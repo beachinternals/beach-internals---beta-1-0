@@ -24,7 +24,7 @@ class LeagueRpt(LeagueRptTemplate):
   def league_rpt_2_click_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(LeagueRpt2()())
+    self.outlined_card_3.add_component(LeagueRpt2())
     pass
 
   def roster_manage_click_click(self, **event_args):

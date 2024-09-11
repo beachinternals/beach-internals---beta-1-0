@@ -99,7 +99,8 @@ components:
     name: beta_link
     properties: {text: Beta Development}
     type: Link
-  - layout_properties: {grid_position: 'NDVFEB,UHROFR'}
+  - event_bindings: {click: admin_link_click}
+    layout_properties: {grid_position: 'NDVFEB,UHROFR'}
     name: admin_link
     properties: {background: 'theme:Secondary', foreground: 'theme:On Primary', text: ADMIN}
     type: Link
