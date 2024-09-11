@@ -1,14 +1,285 @@
 allow_embedding: false
+db_schema:
+  btd_files:
+    client: none
+    columns:
+    - admin_ui: {width: 200}
+      name: league
+      type: string
+    - admin_ui: {width: 200}
+      name: gender
+      type: string
+    - admin_ui: {width: 200}
+      name: year
+      type: string
+    - admin_ui: {width: 200}
+      name: comp_l1
+      type: string
+    - admin_ui: {width: 200}
+      name: comp_l2
+      type: string
+    - admin_ui: {width: 200}
+      name: comp_l3
+      type: string
+    - admin_ui: {width: 200}
+      name: team
+      type: string
+    - admin_ui: {width: 200}
+      name: owner
+      type: string
+    - admin_ui: {width: 200}
+      name: date
+      type: date
+    - admin_ui: {width: 200}
+      name: filename
+      type: string
+    - admin_ui: {width: 200}
+      name: points
+      type: number
+    - admin_ui: {width: 200}
+      name: per_srv_players
+      type: number
+    - admin_ui: {width: 200}
+      name: per_xy
+      type: number
+    - admin_ui: {width: 200}
+      name: per_players
+      type: number
+    - admin_ui: {width: 200}
+      name: completeness_score
+      type: number
+    - admin_ui: {width: 200}
+      name: include_in_master
+      type: bool
+    - admin_ui: {width: 200}
+      name: csv_data
+      type: media
+    - admin_ui: {width: 200}
+      name: ppr_data
+      type: media
+    - admin_ui: {width: 200}
+      name: player1
+      type: string
+    - admin_ui: {width: 200}
+      name: player2
+      type: string
+    - admin_ui: {width: 200}
+      name: player3
+      type: string
+    - admin_ui: {width: 200}
+      name: player4
+      type: string
+    - admin_ui: {width: 200}
+      name: ppr_playera1
+      type: string
+    - admin_ui: {width: 200}
+      name: ppr_playera2
+      type: string
+    - admin_ui: {width: 200}
+      name: ppr_playerb1
+      type: string
+    - admin_ui: {width: 200}
+      name: ppr_playerb2
+      type: string
+    server: full
+    title: btd_files
+  league_comp_l1:
+    client: none
+    columns:
+    - admin_ui: {width: 200}
+      name: league
+      type: string
+    - admin_ui: {width: 200}
+      name: comp_l1
+      type: string
+    server: full
+    title: league_comp_l1
+  league_comp_l3:
+    client: none
+    columns:
+    - admin_ui: {width: 200}
+      name: comp_l3_label
+      type: string
+    - admin_ui: {width: 200}
+      name: comp_l3
+      type: string
+    server: full
+    title: league_comp_l3
+  league_list:
+    client: none
+    columns:
+    - admin_ui: {width: 200}
+      name: league
+      type: string
+    - admin_ui: {width: 200}
+      name: comp_l1_label
+      type: string
+    - admin_ui: {width: 200}
+      name: comp_l2_label
+      type: string
+    - admin_ui: {width: 200}
+      name: comp_l3_label
+      type: string
+    - admin_ui: {width: 200}
+      name: league_db
+      type: string
+    server: full
+    title: league_list
+  master_player:
+    client: none
+    columns:
+    - admin_ui: {width: 102}
+      name: league
+      type: string
+    - admin_ui: {width: 90}
+      name: gender
+      type: string
+    - admin_ui: {width: 82}
+      name: year
+      type: string
+    - admin_ui: {width: 102}
+      name: team
+      type: string
+    - admin_ui: {width: 99}
+      name: number
+      type: string
+    - admin_ui: {width: 157}
+      name: shortname
+      type: string
+    - admin_ui: {width: 200}
+      name: fullname
+      type: string
+    - admin_ui: {width: 200}
+      name: federation_id
+      type: string
+    - admin_ui: {width: 97}
+      name: alias1
+      type: string
+    - admin_ui: {width: 114}
+      name: alias2
+      type: string
+    - admin_ui: {width: 108}
+      name: alias3
+      type: string
+    server: full
+    title: master_player
+  ppr_csv_tables:
+    client: none
+    columns:
+    - admin_ui: {width: 200}
+      name: league
+      type: string
+    - admin_ui: {width: 200}
+      name: gender
+      type: string
+    - admin_ui: {width: 200}
+      name: year
+      type: string
+    - admin_ui: {width: 200}
+      name: team
+      type: string
+    - admin_ui: {width: 200}
+      name: ppr_csv
+      type: media
+    - admin_ui: {width: 200}
+      name: date
+      type: datetime
+    - admin_ui: {width: 122}
+      name: num_points
+      type: number
+    server: full
+    title: ppr_csv_tables
+  subscriptions:
+    client: none
+    columns:
+    - admin_ui: {width: 109}
+      name: team
+      type: string
+    - admin_ui: {width: 200}
+      name: admin
+      type: string
+    - admin_ui: {width: 200}
+      name: email
+      type: string
+    - admin_ui: {width: 106}
+      name: league
+      type: string
+    - admin_ui: {width: 200}
+      name: gender
+      type: string
+    - admin_ui: {width: 200}
+      name: year
+      type: string
+    - admin_ui: {width: 200}
+      name: start_date
+      type: date
+    - admin_ui: {width: 200}
+      name: end_date
+      type: date
+    - admin_ui: {width: 200}
+      name: num_users
+      type: number
+    server: full
+    title: subscriptions
+  users:
+    client: none
+    columns:
+    - admin_ui: {width: 200}
+      name: email
+      type: string
+    - admin_ui: {width: 100}
+      name: enabled
+      type: bool
+    - admin_ui: {width: 200}
+      name: signed_up
+      type: datetime
+    - admin_ui: {width: 200}
+      name: password_hash
+      type: string
+    - admin_ui: {width: 136}
+      name: confirmed_email
+      type: bool
+    - admin_ui: {width: 200}
+      name: email_confirmation_key
+      type: string
+    - admin_ui: {width: 200}
+      name: last_login
+      type: datetime
+    - admin_ui: {width: 200}
+      name: n_password_failures
+      type: number
+    - admin_ui: {width: 200}
+      name: team
+      type: string
+    - admin_ui: {width: 98}
+      name: role
+      type: string
+    - admin_ui: {width: 200}
+      name: client_admin
+      type: bool
+    - admin_ui: {width: 200}
+      name: def_league
+      type: string
+    - admin_ui: {width: 200}
+      name: def_gender
+      type: string
+    - admin_ui: {width: 200}
+      name: def_year
+      type: string
+    server: full
+    title: Users
 dependencies: []
-name: M3 App 1
+metadata: {title: Beach Internals}
+name: Beach Internals - Beta 1.0
 native_deps: null
-package_name: M3_App_1
+package_name: Beach_Internals___Beta_1_0
 renamed: true
 runtime_options:
   client_version: '3'
   legacy_features: {__dict__: true, bootstrap3: true, class_names: true, root_container: true}
-  server_spec: {base: python310-standard}
-  server_version: python3-sandbox
+  server_spec: null
+  server_spec_disabled: {base: python310-standard, requirements: ''}
+  server_version: python3-full
   version: 3
 services:
 - client_config: {}

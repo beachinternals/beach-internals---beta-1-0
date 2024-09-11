@@ -1,0 +1,7 @@
+components:
+- layout_properties: {grid_position: 'WRDNDF,LZENXK'}
+  name: label_1
+  properties: {text: Player Report 1}
+  type: Label
+container: {type: ColumnPanel}
+is_package: true

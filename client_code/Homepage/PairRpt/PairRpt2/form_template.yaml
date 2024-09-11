@@ -1,0 +1,7 @@
+components:
+- layout_properties: {grid_position: 'WJQMMI,NMDXVE'}
+  name: label_1
+  properties: {text: Pair Report 2}
+  type: Label
+container: {type: ColumnPanel}
+is_package: true
