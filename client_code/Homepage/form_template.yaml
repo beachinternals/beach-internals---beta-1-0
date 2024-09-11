@@ -1,0 +1,53 @@
+components:
+- components: []
+  layout_properties: {slot: default}
+  name: content_panel
+  properties: {col_widths: '{}'}
+  type: ColumnPanel
+- components:
+  - layout_properties: {}
+    name: about_us_link
+    properties: {icon: 'fa:info-circle', text: ''}
+    type: Link
+  - layout_properties: {}
+    name: help_link
+    properties: {icon: 'fa:question-circle-o', text: ''}
+    type: Link
+  - layout_properties: {}
+    name: subscription_link
+    properties: {icon: 'fa:book', text: ''}
+    type: Link
+  - layout_properties: {}
+    name: user_page
+    properties: {icon: 'fa:user-circle-o', text: ''}
+    type: Link
+  layout_properties: {slot: nav-right}
+  name: navbar_links
+  properties: {}
+  type: FlowPanel
+- components:
+  - layout_properties: {grid_position: 'JGJDBB,ZXTDIQ'}
+    name: link_1
+    properties: {text: Data}
+    type: Link
+  - layout_properties: {grid_position: 'LITXTA,FHEEDA'}
+    name: link_2
+    properties: {text: Player}
+    type: Link
+  layout_properties: {slot: left-nav}
+  name: column_panel_1
+  properties: {}
+  type: ColumnPanel
+- layout_properties: {slot: title}
+  name: title_label
+  properties: {text: Beach Internals}
+  type: Label
+container:
+  properties: {html: '@theme:standard-page.html'}
+  type: HtmlTemplate
+is_package: true
+slots:
+  content_slot:
+    index: 0
+    set_layout_properties: {grid_position: 'VEUOPL,VXOCDC'}
+    target: {name: content_panel, type: container}
