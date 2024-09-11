@@ -3,9 +3,7 @@ from anvil import *
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
-from btd_import import *
-from btd_manage import *
-from roster_manage import *
+
 
 
 class ReportMgr(ReportMgrTemplate):
@@ -15,16 +13,16 @@ class ReportMgr(ReportMgrTemplate):
 
     # Any code you write here will run before the form opens.
 
-  def btd_import_click_click(self, **event_args):
+  def Report_mgr1_click_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(btd_import())
+    # self.outlined_card_3.add_component(ReportMgr1())
     pass
 
-  def btd_manage_click_click(self, **event_args):
+  def ReportMgr2_click_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(btd_manage())
+    #self.outlined_card_3.add_component(btd_manage())
     pass
 
   def roster_manage_click_click(self, **event_args):

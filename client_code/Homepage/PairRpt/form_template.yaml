@@ -11,20 +11,15 @@ components_by_slot:
     type: ColumnPanel
   - components:
     - components:
-      - event_bindings: {click: btd_import_click_click}
+      - event_bindings: {click: PairRpt1_click_click}
         layout_properties: {grid_position: 'YJBAZA,XDXPYM'}
-        name: btd_import_click
+        name: PairRpt1_click
         properties: {text: FBHE Report}
         type: Link
-      - event_bindings: {click: btd_manage_click_click}
+      - event_bindings: {click: PairRpt2_click_click}
         layout_properties: {grid_position: 'QUDNGE,YTODGM'}
-        name: btd_manage_click
-        properties: {text: Report 2}
-        type: Link
-      - event_bindings: {click: roster_manage_click_click}
-        layout_properties: {grid_position: 'KDKIIQ,KCVXQA'}
-        name: roster_manage_click
-        properties: {text: Report 3}
+        name: PairRpt2_click
+        properties: {text: Attack Tactic}
         type: Link
       layout_properties: {grid_position: 'KCZYCU,SMAHSC'}
       name: column_panel_1

@@ -1,28 +1,29 @@
-from ._anvil_designer import SubscriptionMgrTemplate
+from ._anvil_designer import adminTemplate
 from anvil import *
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
+from admin1 import *
 
 
 
-class SubscriptionMgr(SubscriptionMgrTemplate):
+class admin(adminTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
     # Any code you write here will run before the form opens.
 
-  def SubsMgr1_click_click(self, **event_args):
+  def admin1_click_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
-    #self.outlined_card_3.add_component(btd_import())
+    self.outlined_card_3.add_component(admin1())
     pass
 
-  def SubsMgr2_click_click(self, **event_args):
+  def btd_manage_click_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
-    #self.outlined_card_3.add_component(btd_manage())
+    self.outlined_card_3.add_component(btd_manage())
     pass
 
   def roster_manage_click_click(self, **event_args):
