@@ -11,15 +11,63 @@ components_by_slot:
     type: ColumnPanel
   - components:
     - components:
+      - layout_properties: {grid_position: 'ZVGFOT,ZGAQNC'}
+        name: roster_overview_link
+        properties: {text: Team Summary}
+        type: Link
+      - layout_properties: {grid_position: 'CFNNWG,YFMVHB'}
+        name: label_1
+        properties: {align: center, background: 'theme:Secondary Container', bold: true, text: Offense}
+        type: Label
       - event_bindings: {click: PlayerRpt1_click_click}
         layout_properties: {grid_position: 'YJBAZA,XDXPYM'}
         name: PlayerRpt1_click
-        properties: {text: FBHE Report}
+        properties: {text: First Ball Hitting}
         type: Link
       - event_bindings: {click: PlayerRpt2_click_click}
         layout_properties: {grid_position: 'QUDNGE,YTODGM'}
         name: PlayerRpt2_click
-        properties: {text: Report 2}
+        properties: {text: FBHE Thur Match}
+        type: Link
+      - layout_properties: {grid_position: 'EDTTNZ,SQCSKH'}
+        name: link_1
+        properties: {text: FBHE by Tactic}
+        type: Link
+      - layout_properties: {grid_position: 'MWIJDX,EFMENG'}
+        name: link_2
+        properties: {text: FBHE by Serve Location}
+        type: Link
+      - layout_properties: {grid_position: 'WXWBJL,QEVOIR'}
+        name: link_3
+        properties: {text: FBHE by Serve Source}
+        type: Link
+      - layout_properties: {grid_position: 'WPVRKP,CQYHXW'}
+        name: link_4
+        properties: {text: Attack Detail by Attack Type}
+        type: Link
+      - layout_properties: {grid_position: 'LLBOKX,FWYDVR'}
+        name: label_3
+        properties: {align: center, background: 'theme:Secondary Container', bold: true, text: Defense}
+        type: Label
+      - layout_properties: {grid_position: 'QUKRUR,ZTBZMI'}
+        name: link_5
+        properties: {text: Serving Effectiveness}
+        type: Link
+      - layout_properties: {grid_position: 'OPZUQV,FUGNCL'}
+        name: label_4
+        properties: {align: center, background: 'theme:Secondary Container', bold: true, text: Transition & Errors}
+        type: Label
+      - layout_properties: {grid_position: 'RPTKDZ,XTIETZ'}
+        name: link_6
+        properties: {text: Transition Conversion Rates}
+        type: Link
+      - layout_properties: {grid_position: 'YLHIJF,UXJMWL'}
+        name: link_8
+        properties: {text: Error Density}
+        type: Link
+      - layout_properties: {grid_position: 'SIWJWV,SKGADT'}
+        name: link_7
+        properties: {text: Expected Value}
         type: Link
       layout_properties: {grid_position: 'KCZYCU,SMAHSC'}
       name: column_panel_1

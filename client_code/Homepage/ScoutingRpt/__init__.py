@@ -21,7 +21,10 @@ class ScoutingRpt(ScoutingRptTemplate):
     user_row = anvil.users.get_user(allow_remembered=True)
     if not user_row:
       alert('Please Sign In to Beach Internals')
-      open_form('Homepage.SignIn')
+      open_form('Homepage.UserMgr')
+    elif not user_row["team"]:
+      alert('Please Contact Beach Internals to be Assigned to a Team')
+      open_form('Homepage.Contact')
       
   def ScoutingRpt1_click_click(self, **event_args):
     """This method is called when the link is clicked"""

@@ -1,7 +1,70 @@
 components:
 - layout_properties: {grid_position: 'GTUGIY,ULUKBZ'}
   name: label_1
-  properties: {text: This is btd import}
+  properties: {role: title, text: Upload Match from Ball Time}
   type: Label
+- components:
+  - components:
+    - layout_properties: {grid_position: 'ZBJMXR,LIGXOL'}
+      name: label_2
+      properties: {text: 'League:'}
+      type: Label
+    - layout_properties: {grid_position: 'ZBJMXR,JIAZBI'}
+      name: league_drop_down
+      properties: {}
+      type: DropDown
+    layout_properties: {grid_position: 'JYEQOD,EWIITU BETYTX,WCRDNJ'}
+    name: column_panel_1
+    properties: {}
+    type: ColumnPanel
+  - layout_properties: {grid_position: 'JYEQOD,EWIITU CLIQYC,AQRMMK'}
+    name: label_3
+    properties: {text: 'Gender:'}
+    type: Label
+  - layout_properties: {grid_position: 'JYEQOD,EWIITU CLIQYC,EMGMKC'}
+    name: gender_drop_down
+    properties: {}
+    type: DropDown
+  - layout_properties: {grid_position: 'JYEQOD,EWIITU GRGODB,WNETLB'}
+    name: label_4
+    properties: {text: 'Year:'}
+    type: Label
+  - layout_properties: {grid_position: 'JYEQOD,EWIITU GRGODB,FRZCOC'}
+    name: year_drop_down
+    properties: {}
+    type: DropDown
+  - layout_properties: {grid_position: 'JYEQOD,EWIITU PQKLLF,BJJGKG'}
+    name: label_6
+    properties: {text: 'Match Date:'}
+    type: Label
+  - layout_properties: {grid_position: 'JYEQOD,EWIITU PQKLLF,SPMECB'}
+    name: date_picker_1
+    properties: {}
+    type: DatePicker
+  - components:
+    - layout_properties: {grid_position: 'BYZFQQ,QGXQZW'}
+      name: label_5
+      properties: {align: center, text: Competition Level}
+      type: Label
+    layout_properties: {grid_position: 'JYEQOD,QSGWJX WMNFOO,VHDQIB'}
+    name: column_panel_2
+    properties: {}
+    type: ColumnPanel
+  - layout_properties: {grid_position: 'JYEQOD,QSGWJX MIVVTM,KFPEIG'}
+    name: comp_l1_drop_down
+    properties: {}
+    type: DropDown
+  - layout_properties: {grid_position: 'JYEQOD,QSGWJX IOFHSQ,OPWVRH'}
+    name: comp_l2_drop_down
+    properties: {}
+    type: DropDown
+  - layout_properties: {grid_position: 'JYEQOD,QSGWJX GVYHIJ,OJUDNO'}
+    name: comp_l3_drop_down
+    properties: {}
+    type: DropDown
+  layout_properties: {grid_position: 'GRQZAQ,AEVLXG'}
+  name: outlined_card_1
+  properties: {role: outlined-card}
+  type: ColumnPanel
 container: {type: ColumnPanel}
 is_package: true

@@ -11,11 +11,6 @@ components:
       name: help1_link
       properties: {align: center, background: 'theme:Secondary Container', col_spacing: tiny, font: '12', icon: '', spacing_above: none, spacing_below: none, text: Help}
       type: Link
-    - event_bindings: {click: subscription_link_click}
-      layout_properties: {grid_position: 'EUPYKN,FZPTGG'}
-      name: subscription_link
-      properties: {background: 'theme:Secondary Container', col_spacing: tiny, font_size: 12, icon: '', spacing_above: none, spacing_below: none, text: Subscriptions}
-      type: Link
     - event_bindings: {click: aboutus_link_click}
       layout_properties: {grid_position: 'EUPYKN,UTTPAI'}
       name: aboutus_link
@@ -29,7 +24,7 @@ components:
     - event_bindings: {click: signin_link_click}
       layout_properties: {grid_position: 'EUPYKN,RXLJEE'}
       name: signin_link
-      properties: {align: center, background: 'theme:Secondary Container', col_spacing: tiny, font: '12', spacing_above: none, spacing_below: none, text: Sign In}
+      properties: {align: center, background: 'theme:Secondary Container', col_spacing: tiny, font: '12', spacing_above: none, spacing_below: none, text: Login}
       type: Link
     layout_properties: {grid_position: 'DHWYHY,UIPWBZ'}
     name: outlined_card_1

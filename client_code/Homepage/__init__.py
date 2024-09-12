@@ -13,8 +13,8 @@ class Homepage(HomepageTemplate):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
-    # Any code you write here will run before the form opens.
-
+    pass
+    
   def datamgr_link_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('Homepage.DataMgr')
@@ -107,5 +107,5 @@ class Homepage(HomepageTemplate):
 
   def signin_link_click(self, **event_args):
     """This method is called when the link is clicked"""
-    open_form('Homepage.SignIn')
+    open_form('Homepage.UserMgr')
     pass

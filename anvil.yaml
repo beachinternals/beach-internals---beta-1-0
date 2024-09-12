@@ -190,7 +190,7 @@ db_schema:
     server: full
     title: ppr_csv_tables
   subscriptions:
-    client: none
+    client: search
     columns:
     - admin_ui: {width: 109}
       name: team
