@@ -1,7 +1,7 @@
 allow_embedding: false
 db_schema:
   btd_files:
-    client: search
+    client: full
     columns:
     - admin_ui: {width: 200}
       name: league

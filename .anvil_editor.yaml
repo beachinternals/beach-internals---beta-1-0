@@ -35,4 +35,5 @@ unique_ids:
     Homepage.admin.admin1: '1726087573776470362407185.99286'
   modules: {}
   scripts: {}
-  server_modules: {}
+  server_modules:
+    ServerModule1: '1726179400918979863717852.4039'

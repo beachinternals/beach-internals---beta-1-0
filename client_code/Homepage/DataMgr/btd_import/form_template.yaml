@@ -9,7 +9,8 @@ components:
       name: label_2
       properties: {text: 'League:'}
       type: Label
-    - layout_properties: {grid_position: 'ZBJMXR,JIAZBI'}
+    - event_bindings: {change: league_drop_down_change}
+      layout_properties: {grid_position: 'ZBJMXR,JIAZBI'}
       name: league_drop_down
       properties: {}
       type: DropDown
@@ -23,7 +24,8 @@ components:
     type: Label
   - layout_properties: {grid_position: 'JYEQOD,EWIITU CLIQYC,EMGMKC'}
     name: gender_drop_down
-    properties: {}
+    properties:
+      items: [M, W]
     type: DropDown
   - layout_properties: {grid_position: 'JYEQOD,EWIITU GRGODB,WNETLB'}
     name: label_4
@@ -31,14 +33,15 @@ components:
     type: Label
   - layout_properties: {grid_position: 'JYEQOD,EWIITU GRGODB,FRZCOC'}
     name: year_drop_down
-    properties: {}
+    properties:
+      items: ['2024', '2025', '']
     type: DropDown
   - layout_properties: {grid_position: 'JYEQOD,EWIITU PQKLLF,BJJGKG'}
     name: label_6
     properties: {text: 'Match Date:'}
     type: Label
   - layout_properties: {grid_position: 'JYEQOD,EWIITU PQKLLF,SPMECB'}
-    name: date_picker_1
+    name: date_picker
     properties: {}
     type: DatePicker
   - components:
@@ -54,10 +57,10 @@ components:
     name: comp_l1_drop_down
     properties: {}
     type: DropDown
-  - layout_properties: {grid_position: 'JYEQOD,QSGWJX IOFHSQ,OPWVRH'}
-    name: comp_l2_drop_down
+  - layout_properties: {grid_position: 'JYEQOD,QSGWJX IOFHSQ,QDWKUQ'}
+    name: comp_l2_box
     properties: {}
-    type: DropDown
+    type: TextBox
   - layout_properties: {grid_position: 'JYEQOD,QSGWJX GVYHIJ,OJUDNO'}
     name: comp_l3_drop_down
     properties: {}
@@ -67,10 +70,11 @@ components:
     properties: {text: 'Select File:'}
     type: Label
   - layout_properties: {grid_position: 'WQSSNN,FRLHMW'}
-    name: file_selected
+    name: filename_box
     properties: {}
     type: Label
-  - layout_properties: {grid_position: 'WQSSNN,UVWFFJ'}
+  - event_bindings: {change: file_loader_1_change}
+    layout_properties: {grid_position: 'WQSSNN,UVWFFJ'}
     name: file_loader_1
     properties: {}
     type: FileLoader
@@ -155,19 +159,19 @@ components:
       properties: {text: Pair A}
       type: Label
     - layout_properties: {grid_position: 'FCZQKY,RTFSFK QIJSBM,TUSWIT'}
-      name: drop_down_1
+      name: btd_playera1_drop_down
       properties: {}
       type: DropDown
     - layout_properties: {grid_position: 'FCZQKY,RTFSFK GNYLXN,ZOCOBI'}
-      name: drop_down_3
+      name: btd_playera2_drop_down
       properties: {}
       type: DropDown
     - layout_properties: {grid_position: 'FCZQKY,HJTEJJ WYEOHO,DHDWKX'}
-      name: drop_down_5
+      name: ppr_playera1_drop_down
       properties: {}
       type: DropDown
     - layout_properties: {grid_position: 'FCZQKY,HJTEJJ UBHDFS,LIMBDI'}
-      name: drop_down_6
+      name: ppr_playera2_drop_down
       properties: {}
       type: DropDown
     layout_properties: {grid_position: 'PSXPQF,STIGCC'}
@@ -180,19 +184,19 @@ components:
       properties: {text: Pair B}
       type: Label
     - layout_properties: {grid_position: 'JFKEBS,FXCGZV DAWJNJ,JLZGGJ'}
-      name: drop_down_4
+      name: btd_playerb1_drop_down
       properties: {}
       type: DropDown
     - layout_properties: {grid_position: 'JFKEBS,FXCGZV DAWJNJ,LYORUE'}
-      name: drop_down_7
+      name: ppr_playerb1_drop_down
       properties: {}
       type: DropDown
     - layout_properties: {grid_position: 'JFKEBS,FXCGZV RXYPZO,WYWMVI'}
-      name: drop_down_2
+      name: btd_playerb2_drop_down
       properties: {}
       type: DropDown
     - layout_properties: {grid_position: 'JFKEBS,FXCGZV RXYPZO,YIZVNU'}
-      name: drop_down_8
+      name: ppr_playerb2_drop_down
       properties: {}
       type: DropDown
     layout_properties: {grid_position: 'WYHUHP,YTZRFF'}
@@ -208,7 +212,8 @@ components:
     name: outlined_button_1
     properties: {role: outlined-button, text: CANCEL}
     type: Button
-  - layout_properties: {grid_position: 'PSOIRZ,ARTOLZ'}
+  - event_bindings: {click: outlined_button_2_click}
+    layout_properties: {grid_position: 'PSOIRZ,ARTOLZ'}
     name: outlined_button_2
     properties: {role: outlined-button, text: SAVE}
     type: Button
