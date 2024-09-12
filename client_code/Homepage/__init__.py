@@ -1,5 +1,8 @@
 from ._anvil_designer import HomepageTemplate
 from anvil import *
+import anvil.google.auth, anvil.google.drive
+from anvil.google.drive import app_files
+import anvil.users
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
@@ -27,14 +30,14 @@ class Homepage(HomepageTemplate):
     open_form('Homepage.UserMgr')
     pass
 
-  def about_us_link_click(self, **event_args):
-    """This method is called when the link is clicked"""
-    open_form('Homepage.AboutUs')
-    pass
-
-  def help_link_click(self, **event_args):
+  def help1_link_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('Homepage.HelpPage')
+    pass
+
+  def aboutus_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    open_form('Homepage.AboutUs')
     pass
 
   def subscription_link_click(self, **event_args):
@@ -90,4 +93,19 @@ class Homepage(HomepageTemplate):
   def admin_link_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('Homepage.admin')
+    pass
+
+  def home_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    open_form('Homepage.Landing_form')
+    pass
+
+  def Contact_us_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    open_form('Homepage.Contact')
+    pass
+
+  def signin_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    open_form('Homepage.SignIn')
     pass

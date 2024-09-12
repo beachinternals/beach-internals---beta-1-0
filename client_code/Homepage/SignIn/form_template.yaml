@@ -1,0 +1,13 @@
+components_by_slot:
+  content_slot:
+  - layout_properties: {}
+    name: label_1
+    properties: {text: Sign In}
+    type: Label
+  - event_bindings: {click: signing_button_click}
+    layout_properties: {}
+    name: signing_button
+    properties: {role: outlined-button, text: Sign In}
+    type: Button
+is_package: true
+layout: {type: 'form:Homepage'}

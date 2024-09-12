@@ -2,7 +2,103 @@ components_by_slot:
   content_slot:
   - layout_properties: {}
     name: label_1
-    properties: {text: User Manager}
+    properties: {align: center, bold: true, role: headline, text: User Manager}
     type: Label
+  - components:
+    - components:
+      - layout_properties: {grid_position: 'JPZSPN,CDALFM'}
+        name: label_8
+        properties: {align: center, bold: true, text: User Information}
+        type: Label
+      layout_properties: {grid_position: 'MICKKV,PWHBMW'}
+      name: column_panel_2
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'VORSDM,AAFKYE'}
+        name: label_9
+        properties: {align: center, bold: true, role: null, text: League Information}
+        type: Label
+      layout_properties: {grid_position: 'MICKKV,GTEHRM'}
+      name: column_panel_6
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'QOMQMO,WZAKSV'}
+        name: label_2
+        properties: {text: 'User/eMail:'}
+        type: Label
+      layout_properties: {grid_position: 'UJRZZO,ZGCZVG GKJUFA,CKYVWE'}
+      name: column_panel_1
+      properties: {}
+      type: ColumnPanel
+    - layout_properties: {grid_position: 'UJRZZO,ZGCZVG FQJYIG,LHUNPX'}
+      name: label_4
+      properties: {text: 'Team / Club / Federation:'}
+      type: Label
+    - layout_properties: {grid_position: 'UJRZZO,ZGCZVG OQAYTR,GNGHNT'}
+      name: label_5
+      properties: {text: 'Role:'}
+      type: Label
+    - components:
+      - layout_properties: {grid_position: 'FDXQBY,VBVCVD'}
+        name: label_3
+        properties: {}
+        type: Label
+      layout_properties: {grid_position: 'UJRZZO,ZKNYHA YJRIUW,VJPUUJ'}
+      name: column_panel_3
+      properties: {}
+      type: ColumnPanel
+    - layout_properties: {grid_position: 'UJRZZO,ZKNYHA AESYFV,TBJNUS'}
+      name: label_6
+      properties: {}
+      type: Label
+    - layout_properties: {grid_position: 'UJRZZO,ZKNYHA NGDTVI,MKZPOC'}
+      name: label_7
+      properties: {}
+      type: Label
+    - components:
+      - layout_properties: {grid_position: 'USYHIE,CFVKPX'}
+        name: label_10
+        properties: {text: 'League:'}
+        type: Label
+      layout_properties: {grid_position: 'UJRZZO,ITKZFK QEZPNL,EPRUCT'}
+      name: column_panel_4
+      properties: {}
+      type: ColumnPanel
+    - layout_properties: {grid_position: 'UJRZZO,ITKZFK NEMBTC,BWZLDZ'}
+      name: label_11
+      properties: {text: 'Gender:'}
+      type: Label
+    - layout_properties: {grid_position: 'UJRZZO,ITKZFK DIVZES,TSSVDL'}
+      name: label_13
+      properties: {text: 'Year:'}
+      type: Label
+    - layout_properties: {grid_position: 'UJRZZO,VIMGGT RRXPYV,JDXYYN'}
+      name: column_panel_5
+      properties: {}
+      type: ColumnPanel
+    - layout_properties: {grid_position: 'UJRZZO,VIMGGT ZTOJZK,GNGNCL'}
+      name: label_12
+      properties: {}
+      type: Label
+    - layout_properties: {grid_position: 'UJRZZO,VIMGGT FYCVXR,ONCCCW'}
+      name: label_14
+      properties: {}
+      type: Label
+    layout_properties: {}
+    name: outlined_card_1
+    properties: {role: outlined-card}
+    type: ColumnPanel
+  - event_bindings: {click: signin_button_click}
+    layout_properties: {}
+    name: signin_button
+    properties: {role: outlined-button, text: Sign In}
+    type: Button
+  - event_bindings: {click: singout_button_click}
+    layout_properties: {}
+    name: singout_button
+    properties: {role: outlined-button, text: Sign Out}
+    type: Button
 is_package: true
 layout: {type: 'form:Homepage'}
