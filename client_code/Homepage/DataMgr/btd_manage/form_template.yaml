@@ -1,7 +1,37 @@
 components:
 - layout_properties: {grid_position: 'GTUGIY,ULUKBZ'}
   name: label_1
-  properties: {text: This is btd imanage}
+  properties: {role: title, text: List of Ball Time Match Files}
   type: Label
+- components:
+  - components:
+    - name: repeating_panel_1
+      properties: {item_template: Homepage.DataMgr.btd_manage.RowTemplate2}
+      type: RepeatingPanel
+    layout_properties: {grid_position: 'IZCUPP,XFYRNH'}
+    name: data_grid_1
+    properties:
+      columns:
+      - {data_key: league, id: RMTZUC, title: league}
+      - {data_key: gender, id: MSTZJG, title: gender}
+      - {data_key: year, id: FWLNBY, title: year}
+      - {data_key: comp_l1, id: RPUYMZ, title: comp_l1}
+      - {data_key: comp_l2, id: YPQQYI, title: comp_l2}
+      - {data_key: comp_l3, id: NKHATX, title: comp_l3}
+      - {data_key: team, id: PGLUTP, title: team}
+      - {data_key: owner, id: EZOMPW, title: owner}
+      - {data_key: date, id: HGGFJV, title: date}
+      - {data_key: points, id: IIVUBY, title: points}
+      - {data_key: completeness_score, id: XKZDCR, title: completeness_score}
+      - {data_key: include_in_master, id: QEIHKJ, title: include_in_master}
+      - {data_key: ppr_playera1, id: HCPSRB, title: ppr_playera1}
+      - {data_key: ppr_playera2, id: OTAQQK, title: ppr_playera2}
+      - {data_key: ppr_playerb1, id: SVMQUC, title: ppr_playerb1}
+      - {data_key: ppr_playerb2, id: IPNZYP, title: ppr_playerb2}
+    type: DataGrid
+  layout_properties: {grid_position: 'ZGMYNQ,JCDGEZ'}
+  name: outlined_card_1
+  properties: {role: outlined-card}
+  type: ColumnPanel
 container: {type: ColumnPanel}
 is_package: true

@@ -1,7 +1,7 @@
 allow_embedding: false
 db_schema:
   btd_files:
-    client: none
+    client: search
     columns:
     - admin_ui: {width: 200}
       name: league
@@ -84,7 +84,7 @@ db_schema:
     server: full
     title: btd_files
   league_comp_l1:
-    client: none
+    client: search
     columns:
     - admin_ui: {width: 200}
       name: league
@@ -95,7 +95,7 @@ db_schema:
     server: full
     title: league_comp_l1
   league_comp_l3:
-    client: none
+    client: search
     columns:
     - admin_ui: {width: 200}
       name: comp_l3_label
@@ -106,7 +106,7 @@ db_schema:
     server: full
     title: league_comp_l3
   league_list:
-    client: none
+    client: search
     columns:
     - admin_ui: {width: 200}
       name: league
@@ -126,7 +126,7 @@ db_schema:
     server: full
     title: league_list
   master_player:
-    client: none
+    client: search
     columns:
     - admin_ui: {width: 102}
       name: league
