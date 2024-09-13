@@ -81,13 +81,12 @@ def create_master_ppr( user_league, user_gender, user_year, user_team, data_set 
   for flist_r in btd_rows:
     # call the function to return the ppr file given the btd file
     # check if there is a data object in the ppr_data field:
-    if flist_r['private']:      # this is the table for the team, so only private files
-      if  flist_r['ppr_data']:
-        ppr_df = pd.read_csv(io.BytesIO( flist_r['ppr_data'].get_bytes()))
-        print(f"reading ppr_file, size: {ppr_df.size}")
-        master_ppr_df = pd.concat([master_ppr_df,ppr_df])
-        print(f"master ppr file sie: {master_ppr_df.size}")
-
+    if  flist_r['ppr_data']:
+      ppr_df = pd.read_csv(io.BytesIO( flist_r['ppr_data'].get_bytes()))
+      print(f"reading ppr_file, size: {ppr_df.size}")
+      master_ppr_df = pd.concat([master_ppr_df,ppr_df])
+      print(f"master ppr file sie: {master_ppr_df.size}")
+  
   print(f"size of master_ppr_df: {master_ppr_df.size}")
   #print(master_ppr_df)
   # so we should now have te master ppr_df for the given league, gender, year, and team
@@ -228,16 +227,11 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
     d['last_action_id'] = d['last_action_id'] if isinstance(d['last_action_id'],(float,int)) else 0
 
   # fill all the NaN in the df
-  mppr_df = master_ppr_df.fillna(0)
-  # now, store this into the database, master_ppr_data, record by record
-  #for d in mppr_df.to_dict(orient="records"):
-    # so we think we now have all the types correct, so let's add the row! 
-    #print(f"adding row d: {d['point_no']} Dig Player: {d['dig_player']}")
-  #  app_tables.master_ppr_data.add_row(**d)
 
   # last thing, place this mppr_df (master ppr dataframe) into the database as a csv file
   # first, I need to cahnge the ppr_file dataframe to a csv file.
-  master_ppr_csv_file = pd.DataFrame.to_csv(mppr_df)
+  print(f"saving ppr df, size:{master_ppr_df.size}")
+  master_ppr_csv_file = pd.DataFrame.to_csv(master_ppr_df)
   ppr_media = anvil.BlobMedia(content_type="text/plain", content=master_ppr_csv_file.encode(), name="ppr_csv.csv")
     
   # now I can store it in the btd files database
@@ -251,15 +245,15 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
       team = user_team
     ) )
 
-  if not ppr_csv_row:
+  if len(ppr_csv_row) == 0:
     print("adding a row to the csv table")
-    app_tables.ppr_csv_tables.add_row(league=user_league,gender=user_gender,year=user_year,team=user_team)
+    ppr_csv_row = app_tables.ppr_csv_tables.add_row(league=user_league,gender=user_gender,year=user_year,team=user_team)
 
   print(f"League:{user_league}, Gender:{user_gender}, Year:{user_year}, Team:{user_team}")
   print(f"There are {len(ppr_csv_row)} rows returned")
   for r in ppr_csv_row:
     print(r)
-    print(f"PPR_CSV_ROW, League:{r['league']}")
+    # print(f"PPR_CSV_ROW, League:{r['league']}")
     #, Gender:{ppr_csv_row['gender']}, Year:{ppr_csv_row['year']}, Team:{ppr_csv_row['team']}")
     r.update( ppr_csv = ppr_media ) 
   
