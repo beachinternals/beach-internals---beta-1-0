@@ -1,25 +1,5 @@
 import anvil.google.auth, anvil.google.drive, anvil.google.mail
 from anvil.google.drive import app_files
-import anvil.users
-import anvil.tables as tables
-import anvil.tables.query as q
-from anvil.tables import app_tables
-import anvil.server
-
-# This is a server module. It runs on the Anvil server,
-# rather than in the user's browser.
-#
-# To allow anvil.server.call() to call functions here, we mark
-# them with @anvil.server.callable.
-# Here is an example - you can replace it with your own:
-#
-# @anvil.server.callable
-# def say_hello(name):
-#   print("Hello, " + name + "!")
-#   return 42
-#
-import anvil.google.auth, anvil.google.drive, anvil.google.mail
-from anvil.google.drive import app_files
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
@@ -43,33 +23,70 @@ import math
 #
 
 @anvil.server.callable
-def create_master_ppr( user_league, user_gender, user_year, user_team ):
+def create_master_ppr( user_league, user_gender, user_year, user_team, data_set ):
   # main idea here is to go thru the datafiles table, limited by league, gender, year, and team.
   # then just append all the different ppr csv files together into a master. THen write this to a csv file
   # then put this into a data table  
   # sample code on how to do this from a file system
 
-  # initialize a few variables needed
-  # ppr_path = 'path here'
+  # data_set = 
+  #    All - do all three options below - NOT IMPLEMENTED 
+  #    Private - only the team private file
+  #    Scouting - the league based scouting file
+  #    League - the league wide file that includes all files (team and private) for a league
+  #
+  #     Therefore, the ppr_csv_tables will have a 'Team' designation for each team (i.e. FSU, LSU, Internals), Scouting, and League
+  
+  # initialize a dataframe to hold hte master ppr data
   master_ppr_df = pd.DataFrame()
   
   # open btd file list, filer for the desired group
-  btd_rows = app_tables.btd_files.search(
-    league = user_league,
-    gender = user_gender,
-    year = user_year,
-    team = user_team
-  )
+  #if data_set == "All":
+  #  btd_rows = app_tables.btd_files.search(
+  #    league = user_league,
+  #    gender = user_gender,
+  #    year = user_year,
+  #    team = user_team,
+  #    private = True
+  #    )
+  print(f"Data Set:{data_set}")
+  if data_set == "Private":
+    btd_rows = app_tables.btd_files.search(
+      league = user_league,
+      gender = user_gender,
+      year = user_year,
+      team = user_team,
+      private = True
+      )
+  elif data_set == "Scouting":
+    btd_rows = app_tables.btd_files.search(
+      league = user_league,
+      gender = user_gender,
+      year = user_year,
+      private = False
+      )
+    user_team = "Scout"
+  elif data_set == "League":
+    btd_rows = app_tables.btd_files.search(
+      league = user_league,
+      gender = user_gender,
+      year = user_year
+      )
+    user_team = "League"
+  else:
+    print(f"We failed with data set:{data_set}")
+    return False
 
   # now,, start a loop of the rows
   for flist_r in btd_rows:
     # call the function to return the ppr file given the btd file
     # check if there is a data object in the ppr_data field:
-    if  flist_r['ppr_data']:
-      ppr_df = pd.read_csv(io.BytesIO( flist_r['ppr_data'].get_bytes()))
-      print(f"reading ppr_file, size: {ppr_df.size}")
-      master_ppr_df = pd.concat([master_ppr_df,ppr_df])
-      print(f"master ppr file sie: {master_ppr_df.size}")
+    if flist_r['private']:      # this is the table for the team, so only private files
+      if  flist_r['ppr_data']:
+        ppr_df = pd.read_csv(io.BytesIO( flist_r['ppr_data'].get_bytes()))
+        print(f"reading ppr_file, size: {ppr_df.size}")
+        master_ppr_df = pd.concat([master_ppr_df,ppr_df])
+        print(f"master ppr file sie: {master_ppr_df.size}")
 
   print(f"size of master_ppr_df: {master_ppr_df.size}")
   #print(master_ppr_df)
@@ -213,10 +230,10 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
   # fill all the NaN in the df
   mppr_df = master_ppr_df.fillna(0)
   # now, store this into the database, master_ppr_data, record by record
-  for d in mppr_df.to_dict(orient="records"):
+  #for d in mppr_df.to_dict(orient="records"):
     # so we think we now have all the types correct, so let's add the row! 
     #print(f"adding row d: {d['point_no']} Dig Player: {d['dig_player']}")
-    app_tables.master_ppr_data.add_row(**d)
+  #  app_tables.master_ppr_data.add_row(**d)
 
   # last thing, place this mppr_df (master ppr dataframe) into the database as a csv file
   # first, I need to cahnge the ppr_file dataframe to a csv file.
@@ -225,6 +242,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
     
   # now I can store it in the btd files database
   # find the correct row
+  print(f"looking in ppr csv tables: League:{user_league}, Gender:{user_gender}, Year:{user_year}, Team:{user_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.search( 
     q.all_of(
       league = user_league,
@@ -232,6 +250,10 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
       year = user_year,
       team = user_team
     ) )
+
+  if not ppr_csv_row:
+    print("adding a row to the csv table")
+    app_tables.ppr_csv_tables.add_row(league=user_league,gender=user_gender,year=user_year,team=user_team)
 
   print(f"League:{user_league}, Gender:{user_gender}, Year:{user_year}, Team:{user_team}")
   print(f"There are {len(ppr_csv_row)} rows returned")

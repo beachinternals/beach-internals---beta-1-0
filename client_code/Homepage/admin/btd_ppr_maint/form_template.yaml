@@ -133,7 +133,7 @@ components:
     - layout_properties: {grid_position: 'SVNRCR,BXUMEA'}
       name: drop_down_data_set_copy
       properties:
-        items: [Private, Scouting, All, League]
+        items: [Private, Scouting, League]
       type: DropDown
     layout_properties: {grid_position: 'HFFPKC,XFSWNN'}
     name: column_panel_2_copy
