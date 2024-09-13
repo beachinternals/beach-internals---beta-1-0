@@ -7,7 +7,7 @@ import anvil.users
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
-from admin1 import *
+from btd_ppr_maint import *
 
 
 
@@ -25,21 +25,15 @@ class admin(adminTemplate):
     elif not user_row["team"]:
       alert('Please Contact Beach Internals to be Assigned to a Team')
       open_form('Homepage.Contact')
+
+    if user_row['team'] != "Internals":
+      alert('Site Adminitration not Available')
+      open_form('Homepage')
       
   def admin1_click_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(admin1())
+    self.outlined_card_3.add_component(btd_ppr_maint())
     pass
 
-  def btd_manage_click_click(self, **event_args):
-    """This method is called when the link is clicked"""
-    self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(btd_manage())
-    pass
 
-  def roster_manage_click_click(self, **event_args):
-    """This method is called when the link is clicked"""
-    self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(roster_manage())
-    pass

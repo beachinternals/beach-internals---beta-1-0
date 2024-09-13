@@ -119,19 +119,13 @@ class btd_import(btd_importTemplate):
     #print(f" selected value 1 {self.comp_l3_drop_down.selected_value[1]}")
     #print(f" selected value 2 {self.comp_l3_drop_down.selected_value[2]}")
 
-    print(self.comp_l3_drop_down.selected_value)
-    print(f"com_l3 data:{self.comp_l3_drop_down.selected_value['comp_l3']}")
-
-    # creat a new row with the data
-    print(f"per players            :{self.per_players_label.text}")
-    print(f"per player -1          :{self.per_players_label.text[:-1]}")
-    print(f"float of per player -1 :{float(self.per_players_label.text[:-1])}")
+    # the various statistics were converted to strings, %'s, so we need to convert them back to float.
     per_play = float(self.per_players_label.text[:-1])
-    print(f"percent players, per_play:{per_play}")
     pts = int(self.points_label.text)
     per_s_play = float(self.per_srv_player_label.text[:-1])
-    per_a_play = float(self.per_players_label.text[:-1])
-    
+    per_coord = float(self.per_coord_label.text[:-1])
+    score = float(self.comp_score_label.text[:-1])
+    # creat a new row with the data    
     app_tables.btd_files.add_row( 
       league=self.league_drop_down.selected_value["league"],
       gender=self.gender_drop_down.selected_value,
@@ -146,8 +140,8 @@ class btd_import(btd_importTemplate):
       points = pts,
       per_players = per_play,
       per_srv_players = per_s_play,
-      per_xy = float(self.per_coord_label.text),
-      completeness_score = float(self.comp_score_label.text),
+      per_xy = per_coord,
+      completeness_score = score,
       include_in_master = True,
       player1 = self.btd_playera1_drop_down.selected_value,
       player2 = self.btd_playera2_drop_down.selected_value,

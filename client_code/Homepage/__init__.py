@@ -14,6 +14,15 @@ class Homepage(HomepageTemplate):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
+    # make admin visible, or not
+    user_row = anvil.users.get_user()
+    if user_row:
+      if user_row['team'] == "Internals":
+        self.admin_link.visible = True
+      else:
+        self.admin_link.visible = False
+    else:
+      self.admin_link.visible = False
     pass
     
   def datamgr_link_click(self, **event_args):
