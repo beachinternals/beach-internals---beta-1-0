@@ -72,7 +72,7 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     user_team = self.team_drop_down_copy.selected_value
     data_set = self.drop_down_data_set_copy.selected_value  # this should be: All, Private, Scouting, League
     
-    anvil.server.call('create_master_ppr',user_league, user_gender, user_year, user_team, data_set )
+    #anvil.server.call('create_master_ppr',user_league, user_gender, user_year, user_team, data_set )
 
     pass
 
