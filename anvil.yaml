@@ -81,6 +81,9 @@ db_schema:
     - admin_ui: {width: 200}
       name: ppr_playerb2
       type: string
+    - admin_ui: {order: 11.6875, width: 200}
+      name: private
+      type: bool
     server: full
     title: btd_files
   league_comp_l1:

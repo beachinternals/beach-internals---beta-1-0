@@ -125,6 +125,11 @@ class btd_import(btd_importTemplate):
     per_s_play = float(self.per_srv_player_label.text[:-1])
     per_coord = float(self.per_coord_label.text[:-1])
     score = float(self.comp_score_label.text[:-1])
+    if self.private_button.selected:
+      is_private = True
+    else:
+      is_private = False
+    
     # creat a new row with the data    
     app_tables.btd_files.add_row( 
       league=self.league_drop_down.selected_value["league"],
@@ -143,6 +148,7 @@ class btd_import(btd_importTemplate):
       per_xy = per_coord,
       completeness_score = score,
       include_in_master = True,
+      private = is_private,
       player1 = self.btd_playera1_drop_down.selected_value,
       player2 = self.btd_playera2_drop_down.selected_value,
       player3 = self.btd_playerb1_drop_down.selected_value,
@@ -154,4 +160,9 @@ class btd_import(btd_importTemplate):
     )
     alert("New Row Saved!")
     open_form("Homepage.DataMgr")
+
+  def private_help_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    alert("This defines how the data will be user: /n Private - Only avaiable to the team, used for Player and Pair reports. /n Public - used for scouting, avaialble to all teams on the Internals network.")
+    pass
 

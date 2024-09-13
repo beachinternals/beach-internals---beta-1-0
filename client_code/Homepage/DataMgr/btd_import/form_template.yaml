@@ -44,27 +44,41 @@ components:
     name: date_picker
     properties: {}
     type: DatePicker
-  - components:
-    - layout_properties: {grid_position: 'BYZFQQ,QGXQZW'}
-      name: label_5
-      properties: {align: center, text: Competition Level}
-      type: Label
-    layout_properties: {grid_position: 'JYEQOD,QSGWJX WMNFOO,VHDQIB'}
-    name: column_panel_2
-    properties: {}
-    type: ColumnPanel
-  - layout_properties: {grid_position: 'JYEQOD,QSGWJX MIVVTM,KFPEIG'}
+  - layout_properties: {grid_position: 'JYEQOD,QSGWJX CJIOWT,NIPOSY'}
     name: comp_l1_drop_down
     properties: {}
     type: DropDown
-  - layout_properties: {grid_position: 'JYEQOD,QSGWJX IOFHSQ,QDWKUQ'}
-    name: comp_l2_box
+  - components:
+    - layout_properties: {grid_position: 'WCUZFP,XWCLNM'}
+      name: comp_l2_box
+      properties: {}
+      type: TextBox
+    layout_properties: {grid_position: 'JYEQOD,QSGWJX RJTGJS,JMFQVR'}
+    name: column_panel_2
     properties: {}
-    type: TextBox
+    type: ColumnPanel
   - layout_properties: {grid_position: 'JYEQOD,QSGWJX GVYHIJ,OJUDNO'}
     name: comp_l3_drop_down
     properties: {}
     type: DropDown
+  - components:
+    - layout_properties: {grid_position: 'UIUIZB,ZZRNUQ'}
+      name: private_button
+      properties: {align: center, text: Private}
+      type: RadioButton
+    - layout_properties: {grid_position: 'UIUIZB,ZEHFTI LIFCTA,TLKQXS'}
+      name: scouting_button
+      properties: {align: center, selected: true, text: Scouting}
+      type: RadioButton
+    - event_bindings: {click: private_help_link_click}
+      layout_properties: {grid_position: 'UIUIZB,ZEHFTI LIFCTA,BJERFQ'}
+      name: private_help_link
+      properties: {align: center, text: '?'}
+      type: Link
+    layout_properties: {grid_position: 'JYEQOD,QSGWJX EXIUWS,AUAKOM'}
+    name: column_panel_3
+    properties: {}
+    type: ColumnPanel
   - layout_properties: {grid_position: 'WQSSNN,HRAWXG'}
     name: label_7
     properties: {text: 'Select File:'}

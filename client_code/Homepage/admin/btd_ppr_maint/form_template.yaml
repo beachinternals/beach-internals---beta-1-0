@@ -126,6 +126,15 @@ components:
       name: team_drop_down_copy
       properties: {}
       type: DropDown
+    - layout_properties: {grid_position: 'SVNRCR,YUQWGO'}
+      name: label_8_copy
+      properties: {text: 'Which Data Set?'}
+      type: Label
+    - layout_properties: {grid_position: 'SVNRCR,BXUMEA'}
+      name: drop_down_data_set_copy
+      properties:
+        items: [Private, Scouting, All, League]
+      type: DropDown
     layout_properties: {grid_position: 'HFFPKC,XFSWNN'}
     name: column_panel_2_copy
     properties: {}

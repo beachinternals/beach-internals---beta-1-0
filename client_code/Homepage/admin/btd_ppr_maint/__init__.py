@@ -51,6 +51,16 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
 
   def generate_ppr_button_click(self, **event_args):
     """This method is called when the button is clicked"""
+
+    # call the serer function to convert btd to ppr files and then store them back in the btd_files data table
+    anvil.server.call("generate_ppr_files",
+                      self.league_drop_down.selected_value['league'],
+                      self.gender_drop_down.selected_value,
+                      self.year_drop_down.selected_value,
+                      self.team_drop_down.selected_value
+                     )
+    #generate_ppr_files( user_league, user_gender, user_year,user_team):
+    
     pass
 
   def merge_ppr_button_click(self, **event_args):
