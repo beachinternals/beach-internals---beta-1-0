@@ -27,10 +27,13 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team ):
 
   for flist_r in btd_row:
 
-    print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
+    #print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
     # call the function to return the ppr file given the btd file
     ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
 
+    # clean up the ppr_df databale, just in case.
+    ppr_df = ppr_df.replace({float('nan'): None})
+    
     # We now have a complete ppr datafile.  THree more steps:
     # 1) Transpose some points (so we always serve from close, first ball attack from the far court) Transpose first, makes zone's much easier
     ppr_df = transpose_ppr_coord(ppr_df)
@@ -60,8 +63,10 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
   # convert the btd file to a dataframe
   btd_df = pd.read_csv(btd_file_bytes)
 
-  #print(f"read the btd csv file into a dataframe: {btd_df}")
-  
+  # convert all not a numbers to None
+  btd_df = btd_df.replace({float('nan'): None})
+  #print(f"read the btd csv file into a dataframe: {btd_df['dest_x']}")
+
   # call function to make the convesion
   ppr_df = btd_to_ppr_df(btd_df, flist_r)
 
@@ -130,7 +135,7 @@ def btd_to_ppr_df(btd_df, flist_r):
   
   # ################# loop over the rows in the balltime data file
   for index, btd_r in btd_df.iterrows():
-    print(f"loop over rows, index = {index}, Transition? {in_trans}, Action Type?{btd_r['action_type']}, Player: {btd_r['player']}")
+    #print(f"loop over rows, index = {index}, Transition? {in_trans}, Action Type?{btd_r['action_type']}, Player: {btd_r['player']}")
     
     # replace the btd players with the master player reference
     if btd_r['player'] == flist_r['player1']:
@@ -159,7 +164,7 @@ def btd_to_ppr_df(btd_df, flist_r):
       in_trans = False
       serve_team = teama if btd_r['player'] in teama  else teamb
       
-      print(f" ################ New Serve ################### ------- Raly Id: {btd_r['rally_id']}, ppr_row: {ppr_row}, Quality: {btd_r['quality']}")
+      #print(f" ################ New Serve ################### ------- Raly Id: {btd_r['rally_id']}, ppr_row: {ppr_row}, Quality: {btd_r['quality']}")
       
       ppr_df = save_serve_info( ppr_df, btd_r, ppr_row )
         
@@ -204,7 +209,7 @@ def save_serve_info( ppr_df, btd_r, ppr_row ):
   ppr_df.at[ppr_row,'rally_id'] = btd_r['rally_id']
   ppr_df.at[ppr_row,'serve_src_x'] = btd_r['src_x']
   ppr_df.at[ppr_row,'serve_src_y'] = btd_r['src_y']
-  print(f"Saving Serve INfo ppr_row {ppr_row}, rally number {btd_r['rally_id']}, Server:{ppr_df.at[ppr_row,'serve_player']}")  
+  #print(f"Saving Serve INfo ppr_row {ppr_row}, rally number {btd_r['rally_id']}, Server:{ppr_df.at[ppr_row,'serve_player']}")  
   return ppr_df
 
 def save_pass_info( ppr_df, btd_r, ppr_row):
@@ -217,7 +222,7 @@ def save_pass_info( ppr_df, btd_r, ppr_row):
   ppr_df.at[ppr_row,'pass_src_y'] = btd_r['src_y']
   ppr_df.at[ppr_row,'pass_yn'] = "Y"  
   ppr_df.at[ppr_row,'serve_dest_t'] = ppr_df.at[ppr_row,'pass_src_t']
-  print(f"Saving pass info Action Id: {ppr_df.at[ppr_row,'pass_action_id']}, ppr_row: {ppr_row}, Pass Player: {ppr_df.at[ppr_row,'pass_player']}")
+  #print(f"Saving pass info Action Id: {ppr_df.at[ppr_row,'pass_action_id']}, ppr_row: {ppr_row}, Pass Player: {ppr_df.at[ppr_row,'pass_player']}")
   return ppr_df
 
 def save_set_info( ppr_df, btd_r, ppr_row):
@@ -230,7 +235,7 @@ def save_set_info( ppr_df, btd_r, ppr_row):
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_src_y'))] = btd_r['src_y']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_yn'))] = "Y"  
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('pass_dest_t'))] = ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_src_t'))]
-  print(f"saving SET info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
+  #print(f"saving SET info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
 
   return ppr_df
 
@@ -244,7 +249,7 @@ def save_att_info( ppr_df, btd_r, ppr_row):
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_src_y'))] = btd_r['src_y']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_yn'))] = "Y"  
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_dest_t'))] = ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_src_t'))]
-  print(f"saving ATT info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
+  #print(f"saving ATT info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
 
   return ppr_df
 
@@ -259,14 +264,14 @@ def save_dig_info( ppr_df, btd_r, ppr_row):
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_src_y'))] = btd_r['src_y']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_yn'))] = "Y"  
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_dest_t'))] = ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_src_t'))]
-  print(f"saving Dig info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
+  #print(f"saving Dig info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
   return ppr_df
 
 def save_point(ppr_df, ppr_row, point_code, out_team, action ):
   ppr_df.at[ppr_row,'point_outcome'] = point_code
   ppr_df.at[ppr_row,'point_outcome_team'] = out_team
   ppr_df.at[ppr_row,'last_action_id'] = action
-  print(f"SAVED Point Outcome: Outcome: {ppr_df.at[ppr_row,'point_outcome']}, Point Team:{ppr_df.at[ppr_row,'point_outcome_team']}, Point #: {ppr_row}:  Action ID:{ppr_df.at[ppr_row,'last_action_id']}")
+  #print(f"SAVED Point Outcome: Outcome: {ppr_df.at[ppr_row,'point_outcome']}, Point Team:{ppr_df.at[ppr_row,'point_outcome_team']}, Point #: {ppr_row}:  Action ID:{ppr_df.at[ppr_row,'last_action_id']}")
   return ppr_df
   
 def check_last_point( ppr_df, ppr_row, btd_r, last_player, last_quality, last_action_id, last_action_type, in_trans, teama, teamb, final_pt ):
@@ -279,7 +284,7 @@ def check_last_point( ppr_df, ppr_row, btd_r, last_player, last_quality, last_ac
   if final_pt:
     serve_team = teama if ppr_df.at[ppr_row,'a_score_diff'] > 0 else teamb  # if final point ,like the next server is the one in the lead
     
-  print(f"### CHECKING LAST POINT ###, rally id:{btd_r['rally_id']}, Serve Team next point):{serve_team}, last team: {last_team}, Last Player: {last_player}  Transition? {in_trans}, Last Action Id:{last_action_id},Last Action Type:{last_action_type}, Last Quality:{last_quality}")
+  #print(f"### CHECKING LAST POINT ###, rally id:{btd_r['rally_id']}, Serve Team next point):{serve_team}, last team: {last_team}, Last Player: {last_player}  Transition? {in_trans}, Last Action Id:{last_action_id},Last Action Type:{last_action_type}, Last Quality:{last_quality}")
   
   if in_trans:
     # do I have a terminal quality?
@@ -344,8 +349,8 @@ def update_score(ppr_df, ppr_row, teama):
   kills = ["TSA","FBK","TK"]
   errors = ["TSE","FBE","TE"]
   
-  print("Update Score")
-  print(f"a score:{old_a_score}, b score: {old_b_score} Outcome: {ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('point_outcome'))]} Team: {ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('point_outcome_team'))]}, Team A: {teama}")
+  #print("Update Score")
+  #print(f"a score:{old_a_score}, b score: {old_b_score} Outcome: {ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('point_outcome'))]} Team: {ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('point_outcome_team'))]}, Team A: {teama}")
   
   # update the sets and scores
   ppr_df.at[ppr_row,'set'] = old_set
@@ -379,7 +384,7 @@ def update_score(ppr_df, ppr_row, teama):
   return ppr_df
   
 def calc_ppr_data(ppr_df):
-  print("Calculate ppr data routing")
+  #print("Calculate ppr data routing")
   # set a loop over rows in the ppr_df  
   for index, ppr_r in ppr_df.iterrows():
     # calculate the data for the serve
@@ -446,13 +451,25 @@ def calc_ppr_data(ppr_df):
   return ppr_df
 
 def transpose_ppr_coord(ppr_df):
-  print("Transpose ppr coordiantes routing")
+  #print("Transpose ppr coordiantes routing")
 
   for index, ppr_r in ppr_df.iterrows():
     # transpose from 0-1 cube ot +/-8m and 0-8m
     # serving from near court? or far?
-   # print(f" serve_src: {ppr_r['serve_src_x']}, {ppr_r['serve_src_y']}, rally id : {ppr_r['rally_id']}")
-    near_court = True if ppr_r['serve_src_y'] > 0.5 else False                    
+    # print(f" serve_src: {ppr_r['serve_src_x']}, {ppr_r['serve_src_y']}, rally id : {ppr_r['rally_id']}")
+
+    # what do we do if we don't have serve_src?
+    if ppr_r['serve_src_y'] is None:
+      if ppr_r['pass_src_y'] is None:
+        if ppr_r['set_src_y'] is not None:
+          near_court = False if ppr_r['set_src_y'] > 0.5 else True 
+        else:
+          # if give up!!
+          near_court = True
+      else:
+        near_court = False if ppr_r['pass_src_y'] > 0.5 else True 
+    else:
+      near_court = True if ppr_r['serve_src_y'] > 0.5 else False                    
 
     # Serve Coordinates
     ppr_df.at[index,'serve_src_x'] = ppr_transpose_x(near_court, ppr_r['serve_src_x'])
@@ -491,7 +508,7 @@ def transpose_ppr_coord(ppr_df):
   return ppr_df
 
 def error_check_ppr(ppr_df):
-  print("#############  Error Checking ppr DataFrame ######################")
+  #print("#############  Error Checking ppr DataFrame ######################")
   #print(f"Match: {ppr_df.at(1,'teama')}, {ppr_df.at(1,'teamb')}")
   all3 = False
   no_errors = 0
@@ -531,7 +548,10 @@ def error_check_ppr(ppr_df):
 
 def calc_dist(x1,x2,y1,y2):
   # simple routine to calculate distance
-  return math.sqrt( (x2-x1)**2 + (y2-y1)**2 )
+  if x1 is not None and x2 is not None and y1 is not None and y2 is not None:
+    return math.sqrt( (x2-x1)**2 + (y2-y1)**2 )
+  else:
+    return None
 
 def calc_dur(t1, t2):
   return 0 if not isinstance(t2,(float,int)) else (t2 - t1)
@@ -542,55 +562,73 @@ def calc_speed(dist, dur):
   return 0 if not isinstance(dur,(float,int)) else dist/dur*(60/1000)
 
 def calc_angle(x1,x2,y1,y2):
-  return math.atan( (x2-x1)/(y2-y1) )*57.29578
+  if x1 is not None and x2 is not None and y1 is not None and y2 is not None:
+    if (y2-y1) == 0:
+      return None
+    else:
+      return math.atan( (x2-x1)/(y2-y1) )*57.29578
+  else:
+    return None
 
 def calc_height(t1, t2):
   return 0 if not isinstance(t2,(float,int)) else 1.225*(t2-t1)**2
 
 def ppr_transpose_x(near_court, x1 ):
   # so x coordiantes are 0 - 1, where 0 is 0, and 1 is +8
-  x2 = x1*8
-  x2 = 8 - x2 if near_court else x2
+  if x1 is not None:
+    x2 = x1*8
+    x2 = 8 - x2 if near_court else x2
+  else:
+    x2 = None
   return x2
 
 def ppr_transpose_y(near_court, y1 ):
   # so y coordiantes are 0 - 1, where 0 is -8, and 1 is +8
-  y2 = y1*16 - 8
-  y2 = -y2 if near_court else y2
+  if y1 is not None:
+    y2 = y1*16 - 8
+    y2 = -y2 if near_court else y2
+  else:
+    y2 = None
   return y2
 
 def zone_depth(x1):
-  if math.isnan(x1):
-    zone = " "
-  elif isinstance(x1,(float,int)):
-    #print(f"zone depth x1:{x1}, Type:{type(x1)}")
-    zone = "E"
-    if x1 < 4*1.6:
-      zone = "D"
-    if x1 <3*1.6:
-      zone = "C"
-    if x1 <2*1.6:
-      zone = "B"
-    if x1 <1*1.6:
-      zone = "A"
+  if x1 is not None:
+    if math.isnan(x1):
+      zone = " "
+    elif isinstance(x1,(float,int)):
+      #print(f"zone depth x1:{x1}, Type:{type(x1)}")
+      zone = "E"
+      if x1 < 4*1.6:
+        zone = "D"
+      if x1 <3*1.6:
+        zone = "C"
+      if x1 <2*1.6:
+        zone = "B"
+      if x1 <1*1.6:
+        zone = "A"
+    else:
+      zone = " "
   else:
-    zone = " "
+      zone = " "
     
   return zone
   
 def zone_net(x1):
-  if math.isnan(x1):
-    zone = 0
-  elif isinstance(x1,(float,int)):
-    zone = "5"
-    if x1 < 4*1.6:
-      zone = "4"
-    if x1 <3*1.6:
-      zone = "3"
-    if x1 <2*1.6:
-      zone = "2"
-    if x1 <1*1.6:
-      zone = "1"
+  if x1 is not None:
+    if math.isnan(x1):
+      zone = 0
+    elif isinstance(x1,(float,int)):
+      zone = "5"
+      if x1 < 4*1.6:
+        zone = "4"
+      if x1 <3*1.6:
+        zone = "3"
+      if x1 <2*1.6:
+        zone = "2"
+      if x1 <1*1.6:
+        zone = "1"
+    else:
+      zone = 0
   else:
     zone = 0
     
@@ -599,12 +637,17 @@ def zone_net(x1):
 def calc_tactic( ppr_df ):
   for index, ppr_r in ppr_df.iterrows():
     # calculate the following tactics, put them into the 
+
     # option
-    if ppr_r['pass_yn'] == "Y" and ppr_r['set_yn'] == "Y" :
-      ppr_df.at[index,'tactic'] = "option" if ppr_r['att_yn'] == "N" else ' '
-      # set behind
-      if ppr_r['att_yn'] == "Y" :
-        if ppr_r['pass_src_x'] < (4 - 0.1):
+    if ppr_r['pass_yn'] == "Y" and ppr_r['set_yn'] == "Y" and ppr_r['att_yn'] == "N":
+      ppr_df.at[index,'tactic'] = "option" 
+    if ppr_r['pass_yn'] == "Y" and ppr_r['set_yn'] == "N" and ppr_r['att_yn'] == "Y":
+      ppr_df.at[index,'tactic'] = "option" 
+      
+    # set behind
+    if ppr_r['pass_yn'] == "Y" and ppr_r['set_yn'] == "Y" and ppr_r['att_yn'] == "Y":
+      if ppr_r['pass_src_x'] is not None and ppr_r['set_src_x'] is not None and ppr_r['att_src_x'] is not None:
+        if ppr_r['pass_src_x'] < (4 - 0.1):          
           # now we must be apssing on the right
           ppr_df.at[index,'tactic'] = 'behind' if ( ppr_r['set_src_x'] >= ppr_r['pass_src_x'] and ppr_r['att_src_x'] >= ppr_r['set_src_x'] ) else ' '          
         if ppr_r['pass_src_x'] > ( 4 + 0.1):
