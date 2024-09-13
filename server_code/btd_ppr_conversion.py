@@ -45,7 +45,7 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team ):
     ppr_df = calc_tactic(ppr_df)
     
     # 3) Error check the ppr file for consistency, maybe raise errors into an email/text message??
-    ppr_df = error_check_ppr(ppr_df)
+    ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
     
     # Lastly, save the ppr csv file back into the btd_files database
     # first, I need to cahnge the ppr_file dataframe to a csv file.
@@ -53,7 +53,7 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team ):
     ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
     
     # now I can store it in the btd files database
-    flist_r.update( ppr_data = ppr_media )
+    flist_r.update( ppr_data = ppr_media, error_str = error_string, no_errors = no_errors )
       
   return True
 
@@ -512,16 +512,22 @@ def error_check_ppr(ppr_df):
   #print(f"Match: {ppr_df.at(1,'teama')}, {ppr_df.at(1,'teamb')}")
   all3 = False
   no_errors = 0
+
+  # build a string to store this data
+  error_string = str()
   # loop tyhru the datafarame looking for clear errors that can (or can not) be corrected
   for index,ppr_r in ppr_df.iterrows():
     # pass, set, attack all by same player
     if ppr_r['att_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and (ppr_r['set_player'] == ppr_r['att_player'] ):
       print(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       all3 = True
+      error_string = error_string + print_to_string(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
+
       no_errors += 1
       
     if ppr_r['set_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and not all3:
       print(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
+      error_string = error_string + print_to_string(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
       no_errors += 1
 
     if ppr_r['att_yn'] == "Y" and (ppr_r['att_player'] == ppr_r['set_player'] ) and not all3:  
@@ -544,7 +550,8 @@ def error_check_ppr(ppr_df):
     # someday, I'll have to deal with missing players
 
   print(f"Total Errors Found:{no_errors}")
-  return ppr_df
+  
+  return ppr_df, no_errors, error_string
 
 def calc_dist(x1,x2,y1,y2):
   # simple routine to calculate distance
@@ -655,3 +662,10 @@ def calc_tactic( ppr_df ):
           ppr_df.at[index,'tactic'] = 'behind' if ( ppr_r['set_src_x'] <= ppr_r['pass_src_x'] and ppr_r['att_src_x'] <= ppr_r['set_src_x']) else ' '
  
   return (ppr_df)
+
+def print_to_string(*args, **kwargs):
+    output = io.StringIO()
+    print(*args, file=output, **kwargs)
+    contents = output.getvalue()
+    output.close()
+    return contents

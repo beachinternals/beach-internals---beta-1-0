@@ -84,6 +84,12 @@ db_schema:
     - admin_ui: {order: 11.6875, width: 200}
       name: private
       type: bool
+    - admin_ui: {order: 12.625, width: 200}
+      name: error_str
+      type: string
+    - admin_ui: {order: 12.4375, width: 200}
+      name: no_errors
+      type: number
     server: full
     title: btd_files
   league_comp_l1:
