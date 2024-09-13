@@ -522,7 +522,6 @@ def error_check_ppr(ppr_df):
       print(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       all3 = True
       error_string = error_string + print_to_string(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
-
       no_errors += 1
       
     if ppr_r['set_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and not all3:
@@ -532,17 +531,20 @@ def error_check_ppr(ppr_df):
 
     if ppr_r['att_yn'] == "Y" and (ppr_r['att_player'] == ppr_r['set_player'] ) and not all3:  
       print(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
+      error_string = error_string + print_to_string(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
       no_errors += 1
       
     # serve and attack player are the same team
     if ppr_r['pass_yn'] == "Y":
       if (ppr_r['serve_player'] in ppr_r['teama']) and (ppr_r['pass_player'] in ppr_r['teama'] ) or (ppr_r['serve_player'] in ppr_r['teamb']) and (ppr_r['pass_player'] in ppr_r['teamb'] ):
         print(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
+        error_string = error_string + print_to_string(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
         no_errors += 1
       
     # can I check the service order?
     if not ppr_r['serve_player']:
       print(f"|- No Serve Player                   -|{ppr_r['serve_player']}, Point Number:{ppr_r['point_no']}")
+      error_string = error_string + print_to_string(f"|- No Serve Player                   -|{ppr_r['serve_player']}, Point Number:{ppr_r['point_no']}")
       no_errors += 1
       
     # can I check if the right team got the point?
@@ -550,6 +552,7 @@ def error_check_ppr(ppr_df):
     # someday, I'll have to deal with missing players
 
   print(f"Total Errors Found:{no_errors}")
+  error_string = error_string + print_to_string(f"Total Errors Found:{no_errors}")
   
   return ppr_df, no_errors, error_string
 
