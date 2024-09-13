@@ -2,7 +2,7 @@ components:
 - components:
   - layout_properties: {grid_position: 'BCFKDP,WUVOLA'}
     name: label_1
-    properties: {role: title, text: 'First Ball Hitting Efficiency, FBHE -> Along the Net'}
+    properties: {align: center, role: title, text: First Ball Hitting Efficiency Report}
     type: Label
   layout_properties: {grid_position: 'CRFPCE,DJDVIZ'}
   name: outlined_card_1
@@ -10,62 +10,129 @@ components:
   type: ColumnPanel
 - components:
   - components:
-    - layout_properties: {grid_position: 'DMAYFC,FKWUHT'}
+    - layout_properties: {grid_position: 'SMCGOL,GWSWBZ'}
       name: label_2
       properties: {text: 'League:'}
       type: Label
-    - layout_properties: {grid_position: 'DMAYFC,CGLMGN'}
-      name: drop_down_1
+    - layout_properties: {grid_position: 'SMCGOL,ZQXQOG'}
+      name: league_drop_down
       properties: {}
       type: DropDown
-    name: column_panel_3
-    properties: {}
-    type: ColumnPanel
-  - layout_properties: {}
-    name: label_3
-    properties: {text: 'Gender:'}
-    type: Label
-  - name: drop_down_2
-    properties: {}
-    type: DropDown
-  - name: column_panel_5
-    properties: {}
-    type: ColumnPanel
-  - layout_properties: {}
-    name: label_4
-    properties: {text: 'Year:'}
-    type: Label
-  - name: drop_down_3
-    properties: {}
-    type: DropDown
-  - name: column_panel_4
-    properties: {}
-    type: ColumnPanel
-  - layout_properties: {}
-    name: label_5
-    properties: {text: 'Team:'}
-    type: Label
-  - name: drop_down_4
-    properties: {}
-    type: DropDown
-  - name: column_panel_2
-    properties: {}
-    type: ColumnPanel
-  - layout_properties: {}
-    name: label_6
-    properties: {text: 'Player:'}
-    type: Label
-  - components:
-    - layout_properties: {grid_position: 'YMWLAU,HKKXFA'}
-      name: drop_down_5
-      properties: {}
-      type: DropDown
+    layout_properties: {grid_position: 'JZXCAQ,MLCGJG'}
     name: column_panel_1
     properties: {}
     type: ColumnPanel
-  layout_properties: {grid_position: 'TFWFJZ,WCTYJT'}
-  name: flow_panel_1
-  properties: {visible: false}
-  type: FlowPanel
+  - components:
+    - layout_properties: {grid_position: 'FCTNDB,KAVNJQ'}
+      name: label_3
+      properties: {text: 'Gender:'}
+      type: Label
+    - layout_properties: {grid_position: 'FCTNDB,ZEQIIH'}
+      name: gender_drop_down
+      properties:
+        items: [W, M]
+      type: DropDown
+    layout_properties: {grid_position: 'JZXCAQ,ZPSKYE'}
+    name: column_panel_3
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'BIDBGU,OQWUQZ'}
+      name: label_4
+      properties: {text: 'Year:'}
+      type: Label
+    - layout_properties: {grid_position: 'BIDBGU,TKJBMK'}
+      name: year_drop_down
+      properties:
+        items: ['2024', '2025']
+      type: DropDown
+    layout_properties: {grid_position: 'JZXCAQ,PCFSDY'}
+    name: column_panel_2
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'NGQHHN,OBGSBX'}
+      name: label_5
+      properties: {text: 'Team:'}
+      type: Label
+    - layout_properties: {grid_position: 'NGQHHN,CXXKKG'}
+      name: team_drop_down
+      properties: {}
+      type: DropDown
+    layout_properties: {grid_position: 'JZXCAQ,TSDPDK'}
+    name: column_panel_4
+    properties: {}
+    type: ColumnPanel
+  layout_properties: {grid_position: 'XZWQLR,TCALZC'}
+  name: outlined_card_2
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - components:
+    - layout_properties: {grid_position: 'HAVWHJ,AELSZI'}
+      name: label_6
+      properties: {text: 'Player:'}
+      type: Label
+    - layout_properties: {grid_position: 'HAVWHJ,NHWWTD'}
+      name: player_drop_down
+      properties: {}
+      type: DropDown
+    layout_properties: {grid_position: 'TBYNUD,WRDVWK'}
+    name: column_panel_5
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'HOPPBY,PLZWRL'}
+      name: label_7
+      properties: {text: 'Start Date:'}
+      type: Label
+    - layout_properties: {grid_position: 'HOPPBY,EYESKD'}
+      name: start_date_picker
+      properties: {}
+      type: DatePicker
+    layout_properties: {grid_position: 'TBYNUD,VEJBQI'}
+    name: column_panel_7
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'CYRKBC,QIDAYM'}
+      name: label_8
+      properties: {text: 'End Date:'}
+      type: Label
+    - layout_properties: {grid_position: 'CYRKBC,HHBBWD'}
+      name: end_date_picker
+      properties: {}
+      type: DatePicker
+    layout_properties: {grid_position: 'TBYNUD,BJXXIP'}
+    name: column_panel_8
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - event_bindings: {click: generate_report_button_click}
+      layout_properties: {grid_position: 'TUIWCC,ZCPXTX'}
+      name: generate_report_button
+      properties: {role: outlined-button, text: Generate Report}
+      type: Button
+    layout_properties: {grid_position: 'TBYNUD,WRFNFD'}
+    name: column_panel_6
+    properties: {}
+    type: ColumnPanel
+  layout_properties: {grid_position: 'KYEMYQ,WXIVSQ'}
+  name: outlined_card_3
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'UFEBTD,KBLLMQ'}
+    name: label_9
+    properties: {role: title, text: 'First Ball Hitting Efficiency, FBHE -> Along the Net'}
+    type: Label
+  - layout_properties: {grid_position: 'XOLLTY,VAOCVK'}
+    name: fbhe_table_markup
+    properties: {}
+    type: RichText
+  layout_properties: {grid_position: 'IFBJWJ,BHYTPB'}
+  name: outlined_card_4
+  properties: {role: outlined-card}
+  type: ColumnPanel
 container: {type: ColumnPanel}
 is_package: true
