@@ -31,9 +31,10 @@ def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
-  print(fbhe_table)
+  #print(fbhe_table)
   
   # filter the master_ppr_data file to this player and team and league)
+  print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
   ppr_csv_rows = app_tables.ppr_csv_tables.search( 
     q.all_of(
       league = disp_league,
