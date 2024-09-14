@@ -48,7 +48,9 @@ def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player
     m_ppr_df =  pd.read_csv(io.BytesIO( r['ppr_csv'].get_bytes()))
   
   # Then calcualte the FBHE for all zones, store in a dataframe
-
+  print(f"Number of rows:{len(ppr_csv_rows)}, size of m ppr df:{m_ppr_df.shape}")
+  print(m_ppr_df)
+  
   if len(ppr_csv_rows) != 0:
     # calculate fbhe for all attacks
     fbhe_vector = fbhe( m_ppr_df, disp_player )
@@ -81,7 +83,7 @@ def fbhe( ppr_df, disp_player):
   fbhe_list = [ 0.0, 0, 0, 0, 0, " " ]    # FBHE
 
   # limit to attacks by our player
-  ppr_df = ppr_df[ppr_df.att_player==disp_player]
+  ppr_df = ppr_df[ppr_df['att_player']==disp_player]
 
   # to build the video link, need a quick loop over rows:
   video_list = [*range(0,ppr_df.shape[0],1)]
