@@ -1,7 +1,7 @@
 components:
 - layout_properties: {grid_position: 'GTUGIY,ULUKBZ'}
   name: label_1
-  properties: {role: title, text: Upload Match from Ball Time}
+  properties: {align: center, role: title, text: Upload Match from Ball Time}
   type: Label
 - components:
   - components:
@@ -22,7 +22,8 @@ components:
     name: label_3
     properties: {text: 'Gender:'}
     type: Label
-  - layout_properties: {grid_position: 'JYEQOD,EWIITU CLIQYC,EMGMKC'}
+  - event_bindings: {change: gender_drop_down_change}
+    layout_properties: {grid_position: 'JYEQOD,EWIITU CLIQYC,EMGMKC'}
     name: gender_drop_down
     properties:
       items: [M, W]
@@ -31,7 +32,8 @@ components:
     name: label_4
     properties: {text: 'Year:'}
     type: Label
-  - layout_properties: {grid_position: 'JYEQOD,EWIITU GRGODB,FRZCOC'}
+  - event_bindings: {change: year_drop_down_change}
+    layout_properties: {grid_position: 'JYEQOD,EWIITU GRGODB,FRZCOC'}
     name: year_drop_down
     properties:
       items: ['2024', '2025', '']
@@ -99,7 +101,7 @@ components:
 - components:
   - layout_properties: {grid_position: 'RDYBVE,ZPOOEW'}
     name: label_8
-    properties: {role: title, text: Ball Time Match File Characteristics}
+    properties: {align: center, role: title, text: Ball Time Match File Characteristics}
     type: Label
   - components:
     - layout_properties: {}
@@ -148,7 +150,7 @@ components:
 - components:
   - layout_properties: {grid_position: 'ENBNOH,YDDXJQ'}
     name: label_9
-    properties: {role: title, text: Player Mapping}
+    properties: {align: center, role: title, text: Player Mapping}
     type: Label
   - components:
     - layout_properties: {grid_position: 'ZRKMJR,QZIKSP'}
@@ -222,14 +224,140 @@ components:
   properties: {role: outlined-card}
   type: ColumnPanel
 - components:
+  - layout_properties: {grid_position: 'SHGULN,VOGWOC'}
+    name: label_5
+    properties: {align: center, bold: false, role: title, text: Add a New Player}
+    type: Label
+  - components:
+    - components:
+      - layout_properties: {grid_position: 'WBBBTO,EENNGN'}
+        name: label_23
+        properties: {align: right, bold: false, text: 'Team:'}
+        type: Label
+      - layout_properties: {grid_position: 'WBBBTO,TTHAFW'}
+        name: team2_text_box
+        properties: {}
+        type: TextBox
+      layout_properties: {grid_position: 'FSJZYQ,UTQMES'}
+      name: column_panel_7
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'MNOZAB,MKJSYI'}
+        name: label_22
+        properties: {align: right, text: 'Number:'}
+        type: Label
+      - layout_properties: {grid_position: 'MNOZAB,KIKACM'}
+        name: number_text_box
+        properties: {}
+        type: TextBox
+      layout_properties: {grid_position: 'CUFHEJ,PAHVCH'}
+      name: column_panel_11
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'ARUDXU,LMMLHW'}
+        name: label_20
+        properties: {align: right, text: 'Short Name:'}
+        type: Label
+      - layout_properties: {grid_position: 'ARUDXU,OYNYIQ'}
+        name: short_name_text_box
+        properties: {}
+        type: TextBox
+      - components:
+        - layout_properties: {grid_position: 'NXQOEK,PELVAM'}
+          name: label_21
+          properties: {align: right, text: 'Full Name:'}
+          type: Label
+        - layout_properties: {grid_position: 'NXQOEK,WDQEWA'}
+          name: full_name_text_box
+          properties: {}
+          type: TextBox
+        layout_properties: {grid_position: 'NMUUSK,CLRNVI'}
+        name: column_panel_13
+        properties: {}
+        type: ColumnPanel
+      layout_properties: {grid_position: 'EOLDUC,LULZQZ'}
+      name: column_panel_12
+      properties: {}
+      type: ColumnPanel
+    layout_properties: {grid_position: 'LLSUOR,GTMRKQ'}
+    name: column_panel_4
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - components:
+      - layout_properties: {grid_position: 'GIZJRA,UJPNJI'}
+        name: label_24
+        properties: {align: right, text: 'League:'}
+        type: Label
+      - layout_properties: {grid_position: 'GIZJRA,FWPJCF'}
+        name: league2_drop_down
+        properties: {}
+        type: DropDown
+      layout_properties: {grid_position: 'ZYCEYV,SRPIPX'}
+      name: column_panel_14
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'JXTPGB,LSKEIB'}
+        name: label_25
+        properties: {align: right, text: 'Gender:'}
+        type: Label
+      - layout_properties: {grid_position: 'JXTPGB,HUOAXC'}
+        name: gender2_drop_down
+        properties:
+          items: [M, W]
+        type: DropDown
+      layout_properties: {grid_position: 'MZNQBN,AWVVUX'}
+      name: column_panel_15
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'VBMNNU,WYOBFH'}
+        name: label_26
+        properties: {align: right, text: 'Year:'}
+        type: Label
+      - layout_properties: {grid_position: 'VBMNNU,SDQCRK'}
+        name: year2_drop_down
+        properties:
+          items: ['2024', '2025']
+        type: DropDown
+      layout_properties: {grid_position: 'PDGFLG,OCXFZL'}
+      name: column_panel_16
+      properties: {}
+      type: ColumnPanel
+    layout_properties: {grid_position: 'LLSUOR,NBSJAT'}
+    name: column_panel_5
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - event_bindings: {click: save_player_button_click}
+      layout_properties: {grid_position: 'AZNLGQ,RUPQGD'}
+      name: save_player_button
+      properties: {role: outlined-button, text: Save New Player}
+      type: Button
+    - layout_properties: {grid_position: 'UTFEBB,PGZBOC'}
+      name: cancel_player_button
+      properties: {role: outlined-button, text: Cancel}
+      type: Button
+    layout_properties: {grid_position: 'LLSUOR,CGCSGL'}
+    name: column_panel_6
+    properties: {}
+    type: ColumnPanel
+  layout_properties: {grid_position: 'JGDDBL,WEFMUF'}
+  name: outlined_card_5
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
   - layout_properties: {grid_position: 'PSOIRZ,SRQZES'}
-    name: outlined_button_1
+    name: cancel_file_button
     properties: {role: outlined-button, text: CANCEL}
     type: Button
-  - event_bindings: {click: outlined_button_2_click}
+  - event_bindings: {click: save_file_button_click}
     layout_properties: {grid_position: 'PSOIRZ,ARTOLZ'}
-    name: outlined_button_2
-    properties: {role: outlined-button, text: SAVE}
+    name: save_file_button
+    properties: {role: outlined-button, text: SAVE FILE}
     type: Button
   layout_properties: {grid_position: 'KJQAWI,WGFOOU'}
   name: outlined_card_4

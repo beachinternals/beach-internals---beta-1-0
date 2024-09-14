@@ -135,7 +135,7 @@ db_schema:
     server: full
     title: league_list
   master_player:
-    client: search
+    client: full
     columns:
     - admin_ui: {width: 102}
       name: league
