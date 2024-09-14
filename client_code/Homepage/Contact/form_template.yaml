@@ -3,7 +3,7 @@ components_by_slot:
   - components:
     - layout_properties: {grid_position: 'GYXCXF,AFXNCZ'}
       name: label_1
-      properties: {role: headline, text: Contact Us!}
+      properties: {align: center, role: headline, text: Contact Us!}
       type: Label
     layout_properties: {}
     name: outlined_card_1
@@ -12,7 +12,7 @@ components_by_slot:
   - components:
     - layout_properties: {grid_position: 'KVBUJA,JZJBTF'}
       name: rich_text_1
-      properties: {content: 'Welcome to our Beta site, which is still under development.  Please feel free to contact us at: beachinternals@gmail.com'}
+      properties: {content: 'Welcome to our Beta site, which is still under development.  Please feel free to contact us at: <beachinternals@gmail.com>'}
       type: RichText
     layout_properties: {}
     name: outlined_card_2

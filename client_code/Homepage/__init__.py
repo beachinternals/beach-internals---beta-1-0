@@ -23,6 +23,7 @@ class Homepage(HomepageTemplate):
         self.admin_link.visible = False
     else:
       self.admin_link.visible = False
+
     pass
     
   def datamgr_link_click(self, **event_args):

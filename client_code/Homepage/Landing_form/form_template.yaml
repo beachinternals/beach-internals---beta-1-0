@@ -1,8 +1,22 @@
 components_by_slot:
   content_slot:
-  - layout_properties: {}
-    name: label_1
-    properties: {text: Landing}
-    type: Label
+  - components:
+    - layout_properties: {grid_position: 'PPAEKK,VMYBWG'}
+      name: label_1
+      properties: {align: center, role: headline, text: Welcome to Beach Internals}
+      type: Label
+    layout_properties: {}
+    name: outlined_card_1
+    properties: {role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'RPKCTD,QGEMHJ'}
+      name: rich_text_1
+      properties: {content: 'Serving elite coaches , enabling individualized training to become more consistent.'}
+      type: RichText
+    layout_properties: {}
+    name: outlined_card_2
+    properties: {role: outlined-card}
+    type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}

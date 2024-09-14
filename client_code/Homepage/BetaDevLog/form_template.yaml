@@ -1,8 +1,57 @@
 components_by_slot:
   content_slot:
-  - layout_properties: {}
-    name: label_1
-    properties: {text: Beta Development Log}
-    type: Label
+  - components:
+    - layout_properties: {grid_position: 'SRDSAK,OQCXCP'}
+      name: label_1
+      properties: {align: center, role: headline, text: Beta Development Log}
+      type: Label
+    layout_properties: {}
+    name: outlined_card_3
+    properties: {background: 'theme:Secondary Container', role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - components:
+      - layout_properties: {grid_position: 'LVFOJC,BFFWZZ'}
+        name: label_2
+        properties: {text: Enhancements - Active}
+        type: Label
+      - layout_properties: {grid_position: 'VRYQVR,SARLUG'}
+        name: rich_text_1
+        properties: {}
+        type: RichText
+      layout_properties: {grid_position: 'PSBUAR,VCSNSQ'}
+      name: column_panel_1
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'EQMVOS,WNYKHS'}
+        name: label_3
+        properties: {text: Enhancements - Planned}
+        type: Label
+      - layout_properties: {grid_position: 'GQEFQR,EBVDOD'}
+        name: rich_text_2
+        properties: {}
+        type: RichText
+      layout_properties: {grid_position: 'PSBUAR,XUZMQJ'}
+      name: column_panel_2
+      properties: {}
+      type: ColumnPanel
+    layout_properties: {}
+    name: outlined_card_2
+    properties: {role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'FRPTDZ,WNITOS'}
+      name: label_4
+      properties: {align: center, text: Beta Activities Log}
+      type: Label
+    - layout_properties: {grid_position: 'GSZRYM,ZDFFIG'}
+      name: rich_text_4
+      properties: {}
+      type: RichText
+    layout_properties: {}
+    name: outlined_card_1
+    properties: {role: outlined-card}
+    type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}
