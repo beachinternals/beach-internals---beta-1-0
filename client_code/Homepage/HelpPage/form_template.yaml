@@ -1,8 +1,64 @@
 components_by_slot:
   content_slot:
-  - layout_properties: {}
-    name: label_1
-    properties: {text: Help!!}
-    type: Label
+  - components:
+    - layout_properties: {grid_position: 'SITACZ,ZZJSXU'}
+      name: label_1
+      properties: {align: center, role: headline, text: Getting Help!}
+      type: Label
+    layout_properties: {}
+    name: outlined_card_1
+    properties: {role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'NKLLKN,PAGLFU'}
+      name: rich_text_1
+      properties: {}
+      type: RichText
+    - components:
+      - layout_properties: {grid_position: 'PLQCPL,SISZKF'}
+        name: rich_text_2
+        properties: {content: The whole process.  How we go from Video to detailed internal analysis}
+        type: RichText
+      - layout_properties: {grid_position: 'VODIRH,RLPYYV'}
+        name: rich_text_3
+        properties: {content: How to take the best video!}
+        type: RichText
+      - layout_properties: {grid_position: 'JCCXRR,DUSAWU'}
+        name: rich_text_4
+        properties: {content: Setting up my staff and coaches on Beach Internals}
+        type: RichText
+      - layout_properties: {grid_position: 'SLEWQR,IBNDSI'}
+        name: rich_text_5
+        properties: {}
+        type: RichText
+      layout_properties: {grid_position: 'SJOHFF,XOTBXF'}
+      name: column_panel_1
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'WQXNLO,APWYTJ'}
+        name: rich_text_6
+        properties: {content: 'How do we need to get started? How do subscriptions work?'}
+        type: RichText
+      - layout_properties: {grid_position: 'QCKOAN,HJNSCW'}
+        name: rich_text_7
+        properties: {content: 'The analysis, methods, and assumptions that underly Beach Internals'}
+        type: RichText
+      - layout_properties: {grid_position: 'KYSNOI,RWTRJZ'}
+        name: rich_text_8
+        properties: {content: 'What is FBHE? Error Density? Transition Conversion? Expected Value?'}
+        type: RichText
+      - layout_properties: {grid_position: 'KGQNFV,CNSGJS'}
+        name: rich_text_9
+        properties: {content: 'What are zones 1 - 5?  A - E?'}
+        type: RichText
+      layout_properties: {grid_position: 'SJOHFF,TQLYFA'}
+      name: column_panel_2
+      properties: {}
+      type: ColumnPanel
+    layout_properties: {}
+    name: outlined_card_2
+    properties: {role: outlined-card}
+    type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}

@@ -25,7 +25,17 @@ components_by_slot:
       name: column_panel_1
       properties: {}
       type: ColumnPanel
-    - layout_properties: {grid_position: 'KCZYCU,LQEYDV GRNBPF,IBYDCD'}
+    - components:
+      - layout_properties: {grid_position: 'UXSKQY,SDRERV'}
+        name: rich_text_1
+        properties:
+          content: |-
+            Reports based on the performance of specific pairs.  These reports will include:
+            - Offense Reports including FBHE by zone, serve location and other.
+            - Serving and Defense
+            - Errors on Transition
+        type: RichText
+      layout_properties: {grid_position: 'KCZYCU,LQEYDV GRNBPF,IBYDCD'}
       name: outlined_card_3
       properties: {role: outlined-card}
       type: ColumnPanel

@@ -1,8 +1,43 @@
 components_by_slot:
   content_slot:
-  - layout_properties: {}
-    name: label_1
-    properties: {text: About Us}
-    type: Label
+  - components:
+    - layout_properties: {grid_position: 'GREKWJ,TIMLXO'}
+      name: label_1
+      properties: {align: center, role: headline, text: About - Beach Internals}
+      type: Label
+    layout_properties: {}
+    name: outlined_card_1
+    properties: {role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'QNTDMS,LRWEST'}
+      name: rich_text_1
+      properties: {content: 'Beach Internals is exploiting the opportunity to analyze not just statistics, but to really get inside your game.  With the advent of AI and computer vision/machine learning, new systems developed to breakdown beach volleyball matches.  One output of these systems is detailed geometric data on every touch of the ball. Or mission is to leverage this "data exhaust" to individualize training, m ake players more consistent, and take scouting to a whole new level.'}
+      type: RichText
+    - layout_properties: {grid_position: 'GSESXQ,GDFARJ'}
+      name: rich_text_2
+      properties:
+        content: |-
+          ### What Correlates to Winning?
+
+          The first question when digging deep into the data, is what correlates to winning.  We analyzed the NCAA Women's Beach Volleyball Championships, and, bottom line, the answer is first ball hitting efficiency (FBHE).  When a team's FBHE is greater then theri opponent's, they win 92% of the time (assuming they are near average in transition and errors).  The other 8% typically turn out to be veyr close games, often decided in overtime.
+      type: RichText
+    - layout_properties: {grid_position: 'KOQVFA,ELXMNN'}
+      name: rich_text_3
+      properties:
+        content: "### New Metrics\n\nOur critical metric is FBHE and this is used to measure success in most metrics, include:\n- Passing : instead of a 0-3 measurement, we look at the FBHE resulting from these passes\n- Serving : again, instead of a 0-3 metric, look at the resulting FBHE.  Ultimately, this is the statistic that matters.\n- Errors : when looking at points, instead of sets, we measure error density, or errors/points.  This is actually a better metric since, clearly, there is a big difference between 5 errors in a 21-12 set verse 5 errors in a 32-30 set.\n- Transition Conversion : we can now measure the rate of not just first ball efficiency, but transition conversion, what percent of transition points are won.  This is also broken down by transition points when serving, and transition points when receiving, by player.\n\n### New Measure to Improve Your game\n\nThe results include several new measures to improve consistency, or identify and exploit weaknesses in an opponent.  A few of the most useful are listed below.\n- FBHE by net zone : What is your FBHE at the pin? in the slot? middle? Going behind?  Are they the same or is there a weakness? \n- FBHE by serve source : Is your performance the when the opponenet serve line-to-line?  cross court?  middle to seam?\n- Serve Efficiency by serve source : What is your opponents FBHE when you serve from 1?  3? or 5?\n- FBHE by pass source : What is the FBHE when served deep middle vs short middle? Into the body? We break down FBHE by 25 serve receive zones on the court.With the significant amount of \"data exhaust\" from AI programs such as BallTime, the detail provided is like nothing that has been available before"
+      type: RichText
+    - layout_properties: {grid_position: 'YFFRXH,HQORJS'}
+      name: rich_text_4
+      properties:
+        content: |2-
+           ### More Data!
+
+          But this level of detail requires lots of data!  Fortunately, with BallTime, this  is feasible and cost effective.  Games are uploaded to BallTime, which breaks them down and provides a data file with every action identified included detailed geometric data.  Beach Internals uploads this detailed data, organizes it by point resulting in a large database of points.  This database of points, included location, speed, heigh, angle, distance for every action, is mined for actionable metrics.<b>All without hand coding any video!</b>
+      type: RichText
+    layout_properties: {}
+    name: outlined_card_2
+    properties: {role: outlined-card}
+    type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}
