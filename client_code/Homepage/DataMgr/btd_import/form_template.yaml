@@ -327,10 +327,23 @@ components:
       name: column_panel_16
       properties: {}
       type: ColumnPanel
-    layout_properties: {grid_position: 'LLSUOR,NBSJAT'}
+    layout_properties: {grid_position: 'LLSUOR,NBSJAT IOMDXM,BDZPFY'}
     name: column_panel_5
     properties: {}
     type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'TVFBOD,XPUSUA'}
+      name: label_27
+      properties: {align: right, text: 'BTD Alias:'}
+      type: Label
+    layout_properties: {grid_position: 'LLSUOR,NBSJAT PVLPUE,ZPTEKQ'}
+    name: column_panel_17
+    properties: {}
+    type: ColumnPanel
+  - layout_properties: {grid_position: 'LLSUOR,NBSJAT PVLPUE,EZSWDS'}
+    name: alias_text_box
+    properties: {}
+    type: TextBox
   - components:
     - event_bindings: {click: save_player_button_click}
       layout_properties: {grid_position: 'AZNLGQ,RUPQGD'}

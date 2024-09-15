@@ -1,8 +1,68 @@
 components:
 - layout_properties: {grid_position: 'GTUGIY,ULUKBZ'}
   name: label_1
-  properties: {role: title, text: List of Ball Time Match Files}
+  properties: {align: left, foreground: '', role: title, text: List of Ball Time Match Files}
   type: Label
+- components:
+  - components:
+    - layout_properties: {grid_position: 'BTQUFI,IZTRII'}
+      name: label_2
+      properties: {align: right, text: 'League:'}
+      type: Label
+    - event_bindings: {change: league_drop_down_change}
+      layout_properties: {grid_position: 'BTQUFI,JGDQOS'}
+      name: league_drop_down
+      properties: {}
+      type: DropDown
+    layout_properties: {grid_position: 'OUGWSJ,GRHNXG'}
+    name: column_panel_1
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'HDIFWE,UWJOEA'}
+      name: label_3
+      properties: {align: right, text: 'Gender:'}
+      type: Label
+    - layout_properties: {grid_position: 'HDIFWE,EMWHUT'}
+      name: gender_drop_down
+      properties:
+        items: [M, W]
+      type: DropDown
+    layout_properties: {grid_position: 'OUGWSJ,UIAJNS'}
+    name: column_panel_3
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'EJSBDL,TGQCTU'}
+      name: label_4
+      properties: {align: right, text: 'Year:'}
+      type: Label
+    - layout_properties: {grid_position: 'EJSBDL,FRILTP'}
+      name: year_drop_down
+      properties:
+        items: ['2024', '2025']
+      type: DropDown
+    layout_properties: {grid_position: 'OUGWSJ,GKPVKE'}
+    name: column_panel_4
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'EQSRFE,NHQIGB'}
+      name: label_5
+      properties: {align: right, text: 'Compeition:'}
+      type: Label
+    - layout_properties: {grid_position: 'EQSRFE,ZFDOUC'}
+      name: comp_l1_drop_down
+      properties: {}
+      type: DropDown
+    layout_properties: {grid_position: 'OUGWSJ,PLDMJT'}
+    name: column_panel_2
+    properties: {}
+    type: ColumnPanel
+  layout_properties: {grid_position: 'KUDEEJ,AXNICV'}
+  name: outlined_card_2
+  properties: {role: outlined-card}
+  type: ColumnPanel
 - components:
   - components:
     - name: repeating_panel_1
@@ -12,20 +72,37 @@ components:
     name: data_grid_1
     properties:
       columns:
-      - {data_key: league, id: RMTZUC, title: League}
-      - {data_key: gender, id: MSTZJG, title: Gender}
-      - {data_key: year, id: FWLNBY, title: Year}
-      - {data_key: comp_l1, id: RPUYMZ, title: Comp Level 1}
       - {data_key: comp_l2, id: YPQQYI, title: Comp Level 2}
       - {data_key: comp_l3, id: NKHATX, title: Comp Level 3}
-      - {data_key: team, id: PGLUTP, title: Team}
-      - {data_key: owner, id: EZOMPW, title: Data Owner}
       - {data_key: date, id: HGGFJV, title: Game Date}
       - {data_key: points, id: IIVUBY, title: Total Points}
-      - {data_key: completeness_score, id: XKZDCR, title: Data Score}
-      - {data_key: include_in_master, id: QEIHKJ, title: 'include?'}
+      - {data_key: completeness_score, expand: false, id: XKZDCR, title: Data Score, width: 25.47393798828125}
       - {data_key: ppr_playera1, expand: false, id: HCPSRB, title: ppr_playera1, width: 57.5389404296875}
       - {data_key: ppr_playerb1, id: SVMQUC, title: ppr_playerb1}
+      - {data_key: comp_l2, id: HOWELC, title: comp_l2}
+      - {data_key: team, id: FHFOWZ, title: team}
+      - {data_key: owner, id: UBXPHW, title: owner}
+      - {data_key: date, id: RYZIOY, title: date}
+      - {data_key: filename, id: NAHEIF, title: filename}
+      - {data_key: points, id: MUPUZU, title: points}
+      - {data_key: per_srv_players, id: ONBWMP, title: per_srv_players}
+      - {data_key: per_xy, id: IQLIGG, title: per_xy}
+      - {data_key: per_players, id: MXWXLI, title: per_players}
+      - {data_key: completeness_score, id: VCGSFQ, title: completeness_score}
+      - {data_key: private, id: QBQFHH, title: private}
+      - {data_key: include_in_master, id: ROQPVI, title: include_in_master}
+      - {data_key: csv_data, id: JPTJAH, title: csv_data}
+      - {data_key: no_errors, id: LIZYID, title: no_errors}
+      - {data_key: error_str, id: ENPUCR, title: error_str}
+      - {data_key: ppr_data, id: KXGQJW, title: ppr_data}
+      - {data_key: player1, id: BVYHJL, title: player1}
+      - {data_key: player2, id: GEMGMP, title: player2}
+      - {data_key: player3, id: COEACC, title: player3}
+      - {data_key: player4, id: QIJHVF, title: player4}
+      - {data_key: ppr_playera1, id: WPOWJH, title: ppr_playera1}
+      - {data_key: ppr_playera2, id: RHPSET, title: ppr_playera2}
+      - {data_key: ppr_playerb1, id: YJGKSC, title: ppr_playerb1}
+      - {data_key: ppr_playerb2, id: WCUEOL, title: ppr_playerb2}
     type: DataGrid
   layout_properties: {grid_position: 'ZGMYNQ,JCDGEZ'}
   name: outlined_card_1

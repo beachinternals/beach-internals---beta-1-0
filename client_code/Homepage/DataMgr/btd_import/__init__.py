@@ -194,7 +194,8 @@ class btd_import(btd_importTemplate):
       team = self.team2_text_box.text,
       number=self.number_text_box.text,
       shortname=self.short_name_text_box.text,
-      fullname=self.full_name_text_box.text
+      fullname=self.full_name_text_box.text,
+      alias1=self.alias_text_box.text
     )
 
     if add_row:
