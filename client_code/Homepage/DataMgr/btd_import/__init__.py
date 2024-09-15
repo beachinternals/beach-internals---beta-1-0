@@ -21,7 +21,6 @@ class btd_import(btd_importTemplate):
       alert("Not Currently Logged in")
       open_form('Homepage.Landing_form')
 
-    
     user_team = user_row["team"]
   
     # Now, let's populate the drop downs. 
