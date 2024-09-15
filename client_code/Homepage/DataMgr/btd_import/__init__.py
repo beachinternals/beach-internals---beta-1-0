@@ -22,26 +22,23 @@ class btd_import(btd_importTemplate):
       open_form('Homepage.Landing_form')
 
     user_team = user_row["team"]
-  
-    # Now, let's populate the drop downs. 
-    self.league_drop_down.selected_value = user_row["def_league"]
-    self.gender_drop_down.selected_value = user_row["def_gender"]
-    self.year_drop_down.selected_value = user_row["def_year"]
-    self.league2_drop_down.selected_value = user_row["def_league"]
-    self.gender2_drop_down.selected_value = user_row["def_gender"]
-    self.year2_drop_down.selected_value = user_row["def_year"]
 
+    #print(f"Checking the defaults: {user_row['def_league']}, {user_row['def_year']}")
     #print(f"League, gender, year, selected values:{self.league_drop_down.selected_value}, {self.gender_drop_down.selected_value},{self.year_drop_down.selected_value} ")
   
     # populate the drop downs for league, and competition level 1 and 3
-    self.league_drop_down.items = [(row["league"], row) for row in app_tables.league_list.search()]
+    self.league_drop_down.items = [(row['league'], row) for row in app_tables.league_list.search()]
     self.league2_drop_down.items = self.league_drop_down.items
-    #print(f"League Drop Down Items {self.league_drop_down.items}")
-    # for competition level 1
     self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = self.league_drop_down.selected_value['league'] )]
-    
-    # for Competition Level 3, need to serach the selected league's playoff structure (flight, playoffs)
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = self.league_drop_down.selected_value['comp_l3_label'])]
+    
+    # Now, let's populate the selected values. 
+    #self.league_drop_down.selected_value['league'] = user_row["def_league"]
+    self.gender_drop_down.selected_value = user_row["def_gender"]
+    self.year_drop_down.selected_value = user_row["def_year"]
+    #self.league2_drop_down.selected_value = user_row["def_league"]
+    self.gender2_drop_down.selected_value = user_row["def_gender"]
+    self.year2_drop_down.selected_value = user_row["def_year"]
     
   pass
 
@@ -173,6 +170,10 @@ class btd_import(btd_importTemplate):
     """This method is called when the button is clicked"""
     # this is to save a new player in the master player database.
     # First, check if the player exists
+    # uppeercase the team name and the alias
+    self.team2_text_box.text = self.team2_text_box.text.upper()
+    self.alias_text_box.text = self.alias_text_box.text.upper()
+    
     p_rows = app_tables.master_player.search(
       league = self.league2_drop_down.selected_value['league'],
       gender = self.gender2_drop_down.selected_value,
