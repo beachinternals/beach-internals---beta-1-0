@@ -63,10 +63,24 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
   # convert the btd file to a dataframe
   btd_df = pd.read_csv(btd_file_bytes)
 
-  # convert all not a numbers to None
-  btd_df = btd_df.replace({float('nan'): None})
+  # Clean up the data, all numbers to None, all players to ""
+  #btd_df = btd_df.replace({float('nan'): None})
+  #values = {"player": " ", "src_x": None, 'src_y': None, 'dest_x': None, 'dest_y': None}
+  btd_df.fillna( value={'player': ''} )
+  btd_df.fillna( value={'src_x': 0} )
+  
+
   #print(f"read the btd csv file into a dataframe: {btd_df['dest_x']}")
 
+  # to be backwards compatible, check if there is a video_id column, if not, add one, ok to leave it blank
+  if 'video_id' not in btd_df.columns:
+    # then lets add it
+    print(f"BTD DF Shape:{btd_df.shape}")
+    new_column = ["No Video Id"] * btd_df.shape[0]
+    print(f"column size:{len(new_column)}")
+    btd_df.insert(1,'video_id',new_column)
+    print(f"dataframe shape:{btd_df.shape}")
+    
   # call function to make the convesion
   ppr_df = btd_to_ppr_df(btd_df, flist_r)
 
