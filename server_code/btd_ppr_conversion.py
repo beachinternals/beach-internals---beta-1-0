@@ -64,7 +64,7 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
   btd_df = pd.read_csv(btd_file_bytes)
 
   # Clean up the data, all numbers to None, all players to ""
-  #btd_df = btd_df.replace({float('nan'): None})
+  btd_df = btd_df.replace({float('nan'): None})
   #values = {"player": " ", "src_x": None, 'src_y': None, 'dest_x': None, 'dest_y': None}
   btd_df.fillna( value={'player': ''} )
   btd_df.fillna( value={'src_x': 0} )
@@ -75,11 +75,11 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
   # to be backwards compatible, check if there is a video_id column, if not, add one, ok to leave it blank
   if 'video_id' not in btd_df.columns:
     # then lets add it
-    print(f"BTD DF Shape:{btd_df.shape}")
+    #print(f"BTD DF Shape:{btd_df.shape}")
     new_column = ["No Video Id"] * btd_df.shape[0]
-    print(f"column size:{len(new_column)}")
+    #print(f"column size:{len(new_column)}")
     btd_df.insert(1,'video_id',new_column)
-    print(f"dataframe shape:{btd_df.shape}")
+    #print(f"dataframe shape:{btd_df.shape}")
     
   # call function to make the convesion
   ppr_df = btd_to_ppr_df(btd_df, flist_r)
@@ -162,7 +162,8 @@ def btd_to_ppr_df(btd_df, flist_r):
       btd_r['player'] = player_b2
     else:
       # ######## print this to a file to display as this is an error in the data #####################
-      print(f"Could not find the player!! {btd_r['player']}, Row {index} in these four: {flist_r['player1']}, {flist_r['player2']}, {flist_r['player3']}, {flist_r['player4']}")    
+      print(f"Could not find the player!! {btd_r['player']}, Row {index} in these four: {flist_r['player1']}, {flist_r['player2']}, {flist_r['player3']}, {flist_r['player4']}") 
+      btd_r['player'] = " "
     
     # if this is a serve, then start a new point
     if btd_r['action_type'] == "serve":
@@ -198,7 +199,8 @@ def btd_to_ppr_df(btd_df, flist_r):
     if btd_r['action_type'] == "dig" and not in_trans:
       touch_since_serve += 1
       ppr_df = save_dig_info(ppr_df, btd_r, ppr_row)
-   
+
+    #print(f"TOuches since serve:{touch_since_serve}, Player:{btd_r['player']}, action type:{btd_r['action_type']}")
     if touch_since_serve == 5 or ( btd_r['player'] in serve_team and btd_r['action_type'] != "serve" ):
       in_trans = True
 
