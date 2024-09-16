@@ -75,6 +75,92 @@ def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player
   
   return fbhe_return
 
+@anvil.server.callable
+def fbhe_scout_query(disp_league, disp_gender, disp_year, disp_team, disp_player):
+  # return a fbhe of a given player
+  # we will return the text as markdown to be displayed in a rich text box in the client
+
+  # the difference here is that we combine the scout file with the team file to query aginst.
+
+  # double checked that they are logged in
+
+  # create the output dataframe
+  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
+             'All':[0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,' '],
+             "Zone 2":[0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,' '],
+             'Zone 4':[0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+
+  #print(fbhe_table)
+
+  # first the team file:
+  # filter the master_ppr_data file to this player and team and league)
+  print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
+  ppr_csv_row = app_tables.ppr_csv_tables.get( 
+    q.all_of(
+      league = disp_league,
+      gender = disp_gender,
+      year = disp_year,
+      team = disp_team
+      ) )
+
+  if ppr_csv_row:
+    m_ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
+  else:
+    m_ppr_df = [ " "]
+    print('No Team Rows Found')
+
+  # first nwo the scout file::
+  # filter the master_ppr_data file to this player and team and league)
+  # print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
+  ppr_scout_row = app_tables.ppr_csv_tables.get( 
+    q.all_of(
+      league = disp_league,
+      gender = disp_gender,
+      year = disp_year,
+      team = "Scout"
+      ) )
+
+  if ppr_scout_row:
+    scout_ppr_df =  pd.read_csv(io.BytesIO( ppr_scout_row['ppr_csv'].get_bytes()))
+    m_ppr_df = pd.concat([m_ppr_df,scout_ppr_df])
+    print(f'Scout DB Found:{scout_ppr_df.shape}')
+  else:
+    print('No Scout Rows Found')
+
+  print(f"master scout data frame:{m_ppr_df.shape}")
+  
+  if ppr_csv_row and m_ppr_df.shape[0] != 0:
+    # calculate fbhe for all attacks
+    fbhe_vector = fbhe( m_ppr_df, disp_player )
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+
+    # calculate for zones 1 - 5
+    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
+    for i in [1,2,3,4,5]:
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player )
+      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
+      fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
+      fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
+      fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+  else:
+    fbhe_return = "No Data Found"
+  
+  return fbhe_return
+  
 def fbhe( ppr_df, disp_player):
   # pass this a query of rows, figures the FBHE for the display player as the attacker
   # initialize the vector

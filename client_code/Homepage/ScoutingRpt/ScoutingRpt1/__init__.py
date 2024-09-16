@@ -27,7 +27,6 @@ class ScoutingRpt1(ScoutingRpt1Template):
     self.league_drop_down.selected_value = user_row["def_league"]
     self.gender_drop_down.selected_value = user_row["def_gender"]
     self.year_drop_down.selected_value = user_row["def_year"]
-    self.team_drop_down.selected_value = user_row["team"]
 
     # print(f"League, gender, year, selected values:{self.league_drop_down.selected_value}, {self.gender_drop_down.selected_value},{self.year_drop_down.selected_value} ")
 
@@ -35,17 +34,7 @@ class ScoutingRpt1(ScoutingRpt1Template):
     self.league_drop_down.items = [
       (row["league"], row) for row in app_tables.league_list.search()
     ]
-
-    # competition level 1
-    # self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = self.league_drop_down.selected_value['league'] )]
-
-    # Competition Level 3, need to serach the selected league's playoff structure (flight, playoffs)
-    # self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = self.league_drop_down.selected_value['comp_l3_label'])]
-
-    # populate the drop down for teams, but we want unique items
-    searchitem = list(set([(r["team"]) for r in app_tables.btd_files.search()]))
-    self.team_drop_down.items = searchitem
-
+    
     # Player drop down
     self.player_drop_down.items = [
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
@@ -68,11 +57,11 @@ class ScoutingRpt1(ScoutingRpt1Template):
     )
     print(f"Player:{player}")
     table_markup = anvil.server.call(
-      "fbhe_table_query",
+      "fbhe_scout_query",
       self.league_drop_down.selected_value["league"],
       self.gender_drop_down.selected_value,
       self.year_drop_down.selected_value,
-      "Scouting",
+      anvil.users.get_user()['team'],
       player + "|",
     )
     # now, save the markup to the self.?
