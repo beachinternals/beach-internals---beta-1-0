@@ -14,6 +14,14 @@ components_by_slot:
       name: rich_text_1
       properties: {content: 'Welcome to our Beta site, which is still under development.  Please feel free to contact us at: <beachinternals@gmail.com>'}
       type: RichText
+    - layout_properties: {grid_position: 'EDYWNB,DULGDT'}
+      name: rich_text_2
+      properties: {content: 'Trying a hyperlink: [Link to BallTime](https://www.balltime.com){:target="_blank"}'}
+      type: RichText
+    - layout_properties: {grid_position: 'JWNHSV,FSOUJN'}
+      name: rich_text_3
+      properties: {content: '<html><a href="http://www.balltime.com/" target="_blank">BallTime</a></html>'}
+      type: RichText
     layout_properties: {}
     name: outlined_card_2
     properties: {role: outlined-card}

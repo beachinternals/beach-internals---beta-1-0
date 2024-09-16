@@ -49,6 +49,7 @@ class btd_import(btd_importTemplate):
     #print(f"league drop down value:{self.league_drop_down.selected_value['league']}")
     if "NCAA" in self.league_drop_down.selected_value['league']:
       self.gender_drop_down.selected_value = "W"
+      self.gender2_drop_down.selected_value = "W"
       #print("changed gender to W")
       
     # for Competition Level 3, need to serach the selected league's playoff structure (flight, playoffs)
@@ -93,7 +94,8 @@ class btd_import(btd_importTemplate):
     ppr_player_list = []
     for i in ppr_list:
       ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
-    
+
+    ppr_player_list.sort()    
     self.ppr_playera1_drop_down.items = ppr_player_list
     self.ppr_playera2_drop_down.items = ppr_player_list
     self.ppr_playerb1_drop_down.items = ppr_player_list
@@ -234,7 +236,7 @@ class btd_import(btd_importTemplate):
 
   def gender_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
-    # set thegender to the same for the add player link
+    # set the gender to the same for the add player link
     self.gender2_drop_down.selected_value = self.gender_drop_down.selected_value
     pass
 
