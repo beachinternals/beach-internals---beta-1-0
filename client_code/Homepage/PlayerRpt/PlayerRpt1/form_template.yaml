@@ -14,7 +14,8 @@ components:
       name: label_2
       properties: {text: 'League:'}
       type: Label
-    - layout_properties: {grid_position: 'SMCGOL,ZQXQOG'}
+    - event_bindings: {change: league_drop_down_change}
+      layout_properties: {grid_position: 'SMCGOL,ZQXQOG'}
       name: league_drop_down
       properties: {}
       type: DropDown
@@ -27,7 +28,8 @@ components:
       name: label_3
       properties: {text: 'Gender:'}
       type: Label
-    - layout_properties: {grid_position: 'FCTNDB,ZEQIIH'}
+    - event_bindings: {change: gender_drop_down_change}
+      layout_properties: {grid_position: 'FCTNDB,ZEQIIH'}
       name: gender_drop_down
       properties:
         items: [W, M]
@@ -41,7 +43,8 @@ components:
       name: label_4
       properties: {text: 'Year:'}
       type: Label
-    - layout_properties: {grid_position: 'BIDBGU,TKJBMK'}
+    - event_bindings: {change: year_drop_down_change}
+      layout_properties: {grid_position: 'BIDBGU,TKJBMK'}
       name: year_drop_down
       properties:
         items: ['2024', '2025']

@@ -8,6 +8,7 @@ import anvil.server
 import pandas as pd
 import io
 import math
+import datetime
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -99,7 +100,7 @@ def create_master_ppr( user_league, user_gender, user_year, user_team, data_set 
 def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year, user_team ):
   # append all the records in the master_ppr_df file into the master_ppr datable
 
-  for d in master_ppr_df.to_dict(orient="records"):
+  for d in master_ppr_df.to_dict(orient="records"): ## this loop just tries to clean up the data.  may be able to discard?
     # d is now a dict of {columnname -> value} for this row
     # We use Python's **kwargs syntax to pass the whole dict as
     # keyword arguments
@@ -237,7 +238,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
   # now I can store it in the btd files database
   # find the correct row
   print(f"looking in ppr csv tables: League:{user_league}, Gender:{user_gender}, Year:{user_year}, Team:{user_team}")
-  ppr_csv_row = app_tables.ppr_csv_tables.search( 
+  ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = user_league,
       gender = user_gender,
@@ -245,16 +246,25 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
       team = user_team
     ) )
 
-  if len(ppr_csv_row) == 0:
+  if ppr_csv_row:
+    print("ipdating a row to the csv table")
+    ppr_csv_row.update(
+      league = user_league,
+      gender = user_gender,
+      year = user_year,
+      team = user_team,
+      ppr_csv = ppr_media,
+      date = datetime.datetime.now()
+    )
+  else:
     print("adding a row to the csv table")
-    ppr_csv_row = app_tables.ppr_csv_tables.add_row(league=user_league,gender=user_gender,year=user_year,team=user_team)
+    app_tables.ppr_csv_tables.add_row(
+      league = user_league,
+      gender = user_gender,
+      year = user_year,
+      team = user_team,
+      ppr_csv = ppr_media,
+      date = datetime.datetime.now()
+    )
 
-  print(f"League:{user_league}, Gender:{user_gender}, Year:{user_year}, Team:{user_team}")
-  print(f"There are {len(ppr_csv_row)} rows returned")
-  for r in ppr_csv_row:
-    print(r)
-    # print(f"PPR_CSV_ROW, League:{r['league']}")
-    #, Gender:{ppr_csv_row['gender']}, Year:{ppr_csv_row['year']}, Team:{ppr_csv_row['team']}")
-    r.update( ppr_csv = ppr_media ) 
-  
   pass

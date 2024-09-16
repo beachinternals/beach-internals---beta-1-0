@@ -66,3 +66,31 @@ class PlayerRpt1(PlayerRpt1Template):
     self.fbhe_table_markup.content = table_markup
     #print(table_markup)
     pass
+
+  def league_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    # UIpdate the Player drop down
+    self.player_drop_down.items = [(row['team']+" "+row['number']+" "+row['shortname'], row) for row in app_tables.master_player.search(
+      league = self.league_drop_down.selected_value['league'],
+      gender = self.gender_drop_down.selected_value,
+      year=self.year_drop_down.selected_value)]
+    pass
+
+  def gender_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    # UIpdate the Player drop down
+    self.player_drop_down.items = [(row['team']+" "+row['number']+" "+row['shortname'], row) for row in app_tables.master_player.search(
+      league = self.league_drop_down.selected_value['league'],
+      gender = self.gender_drop_down.selected_value,
+      year=self.year_drop_down.selected_value)]
+    pass
+
+  def year_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    # UIpdate the Player drop down
+    self.player_drop_down.items = [(row['team']+" "+row['number']+" "+row['shortname'], row) for row in app_tables.master_player.search(
+      league = self.league_drop_down.selected_value['league'],
+      gender = self.gender_drop_down.selected_value,
+      year=self.year_drop_down.selected_value)]
+    
+    pass
