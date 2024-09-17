@@ -17,7 +17,7 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'VRYQVR,SARLUG'}
         name: rich_text_1
-        properties: {}
+        properties: {content: '- Team Overview, on the Player Report Page, to show the key statistics of all of a team''s players in one table to highlight areas about 75th percentile, and below the 25th percentile'}
         type: RichText
       layout_properties: {grid_position: 'PSBUAR,VCSNSQ'}
       name: column_panel_1
@@ -48,7 +48,17 @@ components_by_slot:
     - layout_properties: {grid_position: 'GSZRYM,ZDFFIG'}
       name: rich_text_4
       properties:
-        content: "#### Beta 1.0 - September 27, 2024\n\nFirst look at the website.  'Functional' area include:\n- About US, Contact - primarily just descriptive\n- User Manger - upper right logo, to log in a view user data\n- Data Management : Data, Specifically:\n  - \n\n"
+        content: |+
+          #### Beta 1.0 - September 27, 2024
+
+          First look at the website.  'Functional' area include:
+          - About US, Contact - primarily just descriptive
+          - User Manger - upper right logo, to log in a view user data
+          - Data Management : Data, Specifically:
+            - upload new ball time match files, and to view existing ball time match files
+          - Player Reports, but only the first report, FBHE
+          - Scouting Report, but only the first, FBHE
+
       type: RichText
     layout_properties: {}
     name: outlined_card_1
