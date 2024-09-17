@@ -3,23 +3,23 @@ components_by_slot:
   - components:
     - layout_properties: {grid_position: 'ZGCTFP,UFPWQS'}
       name: label_2
-      properties: {align: center, bold: true, role: title, spacing_above: none, spacing_below: none, text: Scouting Reports}
+      properties: {align: center, bold: true, foreground: 'theme:On Secondary Container', role: title, spacing_above: none, spacing_below: none, text: Scouting Reports}
       type: Label
     layout_properties: {}
     name: outlined_card_1
-    properties: {background: 'theme:Primary', foreground: 'theme:On Primary', role: outlined-card}
+    properties: {background: 'theme:Secondary Container', foreground: 'theme:On Primary', role: outlined-card}
     type: ColumnPanel
   - components:
     - components:
       - event_bindings: {click: ScoutingRpt1_click_click}
         layout_properties: {grid_position: 'YJBAZA,XDXPYM'}
         name: ScoutingRpt1_click
-        properties: {foreground: 'theme:On Primary', text: FBHE Report}
+        properties: {foreground: '', text: FBHE Report, visible: true}
         type: Link
       - event_bindings: {click: ScoutingRpt2_click_click}
         layout_properties: {grid_position: 'QUDNGE,YTODGM'}
         name: ScoutingRpt2_click
-        properties: {foreground: 'theme:On Primary', text: Report 2}
+        properties: {foreground: 'theme:On Primary', text: Report 2, visible: false}
         type: Link
       layout_properties: {grid_position: 'KCZYCU,SMAHSC'}
       name: column_panel_1
@@ -34,14 +34,15 @@ components_by_slot:
             - Offense Reports including FBHE by zone, serve location and other.
             - Serving and Defense
             - Errors on Transition
+          foreground: theme:Secondary Container
         type: RichText
       layout_properties: {grid_position: 'KCZYCU,LQEYDV GRNBPF,IBYDCD'}
       name: outlined_card_3
-      properties: {role: outlined-card}
+      properties: {background: 'theme:Secondary', role: outlined-card}
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_2
-    properties: {background: 'theme:Primary', col_widths: '{"SMAHSC":10,"LQEYDV":50}', foreground: '', role: outlined-card, spacing_above: none, spacing_below: none}
+    properties: {background: '', col_widths: '{"SMAHSC":10,"LQEYDV":50}', foreground: '', role: outlined-card, spacing_above: none, spacing_below: none}
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}

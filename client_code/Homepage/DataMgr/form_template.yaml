@@ -7,7 +7,7 @@ components_by_slot:
       type: Label
     layout_properties: {}
     name: outlined_card_1
-    properties: {role: outlined-card}
+    properties: {background: 'theme:Secondary Container', role: outlined-card}
     type: ColumnPanel
   - components:
     - components:
@@ -52,7 +52,7 @@ components_by_slot:
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_2
-    properties: {background: 'theme:Secondary Container', col_widths: '{"SMAHSC":10,"LQEYDV":50}', role: outlined-card}
+    properties: {background: '', col_widths: '{"SMAHSC":10,"LQEYDV":50}', role: outlined-card}
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}

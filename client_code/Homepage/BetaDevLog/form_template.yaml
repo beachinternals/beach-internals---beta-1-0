@@ -13,7 +13,7 @@ components_by_slot:
     - components:
       - layout_properties: {grid_position: 'LVFOJC,BFFWZZ'}
         name: label_2
-        properties: {text: Enhancements - Active}
+        properties: {bold: true, text: Enhancements - Active}
         type: Label
       - layout_properties: {grid_position: 'VRYQVR,SARLUG'}
         name: rich_text_1
@@ -26,7 +26,7 @@ components_by_slot:
     - components:
       - layout_properties: {grid_position: 'EQMVOS,WNYKHS'}
         name: label_3
-        properties: {text: Enhancements - Planned}
+        properties: {bold: true, text: Enhancements - Planned}
         type: Label
       - layout_properties: {grid_position: 'GQEFQR,EBVDOD'}
         name: rich_text_2
@@ -43,7 +43,7 @@ components_by_slot:
   - components:
     - layout_properties: {grid_position: 'FRPTDZ,WNITOS'}
       name: label_4
-      properties: {align: center, text: Beta Activities Log}
+      properties: {align: center, role: title, text: Beta Activities Log}
       type: Label
     - layout_properties: {grid_position: 'GSZRYM,ZDFFIG'}
       name: rich_text_4
@@ -62,6 +62,20 @@ components_by_slot:
       type: RichText
     layout_properties: {}
     name: outlined_card_1
+    properties: {role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'LZZRJG,KUCCQM'}
+      name: label_5
+      properties: {bold: true, text: Current / Upcoming Work}
+      type: Label
+    - layout_properties: {grid_position: 'DHGQSI,QQKZVL'}
+      name: rich_text_3
+      properties:
+        content: "- Checking that user log in, player fbhe, scouting fbhe, btd file upload, btd->ppr conversion, and ppr merge functions work well\n- Next up:\n  - Create and store a league-wide player data file, calculating key stats for each player, for each league.  \n  - Store the key stats in the league db, mean and stdev for each statistic\n  - Once this is working, then use this to create the overview table for coaches to review their team's performance and highlight areas to work on"
+      type: RichText
+    layout_properties: {}
+    name: outlined_card_4
     properties: {role: outlined-card}
     type: ColumnPanel
 is_package: true

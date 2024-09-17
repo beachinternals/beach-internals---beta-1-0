@@ -38,7 +38,7 @@ components_by_slot:
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_2
-    properties: {col_widths: '{"SMAHSC":10,"LQEYDV":50}', role: outlined-card}
+    properties: {background: 'theme:Tertiary Container', col_widths: '{"SMAHSC":10,"LQEYDV":50}', role: outlined-card}
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}
