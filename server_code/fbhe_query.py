@@ -95,8 +95,6 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year, disp_team, disp_player
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
-  #print(fbhe_table)
-
   # first the team file:
   # filter the master_ppr_data file to this player and team and league)
   print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
@@ -108,11 +106,15 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year, disp_team, disp_player
       team = disp_team
       ) )
 
+  no_data = True
   if ppr_csv_row:
     m_ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
+    ppr_for_team_found = True
+    no_data = False
   else:
     m_ppr_df = [ " "]
     print('No Team Rows Found')
+    ppr_for_team_found = False
 
   # first nwo the scout file::
   # filter the master_ppr_data file to this player and team and league)
@@ -127,15 +129,21 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year, disp_team, disp_player
 
   if ppr_scout_row:
     scout_ppr_df =  pd.read_csv(io.BytesIO( ppr_scout_row['ppr_csv'].get_bytes()))
-    m_ppr_df = pd.concat([m_ppr_df,scout_ppr_df])
+    if ppr_for_team_found:
+      m_ppr_df = pd.concat([m_ppr_df,scout_ppr_df])
+    else:
+      m_ppr_df = scout_ppr_df
+      no_data = False
     print(f'Scout DB Found:{scout_ppr_df.shape}')
   else:
     print('No Scout Rows Found')
+    no_data = True
 
-  print(f"master scout data frame:{m_ppr_df.shape}")
+  print(f"master scout data frame:{m_ppr_df.shape}, display player:{disp_player}")
   
-  if ppr_csv_row and m_ppr_df.shape[0] != 0:
+  if not no_data:
     # calculate fbhe for all attacks
+    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
