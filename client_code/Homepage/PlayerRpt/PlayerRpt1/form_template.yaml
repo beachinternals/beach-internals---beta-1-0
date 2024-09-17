@@ -58,10 +58,10 @@ components:
       name: label_5
       properties: {text: 'Team:'}
       type: Label
-    - layout_properties: {grid_position: 'NGQHHN,CXXKKG'}
-      name: team_drop_down
+    - layout_properties: {grid_position: 'NGQHHN,CDHVXO'}
+      name: text_box_1
       properties: {}
-      type: DropDown
+      type: Label
     layout_properties: {grid_position: 'JZXCAQ,TSDPDK'}
     name: column_panel_4
     properties: {}

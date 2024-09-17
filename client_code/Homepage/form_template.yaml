@@ -28,7 +28,7 @@ components:
       type: Link
     layout_properties: {grid_position: 'DHWYHY,UIPWBZ'}
     name: outlined_card_1
-    properties: {background: 'theme:On Primary', role: outlined-card}
+    properties: {background: 'theme:Secondary Container', role: outlined-card}
     type: ColumnPanel
   layout_properties: {slot: default}
   name: content_panel

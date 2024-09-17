@@ -1,9 +1,14 @@
 components_by_slot:
   content_slot:
-  - layout_properties: {}
-    name: label_1
-    properties: {align: center, bold: true, role: headline, text: User Manager}
-    type: Label
+  - components:
+    - layout_properties: {grid_position: 'MJDDRM,DNNOBN'}
+      name: label_1
+      properties: {align: center, bold: true, role: headline, text: User Manager}
+      type: Label
+    layout_properties: {}
+    name: outlined_card_1
+    properties: {background: 'theme:Secondary Container', role: outlined-card}
+    type: ColumnPanel
   - components:
     - components:
       - layout_properties: {grid_position: 'QAFOAT,XBOTUS'}
