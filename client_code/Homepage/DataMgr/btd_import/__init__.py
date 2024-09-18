@@ -37,13 +37,16 @@ class btd_import(btd_importTemplate):
 
   def league_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
-    self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = self.league_drop_down.selected_value['league'] )]
-
-    #print(f"league drop down value:{self.league_drop_down.selected_value['league']}")
-    if "NCAA" in self.league_drop_down.selected_value['league']:
-      self.gender_drop_down.selected_value = "W"
-      self.gender2_drop_down.selected_value = "W"
-      #print("changed gender to W")
+    # unpack the league drop down:
+        # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = disp_league )]
       
     # for Competition Level 3, need to serach the selected league's playoff structure (flight, playoffs)
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = self.league_drop_down.selected_value['comp_l3_label'])]
@@ -62,7 +65,6 @@ class btd_import(btd_importTemplate):
     
     self.btd_playera1_drop_down.items = player_list
     self.btd_playera2_drop_down.items = player_list
-    #self.btd_playerb1_drop_down.items = player_list
     self.btd_playerb2_drop_down.items = player_list
     self.btd_playerb1_drop_down.items = player_list
 
