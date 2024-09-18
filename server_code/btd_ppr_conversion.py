@@ -207,7 +207,7 @@ def btd_to_ppr_df(btd_df, flist_r):
     # save the previous row
     last_player = btd_r['player']
     last_quality = btd_r['quality']
-    last_action_id = btd_r['action_id']
+    last_action_id = int(btd_r['action_id'])
     last_action_type = btd_r['action_type']
 
   # we should be out of the loop over btd rows, so check the last point outcome and score
@@ -217,7 +217,7 @@ def btd_to_ppr_df(btd_df, flist_r):
 
 def save_serve_info( ppr_df, btd_r, ppr_row ):
   ppr_df.at[ppr_row,'video_id'] = btd_r['video_id']
-  ppr_df.at[ppr_row,'serve_action_id'] = btd_r['action_id']
+  ppr_df.at[ppr_row,'serve_action_id'] = int(btd_r['action_id'])
   ppr_df.at[ppr_row,'serve_src_t'] = btd_r['action_time']
   ppr_df.at[ppr_row,'serve_dest_x'] = btd_r['dest_x']
   ppr_df.at[ppr_row,'serve_dest_y'] = btd_r['dest_y']
@@ -229,7 +229,7 @@ def save_serve_info( ppr_df, btd_r, ppr_row ):
   return ppr_df
 
 def save_pass_info( ppr_df, btd_r, ppr_row):
-  ppr_df.at[ppr_row,'pass_action_id'] = btd_r['action_id']
+  ppr_df.at[ppr_row,'pass_action_id'] = int(btd_r['action_id'])
   ppr_df.at[ppr_row,'pass_src_t'] = btd_r['action_time']
   ppr_df.at[ppr_row,'pass_dest_x'] = btd_r['dest_x']
   ppr_df.at[ppr_row,'pass_dest_y'] = btd_r['dest_y']
@@ -242,7 +242,7 @@ def save_pass_info( ppr_df, btd_r, ppr_row):
   return ppr_df
 
 def save_set_info( ppr_df, btd_r, ppr_row):
-  ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_action_id'))] = btd_r['action_id']
+  ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_action_id'))] = int(btd_r['action_id'])
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_src_t'))] = btd_r['action_time']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_dest_x'))] = btd_r['dest_x']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_dest_y'))] = btd_r['dest_y']
@@ -256,7 +256,7 @@ def save_set_info( ppr_df, btd_r, ppr_row):
   return ppr_df
 
 def save_att_info( ppr_df, btd_r, ppr_row):
-  ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_action_id'))] = btd_r['action_id']
+  ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_action_id'))] = int(btd_r['action_id'])
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_src_t'))] = btd_r['action_time']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_dest_x'))] = btd_r['dest_x']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_dest_y'))] = btd_r['dest_y']
@@ -271,7 +271,7 @@ def save_att_info( ppr_df, btd_r, ppr_row):
 
 def save_dig_info( ppr_df, btd_r, ppr_row):
   
-  ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_action_id'))] = btd_r['action_id']
+  ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_action_id'))] = int(btd_r['action_id'])
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_src_t'))] = btd_r['action_time']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_dest_x'))] = btd_r['dest_x']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_dest_y'))] = btd_r['dest_y']

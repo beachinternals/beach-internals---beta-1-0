@@ -23,25 +23,20 @@ class ScoutingRpt1(ScoutingRpt1Template):
       alert("Not Currently Logged in")
       open_form("Homepage.Landing_form")
 
-    # Now, let's populate the drop downs.
-    self.league_drop_down.selected_value = user_row["def_league"]
-    self.gender_drop_down.selected_value = user_row["def_gender"]
-    self.year_drop_down.selected_value = user_row["def_year"]
+    # First, populate the selected values
+    self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
 
-    # print(f"League, gender, year, selected values:{self.league_drop_down.selected_value}, {self.gender_drop_down.selected_value},{self.year_drop_down.selected_value} ")
+    # populate the drop downs for league, year, and gender fromt eh subscriptions table
+    league_list = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
+    self.league_drop_down.items = league_list
 
-    # populate the drop downs for league, and competition level 1 and 3
-    self.league_drop_down.items = [
-      (row["league"], row) for row in app_tables.league_list.search()
-    ]
-    
-    # Player drop down
+    # populate the player drop down
     self.player_drop_down.items = [
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
       for row in app_tables.master_player.search(
-        league=self.league_drop_down.selected_value["league"],
-        gender=self.gender_drop_down.selected_value,
-        year=self.year_drop_down.selected_value,
+        league=user_row['def_league'],
+        gender=user_row['def_gender'],
+        year=user_row['def_year'],
       )
     ]
 
@@ -55,12 +50,22 @@ class ScoutingRpt1(ScoutingRpt1Template):
       + " "
       + self.player_drop_down.selected_value["shortname"]
     )
+
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    
     print(f"Player:{player}")
     table_markup = anvil.server.call(
       "fbhe_scout_query",
-      self.league_drop_down.selected_value["league"],
-      self.gender_drop_down.selected_value,
-      self.year_drop_down.selected_value,
+      disp_league,
+      disp_gender,
+      disp_year,
       anvil.users.get_user()['team'],
       player + "|",
     )
@@ -72,39 +77,23 @@ class ScoutingRpt1(ScoutingRpt1Template):
   def league_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
     # UIpdate the Player drop down
+
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    
     self.player_drop_down.items = [
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
       for row in app_tables.master_player.search(
-        league=self.league_drop_down.selected_value["league"],
-        gender=self.gender_drop_down.selected_value,
-        year=self.year_drop_down.selected_value,
+        league=disp_league,
+        gender=disp_gender,
+        year=disp_year,
       )
     ]
     pass
 
-  def gender_drop_down_change(self, **event_args):
-    """This method is called when an item is selected"""
-    # UIpdate the Player drop down
-    self.player_drop_down.items = [
-      (row["team"] + " " + row["number"] + " " + row["shortname"], row)
-      for row in app_tables.master_player.search(
-        league=self.league_drop_down.selected_value["league"],
-        gender=self.gender_drop_down.selected_value,
-        year=self.year_drop_down.selected_value,
-      )
-    ]
-    pass
-
-  def year_drop_down_change(self, **event_args):
-    """This method is called when an item is selected"""
-    # UIpdate the Player drop down
-    self.player_drop_down.items = [
-      (row["team"] + " " + row["number"] + " " + row["shortname"], row)
-      for row in app_tables.master_player.search(
-        league=self.league_drop_down.selected_value["league"],
-        gender=self.gender_drop_down.selected_value,
-        year=self.year_drop_down.selected_value,
-      )
-    ]
-
-    pass

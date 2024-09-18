@@ -139,9 +139,9 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year, disp_team, disp_player
     print('No Scout Rows Found')
     no_data = True
 
-  print(f"master scout data frame:{m_ppr_df.shape}, display player:{disp_player}")
+  print(f"master scout data frame:{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
   
-  if not no_data:
+  if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player )

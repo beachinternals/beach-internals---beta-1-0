@@ -13,19 +13,19 @@ components_by_slot:
     - components:
       - layout_properties: {grid_position: 'YRKHBX,ZOLVWH'}
         name: label_1
-        properties: {text: 'User:'}
+        properties: {align: right, bold: true, text: 'User:'}
         type: Label
       - layout_properties: {grid_position: 'YRKHBX,JNUGAC'}
         name: user_label
-        properties: {text: ''}
+        properties: {align: left, bold: true, text: ''}
         type: Label
       - layout_properties: {grid_position: 'YRKHBX,QCMKEB'}
         name: label_4
-        properties: {text: 'Team:'}
+        properties: {align: right, bold: true, text: 'Team:'}
         type: Label
       - layout_properties: {grid_position: 'YRKHBX,RXMVNO'}
         name: Label_team
-        properties: {}
+        properties: {bold: true}
         type: Label
       layout_properties: {grid_position: 'KCZYCU,LQEYDV GRNBPF,IBYDCD'}
       name: outlined_card_3
@@ -40,8 +40,8 @@ components_by_slot:
         name: data_grid_1
         properties:
           columns:
-          - {data_key: team, id: PQHIYU, title: Team}
-          - {data_key: admin, id: OOOONG, title: Contact}
+          - {data_key: team, expand: false, id: PQHIYU, title: Team, width: 98.37933349609375}
+          - {data_key: admin, expand: false, id: OOOONG, title: Contact, width: 191.74993896484375}
           - {data_key: league, id: IXRGYC, title: League}
           - {data_key: gender, id: IFMLIW, title: Gender}
           - {data_key: year, id: ECSOOA, title: Year}
@@ -51,11 +51,11 @@ components_by_slot:
         type: DataGrid
       layout_properties: {grid_position: 'KCZYCU,LQEYDV BJWZKF,HYAVKM'}
       name: outlined_card_4
-      properties: {role: outlined-card}
+      properties: {background: '', role: outlined-card}
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_2
-    properties: {col_widths: '{"SMAHSC":10,"LQEYDV":50}', role: outlined-card}
+    properties: {background: 'theme:Secondary', col_widths: '{"SMAHSC":10,"LQEYDV":50}', role: outlined-card}
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}
