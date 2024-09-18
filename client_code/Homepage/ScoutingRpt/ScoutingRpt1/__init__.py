@@ -25,10 +25,7 @@ class ScoutingRpt1(ScoutingRpt1Template):
 
     # First, populate the selected values
     self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
-
-    # populate the drop downs for league, year, and gender fromt eh subscriptions table
-    league_list = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
-    self.league_drop_down.items = league_list
+    self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
 
     # populate the player drop down
     self.player_drop_down.items = [
@@ -39,6 +36,7 @@ class ScoutingRpt1(ScoutingRpt1Template):
         year=user_row['def_year'],
       )
     ]
+    self.player_drop_down.items.sort()
 
   def generate_report_button_click(self, **event_args):
     # """This method is called when the button is clicked"""
@@ -96,4 +94,3 @@ class ScoutingRpt1(ScoutingRpt1Template):
       )
     ]
     pass
-
