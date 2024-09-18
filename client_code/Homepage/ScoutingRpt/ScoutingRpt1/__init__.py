@@ -31,12 +31,12 @@ class ScoutingRpt1(ScoutingRpt1Template):
     self.player_drop_down.items = [
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
       for row in app_tables.master_player.search(
+        tables.order_by("team"),
         league=user_row['def_league'],
         gender=user_row['def_gender'],
         year=user_row['def_year'],
       )
     ]
-    self.player_drop_down.items.sort()
 
   def generate_report_button_click(self, **event_args):
     # """This method is called when the button is clicked"""
@@ -88,6 +88,7 @@ class ScoutingRpt1(ScoutingRpt1Template):
     self.player_drop_down.items = [
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
       for row in app_tables.master_player.search(
+        tables.order_by("team"),
         league=disp_league,
         gender=disp_gender,
         year=disp_year,

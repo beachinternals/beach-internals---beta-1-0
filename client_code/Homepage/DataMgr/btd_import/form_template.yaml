@@ -18,26 +18,6 @@ components:
     name: column_panel_1
     properties: {}
     type: ColumnPanel
-  - layout_properties: {grid_position: 'JYEQOD,EWIITU CLIQYC,AQRMMK'}
-    name: label_3
-    properties: {text: 'Gender:'}
-    type: Label
-  - event_bindings: {change: gender_drop_down_change}
-    layout_properties: {grid_position: 'JYEQOD,EWIITU CLIQYC,EMGMKC'}
-    name: gender_drop_down
-    properties:
-      items: [M, W]
-    type: DropDown
-  - layout_properties: {grid_position: 'JYEQOD,EWIITU GRGODB,WNETLB'}
-    name: label_4
-    properties: {text: 'Year:'}
-    type: Label
-  - event_bindings: {change: year_drop_down_change}
-    layout_properties: {grid_position: 'JYEQOD,EWIITU GRGODB,FRZCOC'}
-    name: year_drop_down
-    properties:
-      items: ['2024', '2025', '']
-    type: DropDown
   - layout_properties: {grid_position: 'JYEQOD,EWIITU PQKLLF,BJJGKG'}
     name: label_6
     properties: {text: 'Match Date:'}
@@ -46,6 +26,24 @@ components:
     name: date_picker
     properties: {}
     type: DatePicker
+  - components:
+    - layout_properties: {grid_position: 'UIUIZB,ZZRNUQ'}
+      name: private_button
+      properties: {align: center, enabled: true, selected: true, text: Private, visible: true}
+      type: RadioButton
+    - layout_properties: {grid_position: 'UIUIZB,ZEHFTI LIFCTA,TLKQXS'}
+      name: scouting_button
+      properties: {align: center, selected: false, text: Scouting}
+      type: RadioButton
+    - event_bindings: {click: private_help_link_click}
+      layout_properties: {grid_position: 'UIUIZB,ZEHFTI LIFCTA,BJERFQ'}
+      name: private_help_link
+      properties: {align: left, icon: 'fa:question-circle-o', text: ''}
+      type: Link
+    layout_properties: {grid_position: 'JYEQOD,EWIITU OZGDGN,RKLQLL'}
+    name: column_panel_3
+    properties: {}
+    type: ColumnPanel
   - layout_properties: {grid_position: 'JYEQOD,QSGWJX CJIOWT,NIPOSY'}
     name: comp_l1_drop_down
     properties: {}
@@ -63,24 +61,6 @@ components:
     name: comp_l3_drop_down
     properties: {}
     type: DropDown
-  - components:
-    - layout_properties: {grid_position: 'UIUIZB,ZZRNUQ'}
-      name: private_button
-      properties: {align: center, enabled: true, selected: true, text: Private, visible: true}
-      type: RadioButton
-    - layout_properties: {grid_position: 'UIUIZB,ZEHFTI LIFCTA,TLKQXS'}
-      name: scouting_button
-      properties: {align: center, selected: false, text: Scouting}
-      type: RadioButton
-    - event_bindings: {click: private_help_link_click}
-      layout_properties: {grid_position: 'UIUIZB,ZEHFTI LIFCTA,BJERFQ'}
-      name: private_help_link
-      properties: {align: center, text: '?'}
-      type: Link
-    layout_properties: {grid_position: 'JYEQOD,QSGWJX EXIUWS,AUAKOM'}
-    name: column_panel_3
-    properties: {}
-    type: ColumnPanel
   - layout_properties: {grid_position: 'WQSSNN,HRAWXG'}
     name: label_7
     properties: {text: 'Select File:'}

@@ -23,22 +23,15 @@ class btd_import(btd_importTemplate):
 
     user_team = user_row["team"]
 
-    #print(f"Checking the defaults: {user_row['def_league']}, {user_row['def_year']}")
-    #print(f"League, gender, year, selected values:{self.league_drop_down.selected_value}, {self.gender_drop_down.selected_value},{self.year_drop_down.selected_value} ")
-  
-    # populate the drop downs for league, and competition level 1 and 3
-    self.league_drop_down.items = [(row['league'], row) for row in app_tables.league_list.search()]
+    # First, populate the selected values
+    self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
+    self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
+    self.league2_drop_down.selected_value = self.league_drop_down.selected_value
     self.league2_drop_down.items = self.league_drop_down.items
-    self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = self.league_drop_down.selected_value['league'] )]
-    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = self.league_drop_down.selected_value['comp_l3_label'])]
     
-    # Now, let's populate the selected values. 
-    #self.league_drop_down.selected_value['league'] = user_row["def_league"]
-    self.gender_drop_down.selected_value = user_row["def_gender"]
-    self.year_drop_down.selected_value = user_row["def_year"]
-    #self.league2_drop_down.selected_value = user_row["def_league"]
-    self.gender2_drop_down.selected_value = user_row["def_gender"]
-    self.year2_drop_down.selected_value = user_row["def_year"]
+    # populate the drop downs for league, and competition level 1 and 3
+    self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = user_row["def_league"] )]
+    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = user_row['def_league'])]
     
   pass
 
