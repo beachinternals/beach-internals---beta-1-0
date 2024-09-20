@@ -44,3 +44,7 @@ class PlayerRpt(PlayerRptTemplate):
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(roster_manage())
     pass
+
+  def comp_1_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    pass

@@ -3,79 +3,147 @@ components_by_slot:
   - components:
     - layout_properties: {grid_position: 'ZGCTFP,UFPWQS'}
       name: label_2
-      properties: {align: center, bold: true, role: title, text: Player Reports}
+      properties: {align: center, bold: true, role: headline, text: Player Reports}
       type: Label
     layout_properties: {}
     name: outlined_card_1
     properties: {background: 'theme:Secondary Container', role: outlined-card}
     type: ColumnPanel
   - components:
+    - layout_properties: {grid_position: 'YUQQZB,RMWMTF'}
+      name: label_9
+      properties: {align: center, bold: true, role: title, text: Search Criteria}
+      type: Label
     - components:
-      - layout_properties: {grid_position: 'ZVGFOT,ZGAQNC'}
-        name: roster_overview_link
-        properties: {text: Team Summary}
-        type: Link
-      - layout_properties: {grid_position: 'CFNNWG,YFMVHB'}
-        name: label_1
-        properties: {align: center, background: 'theme:Secondary Container', bold: true, text: Offense}
+      - name: label_6
+        properties: {align: right, text: 'League:'}
         type: Label
-      - event_bindings: {click: PlayerRpt1_click_click}
-        layout_properties: {grid_position: 'YJBAZA,XDXPYM'}
-        name: PlayerRpt1_click
-        properties: {text: First Ball Hitting}
-        type: Link
-      - event_bindings: {click: PlayerRpt2_click_click}
-        layout_properties: {grid_position: 'QUDNGE,YTODGM'}
-        name: PlayerRpt2_click
-        properties: {text: FBHE Thur Match, visible: false}
-        type: Link
-      - layout_properties: {grid_position: 'EDTTNZ,SQCSKH'}
-        name: link_1
-        properties: {text: FBHE by Tactic, visible: false}
-        type: Link
-      - layout_properties: {grid_position: 'MWIJDX,EFMENG'}
-        name: link_2
-        properties: {text: FBHE by Serve Location, visible: false}
-        type: Link
-      - layout_properties: {grid_position: 'WXWBJL,QEVOIR'}
-        name: link_3
-        properties: {text: FBHE by Serve Source, visible: false}
-        type: Link
-      - layout_properties: {grid_position: 'WPVRKP,CQYHXW'}
-        name: link_4
-        properties: {text: Attack Detail by Attack Type, visible: false}
-        type: Link
-      - layout_properties: {grid_position: 'LLBOKX,FWYDVR'}
-        name: label_3
-        properties: {align: center, background: 'theme:Secondary Container', bold: true, text: Defense}
+      - layout_properties: {}
+        name: league_drop_down
+        properties:
+          items: [NCAA | W | 2025]
+        type: DropDown
+      - layout_properties: {}
+        name: rich_text_1
+        properties: {content: 'Competition Level: 1:'}
+        type: RichText
+      - event_bindings: {change: comp_1_drop_down_change}
+        layout_properties: {}
+        name: comp_1_drop_down
+        properties:
+          items: [Regular Season]
+        type: DropDown
+      - layout_properties: {}
+        name: label_7
+        properties: {text: ' 2:'}
         type: Label
-      - layout_properties: {grid_position: 'QUKRUR,ZTBZMI'}
-        name: link_5
-        properties: {text: Serving Effectiveness, visible: false}
-        type: Link
-      - layout_properties: {grid_position: 'OPZUQV,FUGNCL'}
-        name: label_4
-        properties: {align: center, background: 'theme:Secondary Container', bold: true, text: Transition & Errors}
+      - layout_properties: {}
+        name: drop_down_1
+        properties:
+          items: [Gaastad, Top 20 - Both, Top 20 - One, Unranked]
+        type: DropDown
+      - layout_properties: {}
+        name: label_8
+        properties: {text: ' 3:'}
         type: Label
-      - layout_properties: {grid_position: 'RPTKDZ,XTIETZ'}
-        name: link_6
-        properties: {text: Transition Conversion Rates, visible: false}
-        type: Link
-      - layout_properties: {grid_position: 'YLHIJF,UXJMWL'}
-        name: link_8
-        properties: {text: Error Density, visible: false}
-        type: Link
-      - layout_properties: {grid_position: 'SIWJWV,SKGADT'}
-        name: link_7
-        properties: {text: Expected Value, visible: false}
-        type: Link
-      layout_properties: {grid_position: 'KCZYCU,SMAHSC'}
-      name: column_panel_1
+      - layout_properties: {}
+        name: drop_down_2
+        properties:
+          items: [Finals, Semis]
+        type: DropDown
+      layout_properties: {grid_position: 'TKRLGT,DDSDSX'}
+      name: flow_panel_1
       properties: {}
+      type: FlowPanel
+    - components:
+      - layout_properties: {}
+        name: label_10
+        properties: {align: right, text: 'Date: Start:'}
+        type: Label
+      - name: date_picker_1
+        properties: {}
+        type: DatePicker
+      - layout_properties: {}
+        name: label_11
+        properties: {align: right, text: ' End:'}
+        type: Label
+      - name: date_picker_2
+        properties: {}
+        type: DatePicker
+      layout_properties: {grid_position: 'PPQFBB,BSVOVJ'}
+      name: flow_panel_2
+      properties: {}
+      type: FlowPanel
+    - components:
+      - layout_properties: {}
+        name: label_12
+        properties: {align: right, text: 'Player:'}
+        type: Label
+      - layout_properties: {}
+        name: drop_down_3
+        properties:
+          items: [BRA 01 Ana Patricia]
+        type: DropDown
+      - layout_properties: {}
+        name: label_13
+        properties: {text: 'Report Source:'}
+        type: Label
+      - layout_properties: {}
+        name: drop_down_5
+        properties:
+          items: [Team, Scouting]
+        type: DropDown
+      layout_properties: {grid_position: 'WAOLZJ,BKGVTQ'}
+      name: flow_panel_3
+      properties: {}
+      type: FlowPanel
+    - components:
+      - layout_properties: {}
+        name: label_5
+        properties: {align: right, text: 'Report:'}
+        type: Label
+      - layout_properties: {}
+        name: drop_down_4
+        properties:
+          items: [FBHE Along the Net]
+        type: DropDown
+      - layout_properties: {}
+        name: outlined_button_1
+        properties: {align: right, role: outlined-button, text: Generate Report}
+        type: Button
+      layout_properties: {grid_position: 'RRUZZU,OYDNHB'}
+      name: flow_panel_4
+      properties: {}
+      type: FlowPanel
+    layout_properties: {}
+    name: outlined_card_4
+    properties: {role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - components:
+      - components:
+        - name: label_1
+          properties: {text: 'Data Included:'}
+          type: Label
+        - name: rich_text_2
+          properties: {}
+          type: RichText
+        layout_properties: {grid_position: 'KKHOKZ,EMDNUX'}
+        name: flow_panel_5
+        properties: {}
+        type: FlowPanel
+      layout_properties: {grid_position: 'SLVJGN,BEDHWJ'}
+      name: outlined_card_5
+      properties: {role: outlined-card}
       type: ColumnPanel
-    - layout_properties: {grid_position: 'KCZYCU,LQEYDV GRNBPF,IBYDCD'}
+    - components:
+      - layout_properties: {grid_position: 'BLZLCS,MNQKUG'}
+        name: rich_text_3
+        properties: {}
+        type: RichText
+      layout_properties: {grid_position: 'KCZYCU,LQEYDV'}
       name: outlined_card_3
-      properties: {background: 'theme:Secondary', role: outlined-card}
+      properties: {background: '', role: outlined-card}
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_2
