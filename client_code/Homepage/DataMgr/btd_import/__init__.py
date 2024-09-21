@@ -38,7 +38,7 @@ class btd_import(btd_importTemplate):
   def league_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
     # unpack the league drop down:
-        # extract league, gender, year from league selected value
+    # extract league, gender, year from league selected value
     league_value = self.league_drop_down.selected_value
     str_loc = league_value.index('|')
     disp_league = league_value[:str_loc-1].strip()
@@ -49,7 +49,10 @@ class btd_import(btd_importTemplate):
     self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = disp_league )]
       
     # for Competition Level 3, need to serach the selected league's playoff structure (flight, playoffs)
-    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = self.league_drop_down.selected_value['comp_l3_label'])]
+    comp3lbl = [r for r in app_tables.league_list.search(league=disp_league)]
+    print(f"Comp3 Label List:{comp3lbl}")
+    print(f"comp3lbl value:{comp3lbl['comp_l3_label']}")
+    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0,1])]
     self.league2_drop_down.selected_value = self.league_drop_down.selected_value
     pass
 
