@@ -38,7 +38,7 @@ class btd_import(btd_importTemplate):
 
   def league_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
-    # unpack the league drop down:
+
     # extract league, gender, year from league selected value
     league_value = self.league_drop_down.selected_value
     str_loc = league_value.index('|')
@@ -47,18 +47,21 @@ class btd_import(btd_importTemplate):
     str_loc = league_value.index('|')
     disp_gender = league_value[:str_loc-1].strip()
     disp_year = league_value[str_loc+1:].strip()
+
+    # set comp_l1 data:
     self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = disp_league )]
-      
-    # for Competition Level 3, need to serach the selected league's playoff structure (flight, playoffs)
+
+    # set comp_l2 data:
+    self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( 
+      league= disp_league,
+      comp_l1=self.comp_l1_drop_down.selected_value['comp_l1']
+    )]
+    self.league2_drop_down.selected_value = self.league_drop_down.selected_value
+    
+    # set comp_l3 data:
     comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=disp_league)]
-    #print(f"Comp3 Label List:{comp3lbl}")
-    #print(f"comp3lbl value:{comp3lbl[0]}")
-    #print(f"comp3lbl value:{comp3lbl[0][0]}")
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
 
-    self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( league= disp_league )]
-    
-    self.league2_drop_down.selected_value = self.league_drop_down.selected_value
     pass
 
   def file_loader_1_change(self, file, **event_args):
@@ -81,6 +84,15 @@ class btd_import(btd_importTemplate):
     self.btd_playerb1_drop_down.selected_value = return_value[2]
     self.btd_playerb2_drop_down.selected_value = return_value[3]
 
+    # extract league, gender, year from league selected value
+    league_value = self.league2_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    
     # Set the drop down for the ppr players
     ppr_list = [
       {
@@ -89,9 +101,9 @@ class btd_import(btd_importTemplate):
         "shortname": row["shortname"],
       }
       for row in app_tables.master_player.search(
-        league = self.league_drop_down.selected_value['league'],
-        year = self.year_drop_down.selected_value,
-        gender=self.gender_drop_down.selected_value
+        league = disp_league,
+        year = disp_year,
+        gender= disp_gender
       )
     ]
     ppr_player_list = []
@@ -117,12 +129,14 @@ class btd_import(btd_importTemplate):
     """This method is called when the button is clicked"""
     alert("Saving your data now")
 
-    # pull out the correct selected value from the comp3 selected value row
-    #print(f" self comp_l3 drop down selected value: {self.comp_l3_drop_down.selected_value}")
-    #print(f"size of selected value row: {len(self.comp_l3_drop_down.selected_value)}")
-    #print(f" selected value 0 {self.comp_l3_drop_down.selected_value[0]}")
-    #print(f" selected value 1 {self.comp_l3_drop_down.selected_value[1]}")
-    #print(f" selected value 2 {self.comp_l3_drop_down.selected_value[2]}")
+    # extract league, gender, year from league selected value
+    league_value = self.league2_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
 
     # the various statistics were converted to strings, %'s, so we need to convert them back to float.
     per_play = float(self.per_players_label.text[:-1])
@@ -137,11 +151,11 @@ class btd_import(btd_importTemplate):
     
     # creat a new row with the data    
     app_tables.btd_files.add_row( 
-      league=self.league_drop_down.selected_value["league"],
-      gender=self.gender_drop_down.selected_value,
-      year=self.year_drop_down.selected_value,
+      league=disp_league,
+      gender=disp_gender,
+      year=disp_year,
       comp_l1=self.comp_l1_drop_down.selected_value["comp_l1"],
-      comp_l2=self.comp_l2_box.text,
+      comp_l2=self.comp_l2_drop_down.selected_value['comp_l2'],
       comp_l3=self.comp_l3_drop_down.selected_value["comp_l3"],
       date=self.date_picker.date,
       filename=self.file_loader_1.file.name,
@@ -178,11 +192,21 @@ class btd_import(btd_importTemplate):
     # uppeercase the team name and the alias
     self.team2_text_box.text = self.team2_text_box.text.upper()
     self.alias_text_box.text = self.alias_text_box.text.upper()
+
+    # unpack the league into its parts
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
     
     p_rows = app_tables.master_player.search(
-      league = self.league2_drop_down.selected_value['league'],
-      gender = self.gender2_drop_down.selected_value,
-      year=self.year2_drop_down.selected_value,
+      league = disp_league,
+      gender = disp_gender,
+      year = disp_year,
       team = self.team2_text_box.text,
       number=self.number_text_box.text,
       shortname=self.short_name_text_box.text
@@ -193,9 +217,9 @@ class btd_import(btd_importTemplate):
       return False
 
     add_row = app_tables.master_player.add_row(
-      league = self.league2_drop_down.selected_value['league'],
-      gender = self.gender2_drop_down.selected_value,
-      year=self.year2_drop_down.selected_value,
+      league = disp_league,
+      gender = disp_gender,
+      year = disp_year,
       team = self.team2_text_box.text,
       number=self.number_text_box.text,
       shortname=self.short_name_text_box.text,
@@ -216,9 +240,9 @@ class btd_import(btd_importTemplate):
         "shortname": row["shortname"],
       }
       for row in app_tables.master_player.search(
-        league = self.league_drop_down.selected_value['league'],
-        year = self.year_drop_down.selected_value,
-        gender=self.gender_drop_down.selected_value
+        league = disp_league,
+        year = disp_year,
+        gender = disp_gender
       )
     ]
     ppr_player_list = []
@@ -231,21 +255,30 @@ class btd_import(btd_importTemplate):
     self.ppr_playerb2_drop_down.items = ppr_player_list
     pass
 
-  def year_drop_down_change(self, **event_args):
-    """This method is called when an item is selected"""
-    # set the add player year to the same year
-    self.year2_drop_down.selected_value = self.year_drop_down.selected_value
-    pass
-
-  def gender_drop_down_change(self, **event_args):
-    """This method is called when an item is selected"""
-    # set the gender to the same for the add player link
-    self.gender2_drop_down.selected_value = self.gender_drop_down.selected_value
-    pass
-
   def comp_l1_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
     # if we change the competition level 1, this will change the options for competition level 2
     
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    
+    # set comp_l2 data:    
+    self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( 
+      league= disp_league,
+      comp_l1=self.comp_l1_drop_down.selected_value['comp_l1']
+    )]
+    self.league2_drop_down.selected_value = self.league_drop_down.selected_value
+    
+    # set comp_l3 data:
+    comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=disp_league)]
+    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
+
+
     pass
 
