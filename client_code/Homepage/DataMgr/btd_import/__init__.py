@@ -31,6 +31,7 @@ class btd_import(btd_importTemplate):
     
     # populate the drop downs for league, and competition level 1 and 3
     self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = user_row["def_league"] )]
+    self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( league= user_row['def_league'] )]
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = user_row['def_league'])]
     
   pass
@@ -49,10 +50,14 @@ class btd_import(btd_importTemplate):
     self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = disp_league )]
       
     # for Competition Level 3, need to serach the selected league's playoff structure (flight, playoffs)
-    comp3lbl = [r for r in app_tables.league_list.search(league=disp_league)]
-    print(f"Comp3 Label List:{comp3lbl}")
-    print(f"comp3lbl value:{comp3lbl['comp_l3_label']}")
-    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0,1])]
+    comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=disp_league)]
+    #print(f"Comp3 Label List:{comp3lbl}")
+    #print(f"comp3lbl value:{comp3lbl[0]}")
+    #print(f"comp3lbl value:{comp3lbl[0][0]}")
+    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
+
+    self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( league= disp_league )]
+    
     self.league2_drop_down.selected_value = self.league_drop_down.selected_value
     pass
 
@@ -236,5 +241,11 @@ class btd_import(btd_importTemplate):
     """This method is called when an item is selected"""
     # set the gender to the same for the add player link
     self.gender2_drop_down.selected_value = self.gender_drop_down.selected_value
+    pass
+
+  def comp_l1_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    # if we change the competition level 1, this will change the options for competition level 2
+    
     pass
 

@@ -7,76 +7,77 @@ components:
   - components:
     - layout_properties: {grid_position: 'ZBJMXR,LIGXOL'}
       name: label_2
-      properties: {text: 'League:'}
+      properties: {align: right, text: 'League:'}
       type: Label
     - event_bindings: {change: league_drop_down_change}
       layout_properties: {grid_position: 'ZBJMXR,JIAZBI'}
       name: league_drop_down
       properties: {}
       type: DropDown
-    layout_properties: {grid_position: 'JYEQOD,EWIITU BETYTX,WCRDNJ'}
+    layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,EWIITU BETYTX,WCRDNJ'}
     name: column_panel_1
     properties: {}
     type: ColumnPanel
-  - layout_properties: {grid_position: 'JYEQOD,EWIITU PQKLLF,BJJGKG'}
+  - layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,EWIITU PQKLLF,BJJGKG'}
     name: label_6
-    properties: {text: 'Match Date:'}
+    properties: {align: right, text: 'Match Date:'}
     type: Label
-  - layout_properties: {grid_position: 'JYEQOD,EWIITU PQKLLF,SPMECB'}
+  - layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,EWIITU PQKLLF,SPMECB'}
     name: date_picker
     properties: {}
     type: DatePicker
-  - components:
-    - layout_properties: {grid_position: 'UIUIZB,ZZRNUQ'}
-      name: private_button
-      properties: {align: center, enabled: true, selected: true, text: Private, visible: true}
-      type: RadioButton
-    - layout_properties: {grid_position: 'UIUIZB,ZEHFTI LIFCTA,TLKQXS'}
-      name: scouting_button
-      properties: {align: center, selected: false, text: Scouting}
-      type: RadioButton
-    - event_bindings: {click: private_help_link_click}
-      layout_properties: {grid_position: 'UIUIZB,ZEHFTI LIFCTA,BJERFQ'}
-      name: private_help_link
-      properties: {align: left, icon: 'fa:question-circle-o', text: ''}
-      type: Link
-    layout_properties: {grid_position: 'JYEQOD,EWIITU OZGDGN,RKLQLL'}
-    name: column_panel_3
-    properties: {}
-    type: ColumnPanel
-  - layout_properties: {grid_position: 'JYEQOD,QSGWJX CJIOWT,NIPOSY'}
+  - event_bindings: {change: comp_l1_drop_down_change}
+    layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,QSGWJX CJIOWT,NIPOSY'}
     name: comp_l1_drop_down
     properties: {}
     type: DropDown
   - components:
-    - layout_properties: {grid_position: 'WCUZFP,XWCLNM'}
-      name: comp_l2_box
+    - layout_properties: {grid_position: 'WCUZFP,TFGBBU'}
+      name: comp_l2_drop_down
       properties: {}
-      type: TextBox
-    layout_properties: {grid_position: 'JYEQOD,QSGWJX RJTGJS,JMFQVR'}
+      type: DropDown
+    layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,QSGWJX RJTGJS,JMFQVR'}
     name: column_panel_2
     properties: {}
     type: ColumnPanel
-  - layout_properties: {grid_position: 'JYEQOD,QSGWJX GVYHIJ,OJUDNO'}
+  - layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,QSGWJX GVYHIJ,OJUDNO'}
     name: comp_l3_drop_down
     properties: {}
     type: DropDown
-  - layout_properties: {grid_position: 'WQSSNN,HRAWXG'}
-    name: label_7
-    properties: {text: 'Select File:'}
-    type: Label
-  - layout_properties: {grid_position: 'WQSSNN,FRLHMW'}
-    name: filename_box
+  - layout_properties: {grid_position: 'PVOVSQ,THUYNP WFBAAS,MAKLPO'}
+    name: private_button
+    properties: {align: center, enabled: true, selected: true, text: Private, visible: true}
+    type: RadioButton
+  - layout_properties: {grid_position: 'PVOVSQ,THUYNP WFBAAS,RSBOAH'}
+    name: scouting_button
+    properties: {align: center, selected: false, text: Scouting}
+    type: RadioButton
+  - event_bindings: {click: private_help_link_click}
+    layout_properties: {grid_position: 'PVOVSQ,THUYNP WFBAAS,LMDSTL'}
+    name: private_help_link
+    properties: {align: left, icon: 'fa:question-circle-o', text: ''}
+    type: Link
+  - components:
+    - layout_properties: {grid_position: 'SBXYWQ,KPNAXE'}
+      name: label_7
+      properties: {align: right, text: 'Select File:'}
+      type: Label
+    - layout_properties: {grid_position: 'SBXYWQ,CMOGKV'}
+      name: filename_box
+      properties: {}
+      type: Label
+    layout_properties: {grid_position: 'PVOVSQ,THUYNP YXSLUY,FIBEEK'}
+    name: column_panel_18
     properties: {}
-    type: Label
+    type: ColumnPanel
   - event_bindings: {change: file_loader_1_change}
-    layout_properties: {grid_position: 'WQSSNN,UVWFFJ'}
+    layout_properties: {grid_position: 'PVOVSQ,THUYNP QCBRUY,ZKUCWK'}
     name: file_loader_1
-    properties: {}
+    properties: {align: center}
     type: FileLoader
   layout_properties: {grid_position: 'GRQZAQ,AEVLXG'}
   name: outlined_card_1
-  properties: {role: outlined-card}
+  properties: {col_widths: '{"EWIITU":25,"QSGWJX":35,"VBCDKB":35,"THUYNP":25}', role: outlined-card}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'RDYBVE,ZPOOEW'}

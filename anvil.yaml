@@ -103,6 +103,20 @@ db_schema:
       type: string
     server: full
     title: league_comp_l1
+  league_comp_l2:
+    client: search
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: league
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: comp_l2
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: comp_l1
+      type: string
+    server: full
+    title: league_comp_l2
   league_comp_l3:
     client: search
     columns:
