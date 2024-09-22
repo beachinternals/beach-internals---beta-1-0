@@ -9,6 +9,7 @@ import pandas as pd
 import io
 import math
 from tabulate import tabulate
+from server_functions import fbhe
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.

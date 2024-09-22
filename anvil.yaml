@@ -213,6 +213,9 @@ db_schema:
     - admin_ui: {order: 7, width: 200}
       name: player_data
       type: media
+    - admin_ui: {order: 8, width: 200}
+      name: player_data_stats
+      type: simpleObject
     server: full
     title: ppr_csv_tables
   subscriptions:
@@ -314,7 +317,7 @@ services:
 - client_config: {}
   server_config: {}
   source: /runtime/services/tables.yml
-- client_config: {allow_remember_me: true, allow_signup: true, confirm_email: true, enable_automatically: true, remember_me_days: 30, require_secure_passwords: true, use_email: true, use_google: true, use_token: true}
+- client_config: {allow_remember_me: true, allow_signup: true, confirm_email: true, enable_automatically: true, remember_me_days: 30, require_secure_passwords: true, use_email: true, use_google: true, use_token: false}
   server_config:
     email_content:
       confirm_address: {html: '<p>Thanks for registering your account with us. Please click the following link to confirm that this is your account:</p><p>{{confirm_link}}</p><p>Thanks,</p><p>The Beach Internals Team</p>', subject: Confirm your email address with Beach Internals}

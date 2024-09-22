@@ -49,6 +49,11 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     searchitem = list(set([(r['team']) for r in app_tables.btd_files.search()]))
     self.team_drop_down_copy.items = searchitem
 
+    # First, populate the selected values for the 3rd box
+    self.league3_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
+    self.league3_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
+
+
   def generate_ppr_button_click(self, **event_args):
     """This method is called when the button is clicked"""
 
@@ -74,5 +79,42 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     
     anvil.server.call('create_master_ppr',user_league, user_gender, user_year, user_team, data_set )
 
+    pass
+
+  def create_summary_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    
+    # extract league, gender, year from league selected value
+    league_value = self.league3_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    
+    return_text = anvil.server.call(
+      'calcualte_player_data',
+      disp_league,
+      disp_gender,
+      disp_year
+    )
+    alert(return_text)
+    pass
+
+  def league_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    pass
+
+  def league3_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+        # extract league, gender, year from league selected value
+    league_value = self.league3_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
     pass
 
