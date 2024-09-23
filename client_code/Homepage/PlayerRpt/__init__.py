@@ -142,7 +142,7 @@ class PlayerRpt(PlayerRptTemplate):
     disp_year = league_value[str_loc+1:].strip()
 
     # unpack the player
-    disp_player = self.player_drop_down.selected_value
+    disp_player = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']+'|'
 
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
@@ -158,6 +158,7 @@ class PlayerRpt(PlayerRptTemplate):
         function_name = 'fbhe_table_query'
 
     # now, call the server modeul
+    print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player}")
     table_data = anvil.server.call(function_name, disp_league, disp_gender, disp_year, disp_team, disp_player)
 
     # now put this into the rtf box
