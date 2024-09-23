@@ -26,7 +26,7 @@ def fbhe( ppr_df, disp_player):
   fbhe_list = [ 0.0, 0, 0, 0, 0, " " ]    # FBHE
 
   # limit to attacks by our player
-  print(f"ppr_df shape:{ppr_df.shape}")
+  print(f"fbhe funct: ppr_df shape:{ppr_df.shape}")
   if ppr_df.shape[0] == 0:      # Then no data passed!
     fbhe_list = [ 0.0, 0, 0, 0, 0, " No Data Available " ]
   else:
@@ -76,6 +76,7 @@ def fbhe( ppr_df, disp_player):
     fbhe_list[0] = float("{:.3f}".format(fbhe_list[0]))
     fbhe_list[4] = 0 # need to calculate 95% confidence interval
     fbhe_list[5] = video_link
+    print(f"fbhe Funct: fbhe_list:{fbhe_list}")
 
   return fbhe_list
   
