@@ -11,32 +11,47 @@ components_by_slot:
     type: ColumnPanel
   - components:
     - components:
-      - event_bindings: {click: league_rpt_1_click_click}
-        layout_properties: {grid_position: 'YJBAZA,XDXPYM'}
-        name: league_rpt_1_click
-        properties: {text: League Report 1, visible: false}
-        type: Link
-      - event_bindings: {click: league_rpt_2_click_click}
-        layout_properties: {grid_position: 'QUDNGE,YTODGM'}
-        name: league_rpt_2_click
-        properties: {text: League Report 2, visible: false}
-        type: Link
-      layout_properties: {grid_position: 'KCZYCU,SMAHSC'}
+      - layout_properties: {}
+        name: label_1
+        properties: {align: right, text: 'League:'}
+        type: Label
+      - name: league_drop_down
+        properties: {}
+        type: DropDown
+      - event_bindings: {click: generate_report_button_click}
+        layout_properties: {}
+        name: generate_report_button
+        properties: {role: outlined-button, text: Generate Report}
+        type: Button
+      layout_properties: {grid_position: 'STSJSZ,VIJGXO'}
+      name: flow_panel_1
+      properties: {}
+      type: FlowPanel
+    - components:
+      - layout_properties: {grid_position: 'BOYQME,HUZHBP'}
+        name: label_3
+        properties: {text: 'Data Summary:'}
+        type: Label
+      - layout_properties: {grid_position: 'BOYQME,ZYMSGU'}
+        name: data_summary_markdown_box
+        properties: {}
+        type: RichText
+      layout_properties: {grid_position: 'KCZYCU,LQEYDV'}
+      name: outlined_card_3
+      properties: {col_widths: '{"HUZHBP":10,"ZYMSGU":50}', role: outlined-card}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'YCVSJI,YSHXUT'}
+        name: fbhe_histogram_plot
+        properties: {}
+        type: Plot
+      layout_properties: {grid_position: 'PJEIVH,LKAFOT'}
       name: column_panel_1
       properties: {}
       type: ColumnPanel
-    - components:
-      - layout_properties: {grid_position: 'KFJZLQ,XCJTLI'}
-        name: rich_text_1
-        properties: {content: 'This page will enable legaue-wide reports leveraging all the data for a specific league, but also limited to summary information about the level of play in the league.  Reporting on individual players is not possible in league-wide reports.'}
-        type: RichText
-      layout_properties: {grid_position: 'KCZYCU,LQEYDV GRNBPF,IBYDCD'}
-      name: outlined_card_3
-      properties: {role: outlined-card}
-      type: ColumnPanel
     layout_properties: {}
     name: outlined_card_2
-    properties: {col_widths: '{"SMAHSC":10,"LQEYDV":50}', role: outlined-card}
+    properties: {col_widths: '{"LQEYDV":50}', role: outlined-card}
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}

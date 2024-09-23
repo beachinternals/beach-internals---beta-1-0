@@ -120,3 +120,8 @@ class Homepage(HomepageTemplate):
     """This method is called when the link is clicked"""
     open_form('Homepage.UserMgr')
     pass
+
+  def dashboard_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    open_form('Homepage.Dashboard')
+    pass
