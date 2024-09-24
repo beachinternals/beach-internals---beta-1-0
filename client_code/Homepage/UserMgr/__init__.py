@@ -16,6 +16,7 @@ class UserMgr(UserMgrTemplate):
 
     # Any code you write here will run before the form opens.
     # set the initial values:
+    anvil.server.call('check_user_team')
     user_row = anvil.users.get_user()
     if user_row:
       self.email_label.text = user_row['email']
@@ -33,7 +34,9 @@ class UserMgr(UserMgrTemplate):
       self.league_label.text = ""
       self.gender_label.text = ""
       self.year_label.text = ""
-      
+
+    if self.label_3.text == "Visitor":
+      self.team_info_link.visible = True
   pass
 
   def singout_button_click(self, **event_args):
@@ -73,11 +76,13 @@ class UserMgr(UserMgrTemplate):
     user_row = anvil.users.get_user(allow_remembered=True)
     if not user_row:
       alert("Login Failed")
-    else:
-      alert("Login Success")
+    #else:
+      #alert("Login Success")
       
     # set the initial values:
+    anvil.server.call('check_user_team')
     user_row = anvil.users.get_user()
+    
     if user_row:
       self.email_label.text = user_row['email']
       self.label_3.text = user_row['team']
@@ -94,6 +99,13 @@ class UserMgr(UserMgrTemplate):
       self.league_label.text = ""
       self.gender_label.text = ""
       self.year_label.text = ""
+
+    if self.label_3.text == "Visitor":
+      self.team_info_link.visible = True
       
-      
+    pass
+
+  def team_info_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    alert("Please contact Beach Internals to get a proper Team assignment")
     pass

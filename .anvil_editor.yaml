@@ -37,6 +37,7 @@ unique_ids:
   modules: {}
   scripts: {}
   server_modules:
+    UserMgrTasks: '1727192696034960627443271.5522'
     btd_ppr_conversion: '1726224866718178542809898.03772'
     btd_upload: '1726179400918979863717852.4039'
     calc_player_data: '1727034988516989733363261.2108'

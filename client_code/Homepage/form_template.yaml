@@ -67,7 +67,7 @@ components:
   - event_bindings: {click: scouting_rpt_link_click}
     layout_properties: {grid_position: 'BAGGML,CBZHAU'}
     name: scouting_rpt_link
-    properties: {align: left, text: Scouting Reports, visible: false}
+    properties: {align: left, text: Scouting Reports, visible: true}
     type: Link
   - event_bindings: {click: league_rpt_link_click}
     layout_properties: {grid_position: 'WYEEDF,SZTYHO'}

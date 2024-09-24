@@ -19,10 +19,19 @@ class Homepage(HomepageTemplate):
     if user_row:
       if user_row['team'] == "Internals":
         self.admin_link.visible = True
+        self.pair_rpt_link.visible = True
+        self.league_rpt_link.visible = True
+        self.rpt_mgr_link.visible = True
       else:
         self.admin_link.visible = False
+        self.pair_rpt_link.visible = False
+        self.league_rpt_link.visible = False
+        self.rpt_mgr_link.visible = False
     else:
       self.admin_link.visible = False
+      self.pair_rpt_link.visible = False
+      self.league_rpt_link.visible = False
+      self.rpt_mgr_link.visible = False
 
     pass
     

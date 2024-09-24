@@ -24,7 +24,7 @@ components_by_slot:
         - components:
           - layout_properties: {grid_position: 'HYAZFE,ZJKKBB'}
             name: label_2
-            properties: {text: 'User/eMail:'}
+            properties: {align: right, text: 'User/eMail:'}
             type: Label
           - data_bindings:
             - {code: 'self.item[''user_email'']', property: text, writeback: false}
@@ -34,31 +34,38 @@ components_by_slot:
             type: Label
           - layout_properties: {grid_position: 'GZHHSH,HDJJVA'}
             name: label_4
-            properties: {text: 'Team / Club / Federation:'}
+            properties: {align: right, text: 'Team / Club / Federation:'}
             type: Label
           - layout_properties: {grid_position: 'GZHHSH,OBHHBT'}
             name: label_3
             properties: {}
             type: Label
+          - data_bindings:
+            - {code: 'self.item[''label_3''] == "Visitor"', property: visible, writeback: false}
+            event_bindings: {click: team_info_link_click}
+            layout_properties: {grid_position: 'GZHHSH,OLFYMW'}
+            name: team_info_link
+            properties: {icon: 'fa:question-circle-o', icon_align: left_edge}
+            type: Link
           - layout_properties: {grid_position: 'YJTVCJ,IXGGVG XUMBIM,YANRXD'}
             name: label_5
-            properties: {text: 'Role:'}
+            properties: {align: right, text: 'Role:'}
             type: Label
           - layout_properties: {grid_position: 'YJTVCJ,IXGGVG BMIYDG,TLWNTR'}
             name: label_16
-            properties: {text: 'Team Admin:'}
+            properties: {align: right, text: 'Team Admin:'}
             type: Label
-          - layout_properties: {grid_position: 'YJTVCJ,IXGGVG BMIYDG,CUXYTV'}
-            name: admin_check_box
-            properties: {enabled: true, text: '', visible: true}
-            type: CheckBox
-          - layout_properties: {grid_position: 'YJTVCJ,WQQMWZ'}
+          - layout_properties: {grid_position: 'YJTVCJ,WQQMWZ GNWALJ,WYCQRR'}
             name: label_role
             properties: {}
             type: Label
+          - layout_properties: {grid_position: 'YJTVCJ,WQQMWZ HELAIG,BFPHAH'}
+            name: admin_check_box
+            properties: {enabled: true, text: '', visible: true}
+            type: CheckBox
           layout_properties: {grid_position: 'WEIDZQ,BJFVMD'}
           name: column_panel_11
-          properties: {}
+          properties: {col_widths: '{"HDJJVA":25,"OBHHBT":25,"OLFYMW":10,"ZJKKBB":25,"ZXHOUL":35,"IXGGVG":25,"WQQMWZ":35}'}
           type: ColumnPanel
         layout_properties: {grid_position: 'IPETIK,KKRWRO'}
         name: column_panel_7
@@ -72,7 +79,7 @@ components_by_slot:
         - components:
           - layout_properties: {grid_position: 'TWLBVI,NYXOUS'}
             name: label_10
-            properties: {text: 'League:'}
+            properties: {align: right, text: 'League:'}
             type: Label
           - data_bindings:
             - {code: 'self.item[''user_league'']', property: text, writeback: false}
@@ -82,7 +89,7 @@ components_by_slot:
             type: Label
           - layout_properties: {grid_position: 'FYBIOV,FGSWMZ'}
             name: label_11
-            properties: {text: 'Gender:'}
+            properties: {align: right, text: 'Gender:'}
             type: Label
           - data_bindings:
             - {code: 'self.item[''user_gender'']', property: text, writeback: false}
@@ -92,7 +99,7 @@ components_by_slot:
             type: Label
           - layout_properties: {grid_position: 'JEKQRW,FLIQNO'}
             name: label_13
-            properties: {text: 'Year:'}
+            properties: {align: right, text: 'Year:'}
             type: Label
           - data_bindings:
             - {code: 'self.item[''user_year'']', property: text, writeback: false}
