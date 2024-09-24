@@ -8,6 +8,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 from btd_ppr_maint import *
+from ppr_file_maint import *
 
 
 
@@ -22,9 +23,6 @@ class admin(adminTemplate):
     if not user_row:
       alert('Please Sign In to Beach Internals')
       open_form('Homepage.UserMgr')
-    elif not user_row["team"]:
-      alert('Please Contact Beach Internals to be Assigned to a Team')
-      open_form('Homepage.Contact')
 
     if user_row['team'] != "Internals":
       alert('Site Adminitration not Available')
@@ -34,6 +32,12 @@ class admin(adminTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(btd_ppr_maint())
+    pass
+
+  def ppr_csv_file_maint_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(ppr_file_maint())
     pass
 
 
