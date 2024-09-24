@@ -1,5 +1,8 @@
 unique_ids:
   assets:
+    balltime upload.png: '1727196908284824701791909.3947'
+    btd upload 0.png: '1727197433189468980133683.71606'
+    btd upload 1.png: '1727197445800549820410823.5947'
     standard-page.html: 7XZOV2DAFAULNXUZKOMFNLQHPAOMHAXU
     theme.css: WOZ2YEBSCYPSICUM5EHUU67HARVYZH6U
   forms:
@@ -14,6 +17,7 @@ unique_ids:
     Homepage.DataMgr.btd_manage.RowTemplate2: '172616556884018683104912.942783'
     Homepage.DataMgr.roster_manage: '1726077578048572218063548.0481'
     Homepage.HelpPage: '1726079019455104010846680.65952'
+    Homepage.HelpPage.video_upload_help: '1727196300548706848563234.4768'
     Homepage.Landing_form: '1726142885614223543989031.97903'
     Homepage.LeagueRpt: '1726078922511980922205615.9777'
     Homepage.LeagueRpt.LeagueRpt1: '1726076355576478123105639.9171'

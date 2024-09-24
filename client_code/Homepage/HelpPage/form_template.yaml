@@ -15,8 +15,13 @@ components_by_slot:
       properties: {}
       type: RichText
     - components:
+      - event_bindings: {click: video_upload_help_link_click}
+        layout_properties: {grid_position: 'HMQZAA,JQSSYC'}
+        name: video_upload_help_link
+        properties: {text: Instructions on Uploading Data}
+        type: Link
       - layout_properties: {grid_position: 'PLQCPL,SISZKF'}
-        name: rich_text_2
+        name: video_load_help
         properties: {content: The whole process.  How we go from Video to detailed internal analysis}
         type: RichText
       - layout_properties: {grid_position: 'VODIRH,RLPYYV'}

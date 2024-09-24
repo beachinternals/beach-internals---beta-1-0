@@ -1,0 +1,79 @@
+components:
+- components:
+  - layout_properties: {grid_position: 'QOAEHG,TUPZHC'}
+    name: label_1
+    properties: {role: title, text: Uploading Ball Time Files into Beach Internals}
+    type: Label
+  layout_properties: {grid_position: 'QDUFLB,FSFDWU'}
+  name: outlined_card_1
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'BLXTBY,KYZWWP'}
+    name: rich_text_1
+    properties: {content: 'Beach Internals relies on the data exhaust of AI based, computer vision systems that develop statistics for beach volleyball, such as [BallTime]( http://www.balltime.com).  '}
+    type: RichText
+  layout_properties: {grid_position: 'HTZCLQ,DZUHMJ'}
+  name: outlined_card_2
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'IVHXWN,UJHLLM'}
+    name: rich_text_2
+    properties:
+      content: |-
+        ### On the Court:
+
+        - Video the match.  See recommendations on videoing beach volleyball matches here, but generally:
+          - Video the whole match in one fileVideo from the end line
+          - Mount the camera as high as possible.  Higher camera angle will greatly improve the y coordinates  (depth coordinates)
+          - Shoot the vide on 1080p high def (4k video is just too much data, and lower qualities make player identification more difficult)
+          - Try to set the frame of the video small enough that other courts are not included in the frame, but wide enough to get the server in the video, including during their approach.
+    type: RichText
+  layout_properties: {grid_position: 'GCCAKT,SRKPKF'}
+  name: outlined_card_3
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'NJBGRC,GOELKQ'}
+    name: rich_text_3
+    properties:
+      content: "### On BallTime:\n- Upload the match video file to ball time.\_ \n- Ball time will then run the AI model on the video, tagging the video file.\n- Identifying all the playersIdentify the court corners\n- Download the actions csv file"
+    type: RichText
+  - layout_properties: {grid_position: 'NJBGRC,ARGUJR'}
+    name: image_1
+    properties: {height: 359.9791259765625, source: _/theme/balltime upload.png}
+    type: Image
+  layout_properties: {grid_position: 'NVDBVS,EDFRQT'}
+  name: outlined_card_4
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'CITRIA,OLWHKI'}
+    name: rich_text_4
+    properties:
+      content: "### On Beach Internals:\n- Upload the ball time data fileCreate the ppr files.\_ \n- This should be done once all the files is a group have been uploaded. \n- This step converts the ball time file into the beach internals format, and incorporates this new data into the\_"
+    type: RichText
+  - layout_properties: {grid_position: 'CITRIA,IKVMKN PEUQEM,AQMTPL'}
+    name: image_2
+    properties: {height: 252.80813598632812, source: _/theme/btd upload 0.png}
+    type: Image
+  - layout_properties: {grid_position: 'CITRIA,IKVMKN QUISZM,DXJHFJ'}
+    name: image_3
+    properties: {height: 257.13189697265625, source: _/theme/btd upload 1.png}
+    type: Image
+  layout_properties: {grid_position: 'UUJPAQ,SRCCVS'}
+  name: outlined_card_5
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'IAUDEB,ECFGMZ'}
+    name: rich_text_5
+    properties: {content: The new data is now included in the Beach Internals system and ready to report on.}
+    type: RichText
+  layout_properties: {grid_position: 'SCDIJR,RZNYUB'}
+  name: outlined_card_6
+  properties: {role: outlined-card}
+  type: ColumnPanel
+container: {type: ColumnPanel}
+is_package: true
