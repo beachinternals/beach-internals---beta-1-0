@@ -39,6 +39,10 @@ class Dashboard(DashboardTemplate):
       alert('Please Contact Beach Internals to be Assigned to a Team')
       open_form('Homepage.Contact')
       
-    self.dashboard_text.content = anvil.server.call('coaches_dashboard', user_row['team'])
+    self.dashboard_text.content = anvil.server.call('coaches_dashboard', self.league_drop_down.selected_value, user_row['team'])
     
+    pass
+
+  def league_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
     pass

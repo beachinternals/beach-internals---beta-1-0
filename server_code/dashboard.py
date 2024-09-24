@@ -5,6 +5,10 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
+import pandas as pd
+import io
+from tabulate import tabulate
+
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -39,7 +43,12 @@ def coaches_dashboard(league_value, disp_team):
     return ["No Rows"]
     
   # limit to player_data table to just this team
-  player_data_df = player_data_df[player_data_df['player'][0:3] == disp_team][0:3]
+  #print(f"Playerdf player {player_data_df['player']}")
+  #print(f"Playerdf player 0 {player_data_df.at[0,'player']}")
+  #print(f"Playerdf player 0, 0-3 {player_data_df.at[0,'player'][0:3]}")
+  #print(f"Playerdf player, 0-3 {player_data_df['player'][0:3]}")
+  #print(f"disp team o-3:{disp_team[0:3]}")
+  #player_data_df = player_data_df[player_data_df['player'][0:3] == disp_team][0:3]
 
   # convert df to markdown table
   df_table = pd.DataFrame.to_markdown(player_data_df)

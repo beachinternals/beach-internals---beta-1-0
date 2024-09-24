@@ -52,27 +52,27 @@ components:
   - event_bindings: {click: dashboard_link_click}
     layout_properties: {grid_position: 'GXUGWM,QZZBDA'}
     name: dashboard_link
-    properties: {align: center, text: Dashboard}
+    properties: {align: left, text: Dashboard}
     type: Link
   - event_bindings: {click: playerRpt_link_click}
     layout_properties: {grid_position: 'LITXTA,FHEEDA'}
     name: playerRpt_link
-    properties: {align: center, text: Player Reports}
+    properties: {align: left, text: Player Reports}
     type: Link
   - event_bindings: {click: pair_rpt_link_click}
     layout_properties: {grid_position: 'YZUPKD,QRTDHS'}
     name: pair_rpt_link
-    properties: {align: center, text: Pair Reports}
+    properties: {align: left, text: Pair Reports}
     type: Link
   - event_bindings: {click: scouting_rpt_link_click}
     layout_properties: {grid_position: 'BAGGML,CBZHAU'}
     name: scouting_rpt_link
-    properties: {align: center, text: Scouting Reports, visible: false}
+    properties: {align: left, text: Scouting Reports, visible: false}
     type: Link
   - event_bindings: {click: league_rpt_link_click}
     layout_properties: {grid_position: 'WYEEDF,SZTYHO'}
     name: league_rpt_link
-    properties: {align: center, text: League Reports}
+    properties: {align: left, text: League Reports}
     type: Link
   - layout_properties: {grid_position: 'WCVOTN,YUJLNY'}
     name: label_2
