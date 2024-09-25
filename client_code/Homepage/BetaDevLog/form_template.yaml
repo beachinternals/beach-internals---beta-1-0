@@ -51,7 +51,11 @@ components_by_slot:
         content: |+
           #### Beta 1.0 - September 27, 2024
 
-          MOdified the visibility of homepage menu items so that non-Internals can not see
+          Modified the visibility of homepage menu items so that non-Internals can not see them, including:
+          - Pair Reports
+          - League Reports
+          - Report Manager
+          - Admin
 
           First look at the website.  'Functional' area include:
           - About US, Contact - primarily just descriptive
