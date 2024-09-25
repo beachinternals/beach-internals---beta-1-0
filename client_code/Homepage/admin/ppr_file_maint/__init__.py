@@ -25,10 +25,10 @@ class ppr_file_maint(ppr_file_maintTemplate):
 
     
     # update the ppr-csv table:
-    sort_column = 'team'
-    sort_order = 'ascending'
-    self.repeating_panel_1.items = app_tables.ppr_csv_tables.search()
-    self.repeating_panel_1.items = sorted([for r in self.repeating_panel_1.items], key = lambda x:[sort_column], reverse = (sort_order == 'desc'))
+    #sort_column = 'team'
+    #sort_order = 'ascending'
+    #self.repeating_panel_1.items = app_tables.ppr_csv_tables.search()
+    #self.repeating_panel_1.items = sorted([for r in self.repeating_panel_1.items], key = lambda x:[sort_column], reverse = (sort_order == 'desc'))
     
     # Now, let's populate the drop downs.
     self.league_drop_down.selected_value = user_row["def_league"]
