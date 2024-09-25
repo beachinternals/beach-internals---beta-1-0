@@ -51,6 +51,8 @@ components_by_slot:
         content: |+
           #### Beta 1.0 - September 27, 2024
 
+          MOdified the visibility of homepage menu items so that non-Internals can not see
+
           First look at the website.  'Functional' area include:
           - About US, Contact - primarily just descriptive
           - User Manger - upper right logo, to log in a view user data
