@@ -37,6 +37,7 @@ class UserMgr(UserMgrTemplate):
 
     if self.label_3.text == "Visitor":
       self.team_info_link.visible = True
+
   pass
 
   def singout_button_click(self, **event_args):
