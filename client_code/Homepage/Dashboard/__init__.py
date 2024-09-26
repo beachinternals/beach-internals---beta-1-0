@@ -23,10 +23,10 @@ class Dashboard(DashboardTemplate):
     elif not user_row["team"]:
       alert('Please Contact Beach Internals to be Assigned to a Team')
       open_form('Homepage.Contact')
-
-    # set up the league drop down
-    self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
-    self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
+    else:
+      # set up the league drop down
+      self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
+      self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
 
   def gen_dashboard_button_click(self, **event_args):
     """This method is called when the button is clicked"""

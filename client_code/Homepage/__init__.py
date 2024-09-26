@@ -16,6 +16,7 @@ class Homepage(HomepageTemplate):
 
     # make admin visible, or not
     user_row = anvil.users.get_user()
+
     if user_row:
       if user_row['team'] == "INTERNALS":
         self.admin_link.visible = True
@@ -27,6 +28,7 @@ class Homepage(HomepageTemplate):
         self.pair_rpt_link.visible = False
         self.league_rpt_link.visible = False
         self.rpt_mgr_link.visible = False
+      self.user_name_label.text = user_row['team']
     else:
       self.admin_link.visible = False
       self.pair_rpt_link.visible = False
@@ -48,6 +50,8 @@ class Homepage(HomepageTemplate):
   def user_page_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('Homepage.UserMgr')
+    if anvil.users.get_user():
+      self.user_name_label.text = anvil.users.get_user()['team']
     pass
 
   def help1_link_click(self, **event_args):
@@ -128,6 +132,8 @@ class Homepage(HomepageTemplate):
   def signin_link_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('Homepage.UserMgr')
+    if anvil.users.get_user():
+      self.user_name_label.text = anvil.users.get_user()['team']
     pass
 
   def dashboard_link_click(self, **event_args):

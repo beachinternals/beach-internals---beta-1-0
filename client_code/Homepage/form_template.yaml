@@ -35,6 +35,12 @@ components:
   properties: {col_widths: '{}'}
   type: ColumnPanel
 - components:
+  - data_bindings:
+    - {code: '', property: text, writeback: false}
+    layout_properties: {}
+    name: user_name_label
+    properties: {align: right, font: '8'}
+    type: Label
   - event_bindings: {click: user_page_click}
     layout_properties: {}
     name: user_page
