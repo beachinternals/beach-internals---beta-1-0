@@ -1,3 +1,4 @@
+import anvil.email
 import anvil.google.auth, anvil.google.drive, anvil.google.mail
 from anvil.google.drive import app_files
 import anvil.users
@@ -35,8 +36,18 @@ def check_user_team():
     elif not current_team:
       # if blank, set to 'Visitor'
       user_row['team'] = 'Visitor'
+      # send me an email about this
+      anvil.email.send(from_name = "Beach Internals Support", 
+                 to = "beachinternals@gmail.com",
+                 subject = "New User Assigned to Visitor",
+                 text = "A new user has been assigned to team Visitor :"+current_team)
     else:
       # so we have an issue
       print(f"Appears we have a team with an invalid team: {current_team}")
+      # send me an email about this
+      anvil.email.send(from_name = "Beach Internals Support", 
+                 to = "beachinternals@gmail.com",
+                 subject = "User wiht Invalide Team",
+                 text = "A user has an Invlaid Team :"+current_team)
 
   return True
