@@ -34,13 +34,16 @@ def check_user_team():
       # all is good
       print(f"Current user is on a valid team: {current_team}")
     elif not current_team:
-      # if blank, set to 'Visitor'
+      # if blank, set to 'Visitor', and set a defulat set of league values
       user_row['team'] = 'Visitor'
+      user_row['def_league'] = "FIVB"
+      user_row['def_gender'] = "W"
+      user_row['def_year'] = "2024"
       # send me an email about this
       anvil.email.send(from_name = "Beach Internals Support", 
                  to = "beachinternals@gmail.com",
                  subject = "New User Assigned to Visitor",
-                 text = "A new user has been assigned to team Visitor :"+current_team)
+                 text = "A new user has been assigned to team Visitor :"+user_row['email'])
     else:
       # so we have an issue
       print(f"Appears we have a team with an invalid team: {current_team}")
@@ -49,5 +52,10 @@ def check_user_team():
                  to = "beachinternals@gmail.com",
                  subject = "User wiht Invalide Team",
                  text = "A user has an Invlaid Team :"+current_team)
+      # set it all to blanks to eliminate future crashing
+      user_row['team'] = 'Visitor'
+      user_row['def_league'] = "FIVB"
+      user_row['def_gender'] = "W"
+      user_row['def_year'] = "2024"
 
   return True
