@@ -17,7 +17,7 @@ class Homepage(HomepageTemplate):
     # make admin visible, or not
     user_row = anvil.users.get_user()
     if user_row:
-      if user_row['team'] == "Internals":
+      if user_row['team'] == "INTERNALS":
         self.admin_link.visible = True
         self.pair_rpt_link.visible = True
         self.league_rpt_link.visible = True

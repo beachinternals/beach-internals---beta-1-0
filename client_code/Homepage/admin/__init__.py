@@ -24,7 +24,7 @@ class admin(adminTemplate):
       alert('Please Sign In to Beach Internals')
       open_form('Homepage.UserMgr')
 
-    if user_row['team'] != "Internals":
+    if user_row['team'] != "INTERNALS":
       alert('Site Adminitration not Available')
       open_form('Homepage')
       
