@@ -34,9 +34,10 @@ components_by_slot:
       - name: label_13
         properties: {text: 'Report Source:'}
         type: Label
-      - name: team_drop_down
+      - layout_properties: {}
+        name: team_drop_down
         properties:
-          items: [Team, Scouting]
+          items: [Scouting, Team]
         type: DropDown
       layout_properties: {grid_position: 'TKRLGT,DDSDSX'}
       name: flow_panel_1
@@ -82,7 +83,7 @@ components_by_slot:
         properties: {align: right, text: 'Date: Start:'}
         type: Label
       - layout_properties: {}
-        name: check_box_1
+        name: date_check_box
         properties: {text: ''}
         type: CheckBox
       - name: start_date_picker

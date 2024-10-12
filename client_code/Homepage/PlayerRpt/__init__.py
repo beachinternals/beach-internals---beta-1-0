@@ -46,6 +46,9 @@ class PlayerRpt(PlayerRptTemplate):
         year=user_row['def_year'],
       )
     ]
+
+    # set teh defulat to 'scouting'
+    self.team_drop_down.selected_value = 'Scouting'
   
   def PlayerRpt1_click_click(self, **event_args):
     """This method is called when the link is clicked"""
@@ -157,9 +160,17 @@ class PlayerRpt(PlayerRptTemplate):
       else:
         function_name = 'fbhe_table_query'
 
-    # now, call the server modeul
-    print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player}")
-    table_data = anvil.server.call(function_name, disp_league, disp_gender, disp_year, disp_team, disp_player)
+    # now, call the server module.
+    # now including limits on competition (1,2,3) and dates
+    print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player},{self.comp_l1_check_box.checked},{self.comp_l2_check_box.checked},{self.comp_l3_check_box.checked},{self.date_check_box.checked}")
+    table_data = anvil.server.call(function_name, 
+                                   disp_league, disp_gender, disp_year, 
+                                   disp_team, disp_player, 
+                                   self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
+                                   self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
+                                   self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
+                                   self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date
+                                  )
 
     # now put this into the rtf box
     self.rpt_disp_box.content = table_data
