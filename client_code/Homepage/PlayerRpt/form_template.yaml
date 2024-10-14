@@ -127,9 +127,6 @@ components_by_slot:
   - components:
     - components:
       - components:
-        - name: label_1
-          properties: {text: 'Data Included:'}
-          type: Label
         - name: rich_text_2
           properties: {}
           type: RichText

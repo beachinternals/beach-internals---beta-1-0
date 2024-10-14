@@ -44,12 +44,12 @@ def coaches_dashboard(league_value, disp_team):
     return ["No Rows"]
     
   # limit to player_data table to just this team
-  #print(f"Playerdf player {player_data_df['player']}")
-  #print(f"Playerdf player 0 {player_data_df.at[0,'player']}")
-  #print(f"Playerdf player 0, 0-3 {player_data_df.at[0,'player'][0:3]}")
-  #print(f"Playerdf player, 0-3 {player_data_df['player'][0:3]}")
-  #print(f"disp team o-3:{disp_team[0:3]}")
-  #player_data_df = player_data_df[player_data_df['player'][0:3] == disp_team][0:3]
+  #player_data_df = player_data_df[player_data_df["team"] == disp_team]
+  # replace nan with blanks
+  player_data_df = player_data_df.fillna(' ')
+
+  # what dopes out table look like?
+  print(player_data_df)
 
   # convert df to markdown table
   df_table = pd.DataFrame.to_markdown(player_data_df)

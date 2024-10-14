@@ -155,12 +155,13 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
   if comp_l2_checked:
     m_ppr_df = m_ppr_df[ m_ppr_df['comp_l2'] == disp_comp_l2 ]
     print(f"Limitiing by Comp l2:{disp_comp_l2}, Size:{m_ppr_df.shape}")
-  if comp_l1_checked:
+  if comp_l3_checked:
     m_ppr_df = m_ppr_df[ m_ppr_df['comp_l3'] == disp_comp_l3 ]
     print(f"Limitiing by Comp l3:{disp_comp_l3}, Size:{m_ppr_df.shape}")
   if date_checked:
-    print(f"Checking types. disp_date:{disp_start_date}, Game_date:{m_ppr_df['game_date']}")
-    m_ppr_df = m_ppr_df.query[ ( m_ppr_df['game_date'] >= disp_start_date ) & ( m_ppr_df['game_date'] <= disp_end_date ) ]
+    m_ppr_df['game_date'] = pd.to_datetime(m_ppr_df['game_date'])
+    m_ppr_df['game_date'] = m_ppr_df['game_date'].dt.date
+    m_ppr_df = m_ppr_df.loc[(m_ppr_df['game_date'] >= disp_start_date) & (m_ppr_df['game_date'] <= disp_end_date) ]
     print(f"Limitiing by Dates:{disp_start_date},{disp_end_date}, Size:{m_ppr_df.shape}")
     
   print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")

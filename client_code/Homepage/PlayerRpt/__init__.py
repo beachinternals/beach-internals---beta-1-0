@@ -9,6 +9,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 from PlayerRpt1 import *
 from PlayerRpt2 import *
+from datetime import datetime
 
 
 
@@ -173,6 +174,18 @@ class PlayerRpt(PlayerRptTemplate):
                                   )
 
     # now put this into the rtf box
+    filter_text = 'Data Filtered on: League='+disp_league+' Gender='+disp_gender+' Year='+disp_year
+    filter_text = filter_text + ' Player=' + disp_player
+    if self.comp_l1_check_box.checked:
+      filter_text = filter_text + ' Competition1='+self.comp_l1_drop_down.selected_value['comp_l1']
+    if self.comp_l2_check_box.checked:
+      filter_text = filter_text + ' Competition2='+self.comp_l2_drop_down.selected_value['comp_l2']
+    if self.comp_l3_check_box.checked:
+      filter_text = filter_text + ' Competition3='+self.comp_l3_drop_down.selected_value['comp_l3']
+    if self.date_check_box.checked:
+      filter_text = filter_text + ' Date Range ='+str(self.start_date_picker.date)+' to '+str(self.end_date_picker.date)
+      
+    self.rich_text_2.content = filter_text
     self.rpt_disp_box.content = table_data
     
     pass
