@@ -84,7 +84,7 @@ def calcualte_player_data( c_league, c_gender, c_year):
     print(f"player: {p_list[i]}")
     player_df.at[i,'player'] = p_list[i]
     # need to find the team for this player, search the master_player database
-    p_row = anvil.master_player.search(league == c_gender, gender == c_gender, year == c_year )
+    #p_row = anvil.master_player.search(league == c_gender, gender == c_gender, year == c_year )
     
     # player_df.at[i,'team'] = 
     
