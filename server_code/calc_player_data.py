@@ -86,7 +86,7 @@ def calcualte_player_data( c_league, c_gender, c_year):
     # need to find the team for this player, search the master_player database
     p_row = anvil.master_player.search(league == c_gender, gender == c_gender, year == c_year )
     
-    player_df.at[i,'team'] = 
+    # player_df.at[i,'team'] = 
     
     fbhe_vector = fbhe(ppr_df, p_list[i])
     if fbhe_vector[3] >= min_att:
