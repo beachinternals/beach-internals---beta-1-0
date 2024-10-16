@@ -132,17 +132,17 @@ class btd_import(btd_importTemplate):
     # first off, a little data check:
     if not self.date_picker.date:
       alert("Please enter a valid date for this Match")
-      pass
+      return
 
     # let's check if the privae tag looks correct
     user_team = anvil.users.get_user()['team']
     if user_team in self.ppr_playera1_drop_down.selected_value or user_team in self.ppr_playerb1_drop_down.selected_value:
       # should be a private data file
       if not self.private_button.selected:
-        alert('Did you want to make this data private?')
+        self.private_button.selected = confirm('Did you want to make this data private?')
     else:
       if self.private_button.selected:
-        alert('Did you want to make this data ppublic?')
+        self.private_button.selected = not confirm('Did you want to make this data public?')
         
     # extract league, gender, year from league selected value
     league_value = self.league2_drop_down.selected_value
