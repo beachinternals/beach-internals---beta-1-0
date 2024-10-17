@@ -155,11 +155,16 @@ class PlayerRpt(PlayerRptTemplate):
     # unpack the report to process
     # replace this with a data driven approach
     report_name = self.report_drop_down.selected_value
+    scout = True      # right now, we always want the scouting version of the data
     if report_name == 'FBHE Along the Net':
       if self.team_drop_down.selected_value == "Scouting":
         function_name = 'fbhe_scout_query'
       else:
         function_name = 'fbhe_table_query'
+    elif report_name == 'FBHE by Attack Tactic':
+      function_name = 'fbhe_by_tactic'
+    elif report_name == 'FBHE by Serve Source':
+      function_name = 'fbhe_by_srv_src'
 
     # now, call the server module.
     # now including limits on competition (1,2,3) and dates
@@ -170,7 +175,8 @@ class PlayerRpt(PlayerRptTemplate):
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
                                    self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
                                    self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
-                                   self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date
+                                   self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date,
+                                   scout
                                   )
 
     # now put this into the rtf box

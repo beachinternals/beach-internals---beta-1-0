@@ -109,7 +109,7 @@ components_by_slot:
       - layout_properties: {}
         name: report_drop_down
         properties:
-          items: [FBHE Along the Net]
+          items: [FBHE Along the Net, FBHE by Attack Tactic, FBHE by Serve Source]
         type: DropDown
       - event_bindings: {click: generate_report_buttoon_click}
         layout_properties: {}
