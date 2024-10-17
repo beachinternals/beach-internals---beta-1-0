@@ -120,7 +120,7 @@ def btd_to_ppr_df(btd_df, flist_r):
                   'set_dist':zero,'set_dur':zero,'set_speed':zero,'set_angle':zero,'set_action_id':zero,'set_height':zero,
     'att_player':blank,'att_yn':yn,'att_src_x':zero,'att_src_y':zero,'att_src_t':zero,'att_src_zone_depth':blank,'att_src_zone_net':zero,
                   'att_dest_x':zero,'att_dest_y':zero,'att_dest_t':zero,'att_dest_zone_depth':blank,'att_dest_zone_net':zero,
-                  'att_dist':zero,'att_dur':zero,'att_speed':zero,'att_angle':zero,'att_action_id':zero,'att_height':zero,
+                  'att_dist':zero,'att_dur':zero,'att_speed':zero,'att_angle':zero,'att_action_id':zero,'att_height':zero, 'att_touch_height':zero,
     'dig_player':blank,'dig_yn':yn,'dig_src_x':zero,'dig_src_y':zero,'dig_src_t':zero,'dig_src_zone_depth':blank,'dig_src_zone_net':zero,
                   'dig_dest_x':zero,'dig_dest_y':zero,'dig_dest_t':zero,'dig_dest_zone_depth':blank,'dig_dest_zone_net':zero,
                   'dig_dist':zero,'dig_dur':zero,'dig_speed':zero,'dig_angle':zero,'dig_action_id':zero,'dig_height':zero,
@@ -266,6 +266,9 @@ def save_att_info( ppr_df, btd_r, ppr_row):
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_src_y'))] = btd_r['src_y']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_yn'))] = "Y"  
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_dest_t'))] = ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_src_t'))]
+  if 'vertical_touch_height' in btd_r:
+    ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_touch_height'))] = btd_r['vertical_touch_height']
+    
   #print(f"saving ATT info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
 
   return ppr_df
@@ -407,7 +410,7 @@ def calc_ppr_data(ppr_df):
     # calculate the data for the serve
     ppr_df.at[index,'serve_dist'] = calc_dist(ppr_r['serve_src_x'],ppr_r['serve_src_y'],ppr_r['serve_dest_x'],ppr_r['serve_dest_y'])
     ppr_df.at[index,'serve_src_zone_depth'] = zone_depth(ppr_r['serve_src_y'])
-    ppr_df.at[index,'serve_src_zone_net'] = zone_net(ppr_r['serve_src_x'])
+    ppr_df.at[index,'serve_src_zone_net'] = srv_zone_net(ppr_r['serve_src_x'])
     ppr_df.at[index,'serve_dest_zone_depth'] = zone_depth(ppr_r['serve_dest_y'])
     ppr_df.at[index,'serve_dest_zone_net'] = zone_net(ppr_r['serve_src_x'])
     ppr_df.at[index,"serve_angle"] = calc_angle(ppr_r['serve_src_x'],ppr_r['serve_src_y'],ppr_r['serve_dest_x'],ppr_r['serve_dest_y'])
@@ -661,6 +664,23 @@ def zone_net(x1):
     
   return zone
 
+def srv_zone_net(x1):
+  if x1 is not None:
+    if math.isnan(x1):
+      zone = 0
+    elif isinstance(x1,(float,int)):
+      zone = "1"
+      if x1 > 2.667:
+        zone = "3"
+      if x1 > 5.333:
+        zone = "5"
+    else:
+      zone = 0
+  else:
+    zone = 0
+    
+  return zone
+  
 def calc_tactic( ppr_df ):
   for index, ppr_r in ppr_df.iterrows():
     # calculate the following tactics, put them into the 
