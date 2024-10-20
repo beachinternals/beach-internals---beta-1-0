@@ -142,7 +142,7 @@ def ppr_df_limit( m_ppr_df,
     m_ppr_df = m_ppr_df[ m_ppr_df['comp_l3'] == disp_comp_l3 ]
     print(f"Limitiing by Comp l3:{disp_comp_l3}, Size:{m_ppr_df.shape}")
   if date_checked:
-     m_ppr_df['game_date'] = pd.to_datetime(m_ppr_df['game_date'])
+    m_ppr_df['game_date'] = pd.to_datetime(m_ppr_df['game_date'])
     m_ppr_df['game_date'] = m_ppr_df['game_date'].dt.date
     m_ppr_df = m_ppr_df.loc[(m_ppr_df['game_date'] >= disp_start_date) & (m_ppr_df['game_date'] <= disp_end_date) ]
     print(f"Limitiing by Dates:{disp_start_date},{disp_end_date}")
