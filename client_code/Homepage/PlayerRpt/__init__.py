@@ -9,7 +9,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 from PlayerRpt1 import *
 from PlayerRpt2 import *
-from datetime import datetime
+import datetime
 
 
 
@@ -118,6 +118,7 @@ class PlayerRpt(PlayerRptTemplate):
     comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=disp_league)]
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
 
+    # set the player drop down
     self.player_drop_down.items = [
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
       for row in app_tables.master_player.search(
@@ -127,10 +128,11 @@ class PlayerRpt(PlayerRptTemplate):
         year=disp_year,
       )
     ]
-    pass
 
-  def end_date_picker_change(self, **event_args):
-    """This method is called when the selected date changes"""
+    # set the sstart and end date to beginning and end of the season (needed for function call)
+    self.start_date_picker.date = datetime.date.today()  # temp : need to pull from league DB
+    self.end_date_picker.date = datetime.date.today()
+    
     pass
 
   def generate_report_buttoon_click(self, **event_args):
@@ -168,7 +170,11 @@ class PlayerRpt(PlayerRptTemplate):
 
     # now, call the server module.
     # now including limits on competition (1,2,3) and dates
-    print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player},{self.comp_l1_check_box.checked},{self.comp_l2_check_box.checked},{self.comp_l3_check_box.checked},{self.date_check_box.checked}")
+    print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player}")
+    print(f" Comp l1: {self.comp_l1_check_box.checked},{self.comp_l1_drop_down.selected_value['comp_l1']}")
+    print(f" Comp L2: {self.comp_l2_check_box.checked},{self.comp_l2_drop_down.selected_value['comp_l2']}")
+    print(f" Comp L3: {self.comp_l3_check_box.checked},{self.comp_l3_drop_down.selected_value['comp_l3']}")
+    print(f" Dates: {self.date_check_box.checked}, {self.start_date_picker.date}, {self.end_date_picker.date}")
     table_data = anvil.server.call(function_name, 
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_player, 
