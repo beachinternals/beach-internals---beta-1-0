@@ -83,6 +83,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
   # fetch the appropriate ppr table(s) from the ppr_csv table given the league and team, and if scout data
 
   no_data = True
+  print(f"Searching Team Rows: L:{disp_league}, G:{disp_gender},Y:{disp_year},T:{disp_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = disp_league,
