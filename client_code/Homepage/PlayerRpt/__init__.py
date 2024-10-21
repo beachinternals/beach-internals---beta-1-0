@@ -31,11 +31,15 @@ class PlayerRpt(PlayerRptTemplate):
     # First, populate the selected values
     self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
     self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
-
+    
     # populate the drop downs for league, and competition level 1 and 3
     self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = user_row["def_league"] )]
     self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( league= user_row['def_league'] )]
-    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = user_row['def_league'])]
+    #self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = user_row['def_league'])]
+
+    # set comp_l3 data:
+    comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=user_row['def_league'])]
+    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
 
     # populate the player drop down
     self.player_drop_down.items = [
@@ -48,9 +52,10 @@ class PlayerRpt(PlayerRptTemplate):
       )
     ]
 
-    # set teh defulat to 'scouting'
+    # set the default for team drop down and l1, l2, l3 
     self.team_drop_down.selected_value = 'Scouting'
-  
+
+    
   def PlayerRpt1_click_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
@@ -170,6 +175,9 @@ class PlayerRpt(PlayerRptTemplate):
 
     # now, call the server module.
     # now including limits on competition (1,2,3) and dates
+    # check comp_l3, if not, set to str()
+    if type(self.comp_l3_drop_down.selected_value['comp_l3']) == type(None):
+      self.comp_l3_drop_down.selected_value['comp_l3'] = str()
     print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player}")
     print(f" Comp l1: {self.comp_l1_check_box.checked},{self.comp_l1_drop_down.selected_value['comp_l1']}")
     print(f" Comp L2: {self.comp_l2_check_box.checked},{self.comp_l2_drop_down.selected_value['comp_l2']}")
@@ -200,4 +208,12 @@ class PlayerRpt(PlayerRptTemplate):
     self.rich_text_2.content = filter_text
     self.rpt_disp_box.content = table_data
     
+    pass
+
+  def end_date_picker_change(self, **event_args):
+    """This method is called when the selected date changes"""
+    pass
+
+  def start_date_picker_change(self, **event_args):
+    """This method is called when the selected date changes"""
     pass

@@ -69,7 +69,8 @@ components_by_slot:
       - name: comp_l3_check_box
         properties: {text: ''}
         type: CheckBox
-      - name: comp_l3_drop_down
+      - data_bindings: []
+        name: comp_l3_drop_down
         properties:
           items: [Finals, Semis]
         type: DropDown
@@ -86,7 +87,8 @@ components_by_slot:
         name: date_check_box
         properties: {text: ''}
         type: CheckBox
-      - name: start_date_picker
+      - event_bindings: {change: start_date_picker_change}
+        name: start_date_picker
         properties: {}
         type: DatePicker
       - layout_properties: {}
