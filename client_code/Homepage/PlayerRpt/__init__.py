@@ -156,7 +156,11 @@ class PlayerRpt(PlayerRptTemplate):
         function_name = 'fbhe_scout_query'
       else:
         function_name = 'fbhe_table_query'
-
+    elif report_name == 'FBHE by Attack Tactic':
+      function_name = 'fbhe_by_attack_tactic'
+    elif report_name == 'FBHE by Serve Source':
+      function_name = 'fbhe_by_srv_src'
+    
     # now, call the server modeul
     print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player}")
     table_data = anvil.server.call(function_name, disp_league, disp_gender, disp_year, disp_team, disp_player)

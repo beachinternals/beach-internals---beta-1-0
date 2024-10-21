@@ -34,9 +34,10 @@ components_by_slot:
       - name: label_13
         properties: {text: 'Report Source:'}
         type: Label
-      - name: team_drop_down
+      - layout_properties: {}
+        name: team_drop_down
         properties:
-          items: [Team, Scouting]
+          items: [Scouting]
         type: DropDown
       layout_properties: {grid_position: 'TKRLGT,DDSDSX'}
       name: flow_panel_1
@@ -108,7 +109,7 @@ components_by_slot:
       - layout_properties: {}
         name: report_drop_down
         properties:
-          items: [FBHE Along the Net, Attack Tactics]
+          items: [FBHE Along the Net, FBHE by Attack Tactic, FBHE by Serve Source]
         type: DropDown
       - event_bindings: {click: generate_report_buttoon_click}
         layout_properties: {}
