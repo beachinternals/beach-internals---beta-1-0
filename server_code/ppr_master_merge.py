@@ -265,7 +265,8 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
       year = user_year,
       team = user_team,
       ppr_csv = ppr_media,
-      date = datetime.datetime.now()
+      date = datetime.datetime.now(),
+      min_att= 5  # curently set at this number, can be changed i the table
     )
 
   pass

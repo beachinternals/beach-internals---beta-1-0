@@ -35,11 +35,16 @@ components:
   properties: {role: outlined-card}
   type: ColumnPanel
 - components:
-  - layout_properties: {grid_position: 'NJBGRC,GOELKQ'}
+  - layout_properties: {grid_position: 'NJBGRC,GOELKQ JVXTIU,LUGRWP'}
     name: rich_text_3
     properties:
       content: "### On BallTime:\n- Upload the match video file to ball time.\_ \n- Ball time will then run the AI model on the video, tagging the video file.\n- Identifying all the playersIdentify the court corners\n- Download the actions csv file"
     type: RichText
+  - data_bindings: []
+    layout_properties: {grid_position: 'NJBGRC,GOELKQ ETSDLW,VUQIGY'}
+    name: balltime_video
+    properties: {youtube_id: -O02BL_bPeg&t}
+    type: YouTubeVideo
   - layout_properties: {grid_position: 'NJBGRC,ARGUJR'}
     name: image_1
     properties: {height: 359.9791259765625, source: _/theme/balltime upload.png}
