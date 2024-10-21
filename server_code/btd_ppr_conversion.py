@@ -669,11 +669,11 @@ def srv_zone_net(x1):
     if math.isnan(x1):
       zone = 0
     elif isinstance(x1,(float,int)):
-      zone = "1"
+      zone = "5"
       if x1 > 2.667:
         zone = "3"
       if x1 > 5.333:
-        zone = "5"
+        zone = "1"
     else:
       zone = 0
   else:

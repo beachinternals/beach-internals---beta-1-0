@@ -1,0 +1,43 @@
+components:
+- components:
+  - layout_properties: {grid_position: 'QOAEHG,TUPZHC'}
+    name: label_1
+    properties: {role: title, text: Running Player Reports}
+    type: Label
+  layout_properties: {grid_position: 'QDUFLB,FSFDWU'}
+  name: outlined_card_1
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'IVHXWN,UJHLLM EWJVCS,AQYABZ'}
+    name: rich_text_2
+    properties:
+      content: "### Player Reports\n\nBeach Internals enables running multiple detailed reports on individual players and, soon, pairs.  These can be used for both individualized traing and scouting.  \n\n1) Log into the Beach Internals system\n2) On the main menu (left side fo the screen) select 'Player Reports'\n3) Select the data you want to look at and the limits on the data"
+    type: RichText
+  - layout_properties: {grid_position: 'IVHXWN,UJHLLM MFOTSF,ZJGJMI'}
+    name: rich_text_6
+    properties:
+      content: |-
+        #### Select the Data - League and Player
+        Selecting the data to view includes:
+        1) League - Combination of governing body, gender, and year, such as NCAA W 2025
+        2) Select the Player to report on.  The player drop down will be populated when the league drop down is changed, therefore, if the correct playuers are not display, change the league drop down.
+
+        #### Limit the Data
+        The data can also be limited by a variety of parameters including:
+        1) Competition Level - there are three potential levels that can be used to limit the data.  For example,  in the FIVB -- Maybe Elite 16, Gstaad, Pool play.  Or in the NCAA -- Regular Season, Both Top 20, 2's.  One of more of these filters may be applied, select the check box next to the filter to filter on that competition level.
+        2) Date Range - by selecting this check box, then adding a start date and end date, this will limit the report to match dates within this window.
+
+        #### Select the Report
+        The drop down lists all available reports.  Select the desired reports, then select "Generate Report".
+    type: RichText
+  - layout_properties: {grid_position: 'IVHXWN,ERGBZR'}
+    name: youtube_video_1
+    properties: {youtube_id: 0NQVE1FuvAc}
+    type: YouTubeVideo
+  layout_properties: {grid_position: 'GCCAKT,SRKPKF'}
+  name: outlined_card_3
+  properties: {role: outlined-card}
+  type: ColumnPanel
+container: {type: ColumnPanel}
+is_package: true

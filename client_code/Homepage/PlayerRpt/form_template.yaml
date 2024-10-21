@@ -37,7 +37,7 @@ components_by_slot:
       - layout_properties: {}
         name: team_drop_down
         properties:
-          items: [Scouting, Team]
+          items: [Scouting]
         type: DropDown
       layout_properties: {grid_position: 'TKRLGT,DDSDSX'}
       name: flow_panel_1
@@ -109,7 +109,7 @@ components_by_slot:
       - layout_properties: {}
         name: report_drop_down
         properties:
-          items: [FBHE Along the Net, FBHE by Attack Tactic, FBHE by Serve Source, FBHE by Pass Source, FBHE by Game Progress, FBHE by Attack Type, Serving Effectiveness, Transition, Expected Value, Error Analysis]
+          items: [FBHE Along the Net, FBHE by Attack Tactic, FBHE by Serve Source]
         type: DropDown
       - event_bindings: {click: generate_report_buttoon_click}
         layout_properties: {}

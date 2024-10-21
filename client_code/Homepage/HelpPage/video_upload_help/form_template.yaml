@@ -43,7 +43,7 @@ components:
   - data_bindings: []
     layout_properties: {grid_position: 'NJBGRC,GOELKQ ETSDLW,VUQIGY'}
     name: balltime_video
-    properties: {youtube_id: -O02BL_bPeg&t}
+    properties: {youtube_id: -O02BL_bPeg}
     type: YouTubeVideo
   - layout_properties: {grid_position: 'NJBGRC,ARGUJR'}
     name: image_1
@@ -54,11 +54,15 @@ components:
   properties: {role: outlined-card}
   type: ColumnPanel
 - components:
-  - layout_properties: {grid_position: 'CITRIA,OLWHKI'}
+  - layout_properties: {grid_position: 'CITRIA,OLWHKI VONUST,TNGBRY'}
     name: rich_text_4
     properties:
       content: "### On Beach Internals:\n- Upload the ball time data fileCreate the ppr files.\_ \n- This should be done once all the files is a group have been uploaded. \n- This step converts the ball time file into the beach internals format, and incorporates this new data into the\_"
     type: RichText
+  - layout_properties: {grid_position: 'CITRIA,OLWHKI ZHZHIE,COJSSM'}
+    name: youtube_video_1
+    properties: {youtube_id: i2fJFcUeuEI}
+    type: YouTubeVideo
   - layout_properties: {grid_position: 'CITRIA,IKVMKN PEUQEM,AQMTPL'}
     name: image_2
     properties: {height: 252.80813598632812, source: _/theme/btd upload 0.png}

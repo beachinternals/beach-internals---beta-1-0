@@ -20,6 +20,11 @@ components_by_slot:
         name: video_upload_help_link
         properties: {text: Instructions on Uploading Data}
         type: Link
+      - event_bindings: {click: link_1_click}
+        layout_properties: {grid_position: 'BEKBGA,BSVATU'}
+        name: link_1
+        properties: {text: Running your First Reports}
+        type: Link
       - layout_properties: {grid_position: 'PLQCPL,SISZKF'}
         name: video_load_help
         properties: {content: The whole process.  How we go from Video to detailed internal analysis}
@@ -31,10 +36,6 @@ components_by_slot:
       - layout_properties: {grid_position: 'JCCXRR,DUSAWU'}
         name: rich_text_4
         properties: {content: Setting up my staff and coaches on Beach Internals}
-        type: RichText
-      - layout_properties: {grid_position: 'SLEWQR,IBNDSI'}
-        name: rich_text_5
-        properties: {}
         type: RichText
       layout_properties: {grid_position: 'SJOHFF,XOTBXF'}
       name: column_panel_1

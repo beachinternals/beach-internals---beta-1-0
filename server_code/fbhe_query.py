@@ -237,10 +237,12 @@ def fbhe_by_tactic(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'Push to Pin'] = fbhe_vector[5]  # URL
 
     # Other
-    tmp_ppr_df = m_ppr_df[ ( (m_ppr_df['att_src_zone_net'] == 1) & (m_ppr_df['set_src_zone_net'] == 4) | 
-                           (m_ppr_df['att_src_zone_net'] == 5) & (m_ppr_df['set_src_zone_net'] == 2) ) &
-                            (m_ppr_df['tactic'] != 'behind' ) & 
-                            (m_ppr_df['tactic'] != 'option' )
+    tmp_ppr_df = m_ppr_df[  (m_ppr_df['tactic'] != 'behind' ) & 
+                            (m_ppr_df['tactic'] != 'option' ) &
+                            ~( ((m_ppr_df['att_src_zone_net'] == 1) & (m_ppr_df['set_src_zone_net'] == 4) | 
+                               (m_ppr_df['att_src_zone_net'] == 5) & (m_ppr_df['set_src_zone_net'] == 2) ) &
+                               ( m_ppr_df['set_height'] < 2 )) & 
+                            ~ ((m_ppr_df['set_height'] <= 2) & (m_ppr_df['set_dist'] <= 1))
                           ]
     fbhe_vector = fbhe( tmp_ppr_df, disp_player )
     fbhe_table.at[0,'Other'] = fbhe_vector[0]  # fbhe

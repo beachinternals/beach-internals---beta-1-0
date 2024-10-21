@@ -17,7 +17,10 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'VRYQVR,SARLUG'}
         name: rich_text_1
-        properties: {content: '- Team Overview, on the Player Report Page, to show the key statistics of all of a team''s players in one table to highlight areas about 75th percentile, and below the 25th percentile'}
+        properties:
+          content: |
+            - Coach's Dashboard : currently raw data for all players, refine and expand data and limit to selected players (team members)
+            - Add more reports
         type: RichText
       layout_properties: {grid_position: 'PSBUAR,VCSNSQ'}
       name: column_panel_1
@@ -30,7 +33,8 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'GQEFQR,EBVDOD'}
         name: rich_text_2
-        properties: {}
+        properties:
+          content: "- Data integrity needs further review\n- Better (or new) tolls to manage player data, math (btd) data, \n- Generate PDF report of all data\n- Enable scheduling of PDF reports to be emailed to coaches"
         type: RichText
       layout_properties: {grid_position: 'PSBUAR,XUZMQJ'}
       name: column_panel_2
