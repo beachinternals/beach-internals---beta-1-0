@@ -83,10 +83,14 @@ def calcualte_player_data( c_league, c_gender, c_year):
   for i in range(0,num_players):
     print(f"player: {p_list[i]}")
     player_df.at[i,'player'] = p_list[i]
-    # need to find the team for this player, search the master_player database
-    #p_row = anvil.master_player.search(league == c_gender, gender == c_gender, year == c_year )
-    
-    # player_df.at[i,'team'] = 
+
+    # unpack the player into the team, number, and short name
+    # there is a space in between, built lie this:
+    #  ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
+    teama = player_df.at[i,'player']
+    teama_loc = teama.index(" ")
+    this_team = teama[:teama_loc].strip()
+    player_df.at[i,'team'] = this_team
     
     fbhe_vector = fbhe(ppr_df, p_list[i])
     if fbhe_vector[3] >= min_att:
@@ -105,7 +109,7 @@ def calcualte_player_data( c_league, c_gender, c_year):
         fbhe_min = fbhe_vector[0] if fbhe_vector[0] < fbhe_min else fbhe_min
         fbhe_max = fbhe_vector[0] if fbhe_vector[0] > fbhe_max else fbhe_max
     if fbhe_max - fbhe_min != -1:
-      player_df.at[i,'fbhe_range'] = fbhe_max - fbhe_min
+      player_df.at[i,'fbhe_range'] = float("{:.3f}".format(fbhe_max - fbhe_min))
     else:
       player_df.at[i,'fbhe_range'] = None
     

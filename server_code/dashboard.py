@@ -38,20 +38,32 @@ def coaches_dashboard(league_value, disp_team):
 
   if ppr_csv_row:
     player_data_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data'].get_bytes()))
-    #player_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
+    player_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
   else:
     print('No Rows Found')
     return ["No Rows"]
-    
+
+  # somehow, we are getting a column called unamed: 0, so drop taht
+  #print(player_data_df.to_dict())
+  player_data_df = player_data_df.drop(['Unnamed: 0'], axis = 1 )
+  player_stats_df = player_stats_df.drop(['Unnamed: 0'], axis = 1 )
+  #print(player_data_df.to_dict())
+  
   # limit to player_data table to just this team
-  #player_data_df = player_data_df[player_data_df["team"] == disp_team]
+  if disp_team != "INTERNALS":
+    print(f" Disp Team,{disp_team}")
+    player_data_df = player_data_df[ player_data_df['team'] == disp_team.strip() ]
+  
   # replace nan with blanks
   player_data_df = player_data_df.fillna(' ')
-
-  # what dopes out table look like?
+  player_stats_df = player_stats_df.fillna('')
   print(player_data_df)
+  #print(player_stats_df)
+
+  # now, limit the data to this team, disp_team
+  #player_data_df = player_data_df[player_data_df['team'] == disp_team]
 
   # convert df to markdown table
-  df_table = pd.DataFrame.to_markdown(player_data_df)
-  
-  return df_table
+  df_table = pd.DataFrame.to_markdown(player_data_df, index=False )
+  df_stats_table = pd.DataFrame.to_markdown(player_stats_df, index=False )
+  return df_table, df_stats_table
