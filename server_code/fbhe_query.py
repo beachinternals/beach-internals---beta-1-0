@@ -371,6 +371,11 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
     fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
     fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
 
+    # for this calculation, elminate bad speed and distance data
+    # if both are 0, or speed is negaitve
+    #m_ppr_df = m_ppr_df[ ~( m_ppr_df['att_speed'] == 0 & m_ppr_df['att_dist'] == 0 ) ]
+    m_ppr_df = m_ppr_df[ (m_ppr_df['att_speed'] > 0) ]
+    
     # calculate for poke/roll, limit the data, and call fbhe
     fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) ], disp_player )
     fbhe_table.at[0,'Poke/Roll'] = fbhe_vector[0]  # fbhe
