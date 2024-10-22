@@ -18,6 +18,7 @@ class Homepage(HomepageTemplate):
     user_row = anvil.users.get_user()
 
     if user_row:
+      self.user_name_label.text = user_row['team'] 
       if user_row['team'] == "INTERNALS":
         self.admin_link.visible = True
         self.pair_rpt_link.visible = True
@@ -28,7 +29,6 @@ class Homepage(HomepageTemplate):
         self.pair_rpt_link.visible = False
         self.league_rpt_link.visible = False
         self.rpt_mgr_link.visible = False
-        self.user_name_label.text = user_row['team']
         self.scouting_rpt_link.visible = False
     else:
       self.admin_link.visible = False

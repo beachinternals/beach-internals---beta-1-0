@@ -147,7 +147,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
   return fbhe_return
 
 @anvil.server.callable
-def fbhe_by_tactic(disp_league, disp_gender, disp_year, 
+def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year, 
                     disp_team, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
