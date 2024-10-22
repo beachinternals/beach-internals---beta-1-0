@@ -39,7 +39,7 @@ class Dashboard(DashboardTemplate):
       alert('Please Contact Beach Internals to be Assigned to a Team')
       open_form('Homepage.Contact')
       
-    self.dashboard_text.content = anvil.server.call('coaches_dashboard', self.league_drop_down.selected_value, user_row['team'])
+    self.rich_text_2.content, self.rich_text_3.content = anvil.server.call('coaches_dashboard', self.league_drop_down.selected_value, user_row['team'])
     
     pass
 

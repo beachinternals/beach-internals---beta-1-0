@@ -83,10 +83,11 @@ components_by_slot:
         properties: {align: right, text: 'Date: Start:'}
         type: Label
       - layout_properties: {}
-        name: check_box_1
+        name: date_check_box
         properties: {text: ''}
         type: CheckBox
-      - name: start_date_picker
+      - event_bindings: {change: start_date_picker_change}
+        name: start_date_picker
         properties: {}
         type: DatePicker
       - layout_properties: {}
@@ -127,9 +128,6 @@ components_by_slot:
   - components:
     - components:
       - components:
-        - name: label_1
-          properties: {text: 'Data Included:'}
-          type: Label
         - name: rich_text_2
           properties: {}
           type: RichText

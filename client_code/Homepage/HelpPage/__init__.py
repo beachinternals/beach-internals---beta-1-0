@@ -8,6 +8,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 from video_upload_help import *
+from running_report_help import *
 
 class HelpPage(HelpPageTemplate):
   def __init__(self, **properties):
@@ -20,4 +21,10 @@ class HelpPage(HelpPageTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_2.clear()
     self.outlined_card_2.add_component(video_upload_help())
+    pass
+
+  def link_1_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_2.clear()
+    self.outlined_card_2.add_component(running_report_help())
     pass

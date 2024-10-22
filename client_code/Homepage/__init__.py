@@ -28,12 +28,14 @@ class Homepage(HomepageTemplate):
         self.pair_rpt_link.visible = False
         self.league_rpt_link.visible = False
         self.rpt_mgr_link.visible = False
-      self.user_name_label.text = user_row['team']
+        self.user_name_label.text = user_row['team']
+        self.scouting_rpt_link.visible = False
     else:
       self.admin_link.visible = False
       self.pair_rpt_link.visible = False
       self.league_rpt_link.visible = False
       self.rpt_mgr_link.visible = False
+      self.scouting_rpt_link.visible = False
 
     pass
     

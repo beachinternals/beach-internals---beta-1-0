@@ -6,19 +6,16 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
+import pandas as pd
+import io
 
 # This is a server module. It runs on the Anvil server,
-# rather than in the user's browser.
+
+# Functions in this library
 #
-# To allow anvil.server.call() to call functions here, we mark
-# them with @anvil.server.callable.
-# Here is an example - you can replace it with your own:
+#   fbhe( ppr_df, disp_player):
 #
-# @anvil.server.callable
-# def say_hello(name):
-#   print("Hello, " + name + "!")
-#   return 42
-#
+#   get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ): 
 
  
 def fbhe( ppr_df, disp_player):
@@ -81,4 +78,74 @@ def fbhe( ppr_df, disp_player):
 
   return fbhe_list
   
- 
+def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):  
+  #
+  # fetch the appropriate ppr table(s) from the ppr_csv table given the league and team, and if scout data
+
+  no_data = True
+  print(f"Searching Team Rows: L:{disp_league}, G:{disp_gender},Y:{disp_year},T:{disp_team}")
+  ppr_csv_row = app_tables.ppr_csv_tables.get( 
+    q.all_of(
+      league = disp_league,
+      gender = disp_gender,
+      year = disp_year,
+      team = disp_team
+      ) )
+
+  if ppr_csv_row:
+    m_ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
+    ppr_for_team_found = True
+  else:
+    m_ppr_df = [" "]
+    print('No Team Rows Found')
+    ppr_for_team_found = False
+
+  if scout:
+    # now look for the scout data (league wide public data) and merge the two
+    # print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
+    ppr_scout_row = app_tables.ppr_csv_tables.get( 
+      q.all_of(
+        league = disp_league,
+        gender = disp_gender,
+        year = disp_year,
+        team = "Scout"
+      ) 
+    )
+
+    if ppr_scout_row:
+      scout_ppr_df =  pd.read_csv(io.BytesIO( ppr_scout_row['ppr_csv'].get_bytes()))
+      if ppr_for_team_found:
+        m_ppr_df = pd.concat([m_ppr_df,scout_ppr_df])
+      else:
+        m_ppr_df = scout_ppr_df
+      print(f'Scout DB Found:{scout_ppr_df.shape}')
+    else:
+      print('No Scout Rows Found')
+
+
+  return m_ppr_df
+
+def ppr_df_limit( m_ppr_df, 
+                          comp_l1_checked, disp_comp_l1, 
+                          comp_l2_checked, disp_comp_l2, 
+                          comp_l3_checked, disp_comp_l3, 
+                          date_checked, disp_start_date, disp_end_date
+                         ):
+  #
+  # take an imput ppr_df, and limit it by competition level and date
+  if comp_l1_checked:
+    m_ppr_df = m_ppr_df[ m_ppr_df['comp_l1'] ==  disp_comp_l1 ]
+    print(f"Limitiing by Comp l1:{disp_comp_l1}, Size:{m_ppr_df.shape}")
+  if comp_l2_checked:
+    m_ppr_df = m_ppr_df[ m_ppr_df['comp_l2'] == disp_comp_l2 ]
+    print(f"Limitiing by Comp l2:{disp_comp_l2}, Size:{m_ppr_df.shape}")
+  if comp_l3_checked:
+    m_ppr_df = m_ppr_df[ m_ppr_df['comp_l3'] == disp_comp_l3 ]
+    print(f"Limitiing by Comp l3:{disp_comp_l3}, Size:{m_ppr_df.shape}")
+  if date_checked:
+    m_ppr_df['game_date'] = pd.to_datetime(m_ppr_df['game_date'])
+    m_ppr_df['game_date'] = m_ppr_df['game_date'].dt.date
+    m_ppr_df = m_ppr_df.loc[(m_ppr_df['game_date'] >= disp_start_date) & (m_ppr_df['game_date'] <= disp_end_date) ]
+    print(f"Limitiing by Dates:{disp_start_date},{disp_end_date}")
+    
+  return m_ppr_df

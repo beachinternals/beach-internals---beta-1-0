@@ -22,7 +22,7 @@ from server_functions import fbhe
 def calcualte_player_data( c_league, c_gender, c_year):
   result_string = "Calcualte Player Data server module Called"
 
-  c_team = "League"    # only updating hte league tables
+  c_team = "League"    # only updating the league tables
   print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
@@ -64,7 +64,7 @@ def calcualte_player_data( c_league, c_gender, c_year):
   # build the ppr_dataframe out tpo the proper number of rows, equal total points,
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
 
-  player_dict = {'player':[str()],
+  player_dict = {'player':[str()], 'team':[str()],
                  'fbhe':None,'fbhe1':None,'fbhe2':None,'fbhe3':None,'fbhe4':None,'fbhe5':None,'fbhe_range':None
                 }
   print(f"Player Dict:{player_dict}")
@@ -82,10 +82,20 @@ def calcualte_player_data( c_league, c_gender, c_year):
   
   for i in range(0,num_players):
     print(f"player: {p_list[i]}")
+    player_df.at[i,'player'] = p_list[i]
+
+    # unpack the player into the team, number, and short name
+    # there is a space in between, built lie this:
+    #  ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
+    teama = player_df.at[i,'player']
+    teama_loc = teama.index(" ")
+    this_team = teama[:teama_loc].strip()
+    player_df.at[i,'team'] = this_team
+    
     fbhe_vector = fbhe(ppr_df, p_list[i])
     if fbhe_vector[3] >= min_att:
       player_df.at[i,'fbhe'] = fbhe_vector[0]
-    player_df.at[i,'player'] = p_list[i]
+
     print(f"player_df after fbhe calc:{player_df}")
 
     fbhe_min = 1
@@ -99,7 +109,7 @@ def calcualte_player_data( c_league, c_gender, c_year):
         fbhe_min = fbhe_vector[0] if fbhe_vector[0] < fbhe_min else fbhe_min
         fbhe_max = fbhe_vector[0] if fbhe_vector[0] > fbhe_max else fbhe_max
     if fbhe_max - fbhe_min != -1:
-      player_df.at[i,'fbhe_range'] = fbhe_max - fbhe_min
+      player_df.at[i,'fbhe_range'] = float("{:.3f}".format(fbhe_max - fbhe_min))
     else:
       player_df.at[i,'fbhe_range'] = None
     
