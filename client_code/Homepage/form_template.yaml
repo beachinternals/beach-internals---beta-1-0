@@ -39,7 +39,7 @@ components:
     - {code: '', property: text, writeback: false}
     layout_properties: {}
     name: user_name_label
-    properties: {align: right, font: '8'}
+    properties: {align: right, font: '6'}
     type: Label
   - event_bindings: {click: user_page_click}
     layout_properties: {}

@@ -172,20 +172,19 @@ class PlayerRpt(PlayerRptTemplate):
       function_name = 'fbhe_by_attack_tactic'
     elif report_name == 'FBHE by Serve Source':
       function_name = 'fbhe_by_srv_src'
-    
-    # now, call the server modeul
-
+    elif report_name == 'FBHE by Attack Type':
+      function_name = 'fbhe_by_attack_type'
 
     # now, call the server module.
     # now including limits on competition (1,2,3) and dates
     # check comp_l3, if not, set to str()
     if type(self.comp_l3_drop_down.selected_value['comp_l3']) == type(None):
       self.comp_l3_drop_down.selected_value['comp_l3'] = str()
-    print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player}")
-    print(f" Comp l1: {self.comp_l1_check_box.checked},{self.comp_l1_drop_down.selected_value['comp_l1']}")
-    print(f" Comp L2: {self.comp_l2_check_box.checked},{self.comp_l2_drop_down.selected_value['comp_l2']}")
-    print(f" Comp L3: {self.comp_l3_check_box.checked},{self.comp_l3_drop_down.selected_value['comp_l3']}")
-    print(f" Dates: {self.date_check_box.checked}, {self.start_date_picker.date}, {self.end_date_picker.date}")
+    #print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player}")
+    #print(f" Comp l1: {self.comp_l1_check_box.checked},{self.comp_l1_drop_down.selected_value['comp_l1']}")
+    #print(f" Comp L2: {self.comp_l2_check_box.checked},{self.comp_l2_drop_down.selected_value['comp_l2']}")
+    #print(f" Comp L3: {self.comp_l3_check_box.checked},{self.comp_l3_drop_down.selected_value['comp_l3']}")
+    #print(f" Dates: {self.date_check_box.checked}, {self.start_date_picker.date}, {self.end_date_picker.date}")
     table_data = anvil.server.call(function_name, 
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_player, 

@@ -257,6 +257,8 @@ def save_set_info( ppr_df, btd_r, ppr_row):
   return ppr_df
 
 def save_att_info( ppr_df, btd_r, ppr_row):
+  print(f"saving ATT info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
+  
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_action_id'))] = int(btd_r['action_id'])
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_src_t'))] = btd_r['action_time']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_dest_x'))] = btd_r['dest_x']
@@ -268,8 +270,10 @@ def save_att_info( ppr_df, btd_r, ppr_row):
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_dest_t'))] = ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_src_t'))]
   if 'vertical_touch_height' in btd_r:
     ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_touch_height'))] = btd_r['vertical_touch_height']
-    
-  #print(f"saving ATT info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
+  if 'speed_mph' in btd_r:
+    if isinstance(btd_r['speed_mph'],(float,int)):
+      print(f"Saving Att Speed:{btd_r['speed_mph']}")
+      ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_speed'))] = float(btd_r['speed_mph'])*0.44704  # convert MPH to M/S  
 
   return ppr_df
 
@@ -453,7 +457,8 @@ def calc_ppr_data(ppr_df):
       ppr_df.at[index,'att_angle'] = calc_angle(ppr_r['att_src_x'],ppr_r['att_src_y'],ppr_r['att_dest_x'],ppr_r['att_dest_y'])
       if isinstance(ppr_r['att_dest_t'],(float,int)):
         ppr_df.at[index,'att_dur'] = calc_dur(ppr_r['att_src_t'],ppr_r['att_dest_t'])
-        ppr_df.at[index,'att_speed'] = calc_speed(ppr_df.at[index,'att_dist'],ppr_df.at[index,'att_dur'])
+        if not ppr_df.at[index,'att_speed']:  # in case the speed was imported directly from the dataset
+          ppr_df.at[index,'att_speed'] = calc_speed(ppr_df.at[index,'att_dist'],ppr_df.at[index,'att_dur'])
         ppr_df.at[index,'att_height'] = calc_height(ppr_r['att_src_t'],ppr_r['att_dest_t'])
 
     if ppr_r['dig_yn'] == "Y":

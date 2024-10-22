@@ -325,6 +325,88 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
   return fbhe_return
 
 @anvil.server.callable
+def fbhe_by_attack_type(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout
+               ):
+  # return a markdown text to display
+  # given the parameters
+
+  ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
+  m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout )
+  m_ppr_df = ppr_df_limit( m_ppr_df, 
+                          comp_l1_checked, disp_comp_l1, 
+                          comp_l2_checked, disp_comp_l2, 
+                          comp_l3_checked, disp_comp_l3, 
+                          date_checked, disp_start_date, disp_end_date
+                         )
+    
+  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+
+  ############## Secomd - Create the dataframe that will be displayed as a table, report specific
+  # create the output dataframe - This is speficif to the report
+  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
+             'All':[0,0,0,0,0,' '],
+             'Poke/Roll':[0,0,0,0,0,' '],
+             'Shot':[0,0,0,0,0,' '],
+             'Bang/Hard':[0,0,0,0,0,' '],
+             ' - ':[0,0,0,0,0,' '],
+             ' -- ':[0,0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  if m_ppr_df.shape[0] > 0:
+    # calculate fbhe for all attacks
+    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    fbhe_vector = fbhe( m_ppr_df, disp_player )
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+
+    # calculate for poke/roll, limit the data, and call fbhe
+    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) ], disp_player )
+    fbhe_table.at[0,'Poke/Roll'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'Poke/Roll'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'Poke/Roll'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'Poke/Roll'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'Poke/Roll'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'Poke/Roll'] = fbhe_vector[5]  # URL
+
+    # calculate for shot, imit the data, and call fbhe
+    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 ) ], disp_player )
+    fbhe_table.at[0,'Shot'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'Shot'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'Shot'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'Shot'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'Shot'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'Shot'] = fbhe_vector[5]  # URL
+
+        # calculate for poke/roll
+    # limit the data, and call fbhe
+    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 ) ], disp_player )
+    fbhe_table.at[0,'Bang/Hard'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'Bang/Hard'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'Bang/Hard'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'Bang/Hard'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'Bang/Hard'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'Bang/Hard'] = fbhe_vector[5]  # URL
+    
+    # now create the markdown text to return
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+  else:
+    fbhe_return = "No Data Found"
+  
+  return fbhe_return
+
+@anvil.server.callable
 def report_stub(disp_league, disp_gender, disp_year, 
                     disp_team, disp_player,
                     comp_l1_checked, disp_comp_l1,
