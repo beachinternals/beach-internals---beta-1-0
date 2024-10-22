@@ -163,7 +163,7 @@ def btd_to_ppr_df(btd_df, flist_r):
       btd_r['player'] = player_b2
     else:
       # ######## print this to a file to display as this is an error in the data #####################
-      print(f"Could not find the player!! {btd_r['player']}, Row {index} in these four: {flist_r['player1']}, {flist_r['player2']}, {flist_r['player3']}, {flist_r['player4']}") 
+      #print(f"Could not find the player!! {btd_r['player']}, Row {index} in these four: {flist_r['player1']}, {flist_r['player2']}, {flist_r['player3']}, {flist_r['player4']}") 
       btd_r['player'] = " "
     
     # if this is a serve, then start a new point
@@ -539,31 +539,31 @@ def error_check_ppr(ppr_df):
   for index,ppr_r in ppr_df.iterrows():
     # pass, set, attack all by same player
     if ppr_r['att_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and (ppr_r['set_player'] == ppr_r['att_player'] ):
-      print(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
+      #print(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       all3 = True
       error_string = error_string + print_to_string(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       no_errors += 1
       
     if ppr_r['set_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and not all3:
-      print(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
+      #print(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
       error_string = error_string + print_to_string(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
       no_errors += 1
 
     if ppr_r['att_yn'] == "Y" and (ppr_r['att_player'] == ppr_r['set_player'] ) and not all3:  
-      print(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
+      #print(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
       error_string = error_string + print_to_string(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
       no_errors += 1
       
     # serve and attack player are the same team
     if ppr_r['pass_yn'] == "Y":
       if (ppr_r['serve_player'] in ppr_r['teama']) and (ppr_r['pass_player'] in ppr_r['teama'] ) or (ppr_r['serve_player'] in ppr_r['teamb']) and (ppr_r['pass_player'] in ppr_r['teamb'] ):
-        print(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
+        #print(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
         error_string = error_string + print_to_string(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
         no_errors += 1
       
     # can I check the service order?
     if not ppr_r['serve_player']:
-      print(f"|- No Serve Player                   -|{ppr_r['serve_player']}, Point Number:{ppr_r['point_no']}")
+      #print(f"|- No Serve Player                   -|{ppr_r['serve_player']}, Point Number:{ppr_r['point_no']}")
       error_string = error_string + print_to_string(f"|- No Serve Player                   -|{ppr_r['serve_player']}, Point Number:{ppr_r['point_no']}")
       no_errors += 1
       
@@ -571,7 +571,7 @@ def error_check_ppr(ppr_df):
 
     # someday, I'll have to deal with missing players
 
-  print(f"Total Errors Found:{no_errors}")
+  #print(f"Total Errors Found:{no_errors}")
   error_string = error_string + print_to_string(f"Total Errors Found:{no_errors}")
   
   return ppr_df, no_errors, error_string
