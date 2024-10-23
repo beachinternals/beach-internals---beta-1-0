@@ -518,42 +518,35 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
-  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
-             'All':[0,0,0,0,0,' '],
-             'Zone 1':[0,0,0,0,0,' '],
-             "Zone 2":[0,0,0,0,0,' '],
-             'Zone 3':[0,0,0,0,0,' '],
-             'Zone 4':[0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,' ']
+  df_dict = {' ':['Zone A','Zone B','Zone C','Zone D', 'Zone E'],
+             'Zone 1':[0,0,0,0,0],
+             "Zone 2":[0,0,0,0,0],
+             'Zone 3':[0,0,0,0,0],
+             'Zone 4':[0,0,0,0,0],
+             'Zone 5':[0,0,0,0,0]
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
-  att_table = pd.Data
-
+  att_table = pd.DataFrame.from_dict( df_dict)
+  net_list = [1,2,3,4,5]
+  depth_list = ['A','B','C','D','E']
+  
   ############### Third Populate the dataframe, assuming we have data returned
   if m_ppr_df.shape[0] > 0:
-    # calculate fbhe for all attacks
-    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
-    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
-
-    # calculate for zones 1 - 5
-    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
-    for i in [1,2,3,4,5]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player, 'att' )
-      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
-      fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
-      fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+    # start loop over net, 1 - 5
+    for i in net_list:
+      print(f"i:{i}")
+      tmp1_df = m_ppr_df[ m_ppr_df['serve_dest_zone_net'] == i]
+      print(f"tmp1 df shape:{tmp1_df.shape}")
+      for j in net_list:
+        tmp2_df = tmp1_df[ tmp1_df['serve_dest_zone_depth'] == depth_list[j-1]]
+        print(f"tmp2 df shape:{tmp2_df.shape}")
+        fbhe_vector = fbhe( tmp2_df, disp_player, 'pass' )
+        fbhe_table[i-1,j-1] = fbhe_vector[0]
+        att_table[i-1,j-1] = fbhe_vector[1]
 
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    print(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table) #  + pd.DataFrame.to_markdown(att_table)
   else:
     fbhe_return = "No Data Found"
   

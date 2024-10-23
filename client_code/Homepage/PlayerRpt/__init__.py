@@ -176,7 +176,7 @@ class PlayerRpt(PlayerRptTemplate):
       function_name = 'fbhe_by_attack_type'
     elif report_name == 'Serving Effectiveness':
       function_name = 'srv_eff'
-    elif report_name == 'FBHE by Serve Desitnation':
+    elif report_name == 'FBHE by Serve Destination':
       function_name = 'fbhe_srv_dest'
 
     # now, call the server module.
