@@ -52,7 +52,7 @@ def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player
   
   if ppr_csv_row and m_ppr_df.shape[0] != 0:
     # calculate fbhe for all attacks
-    fbhe_vector = fbhe( m_ppr_df, disp_player )
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
@@ -63,7 +63,7 @@ def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player
     # calculate for zones 1 - 5
     column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
     for i in [1,2,3,4,5]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player )
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player, 'att' )
       fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
       fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
       fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
@@ -121,7 +121,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player )
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
@@ -132,7 +132,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
     # calculate for zones 1 - 5
     column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
     for i in [1,2,3,4,5]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player )
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player, 'att' )
       fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
       fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
       fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
@@ -185,7 +185,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player )
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
@@ -195,7 +195,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
 
     # Option
     tmp_ppr_df = m_ppr_df[m_ppr_df['tactic'] == "option"]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'Option'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Option'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Option'] = fbhe_vector[2]  # errors
@@ -205,7 +205,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
 
     # Behind
     tmp_ppr_df = m_ppr_df[m_ppr_df['tactic'] == "behind"]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'Behind'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Behind'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Behind'] = fbhe_vector[2]  # errors
@@ -215,7 +215,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
 
     # Tempo
     tmp_ppr_df = m_ppr_df[(m_ppr_df['set_height'] <= 2) & (m_ppr_df['set_dist'] <= 1) ]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'Tempo'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Tempo'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Tempo'] = fbhe_vector[2]  # errors
@@ -228,7 +228,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
                            (m_ppr_df['att_src_zone_net'] == 5) & (m_ppr_df['set_src_zone_net'] == 2) ) &
                             ( m_ppr_df['set_height'] < 2 )
                           ]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'Push to Pin'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Push to Pin'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Push to Pin'] = fbhe_vector[2]  # errors
@@ -244,7 +244,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
                                ( m_ppr_df['set_height'] < 2 )) & 
                             ~ ((m_ppr_df['set_height'] <= 2) & (m_ppr_df['set_dist'] <= 1))
                           ]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'Other'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Other'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Other'] = fbhe_vector[2]  # errors
@@ -298,7 +298,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player )
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
@@ -309,7 +309,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
     # calculate for zones 1 - 5
     column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
     for i in [1,2,3,4,5]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['serve_src_zone_net']==i], disp_player )
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['serve_src_zone_net']==i], disp_player, 'att' )
       fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
       fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
       fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
@@ -363,7 +363,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player )
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
@@ -377,7 +377,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
     m_ppr_df = m_ppr_df[ (m_ppr_df['att_speed'] > 0) ]
     
     # calculate for poke/roll, limit the data, and call fbhe
-    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) ], disp_player )
+    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) ], disp_player, 'att' )
     fbhe_table.at[0,'Poke/Roll'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Poke/Roll'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Poke/Roll'] = fbhe_vector[2]  # errors
@@ -386,7 +386,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'Poke/Roll'] = fbhe_vector[5]  # URL
 
     # calculate for shot, imit the data, and call fbhe
-    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 ) ], disp_player )
+    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 ) ], disp_player, 'att' )
     fbhe_table.at[0,'Shot'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Shot'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Shot'] = fbhe_vector[2]  # errors
@@ -396,7 +396,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
 
         # calculate for poke/roll
     # limit the data, and call fbhe
-    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 ) ], disp_player )
+    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 ) ], disp_player, 'att' )
     fbhe_table.at[0,'Bang/Hard'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Bang/Hard'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Bang/Hard'] = fbhe_vector[2]  # errors
@@ -410,6 +410,155 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
     fbhe_return = "No Data Found"
   
   return fbhe_return
+
+@anvil.server.callable
+def srv_eff(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout
+               ):
+  # return a markdown text to display
+  # given the parameters
+
+  ########### Serving Effectiveness  #####################
+
+  ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
+  m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout )
+  m_ppr_df = ppr_df_limit( m_ppr_df, 
+                          comp_l1_checked, disp_comp_l1, 
+                          comp_l2_checked, disp_comp_l2, 
+                          comp_l3_checked, disp_comp_l3, 
+                          date_checked, disp_start_date, disp_end_date
+                         )
+    
+  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+
+  ############## Secomd - Create the dataframe that will be displayed as a table, report specific
+  # create the output dataframe - This is speficif to the report
+  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
+             'All':[0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,' '],
+             "Zone 3":[0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,' '],
+             ' - ':[0,0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  if m_ppr_df.shape[0] > 0:
+    # calculate fbhe for all attacks
+    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'srv' )
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+
+    # calculate for zones 1, 3, 5
+    column = ['Zone 1','Zone 3','Zone 5']
+    for i in [1,2,3]:
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['serve_src_zone_net']==(i-1)*2 +1], disp_player, 'srv' )  # trying to get to 1, 3, 5
+      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
+      fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
+      fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
+      fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+
+    # now those whitoput a zone
+    tmp_df = m_ppr_df[ m_ppr_df['serve_src_zone_net'] != 1 ]
+    tmp_df = tmp_df[ tmp_df['serve_src_zone_net'] != 3]
+    tmp_df = tmp_df[ tmp_df['serve_src_zone_net'] != 5]
+    fbhe_vector = fbhe( tmp_df,
+                       disp_player, 
+                       'srv' )
+    fbhe_table.at[0,'No Zone'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'No Zone'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'No Zone'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'No Zone'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'No Zone'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'No Zone'] = fbhe_vector[5]  # URL
+    
+    # now create the markdown text to return
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+  else:
+    fbhe_return = "No Data Found"
+  
+  return fbhe_return
+
+
+@anvil.server.callable
+def fbhe_srv_dest(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout
+               ):
+  # return a markdown text to display
+  # given the parameters
+
+  ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
+  m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout )
+  m_ppr_df = ppr_df_limit( m_ppr_df, 
+                          comp_l1_checked, disp_comp_l1, 
+                          comp_l2_checked, disp_comp_l2, 
+                          comp_l3_checked, disp_comp_l3, 
+                          date_checked, disp_start_date, disp_end_date
+                         )
+    
+  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+
+  ############## Secomd - Create the dataframe that will be displayed as a table, report specific
+  # create the output dataframe - This is speficif to the report
+  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
+             'All':[0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,' '],
+             "Zone 2":[0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,' '],
+             'Zone 4':[0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+  att_table = pd.Data
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  if m_ppr_df.shape[0] > 0:
+    # calculate fbhe for all attacks
+    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+
+    # calculate for zones 1 - 5
+    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
+    for i in [1,2,3,4,5]:
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player, 'att' )
+      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
+      fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
+      fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
+      fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+
+    # now create the markdown text to return
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+  else:
+    fbhe_return = "No Data Found"
+  
+  return fbhe_return
+
 
 @anvil.server.callable
 def report_stub(disp_league, disp_gender, disp_year, 
@@ -450,7 +599,7 @@ def report_stub(disp_league, disp_gender, disp_year,
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player )
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
@@ -461,7 +610,7 @@ def report_stub(disp_league, disp_gender, disp_year,
     # calculate for zones 1 - 5
     column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
     for i in [1,2,3,4,5]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player )
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player, 'att' )
       fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
       fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
       fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors

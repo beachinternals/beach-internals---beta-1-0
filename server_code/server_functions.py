@@ -18,7 +18,7 @@ import io
 #   get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ): 
 
  
-def fbhe( ppr_df, disp_player):
+def fbhe( ppr_df, disp_player, play_type):
   # pass this a query of rows, figures the FBHE for the display player as the attacker
   # initialize the vector
   fbhe_list = [ 0.0, 0, 0, 0, 0, " " ]    # FBHE
@@ -28,7 +28,12 @@ def fbhe( ppr_df, disp_player):
   if ppr_df.shape[0] == 0:      # Then no data passed!
     fbhe_list = [ 0.0, 0, 0, 0, 0, " No Data Available " ]
   else:
-    ppr_df = ppr_df[ppr_df['att_player']==disp_player]
+    if play_type == "att":
+      ppr_df = ppr_df[ppr_df['att_player']==disp_player]
+    elif play_type == "srv":
+      ppr_df = ppr_df[ppr_df['serve_player']==disp_player]
+    elif play_type == "pass":
+      ppr_df = ppr_df[ppr_df['pass_player']==disp_player]
 
     # to build the video link, need a quick loop over rows:
     video_list = [*range(0,ppr_df.shape[0],1)]

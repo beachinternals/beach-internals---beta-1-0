@@ -174,6 +174,10 @@ class PlayerRpt(PlayerRptTemplate):
       function_name = 'fbhe_by_srv_src'
     elif report_name == 'FBHE by Attack Type':
       function_name = 'fbhe_by_attack_type'
+    elif report_name == 'Serving Effectiveness':
+      function_name = 'srv_eff'
+    elif report_name == 'FBHE by Serve Desitnation':
+      function_name = 'fbhe_srv_dest'
 
     # now, call the server module.
     # now including limits on competition (1,2,3) and dates
@@ -218,4 +222,8 @@ class PlayerRpt(PlayerRptTemplate):
 
   def start_date_picker_change(self, **event_args):
     """This method is called when the selected date changes"""
+    pass
+
+  def report_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
     pass

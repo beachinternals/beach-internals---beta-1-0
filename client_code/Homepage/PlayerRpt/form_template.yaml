@@ -107,10 +107,11 @@ components_by_slot:
         name: label_5
         properties: {align: right, text: 'Report:'}
         type: Label
-      - layout_properties: {}
+      - event_bindings: {change: report_drop_down_change}
+        layout_properties: {}
         name: report_drop_down
         properties:
-          items: [FBHE Along the Net, FBHE by Attack Tactic, FBHE by Serve Source, FBHE by Attack Type]
+          items: [FBHE Along the Net, FBHE by Attack Tactic, FBHE by Serve Source, FBHE by Attack Type, FBHE by Serve Destination, Serving Effectiveness]
         type: DropDown
       - event_bindings: {click: generate_report_buttoon_click}
         layout_properties: {}

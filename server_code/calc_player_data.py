@@ -19,7 +19,7 @@ from server_functions import fbhe
 #  player_data is only for league entries in the ppr_csv_tables table.  We also sotre the list of player data stats
 
 @anvil.server.callable
-def calcualte_player_data( c_league, c_gender, c_year):
+def calculate_player_data( c_league, c_gender, c_year):
   result_string = "Calcualte Player Data server module Called"
 
   c_team = "League"    # only updating the league tables
@@ -92,7 +92,7 @@ def calcualte_player_data( c_league, c_gender, c_year):
     this_team = teama[:teama_loc].strip()
     player_df.at[i,'team'] = this_team
     
-    fbhe_vector = fbhe(ppr_df, p_list[i])
+    fbhe_vector = fbhe(ppr_df, p_list[i], 'att')
     if fbhe_vector[3] >= min_att:
       player_df.at[i,'fbhe'] = fbhe_vector[0]
 
@@ -101,7 +101,7 @@ def calcualte_player_data( c_league, c_gender, c_year):
     fbhe_min = 1
     fbhe_max = 0
     for j in [1,2,3,4,5]:
-      fbhe_vector = fbhe(ppr_df[ppr_df['att_src_zone_net']==j], p_list[i])
+      fbhe_vector = fbhe(ppr_df[ppr_df['att_src_zone_net']==j], p_list[i], 'att')
       field = "fbhe" + str(j)
       print(f"Field:{field}, fbhe vector:{fbhe_vector}")
       if fbhe_vector[3] >= min_att:
