@@ -520,13 +520,14 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
   # create the output dataframe - This is speficif to the report
   df_dict = {' ':['Zone A','Zone B','Zone C','Zone D', 'Zone E'],
              'Zone 1':[0,0,0,0,0],
-             "Zone 2":[0,0,0,0,0],
+             'Zone 2':[0,0,0,0,0],
              'Zone 3':[0,0,0,0,0],
              'Zone 4':[0,0,0,0,0],
              'Zone 5':[0,0,0,0,0]
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
   att_table = pd.DataFrame.from_dict( df_dict)
+  print(fbhe_table)
   net_list = [1,2,3,4,5]
   depth_list = ['A','B','C','D','E']
   
@@ -536,17 +537,17 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
     for i in net_list:
       print(f"i:{i}")
       tmp1_df = m_ppr_df[ m_ppr_df['serve_dest_zone_net'] == i]
-      print(f"tmp1 df shape:{tmp1_df.shape}")
+      print(f"i = {i}, tmp1 df shape:{tmp1_df.shape}")
       for j in net_list:
         tmp2_df = tmp1_df[ tmp1_df['serve_dest_zone_depth'] == depth_list[j-1]]
-        print(f"tmp2 df shape:{tmp2_df.shape}")
+        print(f"i,j = {i},{j}, tmp2 df shape:{tmp2_df.shape}")
         fbhe_vector = fbhe( tmp2_df, disp_player, 'pass' )
-        fbhe_table[i-1,j-1] = fbhe_vector[0]
-        att_table[i-1,j-1] = fbhe_vector[1]
+        fbhe_table.iloc[j-1,i] = fbhe_vector[0]
+        att_table.iloc[j-1,i] = fbhe_vector[1]
 
     # now create the markdown text to return
     print(fbhe_table)
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table) #  + pd.DataFrame.to_markdown(att_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table) + ' ### '+ pd.DataFrame.to_markdown(att_table)
   else:
     fbhe_return = "No Data Found"
   
