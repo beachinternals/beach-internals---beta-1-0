@@ -189,7 +189,7 @@ class PlayerRpt(PlayerRptTemplate):
     #print(f" Comp L2: {self.comp_l2_check_box.checked},{self.comp_l2_drop_down.selected_value['comp_l2']}")
     #print(f" Comp L3: {self.comp_l3_check_box.checked},{self.comp_l3_drop_down.selected_value['comp_l3']}")
     #print(f" Dates: {self.date_check_box.checked}, {self.start_date_picker.date}, {self.end_date_picker.date}")
-    table_data = anvil.server.call(function_name, 
+    table_data1, table_data2, table_data3, table_data4 = anvil.server.call(function_name, 
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
@@ -212,7 +212,10 @@ class PlayerRpt(PlayerRptTemplate):
       filter_text = filter_text + ' Date Range ='+str(self.start_date_picker.date)+' to '+str(self.end_date_picker.date)
       
     self.rich_text_2.content = filter_text
-    self.rpt_disp_box.content = table_data
+    self.rpt_disp_box.content = table_data1
+    self.rpt_disp_box2.content = table_data2
+    self.rpt_disp_box3.content = table_data3
+    self.rpt_disp_box4.content = table_data4
     
     pass
 
