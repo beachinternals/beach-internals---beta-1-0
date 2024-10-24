@@ -178,6 +178,8 @@ class PlayerRpt(PlayerRptTemplate):
       function_name = 'srv_eff'
     elif report_name == 'FBHE by Serve Destination':
       function_name = 'fbhe_srv_dest'
+    elif report_name == 'Error Density':
+      function_name = 'error_density'
 
     # now, call the server module.
     # now including limits on competition (1,2,3) and dates
