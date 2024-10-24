@@ -65,7 +65,12 @@ def calculate_player_data( c_league, c_gender, c_year):
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
 
   player_dict = {'player':[str()], 'team':[str()],
-                 'fbhe':None,'fbhe1':None,'fbhe2':None,'fbhe3':None,'fbhe4':None,'fbhe5':None,'fbhe_range':None
+                 'fbhe':None,'fbhe1':None,'fbhe2':None,'fbhe3':None,'fbhe4':None,'fbhe5':None,'fbhe_range':None,
+                 'err_den':None,'tcr_r':None,'tcr_s':None,'expected':None,
+                 'srv_fbhe':None,'srv1_fbhe':None,'srv3_fbhe':None,'srv5_fbhe':None,
+                 'poke_fbhe':None,'poke_per':None,'shoot_fbhe':None,'shoot_per':None,'bang_fbhe':None,'band_per':None,
+                 'fbhe_srv1':None,'fbhe_srv3':None,'fbhe_srv5':None,
+                 'fbhe_option':None, 'option_per':None,'fbhe_behind':None,'behind_per':None,'fbhe_tempo':None,'tempo_per':None
                 }
   print(f"Player Dict:{player_dict}")
   player_df = pd.DataFrame.from_records(player_dict)

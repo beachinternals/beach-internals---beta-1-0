@@ -592,7 +592,7 @@ def report_stub(disp_league, disp_gender, disp_year,
                           comp_l2_checked, disp_comp_l2, 
                           comp_l3_checked, disp_comp_l3, 
                           date_checked, disp_start_date, disp_end_date
-                         )
+                         ) 
     
   print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
