@@ -55,6 +55,12 @@ class PlayerRpt(PlayerRptTemplate):
     # set the default for team drop down and l1, l2, l3 
     self.team_drop_down.selected_value = 'Scouting'
 
+    # populate the reports drop down
+    self.report_drop_down.items = [
+      (row['report_name']) for row in app_tables.report_list.search( private=False)
+    ]
+  
+
     
   def PlayerRpt1_click_click(self, **event_args):
     """This method is called when the link is clicked"""
@@ -161,37 +167,20 @@ class PlayerRpt(PlayerRptTemplate):
 
     # unpack the report to process
     # replace this with a data driven approach
-    report_name = self.report_drop_down.selected_value
-    scout = True      # right now, we always want the scouting version of the data
-    if report_name == 'FBHE Along the Net':
-      if self.team_drop_down.selected_value == "Scouting":
-        function_name = 'fbhe_scout_query'
-      else:
-        function_name = 'fbhe_table_query'
-    elif report_name == 'FBHE by Attack Tactic':
-      function_name = 'fbhe_by_attack_tactic'
-    elif report_name == 'FBHE by Serve Source':
-      function_name = 'fbhe_by_srv_src'
-    elif report_name == 'FBHE by Attack Type':
-      function_name = 'fbhe_by_attack_type'
-    elif report_name == 'Serving Effectiveness':
-      function_name = 'srv_eff'
-    elif report_name == 'FBHE by Serve Destination':
-      function_name = 'fbhe_srv_dest'
-    elif report_name == 'Error Density':
-      function_name = 'error_density'
-
+    rpt_name = self.report_drop_down.selected_value
+    function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    print(function_list)
+    fnct_name = function_list[0]
+    scout = True
+    
     # now, call the server module.
     # now including limits on competition (1,2,3) and dates
     # check comp_l3, if not, set to str()
     if type(self.comp_l3_drop_down.selected_value['comp_l3']) == type(None):
       self.comp_l3_drop_down.selected_value['comp_l3'] = str()
-    #print(f"calling server function:{function_name},{disp_league}, {disp_gender}, {disp_year},{disp_team}, {disp_player}")
-    #print(f" Comp l1: {self.comp_l1_check_box.checked},{self.comp_l1_drop_down.selected_value['comp_l1']}")
-    #print(f" Comp L2: {self.comp_l2_check_box.checked},{self.comp_l2_drop_down.selected_value['comp_l2']}")
-    #print(f" Comp L3: {self.comp_l3_check_box.checked},{self.comp_l3_drop_down.selected_value['comp_l3']}")
-    #print(f" Dates: {self.date_check_box.checked}, {self.start_date_picker.date}, {self.end_date_picker.date}")
-    table_data1, table_data2, table_data3, table_data4 = anvil.server.call(function_name, 
+
+    # call the server function
+    table_data1, table_data2, table_data3, table_data4 = anvil.server.call(fnct_name, 
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],

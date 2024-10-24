@@ -221,6 +221,29 @@ db_schema:
       type: number
     server: full
     title: ppr_csv_tables
+  report_list:
+    client: search
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: report_name
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: function_name
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: team
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: private
+      type: bool
+    - admin_ui: {order: 4, width: 200}
+      name: explain_text
+      type: string
+    - admin_ui: {order: 5, width: 200}
+      name: help_text
+      type: string
+    server: full
+    title: report_list
   subscriptions:
     client: search
     columns:
