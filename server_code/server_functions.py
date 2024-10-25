@@ -154,3 +154,41 @@ def ppr_df_limit( m_ppr_df,
     print(f"Limitiing by Dates:{disp_start_date},{disp_end_date}")
     
   return m_ppr_df
+
+def calc_trans( ppr_df, disp_player, flag ):
+  # calcaulte transition details
+  trans_list = [0,0,0,0,0,0,0,0,0,0]
+  # defiitions:
+  #  0 = % of transition
+  #  1 = Percentile
+  #  2 = % of transition
+  #  3 = Kills Earned
+  #  4 = Errors Received
+  #  5 = Kills Lost
+  #  6 = Errors Given
+  #  7 = Points Earned
+  #  8 = Points Lost
+  #  9 = Total Points
+
+  tmp_df = ppr_df
+  # filter for serve or receive, or all
+  if flag == 'srv':
+    ppr_df = ppr_df[ ppr_df['serve_player'] == disp_player]
+  elif flag == 'rcv':
+    ppr_df = ppr_df[ ppr_df['pass_player'] == disp_player]
+
+  trans_list[3] = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( disp_player in ppr_df['point_outcome_team'])].shape[0] # Kills earned
+  trans_list[4] = ppr_df[ (ppr_df['point_outcome'] == 'TE') & ( disp_player not in ppr_df['point_outcome_team'])].shape[0] # Errors Received
+  trans_list[5] = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( disp_player not in ppr_df['point_outcome_team'])].shape[0] # Errors Given
+  trans_list[6] = ppr_df[ (ppr_df['point_outcome'] == 'TE') & ( disp_player in ppr_df['point_outcome_team'])].shape[0] # Errors Given
+  trans_list[7] = trans_list[3] + trans_list[4]
+  trans_list[8] = trans_list[5] + trans_list[6]
+  trans_list[9] = trans_list[7] + trans_list[8]
+  trans_list[0] = trans_list[7] / trans_list[9]
+  trans_list[1] = 0  # to get the percentile, we need to look up the league mean and stdev
+  total_transition = tmp_df[ (tmp_df['point_outcome'] == "TE")].shape[0] + tmp_df[ (tmp_df['point_outcome'] == "TK" ) ].shape[0]
+  trans_list[2] = trans_list[9] / total_transition
+
+  return trans_list
+  
+  

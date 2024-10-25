@@ -56,8 +56,12 @@ class PlayerRpt(PlayerRptTemplate):
     self.team_drop_down.selected_value = 'Scouting'
 
     # populate the reports drop down
-    self.report_drop_down.items = [
-      (row['report_name']) for row in app_tables.report_list.search( private=False)
+    if anvil.users.get_user()['team'] == "INTERNALS":
+      self.report_drop_down.items = [
+      (row['report_name']) for row in app_tables.report_list.search()]
+    else:
+      self.report_drop_down.items = [
+      (row['report_name']) for row in app_tables.report_list.search(private=False)
     ]
   
 
@@ -141,8 +145,8 @@ class PlayerRpt(PlayerRptTemplate):
     ]
 
     # set the sstart and end date to beginning and end of the season (needed for function call)
-    self.start_date_picker.date = datetime.date.today()  # temp : need to pull from league DB
-    self.end_date_picker.date = datetime.date.today()
+    #self.start_date_picker.date = datetime.date.today()  # temp : need to pull from league DB
+    #self.end_date_picker.date = datetime.date.today()
     
     pass
 

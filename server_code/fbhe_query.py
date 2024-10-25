@@ -685,6 +685,92 @@ def error_density(disp_league, disp_gender, disp_year,
   
   return fbhe_return, ' ', ' '
 
+#######################  Transition  ############################
+@anvil.server.callable
+def tcr(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout
+               ):
+  # return a markdown text to display
+  # given the parameters
+
+  ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
+  m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout )
+  m_ppr_df = ppr_df_limit( m_ppr_df, 
+                          comp_l1_checked, disp_comp_l1, 
+                          comp_l2_checked, disp_comp_l2, 
+                          comp_l3_checked, disp_comp_l3, 
+                          date_checked, disp_start_date, disp_end_date
+                         )
+    
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+
+  ############## Secomd - Create the dataframe that will be displayed as a table, report specific
+  # create the output dataframe - This is speficif to the report
+  df_dict = {' ':['% Points Won','Percentile','% of Transition','Kills Earned', 'Errors Recieved ','Kills Lost','Errors Given','Points Earned','Points Lost','Total Points'],
+             'All':[0,0,0,0,0,0,0,0,0,0],
+             'Serving':[0,0,0,0,0,0,0,0,0,0],
+             'Receiving':[0,0,0,0,0,0,0,0,0,0]
+            }
+  trans_table = pd.DataFrame.from_dict( df_dict, index=False )
+  trans_list = [0,0,0,0,0,0,0,0,0,0]
+
+  
+  ############### Third Populate the dataframe, assuming we have data returned
+  if m_ppr_df.shape[0] > 0:
+    # calculate fbhe for all attacks
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+
+    # calculate data for all attempts
+    trans_list = calc_trans( m_ppr_df, disp_player, 'all')
+    trans_table.at['% Points Won','All'] = trans_list[0]
+    trans_table.at['Percentile','All'] = trans_list[1]
+    trans_table.at['% of Transition','All'] = trans_list[2]
+    trans_table.at['Kills Earned','All'] = trans_list[3]
+    trans_table.at['Errors Received','All'] = trans_list[4]
+    trans_table.at['Kills Lost','All'] = trans_list[5]
+    trans_table.at['Errors Given','All'] = trans_list[6]
+    trans_table.at['Points Earned','All'] = trans_list[7]
+    trans_table.at['Points Lost','All'] = trans_list[8]
+    trans_table.at['Total Points','All'] = trans_list[9]
+
+    # calculate data for all attempts
+    trans_list = calc_trans( m_ppr_df, disp_player, 'srv')
+    trans_table.at['% Points Won','Serving'] = trans_list[0]
+    trans_table.at['Percentile','Serving'] = trans_list[1]
+    trans_table.at['% of Transition','Serving'] = trans_list[2]
+    trans_table.at['Kills Earned','Serving'] = trans_list[3]
+    trans_table.at['Errors Received','Serving'] = trans_list[4]
+    trans_table.at['Kills Lost','Serving'] = trans_list[5]
+    trans_table.at['Errors Given','Serving'] = trans_list[6]
+    trans_table.at['Points Earned','Serving'] = trans_list[7]
+    trans_table.at['Points Lost','Serving'] = trans_list[8]
+    trans_table.at['Total Points','Serving'] = trans_list[9]
+
+    # calculate data for Reeive attempts
+    trans_list = calc_trans( m_ppr_df, disp_player, 'rcv')
+    trans_table.at['% Points Won','Receiving'] = trans_list[0]
+    trans_table.at['Percentile','Receiving'] = trans_list[1]
+    trans_table.at['% of Transition','Receiving'] = trans_list[2]
+    trans_table.at['Kills Earned','Receiving'] = trans_list[3]
+    trans_table.at['Errors Received','Receiving'] = trans_list[4]
+    trans_table.at['Kills Lost','Receiving'] = trans_list[5]
+    trans_table.at['Errors Given','Receiving'] = trans_list[6]
+    trans_table.at['Points Earned','Receiving'] = trans_list[7]
+    trans_table.at['Points Lost','Receiving'] = trans_list[8]
+    trans_table.at['Total Points','Receiving'] = trans_list[9]
+
+
+    # now create the markdown text to return
+    trans_return = pd.DataFrame.to_markdown(trans_table)
+  else:
+    trans_return = "No Data Found"
+
+  return trans_return, ' ', ' '
 
 @anvil.server.callable
 def report_stub(disp_league, disp_gender, disp_year, 
