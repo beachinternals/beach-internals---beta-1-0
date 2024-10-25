@@ -144,10 +144,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
 
-  # explain the report here
-  fbhe_return4 = "Explain the Report Here"
-  
-  return fbhe_return, ' ', ' ', fbhe_return4
+  return fbhe_return, ' ', ' '
 
 @anvil.server.callable
 def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year, 
@@ -259,10 +256,8 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
     fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
   else:
     fbhe_return = "No Data Found"
-  # explain the report here
-  fbhe_return4 = "Explain the Report Here"
   
-  return fbhe_return, ' ', ' ', fbhe_return4
+  return fbhe_return, ' ', ' '
 
 @anvil.server.callable
 def fbhe_by_srv_src(disp_league, disp_gender, disp_year, 
@@ -327,10 +322,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  # explain the report here
-  fbhe_return4 = "Explain the Report Here"
-  
-  return fbhe_return, ' ', ' ', fbhe_return4
+  return fbhe_return, ' ', ' '
 
 @anvil.server.callable
 def fbhe_by_attack_type(disp_league, disp_gender, disp_year, 
@@ -417,10 +409,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  # explain the report here
-  fbhe_return4 = "Explain the Report Here"
-  
-  return fbhe_return, ' ', ' ', fbhe_return4
+  return fbhe_return, ' ', ' '
 
 @anvil.server.callable
 def srv_eff(disp_league, disp_gender, disp_year, 
@@ -501,10 +490,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  # explain the report here
-  fbhe_return4 = "Explain the Report Here"
-  
-  return fbhe_return, ' ', ' ', fbhe_return4
+  return fbhe_return, ' ', ' '
 
 
 @anvil.server.callable
@@ -571,7 +557,7 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, fbhe_return2, fbhe_return3, fbhe_return4
+  return fbhe_return, fbhe_return2, fbhe_return3
 
 @anvil.server.callable
 def report_stub(disp_league, disp_gender, disp_year, 
@@ -636,10 +622,7 @@ def report_stub(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  # explain the report here
-  fbhe_return4 = "Explain the Report Here"
-  
-  return fbhe_return, ' ', ' ', fbhe_return4
+  return fbhe_return, ' ', ' '
 
 @anvil.server.callable
 def error_density(disp_league, disp_gender, disp_year, 
@@ -698,11 +681,9 @@ def error_density(disp_league, disp_gender, disp_year,
     fbhe_return = pd.DataFrame.to_markdown(error_table)
   else:
     fbhe_return = "No Data Found"
+
   
-  # explain the report here
-  fbhe_return4 = "Explain the Report Here"
-  
-  return fbhe_return, ' ', ' ', fbhe_return4
+  return fbhe_return, ' ', ' '
 
 
 @anvil.server.callable
@@ -767,8 +748,6 @@ def report_stub(disp_league, disp_gender, disp_year,
     fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
   else:
     fbhe_return = "No Data Found"
+
   
-  # explain the report here
-  fbhe_return4 = "Explain the Report Here"
-  
-  return fbhe_return, ' ', ' ', fbhe_return4
+  return fbhe_return, ' ', ' '
