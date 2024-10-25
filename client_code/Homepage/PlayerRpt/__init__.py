@@ -182,7 +182,7 @@ class PlayerRpt(PlayerRptTemplate):
       self.comp_l3_drop_down.selected_value['comp_l3'] = str()
 
     # call the server function
-    table_data1, table_data2, table_data3, table_data4 = anvil.server.call(fnct_name, 
+    table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, 
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
