@@ -169,8 +169,10 @@ class PlayerRpt(PlayerRptTemplate):
     # replace this with a data driven approach
     rpt_name = self.report_drop_down.selected_value
     function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
-    print(function_list)
+    text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    #print(function_list)
     fnct_name = function_list[0]
+    table_data4 = text_list[0]
     scout = True
     
     # now, call the server module.
