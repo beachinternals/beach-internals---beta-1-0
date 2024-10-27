@@ -716,8 +716,12 @@ def tcr(disp_league, disp_gender, disp_year,
              'Serving':[0,0,0,0,0,0,0,0,0,0],
              'Receiving':[0,0,0,0,0,0,0,0,0,0]
             }
-  trans_table = pd.DataFrame.from_dict( df_dict, index=False )
+  trans_table = pd.DataFrame.from_dict( df_dict, orient='columns' )
+  print(trans_table)
   trans_list = [0,0,0,0,0,0,0,0,0,0]
+  # now delete column 0 
+  #trans_table = trans_table.drop(columns=[0])
+  #print(trans_table)
 
   
   ############### Third Populate the dataframe, assuming we have data returned
@@ -727,42 +731,45 @@ def tcr(disp_league, disp_gender, disp_year,
 
     # calculate data for all attempts
     trans_list = calc_trans( m_ppr_df, disp_player, 'all')
-    trans_table.at['% Points Won','All'] = trans_list[0]
-    trans_table.at['Percentile','All'] = trans_list[1]
-    trans_table.at['% of Transition','All'] = trans_list[2]
-    trans_table.at['Kills Earned','All'] = trans_list[3]
-    trans_table.at['Errors Received','All'] = trans_list[4]
-    trans_table.at['Kills Lost','All'] = trans_list[5]
-    trans_table.at['Errors Given','All'] = trans_list[6]
-    trans_table.at['Points Earned','All'] = trans_list[7]
-    trans_table.at['Points Lost','All'] = trans_list[8]
-    trans_table.at['Total Points','All'] = trans_list[9]
+    print(f"Transition List, All:{trans_list}")
+    trans_table.at[0,'All'] = trans_list[0]
+    trans_table.at[1,'All'] = trans_list[1]
+    trans_table.at[2,'All'] = trans_list[2]
+    trans_table.at[3,'All'] = trans_list[3]
+    trans_table.at[4,'All'] = trans_list[4]
+    trans_table.at[5,'All'] = trans_list[5]
+    trans_table.at[6,'All'] = trans_list[6]
+    trans_table.at[7,'All'] = trans_list[7]
+    trans_table.at[8,'All'] = trans_list[8]
+    trans_table.at[9,'All'] = trans_list[9]
 
     # calculate data for all attempts
     trans_list = calc_trans( m_ppr_df, disp_player, 'srv')
-    trans_table.at['% Points Won','Serving'] = trans_list[0]
-    trans_table.at['Percentile','Serving'] = trans_list[1]
-    trans_table.at['% of Transition','Serving'] = trans_list[2]
-    trans_table.at['Kills Earned','Serving'] = trans_list[3]
-    trans_table.at['Errors Received','Serving'] = trans_list[4]
-    trans_table.at['Kills Lost','Serving'] = trans_list[5]
-    trans_table.at['Errors Given','Serving'] = trans_list[6]
-    trans_table.at['Points Earned','Serving'] = trans_list[7]
-    trans_table.at['Points Lost','Serving'] = trans_list[8]
-    trans_table.at['Total Points','Serving'] = trans_list[9]
+    print(f"Transition List, Srv:{trans_list}")
+    trans_table.at[0,'Serving'] = trans_list[0]
+    trans_table.at[1,'Serving'] = trans_list[1]
+    trans_table.at[2,'Serving'] = trans_list[2]
+    trans_table.at[3,'Serving'] = trans_list[3]
+    trans_table.at[4,'Serving'] = trans_list[4]
+    trans_table.at[5,'Serving'] = trans_list[5]
+    trans_table.at[6,'Serving'] = trans_list[6]
+    trans_table.at[7,'Serving'] = trans_list[7]
+    trans_table.at[8,'Serving'] = trans_list[8]
+    trans_table.at[9,'Serving'] = trans_list[9]
 
     # calculate data for Reeive attempts
     trans_list = calc_trans( m_ppr_df, disp_player, 'rcv')
-    trans_table.at['% Points Won','Receiving'] = trans_list[0]
-    trans_table.at['Percentile','Receiving'] = trans_list[1]
-    trans_table.at['% of Transition','Receiving'] = trans_list[2]
-    trans_table.at['Kills Earned','Receiving'] = trans_list[3]
-    trans_table.at['Errors Received','Receiving'] = trans_list[4]
-    trans_table.at['Kills Lost','Receiving'] = trans_list[5]
-    trans_table.at['Errors Given','Receiving'] = trans_list[6]
-    trans_table.at['Points Earned','Receiving'] = trans_list[7]
-    trans_table.at['Points Lost','Receiving'] = trans_list[8]
-    trans_table.at['Total Points','Receiving'] = trans_list[9]
+    print(f"Transition List, rcv:{trans_list}")
+    trans_table.at[0,'Receiving'] = trans_list[0]
+    trans_table.at[1,'Receiving'] = trans_list[1]
+    trans_table.at[2,'Receiving'] = trans_list[2]
+    trans_table.at[3,'Receiving'] = trans_list[3]
+    trans_table.at[4,'Receiving'] = trans_list[4]
+    trans_table.at[5,'Receiving'] = trans_list[5]
+    trans_table.at[6,'Receiving'] = trans_list[6]
+    trans_table.at[7,'Receiving'] = trans_list[7]
+    trans_table.at[8,'Receiving'] = trans_list[8]
+    trans_table.at[9,'Receiving'] = trans_list[9]
 
 
     # now create the markdown text to return
@@ -773,7 +780,7 @@ def tcr(disp_league, disp_gender, disp_year,
   return trans_return, ' ', ' '
 
 @anvil.server.callable
-def report_stub(disp_league, disp_gender, disp_year, 
+def report_stuba(disp_league, disp_gender, disp_year, 
                     disp_team, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,

@@ -172,22 +172,48 @@ def calc_trans( ppr_df, disp_player, flag ):
 
   tmp_df = ppr_df
   # filter for serve or receive, or all
+  # first, make sue we have point relating to this player
+  ppr_df = ppr_df[(( ppr_df['player_a1'] == disp_player ) |
+                  ( ppr_df['player_a2'] == disp_player ) |
+                   ( ppr_df['player_b1'] == disp_player ) |
+                  ( ppr_df['player_b2'] == disp_player ) ) &
+                  (( ppr_df['point_outcome'] == 'TK') | 
+                  ( ppr_df['point_outcome'] == 'TE' ))
+    ]
+  print(f"All Point Ooutcome Teams:{ppr_df['point_outcome_team']}")
   if flag == 'srv':
     ppr_df = ppr_df[ ppr_df['serve_player'] == disp_player]
   elif flag == 'rcv':
     ppr_df = ppr_df[ ppr_df['pass_player'] == disp_player]
 
-  trans_list[3] = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( disp_player in ppr_df['point_outcome_team'])].shape[0] # Kills earned
-  trans_list[4] = ppr_df[ (ppr_df['point_outcome'] == 'TE') & ( disp_player not in ppr_df['point_outcome_team'])].shape[0] # Errors Received
-  trans_list[5] = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( disp_player not in ppr_df['point_outcome_team'])].shape[0] # Errors Given
-  trans_list[6] = ppr_df[ (ppr_df['point_outcome'] == 'TE') & ( disp_player in ppr_df['point_outcome_team'])].shape[0] # Errors Given
+  # first, kilsl and errors for this team
+  print(f"Total Transition points:{ppr_df.shape[0]}")
+  tmp_df = ppr_df[ (disp_player in ppr_df['point_outcome_team']) ]
+  print(f"Transition points earned by team with {disp_player}, = {tmp_df.shape[0]}")
+  trans_list[3] = tmp_df[ (tmp_df['point_outcome'] == 'TK')].shape[0]    # kills earned
+  trans_list[5] = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]      # errors given
+
+  # second, calculate the opponent's kills and errors
+  tmp_df = ppr_df[ (disp_player not in ppr_df['point_outcome_team'])]
+  print(f"Transition points earned by team without {disp_player}, = {tmp_df.shape[0]}")
+  trans_list[4] = tmp_df[ (tmp_df['point_outcome'] == 'TK')].shape[0]    # kills earned
+  trans_list[6] = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]      # errors given
+
   trans_list[7] = trans_list[3] + trans_list[4]
   trans_list[8] = trans_list[5] + trans_list[6]
   trans_list[9] = trans_list[7] + trans_list[8]
   trans_list[0] = trans_list[7] / trans_list[9]
+  trans_list[0] = str('{:.2%}').format(trans_list[0])
   trans_list[1] = 0  # to get the percentile, we need to look up the league mean and stdev
-  total_transition = tmp_df[ (tmp_df['point_outcome'] == "TE")].shape[0] + tmp_df[ (tmp_df['point_outcome'] == "TK" ) ].shape[0]
+  total_transition = tmp_df[(( tmp_df['player_a1'] == disp_player ) |
+                            ( tmp_df['player_a2'] == disp_player ) |
+                            ( tmp_df['player_b1'] == disp_player ) |
+                            ( tmp_df['player_b2'] == disp_player ) ) &
+                            (( tmp_df['point_outcome'] == 'TK') | 
+                            ( tmp_df['point_outcome'] == 'TE' ))
+  ].shape[0]
   trans_list[2] = trans_list[9] / total_transition
+  trans_list[2] = str('{:.2%}').format(trans_list[2])
 
   return trans_list
   
