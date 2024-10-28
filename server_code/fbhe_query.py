@@ -671,7 +671,7 @@ def error_density(disp_league, disp_gender, disp_year,
   if m_ppr_df.shape[0] > 0:
     error_table['Total Points'] = m_ppr_df.shape[0]
     error_table['First Ball Errors'] = m_ppr_df[ ( m_ppr_df['point_outcome'] == 'FBE') & (m_ppr_df['att_player'] == disp_player ) ].shape[0]
-    error_table['Transition Errors'] = m_ppr_df[ ( m_ppr_df['point_outcome'] == 'TE') & (disp_player in m_ppr_df['point_outcome_team']) ].shape[0]*0.5
+    error_table['Transition Errors'] = m_ppr_df[ ( m_ppr_df['point_outcome'] == 'TE') & (m_ppr_df['point_outcome_team'].str.contains(disp_player[:-1])) ].shape[0]*0.5
     error_table['Service Errors'] = m_ppr_df[ ( m_ppr_df['point_outcome'] == 'TSE') & (m_ppr_df['serve_player'] == disp_player ) ].shape[0]
     error_table['Total Errors'] = error_table['Service Errors'] + error_table['First Ball Errors'] + error_table['Transition Errors']
     error_table['Error Density'] = error_table['Total Errors'] / error_table['Total Points']
@@ -778,6 +778,97 @@ def tcr(disp_league, disp_gender, disp_year,
     trans_return = "No Data Found"
 
   return trans_return, ' ', ' '
+
+@anvil.server.callable
+def expected_value(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout
+               ):
+  # return a markdown text to display
+  # given the parameters
+
+  ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
+  m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout )
+  m_ppr_df = ppr_df_limit( m_ppr_df, 
+                          comp_l1_checked, disp_comp_l1, 
+                          comp_l2_checked, disp_comp_l2, 
+                          comp_l3_checked, disp_comp_l3, 
+                          date_checked, disp_start_date, disp_end_date
+                         )
+    
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+
+  ############## Secomd - Create the dataframe that will be displayed as a table, report specific
+  # create the output dataframe - This is speficif to the report
+  df_dict = {' ':['Expected Value',
+                  'Points Won','First Ball Kill','Transition Kill','Opponent Transition Error','Terminal Serve Error',
+                  'Points Lost','First Ball Error','Transition Error','Opponent Transition Kill','Terminal Serve Ace'
+                  ],
+             'All':[0,0,0,0,0,0,0,0,0,0,0]
+            }
+  df_dict = {}
+  ev_table = pd.DataFrame.from_dict( df_dict )
+
+  # now filter my ppr file to just those wher ethe disp_player receives serve
+  ppr_df = m_ppr_df[ m_ppr_df['pass_player'] == disp_player]
+  
+  ############### Third Populate the dataframe, assuming we have data returned
+  if ppr_df.shape[0] > 0:
+
+    ev_table.loc['Expected Value','All'] = 0
+    ev_table.loc['Total Points','All'] = 0
+    ev_table.loc['  ','All'] = ' '
+    ev_table.loc['Points Won','All'] = 0
+    ev_table.loc['---------------------','All'] = ' '
+    ev_table.loc['First Ball Kill','All'] = 0  
+    ev_table.loc['Transition Kill Earned','All'] =0
+    ev_table.loc['Transition Error Received','All']=0
+    ev_table.loc['Service Errors Earned','All']=9
+
+    ev_table.loc['.  ','All'] = ' '
+    ev_table.loc['Points Lost','All'] = 0
+    ev_table.loc['----------------------','All'] = ' '
+    ev_table.loc['First Ball Error','All']=0
+    ev_table.loc['Transition Error Given','All']=0
+    ev_table.loc['Transition Kill Lost','All']=0
+    ev_table.loc['Service Ace Lost','All']=0
+    
+    ev_table.loc['First Ball Kill','All'] = ppr_df[ ppr_df['point_outcome'] == 'FBK'].shape[0]    # first ball kill
+    ev_table.loc['First Ball Error','All'] = ppr_df[ ppr_df['point_outcome'] == 'FBE'].shape[0]    # first ball error
+
+    
+    # now all the onest that are outcome team dependant
+    tmp_df = ppr_df[ ppr_df['point_outcome_team'].str.contains(disp_player[:-1]) ]
+    ev_table.loc['Transition Kill Earned','All'] = tmp_df[ (tmp_df['point_outcome'] == 'TK')].shape[0]    # our transition kill
+    ev_table.loc['Transition Error Given','All'] = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]    # our transition error
+
+    # now all the ones teat are outcome fo the oppoennt    
+    tmp_df = ppr_df[ ~ppr_df['point_outcome_team'].str.contains(disp_player[:-1]) ]
+    ev_table.loc['Transition Error Received','All'] = tmp_df[ (tmp_df['point_outcome'] == 'TE' )].shape[0]    # our transition error
+    ev_table.loc['Transition Kill Lost','All'] = tmp_df[ (tmp_df['point_outcome'] == 'TK' )].shape[0]    # opponent trans kill
+    ev_table.loc['Service Ace Lost','All'] = tmp_df[ (tmp_df['point_outcome'] == 'TSA' )].shape[0]    # terminal serve ace
+    ev_table.loc['Service Errors Earned','All'] = tmp_df[ (tmp_df['point_outcome'] == 'TSE' )].shape[0]    # terminal serve ace
+    print(ev_table)
+    
+    ev_table.loc['Points Won','All'] = ev_table.loc['First Ball Kill','All'] + ev_table.loc['Transition Kill Earned','All'] + ev_table.loc['Transition Error Received','All'] + ev_table.loc['Service Errors Earned','All']
+    ev_table.loc['Points Lost','All'] = ev_table.loc['First Ball Error','All'] + ev_table.loc['Transition Error Given','All'] + ev_table.loc['Transition Kill Lost','All'] + ev_table.loc['Service Ace Lost','All']
+    ev_table.loc['Total Points','All'] = ev_table.loc['Points Lost','All'] + ev_table.loc['Points Won','All'] 
+    ev_table.loc['Expected Value','All'] = ev_table.loc['Points Won','All'] / ev_table.loc['Total Points','All']
+    ev_table.loc['Expected Value','All'] = str('{:.2%}').format(ev_table.loc['Expected Value','All'])
+    
+ 
+ 
+    # now create the markdown text to return
+    ev_return = pd.DataFrame.to_markdown(ev_table)
+  else:
+    ev_return = "No Data Found"
+
+  
+  return ev_return, ' ', ' '
 
 @anvil.server.callable
 def report_stuba(disp_league, disp_gender, disp_year, 
