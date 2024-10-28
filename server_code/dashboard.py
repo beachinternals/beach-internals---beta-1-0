@@ -60,10 +60,14 @@ def coaches_dashboard(league_value, disp_team):
   print(player_data_df)
   #print(player_stats_df)
 
+  # ---------- This may change, but let's make a subest data set a few columns for this display
+  disp_df = player_data_df[['team','player','fbhe','err_den','tcr_r','tcr_s','expected']]
+  print(disp_df)
+  
   # now, limit the data to this team, disp_team
   #player_data_df = player_data_df[player_data_df['team'] == disp_team]
 
   # convert df to markdown table
-  df_table = pd.DataFrame.to_markdown(player_data_df, index=False )
+  df_table = pd.DataFrame.to_markdown(disp_df, index=False )
   df_stats_table = pd.DataFrame.to_markdown(player_stats_df, index=False )
   return df_table, df_stats_table

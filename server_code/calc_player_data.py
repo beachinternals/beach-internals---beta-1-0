@@ -12,7 +12,7 @@ import math
 import statistics
 import numpy as np
 from tabulate import tabulate
-from server_functions import fbhe
+from server_functions import *
 
 # ########## Calculate league summaries, stored as player data
 #
@@ -66,7 +66,7 @@ def calculate_player_data( c_league, c_gender, c_year):
 
   player_dict = {'player':[str()], 'team':[str()],
                  'fbhe':None,'fbhe1':None,'fbhe2':None,'fbhe3':None,'fbhe4':None,'fbhe5':None,'fbhe_range':None,
-                 'err_den':None,'tcr_r':None,'tcr_s':None,'expected':None,
+                 'err_den':None,'tcr':None,'tcr_r':None,'tcr_s':None,'expected':None,
                  'srv_fbhe':None,'srv1_fbhe':None,'srv3_fbhe':None,'srv5_fbhe':None,
                  'poke_fbhe':None,'poke_per':None,'shoot_fbhe':None,'shoot_per':None,'bang_fbhe':None,'band_per':None,
                  'fbhe_srv1':None,'fbhe_srv3':None,'fbhe_srv5':None,
@@ -80,7 +80,9 @@ def calculate_player_data( c_league, c_gender, c_year):
     player_df.loc[max(player_df.index)+1] = player_dict
   
   # create the player_data_stats dataframe
-  player_stats_dict = {'fbhe_mean':[float()],'fbhe_stdev':[float()], 'fbhe_range_mean':[float()],'fbhe_range_stdev':[float()]
+  player_stats_dict = {'fbhe_mean':[float()],'fbhe_stdev':[float()], 'fbhe_range_mean':[float()],'fbhe_range_stdev':[float()],
+                       'tcr_mean':[float()],'tcr_stdev':[float()], 'tcr_r_mean':[float()],'tcr_r_stdev':[float()],'tcr_s_mean':[float()],'tcr_s_stdev':[float()], 
+                       'expected_mean':[float()],'expected_stdev':[float()],'err_den_mean':[float()],'err_den_stdev':[float()]
                       }
   player_stats_df =  pd.DataFrame.from_records(player_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")
@@ -96,7 +98,8 @@ def calculate_player_data( c_league, c_gender, c_year):
     teama_loc = teama.index(" ")
     this_team = teama[:teama_loc].strip()
     player_df.at[i,'team'] = this_team
-    
+
+    # ----------- calculate FBHE, 1-5 ------------------
     fbhe_vector = fbhe(ppr_df, p_list[i], 'att')
     if fbhe_vector[3] >= min_att:
       player_df.at[i,'fbhe'] = fbhe_vector[0]
@@ -117,17 +120,47 @@ def calculate_player_data( c_league, c_gender, c_year):
       player_df.at[i,'fbhe_range'] = float("{:.3f}".format(fbhe_max - fbhe_min))
     else:
       player_df.at[i,'fbhe_range'] = None
-    
+
+    # ------------calculate transition Conversion ------------------
+    trans_vector = calc_trans( ppr_df, p_list[i], 'all' )
+    player_df.at[i,'tcr'] = float(trans_vector[0][:-1])
+    trans_vector = calc_trans( ppr_df, p_list[i], 'srv' )
+    player_df.at[i,'tcr_s'] = float(trans_vector[0][:-1])
+    trans_vector = calc_trans( ppr_df, p_list[i], 'rcv' )
+    player_df.at[i,'tcr_r'] = float(trans_vector[0][:-1])
+
+    # -------------- calculate expected value ---------------
+    ev_vector = calc_ev(ppr_df, p_list[i])
+    player_df.at[i,'expected'] = float(ev_vector[0][:-1])
+
+    # ----------------- calculate error density ----------
+    ed_vector = calc_error_den( ppr_df, p_list[i] )
+    player_df.at[i,'err_den'] = float(ed_vector[0][:-1])
+
+
+
+  ########## end of loop over players
   print(f"Player Df when done:{player_df}")
 
-  # Now sotre and calulate the statistical values
+  # Now store and calulate the statistical values
+  #------------------------------------------------
   player_stats_df.at[0,"fbhe_mean"] = player_df['fbhe'].mean(skipna=True)
   player_stats_df.at[0,"fbhe_stdev"] = player_df['fbhe'].std(skipna=True)
   player_stats_df.at[0,"fbhe_range_mean"] = player_df['fbhe_range'].mean(skipna=True)
   player_stats_df.at[0,"fbhe_range_stdev"] = player_df['fbhe_range'].std(skipna=True)
-  
+  player_stats_df.at[0,"tcr_mean"] = player_df['tcr'].mean(skipna=True)
+  player_stats_df.at[0,"tcr_stdev"] = player_df['tcr'].std(skipna=True)
+  player_stats_df.at[0,"tcr_r_mean"] = player_df['tcr_r'].mean(skipna=True)
+  player_stats_df.at[0,"tcr_r_stdev"] = player_df['tcr_r'].std(skipna=True)
+  player_stats_df.at[0,"tcr_s_mean"] = player_df['tcr_s'].mean(skipna=True)
+  player_stats_df.at[0,"tcr_s_stdev"] = player_df['tcr_s'].std(skipna=True)
+  player_stats_df.at[0,"expected_mean"] = player_df['expected'].mean(skipna=True)
+  player_stats_df.at[0,"expected_stdev"] = player_df['expected'].std(skipna=True)
+  player_stats_df.at[0,"err_den_mean"] = player_df['err_den'].mean(skipna=True)
+  player_stats_df.at[0,"err_den_stdev"] = player_df['err_den'].std(skipna=True)
   
   # now lets store our player_data file back as a csv file in the database
+  #---------------------------------------------------------------------------
   # first, I need to cahnge the ppr_file dataframe to a csv file.
   player_csv_file = pd.DataFrame.to_csv(player_df)
   player_media = anvil.BlobMedia(content_type="text/plain", content=player_csv_file.encode(), name="player_data.csv")

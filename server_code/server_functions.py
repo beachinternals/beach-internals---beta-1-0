@@ -203,12 +203,84 @@ def calc_trans( ppr_df, disp_player, flag ):
   trans_list[7] = trans_list[3] + trans_list[4]
   trans_list[8] = trans_list[5] + trans_list[6]
   trans_list[9] = trans_list[7] + trans_list[8]
-  trans_list[0] = trans_list[7] / trans_list[9]
+  trans_list[0] = trans_list[7] / trans_list[9] if trans_list[9] != 0 else 0
   trans_list[0] = str('{:.2%}').format(trans_list[0])
   trans_list[1] = 0  # to get the percentile, we need to look up the league mean and stdev
-  trans_list[2] = trans_list[9] / total_trans
+  trans_list[2] = trans_list[9] / total_trans if total_trans != 0 else 0
   trans_list[2] = str('{:.2%}').format(trans_list[2])
 
   return trans_list
+
+def calc_ev(ppr_df, disp_player):
+  # calculate expected value
+  #
+  # 0 = expected value
+  # 1 = total points
+  # 2 = points won
+  # 3 = fbk earned
+  # 4 = tk earned
+  # 5 = te received
+  # 6 = tse received
+  # 7 = point lost
+  # 8 = FBE given
+  # 9 = te given
+  # 10 = tk lost
+  # 11 = tsa lost  
+  ev_vector = [0,0,0,0,0,0,0,0,0,0,0,0]
+
+  # now filter my ppr file to just those wher ethe disp_player receives serve
+  ppr_df = ppr_df[ ppr_df['pass_player'] == disp_player]
+
+  ev_vector[3] = ppr_df[ppr_df['point_outcome'] == "FBK"].shape[0]
+  ev_vector[8] = ppr_df[ppr_df['point_outcome'] == 'FBE'].shape[0]
+
+  tmp_df = ppr_df[ppr_df['point_outcome_team'].str.contains(disp_player[:-1])]
+  ev_vector[4] = tmp_df[tmp_df['point_outcome'] == "TK"].shape[0]
+  ev_vector[9] = tmp_df[tmp_df['point_outcome'] == "TE"].shape[0]
+
+  tmp_df = ppr_df[~ppr_df['point_outcome_team'].str.contains(disp_player[:-1])]
+  ev_vector[10] = tmp_df[tmp_df['point_outcome'] == "TK"].shape[0]
+  ev_vector[5] = tmp_df[tmp_df['point_outcome'] == "TE"].shape[0]
+  ev_vector[11] = tmp_df[tmp_df['point_outcome'] == "TSA"].shape[0]
+  ev_vector[6] = tmp_df[tmp_df['point_outcome'] == "TSE"].shape[0]
+
+  # points Earned
+  ev_vector[2] = ev_vector[2] + ev_vector[3] + ev_vector[4] + ev_vector[5] 
+  # points lost
+  ev_vector[7] = ev_vector[8] + ev_vector[9] + ev_vector[10] + ev_vector[11]
+  # total points
+  ev_vector[1] = ev_vector[2] + ev_vector[7]
+  # percent:
+  ev_vector[0] = ev_vector[2]/ev_vector[1] if ev_vector[1] != 0 else 0
+  ev_vector[0] = str('{:.2%}').format(ev_vector[0])
   
+  return ev_vector
   
+def calc_error_den( ppr_df, disp_player):
+
+  # calculate the error density vector
+  # 0 = Error Density
+  # 1 = Percentile
+  # 2 = First Ball Errors
+  # 3 = Service Errors
+  # 4 = Transition Errors
+  # 5 = Total Errors
+  # 6 = total Points
+  error_vector = [0,0,0,0,0,0,0]
+
+  # make sure our player is involved in every point
+  ppr_df = ppr_df[(( ppr_df['player_a1'] == disp_player ) |
+                  ( ppr_df['player_a2'] == disp_player ) |
+                   ( ppr_df['player_b1'] == disp_player ) |
+                  ( ppr_df['player_b2'] == disp_player ) ) ]
+  error_vector[6] = ppr_df.shape[0]
+  error_vector[2] = ppr_df[ ( ppr_df['point_outcome'] == 'FBE') & (ppr_df['att_player'] == disp_player ) ].shape[0]
+  error_vector[4] = ppr_df[ ( ppr_df['point_outcome'] == 'TE') & (ppr_df['point_outcome_team'].str.contains(disp_player[:-1])) ].shape[0]*0.5
+  error_vector[3] = ppr_df[ ( ppr_df['point_outcome'] == 'TSE') & (ppr_df['serve_player'] == disp_player ) ].shape[0]
+  error_vector[5] = error_vector[2] + error_vector[3] + error_vector[4] 
+  error_vector[0] = error_vector[5] / error_vector[6]
+  error_vector[0] = str('{:.2%}').format(error_vector[0])
+  error_vector[1] = 0
+
+  return error_vector
+    

@@ -94,7 +94,7 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     disp_year = league_value[str_loc+1:].strip()
     
     return_text = anvil.server.call(
-      'calcualte_player_data',
+      'calculate_player_data',
       disp_league,
       disp_gender,
       disp_year
