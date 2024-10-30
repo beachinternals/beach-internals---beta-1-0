@@ -41,7 +41,7 @@ def coaches_dashboard(league_value, disp_team):
     player_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
   else:
     print('No Rows Found')
-    return ["No Rows"]
+    return ["No Rows"], ["No Stats Found"]
 
   # somehow, we are getting a column called unamed: 0, so drop taht
   #print(player_data_df.to_dict())
@@ -57,17 +57,16 @@ def coaches_dashboard(league_value, disp_team):
   # replace nan with blanks
   player_data_df = player_data_df.fillna(' ')
   player_stats_df = player_stats_df.fillna('')
-  print(player_data_df)
+  #print(player_data_df)
   #print(player_stats_df)
 
   # ---------- This may change, but let's make a subest data set a few columns for this display
   disp_df = player_data_df[['team','player','fbhe','err_den','tcr_r','tcr_s','expected']]
   print(disp_df)
-  
-  # now, limit the data to this team, disp_team
-  #player_data_df = player_data_df[player_data_df['team'] == disp_team]
 
   # convert df to markdown table
   df_table = pd.DataFrame.to_markdown(disp_df, index=False )
-  df_stats_table = pd.DataFrame.to_markdown(player_stats_df, index=False )
+  #print(df_table)
+  df_stats_table = pd.DataFrame.to_markdown(player_stats_df, index=False)
+  
   return df_table, df_stats_table
