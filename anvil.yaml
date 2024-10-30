@@ -90,6 +90,12 @@ db_schema:
     - admin_ui: {order: 12.4375, width: 200}
       name: no_errors
       type: number
+    - admin_ui: {order: 12.34375, width: 200}
+      name: btd_file_date
+      type: datetime
+    - admin_ui: {order: 13.5, width: 200}
+      name: ppr_file_date
+      type: datetime
     server: full
     title: btd_files
   league_comp_l1:

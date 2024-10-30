@@ -10,13 +10,14 @@ import anvil.server
 import pandas as pd
 import io
 import math
+import datetime
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
 # ############# server function to loop thru btd_file database and create and store the corresponding ppr file
 @anvil.server.callable
-def generate_ppr_files( user_league, user_gender, user_year, user_team ):
+def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild ):
 
   # select rows from the btd_files database and limit it to league, gender, and year
   btd_row = app_tables.btd_files.search(
@@ -27,40 +28,53 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team ):
   )
 
   for flist_r in btd_row:
+    print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
+    calc_ppr = False
+    
+    if rebuild:
+      # call the function to return the ppr file given the btd file
+      ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
+      calc_ppr = True
+    else:
+      if not flist_r['ppr_file_date']:
+        ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )         
+        calc_ppr = True
+      elif flist_r['btd_file_date'] > flist_r['ppr_file_date']:
+        ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
+        calc_ppr = True
 
-    #print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
-    # call the function to return the ppr file given the btd file
-    ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
+    if calc_ppr:
+      # clean up the ppr_df databale, just in case.
+      ppr_df = ppr_df.replace({float('nan'): None})
+    
+      # We now have a complete ppr datafile.  THree more steps:
+      # 1) Transpose some points (so we always serve from close, first ball attack from the far court) Transpose first, makes zone's much easier
+      ppr_df = transpose_ppr_coord(ppr_df)
+    
+      # 2) Cacluate the data (speed, distance, etc...)
+      ppr_df = calc_ppr_data(ppr_df)
 
-    # clean up the ppr_df databale, just in case.
-    ppr_df = ppr_df.replace({float('nan'): None})
+      # 3) Calculate offensive tactic
+      ppr_df = calc_tactic(ppr_df)
     
-    # We now have a complete ppr datafile.  THree more steps:
-    # 1) Transpose some points (so we always serve from close, first ball attack from the far court) Transpose first, makes zone's much easier
-    ppr_df = transpose_ppr_coord(ppr_df)
+      # 4) Error check the ppr file for consistency, maybe raise errors into an email/text message??
+      ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
     
-    # 2) Cacluate the data (speed, distance, etc...)
-    ppr_df = calc_ppr_data(ppr_df)
-
-    # 3) Calculate offensive tactic
-    ppr_df = calc_tactic(ppr_df)
+      # 5) Lastly, save the ppr csv file back into the btd_files database
+      # first, I need to cahnge the ppr_file dataframe to a csv file.
+      ppr_csv_file = pd.DataFrame.to_csv(ppr_df)
+      ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
     
-    # 3) Error check the ppr file for consistency, maybe raise errors into an email/text message??
-    ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
-    
-    # Lastly, save the ppr csv file back into the btd_files database
-    # first, I need to cahnge the ppr_file dataframe to a csv file.
-    ppr_csv_file = pd.DataFrame.to_csv(ppr_df)
-    ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
-    
-    # now I can store it in the btd files database
-    flist_r.update( ppr_data = ppr_media, error_str = error_string, no_errors = no_errors )
+      # now I can store it in the btd files database
+      flist_r.update( ppr_data = ppr_media, error_str = error_string, no_errors = no_errors, ppr_file_date=datetime.datetime.now() )
+    else:
+      print(f"Not processing file:{flist_r['filename']}")
       
   return True
 
 # ############ server function to convert a btd file to a ppr file
 def btd_to_ppr_file(btd_file_bytes, flist_r):
-
+  print(f"btd to ppr process of :{flist_r['filename']}")
   # convert the btd file to a dataframe
   btd_df = pd.read_csv(btd_file_bytes)
 
@@ -257,7 +271,7 @@ def save_set_info( ppr_df, btd_r, ppr_row):
   return ppr_df
 
 def save_att_info( ppr_df, btd_r, ppr_row):
-  print(f"saving ATT info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
+  #print(f"saving ATT info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
   
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_action_id'))] = int(btd_r['action_id'])
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_src_t'))] = btd_r['action_time']
@@ -272,7 +286,7 @@ def save_att_info( ppr_df, btd_r, ppr_row):
     ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_touch_height'))] = btd_r['vertical_touch_height']
   if 'speed_mph' in btd_r:
     if isinstance(btd_r['speed_mph'],(float,int)):
-      print(f"Saving Att Speed:{btd_r['speed_mph']}")
+      #print(f"Saving Att Speed:{btd_r['speed_mph']}")
       ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_speed'))] = float(btd_r['speed_mph'])*0.44704  # convert MPH to M/S  
 
   return ppr_df

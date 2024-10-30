@@ -62,7 +62,8 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
                       self.league_drop_down.selected_value['league'],
                       self.gender_drop_down.selected_value,
                       self.year_drop_down.selected_value,
-                      self.team_drop_down.selected_value
+                      self.team_drop_down.selected_value,
+                      self.rebuild_button.selected
                      )
     #generate_ppr_files( user_league, user_gender, user_year,user_team):
     

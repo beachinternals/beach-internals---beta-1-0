@@ -7,6 +7,7 @@ import anvil.users
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
+import datetime
 
 
 class btd_import(btd_importTemplate):
@@ -175,6 +176,7 @@ class btd_import(btd_importTemplate):
       date=self.date_picker.date,
       filename=self.file_loader_1.file.name,
       csv_data=self.file_loader_1.file,
+      btd_file_date=datetime.datetime.now(),
       team=anvil.users.get_user()['team'],
       points = pts,
       per_players = per_play,
