@@ -106,11 +106,11 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
 def btd_to_ppr_df(btd_df, flist_r):
 
   # define the two teams and the four players in this file:
-  player_a1 = flist_r['ppr_playera1'] + '|'
-  player_a2 = flist_r['ppr_playera2'] + '|'
+  player_a1 = flist_r['ppr_playera1'] + ' '
+  player_a2 = flist_r['ppr_playera2'] + ' '
   teama = player_a1 + player_a2
-  player_b1 = flist_r['ppr_playerb1'] + '|'
-  player_b2 = flist_r['ppr_playerb2'] + '|'
+  player_b1 = flist_r['ppr_playerb1'] + ' '
+  player_b2 = flist_r['ppr_playerb2'] + ' '
   teamb =  player_b1 + player_b2 
   zero = 0
   yn = "N"
