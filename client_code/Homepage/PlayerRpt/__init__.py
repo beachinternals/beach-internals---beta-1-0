@@ -163,7 +163,7 @@ class PlayerRpt(PlayerRptTemplate):
     disp_year = league_value[str_loc+1:].strip()
 
     # unpack the player
-    disp_player = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']+'|'
+    disp_player = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
 
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
@@ -226,5 +226,9 @@ class PlayerRpt(PlayerRptTemplate):
     pass
 
   def report_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    pass
+
+  def player_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
     pass

@@ -27,7 +27,8 @@ components_by_slot:
       - name: label_12
         properties: {align: right, text: 'Player:'}
         type: Label
-      - name: player_drop_down
+      - event_bindings: {change: player_drop_down_change}
+        name: player_drop_down
         properties:
           items: [BRA 01 Ana Patricia]
         type: DropDown
