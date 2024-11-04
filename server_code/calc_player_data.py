@@ -20,7 +20,7 @@ from server_functions import *
 
 @anvil.server.callable
 def calculate_player_data( c_league, c_gender, c_year):
-  result_string = "Calcualte Player Data server module Called"
+  result_string = "Calculate Player Data server module Called"
 
   c_team = "League"    # only updating the league tables
   print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")

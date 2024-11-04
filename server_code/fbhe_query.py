@@ -105,6 +105,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
   # get the ppr data
+  print(f"FBHE_scout_query: League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
   m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True )
 
   # now, narrow the data by competition level and dates

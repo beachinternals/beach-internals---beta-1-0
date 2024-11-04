@@ -29,12 +29,13 @@ def fbhe( ppr_df, disp_player, play_type):
     fbhe_list = [ 0.0, 0, 0, 0, 0, " No Data Available " ]
   else:
     if play_type == "att":
-      ppr_df = ppr_df[ppr_df['att_player']==disp_player]
+      ppr_df = ppr_df[ppr_df['att_player']==disp_player.strip()]
     elif play_type == "srv":
-      ppr_df = ppr_df[ppr_df['serve_player']==disp_player]
+      ppr_df = ppr_df[ppr_df['serve_player']==disp_player.strip()]
     elif play_type == "pass":
-      ppr_df = ppr_df[ppr_df['pass_player']==disp_player]
+      ppr_df = ppr_df[ppr_df['pass_player']==disp_player.strip()]
 
+    print(f"Size of DB in calc_fbhe:{ppr_df.shape[0]}")
     # to build the video link, need a quick loop over rows:
     video_list = [*range(0,ppr_df.shape[0],1)]
     #print(f"video list: {video_list}")

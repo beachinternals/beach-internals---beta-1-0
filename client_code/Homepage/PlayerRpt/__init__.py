@@ -150,7 +150,7 @@ class PlayerRpt(PlayerRptTemplate):
     
     pass
 
-  def generate_report_buttoon_click(self, **event_args):
+  def generate_report_button_click(self, **event_args):
     """This method is called when the button is clicked"""
     # unpack the league data:
         # extract league, gender, year from league selected value

@@ -114,9 +114,9 @@ components_by_slot:
         properties:
           items: []
         type: DropDown
-      - event_bindings: {click: generate_report_buttoon_click}
+      - event_bindings: {click: generate_report_button_click}
         layout_properties: {}
-        name: generate_report_buttoon
+        name: generate_report_button
         properties: {align: right, role: outlined-button, text: Generate Report}
         type: Button
       layout_properties: {grid_position: 'RRUZZU,OYDNHB'}

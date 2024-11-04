@@ -118,7 +118,7 @@ class ppr_file_maint(ppr_file_maintTemplate):
     disp_year = league_value[str_loc + 1 :].strip()
 
     return_text = anvil.server.call(
-      "calcualte_player_data", disp_league, disp_gender, disp_year
+      "calcluate_player_data", disp_league, disp_gender, disp_year
     )
     alert(return_text)
     pass
