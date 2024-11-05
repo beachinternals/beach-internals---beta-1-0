@@ -647,10 +647,10 @@ def error_density(disp_league, disp_gender, disp_year,
                          )
 
   # for this one, now limit to plays that include disp plaer:
-  m_ppr_df = m_ppr_df[ ( m_ppr_df['player_a1'] == disp_player ) | 
-                        ( m_ppr_df['player_a2'] == disp_player ) |  
-                        ( m_ppr_df['player_b1'] == disp_player ) |
-                        ( m_ppr_df['player_b2'] == disp_player )
+  m_ppr_df = m_ppr_df[ ( m_ppr_df['player_a1'].str.strip() == disp_player.strip() ) | 
+                        ( m_ppr_df['player_a2'].str.strip() == disp_player.strip() ) |  
+                        ( m_ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
+                        ( m_ppr_df['player_b2'].str.strip() == disp_player.strip() )
   ]
   #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
@@ -813,7 +813,7 @@ def expected_value(disp_league, disp_gender, disp_year,
   ev_table = pd.DataFrame.from_dict( df_dict )
 
   # now filter my ppr file to just those wher ethe disp_player receives serve
-  ppr_df = m_ppr_df[ m_ppr_df['pass_player'] == disp_player]
+  ppr_df = m_ppr_df[ m_ppr_df['pass_player'].str.strip() == disp_player.strip()]
   
   ############### Third Populate the dataframe, assuming we have data returned
   if ppr_df.shape[0] > 0:

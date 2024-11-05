@@ -29,13 +29,13 @@ def fbhe( ppr_df, disp_player, play_type):
     fbhe_list = [ 0.0, 0, 0, 0, 0, " No Data Available " ]
   else:
     if play_type == "att":
-      ppr_df = ppr_df[ppr_df['att_player']==disp_player.strip()]
+      ppr_df = ppr_df[ppr_df['att_player'].str.strip() == disp_player.strip()]
     elif play_type == "srv":
-      ppr_df = ppr_df[ppr_df['serve_player']==disp_player.strip()]
+      ppr_df = ppr_df[ppr_df['serve_player'].str.strip() == disp_player.strip()]
     elif play_type == "pass":
-      ppr_df = ppr_df[ppr_df['pass_player']==disp_player.strip()]
+      ppr_df = ppr_df[ppr_df['pass_player'].str.strip() == disp_player.strip()]
 
-    print(f"Size of DB in calc_fbhe:{ppr_df.shape[0]}")
+    print(f"Size of DB in calc_fbhe:{ppr_df.shape[0]}, Disp Player:{disp_player}")
     # to build the video link, need a quick loop over rows:
     video_list = [*range(0,ppr_df.shape[0],1)]
     #print(f"video list: {video_list}")
@@ -174,19 +174,19 @@ def calc_trans( ppr_df, disp_player, flag ):
   tmp_df = ppr_df
   # filter for serve or receive, or all
   # first, make sue we have point relating to this player
-  ppr_df = ppr_df[(( ppr_df['player_a1'] == disp_player ) |
-                  ( ppr_df['player_a2'] == disp_player ) |
-                   ( ppr_df['player_b1'] == disp_player ) |
-                  ( ppr_df['player_b2'] == disp_player ) ) &
+  ppr_df = ppr_df[(( ppr_df['player_a1'].str.strip() == disp_player.strip() ) |
+                  ( ppr_df['player_a2'].str.strip() == disp_player.strip() ) |
+                   ( ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
+                  ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) &
                   (( ppr_df['point_outcome'] == 'TK') | 
                   ( ppr_df['point_outcome'] == 'TE' ))
     ]
   total_trans = ppr_df.shape[0]
   #print(f"All Point Ooutcome Teams:{ppr_df['point_outcome_team']}")
   if flag == 'srv':
-    ppr_df = ppr_df[ ppr_df['serve_player'] == disp_player]
+    ppr_df = ppr_df[ ppr_df['serve_player'].str.strip() == disp_player.strip()]
   elif flag == 'rcv':
-    ppr_df = ppr_df[ ppr_df['pass_player'] == disp_player]
+    ppr_df = ppr_df[ ppr_df['pass_player'].str.strip() == disp_player.strip()]
 
   # first, kilsl and errors for this team
   #print(f"Total Transition points:{ppr_df.shape[0]}")
@@ -230,7 +230,7 @@ def calc_ev(ppr_df, disp_player):
   ev_vector = [0,0,0,0,0,0,0,0,0,0,0,0]
 
   # now filter my ppr file to just those wher ethe disp_player receives serve
-  ppr_df = ppr_df[ ppr_df['pass_player'] == disp_player]
+  ppr_df = ppr_df[ ppr_df['pass_player'].str.strip() == disp_player.strip()]
 
   ev_vector[3] = ppr_df[ppr_df['point_outcome'] == "FBK"].shape[0]
   ev_vector[8] = ppr_df[ppr_df['point_outcome'] == 'FBE'].shape[0]
@@ -270,14 +270,14 @@ def calc_error_den( ppr_df, disp_player):
   error_vector = [0,0,0,0,0,0,0]
 
   # make sure our player is involved in every point
-  ppr_df = ppr_df[(( ppr_df['player_a1'] == disp_player ) |
-                  ( ppr_df['player_a2'] == disp_player ) |
-                   ( ppr_df['player_b1'] == disp_player ) |
-                  ( ppr_df['player_b2'] == disp_player ) ) ]
+  ppr_df = ppr_df[(( ppr_df['player_a1'].str.strip() == disp_player.strip() ) |
+                  ( ppr_df['player_a2'].str.strip() == disp_player.strip() ) |
+                   ( ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
+                  ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) ]
   error_vector[6] = ppr_df.shape[0]
-  error_vector[2] = ppr_df[ ( ppr_df['point_outcome'] == 'FBE') & (ppr_df['att_player'] == disp_player ) ].shape[0]
+  error_vector[2] = ppr_df[ ( ppr_df['point_outcome'] == 'FBE') & (ppr_df['att_player'].str.strip() == disp_player.strip() ) ].shape[0]
   error_vector[4] = ppr_df[ ( ppr_df['point_outcome'] == 'TE') & (ppr_df['point_outcome_team'].str.contains(disp_player[:-1])) ].shape[0]*0.5
-  error_vector[3] = ppr_df[ ( ppr_df['point_outcome'] == 'TSE') & (ppr_df['serve_player'] == disp_player ) ].shape[0]
+  error_vector[3] = ppr_df[ ( ppr_df['point_outcome'] == 'TSE') & (ppr_df['serve_player'].str.strip() == disp_player.strip() ) ].shape[0]
   error_vector[5] = error_vector[2] + error_vector[3] + error_vector[4] 
   error_vector[0] = error_vector[5] / error_vector[6]
   error_vector[0] = str('{:.2%}').format(error_vector[0])
