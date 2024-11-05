@@ -68,11 +68,11 @@ def calculate_player_data( c_league, c_gender, c_year):
                  'fbhe':None,'fbhe1':None,'fbhe2':None,'fbhe3':None,'fbhe4':None,'fbhe5':None,'fbhe_range':None,
                  'err_den':None,'tcr':None,'tcr_r':None,'tcr_s':None,'expected':None,
                  'srv_fbhe':None,'srv1_fbhe':None,'srv3_fbhe':None,'srv5_fbhe':None,
-                 'poke_fbhe':None,'poke_per':None,'shoot_fbhe':None,'shoot_per':None,'bang_fbhe':None,'band_per':None,
-                 'fbhe_srv1':None,'fbhe_srv3':None,'fbhe_srv5':None,
+                 'poke_fbhe':None,'poke_per':None,'shoot_fbhe':None,'shoot_per':None,'bang_fbhe':None,'bang_per':None,
+                 'fbhe_from_srv1':None,'fbhe_from_srv3':None,'fbhe_from_srv5':None,
                  'fbhe_option':None, 'option_per':None,'fbhe_behind':None,'behind_per':None,'fbhe_tempo':None,'tempo_per':None
                 }
-  print(f"Player Dict:{player_dict}")
+  #print(f"Player Dict:{player_dict}")
   player_df = pd.DataFrame.from_records(player_dict)
   #player_df = pd.DataFrame(player_dict, columns=['player', 'fbhe', 'fbhe1','fbhe2','fbhe3','fbhe4','fbhe5'])
   
@@ -88,7 +88,7 @@ def calculate_player_data( c_league, c_gender, c_year):
   #print(f"player stats df:{player_stats_df}")
   
   for i in range(0,num_players):
-    print(f"player: {p_list[i]}")
+    #print(f"player: {p_list[i]}")
     player_df.at[i,'player'] = p_list[i]
 
     # unpack the player into the team, number, and short name
@@ -137,6 +137,14 @@ def calculate_player_data( c_league, c_gender, c_year):
     ed_vector = calc_error_den( ppr_df, p_list[i] )
     player_df.at[i,'err_den'] = float(ed_vector[0][:-1])
 
+    #------------------- Calculate Poke, Shoot, and Bang fbhe and %
+
+    #------------------- Behind, Option, and Tempo fbhe and %
+
+    #-------------------- Serving Effectivienss, fbhe on all, zone 1, 3, 5
+
+  
+    #------------------- FBHE when served from 1, 3, 5
 
 
   ########## end of loop over players
