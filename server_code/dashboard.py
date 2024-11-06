@@ -61,11 +61,20 @@ def coaches_dashboard(league_value, disp_team):
   #print(player_stats_df)
 
   # ---------- This may change, but let's make a subest data set a few columns for this display
-  disp_df = player_data_df[['team','player','fbhe','err_den','tcr_r','tcr_s','expected']]
+  disp_df = player_data_df[['team','player','fbhe','fbhe1', 'fbhe2', 'fbhe3', 'fbhe4', 'fbhe5']]
+  #mean_row = {'team':'Mean','fbhe':disp_df['fbhe'].mean(skipna=True),'fbhe1':disp_df['fbhe1'].mean(skipna=True)}
+  #sd_row = {'team':'Mean','fbhe':disp_df['fbhe'].std(skipna=True),'fbhe1':disp_df['fbhe1'].std(skipna=True)}
+  #disp_df = disp_df.append(mean_row, ignore_index = True)
+  #disp_df = disp_df.append(sd_row, ignore_index = True)
   df_table1 = pd.DataFrame.to_markdown(disp_df, index=False )
-  disp_df = player_data_df[['team','player','fbhe','err_den','tcr_r','tcr_s','expected']]
+  disp_df = player_data_df[['player','srv1_fbhe','srv3_fbhe','srv5_fbhe']]
+  mean_row = {'team':'Mean','srv1_fbhe':disp_df['srv1_fbhe'].mean(skipna=True),'fsrv3_fbhe':disp_df['srv3_fbhe'].mean(skipna=True)}
+  sd_row = {'team':'Mean','srv1_fbhe':disp_df['srv1_fbhe'].std(skipna=True),'srv3_fbhe':disp_df['srv3_fbhe'].std(skipna=True)}
+  disp_df = disp_df.append(mean_row, ignore_index = True)
+  disp_df = disp_df.append(sd_row, ignore_index = True)
   df_table2 = pd.DataFrame.to_markdown(disp_df, index=False )
-  #print(df_table)
+  disp_df = player_data_df[['player','err_den','tcr','tcr_r','tcr_s','expected']]
+  df_table3 = pd.DataFrame.to_markdown(disp_df, index=False )
   df_stats_table = pd.DataFrame.to_markdown(player_stats_df, index=False)
   
-  return df_table,1 df_table2, df_stats_table
+  return df_table1, df_table2, df_table3, df_stats_table

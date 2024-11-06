@@ -32,17 +32,37 @@ components_by_slot:
       name: dashboard_text
       properties: {content: ''}
       type: RichText
+    - layout_properties: {grid_position: 'ERHCAB,MERLQO'}
+      name: label_3
+      properties: {text: First Ball Hitting Efficiency (FBHE) Along the Net}
+      type: Label
     - layout_properties: {grid_position: 'GSESXQ,GDFARJ'}
       name: rich_text_2
       properties: {content: ''}
       type: RichText
+    - layout_properties: {grid_position: 'QQXJYR,BSYYBJ'}
+      name: label_3_copy
+      properties: {text: First Ball Hitting Efficiency (FBHE) based on Serve Source}
+      type: Label
     - layout_properties: {grid_position: 'KOQVFA,ELXMNN'}
       name: rich_text_3
       properties: {content: ''}
       type: RichText
+    - layout_properties: {grid_position: 'SKEXSA,UQHGXR'}
+      name: label_3_copy_2
+      properties: {text: 'Error Densty (errors/points), Transition Conversion (all, serving, receiving), Expected Value'}
+      type: Label
     - layout_properties: {grid_position: 'YFFRXH,HQORJS'}
       name: rich_text_4
       properties: {content: ''}
+      type: RichText
+    - layout_properties: {grid_position: 'IYJASR,ORAJUG'}
+      name: label_3_copy_3
+      properties: {text: 'Error Densty (errors/points), Transition Conversion (all, serving, receiving), Expected Value'}
+      type: Label
+    - layout_properties: {grid_position: 'TBNDXA,ACMGSL'}
+      name: rich_text_5
+      properties: {}
       type: RichText
     layout_properties: {}
     name: outlined_card_2
