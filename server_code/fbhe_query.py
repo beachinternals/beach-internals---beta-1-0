@@ -186,7 +186,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'pass' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
@@ -196,7 +196,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
 
     # Option
     tmp_ppr_df = m_ppr_df[m_ppr_df['tactic'] == "option"]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'pass' )
     fbhe_table.at[0,'Option'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Option'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Option'] = fbhe_vector[2]  # errors
@@ -206,7 +206,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
 
     # Behind
     tmp_ppr_df = m_ppr_df[m_ppr_df['tactic'] == "behind"]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'pass' )
     fbhe_table.at[0,'Behind'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Behind'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Behind'] = fbhe_vector[2]  # errors
@@ -216,7 +216,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
 
     # Tempo
     tmp_ppr_df = m_ppr_df[(m_ppr_df['set_height'] <= 2) & (m_ppr_df['set_dist'] <= 1) ]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'pass' )
     fbhe_table.at[0,'Tempo'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Tempo'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Tempo'] = fbhe_vector[2]  # errors
@@ -229,7 +229,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
                            (m_ppr_df['att_src_zone_net'] == 5) & (m_ppr_df['set_src_zone_net'] == 2) ) &
                             ( m_ppr_df['set_height'] < 2 )
                           ]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'pass' )
     fbhe_table.at[0,'Push to Pin'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Push to Pin'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Push to Pin'] = fbhe_vector[2]  # errors
@@ -245,7 +245,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
                                ( m_ppr_df['set_height'] < 2 )) & 
                             ~ ((m_ppr_df['set_height'] <= 2) & (m_ppr_df['set_dist'] <= 1))
                           ]
-    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'att' )
+    fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'pass' )
     fbhe_table.at[0,'Other'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Other'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Other'] = fbhe_vector[2]  # errors
