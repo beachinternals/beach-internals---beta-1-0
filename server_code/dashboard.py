@@ -27,7 +27,7 @@ def coaches_dashboard(league_value, disp_team):
   
   # find the play_data table
   # pull out the player_data csv file
-  print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}")
+  #print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = disp_league,
@@ -40,7 +40,7 @@ def coaches_dashboard(league_value, disp_team):
     player_data_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data'].get_bytes()))
     player_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
   else:
-    print('No Rows Found')
+    #print('No Rows Found')
     return ["No Rows"], ["No Stats Found"]
 
   # somehow, we are getting a column called unamed: 0, so drop taht
@@ -51,7 +51,7 @@ def coaches_dashboard(league_value, disp_team):
   
   # limit to player_data table to just this team
   if disp_team != "INTERNALS":
-    print(f" Disp Team,{disp_team}")
+    #print(f" Disp Team,{disp_team}")
     player_data_df = player_data_df[ player_data_df['team'] == disp_team.strip() ]
   
   # replace nan with blanks
@@ -62,7 +62,7 @@ def coaches_dashboard(league_value, disp_team):
 
   # ---------- This may change, but let's make a subest data set a few columns for this display
   disp_df = player_data_df[['team','player','fbhe','err_den','tcr_r','tcr_s','expected']]
-  print(disp_df)
+  #print(disp_df)
 
   # convert df to markdown table
   df_table = pd.DataFrame.to_markdown(disp_df, index=False )

@@ -35,7 +35,7 @@ def calculate_player_data( c_league, c_gender, c_year):
   if ppr_csv_row:
     ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
   else:
-    print('No Rows Found')
+    #print('No Rows Found')
     return ["No Rows"]
 
   #print(f"shape of ppr_df :{ppr_df.shape}")
@@ -104,14 +104,14 @@ def calculate_player_data( c_league, c_gender, c_year):
     if fbhe_vector[3] >= min_att:
       player_df.at[i,'fbhe'] = fbhe_vector[0]
 
-    print(f"player_df after fbhe calc:{player_df}")
+    #print(f"player_df after fbhe calc:{player_df}")
 
     fbhe_min = 1
     fbhe_max = 0
     for j in [1,2,3,4,5]:
       fbhe_vector = fbhe(ppr_df[ppr_df['att_src_zone_net']==j], p_list[i], 'att')
       field = "fbhe" + str(j)
-      print(f"Field:{field}, fbhe vector:{fbhe_vector}")
+      #print(f"Field:{field}, fbhe vector:{fbhe_vector}")
       if fbhe_vector[3] >= min_att:
         player_df.at[i,field] = fbhe_vector[0]
         fbhe_min = fbhe_vector[0] if fbhe_vector[0] < fbhe_min else fbhe_min
@@ -138,17 +138,52 @@ def calculate_player_data( c_league, c_gender, c_year):
     player_df.at[i,'err_den'] = float(ed_vector[0][:-1])
 
     #------------------- Calculate Poke, Shoot, and Bang fbhe and %
+    fbhe_vector = fbhe( ppr_df, p_list[i], 'all')
+    total_attempts = fbhe_vector[3]if fbhe_vector[3] != 0 else 1
+    fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'poke')
+    player_df.at[i,'poke_fbhe'] = fbhe_vector[0]
+    player_df.at[i,'poke_per'] = fbhe_vector[3]/total_attempts
+    fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'shoot')
+    player_df.at[i,'shoot_fbhe'] = fbhe_vector[0]
+    player_df.at[i,'shoot_per'] = fbhe_vector[3]/total_attempts
+    bhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'bang')
+    player_df.at[i,'bang_fbhe'] = fbhe_vector[0]
+    player_df.at[i,'bang_per'] = fbhe_vector[3]/total_attempts
 
     #------------------- Behind, Option, and Tempo fbhe and %
+    fbhe_vector = fbhe(ppr_df, p_list[i], 'pass')
+    total_attempts = fbhe_vector[3] if fbhe_vector[3] != 0 else 1
+    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'option'],p_list[i],'pass')
+    player_df.at[i,'fbhe_option'] = fbhe_vector[0]
+    player_df.at[i,'option_per'] = int(fbhe_vector[3])/total_attempts
+    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'behind'],p_list[i],'pass')
+    player_df.at[i,'fbhe_behind'] = fbhe_vector[0]
+    player_df.at[i,'behind_per'] = int(fbhe_vector[3])/total_attempts
+    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'tempo'],p_list[i],'pass')
+    player_df.at[i,'fbhe_tempo'] = fbhe_vector[0]
+    player_df.at[i,'tempo_per'] = fbhe_vector[3]/total_attempts
+    
+    #-------------------- Serving Effectiviness, fbhe on all, zone 1, 3, 5
+    fbhe_vector = fbhe(ppr_df, p_list[i], 'srv')
+    player_df.at[i,'fbhe_srv'] = fbhe_vector[0]
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==1],p_list[i],'srv')
+    player_df.at[i,'fbhe_srv1'] = fbhe_vector[0]
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==3],p_list[i],'srv')
+    player_df.at[i,'fbhe_srv3'] = fbhe_vector[0]
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==5],p_list[i],'srv')
+    player_df.at[i,'fbhe_srv5'] = fbhe_vector[0]
 
-    #-------------------- Serving Effectivienss, fbhe on all, zone 1, 3, 5
-
-  
     #------------------- FBHE when served from 1, 3, 5
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==1],p_list[i],'pass')
+    player_df.at[i,'srv1_fbhe'] = fbhe_vector[0]
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==3],p_list[i],'pass')
+    player_df.at[i,'srv3_fbhe'] = fbhe_vector[0]
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==5],p_list[i],'pass')
+    player_df.at[i,'srv5_fbhe'] = fbhe_vector[0]
 
 
   ########## end of loop over players
-  print(f"Player Df when done:{player_df}")
+  #print(f"Player Df when done:{player_df}")
 
   # Now store and calulate the statistical values
   #------------------------------------------------

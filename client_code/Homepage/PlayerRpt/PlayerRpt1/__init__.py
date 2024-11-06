@@ -53,9 +53,9 @@ class PlayerRpt1(PlayerRpt1Template):
 
   def generate_report_button_click(self, **event_args):
     #"""This method is called when the button is clicked"""
-    print(f"player selected value:{self.player_drop_down.selected_value}")
+    #print(f"player selected value:{self.player_drop_down.selected_value}")
     player = self.player_drop_down.selected_value['team']+" "+self.player_drop_down.selected_value['number']+" "+self.player_drop_down.selected_value['shortname']
-    print(f"Player:{player}")
+    #print(f"Player:{player}")
     table_markup = anvil.server.call('fbhe_table_query',
                     self.league_drop_down.selected_value['league'],
                     self.gender_drop_down.selected_value,

@@ -36,7 +36,7 @@ def update_btd_characteristics( file ):
     user_email = anvil.users.get_user()['email']
     
   # pass in the btd csv file, then return the characterestics
-  print("file:", file)
+  #print("file:", file)
   
   # take file, and make the 
   file_obj = io.BytesIO( file.get_bytes() )

@@ -51,7 +51,7 @@ def create_master_ppr( user_league, user_gender, user_year, user_team, data_set 
   #    team = user_team,
   #    private = True
   #    )
-  print(f"Data Set:{data_set}")
+  #print(f"Data Set:{data_set}")
   if data_set == "Private":
     btd_rows = app_tables.btd_files.search(
       league = user_league,
@@ -76,7 +76,7 @@ def create_master_ppr( user_league, user_gender, user_year, user_team, data_set 
       )
     user_team = "League"
   else:
-    print(f"We failed with data set:{data_set}")
+    #print(f"We failed with data set:{data_set}")
     return False
 
   # now,, start a loop of the rows
@@ -85,11 +85,11 @@ def create_master_ppr( user_league, user_gender, user_year, user_team, data_set 
     # check if there is a data object in the ppr_data field:
     if  flist_r['ppr_data']:
       ppr_df = pd.read_csv(io.BytesIO( flist_r['ppr_data'].get_bytes()))
-      print(f"reading ppr_file, size: {ppr_df.size}")
+      #print(f"reading ppr_file, size: {ppr_df.size}")
       master_ppr_df = pd.concat([master_ppr_df,ppr_df])
-      print(f"master ppr file sie: {master_ppr_df.size}")
+      #print(f"master ppr file sie: {master_ppr_df.size}")
   
-  print(f"size of master_ppr_df: {master_ppr_df.size}")
+  #print(f"size of master_ppr_df: {master_ppr_df.size}")
   #print(master_ppr_df)
   # so we should now have te master ppr_df for the given league, gender, year, and team
   # write this to a data file
@@ -232,13 +232,13 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
 
   # last thing, place this mppr_df (master ppr dataframe) into the database as a csv file
   # first, I need to cahnge the ppr_file dataframe to a csv file.
-  print(f"saving ppr df, size:{master_ppr_df.size}")
+  #print(f"saving ppr df, size:{master_ppr_df.size}")
   master_ppr_csv_file = pd.DataFrame.to_csv(master_ppr_df)
   ppr_media = anvil.BlobMedia(content_type="text/plain", content=master_ppr_csv_file.encode(), name="ppr_csv.csv")
     
   # now I can store it in the btd files database
   # find the correct row
-  print(f"looking in ppr csv tables: League:{user_league}, Gender:{user_gender}, Year:{user_year}, Team:{user_team}")
+  #print(f"looking in ppr csv tables: League:{user_league}, Gender:{user_gender}, Year:{user_year}, Team:{user_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = user_league,
@@ -248,7 +248,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
     ) )
 
   if ppr_csv_row:
-    print("ipdating a row to the csv table")
+    #print("ipdating a row to the csv table")
     ppr_csv_row.update(
       league = user_league,
       gender = user_gender,
@@ -258,7 +258,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
       date = datetime.datetime.now()
     )
   else:
-    print("adding a row to the csv table")
+    #print("adding a row to the csv table")
     app_tables.ppr_csv_tables.add_row(
       league = user_league,
       gender = user_gender,

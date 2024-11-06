@@ -28,7 +28,7 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild 
   )
 
   for flist_r in btd_row:
-    print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
+    #print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
     calc_ppr = False
     
     if rebuild:
@@ -74,7 +74,7 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild 
 
 # ############ server function to convert a btd file to a ppr file
 def btd_to_ppr_file(btd_file_bytes, flist_r):
-  print(f"btd to ppr process of :{flist_r['filename']}")
+  #print(f"btd to ppr process of :{flist_r['filename']}")
   # convert the btd file to a dataframe
   btd_df = pd.read_csv(btd_file_bytes)
 
@@ -724,7 +724,7 @@ def calc_tactic( ppr_df ):
 
 def print_to_string(*args, **kwargs):
     output = io.StringIO()
-    print(*args, file=output, **kwargs)
+    #print(*args, file=output, **kwargs)
     contents = output.getvalue()
     output.close()
     return contents

@@ -36,7 +36,7 @@ def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player
   #print(fbhe_table)
   
   # filter the master_ppr_data file to this player and team and league)
-  print(f"FBHE_table_query: League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
+  #print(f"FBHE_table_query: League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = disp_league,
@@ -105,7 +105,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
   # get the ppr data
-  print(f"FBHE_scout_query: League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
+  #print(f"FBHE_scout_query: League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
   m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True )
 
   # now, narrow the data by competition level and dates
@@ -116,12 +116,12 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          )
     
-  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   # if the eata is not empty, create my df, populate it, and return it
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
-    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
@@ -168,7 +168,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          )
     
-  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
@@ -185,7 +185,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
-    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
@@ -281,7 +281,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          )
     
-  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
@@ -298,7 +298,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
-    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
@@ -346,7 +346,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          )
     
-  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
@@ -363,7 +363,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
-    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
@@ -378,7 +378,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
     m_ppr_df = m_ppr_df[ (m_ppr_df['att_speed'] > 0) ]
     
     # calculate for poke/roll, limit the data, and call fbhe
-    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) ], disp_player, 'att' )
+    fbhe_vector = fbhe_attack_type( m_ppr_df, disp_player, 'poke')
     fbhe_table.at[0,'Poke/Roll'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Poke/Roll'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Poke/Roll'] = fbhe_vector[2]  # errors
@@ -387,7 +387,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'Poke/Roll'] = fbhe_vector[5]  # URL
 
     # calculate for shot, imit the data, and call fbhe
-    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 ) ], disp_player, 'att' )
+    fbhe_vector = fbhe_attack_type( m_ppr_df, disp_player, 'shoot')
     fbhe_table.at[0,'Shot'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Shot'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Shot'] = fbhe_vector[2]  # errors
@@ -397,7 +397,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
 
         # calculate for poke/roll
     # limit the data, and call fbhe
-    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 ) ], disp_player, 'att' )
+    fbhe_vector = fbhe_attack_type( m_ppr_df, disp_player, 'bang')
     fbhe_table.at[0,'Bang/Hard'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Bang/Hard'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Bang/Hard'] = fbhe_vector[2]  # errors
@@ -435,7 +435,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          )
     
-  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
@@ -452,7 +452,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
-    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'srv' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
@@ -515,7 +515,7 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          )
     
-  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
@@ -538,19 +538,19 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
   if m_ppr_df.shape[0] > 0:
     # start loop over net, 1 - 5
     for i in net_list:
-      print(f"i:{i}")
+      #print(f"i:{i}")
       tmp1_df = m_ppr_df[ m_ppr_df['serve_dest_zone_net'] == i]
-      print(f"i = {i}, tmp1 df shape:{tmp1_df.shape}")
+      #print(f"i = {i}, tmp1 df shape:{tmp1_df.shape}")
       for j in net_list:
         tmp2_df = tmp1_df[ tmp1_df['serve_dest_zone_depth'] == depth_list[j-1]]
-        print(f"i,j = {i},{j}, tmp2 df shape:{tmp2_df.shape}")
+        #print(f"i,j = {i},{j}, tmp2 df shape:{tmp2_df.shape}")
         fbhe_vector = fbhe( tmp2_df, disp_player, 'pass' )
         fbhe_table.iloc[j-1,i] = fbhe_vector[0]
         att_table.iloc[j-1,i] = fbhe_vector[1]
         url_table.iloc[j-1,i] = fbhe_vector[5]
 
     # now create the markdown text to return
-    print(fbhe_table)
+    #print(fbhe_table)
     fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
     fbhe_return2 = pd.DataFrame.to_markdown(att_table)
     fbhe_return3 = pd.DataFrame.to_markdown(url_table)
@@ -581,7 +581,7 @@ def report_stub(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          ) 
     
-  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
@@ -598,7 +598,7 @@ def report_stub(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
-    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
@@ -716,7 +716,7 @@ def tcr(disp_league, disp_gender, disp_year,
              'Receiving':[0,0,0,0,0,0,0,0,0,0]
             }
   trans_table = pd.DataFrame.from_dict( df_dict, orient='columns' )
-  print(trans_table)
+  #print(trans_table)
   trans_list = [0,0,0,0,0,0,0,0,0,0]
   # now delete column 0 
   #trans_table = trans_table.drop(columns=[0])
@@ -730,7 +730,7 @@ def tcr(disp_league, disp_gender, disp_year,
 
     # calculate data for all attempts
     trans_list = calc_trans( m_ppr_df, disp_player, 'all')
-    print(f"Transition List, All:{trans_list}")
+    #print(f"Transition List, All:{trans_list}")
     trans_table.at[0,'All'] = trans_list[0]
     trans_table.at[1,'All'] = trans_list[1]
     trans_table.at[2,'All'] = trans_list[2]
@@ -744,7 +744,7 @@ def tcr(disp_league, disp_gender, disp_year,
 
     # calculate data for all attempts
     trans_list = calc_trans( m_ppr_df, disp_player, 'srv')
-    print(f"Transition List, Srv:{trans_list}")
+    #print(f"Transition List, Srv:{trans_list}")
     trans_table.at[0,'Serving'] = trans_list[0]
     trans_table.at[1,'Serving'] = trans_list[1]
     trans_table.at[2,'Serving'] = trans_list[2]
@@ -758,7 +758,7 @@ def tcr(disp_league, disp_gender, disp_year,
 
     # calculate data for Reeive attempts
     trans_list = calc_trans( m_ppr_df, disp_player, 'rcv')
-    print(f"Transition List, rcv:{trans_list}")
+    #print(f"Transition List, rcv:{trans_list}")
     trans_table.at[0,'Receiving'] = trans_list[0]
     trans_table.at[1,'Receiving'] = trans_list[1]
     trans_table.at[2,'Receiving'] = trans_list[2]
@@ -865,7 +865,7 @@ def report_stuba(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          )
     
-  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
@@ -882,7 +882,7 @@ def report_stuba(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
-    print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'att' )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks

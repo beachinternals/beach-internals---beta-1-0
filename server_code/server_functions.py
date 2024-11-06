@@ -21,6 +21,14 @@ import io
 def fbhe( ppr_df, disp_player, play_type):
   # pass this a query of rows, figures the FBHE for the display player as the attacker
   # initialize the vector
+  #
+  # 0 = fbhe
+  # 1 = kills
+  # 2 = errors
+  # 3 = attempts
+  # 4 = accuracy (currently 0)
+  # 5 = URL
+  
   fbhe_list = [ 0.0, 0, 0, 0, 0, " " ]    # FBHE
 
   # limit to attacks by our player
@@ -35,7 +43,7 @@ def fbhe( ppr_df, disp_player, play_type):
     elif play_type == "pass":
       ppr_df = ppr_df[ppr_df['pass_player'].str.strip() == disp_player.strip()]
 
-    print(f"Size of DB in calc_fbhe:{ppr_df.shape[0]}, Disp Player:{disp_player}")
+    #print(f"Size of DB in calc_fbhe:{ppr_df.shape[0]}, Disp Player:{disp_player}")
     # to build the video link, need a quick loop over rows:
     video_list = [*range(0,ppr_df.shape[0],1)]
     #print(f"video list: {video_list}")
@@ -89,7 +97,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
   # fetch the appropriate ppr table(s) from the ppr_csv table given the league and team, and if scout data
 
   no_data = True
-  print(f"Searching Team Rows: L:{disp_league}, G:{disp_gender},Y:{disp_year},T:{disp_team}")
+  #print(f"Searching Team Rows: L:{disp_league}, G:{disp_gender},Y:{disp_year},T:{disp_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = disp_league,
@@ -103,7 +111,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
     ppr_for_team_found = True
   else:
     m_ppr_df = [" "]
-    print('No Team Rows Found')
+    #print('No Team Rows Found')
     ppr_for_team_found = False
 
   if scout:
@@ -124,7 +132,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
         m_ppr_df = pd.concat([m_ppr_df,scout_ppr_df])
       else:
         m_ppr_df = scout_ppr_df
-      print(f'Scout DB Found:{scout_ppr_df.shape}')
+      #print(f'Scout DB Found:{scout_ppr_df.shape}')
     else:
       print('No Scout Rows Found')
 
@@ -141,18 +149,18 @@ def ppr_df_limit( m_ppr_df,
   # take an imput ppr_df, and limit it by competition level and date
   if comp_l1_checked:
     m_ppr_df = m_ppr_df[ m_ppr_df['comp_l1'] ==  disp_comp_l1 ]
-    print(f"Limitiing by Comp l1:{disp_comp_l1}, Size:{m_ppr_df.shape}")
+    #print(f"Limitiing by Comp l1:{disp_comp_l1}, Size:{m_ppr_df.shape}")
   if comp_l2_checked:
     m_ppr_df = m_ppr_df[ m_ppr_df['comp_l2'] == disp_comp_l2 ]
-    print(f"Limitiing by Comp l2:{disp_comp_l2}, Size:{m_ppr_df.shape}")
+    #print(f"Limitiing by Comp l2:{disp_comp_l2}, Size:{m_ppr_df.shape}")
   if comp_l3_checked:
     m_ppr_df = m_ppr_df[ m_ppr_df['comp_l3'] == disp_comp_l3 ]
-    print(f"Limitiing by Comp l3:{disp_comp_l3}, Size:{m_ppr_df.shape}")
+    #print(f"Limitiing by Comp l3:{disp_comp_l3}, Size:{m_ppr_df.shape}")
   if date_checked:
     m_ppr_df['game_date'] = pd.to_datetime(m_ppr_df['game_date'])
     m_ppr_df['game_date'] = m_ppr_df['game_date'].dt.date
     m_ppr_df = m_ppr_df.loc[(m_ppr_df['game_date'] >= disp_start_date) & (m_ppr_df['game_date'] <= disp_end_date) ]
-    print(f"Limitiing by Dates:{disp_start_date},{disp_end_date}")
+    #print(f"Limitiing by Dates:{disp_start_date},{disp_end_date}")
     
   return m_ppr_df
 
@@ -284,4 +292,20 @@ def calc_error_den( ppr_df, disp_player):
   error_vector[1] = 0
 
   return error_vector
-    
+
+
+def fbhe_attack_type( m_ppr_df, disp_player, att_type ):
+  # calcualte the fbhe byt he attack type:
+  # att_type:
+  #    'poke' - use the limit equation by poke
+  #    'shoot'
+  #    'bang'
+
+  if (att_type == 'poke'):
+    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) ], disp_player, 'att' )
+  elif (att_type == 'shoot'):
+    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 ) ], disp_player, 'att' )
+  elif (att_type == 'bang'):
+    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 ) ], disp_player, 'att' )
+
+  return fbhe_vector

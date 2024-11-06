@@ -27,7 +27,7 @@ def fbhe_histogram(league_value ):
   
   # pull out the player_data csv file
   disp_team = "League"    # only updating hte league tables
-  print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}")
+  #print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = disp_league,
@@ -40,17 +40,17 @@ def fbhe_histogram(league_value ):
     player_data_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data'].get_bytes()))
     #player_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
   else:
-    print('No Rows Found')
+    #print('No Rows Found')
     return ["No Rows"]
   hist_array = player_data_df['fbhe']
-  print(f"fhbe_hist: Histogram Array: {hist_array}")
+  #print(f"fhbe_hist: Histogram Array: {hist_array}")
   hist_array = hist_array.replace(np.nan, 0) 
-  print(f"fhbe_hist: Histogram Array, after notnull: {hist_array}")
+  #print(f"fhbe_hist: Histogram Array, after notnull: {hist_array}")
   
   # plot it
   histogram = np.histogram(hist_array)
-  print("returned from np.histogram")
-  print(histogram)
+  #print("returned from np.histogram")
+  #print(histogram)
   
   # return it
   return histogram

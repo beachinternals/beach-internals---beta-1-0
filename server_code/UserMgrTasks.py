@@ -23,7 +23,7 @@ def check_user_team():
     current_team = current_team.upper()
     if current_team in team_list:
       # all is good
-      print(f"Current user is on a valid team: {current_team}")
+      #print(f"Current user is on a valid team: {current_team}")
       user_row['team'] = current_team  #save it back, jsut in case, now it should be upper case and trimmed.
     elif not current_team:
       # send me an email about this
@@ -33,7 +33,7 @@ def check_user_team():
                  text = "A new user has been assigned to team Visitor :"+user_row['email'])
     else:
       # so we have an issue
-      print(f"Appears we have a team with an invalid team: {current_team}")
+      #print(f"Appears we have a team with an invalid team: {current_team}")
       user_row['team'] = 'Visitor'
       # send me an email about this
       anvil.email.send(from_name = "Beach Internals Support", 

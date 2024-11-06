@@ -40,7 +40,7 @@ class ScoutingRpt1(ScoutingRpt1Template):
 
   def generate_report_button_click(self, **event_args):
     # """This method is called when the button is clicked"""
-    print(f"player selected value:{self.player_drop_down.selected_value}")
+    #print(f"player selected value:{self.player_drop_down.selected_value}")
     player = (
       self.player_drop_down.selected_value["team"]
       + " "
@@ -58,7 +58,7 @@ class ScoutingRpt1(ScoutingRpt1Template):
     disp_gender = league_value[:str_loc-1].strip()
     disp_year = league_value[str_loc+1:].strip()
     
-    print(f"Player:{player}")
+    #print(f"Player:{player}")
     table_markup = anvil.server.call(
       "fbhe_scout_query",
       disp_league,

@@ -70,8 +70,8 @@ class btd_import(btd_importTemplate):
      # calcuate the information on the uploaded btd file
     return_value =  anvil.server.call('update_btd_characteristics', file )
 
-    print(f"players in the client, {return_value[0]} , {return_value[1]} , {return_value[2]} , {return_value[3]}")
-    print(f"League Dropdown selected value:{self.league_drop_down.selected_value}")
+    #print(f"players in the client, {return_value[0]} , {return_value[1]} , {return_value[2]} , {return_value[3]}")
+    #print(f"League Dropdown selected value:{self.league_drop_down.selected_value}")
     
     player_list = [ return_value[0], return_value[1], return_value[2], return_value[3] ]
     
