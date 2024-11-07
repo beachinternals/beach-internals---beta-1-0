@@ -33,32 +33,32 @@ components_by_slot:
       properties: {content: ''}
       type: RichText
     - layout_properties: {grid_position: 'ERHCAB,MERLQO'}
-      name: label_3
-      properties: {text: First Ball Hitting Efficiency (FBHE) Along the Net}
+      name: text_label1
+      properties: {align: center, text: First Ball Hitting Efficiency (FBHE) Along the Net, visible: false}
       type: Label
     - layout_properties: {grid_position: 'GSESXQ,GDFARJ'}
       name: rich_text_2
       properties: {content: ''}
       type: RichText
     - layout_properties: {grid_position: 'QQXJYR,BSYYBJ'}
-      name: label_3_copy
-      properties: {text: First Ball Hitting Efficiency (FBHE) based on Serve Source}
+      name: text_label2
+      properties: {align: center, text: First Ball Hitting Efficiency (FBHE) based on Serve Source, visible: false}
       type: Label
     - layout_properties: {grid_position: 'KOQVFA,ELXMNN'}
       name: rich_text_3
       properties: {content: ''}
       type: RichText
     - layout_properties: {grid_position: 'SKEXSA,UQHGXR'}
-      name: label_3_copy_2
-      properties: {text: 'Error Densty (errors/points), Transition Conversion (all, serving, receiving), Expected Value'}
+      name: text_label3
+      properties: {align: center, text: 'Error Densty (errors/points), Transition Conversion (all, serving, receiving), Expected Value', visible: false}
       type: Label
     - layout_properties: {grid_position: 'YFFRXH,HQORJS'}
       name: rich_text_4
       properties: {content: ''}
       type: RichText
-    - layout_properties: {grid_position: 'IYJASR,ORAJUG'}
-      name: label_3_copy_3
-      properties: {text: 'Error Densty (errors/points), Transition Conversion (all, serving, receiving), Expected Value'}
+    - layout_properties: {grid_position: 'AKPZZI,OPFWUX'}
+      name: text_label4
+      properties: {align: center, text: League Average Values, visible: false}
       type: Label
     - layout_properties: {grid_position: 'TBNDXA,ACMGSL'}
       name: rich_text_5

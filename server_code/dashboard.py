@@ -41,7 +41,7 @@ def coaches_dashboard(league_value, disp_team):
     player_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
   else:
     #print('No Rows Found')
-    return ["No Rows"], ["No Stats Found"]
+    return ["No Rows"], ["No Rows"], ["No Rows"], ["No Stats Found"]
 
   # somehow, we are getting a column called unamed: 0, so drop taht
   #print(player_data_df.to_dict())
@@ -62,19 +62,60 @@ def coaches_dashboard(league_value, disp_team):
 
   # ---------- This may change, but let's make a subest data set a few columns for this display
   disp_df = player_data_df[['team','player','fbhe','fbhe1', 'fbhe2', 'fbhe3', 'fbhe4', 'fbhe5']]
-  #mean_row = {'team':'Mean','fbhe':disp_df['fbhe'].mean(skipna=True),'fbhe1':disp_df['fbhe1'].mean(skipna=True)}
-  #sd_row = {'team':'Mean','fbhe':disp_df['fbhe'].std(skipna=True),'fbhe1':disp_df['fbhe1'].std(skipna=True)}
-  #disp_df = disp_df.append(mean_row, ignore_index = True)
-  #disp_df = disp_df.append(sd_row, ignore_index = True)
+  mean_df1_dict = {'team':['Mean:'],
+                         'player':[' '],
+                         'fbhe':[disp_df['fbhe'].mean(skipna=True)],
+                         'fbhe1':[disp_df['fbhe1'].mean(skipna=True)],
+                         'fbhe2':[disp_df['fbhe2'].mean(skipna=True)],
+                         'fbhe3':[disp_df['fbhe3'].mean(skipna=True)],
+                         'fbhe4':[disp_df['fbhe4'].mean(skipna=True)],
+                         'fbhe5':[disp_df['fbhe5'].mean(skipna=True)] }
+  mean_df1 = pd.DataFrame.from_dict(mean_df1_dict)
+  sd_df1_dict = {'team':['St Dev:'],
+                         'player':[' '],
+                         'fbhe':[disp_df['fbhe'].std(skipna=True)],
+                         'fbhe1':[disp_df['fbhe1'].std(skipna=True)],
+                         'fbhe2':[disp_df['fbhe2'].std(skipna=True)],
+                         'fbhe3':[disp_df['fbhe3'].std(skipna=True)],
+                         'fbhe4':[disp_df['fbhe4'].std(skipna=True)],
+                         'fbhe5':[disp_df['fbhe5'].std(skipna=True)] }
+  sd_df1 = pd.DataFrame.from_dict(sd_df1_dict)
+  disp_df = pd.concat([disp_df,mean_df1,sd_df1])
   df_table1 = pd.DataFrame.to_markdown(disp_df, index=False )
+
   disp_df = player_data_df[['player','srv1_fbhe','srv3_fbhe','srv5_fbhe']]
-  mean_row = {'team':'Mean','srv1_fbhe':disp_df['srv1_fbhe'].mean(skipna=True),'fsrv3_fbhe':disp_df['srv3_fbhe'].mean(skipna=True)}
-  sd_row = {'team':'Mean','srv1_fbhe':disp_df['srv1_fbhe'].std(skipna=True),'srv3_fbhe':disp_df['srv3_fbhe'].std(skipna=True)}
-  disp_df = disp_df.append(mean_row, ignore_index = True)
-  disp_df = disp_df.append(sd_row, ignore_index = True)
+  mean_df2_dict = {'player':['Mean:'],
+                         'srv1_fbhe':[disp_df['srv1_fbhe'].mean(skipna=True)],
+                         'srv3_fbhe':[disp_df['srv3_fbhe'].mean(skipna=True)],
+                         'svr5_fbhe':[disp_df['srv5_fbhe'].mean(skipna=True)] }
+  mean_df2 = pd.DataFrame.from_dict(mean_df2_dict)
+  sd_df2_dict = {'player':['St Dev:'],
+                         'srv1_fbhe':[disp_df['srv1_fbhe'].std(skipna=True)],
+                         'srv3_fbhe':[disp_df['srv3_fbhe'].std(skipna=True)],
+                         'svr5_fbhe':[disp_df['srv5_fbhe'].std(skipna=True)] }
+  sd_df2 = pd.DataFrame.from_dict(sd_df2_dict)
+  disp_df = pd.concat([disp_df,mean_df2,sd_df2])
   df_table2 = pd.DataFrame.to_markdown(disp_df, index=False )
+  
   disp_df = player_data_df[['player','err_den','tcr','tcr_r','tcr_s','expected']]
+  mean_df3_dict = {'player':['Mean:'],
+                         'err_den':[disp_df['err_den'].mean(skipna=True)],
+                         'tcr':[disp_df['tcr'].mean(skipna=True)],
+                         'tcr_r':[disp_df['tcr_r'].mean(skipna=True)],
+                         'tcr_s':[disp_df['tcr_s'].mean(skipna=True)],
+                         'expected':[disp_df['expected'].mean(skipna=True)] }
+  mean_df3 = pd.DataFrame.from_dict(mean_df3_dict)
+  sd_df3_dict = {'player':['St Dev:'],
+                         'err_den':[disp_df['err_den'].std(skipna=True)],
+                         'tcr':[disp_df['tcr'].std(skipna=True)],
+                         'tcr_r':[disp_df['tcr_r'].std(skipna=True)],
+                         'tcr_s':[disp_df['tcr_s'].std(skipna=True)],
+                         'expected':[disp_df['expected'].std(skipna=True)] }
+  sd_df3 = pd.DataFrame.from_dict(sd_df3_dict)
+  disp_df = pd.concat([disp_df,mean_df3,sd_df3])
   df_table3 = pd.DataFrame.to_markdown(disp_df, index=False )
-  df_stats_table = pd.DataFrame.to_markdown(player_stats_df, index=False)
+
+  player_stats_disp = player_stats_df[['fbhe_mean','fbhe_range_mean','err_den_mean','tcr_mean','tcr_r_mean','tcr_s_mean','expected_mean']]
+  df_stats_table = pd.DataFrame.to_markdown(player_stats_disp, index=False)
   
   return df_table1, df_table2, df_table3, df_stats_table

@@ -38,7 +38,13 @@ class Dashboard(DashboardTemplate):
     elif not user_row["team"]:
       alert('Please Contact Beach Internals to be Assigned to a Team')
       open_form('Homepage.Contact')
-      
+
+    # make the text labels visible
+    self.text_label1.visible = True
+    self.text_label2.visible = True
+    self.text_label3.visible = True
+    self.text_label4.visible = True
+    
     self.rich_text_2.content, self.rich_text_3.content, self.rich_text_4.content, self.rich_text_5.content = anvil.server.call('coaches_dashboard', self.league_drop_down.selected_value, user_row['team'])
     
     pass
