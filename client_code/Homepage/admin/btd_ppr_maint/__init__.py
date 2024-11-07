@@ -8,7 +8,6 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 
-
 class btd_ppr_maint(btd_ppr_maintTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
@@ -95,7 +94,7 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     disp_year = league_value[str_loc+1:].strip()
     
     return_text = anvil.server.call(
-      'calculate_player_data',
+      'calc_player_data_background',
       disp_league,
       disp_gender,
       disp_year

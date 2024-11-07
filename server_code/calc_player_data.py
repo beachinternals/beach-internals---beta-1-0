@@ -18,7 +18,27 @@ from server_functions import *
 #
 #  player_data is only for league entries in the ppr_csv_tables table.  We also sotre the list of player data stats
 
+# begin with the server callable task, this then provides status and calls the background task
 @anvil.server.callable
+def calc_player_data_background( c_league, c_gender, c_year):
+  # 
+  # calculate the player data files for all teams in the league, gender, year given
+  #
+
+  print(f'Calling Background Task calculate_player_data for {c_league},{c_gender},{c_year}')
+  task = anvil.server.launch_background_task('calculate_player_data', c_league, c_gender, c_year)
+
+  # check return status
+  print(f' Background Task, Task id:{task.get_id()} return Status:{task.get_termination_status()}')
+  
+  return task
+
+#----------------------------
+#
+# Define the background task to calculate the player_data for a single league
+#
+#---------------------------------------------
+@anvil.server.background_task
 def calculate_player_data( c_league, c_gender, c_year):
   result_string = "Calculate Player Data server module Called"
 
@@ -88,7 +108,7 @@ def calculate_player_data( c_league, c_gender, c_year):
   #print(f"player stats df:{player_stats_df}")
   
   for i in range(0,num_players):
-    #print(f"player: {p_list[i]}")
+    print(f"player: {p_list[i]}")
     player_df.at[i,'player'] = p_list[i]
 
     # unpack the player into the team, number, and short name
