@@ -634,6 +634,7 @@ def error_density(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout
                ):
+  
   # return a markdown text to display
   # given the parameters
 
@@ -646,13 +647,13 @@ def error_density(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          )
 
-  # for this one, now limit to plays that include disp plaer:
+  # for this one, now limit to plays that include disp player:
   m_ppr_df = m_ppr_df[ ( m_ppr_df['player_a1'].str.strip() == disp_player.strip() ) | 
                         ( m_ppr_df['player_a2'].str.strip() == disp_player.strip() ) |  
                         ( m_ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
                         ( m_ppr_df['player_b2'].str.strip() == disp_player.strip() )
   ]
-  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
