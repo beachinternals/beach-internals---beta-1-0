@@ -57,7 +57,7 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     """This method is called when the button is clicked"""
 
     # call the serer function to convert btd to ppr files and then store them back in the btd_files data table
-    anvil.server.call("generate_ppr_files",
+    anvil.server.call("make_ppr_files",
                       self.league_drop_down.selected_value['league'],
                       self.gender_drop_down.selected_value,
                       self.year_drop_down.selected_value,
@@ -116,5 +116,11 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     str_loc = league_value.index('|')
     disp_gender = league_value[:str_loc-1].strip()
     disp_year = league_value[str_loc+1:].strip()
+    pass
+
+  def all_player_data_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    return_text = anvil.server.call('calc_all_player_data')
+    
     pass
 

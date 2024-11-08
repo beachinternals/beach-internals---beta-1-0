@@ -87,12 +87,12 @@ def coaches_dashboard(league_value, disp_team):
   mean_df2_dict = {'player':['Mean:'],
                          'srv1_fbhe':[disp_df['srv1_fbhe'].mean(skipna=True)],
                          'srv3_fbhe':[disp_df['srv3_fbhe'].mean(skipna=True)],
-                         'svr5_fbhe':[disp_df['srv5_fbhe'].mean(skipna=True)] }
+                         'srv5_fbhe':[disp_df['srv5_fbhe'].mean(skipna=True)] }
   mean_df2 = pd.DataFrame.from_dict(mean_df2_dict)
   sd_df2_dict = {'player':['St Dev:'],
                          'srv1_fbhe':[disp_df['srv1_fbhe'].std(skipna=True)],
                          'srv3_fbhe':[disp_df['srv3_fbhe'].std(skipna=True)],
-                         'svr5_fbhe':[disp_df['srv5_fbhe'].std(skipna=True)] }
+                         'srv5_fbhe':[disp_df['srv5_fbhe'].std(skipna=True)] }
   sd_df2 = pd.DataFrame.from_dict(sd_df2_dict)
   disp_df = pd.concat([disp_df,mean_df2,sd_df2])
   df_table2 = pd.DataFrame.to_markdown(disp_df, index=False )

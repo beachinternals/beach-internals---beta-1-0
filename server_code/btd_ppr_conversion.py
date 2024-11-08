@@ -13,10 +13,36 @@ import math
 import datetime
 
 # This is a server module. It runs on the Anvil server,
+
+@anvil.server.callable
+def make_all_ppr_files():
+  # make a quick loop to make all the ppr files
+
+  leagues = [
+    {
+      r['league'],
+      r['gender'],
+      r['year'],
+    }
+    for r in app_tables.btd_files.search()]
+
+  for i in leagues:
+    task = anvil.server.call('make_ppr_files', leagues.at[i,'league'], r['gender'],r['year'],)
+  
+
+  return task
+  
+
 # rather than in the user's browser.
+@anvil.server.callable
+def make_ppr_files( u_league, u_gender, u_year, u_team, rebuild):
+  # call the background task
+  task = anvil.server.launch_background_task('generate_ppr_files',u_league, u_gender, u_year, u_team, rebuild)
+  
+  return task
 
 # ############# server function to loop thru btd_file database and create and store the corresponding ppr file
-@anvil.server.callable
+@anvil.server.background_task
 def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild ):
 
   # select rows from the btd_files database and limit it to league, gender, and year

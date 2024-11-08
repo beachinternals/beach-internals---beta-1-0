@@ -14,10 +14,14 @@ components:
       name: label_2
       properties: {align: center, bold: true, role: null, text: 'btd -> ppr : Generate PPR files for each Ball Time File'}
       type: Label
-    layout_properties: {grid_position: 'IQJQNN,THMIKC'}
+    layout_properties: {grid_position: 'IQJQNN,THMIKC IXJAPN,PPDBAO'}
     name: column_panel_4
     properties: {}
     type: ColumnPanel
+  - layout_properties: {grid_position: 'IQJQNN,THMIKC XKAZLT,UUUWPE'}
+    name: gen_all_ppr_button
+    properties: {role: outlined-button, text: Generate All PPR Files}
+    type: Button
   - components:
     - layout_properties: {grid_position: 'BYFKWF,LADHNU'}
       name: label_4
@@ -71,7 +75,7 @@ components:
     - event_bindings: {click: generate_ppr_button_click}
       layout_properties: {grid_position: 'TMKBRV,YTSAPB'}
       name: generate_ppr_button
-      properties: {role: outlined-button, text: Generate PPR Files}
+      properties: {role: outlined-button, text: Generate League + Team PPR Files}
       type: Button
     layout_properties: {grid_position: 'IQJQNN,ZLMMGT CYJRHV,ECUGNJ'}
     name: column_panel_3
@@ -87,10 +91,14 @@ components:
       name: label_3
       properties: {align: center, bold: true, role: null, text: 'Merge PPR: Merge match PPR Files into Master PPR files'}
       type: Label
-    layout_properties: {grid_position: 'HFFPKC,GNZNHD'}
+    layout_properties: {grid_position: 'HFFPKC,GNZNHD MJAKWW,CPLIZA'}
     name: column_panel_5
     properties: {}
     type: ColumnPanel
+  - layout_properties: {grid_position: 'HFFPKC,GNZNHD TVWOXD,YDJOIX'}
+    name: merge_all_button
+    properties: {role: outlined-button, text: 'Merge All '}
+    type: Button
   - components:
     - layout_properties: {grid_position: 'BYFKWF,LADHNU'}
       name: label_4_copy
@@ -148,7 +156,7 @@ components:
     - event_bindings: {click: merge_ppr_button_click}
       layout_properties: {grid_position: 'TMKBRV,YTSAPB'}
       name: merge_ppr_button
-      properties: {role: outlined-button, text: Merge into Master PPR File}
+      properties: {role: outlined-button, text: Merge League / Team into Master PPR File}
       type: Button
     layout_properties: {grid_position: 'HFFPKC,XFSWNN'}
     name: column_panel_3_copy
@@ -159,29 +167,49 @@ components:
   properties: {col_widths: '{"GNZNHD":15,"XFSWNN":45}', role: outlined-card}
   type: ColumnPanel
 - components:
-  - layout_properties: {grid_position: 'ZWCLDC,NDBCCX'}
-    name: label_8
-    properties: {align: center, bold: true, role: body, text: Create League Summary Data}
-    type: Label
   - components:
-    - layout_properties: {grid_position: 'ENOELQ,KHJJIJ'}
+    - layout_properties: {grid_position: 'UQKESH,RBNVRZ'}
+      name: label_8
+      properties: {align: center, bold: true, role: body, text: Create League Summary Data}
+      type: Label
+    layout_properties: {grid_position: 'JHHHYC,CPTHKC GKYSTL,BFRQOZ'}
+    name: column_panel_7
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - event_bindings: {click: all_player_data_button_click}
+      layout_properties: {grid_position: 'EPIKIX,QKQQGO'}
+      name: all_player_data_button
+      properties: {role: outlined-button, text: Create All Player Data}
+      type: Button
+    layout_properties: {grid_position: 'JHHHYC,CPTHKC RZJHWY,KMBAYE'}
+    name: column_panel_9
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'DKBETA,TKBNSA'}
       name: label_9
       properties: {align: right, text: 'League:'}
       type: Label
     - event_bindings: {change: league3_drop_down_change}
-      layout_properties: {grid_position: 'ENOELQ,KVATEM'}
+      layout_properties: {grid_position: 'DKBETA,NGTIJT'}
       name: league3_drop_down
       properties: {}
       type: DropDown
-    layout_properties: {grid_position: 'ZWCLDC,DTHWTF ETPHPP,FIYULR'}
-    name: column_panel_6
-    properties: {col_widths: '{"KHJJIJ":20,"KVATEM":40}'}
+    layout_properties: {grid_position: 'JHHHYC,ZAAVXD QQFNJM,JRHAXC'}
+    name: column_panel_8
+    properties: {}
     type: ColumnPanel
-  - event_bindings: {click: create_summary_button_click}
-    layout_properties: {grid_position: 'ZWCLDC,DTHWTF TVSQKR,NKVKPC'}
-    name: create_summary_button
-    properties: {role: outlined-button, text: Create Summary Data}
-    type: Button
+  - components:
+    - event_bindings: {click: create_summary_button_click}
+      layout_properties: {grid_position: 'SAAYSZ,HIWCGL'}
+      name: create_summary_button
+      properties: {role: outlined-button, text: Create Player Data}
+      type: Button
+    layout_properties: {grid_position: 'JHHHYC,ZAAVXD ACLRPN,NWKIGP'}
+    name: column_panel_10
+    properties: {}
+    type: ColumnPanel
   layout_properties: {grid_position: 'PVKSMS,JEKWEE'}
   name: outlined_card_4
   properties: {role: outlined-card}

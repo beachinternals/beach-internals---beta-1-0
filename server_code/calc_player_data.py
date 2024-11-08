@@ -18,6 +18,17 @@ from server_functions import *
 #
 #  player_data is only for league entries in the ppr_csv_tables table.  We also sotre the list of player data stats
 
+@anvil.server.callable
+def calc_all_player_data():
+  # caluclate the plaeyr data for ALL leagues
+  # so seach th eleague data base, then loop thru them
+
+  # for each row:
+  for l_row in app_tables.ppr_csv_tables.search(team='League'):
+    task = calc_player_data_background(l_row['league'],l_row['gender'],l_row['year'])
+        
+  return task
+
 # begin with the server callable task, this then provides status and calls the background task
 @anvil.server.callable
 def calc_player_data_background( c_league, c_gender, c_year):
