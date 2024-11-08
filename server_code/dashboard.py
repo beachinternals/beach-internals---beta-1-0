@@ -50,9 +50,10 @@ def coaches_dashboard(league_value, disp_team):
   #print(player_data_df.to_dict())
   
   # limit to player_data table to just this team
-  if disp_team != "INTERNALS":
-    #print(f" Disp Team,{disp_team}")
-    player_data_df = player_data_df[ player_data_df['team'] == disp_team.strip() ]
+  if ( disp_team != "INTERNALS"):
+    if (disp_league.strip() != "FIVB" and disp_year.strip() != "2024"):
+      print(f" Disp Team,{disp_team}, disp league: {disp_league}, disp_year: {disp_year}")
+      player_data_df = player_data_df[ player_data_df['team'] == disp_team.strip() ]
   
   # replace nan with blanks
   player_data_df = player_data_df.fillna(' ')
