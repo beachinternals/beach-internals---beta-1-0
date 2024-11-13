@@ -215,7 +215,13 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'Behind'] = fbhe_vector[5]  # URL
 
     # Tempo
-    tmp_ppr_df = m_ppr_df[(m_ppr_df['set_height'] <= 2) & (m_ppr_df['set_dist'] <= 1) ]
+    tmp_ppr_df = m_ppr_df[(m_ppr_df['set_height'] <= 2.5) & 
+                          (m_ppr_df['set_height'] != 0 ) &
+                          (m_ppr_df['set_dist'] <= 2) &
+                           (m_ppr_df['set_dist'] != 0 ) &
+                          (m_ppr_df['tactic'] != 'option')  &
+                          ( m_ppr_df['tactic'] != 'behind' ) 
+    ]
     fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'pass' )
     fbhe_table.at[0,'Tempo'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Tempo'] = fbhe_vector[1]  # attacks
@@ -225,9 +231,10 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'Tempo'] = fbhe_vector[5]  # URL
 
     # Push to Pin
-    tmp_ppr_df = m_ppr_df[ ( (m_ppr_df['att_src_zone_net'] == 1) & (m_ppr_df['set_src_zone_net'] == 4) | 
-                           (m_ppr_df['att_src_zone_net'] == 5) & (m_ppr_df['set_src_zone_net'] == 2) ) &
-                            ( m_ppr_df['set_height'] < 2 )
+    tmp_ppr_df = m_ppr_df[ ( (m_ppr_df['att_src_zone_net'] == 1) | (m_ppr_df['att_src_zone_net'] == 5) &
+                            (m_ppr_df['set_dist'] > 3) & 
+                            (m_ppr_df['tactic'] != 'option')  &
+                            ( m_ppr_df['tactic'] != 'behind' ) )
                           ]
     fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'pass' )
     fbhe_table.at[0,'Push to Pin'] = fbhe_vector[0]  # fbhe
@@ -240,10 +247,12 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
     # Other
     tmp_ppr_df = m_ppr_df[  (m_ppr_df['tactic'] != 'behind' ) & 
                             (m_ppr_df['tactic'] != 'option' ) &
-                            ~( ((m_ppr_df['att_src_zone_net'] == 1) & (m_ppr_df['set_src_zone_net'] == 4) | 
-                               (m_ppr_df['att_src_zone_net'] == 5) & (m_ppr_df['set_src_zone_net'] == 2) ) &
-                               ( m_ppr_df['set_height'] < 2 )) & 
-                            ~ ((m_ppr_df['set_height'] <= 2) & (m_ppr_df['set_dist'] <= 1))
+                            ~( (m_ppr_df['att_src_zone_net'] == 1) | (m_ppr_df['att_src_zone_net'] == 5) &
+                              (m_ppr_df['set_dist'] > 3) ) & 
+                            ~ ( (m_ppr_df['set_height'] <= 2.5) & 
+                              (m_ppr_df['set_height'] != 0 ) &
+                              (m_ppr_df['set_dist'] <= 2) &
+                              (m_ppr_df['set_dist'] != 0 ) )
                           ]
     fbhe_vector = fbhe( tmp_ppr_df, disp_player, 'pass' )
     fbhe_table.at[0,'Other'] = fbhe_vector[0]  # fbhe
