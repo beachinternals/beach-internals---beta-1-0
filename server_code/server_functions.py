@@ -201,13 +201,13 @@ def calc_trans( ppr_df, disp_player, flag ):
   tmp_df = ppr_df[ (ppr_df['point_outcome_team'].str.contains(disp_player[:-1]) )]
   #print(f"Transition points earned by team with {disp_player} = {tmp_df.shape[0]}")
   trans_list[3] = tmp_df[ (tmp_df['point_outcome'] == 'TK')].shape[0]    # kills earned
-  trans_list[5] = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]      # errors given
+  trans_list[6] = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]      # errors given
 
   # second, calculate the opponent's kills and errors
   tmp_df = ppr_df[ (~ppr_df['point_outcome_team'].str.contains(disp_player[:-1]) ) ]
   #print(f"Transition points earned by team without {disp_player} = {tmp_df.shape[0]}")
-  trans_list[4] = tmp_df[ (tmp_df['point_outcome'] == 'TK')].shape[0]    # kills earned
-  trans_list[6] = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]      # errors given
+  trans_list[5] = tmp_df[ (tmp_df['point_outcome'] == 'TK')].shape[0]    # kills earned
+  trans_list[4] = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]      # errors given
 
   trans_list[7] = trans_list[3] + trans_list[4]
   trans_list[8] = trans_list[5] + trans_list[6]
@@ -284,7 +284,7 @@ def calc_error_den( ppr_df, disp_player):
                   ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) ]
   error_vector[6] = ppr_df.shape[0]
   error_vector[2] = ppr_df[ ( ppr_df['point_outcome'] == 'FBE') & (ppr_df['att_player'].str.strip() == disp_player.strip() ) ].shape[0]
-  error_vector[4] = ppr_df[ ( ppr_df['point_outcome'] == 'TE') & (ppr_df['point_outcome_team'].str.contains(disp_player[:-1])) ].shape[0]*0.5
+  error_vector[4] = ppr_df[ ( ppr_df['point_outcome'] == 'TE') & (ppr_df['point_outcome_team'].str.contains(disp_player)) ].shape[0]*0.5
   error_vector[3] = ppr_df[ ( ppr_df['point_outcome'] == 'TSE') & (ppr_df['serve_player'].str.strip() == disp_player.strip() ) ].shape[0]
   error_vector[5] = error_vector[2] + error_vector[3] + error_vector[4] 
   error_vector[0] = error_vector[5] / error_vector[6]
@@ -302,10 +302,10 @@ def fbhe_attack_type( m_ppr_df, disp_player, att_type ):
   #    'bang'
 
   if (att_type == 'poke'):
-    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) ], disp_player, 'att' )
+    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) ], disp_player, 'att' )
   elif (att_type == 'shoot'):
-    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 ) ], disp_player, 'att' )
+    fbhe_vector = fbhe( m_ppr_df[ (~(m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 )) ], disp_player, 'att' )
   elif (att_type == 'bang'):
-    fbhe_vector = fbhe( m_ppr_df[ ~(m_ppr_df['att_speed'] <= 2.5/15*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 ) ], disp_player, 'att' )
+    fbhe_vector = fbhe( m_ppr_df[ (~(m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 )) ], disp_player, 'att' )
 
   return fbhe_vector

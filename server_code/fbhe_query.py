@@ -297,9 +297,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
   df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
              'All':[0,0,0,0,0,' '],
              'Zone 1':[0,0,0,0,0,' '],
-             "Zone 2":[0,0,0,0,0,' '],
              'Zone 3':[0,0,0,0,0,' '],
-             'Zone 4':[0,0,0,0,0,' '],
              'Zone 5':[0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
@@ -317,15 +315,15 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
 
     # calculate for zones 1 - 5
-    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
-    for i in [1,2,3,4,5]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['serve_src_zone_net']==i], disp_player, 'att' )
-      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
-      fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
-      fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+    column = ['Zone 1','Zone 3','Zone 5']
+    for i in [0,1,2]:
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['serve_src_zone_net']==(i*2)+1], disp_player, 'pass' )
+      fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
+      fbhe_table.at[1,column[i]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[2,column[i]] = fbhe_vector[2]  # errors
+      fbhe_table.at[3,column[i]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[4,column[i]] = fbhe_vector[4]  # confidence interval
+      fbhe_table.at[5,column[i]] = fbhe_vector[5]  # URL
 
     # now create the markdown text to return
     fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
@@ -448,13 +446,12 @@ def srv_eff(disp_league, disp_gender, disp_year,
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
-  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
-             'All':[0,0,0,0,0,' '],
-             'Zone 1':[0,0,0,0,0,' '],
-             "Zone 3":[0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,' '],
-             'No Zone':[0,0,0,0,0,' '],
-             ' - ':[0,0,0,0,0,' ']
+  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL','Aces','Errors'],
+             'All':[0,0,0,0,0,' ',0,0],
+             'Zone 1':[0,0,0,0,0,' ',0,0],
+             "Zone 3":[0,0,0,0,0,' ',0,0],
+             'Zone 5':[0,0,0,0,0,' ',0,0],
+             'No Zone':[0,0,0,0,0,' ',0,0]
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
@@ -469,6 +466,15 @@ def srv_eff(disp_league, disp_gender, disp_year,
     fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
     fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
     fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+    # Aces and Errors
+    tmp_df = m_ppr_df[m_ppr_df['point_outcome'] == "TSA"]
+    print(f"Aces {tmp_df.shape[0]}")
+    tmp_df = tmp_df[tmp_df['serve_player'].str.strip() == disp_player.strip() ]
+    fbhe_table.at[6,'All'] = tmp_df.shape[0]
+    tmp_df = m_ppr_df[ m_ppr_df['point_outcome'] == "TSE" ]
+    print(f"Errors {tmp_df.shape[0]}")
+    tmp_df = tmp_df[tmp_df['serve_player'].str.strip() == disp_player.strip() ]    
+    fbhe_table.at[7,'All'] = tmp_df.shape[0]
 
     # calculate for zones 1, 3, 5
     column = ['Zone 1','Zone 3','Zone 5']
@@ -480,6 +486,14 @@ def srv_eff(disp_league, disp_gender, disp_year,
       fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
       fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+      tmp_df = m_ppr_df[ m_ppr_df['point_outcome'] == "TSA" ]
+      tmp_df = tmp_df[tmp_df['serve_player'].str.strip() == disp_player.strip()] 
+      tmp_df = tmp_df[tmp_df['serve_src_zone_net']==(i-1)*2+1 ]
+      fbhe_table.at[6,column[i-1]] = tmp_df.shape[0]
+      tmp_df = m_ppr_df[ m_ppr_df['point_outcome'] == "TSE" ]
+      tmp_df = tmp_df[tmp_df['serve_player'].str.strip() == disp_player.strip()] 
+      tmp_df = tmp_df[tmp_df['serve_src_zone_net']==(i-1)*2+1 ]
+      fbhe_table.at[7,column[i-1]] = tmp_df.shape[0]
 
     # now those whitoput a zone
     tmp_df = m_ppr_df[ m_ppr_df['serve_src_zone_net'] != 1 ]
@@ -548,14 +562,15 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
     # start loop over net, 1 - 5
     for i in net_list:
       #print(f"i:{i}")
-      tmp1_df = m_ppr_df[ m_ppr_df['serve_dest_zone_net'] == i]
+      tmp1_df = m_ppr_df[ m_ppr_df['pass_src_zone_net'] == i]
       #print(f"i = {i}, tmp1 df shape:{tmp1_df.shape}")
       for j in net_list:
-        tmp2_df = tmp1_df[ tmp1_df['serve_dest_zone_depth'] == depth_list[j-1]]
+        tmp2_df = tmp1_df[ tmp1_df['pass_src_zone_depth'] == depth_list[j-1]]
         #print(f"i,j = {i},{j}, tmp2 df shape:{tmp2_df.shape}")
         fbhe_vector = fbhe( tmp2_df, disp_player, 'pass' )
+        #print(fbhe_vector)
         fbhe_table.iloc[j-1,i] = fbhe_vector[0]
-        att_table.iloc[j-1,i] = fbhe_vector[1]
+        att_table.iloc[j-1,i] = fbhe_vector[3]
         url_table.iloc[j-1,i] = fbhe_vector[5]
 
     # now create the markdown text to return
