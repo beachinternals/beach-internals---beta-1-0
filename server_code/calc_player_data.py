@@ -135,7 +135,7 @@ def calculate_player_data( c_league, c_gender, c_year):
     player_df.at[i,'team'] = this_team
 
     # ----------- calculate FBHE, 1-5 ------------------
-    fbhe_vector = fbhe(ppr_df, p_list[i], 'att')
+    fbhe_vector = fbhe(ppr_df, p_list[i], 'att', True )
     if fbhe_vector[3] >= min_att:
       player_df.at[i,'fbhe'] = fbhe_vector[0]
 
@@ -144,7 +144,7 @@ def calculate_player_data( c_league, c_gender, c_year):
     fbhe_min = 1
     fbhe_max = 0
     for j in [1,2,3,4,5]:
-      fbhe_vector = fbhe(ppr_df[ppr_df['att_src_zone_net']==j], p_list[i], 'att')
+      fbhe_vector = fbhe(ppr_df[ppr_df['att_src_zone_net']==j], p_list[i], 'att', False)
       field = "fbhe" + str(j)
       #print(f"Field:{field}, fbhe vector:{fbhe_vector}")
       if fbhe_vector[3] >= min_att:
@@ -157,71 +157,71 @@ def calculate_player_data( c_league, c_gender, c_year):
       player_df.at[i,'fbhe_range'] = None
       
     #------------------- Behind, Option, and Tempo fbhe and %
-    fbhe_vector = fbhe(ppr_df, p_list[i], 'pass')
+    fbhe_vector = fbhe(ppr_df, p_list[i], 'pass', True)
     total_attempts = fbhe_vector[3] if fbhe_vector[3] != 0 else 1
-    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'option'],p_list[i],'pass')
+    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'option'],p_list[i],'pass', False)
     player_df.at[i,'fbhe_option'] = fbhe_vector[0]
     player_df.at[i,'option_per'] = int(fbhe_vector[3])/total_attempts
-    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'behind'],p_list[i],'pass')
+    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'behind'],p_list[i],'pass', False)
     player_df.at[i,'fbhe_behind'] = fbhe_vector[0]
     player_df.at[i,'behind_per'] = int(fbhe_vector[3])/total_attempts
-    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'tempo'],p_list[i],'pass')
+    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'tempo'],p_list[i],'pass', False)
     player_df.at[i,'fbhe_tempo'] = fbhe_vector[0]
     player_df.at[i,'tempo_per'] = fbhe_vector[3]/total_attempts
 
     #------------------- Calculate Poke, Shoot, and Bang fbhe and %
     fbhe_vector = fbhe( ppr_df, p_list[i], 'all')
     total_attempts = fbhe_vector[3]if fbhe_vector[3] != 0 else 1
-    fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'poke')
+    fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'poke', False)
     player_df.at[i,'poke_fbhe'] = fbhe_vector[0]
     player_df.at[i,'poke_per'] = fbhe_vector[3]/total_attempts
-    fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'shoot')
+    fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'shoot', False)
     player_df.at[i,'shoot_fbhe'] = fbhe_vector[0]
     player_df.at[i,'shoot_per'] = fbhe_vector[3]/total_attempts
-    bhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'bang')
+    bhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'bang', False)
     player_df.at[i,'bang_fbhe'] = fbhe_vector[0]
     player_df.at[i,'bang_per'] = fbhe_vector[3]/total_attempts
 
     #--------------calculate fbhe based on height of set
     tmp_df = ppr_df[ ppr_df['set_height'] > 0 ] 
     tmp_df = tmp_df[ tmp_df['set_height'] <= 1 ]
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_h1'] = fbhe_vector[0]
     tmp_df = ppr_df[ ppr_df['set_height'] > 1 ] 
     tmp_df = tmp_df[ tmp_df['set_height'] <= 2 ]
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_h2'] = fbhe_vector[0]
     tmp_df = ppr_df[ ppr_df['set_height'] > 2 ] 
     tmp_df = tmp_df[ tmp_df['set_height'] <= 3 ]
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_h3'] = fbhe_vector[0]
     tmp_df = ppr_df[ ppr_df['set_height'] > 3 ] 
     tmp_df = tmp_df[ tmp_df['set_height'] <= 4 ]
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_h4'] = fbhe_vector[0]
     tmp_df = ppr_df[ ppr_df['set_height'] > 4 ] 
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_h5'] = fbhe_vector[0]
     
     #--------------calculate fbhe based on distance of set
     tmp_df = ppr_df[ ppr_df['set_dist'] > 0 ] 
     tmp_df = tmp_df[ tmp_df['set_dist'] <= 1 ]
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_d1'] = fbhe_vector[0]
     tmp_df = ppr_df[ ppr_df['set_dist'] > 1 ] 
     tmp_df = tmp_df[ tmp_df['set_dist'] <= 2 ]
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_d2'] = fbhe_vector[0]
     tmp_df = ppr_df[ ppr_df['set_dist'] > 2 ] 
     tmp_df = tmp_df[ tmp_df['set_dist'] <= 3 ]
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_d3'] = fbhe_vector[0]
     tmp_df = ppr_df[ ppr_df['set_dist'] > 3 ] 
     tmp_df = tmp_df[ tmp_df['set_dist'] <= 4 ]
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_d4'] = fbhe_vector[0]
     tmp_df = ppr_df[ ppr_df['set_dist'] > 4 ] 
-    fbhe_vector = fbhe( tmp_df, p_list[i], 'att')
+    fbhe_vector = fbhe( tmp_df, p_list[i], 'att', False)
     player_df.at[i,'fbhe_d5'] = fbhe_vector[0]
 
     # ------------calculate transition Conversion ------------------
@@ -241,7 +241,7 @@ def calculate_player_data( c_league, c_gender, c_year):
     player_df.at[i,'err_den'] = float(ed_vector[0][:-1])
 
     #-------------------- Serving Effectiviness, fbhe on all, zone 1, 3, 5
-    fbhe_vector = fbhe(ppr_df, p_list[i], 'srv')
+    fbhe_vector = fbhe(ppr_df, p_list[i], 'srv', False)
     player_df.at[i,'serve_fbhe'] = fbhe_vector[0]
     player_df.at[i,'serve_n'] = fbhe_vector[3]
     tmp_df = ppr_df[ ppr_df['point_outcome'] == "TSA" ]
@@ -254,7 +254,7 @@ def calculate_player_data( c_league, c_gender, c_year):
     player_df.at[i,'serve_err_per'] = err_n / fbhe_vector[3] if fbhe_vector[3] != 0 else None
     
     
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==1],p_list[i],'srv')
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==1],p_list[i],'srv', False)
     player_df.at[i,'serve1_fbhe'] = fbhe_vector[0]
     player_df.at[i,'serve_n'] = fbhe_vector[3]
     tmp_df = ppr_df[ ppr_df['point_outcome'] == "TSA" ]
@@ -268,7 +268,7 @@ def calculate_player_data( c_league, c_gender, c_year):
     player_df.at[i,'serve1_ace_per'] = ace_n / fbhe_vector[3] if fbhe_vector[3] != 0 else None
     player_df.at[i,'serve1_err_per'] = err_n / fbhe_vector[3] if fbhe_vector[3] != 0 else None
    
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==3],p_list[i],'srv')
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==3],p_list[i],'srv', False)
     player_df.at[i,'serve3_fbhe'] = fbhe_vector[0]
     player_df.at[i,'serve3_n'] = fbhe_vector[3]
     tmp_df = ppr_df[ ppr_df['point_outcome'] == "TSA" ]
@@ -282,7 +282,7 @@ def calculate_player_data( c_league, c_gender, c_year):
     player_df.at[i,'serve3_ace_per'] = ace_n / fbhe_vector[3] if fbhe_vector[3] != 0 else None
     player_df.at[i,'serve3_err_per'] = err_n / fbhe_vector[3] if fbhe_vector[3] != 0 else None
 
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==5],p_list[i],'srv')
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==5],p_list[i],'srv', False)
     player_df.at[i,'serve5_fbhe'] = fbhe_vector[0]
     player_df.at[i,'serve5_n'] = fbhe_vector[3]
     tmp_df = ppr_df[ ppr_df['point_outcome'] == "TSA" ]
@@ -298,11 +298,11 @@ def calculate_player_data( c_league, c_gender, c_year):
 
 
     #------------------- FBHE when served from 1, 3, 5
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==1],p_list[i],'pass')
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==1],p_list[i],'pass', False)
     player_df.at[i,'srv1_fbhe'] = fbhe_vector[0]
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==3],p_list[i],'pass')
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==3],p_list[i],'pass', False)
     player_df.at[i,'srv3_fbhe'] = fbhe_vector[0]
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==5],p_list[i],'pass')
+    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==5],p_list[i],'pass', False)
     player_df.at[i,'srv5_fbhe'] = fbhe_vector[0]
 
 

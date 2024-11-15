@@ -18,7 +18,7 @@ import io
 #   get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ): 
 
  
-def fbhe( ppr_df, disp_player, play_type):
+def fbhe( ppr_df, disp_player, play_type, video_yn ):
   # pass this a query of rows, figures the FBHE for the display player as the attacker
   # initialize the vector
   #
@@ -50,35 +50,38 @@ def fbhe( ppr_df, disp_player, play_type):
     video_btd_id = ""
     video_link = ""
     i = 0
-    for index,r in ppr_df.iterrows():
-      if r['video_id'] != video_btd_id:
-        # build a new link
-        print(f"start new link, video_btd_id:{video_btd_id}, Lenght: {len(video_btd_id)}")
-        video_link = video_link + ")" if len(video_btd_id) != 0 else video_link
-        video_list[i] = " [Game "+str(i)+"](https://app.balltime.com/video/"+r['video_id']+"?actionIds="+str(r['serve_action_id'])
-        video_list[i] = video_list[i] + ',' + str(r['pass_action_id']) if r['pass_action_id'] != 0 else video_list[i]
-        video_list[i] = video_list[i] + ',' + str(r['set_action_id']) if r['set_action_id'] != 0 else video_list[i]
-        video_list[i] = video_list[i] + ',' + str(r['att_action_id']) if r['att_action_id'] != 0 else video_list[i]
-        video_list[i] = video_list[i] + ',' + str(r['dig_action_id']) if r['dig_action_id'] != 0 else video_list[i]
-        video_list[i] = video_list[i] 
-        video_link = video_link+ video_list[i]
-        print(f"New Link i: {i} Video Link: {video_link}")
-        i += 1
-      elif r['video_id'] == video_btd_id:
-        # add on to the current video list
-        video_list[i] = str(video_list[i]) + ',' + str(r['serve_action_id']) if r['serve_action_id'] != 0 else video_list[i]
-        video_list[i] = video_list[i] + ',' + str(r['pass_action_id']) if r['pass_action_id'] != 0 else video_list[i]
-        video_list[i] = video_list[i] + ',' + str(r['set_action_id']) if r['set_action_id'] != 0 else video_list[i]
-        video_list[i] = video_list[i] + ',' + str(r['att_action_id']) if r['att_action_id'] != 0 else video_list[i]
-        video_list[i] = video_list[i] + ',' + str(r['dig_action_id']) if r['dig_action_id'] != 0 else video_list[i]
-        video_link = video_link+ video_list[i]
-        print(f"Add to existing Link i: {i}, Video Link: {video_link}")
+    if video_yn:
+      for index,r in ppr_df.iterrows():
+        if r['video_id'] != video_btd_id:
+          # build a new link
+          #print(f"start new link, video_btd_id:{video_btd_id}, Lenght: {len(video_btd_id)}")
+          video_link = video_link + ")" if len(video_btd_id) != 0 else video_link
+          video_list[i] = " [Game "+str(i)+"](https://app.balltime.com/video/"+r['video_id']+"?actionIds="+str(r['serve_action_id'])
+          video_list[i] = video_list[i] + ',' + str(r['pass_action_id']) if r['pass_action_id'] != 0 else video_list[i]
+          video_list[i] = video_list[i] + ',' + str(r['set_action_id']) if r['set_action_id'] != 0 else video_list[i]
+          video_list[i] = video_list[i] + ',' + str(r['att_action_id']) if r['att_action_id'] != 0 else video_list[i]
+          video_list[i] = video_list[i] + ',' + str(r['dig_action_id']) if r['dig_action_id'] != 0 else video_list[i]
+          video_list[i] = video_list[i] 
+          video_link = video_link+ video_list[i]
+          #print(f"New Link i: {i} Video Link: {video_link}")
+          i += 1
+        elif r['video_id'] == video_btd_id:
+          # add on to the current video list
+          video_list[i] = str(video_list[i]) + ',' + str(r['serve_action_id']) if r['serve_action_id'] != 0 else video_list[i]
+          video_list[i] = str(video_list[i]) + ',' + str(r['pass_action_id']) if r['pass_action_id'] != 0 else video_list[i]
+          video_list[i] = str(video_list[i]) + ',' + str(r['set_action_id']) if r['set_action_id'] != 0 else video_list[i]
+          video_list[i] = str(video_list[i]) + ',' + str(r['att_action_id']) if r['att_action_id'] != 0 else video_list[i]
+          video_list[i] = str(video_list[i]) + ',' + str(r['dig_action_id']) if r['dig_action_id'] != 0 else video_list[i]
+          video_link = video_link+ video_list[i]
+          #print(f"Add to existing Link i: {i}, Video Link: {video_link}")
       
-      video_btd_id = r['video_id']
+        video_btd_id = r['video_id']
 
-    video_link = video_link + ")" if len(video_link) != 0 else video_link
-    if "No Video Id" in video_link:     # in case we have old data with no video id
-      video_link = ""
+      video_link = video_link + ")" if len(video_link) != 0 else video_link
+      if "No Video Id" in video_link:     # in case we have old data with no video id
+        video_link = ""
+    else:
+      video_list[i] = "N/A"
     
     #print(f"player :{disp_player}, ppr df size:{ppr_df.shape}")
     fbhe_list[3] = ppr_df.shape[0]  # number of attempts
@@ -294,7 +297,7 @@ def calc_error_den( ppr_df, disp_player):
   return error_vector
 
 
-def fbhe_attack_type( m_ppr_df, disp_player, att_type ):
+def fbhe_attack_type( m_ppr_df, disp_player, att_type, video_yn ):
   # calcualte the fbhe byt he attack type:
   # att_type:
   #    'poke' - use the limit equation by poke
@@ -302,10 +305,10 @@ def fbhe_attack_type( m_ppr_df, disp_player, att_type ):
   #    'bang'
 
   if (att_type == 'poke'):
-    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) ], disp_player, 'att' )
+    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) ], disp_player, 'att' , video_yn)
   elif (att_type == 'shoot'):
-    fbhe_vector = fbhe( m_ppr_df[ (~(m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 )) ], disp_player, 'att' )
+    fbhe_vector = fbhe( m_ppr_df[ (~(m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 )) ], disp_player, 'att', video_yn )
   elif (att_type == 'bang'):
-    fbhe_vector = fbhe( m_ppr_df[ (~(m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 )) ], disp_player, 'att' )
+    fbhe_vector = fbhe( m_ppr_df[ (~(m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 )) ], disp_player, 'att', video_yn )
 
   return fbhe_vector
