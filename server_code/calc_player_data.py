@@ -170,7 +170,7 @@ def calculate_player_data( c_league, c_gender, c_year):
     player_df.at[i,'tempo_per'] = fbhe_vector[3]/total_attempts
 
     #------------------- Calculate Poke, Shoot, and Bang fbhe and %
-    fbhe_vector = fbhe( ppr_df, p_list[i], 'all')
+    fbhe_vector = fbhe( ppr_df, p_list[i], 'all', False)
     total_attempts = fbhe_vector[3]if fbhe_vector[3] != 0 else 1
     fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'poke', False)
     player_df.at[i,'poke_fbhe'] = fbhe_vector[0]

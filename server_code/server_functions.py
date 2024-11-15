@@ -81,7 +81,7 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
       if "No Video Id" in video_link:     # in case we have old data with no video id
         video_link = ""
     else:
-      video_list[i] = "N/A"
+      video_link = "N/A"
     
     #print(f"player :{disp_player}, ppr df size:{ppr_df.shape}")
     fbhe_list[3] = ppr_df.shape[0]  # number of attempts
