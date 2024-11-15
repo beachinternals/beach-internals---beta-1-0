@@ -53,7 +53,7 @@ def fbhe( ppr_df, disp_player, play_type):
     for index,r in ppr_df.iterrows():
       if r['video_id'] != video_btd_id:
         # build a new link
-        #print(f"start new link, video_btd_id:{video_btd_id}, Lenght: {len(video_btd_id)}")
+        print(f"start new link, video_btd_id:{video_btd_id}, Lenght: {len(video_btd_id)}")
         video_link = video_link + ")" if len(video_btd_id) != 0 else video_link
         video_list[i] = " [Game "+str(i)+"](https://app.balltime.com/video/"+r['video_id']+"?actionIds="+str(r['serve_action_id'])
         video_list[i] = video_list[i] + ',' + str(r['pass_action_id']) if r['pass_action_id'] != 0 else video_list[i]
@@ -62,7 +62,7 @@ def fbhe( ppr_df, disp_player, play_type):
         video_list[i] = video_list[i] + ',' + str(r['dig_action_id']) if r['dig_action_id'] != 0 else video_list[i]
         video_list[i] = video_list[i] 
         video_link = video_link+ video_list[i]
-        #print(f"New Link i: {i} Video Link: {video_link}")
+        print(f"New Link i: {i} Video Link: {video_link}")
         i += 1
       elif r['video_id'] == video_btd_id:
         # add on to the current video list
@@ -72,7 +72,7 @@ def fbhe( ppr_df, disp_player, play_type):
         video_list[i] = video_list[i] + ',' + str(r['att_action_id']) if r['att_action_id'] != 0 else video_list[i]
         video_list[i] = video_list[i] + ',' + str(r['dig_action_id']) if r['dig_action_id'] != 0 else video_list[i]
         video_link = video_link+ video_list[i]
-        #print(f"Add to existing Link i: {i}, Video Link: {video_link}")
+        print(f"Add to existing Link i: {i}, Video Link: {video_link}")
       
       video_btd_id = r['video_id']
 
