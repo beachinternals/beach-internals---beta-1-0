@@ -48,29 +48,26 @@ def coaches_dashboard(league_value, disp_team):
   player_data_df = player_data_df.drop(['Unnamed: 0'], axis = 1 )
   player_stats_df = player_stats_df.drop(['Unnamed: 0'], axis = 1 )
   #print(player_data_df.to_dict())
+
+  # need to replace a space with NaN 
+  player_data_df = player_data_df.replace( " " , None )
   
   # limit to player_data table to just this team
   if ( disp_team != "INTERNALS"):
     if (disp_league.strip() != "FIVB" and disp_year.strip() != "2024"):
       print(f" Disp Team,{disp_team}, disp league: {disp_league}, disp_year: {disp_year}")
       player_data_df = player_data_df[ player_data_df['team'] == disp_team.strip() ]
-  
-  # replace nan with blanks
-  player_data_df = player_data_df.fillna(' ')
-  player_stats_df = player_stats_df.fillna('')
-  #print(player_data_df)
-  #print(player_stats_df)
 
   # ---------- This may change, but let's make a subest data set a few columns for this display
   disp_df = player_data_df[['team','player','fbhe','fbhe1', 'fbhe2', 'fbhe3', 'fbhe4', 'fbhe5']]
   mean_df1_dict = {'team':['Mean:'],
                          'player':[' '],
-                         'fbhe':["{:.3f}".format(disp_df['fbhe'].mean(skipna=True))],
-                         'fbhe1':["{:.3f}".format(disp_df['fbhe1'].mean(skipna=True))],
-                         'fbhe2':["{:.3f}".format(disp_df['fbhe2'].mean(skipna=True))],
-                         'fbhe3':["{:.3f}".format(disp_df['fbhe3'].mean(skipna=True))],
-                         'fbhe4':["{:.3f}".format(disp_df['fbhe4'].mean(skipna=True))],
-                         'fbhe5':["{:.3f}".format(disp_df['fbhe5'].mean(skipna=True))] }
+                         'fbhe':["{:.3f}".format(disp_df['fbhe'].mean(skipna=True, numeric_only=True))],
+                         'fbhe1':["{:.3f}".format(disp_df['fbhe1'].mean(skipna=True, numeric_only=True))],
+                         'fbhe2':["{:.3f}".format(disp_df['fbhe2'].mean(skipna=True, numeric_only=True))],
+                         'fbhe3':["{:.3f}".format(disp_df['fbhe3'].mean(skipna=True, numeric_only=True))],
+                         'fbhe4':["{:.3f}".format(disp_df['fbhe4'].mean(skipna=True, numeric_only=True))],
+                         'fbhe5':["{:.3f}".format(disp_df['fbhe5'].mean(skipna=True, numeric_only=True))] }
   mean_df1 = pd.DataFrame.from_dict(mean_df1_dict)
   sd_df1_dict = {'team':['St Dev:'],
                          'player':[' '],
@@ -81,7 +78,8 @@ def coaches_dashboard(league_value, disp_team):
                          'fbhe4':["{:.3f}".format(disp_df['fbhe4'].std(skipna=True))],
                          'fbhe5':["{:.3f}".format(disp_df['fbhe5'].std(skipna=True))] }
   sd_df1 = pd.DataFrame.from_dict(sd_df1_dict)
-  disp_df = pd.concat([disp_df,mean_df1,sd_df1])
+  
+  disp_df = pd.concat([disp_df.fillna(''),mean_df1,sd_df1])
   df_table1 = pd.DataFrame.to_markdown(disp_df, index=False )
 
   disp_df = player_data_df[['player','srv1_fbhe','srv3_fbhe','srv5_fbhe']]
@@ -95,7 +93,7 @@ def coaches_dashboard(league_value, disp_team):
                          'srv3_fbhe':["{:.3f}".format(disp_df['srv3_fbhe'].std(skipna=True))],
                          'srv5_fbhe':["{:.3f}".format(disp_df['srv5_fbhe'].std(skipna=True))] }
   sd_df2 = pd.DataFrame.from_dict(sd_df2_dict)
-  disp_df = pd.concat([disp_df,mean_df2,sd_df2])
+  disp_df = pd.concat([disp_df.fillna(''),mean_df2,sd_df2])
   df_table2 = pd.DataFrame.to_markdown(disp_df, index=False )
   
   disp_df = player_data_df[['player','err_den','tcr','tcr_r','tcr_s','expected']]
@@ -113,7 +111,7 @@ def coaches_dashboard(league_value, disp_team):
                          'tcr_s':["{:.2f}".format(disp_df['tcr_s'].std(skipna=True))],
                          'expected':["{:.2f}".format(disp_df['expected'].std(skipna=True))] }
   sd_df3 = pd.DataFrame.from_dict(sd_df3_dict)
-  disp_df = pd.concat([disp_df,mean_df3,sd_df3])
+  disp_df = pd.concat([disp_df.fillna(''),mean_df3,sd_df3])
   df_table3 = pd.DataFrame.to_markdown(disp_df, index=False )
 
   player_stats_disp = {

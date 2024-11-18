@@ -581,6 +581,8 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
     fbhe_return4 = "Explain the data here"
   else:
     fbhe_return = "No Data Found"
+    fbhe_return2 = ''
+    fbhe_return3 = ''
   
   return fbhe_return, fbhe_return2, fbhe_return3
 
@@ -671,28 +673,29 @@ def error_density(disp_league, disp_gender, disp_year,
                           date_checked, disp_start_date, disp_end_date
                          )
 
-  # for this one, now limit to plays that include disp player:
-  m_ppr_df = m_ppr_df[ ( m_ppr_df['player_a1'].str.strip() == disp_player.strip() ) | 
-                        ( m_ppr_df['player_a2'].str.strip() == disp_player.strip() ) |  
-                        ( m_ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
-                        ( m_ppr_df['player_b2'].str.strip() == disp_player.strip() )
-  ]
-  print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
-
-  ############## Secomd - Create the dataframe that will be displayed as a table, report specific
-  # create the output dataframe - This is speficif to the report
-  df_dict = {'Error Density':[0],
-             'Percentile':[0],
-             'First Ball Errors':[0],
-             'Service Errors':[0],
-             'Transition Errors':[0],
-             'Total Errors':[0],
-             'Total Points':[0]
-            }
-  error_table = pd.DataFrame.from_dict( df_dict )
-
-  ############### Third Populate the dataframe, assuming we have data returned
+  # check if no data left:
   if m_ppr_df.shape[0] > 0:
+    # for this one, now limit to plays that include disp player:
+    m_ppr_df = m_ppr_df[ ( m_ppr_df['player_a1'].str.strip() == disp_player.strip() ) | 
+                          ( m_ppr_df['player_a2'].str.strip() == disp_player.strip() ) |  
+                          ( m_ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
+                          ( m_ppr_df['player_b2'].str.strip() == disp_player.strip() )
+    ]
+    #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+
+    ############## Secomd - Create the dataframe that will be displayed as a table, report specific
+    # create the output dataframe - This is speficif to the report
+    df_dict = {'Error Density':[0],
+               'Percentile':[0],
+               'First Ball Errors':[0],
+               'Service Errors':[0],
+               'Transition Errors':[0],
+               'Total Errors':[0],
+               'Total Points':[0]
+              }
+    error_table = pd.DataFrame.from_dict( df_dict )
+
+    ############### Third Populate the dataframe, assuming we have data returned
     error_vector = calc_error_den(m_ppr_df, disp_player)
     error_table['Error Density'] = error_vector[0]
     error_table['Percentile'] = error_vector[1]
@@ -837,35 +840,38 @@ def expected_value(disp_league, disp_gender, disp_year,
   df_dict = {}
   ev_table = pd.DataFrame.from_dict( df_dict )
 
-  # now filter my ppr file to just those wher ethe disp_player receives serve
-  ppr_df = m_ppr_df[ m_ppr_df['pass_player'].str.strip() == disp_player.strip()]
+  # now filter my ppr file to just those where the disp_player receives serve
+  if m_ppr_df.shape[0] > 0:
+    ppr_df = m_ppr_df[ m_ppr_df['pass_player'].str.strip() == disp_player.strip()]
   
-  ############### Third Populate the dataframe, assuming we have data returned
-  if ppr_df.shape[0] > 0:
-    ev_vector = calc_ev(ppr_df, disp_player
+    ############### Third Populate the dataframe, assuming we have data returned
+    if ppr_df.shape[0] > 0:
+      ev_vector = calc_ev(ppr_df, disp_player
                        )
-    ev_table.loc['Expected Value','All'] = ev_vector[0]
-    ev_table.loc['Total Points','All'] = ev_vector[1]
-    ev_table.loc['  ','All'] = ' '
-    ev_table.loc['Points Won','All'] = ev_vector[2]
-    ev_table.loc['---------------------','All'] = ' '
-    ev_table.loc['First Ball Kill','All'] = ev_vector[3] 
-    ev_table.loc['Transition Kill Earned','All'] =ev_vector[4]
-    ev_table.loc['Transition Error Received','All']=ev_vector[5]
-    ev_table.loc['Service Errors Earned','All']=ev_vector[6]
+      ev_table.loc['Expected Value','All'] = ev_vector[0]
+      ev_table.loc['Total Points','All'] = ev_vector[1]
+      ev_table.loc['  ','All'] = ' '
+      ev_table.loc['Points Won','All'] = ev_vector[2]
+      ev_table.loc['---------------------','All'] = ' '
+      ev_table.loc['First Ball Kill','All'] = ev_vector[3] 
+      ev_table.loc['Transition Kill Earned','All'] =ev_vector[4]
+      ev_table.loc['Transition Error Received','All']=ev_vector[5]
+      ev_table.loc['Service Errors Earned','All']=ev_vector[6]
 
-    ev_table.loc['.  ','All'] = ' '
-    ev_table.loc['Points Lost','All'] = ev_vector[7]
-    ev_table.loc['----------------------','All'] = ' '
-    ev_table.loc['First Ball Error','All']=ev_vector[8]
-    ev_table.loc['Transition Error Given','All']=ev_vector[9]
-    ev_table.loc['Transition Kill Lost','All']=ev_vector[10]
-    ev_table.loc['Service Ace Lost','All']=ev_vector[11]
+      ev_table.loc['.  ','All'] = ' '
+      ev_table.loc['Points Lost','All'] = ev_vector[7]
+      ev_table.loc['----------------------','All'] = ' '
+      ev_table.loc['First Ball Error','All']=ev_vector[8]
+      ev_table.loc['Transition Error Given','All']=ev_vector[9]
+      ev_table.loc['Transition Kill Lost','All']=ev_vector[10]
+      ev_table.loc['Service Ace Lost','All']=ev_vector[11]
  
-    # now create the markdown text to return
-    ev_return = pd.DataFrame.to_markdown(ev_table)
+     # now create the markdown text to return
+      ev_return = pd.DataFrame.to_markdown(ev_table)
+    else:
+      ev_return = "No Data Found"
   else:
-    ev_return = "No Data Found"
+     ev_return = "No Data Found"
   
   return ev_return, ' ', ' '
 
