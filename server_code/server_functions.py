@@ -215,11 +215,17 @@ def calc_trans( ppr_df, disp_player, flag ):
   trans_list[7] = trans_list[3] + trans_list[4]
   trans_list[8] = trans_list[5] + trans_list[6]
   trans_list[9] = trans_list[7] + trans_list[8]
-  trans_list[0] = trans_list[7] / trans_list[9] if trans_list[9] != 0 else 0
-  trans_list[0] = str('{:.2%}').format(trans_list[0])
+  if trans_list[9] != 0:
+    trans_list[0] = trans_list[7] / trans_list[9]
+    trans_list[0] = str('{:.2%}').format(trans_list[0])
+    trans_list[2] = trans_list[9] / total_trans 
+    trans_list[2] = str('{:.2%}').format(trans_list[2])
+  else :
+    trans_list[0] = None
+    trans_list[2] = None
+    
   trans_list[1] = 0  # to get the percentile, we need to look up the league mean and stdev
-  trans_list[2] = trans_list[9] / total_trans if total_trans != 0 else 0
-  trans_list[2] = str('{:.2%}').format(trans_list[2])
+
 
   return trans_list
 

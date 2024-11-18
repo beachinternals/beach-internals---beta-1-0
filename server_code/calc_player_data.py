@@ -240,11 +240,11 @@ def calculate_player_data( c_league, c_gender, c_year):
 
     # ------------calculate transition Conversion ------------------
     trans_vector = calc_trans( ppr_df, p_list[i], 'all' )
-    player_df.at[i,'tcr'] = float(trans_vector[0][:-1])
+    player_df.at[i,'tcr'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
     trans_vector = calc_trans( ppr_df, p_list[i], 'srv' )
-    player_df.at[i,'tcr_s'] = float(trans_vector[0][:-1])
+    player_df.at[i,'tcr_s'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
     trans_vector = calc_trans( ppr_df, p_list[i], 'rcv' )
-    player_df.at[i,'tcr_r'] = float(trans_vector[0][:-1])
+    player_df.at[i,'tcr_r'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
 
     # -------------- calculate expected value ---------------
     ev_vector = calc_ev(ppr_df, p_list[i])
@@ -274,7 +274,7 @@ def calculate_player_data( c_league, c_gender, c_year):
     #
     fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==1],p_list[i],'srv', False)
     player_df.at[i,'serve1_fbhe'] = fbhe_vector[0] if fbhe_vector[3] != 0 else None
-    player_df.at[i,'serve_n'] = fbhe_vector[3]
+    player_df.at[i,'serve1_n'] = fbhe_vector[3]
     tmp_df = ppr_df[ ppr_df['point_outcome'] == "TSA" ]
     tmp_df = tmp_df[ tmp_df['serve_player'] == p_list[i]]
     tmp_df = tmp_df[ tmp_df['serve_src_zone_net'] == 1 ]
