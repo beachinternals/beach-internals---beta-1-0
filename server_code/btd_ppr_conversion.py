@@ -629,12 +629,12 @@ def calc_dist(x1,x2,y1,y2):
     return None
 
 def calc_dur(t1, t2):
-  return 0 if not isinstance(t2,(float,int)) else (t2 - t1)
+  return 0 if not ( isinstance(t1,(float,int)) and isinstance(t2,(float,int)) ) else (t2 - t1)
 
 def calc_speed(dist, dur):
   # converting to km/hr from m/s
-  # print(f"speed, Dist:{dist}, duration: {dur}")
-  return 0 if not isinstance(dur,(float,int)) else dist/dur*(60/1000)
+  #print(f"speed, Dist:{dist}, duration: {dur}")
+  return 0 if not (isinstance(dur,(float,int)) and isinstance(dist,(float,int)) ) else dist/dur*(60/1000)
 
 def calc_angle(x1,x2,y1,y2):
   if x1 is not None and x2 is not None and y1 is not None and y2 is not None:
@@ -646,7 +646,7 @@ def calc_angle(x1,x2,y1,y2):
     return None
 
 def calc_height(t1, t2):
-  return 0 if not isinstance(t2,(float,int)) else 1.225*(t2-t1)**2
+  return 0 if not ( isinstance(t1,(float,int)) and isinstance(t2,(float,int)) ) else 1.225*(t2-t1)**2
 
 def ppr_transpose_x(near_court, x1 ):
   # so x coordiantes are 0 - 1, where 0 is 0, and 1 is +8
