@@ -52,6 +52,10 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     self.league3_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
     self.league3_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
 
+    # populate drop down for Traingle Scoring
+      # populate the drop downs for league
+    self.tri_league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
+    self.tri_league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))  
 
   def generate_ppr_button_click(self, **event_args):
     """This method is called when the button is clicked"""
@@ -121,6 +125,33 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
   def all_player_data_button_click(self, **event_args):
     """This method is called when the button is clicked"""
     return_text = anvil.server.call('calc_all_player_data')
+    
+    pass
+
+  def tri_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # Call the server routine to calculate the triangle scoring table
+
+    # unpack the league, gender, year from the drop down
+    # extract league, gender, year from league selected value
+    league_value = self.tri_league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    
+    return_text = anvil.server.call(
+      'calc_triangle_scoring_background',
+      disp_league,
+      disp_gender,
+      disp_year
+    )
+    alert(return_text)
+
+    # call the server functions
+
     
     pass
 

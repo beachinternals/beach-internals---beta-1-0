@@ -214,5 +214,28 @@ components:
   name: outlined_card_4
   properties: {role: outlined-card}
   type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'YVKKFQ,VYNCIF'}
+    name: label_10
+    properties: {text: Create Triangle Scoring Table}
+    type: Label
+  - layout_properties: {grid_position: 'YVKKFQ,EVJXUK'}
+    name: label_11
+    properties: {align: right, text: 'League:'}
+    type: Label
+  - event_bindings: {change: tri_league_drop_down_change}
+    layout_properties: {grid_position: 'YVKKFQ,OCUQMR'}
+    name: tri_league_drop_down
+    properties: {}
+    type: DropDown
+  - event_bindings: {click: tri_button_click}
+    layout_properties: {grid_position: 'YVKKFQ,OPBVNI'}
+    name: tri_button
+    properties: {role: outlined-button, text: Create Table}
+    type: Button
+  layout_properties: {grid_position: 'EXITKV,AEDSYF'}
+  name: outlined_card_5
+  properties: {role: outlined-card}
+  type: ColumnPanel
 container: {type: ColumnPanel}
 is_package: true

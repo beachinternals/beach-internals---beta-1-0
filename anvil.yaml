@@ -225,6 +225,9 @@ db_schema:
     - admin_ui: {order: 10, width: 200}
       name: min_att
       type: number
+    - admin_ui: {order: 11, width: 200}
+      name: tri_data
+      type: media
     server: full
     title: ppr_csv_tables
   report_list:
