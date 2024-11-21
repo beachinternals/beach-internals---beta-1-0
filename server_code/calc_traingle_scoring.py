@@ -64,8 +64,8 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
   # now, how many matches do we have, looking at video_id:
   m_list = ppr_df['video_id'].unique()
   num_matches = m_list.shape[0]
-  print(f"Match List: #{num_matches}")
-  print(m_list)
+  #print(f"Match List: #{num_matches}")
+  #print(m_list)
 
   # build the ppr_dataframe out tpo the proper number of rows, equal total points,
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
@@ -93,6 +93,22 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
   #  tri_df.loc[max(tri_df.index)+1] = tri_dict
 
   for i in range(0,num_matches):
+    teama_list = ppr_df[ ppr_df['video_id'] == m_list[i] ]
+    teama_list = teama_list['teama'].unique()
+    print(f'team a list {teama_list}')
+    teama = teama_list[0]
+    print(f'teama {teama}')
+    teamb_list = ppr_df[ ppr_df['video_id'] == m_list[i] ]
+    teamb_list = teamb_list['teamb'].unique()
+    print(f'team a list {teamb_list}')
+    teamb = teamb_list[0]
+    print(f'teamb {teamb}')
+
+    player_list = ppr_df[ ppr_df['video_id'] == m_list[i] ]
+    player_a1 = player_list['player_a1'].unique()[0]
+    player_a2 = player_list['player_a2'].unique()[0]
+    player_b1 = player_list['player_b1'].unique()[0]
+    player_b2 = player_list['player_b2'].unique()[0]
 
     for s in [1,2,3]:
       set_df = ppr_df[ppr_df['video_id'] == m_list[i]]  # limit to this video match
@@ -102,15 +118,15 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
 
         # add a row for this set
         tri_df.loc[max(tri_df.index)+1] = tri_dict
-        tri_row = tri_df.shape[0]
-        print(f"Tri Row:{tri_row}")
+        tri_row = tri_df.shape[0]-1
+        #print(tri_df)
 
         # save video id and set number
         tri_df.at[tri_row,'video_id'] = m_list[i]
         tri_df.at[tri_row,'set'] = s
-        teama = set_df.at[0,'teama']
-        player_a1 = set_df.at[0,'player_a1']
-        player_a2 = set_df.at[0,'player_a2']
+        teama = set_df.at[1,'teama']
+        player_a1 = set_df.at[1,'player_a1']
+        player_a2 = set_df.at[1,'player_a2']
         tri_df.at[tri_row,'teama'] = teama
         tri_df.at[tri_row,'player_a1'] =  player_a1
         tri_df.at[tri_row,'player_a2'] =  player_a2
@@ -121,45 +137,49 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
         tri_df.at[tri_row,'player_b1'] =  player_b1
         tri_df.at[tri_row,'player_b2'] =  player_b2
         tri_df.at[tri_row,'total_pts'] = set_df.shape[0]
+        print(f"I = {i}, Video id:{m_list[i]}, Set: {s}, Tri Row:{tri_row} Tri_df Shape:{tri_df.shape[0]}, max index:{max(tri_df.index)}, Set size:{set_df.shape[0]}, Team a/b:{teama,teamb}")
 
         # terminal Serving
         tmp_df = set_df[set_df['point_outcome'] == "TSA" ]
-        tri_df.at[tri_row,'tsa_a'] = tmp_df['point_outcome_team'].str.contains(teama).shape[0]
-        tri_df.at[tri_row,'tsa_b'] = tmp_df['point_outcome_team'].str.contains(teamb).shape[0] 
+        tri_df.at[tri_row,'tsa_a'] = tmp_df[ tmp_df['point_outcome_team'] == teama ].shape[0]
+        tri_df.at[tri_row,'tsa_b'] = tmp_df[ tmp_df['point_outcome_team'] == teamb ].shape[0] 
         tmp_df = set_df[set_df['point_outcome'] == "TSE" ]
-        tri_df.at[tri_row,'tse_a'] = tmp_df['point_outcome_team'].str.contains(teama).shape[0]
-        tri_df.at[tri_row,'tse_b'] = tmp_df['point_outcome_team'].str.contains(teamb).shape[0] 
+        tri_df.at[tri_row,'tse_a'] = tmp_df[ tmp_df['point_outcome_team'] == teama ].shape[0]
+        tri_df.at[tri_row,'tse_b'] = tmp_df[ tmp_df['point_outcome_team'] == teamb ].shape[0] 
         tri_df.at[tri_row,'srv_num_a'] = tmp_df[tmp_df['serve_player'] == player_a1 ].shape[0] + set_df[set_df['serve_player'] == player_a2 ].shape[0]
         tri_df.at[tri_row,'srv_num_b'] = tmp_df[tmp_df['serve_player'] == player_b1 ].shape[0] + set_df[set_df['serve_player'] == player_b2 ].shape[0]
-        tri_df.at[tri_row,'tsrv_pta_a'] = tri_df.at[tri_row,'tsa_a'] + tri_df.at[tri_row,'tse_b']
-        tri_df.at[tri_row,'tsrv_pta_b'] = tri_df.at[tri_row,'tsa_b'] + tri_df.at[tri_row,'tse_a']        
-        tri_df.at[tri_row,'tsrv_adv_a'] = tri_df.at[tri_row,'tsrv_pta_a'] - tri_df.at[tri_row,'tsrv_pta_b']
-        tri_df.at[tri_row,'tsrv_pts'] = tri_df.at[tri_row,'tsrv_pta_a'] + tri_df.at[tri_row,'tsrv_pta_b']
-
+        tri_df.at[tri_row,'tsrv_pts_a'] = tri_df.at[tri_row,'tsa_a'] + tri_df.at[tri_row,'tse_b']
+        tri_df.at[tri_row,'tsrv_pts_b'] = tri_df.at[tri_row,'tsa_b'] + tri_df.at[tri_row,'tse_a']        
+        tri_df.at[tri_row,'tsrv_adv_a'] = tri_df.at[tri_row,'tsrv_pts_a'] - tri_df.at[tri_row,'tsrv_pts_b']
+        tri_df.at[tri_row,'tsrv_pts'] = tri_df.at[tri_row,'tsrv_pts_a'] + tri_df.at[tri_row,'tsrv_pts_b']
+        print(f"Terminal Serve: Ace {tri_df.at[tri_row,'tsa_a'],tri_df.at[tri_row,'tsa_b']} Terminal Serve Error: {tri_df.at[tri_row,'tse_a'],tri_df.at[tri_row,'tse_b']}")
+        
         # first ball
         tmp_df = set_df[set_df['point_outcome'] == "FBK" ]
-        tri_df.at[tri_row,'fbk_a'] = tmp_df['point_outcome_team'].str.contains(teama).shape[0]
-        tri_df.at[tri_row,'fbk_b'] = tmp_df['point_outcome_team'].str.contains(teamb).shape[0] 
+        tri_df.at[tri_row,'fbk_a'] = tmp_df[ tmp_df['point_outcome_team'] == teama ].shape[0]
+        tri_df.at[tri_row,'fbk_b'] = tmp_df[ tmp_df['point_outcome_team'] == teamb ].shape[0] 
         tmp_df = set_df[set_df['point_outcome'] == "FBE" ]
-        tri_df.at[tri_row,'fbe_a'] = tmp_df['point_outcome_team'].str.contains(teama).shape[0]
-        tri_df.at[tri_row,'fbe_b'] = tmp_df['point_outcome_team'].str.contains(teamb).shape[0]   
+        tri_df.at[tri_row,'fbe_a'] = tmp_df[ tmp_df['point_outcome_team'] == teama ].shape[0]
+        tri_df.at[tri_row,'fbe_b'] = tmp_df[ tmp_df['point_outcome_team'] == teamb ].shape[0]  
         tri_df.at[tri_row,'fb_pts_a'] = tri_df.at[tri_row,'fbk_a'] + tri_df.at[tri_row,'fbe_b']
         tri_df.at[tri_row,'fb_pts_b'] = tri_df.at[tri_row,'fbk_b'] + tri_df.at[tri_row,'fbe_a']        
         tri_df.at[tri_row,'fb_adv_a'] = tri_df.at[tri_row,'fb_pts_a'] - tri_df.at[tri_row,'fb_pts_b']  
         tri_df.at[tri_row,'fb_pts'] = tri_df.at[tri_row,'fb_pts_a'] + tri_df.at[tri_row,'fb_pts_b']  
+        print(f"First Ball: Kill {tri_df.at[tri_row,'fbk_a'],tri_df.at[tri_row,'fbk_b']} Error: {tri_df.at[tri_row,'fbe_a'],tri_df.at[tri_row,'fbe_b']}")
 
         # Transition
         tmp_df = set_df[set_df['point_outcome'] == "TK" ]
-        tri_df.at[tri_row,'tk_a'] = tmp_df['point_outcome_team'].str.contains(teama).shape[0]
-        tri_df.at[tri_row,'tk_b'] = tmp_df['point_outcome_team'].str.contains(teamb).shape[0] 
+        tri_df.at[tri_row,'tk_a'] = tmp_df[ tmp_df['point_outcome_team'] == teama ].shape[0]
+        tri_df.at[tri_row,'tk_b'] = tmp_df[ tmp_df['point_outcome_team'] == teamb ].shape[0] 
         tmp_df = set_df[set_df['point_outcome'] == "TE" ]
-        tri_df.at[tri_row,'te_a'] = tmp_df['point_outcome_team'].str.contains(teama).shape[0]
-        tri_df.at[tri_row,'te_b'] = tmp_df['point_outcome_team'].str.contains(teamb).shape[0]    
+        tri_df.at[tri_row,'te_a'] = tmp_df[ tmp_df['point_outcome_team'] == teama ].shape[0]
+        tri_df.at[tri_row,'te_b'] = tmp_df[ tmp_df['point_outcome_team'] == teamb ].shape[0]  
         tri_df.at[tri_row,'tran_pts_a'] = tri_df.at[tri_row,'tk_a'] + tri_df.at[tri_row,'te_b']
         tri_df.at[tri_row,'tran_pts_b'] = tri_df.at[tri_row,'tk_b'] + tri_df.at[tri_row,'te_a']        
         tri_df.at[tri_row,'tran_adv_a'] = tri_df.at[tri_row,'tran_pts_a'] - tri_df.at[tri_row,'tran_pts_b']  
         tri_df.at[tri_row,'tran_pts'] = tri_df.at[tri_row,'tran_pts_a'] + tri_df.at[tri_row,'tran_pts_b'] 
-
+        print(f"Transition: Kill {tri_df.at[tri_row,'tk_a'],tri_df.at[tri_row,'tk_b']} Error: {tri_df.at[tri_row,'te_a'],tri_df.at[tri_row,'te_b']}")
+        
         # Total points and percenta
         tri_df.at[tri_row,'total_pts'] = tri_df.at[tri_row,'tsrv_pts'] + tri_df.at[tri_row,'fb_pts'] + tri_df.at[tri_row,'tran_pts']
         tri_df.at[tri_row,'tsrv_pts_per'] = tri_df.at[tri_row,'tsrv_pts'] / tri_df.at[tri_row,'total_pts']
