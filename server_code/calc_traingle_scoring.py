@@ -77,7 +77,7 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
               'tsrv_pts_a':None, 'tsrv_pts_b':None, 'tsrv_adv_a':None, 'tsrv_pts':None, 
               'fbk_a':None, 'fbe_a':None, 'fbk_b':None, 'fbe_b':None, 'fb_pts_a':None, 'fb_pts_b':None, 'fb_adv_a':None, 'fb_pts':None, 
               'tk_a':None, 'te_a':None, 'tk_b':None, 'te_b':None, 'tran_pts_a':None, 'tran_pts_b':None, 'tran_adv_a':None, 'tran_pts':None, 
-              'ts_pts_per':None, 'fb_pts_per':None, 'tran_pts_per':None, 
+              'tran_pts_per':None, 'fb_pts_per':None, 'tran_pts_per':None, 
               'fbhe_a_noace':None, 'fbhe_b_noace':None, 'fbhe_a_withace':None, 'fbhe_b_withace':None, 'tcr_a':None, 'tcr_b':None, 'err_den_a':None, 'err_den_b':None, 
               'err_den_criteria_met_a':None, 'err_den_criteria_met_b':None,'tcr_criteria_met_a':None,'tcr_criteria_met_b':None,
               'winning_team':None,'win_fbhe_noace':None,'win_fbhe_withace':None,'win_tcr':None, 'point_diff':None,
@@ -95,20 +95,21 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
   for i in range(0,num_matches):
     teama_list = ppr_df[ ppr_df['video_id'] == m_list[i] ]
     teama_list = teama_list['teama'].unique()
-    print(f'team a list {teama_list}')
+    #print(f'team a list {teama_list}')
     teama = teama_list[0]
-    print(f'teama {teama}')
+    #print(f'teama {teama}')
     teamb_list = ppr_df[ ppr_df['video_id'] == m_list[i] ]
     teamb_list = teamb_list['teamb'].unique()
-    print(f'team a list {teamb_list}')
+    #print(f'team a list {teamb_list}')
     teamb = teamb_list[0]
-    print(f'teamb {teamb}')
+    #print(f'teamb {teamb}')
 
     player_list = ppr_df[ ppr_df['video_id'] == m_list[i] ]
     player_a1 = player_list['player_a1'].unique()[0]
     player_a2 = player_list['player_a2'].unique()[0]
     player_b1 = player_list['player_b1'].unique()[0]
     player_b2 = player_list['player_b2'].unique()[0]
+    print(f"Teams: {teama, teamb}, Players: {player_a1, player_a2, player_b1, player_b2}")
 
     for s in [1,2,3]:
       set_df = ppr_df[ppr_df['video_id'] == m_list[i]]  # limit to this video match
@@ -118,26 +119,20 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
 
         # add a row for this set
         tri_df.loc[max(tri_df.index)+1] = tri_dict
-        tri_row = tri_df.shape[0]-1
+        tri_row = tri_df.shape[0]-2
         #print(tri_df)
 
         # save video id and set number
         tri_df.at[tri_row,'video_id'] = m_list[i]
         tri_df.at[tri_row,'set'] = s
-        teama = set_df.at[1,'teama']
-        player_a1 = set_df.at[1,'player_a1']
-        player_a2 = set_df.at[1,'player_a2']
         tri_df.at[tri_row,'teama'] = teama
         tri_df.at[tri_row,'player_a1'] =  player_a1
         tri_df.at[tri_row,'player_a2'] =  player_a2
-        teamb =  set_df.at[0,'teamb']
-        player_b1 = set_df.at[0,'player_b1']
-        player_b2 = set_df.at[0,'player_b2']
         tri_df.at[tri_row,'teamb'] =  teamb
         tri_df.at[tri_row,'player_b1'] =  player_b1
         tri_df.at[tri_row,'player_b2'] =  player_b2
         tri_df.at[tri_row,'total_pts'] = set_df.shape[0]
-        print(f"I = {i}, Video id:{m_list[i]}, Set: {s}, Tri Row:{tri_row} Tri_df Shape:{tri_df.shape[0]}, max index:{max(tri_df.index)}, Set size:{set_df.shape[0]}, Team a/b:{teama,teamb}")
+        #print(f"I = {i}, Video id:{m_list[i]}, Set: {s}, Tri Row:{tri_row} Tri_df Shape:{tri_df.shape[0]}, max index:{max(tri_df.index)}, Set size:{set_df.shape[0]}, Team a/b:{teama,teamb}")
 
         # terminal Serving
         tmp_df = set_df[set_df['point_outcome'] == "TSA" ]
@@ -152,7 +147,7 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
         tri_df.at[tri_row,'tsrv_pts_b'] = tri_df.at[tri_row,'tsa_b'] + tri_df.at[tri_row,'tse_a']        
         tri_df.at[tri_row,'tsrv_adv_a'] = tri_df.at[tri_row,'tsrv_pts_a'] - tri_df.at[tri_row,'tsrv_pts_b']
         tri_df.at[tri_row,'tsrv_pts'] = tri_df.at[tri_row,'tsrv_pts_a'] + tri_df.at[tri_row,'tsrv_pts_b']
-        print(f"Terminal Serve: Ace {tri_df.at[tri_row,'tsa_a'],tri_df.at[tri_row,'tsa_b']} Terminal Serve Error: {tri_df.at[tri_row,'tse_a'],tri_df.at[tri_row,'tse_b']}")
+        #print(f"Terminal Serve: Ace {tri_df.at[tri_row,'tsa_a'],tri_df.at[tri_row,'tsa_b']} Terminal Serve Error: {tri_df.at[tri_row,'tse_a'],tri_df.at[tri_row,'tse_b']}")
         
         # first ball
         tmp_df = set_df[set_df['point_outcome'] == "FBK" ]
@@ -165,7 +160,7 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
         tri_df.at[tri_row,'fb_pts_b'] = tri_df.at[tri_row,'fbk_b'] + tri_df.at[tri_row,'fbe_a']        
         tri_df.at[tri_row,'fb_adv_a'] = tri_df.at[tri_row,'fb_pts_a'] - tri_df.at[tri_row,'fb_pts_b']  
         tri_df.at[tri_row,'fb_pts'] = tri_df.at[tri_row,'fb_pts_a'] + tri_df.at[tri_row,'fb_pts_b']  
-        print(f"First Ball: Kill {tri_df.at[tri_row,'fbk_a'],tri_df.at[tri_row,'fbk_b']} Error: {tri_df.at[tri_row,'fbe_a'],tri_df.at[tri_row,'fbe_b']}")
+        #print(f"First Ball: Kill {tri_df.at[tri_row,'fbk_a'],tri_df.at[tri_row,'fbk_b']} Error: {tri_df.at[tri_row,'fbe_a'],tri_df.at[tri_row,'fbe_b']}")
 
         # Transition
         tmp_df = set_df[set_df['point_outcome'] == "TK" ]
@@ -178,32 +173,58 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
         tri_df.at[tri_row,'tran_pts_b'] = tri_df.at[tri_row,'tk_b'] + tri_df.at[tri_row,'te_a']        
         tri_df.at[tri_row,'tran_adv_a'] = tri_df.at[tri_row,'tran_pts_a'] - tri_df.at[tri_row,'tran_pts_b']  
         tri_df.at[tri_row,'tran_pts'] = tri_df.at[tri_row,'tran_pts_a'] + tri_df.at[tri_row,'tran_pts_b'] 
-        print(f"Transition: Kill {tri_df.at[tri_row,'tk_a'],tri_df.at[tri_row,'tk_b']} Error: {tri_df.at[tri_row,'te_a'],tri_df.at[tri_row,'te_b']}")
+        #print(f"Transition: Kill {tri_df.at[tri_row,'tk_a'],tri_df.at[tri_row,'tk_b']} Error: {tri_df.at[tri_row,'te_a'],tri_df.at[tri_row,'te_b']}")
         
         # Total points and percenta
         tri_df.at[tri_row,'total_pts'] = tri_df.at[tri_row,'tsrv_pts'] + tri_df.at[tri_row,'fb_pts'] + tri_df.at[tri_row,'tran_pts']
-        tri_df.at[tri_row,'tsrv_pts_per'] = tri_df.at[tri_row,'tsrv_pts'] / tri_df.at[tri_row,'total_pts']
-        tri_df.at[tri_row,'fb_pts_per'] = tri_df.at[tri_row,'fb_pts'] / tri_df.at[tri_row,'total_pts']
-        tri_df.at[tri_row,'tran_pts_per'] = tri_df.at[tri_row,'tran_pts'] / tri_df.at[tri_row,'total_pts']
+        if ( tri_df.at[tri_row,'total_pts'] != 0 ):
+          tri_df.at[tri_row,'tsrv_pts_per'] = tri_df.at[tri_row,'tsrv_pts'] / tri_df.at[tri_row,'total_pts']
+          tri_df.at[tri_row,'fb_pts_per'] = tri_df.at[tri_row,'fb_pts'] / tri_df.at[tri_row,'total_pts']
+          tri_df.at[tri_row,'tran_pts_per'] = tri_df.at[tri_row,'tran_pts'] / tri_df.at[tri_row,'total_pts']
+        else:
+          tri_df.at[tri_row,'tsrv_pts_per'] = None
+          tri_df.at[tri_row,'fb_prs_per'] = None  
+          tri_df.at[tri_row,'tran_pts_per'] = None
 
         # count points and find a winner!
-        teama_pts = tri_df.at[tri_row,'tran_pts_a'] + tri_df.at[tri_row,'tsrv_pts_a'] + tri_df.at[tri_row,'fb_pts_a']
-        teamb_pts = tri_df.at[tri_row,'tran_pts_b'] + tri_df.at[tri_row,'tsrv_pts_b'] + tri_df.at[tri_row,'fb_pts_b']
-        tri_df.at[tri_row,'winning_team'] = teama if teama_pts > teamb_pts else teamb
-        tri_df.at[tri_row,'point_diff'] = teama_pts - teamb_pts if teama_pts > teamb_pts else teamb_pts - teama_pts
+        tri_df.at[tri_row,'teama_pts'] = tri_df.at[tri_row,'tran_pts_a'] + tri_df.at[tri_row,'tsrv_pts_a'] + tri_df.at[tri_row,'fb_pts_a']
+        tri_df.at[tri_row,'teamb_pts'] = tri_df.at[tri_row,'tran_pts_b'] + tri_df.at[tri_row,'tsrv_pts_b'] + tri_df.at[tri_row,'fb_pts_b']
+        tri_df.at[tri_row,'winning_team'] = teama if tri_df.at[tri_row,'teama_pts'] > tri_df.at[tri_row,'teamb_pts'] else teamb
+        tri_df.at[tri_row,'point_diff'] = tri_df.at[tri_row,'teama_pts'] - tri_df.at[tri_row,'teamb_pts'] if tri_df.at[tri_row,'teama_pts'] > tri_df.at[tri_row,'teamb_pts'] else tri_df.at[tri_row,'teamb_pts'] - tri_df.at[tri_row,'teama_pts']
     
 
         # fbhe and tcr
-        tri_df.at[tri_row,'fbhe_a_noace'] = ( tri_df.at[tri_row,'fbk_a'] - tri_df.at[tri_row,'fbe_a'] ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tsa_b'] - tri_df.at[tri_row,'tse_b'] )
-        tri_df.at[tri_row,'fbhe_b_noace'] = ( tri_df.at[tri_row,'fbk_b'] - tri_df.at[tri_row,'fbe_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tsa_a'] - tri_df.at[tri_row,'tse_a'] )
-        tri_df.at[tri_row,'fbhe_a_withace'] = ( tri_df.at[tri_row,'fbk_a'] - tri_df.at[tri_row,'fbe_a'] ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
-        tri_df.at[tri_row,'fbhe_b_withace'] = ( tri_df.at[tri_row,'fbk_b'] - tri_df.at[tri_row,'fbe_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
+        if ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tsa_b'] - tri_df.at[tri_row,'tse_b'] ) != 0:
+          tri_df.at[tri_row,'fbhe_a_noace'] = ( tri_df.at[tri_row,'fbk_a'] - tri_df.at[tri_row,'fbe_a'] ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tsa_b'] - tri_df.at[tri_row,'tse_b'] )
+        else:
+          tri_df.at[tri_row,'fbhe_a_noace'] = None
+        if ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tsa_a'] - tri_df.at[tri_row,'tse_a'] ) != 0:
+          tri_df.at[tri_row,'fbhe_b_noace'] = ( tri_df.at[tri_row,'fbk_b'] - tri_df.at[tri_row,'fbe_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tsa_a'] - tri_df.at[tri_row,'tse_a'] )
+        else:
+          tri_df.at[tri_row,'fbhe_b_noace'] = None
 
-        tri_df.at[tri_row,'tcr_a'] = ( tri_df.at[tri_row,'tk_a'] + tri_df.at[tri_row,'te_b'] ) / ( tri_df.at[tri_row,'tran_pts'] )   
-        tri_df.at[tri_row,'tcr_b'] = ( tri_df.at[tri_row,'tk_b'] + tri_df.at[tri_row,'te_a'] ) / ( tri_df.at[tri_row,'tran_pts'] )   
+        if ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] ) != 0:
+          tri_df.at[tri_row,'fbhe_a_withace'] = ( tri_df.at[tri_row,'fbk_a'] - tri_df.at[tri_row,'fbe_a'] ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
+        else:
+          tri_df.at[tri_row,'fbhe_a_withace'] = None
+        if ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] ) != 0:
+          tri_df.at[tri_row,'fbhe_b_withace'] = ( tri_df.at[tri_row,'fbk_b'] - tri_df.at[tri_row,'fbe_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
+        else:
+          tri_df.at[tri_row,'fbhe_b_withace'] = None
+        
+        if ( tri_df.at[tri_row,'tran_pts'] != 0 ):
+          tri_df.at[tri_row,'tcr_a'] = ( tri_df.at[tri_row,'tk_a'] + tri_df.at[tri_row,'te_b'] ) / ( tri_df.at[tri_row,'tran_pts'] )   
+          tri_df.at[tri_row,'tcr_b'] = ( tri_df.at[tri_row,'tk_b'] + tri_df.at[tri_row,'te_a'] ) / ( tri_df.at[tri_row,'tran_pts'] )   
+        else:
+          tri_df.at[tri_row,'tcr_a'] = None
+          tri_df.at[tri_row,'tcr_b'] = None
 
-        tri_df.at[tri_row,'err_den_a'] = ( tri_df.at[tri_row,'te_a'] + tri_df.at[tri_row,'fbe_a'] + tri_df.at[tri_row,'tse_a']) / ( tri_df.at[tri_row,'total_pts'] )   
-        tri_df.at[tri_row,'err_den_b'] = ( tri_df.at[tri_row,'te_b'] + tri_df.at[tri_row,'fbe_b'] + tri_df.at[tri_row,'tse_b']) / ( tri_df.at[tri_row,'total_pts'] )   
+        if ( tri_df.at[tri_row,'total_pts'] != 0 ):
+          tri_df.at[tri_row,'err_den_a'] = ( tri_df.at[tri_row,'te_a'] + tri_df.at[tri_row,'fbe_a'] + tri_df.at[tri_row,'tse_a']) / ( tri_df.at[tri_row,'total_pts'] )   
+          tri_df.at[tri_row,'err_den_b'] = ( tri_df.at[tri_row,'te_b'] + tri_df.at[tri_row,'fbe_b'] + tri_df.at[tri_row,'tse_b']) / ( tri_df.at[tri_row,'total_pts'] )   
+        else:
+          tri_df.at[tri_row,'err_den_a'] = None
+          tri_df.at[tri_row,'err_den_b'] = None          
 
         tri_df.at[tri_row,'win_fbhe_noace'] = tri_df.at[tri_row,'fbhe_a_noace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_noace']
         tri_df.at[tri_row,'loser_fbhe_noace'] = tri_df.at[tri_row,'fbhe_b_noace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_a_noace']
@@ -211,11 +232,19 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
         tri_df.at[tri_row,'loser_fbhe_withace'] = tri_df.at[tri_row,'fbhe_b_withace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_withace']
         tri_df.at[tri_row,'win_tcr'] = tri_df.at[tri_row,'tcr_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'tcr_b']
 
-        tri_df.at[tri_row,'fbhe_diff_noace'] = tri_df.at[tri_row,'win_fbhe_noace'] - tri_df.at[tri_row,'loser_fbhe_noace']
-        tri_df.at[tri_row,'fbhe_diff_withace'] = tri_df.at[tri_row,'win_fbhe_withace'] - tri_df.at[tri_row,'loser_fbhe_withace']
+        if isinstance(tri_df.at[tri_row,'win_fbhe_noace'],float) & isinstance(tri_df.at[tri_row,'loser_fbhe_noace'],float) :
+          tri_df.at[tri_row,'fbhe_diff_noace'] = tri_df.at[tri_row,'win_fbhe_noace'] - tri_df.at[tri_row,'loser_fbhe_noace']
+        else:
+          tri_df.at[tri_row,'fbhe_diff_noace'] = None
+        if isinstance(tri_df.at[tri_row,'win_fbhe_withace'],float) & isinstance(tri_df.at[tri_row,'loser_fbhe_withace'],float) :
+          tri_df.at[tri_row,'fbhe_diff_withace'] = tri_df.at[tri_row,'win_fbhe_withace'] - tri_df.at[tri_row,'loser_fbhe_withace']
+        else:
+          tri_df.at[tri_row,'fbhe_diff_withace'] = None        
 
         # need to find the 25th and 75th percentile for error density, and TCR to see if conditions are met.
 
+        #print("End of Loop over the Set")
+        #print(tri_df)
         # End if statment for the set
       # end loop over sets
     # end loop over video id's, or match
@@ -223,6 +252,7 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
   # now lets store our triangle stats data file back as a csv file in the database
   #---------------------------------------------------------------------------
   # first, I need to change the ppr_file dataframe to a csv file.
+  print("Saving Tri_df back to database")
   tri_csv_file = pd.DataFrame.to_csv(tri_df)
   tri_media = anvil.BlobMedia(content_type="text/plain", content=tri_csv_file.encode(), name="triangle_data.csv")
 
