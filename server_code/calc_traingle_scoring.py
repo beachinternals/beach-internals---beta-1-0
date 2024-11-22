@@ -62,12 +62,12 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
   # calculate data from plalyer_data
   err_den_mean = player_df['err_den'].mean(skipna=True, numeric_only=True)
   err_den_sd = player_df['err_den'].std(skipna=True, numeric_only=True)
-  err_den_25 = (-0.674)*err_den_sd + err_den_mean
-  err_den_75 = (0.674)*err_den_sd + err_den_mean
+  err_den_25 = ((-0.674)*err_den_sd + err_den_mean)*2
+  err_den_75 = ((0.674)*err_den_sd + err_den_mean)*2
   tcr_mean = player_df['tcr'].mean(skipna=True, numeric_only=True)
   tcr_sd = player_df['tcr'].std(skipna=True, numeric_only=True)
-  tcr_25 = (-0.674)*tcr_sd + tcr_mean
-  tcr_75 = (0.674)*tcr_sd + tcr_mean
+  tcr_25 = ((-0.674)*tcr_sd + tcr_mean)
+  tcr_75 = ((0.674)*tcr_sd + tcr_mean)
   print(f"Stats: Err Den: {err_den_25,err_den_75}, TCR: {tcr_25,tcr_75}")
   
   #print(f"shape of ppr_df :{ppr_df.shape}")
@@ -243,6 +243,7 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
         tri_df.at[tri_row,'win_fbhe_withace'] = tri_df.at[tri_row,'fbhe_a_withace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_withace']
         tri_df.at[tri_row,'loser_fbhe_withace'] = tri_df.at[tri_row,'fbhe_b_withace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_withace']
         tri_df.at[tri_row,'win_tcr'] = tri_df.at[tri_row,'tcr_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'tcr_b']
+        tri_df.at[tri_row,'win_err_den'] = tri_df.at[tri_row,'err_den_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'err_den_b']
 
         if isinstance(tri_df.at[tri_row,'win_fbhe_noace'],float) & isinstance(tri_df.at[tri_row,'loser_fbhe_noace'],float) :
           tri_df.at[tri_row,'fbhe_diff_noace'] = tri_df.at[tri_row,'win_fbhe_noace'] - tri_df.at[tri_row,'loser_fbhe_noace']
@@ -258,34 +259,38 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
         # TCR criteria for team a
         if ( isinstance(tri_df.at[tri_row,'tcr_a'],float)):
           if ( tri_df.at[tri_row,'tcr_a'] > tcr_25 ):
-            if ( tri_df.at[tri_row,'tcr_a'] < tcr_25):
-              tri_df.at[tri_row,'tcr_criteria_met_a'] = True
-        else:
-          tri_df.at[tri_row,'tcr_criteria_met_a'] = False 
+          #if ( tri_df.at[tri_row,'tcr_a'] < tcr_75):
+            print(f"tcr a: {tri_df.at[tri_row,'tcr_a'], tcr_25}")
+            tri_df.at[tri_row,'tcr_criteria_met_a'] = True
+          else:
+            tri_df.at[tri_row,'tcr_criteria_met_a'] = False 
           
         # tcr criteria for team b
         if ( isinstance(tri_df.at[tri_row,'tcr_b'],float)):
           if ( tri_df.at[tri_row,'tcr_b'] > tcr_25 ):
-            if ( tri_df.at[tri_row,'tcr_b'] < tcr_25):
-              tri_df.at[tri_row,'tcr_criteria_met_b'] = True
-        else:
-          tri_df.at[tri_row,'tcr_criteria_met_b'] = False 
+            print(f"tcr b: {tri_df.at[tri_row,'tcr_b'], tcr_25}")
+            #if ( tri_df.at[tri_row,'tcr_b'] < tcr_75):
+            tri_df.at[tri_row,'tcr_criteria_met_b'] = True
+          else:
+            tri_df.at[tri_row,'tcr_criteria_met_b'] = False 
 
         # error density criteria for team a
         if ( isinstance(tri_df.at[tri_row,'err_den_a'],float)):
-          if ( tri_df.at[tri_row,'err_den_a'] > tcr_25 ):
-            if ( tri_df.at[tri_row,'err_den_a'] < tcr_25):
-              tri_df.at[tri_row,'err_den_criteria_met_a'] = True
-        else:
-          tri_df.at[tri_row,'err_den_criteria_met_a'] = False
+          #if ( tri_df.at[tri_row,'err_den_a'] > tcr_25 ):
+          if ( tri_df.at[tri_row,'err_den_a'] < err_den_75):
+            print(f"err den a: {tri_df.at[tri_row,'err_den_a'], err_den_75}")
+            tri_df.at[tri_row,'err_den_criteria_met_a'] = True
+          else:
+            tri_df.at[tri_row,'err_den_criteria_met_a'] = False
           
         # error density criteria for team b
         if ( isinstance(tri_df.at[tri_row,'err_den_b'],float)):
-          if ( tri_df.at[tri_row,'err_den_b'] > tcr_25 ):
-            if ( tri_df.at[tri_row,'err_den_b'] < tcr_25):
-              tri_df.at[tri_row,'err_den_criteria_met_b'] = True
-        else:
-          tri_df.at[tri_row,'err_den_criteria_met_b'] = False         
+          #if ( tri_df.at[tri_row,'err_den_b'] > tcr_25 ):
+          if ( tri_df.at[tri_row,'err_den_b'] < err_den_75):
+            print(f"err den b: {tri_df.at[tri_row,'err_den_b'], err_den_75}")
+            tri_df.at[tri_row,'err_den_criteria_met_b'] = True
+          else:
+            tri_df.at[tri_row,'err_den_criteria_met_b'] = False         
 
         # error density criteria for winning team
         if ( tri_df.at[tri_row,'winning_team'] == teama  ):
