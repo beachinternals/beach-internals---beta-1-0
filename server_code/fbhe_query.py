@@ -587,7 +587,7 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
   return fbhe_return, fbhe_return2, fbhe_return3
 
 @anvil.server.callable
-def report_stub(disp_league, disp_gender, disp_year, 
+def tri_score(disp_league, disp_gender, disp_year, 
                     disp_team, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
