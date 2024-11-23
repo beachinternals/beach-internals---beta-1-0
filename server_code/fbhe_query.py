@@ -599,57 +599,57 @@ def tri_score(disp_league, disp_gender, disp_year,
   # given the parameters
 
   ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
-  m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout )
-  m_ppr_df = ppr_df_limit( m_ppr_df, 
-                          comp_l1_checked, disp_comp_l1, 
-                          comp_l2_checked, disp_comp_l2, 
-                          comp_l3_checked, disp_comp_l3, 
-                          date_checked, disp_start_date, disp_end_date
-                         ) 
+  tri_df = get_tri_data( disp_league, disp_gender, disp_year )
+  tri_df = tri_df[ tri_df['player_a1'] == disp_player | 
+                   tri_df['player_a2'] == disp_player |
+                   tri_df['player_b1'] == disp_player |
+                   tri_df['player_b2'] == disp_player ]
     
   #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
-  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
-             'All':[0,0,0,0,0,' '],
-             'Zone 1':[0,0,0,0,0,' '],
-             "Zone 2":[0,0,0,0,0,' '],
-             'Zone 3':[0,0,0,0,0,' '],
-             'Zone 4':[0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,' ']
+  tri_dict = {'Team A ':[' '],
+             'Team B ':[' '],
+             'TS +/-':[0],
+             'FB +/-':[0],
+             'Tran +/-':[0],
+             'FBHE':[0],
+             'TCR':[0],
+             'Err Den':[0]
             }
-  fbhe_table = pd.DataFrame.from_dict( df_dict )
+  tri_table = pd.DataFrame.from_dict( tri_dict )
 
   ############### Third Populate the dataframe, assuming we have data returned
-  if m_ppr_df.shape[0] > 0:
-    # calculate fbhe for all attacks
-    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att', True )
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
-    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+  num_row = tri_df.shape[0]
+  if num_row >0:
+    if tri_df[0,'teama'].str.contains(disp_player):
+      disp_team = tri_df[0,'teama']
+    else:
+      disp_team tri_df[0,'teamb']
+  
+    for i in (0,num_row):
+      tri_table.at[0,'Team A'] = tri_df[i,'teama']
+      tri_table.at[0,'Team B'] = tri_df[i,'teamb']
+      tri_table.at[0,'Winner'] = tri_df[i,'winning_team']
+      tri_table.at[0,'TS +/-'] = tri_df[i,'tsrv_adv_a'] if trd_df[i,'tsrv_adv_a'].str.contains(disp_team) else -tri_df[i,'tsrv_adv_a']
+      tri_table.at[0,'FB +/-'] = tri_df[i,'fb_adv_a']if trd_df[i,'fb_adv_a'].str.contains(disp_team) else -tri_df[i,'fb_adv_a']
+      tri_table.at[0,'Tran +/-'] = tri_df[i,'tran_adv_a']if trd_df[i,'tran_adv_a'].str.contains(disp_team) else -tri_df[i,'tran_adv_a']
+      tri_table.at[0,'FBHE'] = tri_df[i,'fbhe_a_noace']if trd_df[i,'fbhe_a_noace'].str.contains(disp_team) else -tri_df[i,'fbhe_a_noace']
+      tri_table.at[0,'FBHE Diff'] = tri_df[i,'fbhe_diff_noace']if trd_df[i,'fbhe_diff_noace'].str.contains(disp_team) else -tri_df[i,'fbhe_diff_noace']
+      tri_table.at[0,'TCR'] = tri_df[i,'err_den_a']if trd_df[i,'err_den_a'].str.contains(disp_team) else -tri_df[i,'err_den_a']
+      tri_table.at[0,'Err Den'] = tri_df[i,'err_den_a']if trd_df[i,'err_den_a'].str.contains(disp_team) else -tri_df[i,'err_den_a']
 
-    # calculate for zones 1 - 5
-    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
-    for i in [1,2,3,4,5]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player, 'att' , True)
-      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
-      fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
-      fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+      # need to add a rwo to tri_table
+      tri_table.loc[len(tri_table.index)] = tri_dict
+    
  
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    tri_return = pd.DataFrame.to_markdown(tri_table)
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, ' ', ' '
+  return tri_return, ' ', ' '
 
 @anvil.server.callable
 def error_density(disp_league, disp_gender, disp_year, 
