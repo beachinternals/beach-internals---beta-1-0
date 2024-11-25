@@ -182,8 +182,10 @@ def calculate_player_data( c_league, c_gender, c_year):
 
     #------------------- Calculate Poke, Shoot, and Bang fbhe and %
     fbhe_vector = fbhe( ppr_df, p_list[i], 'all', False)
-    total_attempts = fbhe_vector[3]if fbhe_vector[3] != 0 else 1
+    #print(f"player: {p_list[i]}, fbhe_vector: {fbhe_vector}")
+    total_attempts = fbhe_vector[3] if fbhe_vector[3] != 0 else 1
     fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'poke', False)
+    #print(f"player: {p_list[i]}, i: {i}, fbhe_vector line 188: {fbhe_vector}")
     player_df.at[i,'poke_fbhe'] = fbhe_vector[0] if fbhe_vector[3] != 0 else None
     player_df.at[i,'poke_fbhe_n'] = fbhe_vector[3]    
     player_df.at[i,'poke_per'] = fbhe_vector[3]/total_attempts

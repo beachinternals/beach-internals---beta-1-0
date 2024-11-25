@@ -630,6 +630,7 @@ def tri_score(disp_league, disp_gender, disp_year,
             }
   tri_table = pd.DataFrame.from_dict( tri_dict )
 
+
   ############### Third Populate the dataframe, assuming we have data returned
   num_row = tri_df.shape[0]
   print(f"Number of Rows in Tri Data:{num_row}")

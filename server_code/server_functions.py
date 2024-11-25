@@ -311,13 +311,15 @@ def fbhe_attack_type( m_ppr_df, disp_player, att_type, video_yn ):
   #    'bang'
 
   if (att_type == 'poke'):
+    #print(f"fbhe_attack_type, Poke, ppr_df size:{m_ppr_df.shape[0]}")
     fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) ], disp_player, 'att' , video_yn)
+    #print(f"fbhe vector: {fbhe_vector}")
   elif (att_type == 'shoot'):
     fbhe_vector = fbhe( m_ppr_df[ (~(m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) & ( m_ppr_df['att_speed'] <= 6 )) ], disp_player, 'att', video_yn )
   elif (att_type == 'bang'):
     fbhe_vector = fbhe( m_ppr_df[ (~(m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 )) ], disp_player, 'att', video_yn )
 
-  return 
+  return fbhe_vector
 
 
 def get_tri_data( disp_league, disp_gender, disp_year ):  
