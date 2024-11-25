@@ -317,4 +317,31 @@ def fbhe_attack_type( m_ppr_df, disp_player, att_type, video_yn ):
   elif (att_type == 'bang'):
     fbhe_vector = fbhe( m_ppr_df[ (~(m_ppr_df['att_speed'] <= (2.5/15)*m_ppr_df['att_dist']) &  ( m_ppr_df['att_speed'] > 6 )) ], disp_player, 'att', video_yn )
 
-  return fbhe_vector
+  return 
+
+
+def get_tri_data( disp_league, disp_gender, disp_year ):  
+  #
+  # fetch the appropriate trianble scroing csv table(s) from the ppr_csv table given the league 
+
+  #print(f"Searching Team Rows: L:{disp_league}, G:{disp_gender},Y:{disp_year},T:{disp_team}")
+  disp_team = 'League'
+  ppr_csv_row = app_tables.ppr_csv_tables.get( 
+    q.all_of(
+      league = disp_league,
+      gender = disp_gender,
+      year = disp_year,
+      team = disp_team
+      ) )
+
+  if ppr_csv_row:
+    tri_df =  pd.read_csv(io.BytesIO( ppr_csv_row['tri_data'].get_bytes()))
+    print(f"tri data found!, records:{tri_df.shape[0]}")
+    tri_data_found = True
+  else:
+    tri_df = [" "]
+    print(f"No Tri data Found, {disp_league, disp_gender, disp_year, disp_team}")
+    #print('No Team Rows Found')
+    tri_data_found = False
+
+  return tri_df, tri_data_found

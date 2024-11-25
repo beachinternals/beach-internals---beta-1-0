@@ -599,22 +599,32 @@ def tri_score(disp_league, disp_gender, disp_year,
   # given the parameters
 
   ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
-  tri_df = get_tri_data( disp_league, disp_gender, disp_year )
-  tri_df = tri_df[ tri_df['player_a1'] == disp_player | 
-                   tri_df['player_a2'] == disp_player |
-                   tri_df['player_b1'] == disp_player |
-                   tri_df['player_b2'] == disp_player ]
-    
-  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+  tri_df, tri_data_found = get_tri_data( disp_league, disp_gender, disp_year )
+  print(f" Data Found? {tri_data_found}m=, records={tri_df.shape[0]}, Displayer Player: {disp_player}")
+  
+  if (tri_df.shape[0] == 0):
+    return "No Triangle Scoring Data Found"
+
+  disp_player = disp_player.strip()
+  tri1_df = tri_df[ tri_df['player_a1'].str.strip() == disp_player ]
+  tri2_df = tri_df[ tri_df['player_a2'].str.strip() == disp_player ]
+  tri3_df = tri_df[ tri_df['player_b1'].str.strip() == disp_player ]
+  tri4_df = tri_df[ tri_df['player_b2'].str.strip() == disp_player ]
+
+  tri_df = pd.concat([ tri1_df, tri2_df, tri3_df, tri4_df ])
+  print(f"tri_df size:{tri_df.shape[0]}, Tri1 = {tri1_df.shape[0]}, Tri2 = {tri2_df.shape[0]}, Tri3 = {tri3_df.shape[0]}, Tri4 = {tri4_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
-  tri_dict = {'Team A ':[' '],
-             'Team B ':[' '],
+  tri_dict = {'Team A':[' '],
+             'Team B':[' '],
+              'Winner':[' '],
+              'Set':[0],
              'TS +/-':[0],
              'FB +/-':[0],
              'Tran +/-':[0],
              'FBHE':[0],
+              'FBHE Diff':[0],
              'TCR':[0],
              'Err Den':[0]
             }
@@ -622,32 +632,32 @@ def tri_score(disp_league, disp_gender, disp_year,
 
   ############### Third Populate the dataframe, assuming we have data returned
   num_row = tri_df.shape[0]
-  if num_row >0:
-    if tri_df[0,'teama'].str.contains(disp_player):
-      disp_team = tri_df[0,'teama']
-    else:
-      disp_team tri_df[0,'teamb']
-  
-    for i in (0,num_row):
-      tri_table.at[0,'Team A'] = tri_df[i,'teama']
-      tri_table.at[0,'Team B'] = tri_df[i,'teamb']
-      tri_table.at[0,'Winner'] = tri_df[i,'winning_team']
-      tri_table.at[0,'TS +/-'] = tri_df[i,'tsrv_adv_a'] if trd_df[i,'tsrv_adv_a'].str.contains(disp_team) else -tri_df[i,'tsrv_adv_a']
-      tri_table.at[0,'FB +/-'] = tri_df[i,'fb_adv_a']if trd_df[i,'fb_adv_a'].str.contains(disp_team) else -tri_df[i,'fb_adv_a']
-      tri_table.at[0,'Tran +/-'] = tri_df[i,'tran_adv_a']if trd_df[i,'tran_adv_a'].str.contains(disp_team) else -tri_df[i,'tran_adv_a']
-      tri_table.at[0,'FBHE'] = tri_df[i,'fbhe_a_noace']if trd_df[i,'fbhe_a_noace'].str.contains(disp_team) else -tri_df[i,'fbhe_a_noace']
-      tri_table.at[0,'FBHE Diff'] = tri_df[i,'fbhe_diff_noace']if trd_df[i,'fbhe_diff_noace'].str.contains(disp_team) else -tri_df[i,'fbhe_diff_noace']
-      tri_table.at[0,'TCR'] = tri_df[i,'err_den_a']if trd_df[i,'err_den_a'].str.contains(disp_team) else -tri_df[i,'err_den_a']
-      tri_table.at[0,'Err Den'] = tri_df[i,'err_den_a']if trd_df[i,'err_den_a'].str.contains(disp_team) else -tri_df[i,'err_den_a']
+  print(f"Number of Rows in Tri Data:{num_row}")
+  print(tri_df)
+  i = 0
+  for index, row in tri_df.iterrows():
+    print(f"i: {i}, Tri Table:{tri_table}")
 
-      # need to add a rwo to tri_table
+    if ( i != 0):
+      # need to add a row to tri_table
       tri_table.loc[len(tri_table.index)] = tri_dict
+      
+    disp_team = row['teama'] if disp_player.strip() in row['teama'].strip() else row['teamb']
+    tri_table.at[i,'Team A'] = row['teama']
+    tri_table.at[i,'Team B'] = row['teamb']
+    tri_table.at[i,'Winner'] = row['winning_team']
+    tri_table.at[i,'Set'] = row['set']
+    tri_table.at[i,'TS +/-'] = row['tsrv_adv_a'] if disp_team.strip() in row['teama'].strip() else -row['tsrv_adv_a']
+    tri_table.at[i,'FB +/-'] = row['fb_adv_a']if disp_team.strip() in row['teama'].strip()  else -row['fb_adv_a']
+    tri_table.at[i,'Tran +/-'] = '{:.3}'.format(row['tran_adv_a']) if disp_team.strip() in row['teama'].strip()  else '{:.3}'.format(-row['tran_adv_a'])
+    tri_table.at[i,'FBHE'] = '{:.3}'.format(row['fbhe_a_noace']) if disp_team.strip() in row['teama'].strip()  else '{:.3}'.format(-row['fbhe_b_noace'])
+    tri_table.at[i,'FBHE Diff'] = '{:.3}'.format(row['fbhe_diff_noace']) if disp_team.strip() in row['winning_team'].strip() else '{:.3}'.format(-row['fbhe_diff_noace'])
+    tri_table.at[i,'TCR'] = '{:.1%}'.format(row['tcr_a']) if disp_team.strip() in row['teama'].strip()  else '{:.1%}'.format(row['tcr_b'])
+    tri_table.at[i,'Err Den'] = '{:.1%}'.format(row['err_den_a']) if disp_team.strip() in row['teama'].strip()  else '{:.1%}'.format(row['err_den_b'])
+    i = i + 1
     
- 
-    # now create the markdown text to return
-    tri_return = pd.DataFrame.to_markdown(tri_table)
-  else:
-    fbhe_return = "No Data Found"
+  # now create the markdown text to return
+  tri_return = pd.DataFrame.to_markdown(tri_table)
   
   return tri_return, ' ', ' '
 
