@@ -92,7 +92,7 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
               'tran_pts_per':None, 'fb_pts_per':None, 
               'fbhe_a_noace':None, 'fbhe_b_noace':None, 'fbhe_a_withace':None, 'fbhe_b_withace':None, 'tcr_a':None, 'tcr_b':None, 'err_den_a':None, 'err_den_b':None, 
               'err_den_criteria_met_a':None, 'err_den_criteria_met_b':None,'tcr_criteria_met_a':None,'tcr_criteria_met_b':None,
-              'winning_team':None,'win_fbhe_noace':None,'win_fbhe_withace':None,'win_tcr':None, 'point_diff':None,
+              'winning_team':None,'win_fbhe_noace':None,'win_fbhe_withace':None,'win_tcr':None, 'win_err_den':None, 'point_diff':None, 'loser_tcr':None, 'loser_err_den':None,
               'loser_fbhe_noace':None,'loser_fbhe_withace':None,
               'fbhe_diff_noace':None,'fbhe_diff_withace':None,'win_err_den_criteria_met':None, 'win_tcr_criteria_met':None,
               'assumption_met_noace':None, 'assumption_met_withace':None
@@ -244,6 +244,8 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
         tri_df.at[tri_row,'loser_fbhe_withace'] = tri_df.at[tri_row,'fbhe_b_withace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_withace']
         tri_df.at[tri_row,'win_tcr'] = tri_df.at[tri_row,'tcr_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'tcr_b']
         tri_df.at[tri_row,'win_err_den'] = tri_df.at[tri_row,'err_den_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'err_den_b']
+        tri_df.at[tri_row,'loser_tcr'] = tri_df.at[tri_row,'tcr_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'tcr_a']
+        tri_df.at[tri_row,'loser_err_den'] = tri_df.at[tri_row,'err_den_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'err_den_a']
 
         if isinstance(tri_df.at[tri_row,'win_fbhe_noace'],float) & isinstance(tri_df.at[tri_row,'loser_fbhe_noace'],float) :
           tri_df.at[tri_row,'fbhe_diff_noace'] = tri_df.at[tri_row,'win_fbhe_noace'] - tri_df.at[tri_row,'loser_fbhe_noace']
