@@ -38,6 +38,14 @@ def create_master_ppr( user_league, user_gender, user_year, user_team, data_set 
   #    League - the league wide file that includes all files (team and private) for a league
   #
   #     Therefore, the ppr_csv_tables will have a 'Team' designation for each team (i.e. FSU, LSU, Internals), Scouting, and League
+
+  # pass this off to a background task!
+  task = anvil.server.launch_background_task('make_master_ppr',user_league, user_gender, user_year, user_team, data_set )
+  return task
+  
+@anvil.server.background_task
+def make_master_ppr( user_league, user_gender, user_year, user_team, data_set ):
+
   
   # initialize a dataframe to hold hte master ppr data
   master_ppr_df = pd.DataFrame()

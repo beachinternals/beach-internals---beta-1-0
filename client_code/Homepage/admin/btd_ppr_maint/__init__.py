@@ -61,7 +61,7 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     """This method is called when the button is clicked"""
 
     # call the serer function to convert btd to ppr files and then store them back in the btd_files data table
-    anvil.server.call("make_ppr_files",
+    return_text = anvil.server.call("make_ppr_files",
                       self.league_drop_down.selected_value['league'],
                       self.gender_drop_down.selected_value,
                       self.year_drop_down.selected_value,
@@ -69,7 +69,7 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
                       self.rebuild_button.selected
                      )
     #generate_ppr_files( user_league, user_gender, user_year,user_team):
-    
+    alert(return_text)
     pass
 
   def merge_ppr_button_click(self, **event_args):
@@ -81,8 +81,8 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     user_team = self.team_drop_down_copy.selected_value
     data_set = self.drop_down_data_set_copy.selected_value  # this should be: All, Private, Scouting, League
     
-    anvil.server.call('create_master_ppr',user_league, user_gender, user_year, user_team, data_set )
-
+    return_text = anvil.server.call('create_master_ppr',user_league, user_gender, user_year, user_team, data_set )
+    alert(return_text)
     pass
 
   def create_summary_button_click(self, **event_args):
