@@ -98,6 +98,32 @@ db_schema:
       type: datetime
     server: full
     title: btd_files
+  exec_summary_criteria:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 357}
+      name: text
+      type: string
+    - admin_ui: {order: 1, width: 133}
+      name: active
+      type: bool
+    - admin_ui: {order: 2, width: 200}
+      name: sectiion
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: var
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      name: sd_mult
+      type: number
+    - admin_ui: {order: 5, width: 200}
+      name: pro-con
+      type: string
+    - admin_ui: {order: 6, width: 115}
+      name: subreport
+      type: string
+    server: full
+    title: exec_summary_criteria
   league_comp_l1:
     client: search
     columns:
