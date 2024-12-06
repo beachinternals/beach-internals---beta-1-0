@@ -31,6 +31,11 @@ components_by_slot:
         name: ppr_csv_file_maint
         properties: {text: Master PPR File Maintenance}
         type: Link
+      - event_bindings: {click: link_3_click}
+        layout_properties: {grid_position: 'NUKMWK,TOPQPN'}
+        name: link_3
+        properties: {text: Scheduled Tasks}
+        type: Link
       layout_properties: {grid_position: 'KCZYCU,SMAHSC'}
       name: column_panel_1
       properties: {}

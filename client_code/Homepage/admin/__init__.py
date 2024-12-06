@@ -9,6 +9,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 from btd_ppr_maint import *
 from ppr_file_maint import *
+from scheduled_tasks import *
 
 
 
@@ -38,6 +39,12 @@ class admin(adminTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(ppr_file_maint())
+    pass
+
+  def link_3_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(scheduled_tasks())
     pass
 
 

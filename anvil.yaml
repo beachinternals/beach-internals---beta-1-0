@@ -374,7 +374,13 @@ runtime_options:
   server_spec_disabled: {base: python310-standard, requirements: ''}
   server_version: python3-full
   version: 3
-scheduled_tasks: []
+scheduled_tasks:
+- job_id: EGSCTBLA
+  task_name: chk_user_logins
+  time_spec:
+    at: {hour: 0, minute: 0}
+    every: day
+    n: 1
 services:
 - client_config: {}
   server_config: {}
