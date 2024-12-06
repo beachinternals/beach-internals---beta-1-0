@@ -396,7 +396,7 @@ services:
   server_config: {}
   source: /runtime/services/google.yml
 - client_config: {}
-  server_config: {test_mode: true}
+  server_config: {test_mode: false}
   source: /runtime/services/anvil/email.yml
 startup: {module: Homepage, type: form}
 startup_form: null
