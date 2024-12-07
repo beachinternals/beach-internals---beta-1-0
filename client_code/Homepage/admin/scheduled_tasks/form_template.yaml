@@ -37,12 +37,12 @@ components:
   - components:
     - layout_properties: {grid_position: 'YACHSG,PQORCC'}
       name: label_2
-      properties: {text: Run Update Build}
+      properties: {text: Run PPR > BTD}
       type: Label
     - event_bindings: {click: build_update_button_click}
       layout_properties: {grid_position: 'YACHSG,EIBJDO'}
       name: build_update_button
-      properties: {role: outlined-button, text: Build Update}
+      properties: {role: outlined-button, text: Build PPR}
       type: Button
     layout_properties: {grid_position: 'YVKKFQ,NHRAUN TATSQE,TWEHVA'}
     name: column_panel_1
@@ -50,12 +50,30 @@ components:
     type: ColumnPanel
   - layout_properties: {grid_position: 'YVKKFQ,NHRAUN HZGOWP,MXVRZW'}
     name: label_3
-    properties: {text: Run Rebuild All}
+    properties: {text: Run BTD > PPR All}
     type: Label
   - event_bindings: {click: rebuild_all_button_click}
     layout_properties: {grid_position: 'YVKKFQ,NHRAUN HZGOWP,GEVPGN'}
     name: rebuild_all_button
-    properties: {role: outlined-button, text: Rebuild ALL}
+    properties: {role: outlined-button, text: Build PPR ALL}
+    type: Button
+  - layout_properties: {grid_position: 'YVKKFQ,NHRAUN NQGGJX,GVQIJJ'}
+    name: label_6
+    properties: {text: Run Merge PPR}
+    type: Label
+  - event_bindings: {click: outlined_button_3_click}
+    layout_properties: {grid_position: 'YVKKFQ,NHRAUN NQGGJX,UILDEV'}
+    name: outlined_button_3
+    properties: {role: outlined-button, text: Merge PPR}
+    type: Button
+  - layout_properties: {grid_position: 'YVKKFQ,NHRAUN ZCPKCU,SUHCJJ'}
+    name: label_7
+    properties: {text: Run Calculate Data}
+    type: Label
+  - event_bindings: {click: outlined_button_4_click}
+    layout_properties: {grid_position: 'YVKKFQ,NHRAUN ZCPKCU,ORJAVQ'}
+    name: outlined_button_4
+    properties: {role: outlined-button, text: Calc Data}
     type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5

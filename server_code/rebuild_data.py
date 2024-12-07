@@ -11,39 +11,52 @@ import pandas as pd
 import btd_ppr_conversion
 import ppr_master_merge
 
-
-# This is a server module. It runs on the Anvil server,
-# rather than in the user's browser.
-
 # functions to update / rebuild all the data files
 
+#-------------------------------------------------------------------------
+#
+#        Set this up as three to call like a half hour apart
+#
+#.       1) btd > ppr                        : call_build_ppr > build_ppr
+#        2) Merge ppr files                  : call_merge_ppr > merge_ppr
+#        3) Calculate data and tri files     : call_calc_player_data > calc_player_data
+#        4) create reports
+#
+#-------------------------------------------------------------------------
+
+#--------------------------------------------------------------------
+#
+#        Build PPR data
+#        Convert btd to ppr and save in ppr_csv table
+#
+#-------------------------------------------------------------------
 @anvil.server.callable
-def call_build_data():
-  task = anvil.server.launch_background_task('build_data1')
+def call_build_ppr_data():
+  task = anvil.server.launch_background_task('build_ppr_data1')
   return task
 
 @anvil.server.callable
-def call_rebuild_all_data():
-  task = anvil.server.launch_background_task('rebuild_all_data1')
+def call_build_all_ppr_data():
+  task = anvil.server.launch_background_task('build_ppr_data2')
   return task
 
 
 @anvil.server.background_task
-def build_data1():
+def build_ppr_data1():
   # this just call the background task with the 
-  task = calculate_all_data(False)
+  task = calculate_ppr_data(False)
 
   return task
 
 @anvil.server.background_task
-def rebuild_all_data1():
-  task = calculate_all_data(True)
+def build_ppr_data2():
+  task = calculate_ppr_data(True)
   return task
 
 @anvil.server.callable
-def calculate_all_data(rebuild):
+def calculate_ppr_data(rebuild):
   now = datetime.now()
-  email_text = "Calculate All Data /n Called at:" + str(now) + "/n"
+  email_text = "Calculate PPR Data \n Called at:" + str(now) + "\n"
   
   # build data for all new files, for all leagues
 
@@ -70,10 +83,6 @@ def calculate_all_data(rebuild):
   year_list = pd.unique(btd_df['year'])
   team_list = pd.unique(btd_df['team'])
 
-  print(league_list)
-  print(gender_list)
-  print(year_list)
-  print(team_list)
   # loop over league
   for c_league in league_list:
     # loop ober gender
@@ -90,6 +99,55 @@ def calculate_all_data(rebuild):
           #print(email_text)
           r_val = anvil.server.launch_background_task('generate_ppr_files', c_league, c_gender, c_year, c_team, rebuild )
 
+    #now, send an email with the updates
+  internals_email = 'spccoach@gmail.com'
+  email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Rebuild Data',text=email_text)
+  
+
+  return r_val, email_status
+
+@anvil.server.callable
+def call_merge_ppr_data():
+  task = anvil.server.launch_background_task('merge_ppr_data1')
+  return task
+
+@anvil.server.background_task
+def merge_ppr_data1():
+  # this just call the background task with the 
+  task = merge_ppr_data()
+  return task
+  
+@anvil.server.callable
+def merge_ppr_data():
+  now = datetime.now()
+  email_text = "Merging PPR Data \n Called at:" + str(now) + "\n"
+  
+  # build data for all new files, for all leagues
+
+  # do the btd -> ppr conversion for all btf files
+  dict = {'league':[str()],
+          'gender':[str()],
+          'year':[str()],
+          'team':[str()]
+         }
+  btd_df = pd.DataFrame.from_records(dict)
+  i = 0
+  for btd_file_r in app_tables.btd_files.search():
+    # make a quick df of the values needed
+    btd_df.at[i,'league'] = btd_file_r['league']
+    btd_df.at[i,'gender'] = btd_file_r['gender']
+    btd_df.at[i,'year'] = btd_file_r['year']
+    btd_df.at[i,'team'] = btd_file_r['team']
+    i = i + 1
+
+  # now we need to make this unique  
+  print(btd_df)
+  league_list = pd.unique(btd_df['league'])
+  gender_list = pd.unique(btd_df['gender'])
+  year_list = pd.unique(btd_df['year'])
+  team_list = pd.unique(btd_df['team'])
+
+  
   for c_league in league_list:
     for c_gender in gender_list:  
       for c_year in year_list:
@@ -104,21 +162,64 @@ def calculate_all_data(rebuild):
             #print(email_text)
             r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'League' )
 
+  #now, send an email with the updates
+  internals_email = 'spccoach@gmail.com'
+  email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Merge PPR Data',text=email_text)
+  
+  return r_val, email_status
+
+@anvil.server.callable
+def call_calculate_data():
+  task = anvil.server.launch_background_task('calculate_data')
+  return task
+
+@anvil.server.background_task
+def calculate_data():
+  # this just call the background task with the 
+  task = calculate_data1()
+  return task
+  
+@anvil.server.callable
+def calculate_data1():
+  now = datetime.now()
+  email_text = "Calculate PPR Data \n Called at:" + str(now) + "\n"
+  
+  # build data for all new files, for all leagues
+
+  # do the btd -> ppr conversion for all btf files
+  dict = {'league':[str()],
+          'gender':[str()],
+          'year':[str()],
+          'team':[str()]
+         }
+  btd_df = pd.DataFrame.from_records(dict)
+  i = 0
+  for btd_file_r in app_tables.btd_files.search():
+    # make a quick df of the values needed
+    btd_df.at[i,'league'] = btd_file_r['league']
+    btd_df.at[i,'gender'] = btd_file_r['gender']
+    btd_df.at[i,'year'] = btd_file_r['year']
+    i = i + 1
+
+  # now we need to make this unique  
+  print(btd_df)
+  league_list = pd.unique(btd_df['league'])
+  gender_list = pd.unique(btd_df['gender'])
+  year_list = pd.unique(btd_df['year'])
+  
+  for c_league in league_list:
+    for c_gender in gender_list:  
+      for c_year in year_list:
         # now make the player data and triange data
-        email_text = email_text + ' Calculating Player Data for' + c_league + c_gender + c_year+"\n"
-        #print(email_text)
+        email_text = email_text + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
         r_val = anvil.server.launch_background_task('calculate_player_data', c_league, c_gender, c_year)
-          
-        email_text = email_text + ' Calculating Triangle Data for' + c_league + c_gender + c_year +"\n"
-        #print(email_text)
+        email_text = email_text + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
         r_val = anvil.server.launch_background_task('calculate_triangle_scoring', c_league, c_gender, c_year)
 
   #now, send an email with the updates
   internals_email = 'spccoach@gmail.com'
-  email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Rebuild Data',text=email_text)
+  email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Calculate player and Triangle Data',text=email_text)
   
 
-  return r_val
-
-
+  return r_val, email_status
 

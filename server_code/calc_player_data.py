@@ -65,6 +65,8 @@ def calculate_player_data( c_league, c_gender, c_year):
 
   if ppr_csv_row:
     ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
+    if ppr_df.shape[0] == 0:
+      return ["No Rows"]
   else:
     #print('No Rows Found')
     return ["No Rows"]

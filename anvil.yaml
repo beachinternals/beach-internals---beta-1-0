@@ -381,6 +381,24 @@ scheduled_tasks:
     at: {hour: 6, minute: 0}
     every: day
     n: 1
+- job_id: ROSGYFFV
+  task_name: calculate_data
+  time_spec:
+    at: {day: 7, hour: 9, minute: 0}
+    every: week
+    n: 1
+- job_id: CQQEBXJQ
+  task_name: build_ppr_data1
+  time_spec:
+    at: {day: 7, hour: 7, minute: 0}
+    every: week
+    n: 1
+- job_id: HJKBGDOO
+  task_name: merge_ppr_data1
+  time_spec:
+    at: {day: 7, hour: 8, minute: 0}
+    every: week
+    n: 1
 services:
 - client_config: {}
   server_config: {}
