@@ -24,3 +24,15 @@ class scheduled_tasks(scheduled_tasksTemplate):
     alert(return_text)
     pass
 
+  def build_update_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    return_text = anvil.server.call('call_build_data')
+    alert(return_text)
+    pass
+
+  def rebuild_all_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    return_text = anvil.server.call('call_build_all_data')
+    alert(return_text)
+    pass
+

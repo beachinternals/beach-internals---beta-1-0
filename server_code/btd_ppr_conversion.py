@@ -44,7 +44,11 @@ def make_ppr_files( u_league, u_gender, u_year, u_team, rebuild):
 # ############# server function to loop thru btd_file database and create and store the corresponding ppr file
 @anvil.server.background_task
 def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild ):
+  task = generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild )
+  return task
 
+@anvil.server.callable
+def generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild  ): 
   # select rows from the btd_files database and limit it to league, gender, and year
   btd_row = app_tables.btd_files.search(
     league = user_league,

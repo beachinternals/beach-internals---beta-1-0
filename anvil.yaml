@@ -378,7 +378,7 @@ scheduled_tasks:
 - job_id: EGSCTBLA
   task_name: chk_user_logins
   time_spec:
-    at: {hour: 0, minute: 0}
+    at: {hour: 6, minute: 0}
     every: day
     n: 1
 services:

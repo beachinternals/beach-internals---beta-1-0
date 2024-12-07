@@ -45,8 +45,11 @@ def create_master_ppr( user_league, user_gender, user_year, user_team, data_set 
   
 @anvil.server.background_task
 def make_master_ppr( user_league, user_gender, user_year, user_team, data_set ):
+  task = make_master_ppr_not_background(user_league, user_gender, user_year, user_team, data_set)
+  return task
 
-  
+@anvil.server.callable
+def make_master_ppr_not_background(user_league, user_gender, user_year, user_team, data_set):
   # initialize a dataframe to hold hte master ppr data
   master_ppr_df = pd.DataFrame()
   

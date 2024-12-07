@@ -39,7 +39,8 @@ components:
       name: label_2
       properties: {text: Run Update Build}
       type: Label
-    - layout_properties: {grid_position: 'YACHSG,EIBJDO'}
+    - event_bindings: {click: build_update_button_click}
+      layout_properties: {grid_position: 'YACHSG,EIBJDO'}
       name: build_update_button
       properties: {role: outlined-button, text: Build Update}
       type: Button
@@ -51,7 +52,8 @@ components:
     name: label_3
     properties: {text: Run Rebuild All}
     type: Label
-  - layout_properties: {grid_position: 'YVKKFQ,NHRAUN HZGOWP,GEVPGN'}
+  - event_bindings: {click: rebuild_all_button_click}
+    layout_properties: {grid_position: 'YVKKFQ,NHRAUN HZGOWP,GEVPGN'}
     name: rebuild_all_button
     properties: {role: outlined-button, text: Rebuild ALL}
     type: Button
