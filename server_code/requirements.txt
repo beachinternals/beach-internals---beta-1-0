@@ -1,1 +1,2 @@
 tabulate
+rpy2==3.5.17
