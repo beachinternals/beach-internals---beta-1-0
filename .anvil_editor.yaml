@@ -23,6 +23,7 @@ unique_ids:
     Homepage.LeagueRpt: '1726078922511980922205615.9777'
     Homepage.LeagueRpt.LeagueRpt1: '1726076355576478123105639.9171'
     Homepage.LeagueRpt.LeagueRpt2: '1726079226042970842458102.2212'
+    Homepage.PDF_Rpt: '1733783035494613105672562.0863'
     Homepage.PairRpt: '172607888997473202943227.07822'
     Homepage.PairRpt.PairRpt1: '1726079247098665554328186.3125'
     Homepage.PairRpt.PairRpt2: '1726079263716964563097827.0535'
@@ -39,6 +40,7 @@ unique_ids:
     Homepage.UserMgr: '1726075506124459744395000.8564'
     Homepage.admin: '1726087554034887812543108.9557'
     Homepage.admin.btd_ppr_maint: '1726087573776470362407185.99286'
+    Homepage.admin.pdf_reports: '1733784017811486789743629.02673'
     Homepage.admin.ppr_file_maint: '1727210924078863174854308.9641'
     Homepage.admin.ppr_file_maint.RowTemplate3: '1727211143165273139932229.22318'
     Homepage.admin.scheduled_tasks: '1733506483575600418051468.2592'
@@ -46,6 +48,7 @@ unique_ids:
   scripts: {}
   server_modules:
     Exec_Summary: '1733348424785585788426961.9935'
+    Generate_PDF: '1733783791196209170402452.11505'
     UserMgrTasks: '1727192696034960627443271.5522'
     btd_ppr_conversion: '1726224866718178542809898.03772'
     btd_upload: '1726179400918979863717852.4039'

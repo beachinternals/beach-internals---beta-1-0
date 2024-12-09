@@ -10,6 +10,7 @@ from anvil.tables import app_tables
 from btd_ppr_maint import *
 from ppr_file_maint import *
 from scheduled_tasks import *
+from pdf_reports import *
 
 
 
@@ -45,6 +46,12 @@ class admin(adminTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(scheduled_tasks())
+    pass
+
+  def link_4_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(pdf_reports())
     pass
 
 

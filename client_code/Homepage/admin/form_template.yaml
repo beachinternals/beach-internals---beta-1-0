@@ -36,6 +36,11 @@ components_by_slot:
         name: link_3
         properties: {text: Scheduled Tasks}
         type: Link
+      - event_bindings: {click: link_4_click}
+        layout_properties: {grid_position: 'URGSBW,APDYSG'}
+        name: link_4
+        properties: {text: PDF Reports}
+        type: Link
       layout_properties: {grid_position: 'KCZYCU,SMAHSC'}
       name: column_panel_1
       properties: {}
