@@ -1,16 +1,36 @@
 components:
 - layout_properties: {grid_position: 'WZGTJW,GHAFDP'}
   name: label_1
-  properties: {text: Test PDF Report}
+  properties: {align: center, bold: true, font_size: 30, text: Beach Internals}
   type: Label
 - components:
-  - layout_properties: {grid_position: 'STZYHH,ZBENRF'}
-    name: text_box_1
-    properties: {text: This is a text box}
-    type: TextBox
+  - layout_properties: {grid_position: 'KWMMOJ,ZSHCLV'}
+    name: label_2
+    properties: {align: right, text: 'Player Detail Report For:'}
+    type: Label
+  - layout_properties: {grid_position: 'KWMMOJ,VXCKOK'}
+    name: player_label
+    properties: {}
+    type: Label
+  - layout_properties: {grid_position: 'KWMMOJ,SIXWGA'}
+    name: label_3
+    properties: {align: right, text: 'Printed:'}
+    type: Label
+  - layout_properties: {grid_position: 'KWMMOJ,SVIMAA'}
+    name: date_printed_label
+    properties: {}
+    type: Label
   layout_properties: {grid_position: 'VQTWUZ,SHJANG'}
   name: column_panel_1
   properties: {}
   type: ColumnPanel
+- layout_properties: {grid_position: 'QHUOXY,AOBTXD'}
+  name: fbhe_net_box
+  properties: {}
+  type: RichText
+- layout_properties: {grid_position: 'VCETFW,FQJTUE'}
+  name: fbhe_tactic_box
+  properties: {}
+  type: RichText
 container: {type: ColumnPanel}
 is_package: true
