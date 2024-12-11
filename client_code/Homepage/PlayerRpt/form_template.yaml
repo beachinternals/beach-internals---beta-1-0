@@ -119,6 +119,11 @@ components_by_slot:
         name: generate_report_button
         properties: {align: right, role: outlined-button, text: Generate Report}
         type: Button
+      - event_bindings: {click: pdf_button_click}
+        layout_properties: {}
+        name: pdf_button
+        properties: {role: outlined-button, text: Generate pdf}
+        type: Button
       layout_properties: {grid_position: 'RRUZZU,OYDNHB'}
       name: flow_panel_4
       properties: {}

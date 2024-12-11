@@ -153,7 +153,7 @@ class PlayerRpt(PlayerRptTemplate):
   def generate_report_button_click(self, **event_args):
     """This method is called when the button is clicked"""
     # unpack the league data:
-        # extract league, gender, year from league selected value
+    # extract league, gender, year from league selected value
     league_value = self.league_drop_down.selected_value
     str_loc = league_value.index('|')
     disp_league = league_value[:str_loc-1].strip()
@@ -231,4 +231,72 @@ class PlayerRpt(PlayerRptTemplate):
 
   def player_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
+    pass
+
+  def pdf_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+        # unpack the league data:
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+
+    # unpack the player
+    disp_player = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
+
+    # unpack the source data:
+    user_row = anvil.users.get_user(allow_remembered=True)
+    disp_team = user_row['team']
+
+    # unpack the report to process
+    # replace this with a data driven approach
+    rpt_name = self.report_drop_down.selected_value
+    function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    #print(function_list)
+    fnct_name = function_list[0]
+    table_data4 = text_list[0]
+    scout = True
+    
+    # now, call the server module.
+    # now including limits on competition (1,2,3) and dates
+    # check comp_l3, if not, set to str()
+    if type(self.comp_l3_drop_down.selected_value['comp_l3']) == type(None):
+      self.comp_l3_drop_down.selected_value['comp_l3'] = str()
+
+    # call the server function
+    table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, 
+                                   disp_league, disp_gender, disp_year, 
+                                   disp_team, disp_player, 
+                                   self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
+                                   self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
+                                   self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
+                                   self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date,
+                                   scout
+                                  )
+
+    # now put this into the rtf box
+    filter_text = f"""
+    Data Filters:
+    - League : {disp_league}
+    - Gender : {disp_gender}
+    - Year : {disp_year}
+    - Player : {disp_player}
+    - Competition 1 : {self.comp_l1_drop_down.selected_value['comp_l1'] if self.comp_l1_check_box.checked else ''}
+    - Competition 2 : {self.comp_l2_drop_down.selected_value['comp_l2'] if self.comp_l2_check_box.checked else ''}
+    - Competition 3 : {self.comp_l3_drop_down.selected_value['comp_l3'] if self.comp_l3_check_box.checked else ''}
+    - Date Filtered : {str(self.start_date_picker.date)+' to '+str(self.end_date_picker.date) if self.date_check_box.checked else ''}
+    """
+
+    self.rich_text_2.content = filter_text
+    self.rpt_disp_box.content = table_data1
+    self.rpt_disp_box2.content = table_data2
+    self.rpt_disp_box3.content = table_data3
+    self.rpt_disp_box4.content = table_data4
+    
+
     pass
