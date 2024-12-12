@@ -11,8 +11,6 @@ from PlayerRpt1 import *
 from PlayerRpt2 import *
 import datetime
 
-
-
 class PlayerRpt(PlayerRptTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
@@ -176,7 +174,7 @@ class PlayerRpt(PlayerRptTemplate):
     text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
     #print(function_list)
     fnct_name = function_list[0]
-    table_data4 = text_list[0]
+    explain_text = text_list[0]
     scout = True
     
     # now, call the server module.
@@ -193,7 +191,7 @@ class PlayerRpt(PlayerRptTemplate):
                                    self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
                                    self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
                                    self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date,
-                                   scout
+                                   scout, explain_text
                                   )
 
     # now put this into the rtf box
@@ -213,7 +211,7 @@ class PlayerRpt(PlayerRptTemplate):
     self.rpt_disp_box.content = table_data1
     self.rpt_disp_box2.content = table_data2
     self.rpt_disp_box3.content = table_data3
-    self.rpt_disp_box4.content = table_data4
+    self.rpt_disp_box4.content = explain_text
     
     pass
 
@@ -278,18 +276,6 @@ class PlayerRpt(PlayerRptTemplate):
                                    self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date,
                                    scout, table_data4
                                   )
-
-    
-    anvil.email.send(
-      from_address='no-reply',
-      from_name='Beach Internals', 
-      to=anvil.users.get_user()['email'], 
-      subject='Your PDF Report',
-      text='Thanks for being a Beach Internals Partner.  Attached is your PDF Player Report.',
-      attachments = pdf_rpt
-  )
-
-    
-    
-
+    result = anvil.server.call('send_email',"Beach Internals Player Report - PDF Version", 'Attached please find the PDF version of the Player Report', pdf_rpt, '', '' )    
+    alert(('PDF report emailed'+str(result)))
     pass

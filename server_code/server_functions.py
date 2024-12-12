@@ -8,6 +8,7 @@ from anvil.tables import app_tables
 import anvil.server
 import pandas as pd
 import io
+import anvil.email
 
 # This is a server module. It runs on the Anvil server,
 
@@ -347,3 +348,4 @@ def get_tri_data( disp_league, disp_gender, disp_year ):
     tri_data_found = False
 
   return tri_df, tri_data_found
+

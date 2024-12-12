@@ -84,7 +84,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                     ):
   
   # return a fbhe of a given player
@@ -154,7 +154,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   # return a markdown text to display
   # given the parameters
@@ -276,7 +276,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   # return a markdown text to display
   # given the parameters
@@ -339,7 +339,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   # return a markdown text to display
   # given the parameters
@@ -426,7 +426,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   # return a markdown text to display
   # given the parameters
@@ -524,7 +524,7 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   # return a markdown text to display
   # given the parameters
@@ -593,7 +593,7 @@ def tri_score(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   # return a markdown text to display
   # given the parameters
@@ -669,7 +669,7 @@ def error_density(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   
   # return a markdown text to display
@@ -731,7 +731,7 @@ def tcr(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   # return a markdown text to display
   # given the parameters
@@ -824,7 +824,7 @@ def expected_value(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   # return a markdown text to display
   # given the parameters
@@ -893,7 +893,7 @@ def report_stuba(disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                ):
   # return a markdown text to display
   # given the parameters
@@ -951,3 +951,22 @@ def report_stuba(disp_league, disp_gender, disp_year,
 
   
   return fbhe_return, ' ', ' '
+
+@anvil.server.callable
+def send_email(email_subj, email_body, email_attachment, email_to, email_from):
+  if not email_to:
+    email_to = anvil.users.get_user()['email']
+
+  if not email_from:
+    email_from = 'no-reply'
+
+  result = anvil.email.send(
+    from_address=email_from,
+    from_name='Beach Internals', 
+    to=email_to,
+    subject=email_subj,
+    text=email_body,
+    attachments = email_attachment
+  )
+
+  return result

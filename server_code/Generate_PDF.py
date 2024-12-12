@@ -37,7 +37,7 @@ def send_pdf_email(email, email_message, pdf ):
 #----------------------------------------------------------------------
 
 @anvil.server.callable
-def create_pdf_report(fnct_name, disp_league, disp_gender, disp_year, 
+def create_pdf_reports(fnct_name, disp_league, disp_gender, disp_year, 
                     disp_team, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
@@ -53,7 +53,7 @@ def create_pdf_report(fnct_name, disp_league, disp_gender, disp_year,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout
+                    scout, explain_text
                     )
 
   # calculate the query text
@@ -66,9 +66,9 @@ def create_pdf_report(fnct_name, disp_league, disp_gender, disp_year,
     - Competition 1 : {disp_comp_l1 if comp_l1_checked else ''}
     - Competition 2 : {disp_comp_l2 if comp_l2_checked else ''}
     - Competition 3 : {disp_comp_l3 if comp_l3_checked else ''}
-    - Date Filtered : {str(disp_start_date)+' to '+str(disp_end_date) if date_hecked else ''}
+    - Date Filtered : {str(disp_start_date)+' to '+str(disp_end_date) if date_checked else ''}
     """
   
   # call render form
-  pdf = PDFRenderer.render_form('Homepage.function_rpt', table_data1, table_data2, table_data3, filter_text)
+  pdf = PDFRenderer.render_form('function_rpt', table_data1, table_data2, table_data3, filter_text, explain_text, disp_player)
   return pdf
