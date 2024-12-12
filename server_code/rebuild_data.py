@@ -101,6 +101,7 @@ def calculate_ppr_data(rebuild):
 
     #now, send an email with the updates
   internals_email = 'spccoach@gmail.com'
+  email_text = email_text + "Completed at:" + str(now) + "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Rebuild Data',text=email_text)
   
 
@@ -158,12 +159,13 @@ def merge_ppr_data():
           r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'Private' )
           r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'Scouting' )
           if c_team == 'INTERNALS':
-            email_text = email_text + ' Merging PPR Files for' + c_league + " "+c_gender +" "+ c_year +" "+ c_team + 'League'+"\n"
+            email_text = email_text + ' Merging PPR Files for' + ' '+c_league + " "+c_gender +" "+ c_year +" "+ c_team + ' League'+"\n"
             #print(email_text)
             r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'League' )
 
   #now, send an email with the updates
   internals_email = 'spccoach@gmail.com'
+  email_text = email_text + "Completed at:" + str(now) + "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Merge PPR Data',text=email_text)
   
   return r_val, email_status
@@ -218,6 +220,7 @@ def calculate_data1():
 
   #now, send an email with the updates
   internals_email = 'spccoach@gmail.com'
+  email_text = email_text + "Completed at:" + str(now) + "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Calculate player and Triangle Data',text=email_text)
   
 

@@ -269,34 +269,27 @@ class PlayerRpt(PlayerRptTemplate):
       self.comp_l3_drop_down.selected_value['comp_l3'] = str()
 
     # call the server function
-    table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, 
+    pdf_rpt = anvil.server.call('create_pdf_reports', fnct_name, 
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
                                    self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
                                    self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
                                    self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date,
-                                   scout
+                                   scout, table_data4
                                   )
 
-    # now put this into the rtf box
-    filter_text = f"""
-    Data Filters:
-    - League : {disp_league}
-    - Gender : {disp_gender}
-    - Year : {disp_year}
-    - Player : {disp_player}
-    - Competition 1 : {self.comp_l1_drop_down.selected_value['comp_l1'] if self.comp_l1_check_box.checked else ''}
-    - Competition 2 : {self.comp_l2_drop_down.selected_value['comp_l2'] if self.comp_l2_check_box.checked else ''}
-    - Competition 3 : {self.comp_l3_drop_down.selected_value['comp_l3'] if self.comp_l3_check_box.checked else ''}
-    - Date Filtered : {str(self.start_date_picker.date)+' to '+str(self.end_date_picker.date) if self.date_check_box.checked else ''}
-    """
+    
+    anvil.email.send(
+      from_address='no-reply',
+      from_name='Beach Internals', 
+      to=anvil.users.get_user()['email'], 
+      subject='Your PDF Report',
+      text='Thanks for being a Beach Internals Partner.  Attached is your PDF Player Report.',
+      attachments = pdf_rpt
+  )
 
-    self.rich_text_2.content = filter_text
-    self.rpt_disp_box.content = table_data1
-    self.rpt_disp_box2.content = table_data2
-    self.rpt_disp_box3.content = table_data3
-    self.rpt_disp_box4.content = table_data4
+    
     
 
     pass
