@@ -1014,8 +1014,8 @@ def  render_all_rpts_pdf_background(
   full_rpt_pdf = None
   
   # now loop over the items in the functioj list
-  for index, value in function_list:
-    print(index, value)
+  for value in function_list:
+    print(value)
     pdf1 = anvil.server.call('create_pdf_reports', value, 
                           disp_league, disp_gender, disp_year, 
                           disp_team, disp_player,
@@ -1023,9 +1023,9 @@ def  render_all_rpts_pdf_background(
                           comp_l2_checked, disp_comp_l2,
                           comp_l3_checked, disp_comp_l3,
                           date_checked, disp_start_date, disp_end_date,
-                          scout, text_list[index]
+                          scout, text_list[0]
                           )
-
+    #print(pdf1)
     if pdf1 and full_rpt_pdf:
       print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
       full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1)

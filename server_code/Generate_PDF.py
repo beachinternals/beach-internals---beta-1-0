@@ -47,6 +47,7 @@ def create_pdf_reports(fnct_name, disp_league, disp_gender, disp_year,
                     ):
 
   # call report function
+  print(f'Calling Function:{fnct_name}')
   table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
                     disp_team, disp_player,
                     comp_l1_checked, disp_comp_l1,
@@ -70,5 +71,6 @@ def create_pdf_reports(fnct_name, disp_league, disp_gender, disp_year,
     """
   
   # call render form
+  print(f"Rendering Form for {table_data1}")
   pdf = PDFRenderer.render_form('function_rpt', table_data1, table_data2, table_data3, filter_text, explain_text, disp_player)
   return pdf
