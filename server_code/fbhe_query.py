@@ -11,6 +11,8 @@ import io
 import math
 from tabulate import tabulate
 from server_functions import *
+from anvil import pdf
+from PyPDF2 import PdfMerger
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -970,3 +972,84 @@ def send_email(email_subj, email_body, email_attachment, email_to, email_from):
   )
 
   return result
+
+@anvil.server.callable
+def render_all_rpts_pdf_callable(
+                    disp_league, disp_gender, disp_year, 
+                    disp_team, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    ):
+  # just kick off the background task to do this
+  return_value = anvil.server.launch_background_task('render_all_rpts_pdf_background',
+                    disp_league, disp_gender, disp_year, 
+                    disp_team, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    )
+
+  return return_value
+  
+@anvil.server.background_task
+def  render_all_rpts_pdf_background(
+                    disp_league, disp_gender, disp_year, 
+                    disp_team, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    ):
+
+  # get all the reports out of the table, then loop thruy them all for the disp player
+  function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(private=False)]
+  text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(private=False)]
+  print(function_list)
+  full_rpt_pdf = None
+  
+  # now loop over the items in the functioj list
+  for index, value in function_list:
+    print(index, value)
+    pdf1 = anvil.server.call('create_pdf_reports', value, 
+                          disp_league, disp_gender, disp_year, 
+                          disp_team, disp_player,
+                          comp_l1_checked, disp_comp_l1,
+                          comp_l2_checked, disp_comp_l2,
+                          comp_l3_checked, disp_comp_l3,
+                          date_checked, disp_start_date, disp_end_date,
+                          scout, text_list[index]
+                          )
+
+    if pdf1 and full_rpt_pdf:
+      print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+      full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1)
+    else:
+      print('no original pdf file, setting to pdf1')
+      full_rpt_pdf = pdf1
+      print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+
+  # now that we are done, send this to the user
+  return_value = send_email("Beach Internals - Player Detailed Report", "Please find the attached full player report.", full_rpt_pdf, 'beachinternals@gmail.com', 'no-reply')
+
+  return return_value
+
+
+def merge_pdfs( file1, file2):
+  # initialize PdfMerger
+  merger = PdfMerger()
+  
+  # merge PDFs
+  pdf1 = io.BytesIO(file1)
+  pdf2 = io.BytesIO(file2)
+  merger.append(pdf1,pdf2)
+  merged_pdf = io.BytesIO()
+  merger.write(merged_pdf)
+  merger.close()
+  
+  return anvil.BlobMedia('application/pdf',merged_pdf.getvalue(), name='merged.pdf')

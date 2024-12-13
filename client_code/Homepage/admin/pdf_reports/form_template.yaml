@@ -26,13 +26,38 @@ components:
     properties: {}
     type: TextBox
   - event_bindings: {click: outlined_button_1_click}
-    layout_properties: {grid_position: 'SRZGDC,HSFTDV'}
+    layout_properties: {grid_position: 'YVKKFQ,UYUCGW'}
     name: outlined_button_1
     properties: {role: outlined-button, text: Generate PDF}
     type: Button
+  - layout_properties: {grid_position: 'OGEUWY,MBFIYM'}
+    name: label_6
+    properties: {align: right, text: 'League:'}
+    type: Label
+  - event_bindings: {change: league_drop_down_change}
+    layout_properties: {grid_position: 'OGEUWY,GLCWVQ'}
+    name: league_drop_down
+    properties:
+      items: [NCAA | W | 2025]
+    type: DropDown
+  - layout_properties: {grid_position: 'OGEUWY,ZZKJKQ'}
+    name: label_12
+    properties: {align: right, text: 'Player:'}
+    type: Label
+  - event_bindings: {change: player_drop_down_change}
+    layout_properties: {grid_position: 'OGEUWY,XRIVKD'}
+    name: player_drop_down
+    properties:
+      items: [BRA 01 Ana Patricia]
+    type: DropDown
+  - event_bindings: {click: gen_all_rpt_pdf_click}
+    layout_properties: {grid_position: 'OGEUWY,CGIRML'}
+    name: gen_all_rpt_pdf
+    properties: {role: outlined-button, text: All Report PDF}
+    type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5
-  properties: {col_widths: '{"VYNCIF":18,"STEGGX":14,"BOPASV":14,"NERSMM":14}', role: outlined-card}
+  properties: {col_widths: '{"VYNCIF":15,"STEGGX":12,"BOPASV":12,"NBKPXK":10,"UYUCGW":11}', role: outlined-card}
   type: ColumnPanel
 container: {type: ColumnPanel}
 is_package: true

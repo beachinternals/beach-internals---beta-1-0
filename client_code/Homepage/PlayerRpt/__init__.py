@@ -15,6 +15,7 @@ class PlayerRpt(PlayerRptTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
+    self.all_rpt_pdf.visible = True if anvil.users.get_user()['team'] == "INTERNALS" else False
     
     # Any code you write here will run before the form opens.
     # Check for login
@@ -278,4 +279,56 @@ class PlayerRpt(PlayerRptTemplate):
                                   )
     result = anvil.server.call('send_email',"Beach Internals Player Report - PDF Version", 'Attached please find the PDF version of the Player Report', pdf_rpt, '', '' )    
     alert(('PDF report emailed'+str(result)))
+    anvil.media.download(pdf_rpt)
+    pass
+
+  def all_rpt_pdf_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # take the given (league+) player, and run thru the list and generate all reports, email to user, and download here
+
+    # unpck the league, gender, and year
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+
+    # unpack the player
+    disp_player = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
+
+    # unpack the source data:
+    user_row = anvil.users.get_user(allow_remembered=True)
+    disp_team = user_row['team']
+
+    # unpack the report to process
+    # replace this with a data driven approach
+    rpt_name = self.report_drop_down.selected_value
+    function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    #print(function_list)
+    fnct_name = function_list[0]
+    table_data4 = text_list[0]
+    scout = True
+    
+    # now, call the server module.
+    # now including limits on competition (1,2,3) and dates
+    # check comp_l3, if not, set to str()
+    if type(self.comp_l3_drop_down.selected_value['comp_l3']) == type(None):
+      self.comp_l3_drop_down.selected_value['comp_l3'] = str()
+    
+    return_value = anvil.server.call('render_all_rpts_pdf_callable',
+                                   disp_league, disp_gender, disp_year, 
+                                   disp_team, disp_player, 
+                                   self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
+                                   self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
+                                   self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
+                                   self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date,
+                                   scout, table_data4
+                                  )
+
+    alert('PDF report running in background')
+
     pass
