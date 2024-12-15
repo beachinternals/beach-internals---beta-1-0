@@ -293,14 +293,23 @@ def calc_error_den( ppr_df, disp_player):
                    ( ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
                   ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) ]
   error_vector[6] = ppr_df.shape[0]
-  error_vector[2] = ppr_df[ ( ppr_df['point_outcome'] == 'FBE') & (ppr_df['att_player'].str.strip() == disp_player.strip() ) ].shape[0]
-  error_vector[4] = ppr_df[ ( ppr_df['point_outcome'] == 'TE') & (ppr_df['point_outcome_team'].str.contains(disp_player)) ].shape[0]*0.5
-  error_vector[3] = ppr_df[ ( ppr_df['point_outcome'] == 'TSE') & (ppr_df['serve_player'].str.strip() == disp_player.strip() ) ].shape[0]
-  error_vector[5] = error_vector[2] + error_vector[3] + error_vector[4] 
-  error_vector[0] = error_vector[5] / error_vector[6]
-  error_vector[0] = str('{:.2%}').format(error_vector[0])
-  error_vector[1] = 0
+  if error_vector[6] != 0:
+    error_vector[2] = ppr_df[ ( ppr_df['point_outcome'] == 'FBE') & (ppr_df['att_player'].str.strip() == disp_player.strip() ) ].shape[0]
+    error_vector[4] = ppr_df[ ( ppr_df['point_outcome'] == 'TE') & (ppr_df['point_outcome_team'].str.contains(disp_player)) ].shape[0]*0.5
+    error_vector[3] = ppr_df[ ( ppr_df['point_outcome'] == 'TSE') & (ppr_df['serve_player'].str.strip() == disp_player.strip() ) ].shape[0]
+    error_vector[5] = error_vector[2] + error_vector[3] + error_vector[4] 
+    error_vector[0] = error_vector[5] / error_vector[6]
+    error_vector[0] = str('{:.2%}').format(error_vector[0])
+    error_vector[1] = 0
+  else:
+    error_vector[0] = None
+    error_vector[1] = None
+    error_vector[2] = None
+    error_vector[3] = None
+    error_vector[4] = None
+    error_vector[5] = None
 
+    
   return error_vector
 
 
