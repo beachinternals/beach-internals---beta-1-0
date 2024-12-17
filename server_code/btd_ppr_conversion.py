@@ -461,7 +461,7 @@ def calc_ppr_data(ppr_df):
     ppr_df.at[index,'serve_src_zone_net'] = srv_zone_net(ppr_r['serve_src_x'])
     ppr_df.at[index,'serve_dest_zone_depth'] = zone_depth(ppr_r['serve_dest_y'])
     ppr_df.at[index,'serve_dest_zone_net'] = zone_net(ppr_r['serve_src_x'])
-    ppr_df.at[index,"serve_angle"] = calc_angle(ppr_r['serve_src_x'],ppr_r['serve_src_y'],ppr_r['serve_dest_x'],ppr_r['serve_dest_y'])
+    ppr_df.at[index,"serve_angle"] = calc_angle(ppr_r['serve_src_x'],ppr_r['serve_dest_x'],ppr_r['serve_src_y'],ppr_r['serve_dest_y'])
    # print(f"serve dest time:{ppr_r['serve_dest_t']}, rally id: {ppr_r['rally_id']}")
     if isinstance(ppr_r['serve_dest_t'],(float,int)):
       ppr_df.at[index,'serve_dur'] = calc_dur(ppr_r['serve_src_t'],ppr_r['serve_dest_t'])
@@ -474,7 +474,7 @@ def calc_ppr_data(ppr_df):
       ppr_df.at[index,'pass_src_zone_net'] = zone_net(ppr_r['pass_src_x'])
       ppr_df.at[index,'pass_dest_zone_depth'] = zone_depth(ppr_r['pass_dest_y'])
       ppr_df.at[index,'pass_dest_zone_net'] = zone_net(ppr_r['pass_src_x'])
-      ppr_df.at[index,'pass_angle'] = calc_angle(ppr_r['pass_src_x'],ppr_r['pass_src_y'],ppr_r['pass_dest_x'],ppr_r['pass_dest_y'])
+      ppr_df.at[index,'pass_angle'] = calc_angle(ppr_r['pass_src_x'],ppr_r['pass_dest_x'],ppr_r['pass_src_y'],ppr_r['pass_dest_y'])
       if isinstance(ppr_r['pass_dest_t'],(float,int)):
         ppr_df.at[index,'pass_dur'] = calc_dur(ppr_r['pass_src_t'],ppr_r['pass_dest_t'])
         ppr_df.at[index,'pass_speed'] = calc_speed(ppr_df.at[index,'pass_dist'],ppr_df.at[index,'pass_dur'])
@@ -486,7 +486,7 @@ def calc_ppr_data(ppr_df):
       ppr_df.at[index,'set_src_zone_net'] = zone_net(ppr_r['set_src_x'])
       ppr_df.at[index,'set_dest_zone_depth'] = zone_depth(ppr_r['set_dest_y'])
       ppr_df.at[index,'set_dest_zone_net'] = zone_net(ppr_r['set_src_x'])
-      ppr_df.at[index,'set_angle'] = calc_angle(ppr_r['set_src_x'],ppr_r['set_src_y'],ppr_r['set_dest_x'],ppr_r['set_dest_y'])
+      ppr_df.at[index,'set_angle'] = calc_angle(ppr_r['set_src_x'],ppr_r['set_dest_x'],ppr_r['set_src_y'],ppr_r['set_dest_y'])
       if isinstance(ppr_r['set_dest_t'],(float,int)):
         ppr_df.at[index,'set_dur'] = calc_dur(ppr_r['set_src_t'],ppr_r['set_dest_t'])
         ppr_df.at[index,'set_speed'] = calc_speed(ppr_df.at[index,'set_dist'],ppr_df.at[index,'set_dur'])
@@ -498,7 +498,7 @@ def calc_ppr_data(ppr_df):
       ppr_df.at[index,'att_src_zone_net'] = zone_net(ppr_r['att_src_x'])
       ppr_df.at[index,'att_dest_zone_depth'] = zone_depth(ppr_r['att_dest_y'])
       ppr_df.at[index,'att_dest_zone_net'] = zone_net(ppr_r['att_src_x'])
-      ppr_df.at[index,'att_angle'] = calc_angle(ppr_r['att_src_x'],ppr_r['att_src_y'],ppr_r['att_dest_x'],ppr_r['att_dest_y'])
+      ppr_df.at[index,'att_angle'] = calc_angle(ppr_r['att_src_x'],ppr_r['att_dest_x'],ppr_r['att_src_y'],ppr_r['att_dest_y'])
       if isinstance(ppr_r['att_dest_t'],(float,int)):
         ppr_df.at[index,'att_dur'] = calc_dur(ppr_r['att_src_t'],ppr_r['att_dest_t'])
         if not ppr_df.at[index,'att_speed']:  # in case the speed was imported directly from the dataset
@@ -511,7 +511,7 @@ def calc_ppr_data(ppr_df):
       ppr_df.at[index,'dig_src_zone_net'] = zone_net(ppr_r['dig_src_x'])
       ppr_df.at[index,'dig_dest_zone_depth'] = zone_depth(ppr_r['dig_dest_y'])
       ppr_df.at[index,'dig_dest_zone_net'] = zone_net(ppr_r['dig_src_x'])
-      ppr_df.at[index,'dig_angle'] = calc_angle(ppr_r['dig_src_x'],ppr_r['dig_src_y'],ppr_r['dig_dest_x'],ppr_r['dig_dest_y'])
+      ppr_df.at[index,'dig_angle'] = calc_angle(ppr_r['dig_src_x'],ppr_r['dig_dest_x'],ppr_r['dig_src_y'],ppr_r['dig_dest_y'])
       if isinstance(ppr_r['dig_dest_t'],(float,int)):
         ppr_df.at[index,'dig_dur'] = calc_dur(ppr_r['dig_src_t'],ppr_r['dig_dest_t'])
         ppr_df.at[index,'dig_speed'] = calc_speed(ppr_df.at[index,'dig_dist'],ppr_df.at[index,'dig_dur'])
