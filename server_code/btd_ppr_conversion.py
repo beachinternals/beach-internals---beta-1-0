@@ -475,17 +475,17 @@ def calc_ppr_data(ppr_df):
       ppr_df.at[index,'pass_src_zone_depth'] = zone_depth(ppr_r['pass_src_y'])
       ppr_df.at[index,'pass_src_zone_net'] = zone_net(ppr_r['pass_src_x'])
       ppr_df.at[index,'pass_dest_zone_depth'] = zone_depth(ppr_r['pass_dest_y'])
-      ppr_df.at[index,'pass_dest_zone_net'] = zone_net(ppr_r['pass_src_x'])
+      ppr_df.at[index,'pass_dest_zone_net'] = zone_net(ppr_r['pass_dest_x'])
       ppr_df.at[index,'pass_angle'] = calc_angle(ppr_r['pass_src_x'],ppr_r['pass_dest_x'],ppr_r['pass_src_y'],ppr_r['pass_dest_y'])
       if isinstance(ppr_r['pass_dest_t'],(float,int)):
         ppr_df.at[index,'pass_dur'] = calc_dur(ppr_r['pass_src_t'],ppr_r['pass_dest_t'])
         ppr_df.at[index,'pass_speed'] = calc_speed(ppr_df.at[index,'pass_dist'],ppr_df.at[index,'pass_dur'])
         ppr_df.at[index,'pass_height'] = calc_height(ppr_r['pass_src_t'],ppr_r['pass_dest_t']) 
-        ppr_df.at[index,'pass_oos'] = calc_out_of_system(ppr_df[index,'pass_dest_zone_net'],
-                                                        ppr_df[index,'pass_dest_zone_depth'],
-                                                        ppr_df[index,'pass_height'],
-                                                        ppr_df[index,'pass_src_zone_net'],
-                                                        ppr_df[index,'pass_angle']
+        ppr_df.at[index,'pass_oos'] = calc_out_of_system(ppr_df.at[index,'pass_dest_zone_net'],
+                                                        ppr_df.at[index,'pass_dest_zone_depth'],
+                                                        ppr_df.at[index,'pass_height'],
+                                                        ppr_df.at[index,'pass_src_zone_net'],
+                                                        ppr_df.at[index,'pass_angle']
                                                         )
 
     if ppr_r['set_yn'] == "Y":
@@ -769,14 +769,37 @@ def print_to_string(*args, **kwargs):
 
 def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle):
   # calcualte the out of system flag
-  oos_flag = ''
+  oos_flag = str()
+  #print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
   
   # Angle
-  if (src_zone_net == 1 & pass_angle < -10) | (src_zone_net == 2 & pass_angle < -15 ) |  (src_zone_net == 4 & pass_angle > 15 ) | (src_zone_net == 5 & pass_angle > 10 ) :
-    oos_flag = 'A'
+  if (src_zone_net == 1) & (pass_angle < -10):
+    #print(f'2a oos flag: {oos_flag}')
+    oos_flag = oos_flag + 'A'
+  if (src_zone_net == 2) & (pass_angle < -15 ):
+    #print(f'2b oos flag: {oos_flag}')
+    oos_flag = oos_flag + 'A'
+  if (src_zone_net == 4) & (pass_angle > 15 ):
+    #print(f'2c oos flag: {oos_flag}')
+    oos_flag = oos_flag + 'A'
+  if (src_zone_net == 5) & (pass_angle > 10 ):
+    #print(f'2d oos flag: {oos_flag}')
+    oos_flag = oos_flag + 'A'
     
   # zone
-  if (de)
+  if ( dest_zone_depth == 'E') | ( dest_zone_depth == 'D'):
+    #print(f'3 oos flag: {oos_flag}')
+    oos_flag = oos_flag + 'L'
+  if (dest_zone_depth == 'C') & ( (dest_zone_net == 1 ) | (dest_zone_net == 5) ):
+    #print(f'4 oos flag: {oos_flag}')
+    oos_flag = oos_flag + 'L'
 
   # height
-  if ppr_df.at[ppr_row,'pass_jeight']
+  if (pass_height > 0) & (pass_height < 1.25):
+    #print(f'5 oos flag: {oos_flag}')
+    oos_flag = oos_flag + 'H'
+    
+  #if ( oos_flag != '' ):
+  #  print(f'6 oos flag: {oos_flag}, Dest net, depth, height, src net, angle: {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
+    
+  return oos_flag
