@@ -536,17 +536,21 @@ def transpose_ppr_coord(ppr_df):
     # print(f" serve_src: {ppr_r['serve_src_x']}, {ppr_r['serve_src_y']}, rally id : {ppr_r['rally_id']}")
 
     # what do we do if we don't have serve_src?
-    if ppr_r['serve_src_y'] is None:
+    if (ppr_r['serve_src_y'] is None) or (ppr_r['serve_src_y'] == 0) :
       if ppr_r['pass_src_y'] is None:
         if ppr_r['set_src_y'] is not None:
           near_court = False if ppr_r['set_src_y'] > 0.5 else True 
+          print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, set_src_y: {ppr_r['set_src_y']}")
         else:
           # if give up!!
           near_court = True
+          print(f"Near Court Calc: gave up! {near_court}, Rally ID: {ppr_r['rally_id']}, serve Src Y: {ppr_r['serve_src_y']}, pass soruce y: {ppr_r['pass_src_y']}, set_src_y: {ppr_r['set_src_y']}")
       else:
         near_court = False if ppr_r['pass_src_y'] > 0.5 else True 
+        print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, pass_src_y: {ppr_r['pass_src_y']}")
     else:
-      near_court = True if ppr_r['serve_src_y'] > 0.5 else False                    
+      near_court = True if ppr_r['serve_src_y'] > 0.5 else False    
+      print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, serve_src_y: {ppr_r['serve_src_y']}")
 
     # Serve Coordinates
     ppr_df.at[index,'serve_src_x'] = ppr_transpose_x(near_court, ppr_r['serve_src_x'])
