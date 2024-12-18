@@ -653,7 +653,10 @@ def calc_angle(x1,x2,y1,y2):
     if (y2-y1) == 0: 
       return None
     else:
-      return math.atan2( (x2-x1), (y2-y1) )*57.29578
+      angle = math.atan2( (x2-x1), (y2-y1) )
+      shifted_angle = angle + math.pi
+      shifted_angle = (shifted_angle + math.pi)%(2*math-pi) - math.pi
+      return shifted_angle*57.29578
   else:
     return None
 
