@@ -653,10 +653,8 @@ def calc_angle(x1,x2,y1,y2):
     if (y2-y1) == 0: 
       return None
     else:
-      angle = math.atan2( (x2-x1), (y2-y1) )
-      shifted_angle = angle + math.pi
-      shifted_angle = (shifted_angle + math.pi)%(2*math.pi) - math.pi
-      return shifted_angle*57.29578
+      angle = math.atan2( (x2-x1), -(y2-y1) ) # 180 degree phase shift with negative y
+      return angle*57.29578
   else:
     return None
 
@@ -776,16 +774,16 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
   #print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
   
   # Angle
-  if (src_zone_net == 1) & (pass_angle < -10):
+  if (src_zone_net == 1) & (pass_angle > 10):
     #print(f'2a oos flag: {oos_flag}')
     oos_flag = oos_flag + 'A'
-  if (src_zone_net == 2) & (pass_angle < -15 ):
+  if (src_zone_net == 2) & (pass_angle > 15 ):
     #print(f'2b oos flag: {oos_flag}')
     oos_flag = oos_flag + 'A'
-  if (src_zone_net == 4) & (pass_angle > 15 ):
+  if (src_zone_net == 4) & (pass_angle < -15 ):
     #print(f'2c oos flag: {oos_flag}')
     oos_flag = oos_flag + 'A'
-  if (src_zone_net == 5) & (pass_angle > 10 ):
+  if (src_zone_net == 5) & (pass_angle < -10 ):
     #print(f'2d oos flag: {oos_flag}')
     oos_flag = oos_flag + 'A'
     
