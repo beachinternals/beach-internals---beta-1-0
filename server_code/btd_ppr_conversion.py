@@ -650,10 +650,10 @@ def calc_speed(dist, dur):
 
 def calc_angle(x1,x2,y1,y2):
   if x1 is not None and x2 is not None and y1 is not None and y2 is not None:
-    if (y2-y1) == 0:
+    if (y2-y1) == 0: 
       return None
     else:
-      return math.atan( (x2-x1)/(y2-y1) )*57.29578
+      return math.atan2( (x2-x1)/(y2-y1) )*57.29578
   else:
     return None
 
