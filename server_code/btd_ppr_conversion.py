@@ -159,6 +159,7 @@ def btd_to_ppr_df(btd_df, flist_r):
     'pass_player':blank,'pass_yn':yn,'pass_src_x':zero,'pass_src_y':zero,'pass_src_t':zero,'pass_src_zone_depth':blank,'pass_src_zone_net':zero,
                   'pass_dest_x':zero,'pass_dest_y':zero,'pass_dest_t':zero,'pass_dest_zone_depth':blank,'pass_dest_zone_net':zero,
                   'pass_dist':zero,'pass_dur':zero,'pass_speed':zero,'pass_angle':zero,'pass_action_id':zero,'pass_height':zero,
+                  'pass_rtg_btd':zero,'pass_oos':blank,
     'set_player':blank,'set_yn':yn,'set_src_x':zero,'set_src_y':zero,'set_src_t':zero,'set_src_zone_depth':blank,'set_src_zone_net':zero,
                   'set_dest_x':zero,'set_dest_y':zero,'set_dest_t':zero,'set_dest_zone_depth':blank,'set_dest_zone_net':zero,
                   'set_dist':zero,'set_dur':zero,'set_speed':zero,'set_angle':zero,'set_action_id':zero,'set_height':zero,
@@ -283,6 +284,7 @@ def save_pass_info( ppr_df, btd_r, ppr_row):
   ppr_df.at[ppr_row,'pass_src_y'] = btd_r['src_y']
   ppr_df.at[ppr_row,'pass_yn'] = "Y"  
   ppr_df.at[ppr_row,'serve_dest_t'] = ppr_df.at[ppr_row,'pass_src_t']
+  ppr_df.at[ppr_row,'pass_rtg_btd'] = btd_r['quality']
   #print(f"Saving pass info Action Id: {ppr_df.at[ppr_row,'pass_action_id']}, ppr_row: {ppr_row}, Pass Player: {ppr_df.at[ppr_row,'pass_player']}")
   return ppr_df
 
@@ -479,6 +481,12 @@ def calc_ppr_data(ppr_df):
         ppr_df.at[index,'pass_dur'] = calc_dur(ppr_r['pass_src_t'],ppr_r['pass_dest_t'])
         ppr_df.at[index,'pass_speed'] = calc_speed(ppr_df.at[index,'pass_dist'],ppr_df.at[index,'pass_dur'])
         ppr_df.at[index,'pass_height'] = calc_height(ppr_r['pass_src_t'],ppr_r['pass_dest_t']) 
+        ppr_df.at[index,'pass_oos'] = calc_out_of_system(ppr_df[index,'pass_dest_zone_net'],
+                                                        ppr_df[index,'pass_dest_zone_depth'],
+                                                        ppr_df[index,'pass_height'],
+                                                        ppr_df[index,'pass_src_zone_net'],
+                                                        ppr_df[index,'pass_angle']
+                                                        )
 
     if ppr_r['set_yn'] == "Y":
       ppr_df.at[index,'set_dist'] = calc_dist(ppr_r['set_src_x'],ppr_r['set_src_y'],ppr_r['set_dest_x'],ppr_r['set_dest_y'])
@@ -758,3 +766,17 @@ def print_to_string(*args, **kwargs):
     contents = output.getvalue()
     output.close()
     return contents
+
+def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle):
+  # calcualte the out of system flag
+  oos_flag = ''
+  
+  # Angle
+  if (src_zone_net == 1 & pass_angle < -10) | (src_zone_net == 2 & pass_angle < -15 ) |  (src_zone_net == 4 & pass_angle > 15 ) | (src_zone_net == 5 & pass_angle > 10 ) :
+    oos_flag = 'A'
+    
+  # zone
+  if (de)
+
+  # height
+  if ppr_df.at[ppr_row,'pass_jeight']
