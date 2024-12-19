@@ -538,7 +538,7 @@ def transpose_ppr_coord(ppr_df):
 
     # what do we do if we don't have serve_src?
     # I added the not 0 and not 1 because balltime seems to be giving serve of 1 and 0 whent they really do not know, so then go to the pass.
-    if (ppr_r['serve_src_y'] is None) or (ppr_r['serve_src_y'] == 0) or (ppr_r['serve_src_y'] == 1 ):
+    if (ppr_r['serve_src_y'] is None):
       if ppr_r['pass_src_y'] is None:
         if ppr_r['set_src_y'] is not None:
           near_court = False if ppr_r['set_src_y'] > 0.5 else True 
@@ -551,7 +551,16 @@ def transpose_ppr_coord(ppr_df):
         near_court = False if ppr_r['pass_src_y'] > 0.5 else True 
         print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, pass_src_y: {ppr_r['pass_src_y']}")
     else:
-      near_court = True if ppr_r['serve_src_y'] > 0.5 else False    
+      if (ppr_r['serve_src_y'] == 0) or (ppr_r['serve_src_y'] == 1):
+        # have a bit of doubt with teh 0 and 1 coordiante, sometimes they are wrong, so check pass src
+        # check the pass src, is not none, use that, else use this
+        if (ppr_r['pass_src_y'] is not None):
+          near_court = False if ppr_r['pass_src_y'] > 0.5 else True 
+        else:
+          near_court = True if ppr_r['serve_src_y'] > 0.5 else False 
+      else:
+        near_court = True if ppr_r['serve_src_y'] > 0.5 else False  
+        
       print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, serve_src_y: {ppr_r['serve_src_y']}")
 
     # Serve Coordinates
