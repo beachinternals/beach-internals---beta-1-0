@@ -542,14 +542,14 @@ def transpose_ppr_coord(ppr_df):
       if ppr_r['pass_src_y'] is None:
         if ppr_r['set_src_y'] is not None:
           near_court = False if ppr_r['set_src_y'] > 0.5 else True 
-          print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, set_src_y: {ppr_r['set_src_y']}")
+          #print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, set_src_y: {ppr_r['set_src_y']}")
         else:
           # if give up!!
           near_court = True
           #print(f"Near Court Calc: gave up! {near_court}, Rally ID: {ppr_r['rally_id']}, serve Src Y: {ppr_r['serve_src_y']}, pass soruce y: {ppr_r['pass_src_y']}, set_src_y: {ppr_r['set_src_y']}")
       else:
         near_court = False if ppr_r['pass_src_y'] > 0.5 else True 
-        print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, pass_src_y: {ppr_r['pass_src_y']}")
+        #print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, pass_src_y: {ppr_r['pass_src_y']}")
     else:
       if (ppr_r['serve_src_y'] == 0) or (ppr_r['serve_src_y'] == 1):
         # have a bit of doubt with teh 0 and 1 coordiante, sometimes they are wrong, so check pass src
@@ -561,7 +561,7 @@ def transpose_ppr_coord(ppr_df):
       else:
         near_court = True if ppr_r['serve_src_y'] > 0.5 else False  
         
-      print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, serve_src_y: {ppr_r['serve_src_y']}")
+      #print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, serve_src_y: {ppr_r['serve_src_y']}")
 
     # Serve Coordinates
     ppr_df.at[index,'serve_src_x'] = ppr_transpose_x(near_court, ppr_r['serve_src_x'])
@@ -680,7 +680,7 @@ def ppr_transpose_x(near_court, x1 ):
   # so x coordiantes are 0 - 1, where 0 is 0, and 1 is +8
   if x1 is not None:
     x2 = x1*8
-    x2 = 8 - x2 if near_court else x2
+    x2 = 8 - x2 if not near_court else x2
   else:
     x2 = None
   return x2
@@ -721,15 +721,15 @@ def zone_net(x1):
     if math.isnan(x1):
       zone = 0
     elif isinstance(x1,(float,int)):
-      zone = "5"
+      zone = "1"
       if x1 < 4*1.6:
-        zone = "4"
-      if x1 <3*1.6:
-        zone = "3"
-      if x1 <2*1.6:
         zone = "2"
-      if x1 <1*1.6:
-        zone = "1"
+      if x1 < 3*1.6:
+        zone = "3"
+      if x1 < 2*1.6:
+        zone = "4"
+      if x1 < 1*1.6:
+        zone = "5"
     else:
       zone = 0
   else:
@@ -786,36 +786,36 @@ def print_to_string(*args, **kwargs):
 def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle):
   # calcualte the out of system flag
   oos_flag = str()
-  print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
+  #print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
   
   # Angle
-  if (src_zone_net == 1) & (pass_angle > 10):
-    print(f'2a oos flag: {oos_flag}')
+  if (src_zone_net == '1') and ( float(pass_angle) > 10):
     oos_flag = oos_flag + 'A'
-  if (src_zone_net == 2) & (pass_angle > 15 ):
-    print(f'2b oos flag: {oos_flag}')
+    #print(f'2a oos flag: {oos_flag}')
+  if (src_zone_net == '2') & (pass_angle > 15 ):
     oos_flag = oos_flag + 'A'
-  if (src_zone_net == 4) & (pass_angle < -15 ):
-    print(f'2c oos flag: {oos_flag}')
+    #print(f'2b oos flag: {oos_flag}')
+  if (src_zone_net == '4') & (pass_angle < -15 ):
     oos_flag = oos_flag + 'A'
-  if (src_zone_net == 5) & (pass_angle < -10 ):
-    print(f'2d oos flag: {oos_flag}')
+    #print(f'2c oos flag: {oos_flag}')
+  if (src_zone_net == '5') & (pass_angle < -10 ):
     oos_flag = oos_flag + 'A'
+    #print(f'2d oos flag: {oos_flag}')
     
   # zone
   if ( dest_zone_depth == 'E') | ( dest_zone_depth == 'D'):
-    print(f'3 oos flag: {oos_flag}')
     oos_flag = oos_flag + 'L'
-  if (dest_zone_depth == 'C') & ( (dest_zone_net == 1 ) | (dest_zone_net == 5) ):
-    print(f'4 oos flag: {oos_flag}')
+    #print(f'3 oos flag: {oos_flag}')
+  if (dest_zone_depth == 'C') & ( (dest_zone_net == '1' ) | (dest_zone_net == '5') ):
     oos_flag = oos_flag + 'L'
+    #print(f'4 oos flag: {oos_flag}')
 
   # height
-  if (pass_height > 0) & (pass_height < 1.25):
-    print(f'5 oos flag: {oos_flag}')
+  if (pass_height > 0) & (pass_height < 1.00):
     oos_flag = oos_flag + 'H'
+    #print(f'5 oos flag: {oos_flag}')
     
-  #if ( oos_flag != '' ):
-  #  print(f'6 oos flag: {oos_flag}, Dest net, depth, height, src net, angle: {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
+  if ( oos_flag != '' ):
+    print(f'6 oos flag: {oos_flag}, Dest net, depth, height, src net, angle: {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
     
   return oos_flag
