@@ -98,7 +98,8 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       # now I can store it in the btd files database
       flist_r.update( ppr_data = ppr_media, error_str = error_string, no_errors = no_errors, ppr_file_date=datetime.datetime.now() )
     else:
-      print(f"Not processing file:{flist_r['filename']}")
+      True
+      #print(f"Not processing file:{flist_r['filename']}")
       
   return True
 
@@ -536,7 +537,8 @@ def transpose_ppr_coord(ppr_df):
     # print(f" serve_src: {ppr_r['serve_src_x']}, {ppr_r['serve_src_y']}, rally id : {ppr_r['rally_id']}")
 
     # what do we do if we don't have serve_src?
-    if (ppr_r['serve_src_y'] is None) or (ppr_r['serve_src_y'] == 0) :
+    # I added the not 0 and not 1 because balltime seems to be giving serve of 1 and 0 whent they really do not know, so then go to the pass.
+    if (ppr_r['serve_src_y'] is None) or (ppr_r['serve_src_y'] == 0) or (ppr_r['serve_src_y'] == 1 ):
       if ppr_r['pass_src_y'] is None:
         if ppr_r['set_src_y'] is not None:
           near_court = False if ppr_r['set_src_y'] > 0.5 else True 
@@ -544,7 +546,7 @@ def transpose_ppr_coord(ppr_df):
         else:
           # if give up!!
           near_court = True
-          print(f"Near Court Calc: gave up! {near_court}, Rally ID: {ppr_r['rally_id']}, serve Src Y: {ppr_r['serve_src_y']}, pass soruce y: {ppr_r['pass_src_y']}, set_src_y: {ppr_r['set_src_y']}")
+          #print(f"Near Court Calc: gave up! {near_court}, Rally ID: {ppr_r['rally_id']}, serve Src Y: {ppr_r['serve_src_y']}, pass soruce y: {ppr_r['pass_src_y']}, set_src_y: {ppr_r['set_src_y']}")
       else:
         near_court = False if ppr_r['pass_src_y'] > 0.5 else True 
         print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, pass_src_y: {ppr_r['pass_src_y']}")
@@ -775,33 +777,33 @@ def print_to_string(*args, **kwargs):
 def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle):
   # calcualte the out of system flag
   oos_flag = str()
-  #print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
+  print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
   
   # Angle
   if (src_zone_net == 1) & (pass_angle > 10):
-    #print(f'2a oos flag: {oos_flag}')
+    print(f'2a oos flag: {oos_flag}')
     oos_flag = oos_flag + 'A'
   if (src_zone_net == 2) & (pass_angle > 15 ):
-    #print(f'2b oos flag: {oos_flag}')
+    print(f'2b oos flag: {oos_flag}')
     oos_flag = oos_flag + 'A'
   if (src_zone_net == 4) & (pass_angle < -15 ):
-    #print(f'2c oos flag: {oos_flag}')
+    print(f'2c oos flag: {oos_flag}')
     oos_flag = oos_flag + 'A'
   if (src_zone_net == 5) & (pass_angle < -10 ):
-    #print(f'2d oos flag: {oos_flag}')
+    print(f'2d oos flag: {oos_flag}')
     oos_flag = oos_flag + 'A'
     
   # zone
   if ( dest_zone_depth == 'E') | ( dest_zone_depth == 'D'):
-    #print(f'3 oos flag: {oos_flag}')
+    print(f'3 oos flag: {oos_flag}')
     oos_flag = oos_flag + 'L'
   if (dest_zone_depth == 'C') & ( (dest_zone_net == 1 ) | (dest_zone_net == 5) ):
-    #print(f'4 oos flag: {oos_flag}')
+    print(f'4 oos flag: {oos_flag}')
     oos_flag = oos_flag + 'L'
 
   # height
   if (pass_height > 0) & (pass_height < 1.25):
-    #print(f'5 oos flag: {oos_flag}')
+    print(f'5 oos flag: {oos_flag}')
     oos_flag = oos_flag + 'H'
     
   #if ( oos_flag != '' ):
