@@ -160,7 +160,7 @@ def btd_to_ppr_df(btd_df, flist_r):
     'pass_player':blank,'pass_yn':yn,'pass_src_x':zero,'pass_src_y':zero,'pass_src_t':zero,'pass_src_zone_depth':blank,'pass_src_zone_net':zero,
                   'pass_dest_x':zero,'pass_dest_y':zero,'pass_dest_t':zero,'pass_dest_zone_depth':blank,'pass_dest_zone_net':zero,
                   'pass_dist':zero,'pass_dur':zero,'pass_speed':zero,'pass_angle':zero,'pass_action_id':zero,'pass_height':zero,
-                  'pass_rtg_btd':zero,'pass_oos':blank,
+                  'pass_rtg_btd':zero,'pass_oos':zero,
     'set_player':blank,'set_yn':yn,'set_src_x':zero,'set_src_y':zero,'set_src_t':zero,'set_src_zone_depth':blank,'set_src_zone_net':zero,
                   'set_dest_x':zero,'set_dest_y':zero,'set_dest_t':zero,'set_dest_zone_depth':blank,'set_dest_zone_net':zero,
                   'set_dist':zero,'set_dur':zero,'set_speed':zero,'set_angle':zero,'set_action_id':zero,'set_height':zero,
@@ -785,37 +785,37 @@ def print_to_string(*args, **kwargs):
 
 def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle):
   # calcualte the out of system flag
-  oos_flag = str()
+  oos_flag = 0
   #print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
   
   # Angle
   if (src_zone_net == '1') and ( float(pass_angle) > 10):
-    oos_flag = oos_flag + 'A'
+    oos_flag = oos_flag + 1
     #print(f'2a oos flag: {oos_flag}')
   if (src_zone_net == '2') & (pass_angle > 15 ):
-    oos_flag = oos_flag + 'A'
+    oos_flag = oos_flag + 1
     #print(f'2b oos flag: {oos_flag}')
   if (src_zone_net == '4') & (pass_angle < -15 ):
-    oos_flag = oos_flag + 'A'
+    oos_flag = oos_flag + 1
     #print(f'2c oos flag: {oos_flag}')
   if (src_zone_net == '5') & (pass_angle < -10 ):
-    oos_flag = oos_flag + 'A'
+    oos_flag = oos_flag + 1
     #print(f'2d oos flag: {oos_flag}')
     
   # zone
   if ( dest_zone_depth == 'E') | ( dest_zone_depth == 'D'):
-    oos_flag = oos_flag + 'L'
+    oos_flag = oos_flag + 10
     #print(f'3 oos flag: {oos_flag}')
   if (dest_zone_depth == 'C') & ( (dest_zone_net == '1' ) | (dest_zone_net == '5') ):
-    oos_flag = oos_flag + 'L'
+    oos_flag = oos_flag + 10
     #print(f'4 oos flag: {oos_flag}')
 
   # height
   if (pass_height > 0) & (pass_height < 1.00):
-    oos_flag = oos_flag + 'H'
+    oos_flag = oos_flag + 100
     #print(f'5 oos flag: {oos_flag}')
     
-  if ( oos_flag != '' ):
+  if ( oos_flag != 0 ):
     print(f'6 oos flag: {oos_flag}, Dest net, depth, height, src net, angle: {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
     
   return oos_flag

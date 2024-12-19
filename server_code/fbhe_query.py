@@ -924,8 +924,7 @@ def out_of_system(disp_league, disp_gender, disp_year,
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
   # now limit to only out of system plays
-  oos_type = ['A','L','H']
-  m_ppr_df = m_ppr_df[ m_ppr_df['pass_oos'].str.strip() == 'L' or m_ppr_df['pass_oos'].str.strip() == 'A' ]
+  m_ppr_df = m_ppr_df[ m_ppr_df['pass_oos'] != 0 ]
   
   ############### Third Populate the dataframe, assuming we have data returned
   if m_ppr_df.shape[0] > 0:
