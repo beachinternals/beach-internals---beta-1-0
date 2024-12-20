@@ -803,10 +803,10 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
     #print(f'2d oos flag: {oos_flag}')
     
   # zone
-  if ( dest_zone_depth == 'E') | ( dest_zone_depth == 'D'):
+  if ( dest_zone_depth == 'E'):
     oos_flag = oos_flag + 10
     #print(f'3 oos flag: {oos_flag}')
-  if (dest_zone_depth == 'C') & ( (dest_zone_net == '1' ) | (dest_zone_net == '5') ):
+  if (dest_zone_depth == 'D') & ( (dest_zone_net == '1' ) | (dest_zone_net == '5') ):
     oos_flag = oos_flag + 10
     #print(f'4 oos flag: {oos_flag}')
 
