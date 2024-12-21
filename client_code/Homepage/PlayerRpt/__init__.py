@@ -15,7 +15,7 @@ class PlayerRpt(PlayerRptTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
-    self.all_rpt_pdf.visible = True if anvil.users.get_user()['team'] == "INTERNALS" else False
+    #self.all_rpt_pdf.visible = True if anvil.users.get_user()['team'] == "INTERNALS" else False
     
     # Any code you write here will run before the form opens.
     # Check for login
@@ -173,9 +173,15 @@ class PlayerRpt(PlayerRptTemplate):
     rpt_name = self.report_drop_down.selected_value
     function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
     text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    box1_title_list = [(f_row['box1_title']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    box2_title_list = [(f_row['box2_title']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    box3_title_list = [(f_row['box3_title']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
     #print(function_list)
     fnct_name = function_list[0]
     explain_text = text_list[0]
+    box1_title = box1_title_list[0]
+    box2_title = box2_title_list[0]
+    box3_title = box3_title_list[0]
     scout = True
     
     # now, call the server module.
@@ -213,6 +219,9 @@ class PlayerRpt(PlayerRptTemplate):
     self.rpt_disp_box2.content = table_data2
     self.rpt_disp_box3.content = table_data3
     self.rpt_disp_box4.content = explain_text
+    self.box1_label.text = box1_title
+    self.box2_label.text = box2_title
+    self.box3_label.text = box3_title
     
     pass
 
