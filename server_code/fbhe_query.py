@@ -925,6 +925,7 @@ def out_of_system(disp_league, disp_gender, disp_year,
 
   # now limit to only out of system plays
   m_ppr_df = m_ppr_df[ m_ppr_df['pass_oos'] != 0 ]
+  m_ppr_df = m_ppr_df[ m_ppr_df['pass_player'] == disp_player ]
   
   ############### Third Populate the dataframe, assuming we have data returned
   if m_ppr_df.shape[0] > 0:
