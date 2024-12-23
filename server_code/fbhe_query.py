@@ -1296,58 +1296,8 @@ def player_sum_rpt(disp_league, disp_gender, disp_year,
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
 
-    # for much of the scoring data, call expected value, and use data form that array:
-      # 0 = expected value
-    # 1 = total points
-    # 2 = points won
-    # 3 = fbk earned
-    # 4 = tk earned
-    # 5 = te received
-    # 6 = tse received
-    # 7 = point lost
-    # 8 = FBE given
-    # 9 = te given
-    # 10 = tk lost
-    # 11 = tsa lost  
-    ev = calc_ev(m_ppr_df, disp_player)
-
-    # point differential:
-    scor_table.at[0,'#'] = ev[2] - ev[7]
-    if ev[1] != 0:
-      scor_table.at[0,'%'] = ( ev[2] - ev[7])/ev[1]
-
-    # terminal Serves (my aces + opp errors) - (opp aces + my errors)
-    scor_table[1,'#'] = ev[6] - ev[11]
-    scor_table[1,'#'] = 0
-
-    # live rallies - transition
-    scor_table[2,'#'] = (ev[4] + ev[5]) - (ev[9] + ev[10])
-    if ev[1] != 0:
-      scor_table[2,'%'] = scor_table[2,'#']/ev[1]
-
-    # side out
-    scor_table[4,'#'] = ev[3]
-    scor_table[5,'%'] = ev[]
-    
-    
-    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att', True )
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
-    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
-
-    # calculate for zones 1 - 5
-    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
-    for i in [1,2,3,4,5]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player, 'att', True )
-      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
-      fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
-      fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+    # Call number of points
+    pts_df = 
  
     # now create the markdown text to return
     scor_return = pd.DataFrame.to_markdown(scor_table)
