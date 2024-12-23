@@ -369,12 +369,14 @@ def point_totals(ppr_df, disp_player):
               'p_fbe':[0],
               'p_tk':[0],
               'p_te':[0],
+              'p_serves':[0],
               'o_tsa':[0],
               'o_tse':[0],
               'o_fbk':[0],
               'o_fbe':[0],
               'o_tk':[0],
               'o_te':[0],
+              'o_serves':[0],
               'pts_total':[0]
              }
 
@@ -394,6 +396,7 @@ def point_totals(ppr_df, disp_player):
   pts_df.at[0,'p_fbe'] = ppr_df[ ppr_df['point_outcome'] == 'FBE' & ppr_df['point_outcome_team'].str.contains(disp_player)].shape[0]
   pts_df.at[0,'p_tk'] = ppr_df[ ppr_df['point_outcome'] == 'TK' & ppr_df['point_outcome_team'].str.contains(disp_player)].shape[0]
   pts_df.at[0,'p_te'] = ppr_df[ ppr_df['point_outcome'] == 'TE' & ppr_df['point_outcome_team'].str.contains(disp_player)].shape[0]
+  pts_df.at[0,'p_serves'] = ppr_df[ ppr_df['serve_player']]
   
   pts_df.at[0,'o_tsa'] = ppr_df[ ppr_df['point_outcome'] == 'TSA' & ~ppr_df['point_outcome_team'].str.contains(disp_player)].shape[0]
   pts_df.at[0,'o_tse'] = ppr_df[ ppr_df['point_outcome'] == 'TSE' & ~ppr_df['point_outcome_team'].str.contains(disp_player)].shape[0]

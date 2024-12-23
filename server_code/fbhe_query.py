@@ -1292,19 +1292,73 @@ def player_sum_rpt(disp_league, disp_gender, disp_year,
   scor_table = pd.DataFrame.from_dict( scor_dict )
 
   ############### Third Populate the dataframe, assuming we have data returned
-  if m_ppr_df.shape[0] > 0:
-    # calculate fbhe for all attacks
-    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+  # Call number of points
+  pts_df = point_totals(m_ppr_df,disp_player)
+  if pts_df[0,'pts_total'] != 0:
+    # now store the values into t scor_return array
+    # point differential
+    scor_table[0,'#'] = ( ( pts_df[0,'p_tsa'] + pts_df[0,'p_fbk'] + pts_df[0,'p_tk'] + pts_df[0,'o_tse'] + pts_df[0,'o_fbe'] + pts_df[0,'o_te'] ) -
+                          ( pts_df[0,'p_tse'] + pts_df[0,'p_fbe'] + pts_df[0,'p_te'] + pts_df[0,'o_tsa'] + pts_df[0,'o_fbk'] + pts_df[0,'o_tk'] ) )
+    scor_table[0,'%'] = scor_table[0,'#']/pts_df[0,'pts_total']
 
-    # Call number of points
-    pts_df = 
+    # Terminal Serves
+    scor_table[1,'#'] = ( point_totals[0,'p_tsa'] + point_totals[0,'o_tse']) - ( point_totals[0,'o_tsa'] + point_totals[0,'p_tse'])
+    scor_table[1,'%'] = scor_table[1,'#']/pts_df[0,'pts_total']
+
+    # live Rallies -- guessing all transition points??
+    scor_table[2,'#'] = pts_df[0,'p_tk'] + pts_df[0,'p_te'] + pts_df[0,'o_tk'] + ptd_df[0,'o_te']
+    scor_table[2,"%"] = scor_table[2,'#'] / pts_df[0,'pts_total']
+
+    # blank row
+    # Side out = FBK + TK
+    #----------------------------
+    #... i think we have an issue here as we want TK only when we were served?  Or both TE and TK when we were served?
+    #----------------------
+    scor_table[4,'#'] = pts_df[0,'p_fbk'] + pts_df[0,'p_tk']
+    scor_table[4,"%"] = scor_table[4,'#'] / pts_df[0,'pts_total']
+    scor_table[5,'#'] = pts_df[0,'o_fbk'] + pts_df[0,'o_tk']
+    scor_table[5,"%"] = scor_table[5,'#'] / pts_df[0,'pts_total']
+
+    # first ball sideout - FBK/points
+    scor_table[7,"#"] = pts_df[0,'p_fbk']
+    scor_table[7,"%"] = pts_df[0,'p_fbk']/pts_df[0,'o_serves']
+    scor_table[8,"#"] = pts_df[0,'o_fbk']
+    scor_table[8,"%"] = pts_df[0,'o_fbk']/pts_df[0,'p_serves']
+
+    # blank row
+    # first ball stop - fbe / serves (attempts)
+    scor_table[10,"#"] = pts_df[0,'o_fbe']
+    scor_table[10,"%"] = pts_df[0,'o_fbe']/(pts_df[0,'p_serves'] - pts_df[0,'p_tse'])
+    scor_table[11,"#"] = pts_df[0,'p_fbe']
+    scor_table[11,"%"] = pts_df[0,'p_fbe']/(pts_df[0,'o_serves'] - pts_df[0,'o_tse'])
+
+    # blank row
+    # first ball win %
+    scor_table[13,'%'] = ( pts_df[0,'p_fbk'] + pts_df[0,'o_fbe']) / (pts_df[0,'pts_total']-pts_df[0,'p_tse']-ptd_df[0,'o_tse'])
+
+    # blank row
+    #Transition Win - Number of transitiono points we won! and they won
+    tcr = 
+    
+    
+
+    
+    
+  
+                    
+    'SideOut', 
+    'Opp Sideout','',
+                    'FB Stop', 'Opp FB Stop','',
+                    'FB Win','',
+                    'Trans Win','Opp Trans Win','',
+                    'Blocking','Digging','Create','',
+                   'Serving','First Ball Attacking','Transition Attacking'],
  
     # now create the markdown text to return
     scor_return = pd.DataFrame.to_markdown(scor_table)
   else:
     scor_return = "No Data Found"
-
-  
+    
   return scor_return, ' ', ' '
 
 
