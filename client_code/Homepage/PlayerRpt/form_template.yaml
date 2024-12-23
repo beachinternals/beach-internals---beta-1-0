@@ -129,6 +129,11 @@ components_by_slot:
         name: all_rpt_pdf
         properties: {role: outlined-button, text: PDF of All Reports, visible: true}
         type: Button
+      - event_bindings: {click: summary_pdf_button_click}
+        layout_properties: {}
+        name: summary_pdf_button
+        properties: {role: outlined-button, text: Player Summary PDF}
+        type: Button
       layout_properties: {grid_position: 'RRUZZU,OYDNHB'}
       name: flow_panel_4
       properties: {}

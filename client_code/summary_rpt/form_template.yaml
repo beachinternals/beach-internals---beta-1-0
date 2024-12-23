@@ -1,0 +1,62 @@
+components:
+- components:
+  - layout_properties: {}
+    name: label_1
+    properties: {align: center, bold: true, font_size: 30, text: Player Summary}
+    type: Label
+  - name: player_label
+    properties: {align: center, bold: true, font_size: 24}
+    type: Label
+  layout_properties: {grid_position: 'MLVCDI,ACEJXM'}
+  name: linear_panel_1
+  properties: {}
+  type: LinearPanel
+- components:
+  - layout_properties: {grid_position: 'VVOYIG,JXVMLW WGVBEJ,CLPBFH'}
+    name: label_2
+    properties: {align: center, bold: true, text: Scoring}
+    type: Label
+  - layout_properties: {grid_position: 'VVOYIG,JXVMLW AITUXC,YKSJAN'}
+    name: rpt_disp_box
+    properties: {}
+    type: RichText
+  - layout_properties: {grid_position: 'VVOYIG,XHELYG ARLSXM,MNYPDS'}
+    name: label_3
+    properties: {align: center, bold: true, text: Rotations}
+    type: Label
+  - layout_properties: {grid_position: 'VVOYIG,XHELYG NITXZQ,PKVQOC'}
+    name: rpt_disp_box2
+    properties: {}
+    type: RichText
+  - layout_properties: {grid_position: 'VVOYIG,TXBZVK VADOIR,KEMIVE'}
+    name: label_4
+    properties: {align: center, bold: true, text: Stats}
+    type: Label
+  - layout_properties: {grid_position: 'VVOYIG,TXBZVK NYXPGA,TTQXFH'}
+    name: rpt_disp_box3
+    properties: {}
+    type: RichText
+  layout_properties: {grid_position: 'KYXLMK,AROPVN'}
+  name: column_panel_2
+  properties: {}
+  type: ColumnPanel
+- components:
+  - components: []
+    layout_properties: {grid_position: 'UJSIMN,AXCVRJ'}
+    name: rpt_disp_box4
+    properties: {}
+    type: RichText
+  - components:
+    - name: filter_text
+      properties: {}
+      type: RichText
+    layout_properties: {grid_position: 'UJSIMN,ZKZAMB'}
+    name: flow_panel_5
+    properties: {}
+    type: FlowPanel
+  layout_properties: {grid_position: 'YCJHSA,TEOQTU'}
+  name: column_panel_1
+  properties: {}
+  type: ColumnPanel
+container: {type: ColumnPanel}
+is_package: true
