@@ -358,3 +358,34 @@ def get_tri_data( disp_league, disp_gender, disp_year ):
 
   return tri_df, tri_data_found
 
+
+def point_totals(ppr_df, disp_player):
+  # count the total number of points in each category
+
+  # return datafarme with the details
+  pts_dict = {'p_tsa':[0],
+              'p_tse':[0],
+              'p_fbk':[0],
+              'p_fbe':[0],
+              'p_tk':[0],
+              'p_te':[0],
+              'o_tsa':[0],
+              'o_tse':[0],
+              'o_fbk':[0],
+              'o_fbe':[0],
+              'o_tk':[0],
+              'o_te':[0]
+             }
+
+  pts_df = pd.DataFrame.from_dict( pts_dict )
+
+  # filter whoiel dataframe to this player:
+  ppr_df = ppr_df[(( ppr_df['player_a1'].str.strip() == disp_player.strip() ) |
+                  ( ppr_df['player_a2'].str.strip() == disp_player.strip() ) |
+                   ( ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
+                  ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) 
+  ]
+
+  # let's start counting!
+  pdf_df.at[0,'p_tsa'] = ppr_df[ ppr_df['point_outcome'] == 'TSA' & ppr_df['point_outcome_team'].str.contains(disp_player)]
+  

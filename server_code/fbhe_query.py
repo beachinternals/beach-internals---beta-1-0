@@ -1316,7 +1316,18 @@ def player_sum_rpt(disp_league, disp_gender, disp_year,
     if ev[1] != 0:
       scor_table.at[0,'%'] = ( ev[2] - ev[7])/ev[1]
 
-    # terminal Serves:
+    # terminal Serves (my aces + opp errors) - (opp aces + my errors)
+    scor_table[1,'#'] = ev[6] - ev[11]
+    scor_table[1,'#'] = 0
+
+    # live rallies - transition
+    scor_table[2,'#'] = (ev[4] + ev[5]) - (ev[9] + ev[10])
+    if ev[1] != 0:
+      scor_table[2,'%'] = scor_table[2,'#']/ev[1]
+
+    # side out
+    scor_table[4,'#'] = ev[3]
+    scor_table[5,'%'] = ev[]
     
     
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'att', True )
