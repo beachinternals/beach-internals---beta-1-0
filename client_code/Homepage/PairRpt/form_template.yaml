@@ -3,45 +3,202 @@ components_by_slot:
   - components:
     - layout_properties: {grid_position: 'ZGCTFP,UFPWQS'}
       name: label_2
-      properties: {align: center, bold: true, role: title, text: Pair Reports}
+      properties: {align: center, bold: true, role: headline, text: Pair Reports}
       type: Label
     layout_properties: {}
     name: outlined_card_1
     properties: {background: 'theme:Secondary Container', role: outlined-card}
     type: ColumnPanel
   - components:
+    - layout_properties: {grid_position: 'YUQQZB,RMWMTF'}
+      name: label_9
+      properties: {align: center, bold: true, role: title, text: Search Criteria}
+      type: Label
     - components:
-      - event_bindings: {click: PairRpt1_click_click}
-        layout_properties: {grid_position: 'YJBAZA,XDXPYM'}
-        name: PairRpt1_click
-        properties: {text: FBHE Report}
-        type: Link
-      - event_bindings: {click: PairRpt2_click_click}
-        layout_properties: {grid_position: 'QUDNGE,YTODGM'}
-        name: PairRpt2_click
-        properties: {text: Attack Tactic}
-        type: Link
-      layout_properties: {grid_position: 'KCZYCU,SMAHSC'}
-      name: column_panel_1
+      - name: label_6
+        properties: {align: right, text: 'League:'}
+        type: Label
+      - event_bindings: {change: league_drop_down_change}
+        layout_properties: {}
+        name: league_drop_down
+        properties:
+          items: [NCAA | W | 2025]
+        type: DropDown
+      - layout_properties: {}
+        name: label_12
+        properties: {align: right, text: 'Pair - Player 1:'}
+        type: Label
+      - event_bindings: {change: player_drop_down_change}
+        name: player_drop_down
+        properties:
+          items: [BRA 01 Ana Patricia]
+        type: DropDown
+      - layout_properties: {}
+        name: label_12_copy
+        properties: {align: right, text: 'Player 2:'}
+        type: Label
+      - event_bindings: {change: player_drop_down_change}
+        name: player_drop_down_copy
+        properties:
+          items: [BRA 01 Ana Patricia]
+        type: DropDown
+      layout_properties: {grid_position: 'TKRLGT,DDSDSX'}
+      name: flow_panel_1
       properties: {}
+      type: FlowPanel
+    - layout_properties: {grid_position: 'RWRXWM,JBCAMJ'}
+      name: label_3
+      properties: {align: center, text: Optional Filters.  Check to filter one each item}
+      type: Label
+    - components:
+      - name: rich_text_1
+        properties: {content: 'Competition:'}
+        type: RichText
+      - name: comp_l1_check_box
+        properties: {text: ''}
+        type: CheckBox
+      - event_bindings: {change: comp_l1_drop_down_change}
+        name: comp_l1_drop_down
+        properties:
+          items: [Regular Season]
+        type: DropDown
+      - name: comp_l2_check_box
+        properties: {text: ''}
+        type: CheckBox
+      - name: comp_l2_drop_down
+        properties:
+          items: [Gaastad, Top 20 - Both, Top 20 - One, Unranked]
+        type: DropDown
+      - name: comp_l3_check_box
+        properties: {text: ''}
+        type: CheckBox
+      - name: comp_l3_drop_down
+        properties:
+          items: [Finals, Semis]
+        type: DropDown
+      layout_properties: {grid_position: 'RWDBEO,CGZOFW'}
+      name: flow_panel_6
+      properties: {}
+      type: FlowPanel
+    - components:
+      - layout_properties: {}
+        name: label_10
+        properties: {align: right, text: 'Date: Start:'}
+        type: Label
+      - layout_properties: {}
+        name: date_check_box
+        properties: {text: ''}
+        type: CheckBox
+      - event_bindings: {change: start_date_picker_change}
+        name: start_date_picker
+        properties: {}
+        type: DatePicker
+      - layout_properties: {}
+        name: label_11
+        properties: {align: right, text: ' End:'}
+        type: Label
+      - event_bindings: {change: end_date_picker_change}
+        name: end_date_picker
+        properties: {}
+        type: DatePicker
+      layout_properties: {grid_position: 'PPQFBB,BSVOVJ'}
+      name: flow_panel_2
+      properties: {}
+      type: FlowPanel
+    - components:
+      - layout_properties: {}
+        name: label_5
+        properties: {align: right, text: 'Report:'}
+        type: Label
+      - event_bindings: {change: report_drop_down_change}
+        layout_properties: {}
+        name: report_drop_down
+        properties:
+          items: []
+        type: DropDown
+      - event_bindings: {click: generate_report_button_click}
+        layout_properties: {}
+        name: generate_report_button
+        properties: {align: right, role: outlined-button, text: Generate Report}
+        type: Button
+      - event_bindings: {click: pdf_button_click}
+        layout_properties: {}
+        name: pdf_button
+        properties: {role: outlined-button, text: Generate pdf}
+        type: Button
+      - event_bindings: {click: all_rpt_pdf_click}
+        layout_properties: {}
+        name: all_rpt_pdf
+        properties: {role: outlined-button, text: PDF of All Reports, visible: true}
+        type: Button
+      - event_bindings: {click: summary_pdf_button_click}
+        layout_properties: {}
+        name: summary_pdf_button
+        properties: {role: outlined-button, text: Player Summary PDF}
+        type: Button
+      layout_properties: {grid_position: 'RRUZZU,OYDNHB'}
+      name: flow_panel_4
+      properties: {}
+      type: FlowPanel
+    layout_properties: {}
+    name: outlined_card_4
+    properties: {role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - components:
+      - layout_properties: {grid_position: 'GSSDZH,QHRUMW'}
+        name: box1_label
+        properties: {align: center, bold: true}
+        type: Label
+      - layout_properties: {grid_position: 'BLZLCS,MNQKUG'}
+        name: rpt_disp_box
+        properties: {}
+        type: RichText
+      - layout_properties: {grid_position: 'RKJIHD,RTCOXL'}
+        name: box2_label
+        properties: {align: center, bold: true}
+        type: Label
+      - layout_properties: {grid_position: 'EPXYNM,UGQFFV'}
+        name: rpt_disp_box2
+        properties: {}
+        type: RichText
+      - layout_properties: {grid_position: 'RNDYAK,NEDATC'}
+        name: box3_label
+        properties: {align: center, bold: true}
+        type: Label
+      - layout_properties: {grid_position: 'NLXWVV,TEBLBO'}
+        name: rpt_disp_box3
+        properties: {}
+        type: RichText
+      layout_properties: {grid_position: 'KCZYCU,LQEYDV'}
+      name: outlined_card_3
+      properties: {background: '', role: outlined-card}
       type: ColumnPanel
     - components:
-      - layout_properties: {grid_position: 'UXSKQY,SDRERV'}
-        name: rich_text_1
-        properties:
-          content: |-
-            Reports based on the performance of specific pairs.  These reports will include:
-            - Offense Reports including FBHE by zone, serve location and other.
-            - Serving and Defense
-            - Errors on Transition
+      - layout_properties: {grid_position: 'OULBBH,UTZUNT'}
+        name: rpt_disp_box4
+        properties: {}
         type: RichText
-      layout_properties: {grid_position: 'KCZYCU,LQEYDV GRNBPF,IBYDCD'}
-      name: outlined_card_3
+      layout_properties: {grid_position: 'TQSRMR,WIJTSC'}
+      name: outlined_card_6
+      properties: {role: outlined-card}
+      type: ColumnPanel
+    - components:
+      - components:
+        - name: rich_text_2
+          properties: {}
+          type: RichText
+        layout_properties: {grid_position: 'KKHOKZ,EMDNUX'}
+        name: flow_panel_5
+        properties: {}
+        type: FlowPanel
+      layout_properties: {grid_position: 'TQSRMR,KGXKWF'}
+      name: outlined_card_5
       properties: {role: outlined-card}
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_2
-    properties: {col_widths: '{"SMAHSC":10,"LQEYDV":50}', role: outlined-card}
+    properties: {background: '', col_widths: '{"LQEYDV":50}', role: outlined-card}
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}

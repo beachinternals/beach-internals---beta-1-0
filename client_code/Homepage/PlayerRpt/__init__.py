@@ -381,7 +381,7 @@ class PlayerRpt(PlayerRptTemplate):
     if type(self.comp_l3_drop_down.selected_value['comp_l3']) == type(None):
       self.comp_l3_drop_down.selected_value['comp_l3'] = str()
     
-    pdf_rpt = anvil.server.call('create_pdf_reports', fnct_name, rpt_form
+    pdf_rpt = anvil.server.call('create_pdf_reports', fnct_name, rpt_form,
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
