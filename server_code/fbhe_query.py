@@ -1338,21 +1338,6 @@ def player_sum_rpt(disp_league, disp_gender, disp_year,
 
     # blank row
     #Transition Win - Number of transitiono points we won! and they won
-    tcr = 
-    
-    
-
-    
-    
-  
-                    
-    'SideOut', 
-    'Opp Sideout','',
-                    'FB Stop', 'Opp FB Stop','',
-                    'FB Win','',
-                    'Trans Win','Opp Trans Win','',
-                    'Blocking','Digging','Create','',
-                   'Serving','First Ball Attacking','Transition Attacking'],
  
     # now create the markdown text to return
     scor_return = pd.DataFrame.to_markdown(scor_table)

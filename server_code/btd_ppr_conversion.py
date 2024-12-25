@@ -66,10 +66,10 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
       calc_ppr = True
     else:
-      if not flist_r['ppr_file_date']:
+      if not flist_r['ppr_file_date']: # no date for the ppr file
         ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )         
         calc_ppr = True
-      elif flist_r['btd_file_date'] > flist_r['ppr_file_date']:
+      elif flist_r['btd_file_date'] > flist_r['ppr_file_date']: # btd file is newer then the ppr file
         ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
         calc_ppr = True
 
@@ -89,6 +89,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
     
       # 4) Error check the ppr file for consistency, maybe raise errors into an email/text message??
       ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
+      #print(f"Error String: {error_string}")
     
       # 5) Lastly, save the ppr csv file back into the btd_files database
       # first, I need to cahnge the ppr_file dataframe to a csv file.
@@ -137,12 +138,21 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
 def btd_to_ppr_df(btd_df, flist_r):
 
   # define the two teams and the four players in this file:
-  player_a1 = flist_r['ppr_playera1'] + ' '
-  player_a2 = flist_r['ppr_playera2'] + ' '
-  teama = player_a1 + player_a2
-  player_b1 = flist_r['ppr_playerb1'] + ' '
-  player_b2 = flist_r['ppr_playerb2'] + ' '
-  teamb =  player_b1 + player_b2 
+  # we need to sor the players alphs
+  player_a1 = flist_r['ppr_playera1']
+  player_a2 = flist_r['ppr_playera2']
+  if player_a1 > player_a2:
+    tmp = player_a1 
+    player_a1 = player_a2
+    player_a2 = tmp
+  teama = player_a1 + " " + player_a2
+  player_b1 = flist_r['ppr_playerb1']
+  player_b2 = flist_r['ppr_playerb2']
+  if player_b1 > player_b2:
+    tmp = player_b1 
+    player_b1 = player_b2
+    player_b2 = tmp
+  teamb =  player_b1 + " " + player_b2 
   zero = 0
   yn = "N"
   blank = 'empty'
@@ -601,7 +611,6 @@ def transpose_ppr_coord(ppr_df):
 
 def error_check_ppr(ppr_df):
   #print("#############  Error Checking ppr DataFrame ######################")
-  #print(f"Match: {ppr_df.at(1,'teama')}, {ppr_df.at(1,'teamb')}")
   all3 = False
   no_errors = 0
 
@@ -615,6 +624,7 @@ def error_check_ppr(ppr_df):
       all3 = True
       error_string = error_string + print_to_string(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       no_errors += 1
+      #print(f"Error String in all 3:{error_string}")
       
     if ppr_r['set_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and not all3:
       #print(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
@@ -643,9 +653,8 @@ def error_check_ppr(ppr_df):
 
     # someday, I'll have to deal with missing players
 
-  #print(f"Total Errors Found:{no_errors}")
+    #print(f"Total Errors Found:{no_errors}")
   error_string = error_string + print_to_string(f"Total Errors Found:{no_errors}")
-  
   return ppr_df, no_errors, error_string
 
 def calc_dist(x1,x2,y1,y2):
@@ -777,11 +786,11 @@ def calc_tactic( ppr_df ):
   return (ppr_df)
 
 def print_to_string(*args, **kwargs):
-    output = io.StringIO()
-    #print(*args, file=output, **kwargs)
-    contents = output.getvalue()
-    output.close()
-    return contents
+  output = io.StringIO()
+  print(*args, file=output, **kwargs)
+  contents = output.getvalue()
+  output.close()
+  return contents
 
 def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle):
   # calcualte the out of system flag
@@ -815,7 +824,7 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
     oos_flag = oos_flag + 100
     #print(f'5 oos flag: {oos_flag}')
     
-  if ( oos_flag != 0 ):
-    print(f'6 oos flag: {oos_flag}, Dest net, depth, height, src net, angle: {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
+  #if ( oos_flag != 0 ):
+   # print(f'6 oos flag: {oos_flag}, Dest net, depth, height, src net, angle: {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
     
   return oos_flag

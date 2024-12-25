@@ -48,3 +48,9 @@ class scheduled_tasks(scheduled_tasksTemplate):
     alert(return_text)
     pass
 
+  def pair_file_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    return_text = anvil.server.call(('build_pair_table'))
+    alert(return_text)
+    pass
+

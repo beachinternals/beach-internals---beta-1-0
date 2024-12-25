@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import btd_ppr_conversion
 import ppr_master_merge
+import io
 
 # functions to update / rebuild all the data files
 
@@ -217,6 +218,8 @@ def calculate_data1():
         r_val = anvil.server.launch_background_task('calculate_player_data', c_league, c_gender, c_year)
         email_text = email_text + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
         r_val = anvil.server.launch_background_task('calculate_triangle_scoring', c_league, c_gender, c_year)
+        email_text = email_text + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+        r_val = anvil.server.launch_background_task('build_pair_table_background', c_league, c_gender, c_year)
 
   #now, send an email with the updates
   internals_email = 'spccoach@gmail.com'
@@ -226,3 +229,49 @@ def calculate_data1():
 
   return r_val, email_status
 
+@anvil.server.background_task
+def build_pair_table_background(c_league, c_gender, c_year):
+  # call the background taks
+  # build the pair table for each league based on the ppr.league table
+
+  # get the ppr file
+  c_team = "League"    # only updating the league tables
+  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+  ppr_csv_row = app_tables.ppr_csv_tables.get( 
+    q.all_of(
+      league = c_league,
+      gender = c_gender,
+      year = c_year,
+      team = c_team
+      ) )
+
+  if ppr_csv_row:
+    ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
+    if ppr_df.shape[0] == 0:
+      return ["No Rows"]
+  else:
+    #print('No Rows Found')
+    return ["No Rows"]
+
+  # extract team a and team b lists
+  team_list_a = ppr_df['teama']
+  #print(f"Team List A: {team_list_a}")
+  team_list_a = team_list_a.rename( {'teama':'team'} )
+  team_list_b = ppr_df['teamb']
+  #print(f"Team List B: {team_list_b}")
+  team_list_b = team_list_b.rename( {'teamb':'team'} )
+  team_list = pd.concat([team_list_a,team_list_b])
+  print(f"Pair List:{team_list}")
+  team_list = team_list.unique()
+  print(f"Pair List:{team_list}")
+  team_list = team_list.sort()
+
+  # save it back to the ppr_csv table
+  # first, I need to cahnge the ppr_file dataframe to a csv file.
+  tmp = pd.DataFrame(team_list)
+  pair_csv_file = pd.DataFrame.to_csv(tmp)
+  pair_media = anvil.BlobMedia(content_type="text/plain", content=pair_csv_file.encode(), name="pair_table.csv")
+  ppr_csv_row.update(pair_list = pair_media)
+
+  return True
+  

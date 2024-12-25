@@ -180,6 +180,29 @@ db_schema:
       type: string
     server: full
     title: league_list
+  master_pair:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: league
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: gender
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: year
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: player1
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      name: player1_2
+      type: string
+    - admin_ui: {order: 5, width: 200}
+      name: pair
+      type: string
+    server: full
+    title: master_pair
   master_player:
     client: full
     columns:
@@ -253,6 +276,9 @@ db_schema:
       type: number
     - admin_ui: {order: 11, width: 200}
       name: tri_data
+      type: media
+    - admin_ui: {order: 12, width: 200}
+      name: pair_list
       type: media
     server: full
     title: ppr_csv_tables

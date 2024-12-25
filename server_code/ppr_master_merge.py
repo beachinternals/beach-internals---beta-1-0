@@ -259,7 +259,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
     ) )
 
   if ppr_csv_row:
-    #print("ipdating a row to the csv table")
+    print(f"Updating a row to the csv table {user_league}, {user_gender}, {user_year}, {user_team}")
     ppr_csv_row.update(
       league = user_league,
       gender = user_gender,
@@ -277,7 +277,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
       team = user_team,
       ppr_csv = ppr_media,
       date = datetime.datetime.now(),
-      min_att= 5  # curently set at this number, can be changed i the table
+      min_att= 5  # curently set at this number, can be changed in the table
     )
 
   pass
