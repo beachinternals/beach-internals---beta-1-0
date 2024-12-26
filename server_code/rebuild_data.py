@@ -236,8 +236,8 @@ def build_pair_table(c_league,c_gender,c_year):
   return anvil.server.launch_background_task('build_pair_table_background',c_league,c_gender,c_year)
 
 @anvil.server.callable
-def build_pair_data_table(c_league,c_gender,c_year):
-  return anvil.server.launch_background_task('build_pair_data_table_background',c_league,c_gender,c_year)
+def build_pair_data_table():
+  return anvil.server.launch_background_task('build_pair_data_background')
 
   
 @anvil.server.background_task
@@ -247,7 +247,7 @@ def build_pair_table_background(c_league, c_gender, c_year):
 
   # get the ppr file
   c_team = "League"    # only updating the league tables
-  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+  print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = c_league,
@@ -293,38 +293,37 @@ def build_pair_table_background(c_league, c_gender, c_year):
 
   return True
 
+#----------------------------------------------------------------------------------
 @anvil.server.background_task
-def build_pair_table_background():
+def build_pair_data_background():
   # here we put the pair table into the pairs table in Anvil, using the pair_list in the 'league' entries
 
   # dump the contents of the master_pairs table in anvil
   
   # get a set of rows from ppr_ccv table for team = league, loop thru the rows
-  # get the ppr file
-  c_team = "League"    # only updating the league tables
-  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
-  ppr_csv_row = app_tables.ppr_csv_tables.get( 
-    q.all_of(
-      league = c_league,
-      gender = c_gender,
-      year = c_year,
-      team = c_team
-      ) )
 
-  if ppr_csv_row:
-    pair_df =  pd.read_csv(io.BytesIO( ppr_csv_row['pair_list'].get_bytes()))
+  for lrow in app_tables.ppr_csv_tables.search( team=q.like("League") ):
+    print(f"League Row:,{lrow['league']}, {lrow['gender']},{lrow['year']}")
+    pair_df =  pd.read_csv(io.BytesIO( lrow['pair_list'].get_bytes()))
     if pair_df.shape[0] == 0:
-      return ["No Rows"]
-  else:
-    #print('No Rows Found')
-    return ["No Rows"]
+      return ["No Pair List Found"]
+      
+    # loop thru the rows in in teh pair-list
+    print(pair_df)
+    for p in pair_df.iterrows():
+      # create a new row in the master_pair table
+      print(f"Row; {p}")
+      print(f"Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']}")
+      print(f"p1 {p[1,'team']}")
+      print(f"p2 {p[2,'team']}")
+      print(f"p3 {p[3]}")
+      print(f"p0 {p[0]}")
+      app_tables.master_pair.add_row( league = lrow['league'],
+                                      gender = lrow['gender'],
+                                      year = lrow['year'],
+                                      player1 = p['player1'],
+                                      player2 = p['player2'],
+                                      pair = p['team']
+                )
 
-  
-    # unpack the pair_list in to a data frame
-
-    # loop thur the data frame
-
-      # for each row in the dataframe, create a row in the master_pairs datatable
-  
-  
   return True

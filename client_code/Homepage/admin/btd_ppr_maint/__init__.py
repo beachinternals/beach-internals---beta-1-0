@@ -165,7 +165,7 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
 
     # unpack the league, gender, year from the drop down
     # extract league, gender, year from league selected value
-    league_value = self.tri_league_drop_down.selected_value
+    league_value = self.league4_drop_down.selected_value
     str_loc = league_value.index('|')
     disp_league = league_value[:str_loc-1].strip()
     league_value = league_value[str_loc+1:]
@@ -188,5 +188,11 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
 
   def league4_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
+    pass
+
+  def build_master_pair_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    task = anvil.server.call('build_pair_data_table')
+    alert(task)
     pass
 
