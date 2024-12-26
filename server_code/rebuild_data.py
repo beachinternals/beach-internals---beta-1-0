@@ -233,7 +233,12 @@ def calculate_data1():
 
 @anvil.server.callable
 def build_pair_table(c_league,c_gender,c_year):
-  return  anvil.server.launch_background_task('build_pair_table_background',c_league,c_gender,c_year)
+  return anvil.server.launch_background_task('build_pair_table_background',c_league,c_gender,c_year)
+
+@anvil.server.callable
+def build_pair_data_table(c_league,c_gender,c_year):
+  return anvil.server.launch_background_task('build_pair_data_table_background',c_league,c_gender,c_year)
+
   
 @anvil.server.background_task
 def build_pair_table_background(c_league, c_gender, c_year):
@@ -271,7 +276,7 @@ def build_pair_table_background(c_league, c_gender, c_year):
   team_list = pd.concat([team_list_a,team_list_b])
   print(f"Pair List Concat:{team_list}")
   
-  team_list = pd.unique(team_list['team'])
+  team_list = team_list.drop_duplicates()
   print(f"Pair List Unique:{team_list}")
   
   team_list = team_list.sort_values(by=['team'])
@@ -287,4 +292,39 @@ def build_pair_table_background(c_league, c_gender, c_year):
   ppr_csv_row.update(pair_list = pair_media)
 
   return True
+
+@anvil.server.background_task
+def build_pair_table_background():
+  # here we put the pair table into the pairs table in Anvil, using the pair_list in the 'league' entries
+
+  # dump the contents of the master_pairs table in anvil
   
+  # get a set of rows from ppr_ccv table for team = league, loop thru the rows
+  # get the ppr file
+  c_team = "League"    # only updating the league tables
+  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+  ppr_csv_row = app_tables.ppr_csv_tables.get( 
+    q.all_of(
+      league = c_league,
+      gender = c_gender,
+      year = c_year,
+      team = c_team
+      ) )
+
+  if ppr_csv_row:
+    pair_df =  pd.read_csv(io.BytesIO( ppr_csv_row['pair_list'].get_bytes()))
+    if pair_df.shape[0] == 0:
+      return ["No Rows"]
+  else:
+    #print('No Rows Found')
+    return ["No Rows"]
+
+  
+    # unpack the pair_list in to a data frame
+
+    # loop thur the data frame
+
+      # for each row in the dataframe, create a row in the master_pairs datatable
+  
+  
+  return True
