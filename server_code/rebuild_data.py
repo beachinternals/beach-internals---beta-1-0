@@ -260,25 +260,29 @@ def build_pair_table_background(c_league, c_gender, c_year):
     return ["No Rows"]
 
   # extract team a and team b lists
-  team_list_a = ppr_df['teama']
+  team_list_a = ppr_df[['teama','player_a1','player_a2']]
+  team_list_a = team_list_a.rename( columns={'teama':'team', 'player_a1':'player1', 'player_a2':'player2'} )
   print(f"Team List A: {team_list_a}")
-  team_list_a = team_list_a.rename( {'teama':'team'} )
-  team_list_b = ppr_df['teamb']
+  
+  team_list_b = ppr_df[['teamb','player_b1','player_b2']]
+  team_list_b = team_list_b.rename( columns={'teamb':'team', 'player_b1':'player1','player_b2':'player2'} )
   print(f"Team List B: {team_list_b}")
-  team_list_b = team_list_b.rename( {'teamb':'team'} )
+  
   team_list = pd.concat([team_list_a,team_list_b])
   print(f"Pair List Concat:{team_list}")
-  team_list = team_list.unique()
+  
+  team_list = pd.unique(team_list['team'])
   print(f"Pair List Unique:{team_list}")
-  team_list = np.sort(team_list)
+  
+  team_list = team_list.sort_values(by=['team'])
   print(f"Pair List Sort:{team_list}")
 
   # save it back to the ppr_csv table
   # first, I need to cahnge the ppr_file dataframe to a csv file.
   tmp = pd.DataFrame(team_list)
-  print(f"TMP: pair list in a dataframe:{tmp}")
+  #print(f"TMP: pair list in a dataframe:{tmp}")
   pair_csv_file = pd.DataFrame.to_csv(tmp)
-  print(f"Pair lisdt as a csv file :{pair_csv_file}")
+  #print(f"Pair lisdt as a csv file :{pair_csv_file}")
   pair_media = anvil.BlobMedia(content_type="text/plain", content=pair_csv_file.encode(), name="pair_table.csv")
   ppr_csv_row.update(pair_list = pair_media)
 
