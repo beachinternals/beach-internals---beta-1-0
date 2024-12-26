@@ -180,7 +180,7 @@ components:
     - event_bindings: {click: all_player_data_button_click}
       layout_properties: {grid_position: 'EPIKIX,QKQQGO'}
       name: all_player_data_button
-      properties: {role: outlined-button, text: Create All Player Data}
+      properties: {role: outlined-button, text: 'Create All Player Data : calc_all_player_data'}
       type: Button
     layout_properties: {grid_position: 'JHHHYC,CPTHKC RZJHWY,KMBAYE'}
     name: column_panel_9
@@ -204,7 +204,7 @@ components:
     - event_bindings: {click: create_summary_button_click}
       layout_properties: {grid_position: 'SAAYSZ,HIWCGL'}
       name: create_summary_button
-      properties: {role: outlined-button, text: Create Player Data}
+      properties: {role: outlined-button, text: 'Create Player Data: calc_player_data_background'}
       type: Button
     layout_properties: {grid_position: 'JHHHYC,ZAAVXD ACLRPN,NWKIGP'}
     name: column_panel_10
@@ -231,10 +231,33 @@ components:
   - event_bindings: {click: tri_button_click}
     layout_properties: {grid_position: 'YVKKFQ,OPBVNI'}
     name: tri_button
-    properties: {role: outlined-button, text: Create Table}
+    properties: {role: outlined-button, text: 'Create Table:calc_triangle_scoring_background'}
     type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'WEKJSE,BOKYTA'}
+    name: label_12
+    properties: {text: Create Pair Table}
+    type: Label
+  - layout_properties: {grid_position: 'WEKJSE,SJWOMI'}
+    name: label_13
+    properties: {align: right, text: 'League:'}
+    type: Label
+  - event_bindings: {change: league4_drop_down_change}
+    layout_properties: {grid_position: 'WEKJSE,JGSFSZ'}
+    name: league4_drop_down
+    properties: {}
+    type: DropDown
+  - event_bindings: {click: create_pair_button_click}
+    layout_properties: {grid_position: 'WEKJSE,BFKIAM'}
+    name: create_pair_button
+    properties: {role: outlined-button, text: 'Create Table:build_pair_table'}
+    type: Button
+  layout_properties: {grid_position: 'APTLEV,LMLBTY'}
+  name: outlined_card_6
   properties: {role: outlined-card}
   type: ColumnPanel
 container: {type: ColumnPanel}

@@ -75,15 +75,6 @@ components:
     name: outlined_button_4
     properties: {role: outlined-button, text: Calc Data}
     type: Button
-  - layout_properties: {grid_position: 'YVKKFQ,NHRAUN PWZYQO,WHPIDQ'}
-    name: label_8
-    properties: {align: right, text: 'Build Pair FIle:'}
-    type: Label
-  - event_bindings: {click: pair_file_button_click}
-    layout_properties: {grid_position: 'YVKKFQ,NHRAUN PWZYQO,AZRSHX'}
-    name: pair_file_button
-    properties: {role: outlined-button, text: Pair FIle}
-    type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5
   properties: {col_widths: '{"VYNCIF":20,"RLNRSN":15,"NHRAUN":25}', role: outlined-card}

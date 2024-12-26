@@ -8,6 +8,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 
+
 class btd_ppr_maint(btd_ppr_maintTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
@@ -51,7 +52,10 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     # First, populate the selected values for the 3rd box
     self.league3_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
     self.league3_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
+    self.league4_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
+    self.league4_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
 
+    
     # populate drop down for Traingle Scoring
       # populate the drop downs for league
     self.tri_league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
@@ -153,5 +157,36 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     # call the server functions
 
     
+    pass
+
+  def create_pair_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # Call the server routine to calculate the pair table
+
+    # unpack the league, gender, year from the drop down
+    # extract league, gender, year from league selected value
+    league_value = self.tri_league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    
+    return_text = anvil.server.call(
+      'build_pair_table',
+      disp_league,
+      disp_gender,
+      disp_year
+    )
+    alert(return_text)
+    pass
+
+  def tri_league_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    pass
+
+  def league4_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
     pass
 

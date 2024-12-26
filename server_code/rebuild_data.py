@@ -11,6 +11,8 @@ import pandas as pd
 import btd_ppr_conversion
 import ppr_master_merge
 import io
+import rebuild_data
+import numpy as np
 
 # functions to update / rebuild all the data files
 
@@ -229,6 +231,10 @@ def calculate_data1():
 
   return r_val, email_status
 
+@anvil.server.callable
+def build_pair_table(c_league,c_gender,c_year):
+  return  anvil.server.launch_background_task('build_pair_table_background',c_league,c_gender,c_year)
+  
 @anvil.server.background_task
 def build_pair_table_background(c_league, c_gender, c_year):
   # call the background taks
@@ -255,21 +261,24 @@ def build_pair_table_background(c_league, c_gender, c_year):
 
   # extract team a and team b lists
   team_list_a = ppr_df['teama']
-  #print(f"Team List A: {team_list_a}")
+  print(f"Team List A: {team_list_a}")
   team_list_a = team_list_a.rename( {'teama':'team'} )
   team_list_b = ppr_df['teamb']
-  #print(f"Team List B: {team_list_b}")
+  print(f"Team List B: {team_list_b}")
   team_list_b = team_list_b.rename( {'teamb':'team'} )
   team_list = pd.concat([team_list_a,team_list_b])
-  print(f"Pair List:{team_list}")
+  print(f"Pair List Concat:{team_list}")
   team_list = team_list.unique()
-  print(f"Pair List:{team_list}")
-  team_list = team_list.sort()
+  print(f"Pair List Unique:{team_list}")
+  team_list = np.sort(team_list)
+  print(f"Pair List Sort:{team_list}")
 
   # save it back to the ppr_csv table
   # first, I need to cahnge the ppr_file dataframe to a csv file.
   tmp = pd.DataFrame(team_list)
+  print(f"TMP: pair list in a dataframe:{tmp}")
   pair_csv_file = pd.DataFrame.to_csv(tmp)
+  print(f"Pair lisdt as a csv file :{pair_csv_file}")
   pair_media = anvil.BlobMedia(content_type="text/plain", content=pair_csv_file.encode(), name="pair_table.csv")
   ppr_csv_row.update(pair_list = pair_media)
 
