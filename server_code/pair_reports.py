@@ -158,48 +158,61 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   # Call number of points
   pts_df = pair_pt_total(ppr_df,disp_pair)
+
   
-  if pts_df[0,'pts_total'] != 0:
+  if pts_df.shape[0] != 0:
     # now store the values into t scor_return array
     # point differential
     scor_table.at[0,'#'] = ( ( pts_df.at[0,'p_tsa'] + pts_df.at[0,'p_fbk'] + pts_df.at[0,'p_tk'] + pts_df.at[0,'o_tse'] + pts_df.at[0,'o_fbe'] + pts_df.at[0,'o_te'] ) -
                           ( pts_df.at[0,'p_tse'] + pts_df.at[0,'p_fbe'] + pts_df.at[0,'p_te'] + pts_df.at[0,'o_tsa'] + pts_df.at[0,'o_fbk'] + pts_df.at[0,'o_tk'] ) )
     scor_table.at[0,'%'] = scor_table.at[0,'#']/pts_df.at[0,'pts_total']
+    scor_table.at[0,'%'] = str('{:.1%}'.format(scor_table.at[0,'%'])) 
 
     # Terminal Serves
     scor_table.at[1,'#'] = ( pts_df.at[0,'p_tsa'] + pts_df.at[0,'o_tse']) - ( pts_df.at[0,'o_tsa'] + pts_df.at[0,'p_tse'])
     scor_table.at[1,'%'] = scor_table.at[1,'#']/pts_df.at[0,'pts_total']
+    scor_table.at[1,'%'] = str('{:.1%}'.format(scor_table.at[1,'%'])) 
 
     # live Rallies -- guessing all transition points??
     scor_table.at[2,'#'] = pts_df.at[0,'p_tk'] + pts_df.at[0,'p_te'] + pts_df.at[0,'o_tk'] + pts_df.at[0,'o_te']
     scor_table.at[2,"%"] = scor_table.at[2,'#'] / pts_df.at[0,'pts_total']
+    scor_table.at[2,'%'] = str('{:.1%}'.format(scor_table.at[2,'%'])) 
 
     # blank row
     # Side out = FBK + TK
     #----------------------------
     #... i think we have an issue here as we want TK only when we were served?  Or both TE and TK when we were served?
     #----------------------
-    scor_table.at[4,'#'] = pts_df.at[0,'p_fbk'] + pts_df.at[0,'p_tk']
-    scor_table.at[4,"%"] = scor_table.at[4,'#'] / pts_df.at[0,'pts_total']
-    scor_table.at[5,'#'] = pts_df.at[0,'o_fbk'] + pts_df.at[0,'o_tk']
-    scor_table.at[5,"%"] = scor_table.at[5,'#'] / pts_df.at[0,'pts_total']
+    scor_table.at[4,'#'] = pts_df.at[0,'p_fbk']
+    scor_table.at[4,"%"] = scor_table.at[4,'#'] / (pts_df.at[0,'o_serves']-pts_df.at[0,'o_tse'] )
+    scor_table.at[4,'%'] = str('{:.1%}'.format(scor_table.at[4,'%'])) 
+    scor_table.at[5,'#'] = pts_df.at[0,'o_fbk'] 
+    scor_table.at[5,"%"] = scor_table.at[5,'#'] // (pts_df.at[0,'p_serves']-pts_df.at[0,'p_tse'] )
+    scor_table.at[5,'%'] = str('{:.1%}'.format(scor_table.at[5,'%'])) 
 
     # first ball sideout - FBK/points
     scor_table.at[7,"#"] = pts_df.at[0,'p_fbk']
-    scor_table.at[7,"%"] = pts_df.at[0,'p_fbk']/pts_df.at[0,'o_serves']
+    if pts_df.at[0,'o_serves'] != 0:
+      scor_table.at[7,"%"] = pts_df.at[0,'p_fbk']/(pts_df.at[0,'o_serves']-pts_df.at[0,'o_tse'])
+      scor_table.at[7,'%'] = str('{:.1%}'.format(scor_table.at[7,'%'])) 
     scor_table.at[8,"#"] = pts_df.at[0,'o_fbk']
-    scor_table.at[8,"%"] = pts_df.at[0,'o_fbk']/pts_df.at[0,'p_serves']
+    if pts_df.at[0,'p_serves'] != 0:
+      scor_table.at[8,"%"] = pts_df.at[0,'o_fbk']/(pts_df.at[0,'p_serves']-pts_df.at[0,'p_tse'])
+      scor_table.at[8,'%'] = str('{:.1%}'.format(scor_table.at[8,'%'])) 
 
     # blank row
     # first ball stop - fbe / serves (attempts)
     scor_table.at[10,"#"] = pts_df.at[0,'o_fbe']
     scor_table.at[10,"%"] = pts_df.at[0,'o_fbe']/(pts_df.at[0,'p_serves'] - pts_df.at[0,'p_tse'])
+    scor_table.at[10,'%'] = str('{:.1%}'.format(scor_table.at[10,'%'])) 
     scor_table.at[11,"#"] = pts_df.at[0,'p_fbe']
     scor_table.at[11,"%"] = pts_df.at[0,'p_fbe']/(pts_df.at[0,'o_serves'] - pts_df.at[0,'o_tse'])
+    scor_table.at[11,'%'] = str('{:.1%}'.format(scor_table.at[11,'%'])) 
 
     # blank row
     # first ball win %
-    scor_table.at[13,'%'] = ( pts_df.at[0,'p_fbk'] + pts_df.at[0,'o_fbe']) / (pts_df.at[0,'pts_total']-pts_df.at[0,'p_tse']-ptd_df.at[0,'o_tse'])
+    scor_table.at[13,'%'] = ( pts_df.at[0,'p_fbk'] + pts_df.at[0,'o_fbe']) / (pts_df.at[0,'pts_total']-pts_df.at[0,'p_tse']-pts_df.at[0,'o_tse'])
+    scor_table.at[13,'%'] = str('{:.1%}'.format(scor_table.at[13,'%'])) 
 
     # blank row
     #Transition Win - Number of transitiono points we won! and they won

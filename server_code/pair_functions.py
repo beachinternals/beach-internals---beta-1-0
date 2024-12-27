@@ -34,6 +34,8 @@ def pair_filter(ppr_df, disp_pair):
 def pair_players(disp_pair):
   # search the master pair table to find the two players
   disp_pair = disp_pair.strip()
+  disp_player1 = ''
+  disp_player2 = ''
   for pair_row in app_tables.master_pair.search(pair=disp_pair):
     disp_player1 = pair_row['player1']
     disp_player2 = pair_row['player2']
@@ -50,19 +52,24 @@ def pair_pt_total(ppr_df, disp_pair):
               'p_tse':[0],# this pair, terminal serve error
               'p_fbk':[0], # this pair, first ball kill
               'p_fbe':[0], # this pair, first ball error
-              'p_tk':[0], # this pair, transition kills
-              'p_te':[0], # this pair, transition errors
+              'p_tk_s':[0], # this pair, transition kill when serving
+              'p_te_s':[0], # this pair, transition error when serving
+              'p_tk_r':[0], # this pair, transition kills when receiving
+              'p_te_r':[0], # this pair, transition error when receiving
               'p_serves':[0], # this pair, total number of serves
               'o_tsa':[0], # opponent - terminal serve ace
               'o_tse':[0], # opponent - terminal serve error
               'o_fbk':[0], # opponent - first ball kill
               'o_fbe':[0], # opponent - first ball error
-              'o_tk':[0], # opponent - transition kill
-              'o_te':[0], # opponent - transition error
+              'o_tk_s':[0], # this pair, transition kill when serving
+              'o_te_s':[0], # this pair, transition error when serving
+              'o_tk_r':[0], # this pair, transition kills when receiving
+              'o_te_r':[0], # this pair, transition error when receiving
               'o_serves':[0], # opponent - total number of serves
               'pts_total':[0] # total number of points played
              }
 
+  player1, player2 = pair_players(disp_pair)
   pts_df = pd.DataFrame.from_dict( pts_dict )
   disp_pair = disp_pair.strip() # just to make sure!
   # filter whoiel dataframe to this player:
@@ -74,21 +81,48 @@ def pair_pt_total(ppr_df, disp_pair):
   pts_df.at[0,'p_tse'] = tmp_df[ tmp_df['point_outcome'] == 'TSE' ].shape[0]
   pts_df.at[0,'p_fbk'] = tmp_df[ tmp_df['point_outcome'] == 'FBK' ].shape[0]
   pts_df.at[0,'p_fbe'] = tmp_df[ tmp_df['point_outcome'] == 'FBE' ].shape[0]
+
+  tmp2_df = tmp_df[ tmp_df['serve_player'] == player1]
   pts_df.at[0,'p_tk']  = tmp_df[ tmp_df['point_outcome'] == 'TK'  ].shape[0]
   pts_df.at[0,'p_te']  = tmp_df[ tmp_df['point_outcome'] == 'TE'  ].shape[0]
-  pts_df.at[0,'p_serves'] = tmp_df[ disp_pair.contains(tmp_df['serve_player']) ]
   
-  tmp_df = ppr_df[ ~ppr_df['point_outcome_team'] == disp_pair]
+  pts_df.at[0,'p_serves'] = ppr_df[ ppr_df['serve_player'] == player1  ].shape[0] + ppr_df[ ppr_df['serve_player'] == player2  ].shape[0]
+  
+  tmp_df = ppr_df[ ppr_df['point_outcome_team'] != disp_pair]
   pts_df.at[0,'o_tsa'] = tmp_df[ tmp_df['point_outcome'] == 'TSA' ].shape[0]
   pts_df.at[0,'o_tse'] = tmp_df[ tmp_df['point_outcome'] == 'TSE' ].shape[0]
   pts_df.at[0,'o_fbk'] = tmp_df[ tmp_df['point_outcome'] == 'FBK' ].shape[0]
   pts_df.at[0,'o_fbe'] = tmp_df[ tmp_df['point_outcome'] == 'FBE' ].shape[0]
   pts_df.at[0,'o_tk'] = tmp_df[ tmp_df['point_outcome'] == 'TK' ].shape[0]
   pts_df.at[0,'o_te'] = tmp_df[ tmp_df['point_outcome'] == 'TE' ].shape[0]
-  pts_df.at[0,'o_serves'] = tmp_df[ ~disp_pair.str.contains(tmp_df['serve_player']) ]
+    
+  tmp_df = ppr_df[ ppr_df['serve_player'] != player1 ]
+  pts_df.at[0,'o_serves'] = tmp_df[ tmp_df['serve_player'] != player2  ].shape[0]
   
   pts_df.at[0,'pts_total'] = ppr_df.shape[0]
 
+  if True:  # make true if you want to check the numers
+    print("Points Data Frame")
+    print(f"p_tsa: {pts_df.at[0,'p_tsa']}")
+    print(f"p_tse: {pts_df.at[0,'p_tse']}")
+    print(f"p_fbk: {pts_df.at[0,'p_fbk']}")
+    print(f"p_fbe: {pts_df.at[0,'p_fbe']}")
+    print(f"p_tk_s: {pts_df.at[0,'p_tk_s']}")
+    print(f"p_te_s: {pts_df.at[0,'p_te_s']}")
+    print(f"p_tk_r: {pts_df.at[0,'p_tk_r']}")
+    print(f"p_te_r: {pts_df.at[0,'p_te_r']}")
+    print(f"p_serves: {pts_df.at[0,'p_serves']}")
+    print(f"o_tsa: {pts_df.at[0,'o_tsa']}")
+    print(f"o_tse: {pts_df.at[0,'o_tse']}")
+    print(f"o_fbk: {pts_df.at[0,'o_fbk']}")
+    print(f"o_fbe: {pts_df.at[0,'o_fbe']}")
+    print(f"o_tk_s: {pts_df.at[0,'o_tk_s']}")
+    print(f"o_te_s: {pts_df.at[0,'o_te_s']}")
+    print(f"o_tk_r: {pts_df.at[0,'o_tk_r']}")
+    print(f"o_te_r: {pts_df.at[0,'o_te_r']}")
+    print(f"o_serves: {pts_df.at[0,'o_serves']}")
+    print(f"pts_total: {pts_df.at[0,'pts_total']}")
+  
   return pts_df
   
   
