@@ -57,10 +57,10 @@ class PlayerRpt(PlayerRptTemplate):
     # populate the reports drop down
     if anvil.users.get_user()['team'] == "INTERNALS":
       self.report_drop_down.items = [
-      (row['report_name']) for row in app_tables.report_list.search()]
+      (row['report_name']) for row in app_tables.report_list.search(rpt_type='player')]
     else:
       self.report_drop_down.items = [
-      (row['report_name']) for row in app_tables.report_list.search(private=False)
+      (row['report_name']) for row in app_tables.report_list.search(private=False, rpt_type='player')
     ]
   
 

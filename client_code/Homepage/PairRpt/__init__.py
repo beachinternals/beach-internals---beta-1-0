@@ -7,8 +7,6 @@ import anvil.users
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
-from PlayerRpt1 import *
-from PlayerRpt2 import *
 import datetime
 
 
@@ -63,27 +61,24 @@ class PairRpt(PairRptTemplate):
     ]
 
     # populate the player drop down
-    self.player_drop_down.items = [
-      (row["team"] + " " + row["number"] + " " + row["shortname"], row)
-      for row in app_tables.master_player.search(
-        tables.order_by("team"),
+    self.pair_drop_down.items = [
+      (row["pair"], row)
+      for row in app_tables.master_pair.search(
+        tables.order_by("pair"),
         league=user_row["def_league"],
         gender=user_row["def_gender"],
         year=user_row["def_year"],
       )
     ]
 
-    # set the default for team drop down and l1, l2, l3
-    self.team_drop_down.selected_value = "Scouting"
-
     # populate the reports drop down
     if anvil.users.get_user()["team"] == "INTERNALS":
       self.report_drop_down.items = [
-        (row["report_name"]) for row in app_tables.report_list.search()
+        (row["report_name"]) for row in app_tables.report_list.search(rpt_type='pair')
       ]
     else:
       self.report_drop_down.items = [
-        (row["report_name"]) for row in app_tables.report_list.search(private=False)
+        (row["report_name"]) for row in app_tables.report_list.search( private=False, rpt_type='pair' )
       ]
 
   def PlayerRpt1_click_click(self, **event_args):
@@ -171,10 +166,10 @@ class PairRpt(PairRptTemplate):
     ]
 
     # set the player drop down
-    self.player_drop_down.items = [
-      (row["team"] + " " + row["number"] + " " + row["shortname"], row)
-      for row in app_tables.master_player.search(
-        tables.order_by("team"),
+    self.pair_drop_down.items = [
+      (row["pair"], row)
+      for row in app_tables.master_pair.search(
+        tables.order_by("pair"),
         league=disp_league,
         gender=disp_gender,
         year=disp_year,
@@ -198,15 +193,6 @@ class PairRpt(PairRptTemplate):
     str_loc = league_value.index("|")
     disp_gender = league_value[: str_loc - 1].strip()
     disp_year = league_value[str_loc + 1 :].strip()
-
-    # unpack the player
-    disp_player = (
-      self.player_drop_down.selected_value["team"]
-      + " "
-      + self.player_drop_down.selected_value["number"]
-      + " "
-      + self.player_drop_down.selected_value["shortname"]
-    )
 
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
@@ -256,7 +242,7 @@ class PairRpt(PairRptTemplate):
       disp_gender,
       disp_year,
       disp_team,
-      disp_player,
+      self.pair_drop_down.selected_value['pair'],
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
       self.comp_l2_check_box.checked,
@@ -276,7 +262,7 @@ class PairRpt(PairRptTemplate):
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
-    - Player : {disp_player}
+    - Pair : {self.pair_drop_down.selected_value['pair']}
     - Competition 1 : {self.comp_l1_drop_down.selected_value['comp_l1'] if self.comp_l1_check_box.checked else ''}
     - Competition 2 : {self.comp_l2_drop_down.selected_value['comp_l2'] if self.comp_l2_check_box.checked else ''}
     - Competition 3 : {self.comp_l3_drop_down.selected_value['comp_l3'] if self.comp_l3_check_box.checked else ''}
@@ -306,7 +292,7 @@ class PairRpt(PairRptTemplate):
     """This method is called when an item is selected"""
     pass
 
-  def player_drop_down_change(self, **event_args):
+  def pair_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
     pass
 

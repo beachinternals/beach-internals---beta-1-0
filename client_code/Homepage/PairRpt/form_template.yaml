@@ -26,19 +26,10 @@ components_by_slot:
         type: DropDown
       - layout_properties: {}
         name: label_12
-        properties: {align: right, text: 'Pair - Player 1:'}
+        properties: {align: right, text: 'Pair:'}
         type: Label
-      - event_bindings: {change: player_drop_down_change}
-        name: player_drop_down
-        properties:
-          items: [BRA 01 Ana Patricia]
-        type: DropDown
-      - layout_properties: {}
-        name: label_12_copy
-        properties: {align: right, text: 'Player 2:'}
-        type: Label
-      - event_bindings: {change: player_drop_down_change}
-        name: player_drop_down_copy
+      - event_bindings: {change: pair_drop_down_change}
+        name: pair_drop_down
         properties:
           items: [BRA 01 Ana Patricia]
         type: DropDown

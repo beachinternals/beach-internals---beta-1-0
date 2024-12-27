@@ -299,31 +299,33 @@ def build_pair_data_background():
   # here we put the pair table into the pairs table in Anvil, using the pair_list in the 'league' entries
 
   # dump the contents of the master_pairs table in anvil
+  app_tables.master_pair.delete_all_rows()
   
   # get a set of rows from ppr_ccv table for team = league, loop thru the rows
 
   for lrow in app_tables.ppr_csv_tables.search( team=q.like("League") ):
     print(f"League Row:,{lrow['league']}, {lrow['gender']},{lrow['year']}")
-    pair_df =  pd.read_csv(io.BytesIO( lrow['pair_list'].get_bytes()))
-    if pair_df.shape[0] == 0:
-      return ["No Pair List Found"]
+    if lrow['pair_list']:
+      pair_df =  pd.read_csv(io.BytesIO( lrow['pair_list'].get_bytes()))
+      if pair_df.shape[0] == 0:
+        print(f"Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
+        return ["No Pair List Found"]
       
-    # loop thru the rows in in teh pair-list
-    print(pair_df)
-    for p in pair_df.iterrows():
-      # create a new row in the master_pair table
-      print(f"Row; {p}")
-      print(f"Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']}")
-      print(f"p1 {p[1,'team']}")
-      print(f"p2 {p[2,'team']}")
-      print(f"p3 {p[3]}")
-      print(f"p0 {p[0]}")
-      app_tables.master_pair.add_row( league = lrow['league'],
-                                      gender = lrow['gender'],
-                                      year = lrow['year'],
-                                      player1 = p['player1'],
-                                      player2 = p['player2'],
-                                      pair = p['team']
-                )
+      # loop thru the rows in in teh pair-list
+      #print(pair_df)
+      for index, p in pair_df.iterrows():
+        # create a new row in the master_pair table
+        #print(f"Row; {p}")
+        #print(f"Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
+        app_tables.master_pair.add_row( league = lrow['league'],
+                                        gender = lrow['gender'],
+                                        year = lrow['year'],
+                                        player1 = p[2],
+                                        player2 = p[3],
+                                        pair = p[1]
+                                        )
+    else:
+      print(f"No Pair List Data Frame Found : {lrow['league']}, {lrow['gender']},{lrow['year']}")
+      return False
 
   return True

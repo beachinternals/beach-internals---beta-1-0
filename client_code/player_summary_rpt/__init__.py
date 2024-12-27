@@ -1,4 +1,4 @@
-from ._anvil_designer import summary_rptTemplate
+from ._anvil_designer import player_summary_rptTemplate
 from anvil import *
 import anvil.server
 import anvil.google.auth, anvil.google.drive
@@ -9,7 +9,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 
 
-class summary_rpt(summary_rptTemplate):
+class player_summary_rpt(player_summary_rptTemplate):
   def __init__(
     self,
     table_data1,
