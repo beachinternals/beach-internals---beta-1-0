@@ -326,9 +326,14 @@ class PairRpt(PairRptTemplate):
       (f_row["explain_text"])
       for f_row in app_tables.report_list.search(report_name=rpt_name)
     ]
+    form_list = [
+      (f_row["rpt_form"])
+      for f_row in app_tables.report_list.search(report_name=rpt_name)
+    ]
     # print(function_list)
     fnct_name = function_list[0]
     table_data4 = text_list[0]
+    form = form_list[0]
     scout = True
 
     # now, call the server module.
@@ -341,6 +346,7 @@ class PairRpt(PairRptTemplate):
     pdf_rpt = anvil.server.call(
       "create_pdf_reports",
       fnct_name,
+      form,
       disp_league,
       disp_gender,
       disp_year,

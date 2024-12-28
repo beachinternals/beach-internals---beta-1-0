@@ -9,6 +9,8 @@ import anvil.server
 import anvil.pdf as PDFRenderer
 from PyPDF2 import PdfMerger
 import io
+import pair_functions
+import pair_reports
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.

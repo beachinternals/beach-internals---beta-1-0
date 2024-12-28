@@ -265,9 +265,11 @@ class PlayerRpt(PlayerRptTemplate):
     rpt_name = self.report_drop_down.selected_value
     function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
     text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    form_list = [(f_row['rpt_form']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
     #print(function_list)
     fnct_name = function_list[0]
     table_data4 = text_list[0]
+    form = form_list[0]
     scout = True
     
     # now, call the server module.
@@ -277,7 +279,7 @@ class PlayerRpt(PlayerRptTemplate):
       self.comp_l3_drop_down.selected_value['comp_l3'] = str()
 
     # call the server function
-    pdf_rpt = anvil.server.call('create_pdf_reports', fnct_name, 
+    pdf_rpt = anvil.server.call('create_pdf_reports', fnct_name, form,
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],

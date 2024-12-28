@@ -23,7 +23,7 @@ class pair_summary_rpt(pair_summary_rptTemplate):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
-    self.player_label.text = disp_player
+    self.pair_label.text = disp_player
     self.rpt_disp_box.content = table_data1
     self.rpt_disp_box2.content = table_data2
     self.rpt_disp_box3.content = table_data3
