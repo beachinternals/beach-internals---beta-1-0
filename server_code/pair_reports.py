@@ -158,13 +158,17 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   # Call number of points
   pts_df = pair_pt_total(ppr_df,disp_pair)
+  #p1_df = player_pt_total(ppr_df,disp_player1)
+  #p2_df = player_pt_total(ppr_df,disp_player2)
 
   
   if pts_df.shape[0] != 0:
     # now store the values into t scor_return array
     # point differential
-    scor_table.at[0,'#'] = ( ( pts_df.at[0,'p_tsa'] + pts_df.at[0,'p_fbk'] + pts_df.at[0,'p_tk'] + pts_df.at[0,'o_tse'] + pts_df.at[0,'o_fbe'] + pts_df.at[0,'o_te'] ) -
-                          ( pts_df.at[0,'p_tse'] + pts_df.at[0,'p_fbe'] + pts_df.at[0,'p_te'] + pts_df.at[0,'o_tsa'] + pts_df.at[0,'o_fbk'] + pts_df.at[0,'o_tk'] ) )
+    scor_table.at[0,'#'] = ( ( pts_df.at[0,'p_tsa'] + pts_df.at[0,'p_fbk'] + pts_df.at[0,'p_tk_s'] + pts_df.at[0,'p_tk_r'] + 
+                               pts_df.at[0,'o_tse'] + pts_df.at[0,'o_fbe'] + pts_df.at[0,'o_te_s'] + pts_df.at[0,'o_te_r'] ) -
+                             ( pts_df.at[0,'p_tse'] + pts_df.at[0,'p_fbe'] + pts_df.at[0,'p_te_s'] + pts_df.at[0,'p_te_s'] + 
+                               pts_df.at[0,'o_tsa'] + pts_df.at[0,'o_fbk'] + pts_df.at[0,'o_tk_s'] + pts_df.at[0,'o_tk_r']  ) )
     scor_table.at[0,'%'] = scor_table.at[0,'#']/pts_df.at[0,'pts_total']
     scor_table.at[0,'%'] = str('{:.1%}'.format(scor_table.at[0,'%'])) 
 
@@ -174,7 +178,8 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
     scor_table.at[1,'%'] = str('{:.1%}'.format(scor_table.at[1,'%'])) 
 
     # live Rallies -- guessing all transition points??
-    scor_table.at[2,'#'] = pts_df.at[0,'p_tk'] + pts_df.at[0,'p_te'] + pts_df.at[0,'o_tk'] + pts_df.at[0,'o_te']
+    scor_table.at[2,'#'] =( pts_df.at[0,'p_tk_s'] + pts_df.at[0,'p_te_s'] + pts_df.at[0,'o_tk_s'] + pts_df.at[0,'o_te_s'] + 
+                            pts_df.at[0,'p_tk_r'] + pts_df.at[0,'p_te_r'] + pts_df.at[0,'o_tk_r'] + pts_df.at[0,'o_te_r'] )
     scor_table.at[2,"%"] = scor_table.at[2,'#'] / pts_df.at[0,'pts_total']
     scor_table.at[2,'%'] = str('{:.1%}'.format(scor_table.at[2,'%'])) 
 
@@ -222,7 +227,44 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   else:
     scor_markdown = "No Data Found"
     # So I think we are done:-)
-  return scor_markdown,  ' ', ' '
+
+  # now, next section, Rotations
+  rot_dict = {'col1':[ disp_player1+' Serve','FB Wins','Ace','Blk', 'Opp Err',' ',
+                                'FB Loss', 'Srv Err','Blk Err','Dig Err', ' ',
+                                'Trans Win', 'Att Kill','Blk','Opp Err',' ',
+                                'Trans Loss','Att Err','Atk Blk','Blk Err','Dig Err',' ',
+                                'Opp SO','Opp FBSO','FB Stop','Trans Win'],
+              'col2':['',0,0,'',0,'',0,0,0,0,'',0,0,0,0,'',0,0,0,0,0,'',0,0,0,0],
+              'col3':[ disp_player1+' Receive','FB Wins','Ace','Blk', 'Opp Err',' ',
+                                'FB Loss', 'Srv Err','Blk Err','Dig Err', ' ',
+                                'Trans Win', 'Att Kill','Blk','Opp Err',' ',
+                                'Trans Loss','Att Err','Atk Blk','Blk Err','Dig Err',' ',
+                                'Opp SO','Opp FBSO','FB Stop','Trans Win'],
+              'col4':['',0,0,0,0,'',0,0,0,0,'',0,0,0,0,'',0,0,0,0,0,'',0,0,0,0],
+              'col5':[ disp_player2+' Serve','FB Wins','Ace','Blk', 'Opp Err',' ',
+                                'FB Loss', 'Srv Err','Blk Err','Dig Err', ' ',
+                                'Trans Win', 'Att Kill','Blk','Opp Err',' ',
+                                'Trans Loss','Att Err','Atk Blk','Blk Err','Dig Err',' ',
+                                'Opp SO','Opp FBSO','FB Stop','Trans Win'],
+              'col6':['',0,0,'',0,'',0,0,0,0,'',0,0,0,0,'',0,0,0,0,0,'',0,0,0,0],
+              'col7':[ disp_player2+' Receive','FB Wins','Ace','Blk', 'Opp Err',' ',
+                                'FB Loss', 'Srv Err','Blk Err','Dig Err', ' ',
+                                'Trans Win', 'Att Kill','Blk','Opp Err',' ',
+                                'Trans Loss','Att Err','Atk Blk','Blk Err','Dig Err',' ',
+                                'Opp SO','Opp FBSO','FB Stop','Trans Win'],
+              'col8':['',0,0,0,0,'',0,0,0,0,'',0,0,0,0,'',0,0,0,0,0,'',0,0,0,0]
+             }
+
+  rot_table = pd.DataFrame.from_dict( rot_dict )
+
+  # working thru the rows ...
+  # FB Wins - Serving
+  #rot_table.at[4,'col1'] = # Opponent error
+
+  
+  rot_markdown = pd.DataFrame.to_markdown(rot_table)
+  
+  return scor_markdown,  rot_markdown, ' '
   
 
 #-------------------------------------------------------

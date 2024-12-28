@@ -309,13 +309,7 @@ class PairRpt(PairRptTemplate):
     disp_year = league_value[str_loc + 1 :].strip()
 
     # unpack the player
-    disp_player = (
-      self.player_drop_down.selected_value["team"]
-      + " "
-      + self.player_drop_down.selected_value["number"]
-      + " "
-      + self.player_drop_down.selected_value["shortname"]
-    )
+    disp_pair = self.pair_drop_down.selected_value['pair']
 
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
@@ -351,7 +345,7 @@ class PairRpt(PairRptTemplate):
       disp_gender,
       disp_year,
       disp_team,
-      disp_player,
+      disp_pair,
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
       self.comp_l2_check_box.checked,
@@ -362,12 +356,12 @@ class PairRpt(PairRptTemplate):
       self.start_date_picker.date,
       self.end_date_picker.date,
       scout,
-      table_data4,
+      table_data4
     )
     result = anvil.server.call(
       "send_email",
-      "Beach Internals Player Report - PDF Version",
-      "Attached please find the PDF version of the Player Report",
+      "Beach Internals Pair Report - PDF Version",
+      "Attached please find the PDF version of the Pair Report",
       pdf_rpt,
       "",
       "",
