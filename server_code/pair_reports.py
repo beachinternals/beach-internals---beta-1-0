@@ -174,13 +174,14 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
 
     # Terminal Serves
     scor_table.at[1,'#'] = ( pts_df.at[0,'p_tsa'] + pts_df.at[0,'o_tse']) - ( pts_df.at[0,'o_tsa'] + pts_df.at[0,'p_tse'])
-    scor_table.at[1,'%'] = scor_table.at[1,'#']/pts_df.at[0,'pts_total']
+    scor_table.at[1,'%'] = scor_table.at[1,'#']/(pts_df.at[0,'p_tse']+pts_df.at[0,'p_tsa']+pts_df.at[0,'o_tse']+pts_df.at[0,'p_tsa'])
     scor_table.at[1,'%'] = str('{:.1%}'.format(scor_table.at[1,'%'])) 
 
     # live Rallies -- guessing all transition points??
-    scor_table.at[2,'#'] =( pts_df.at[0,'p_tk_s'] + pts_df.at[0,'p_te_s'] + pts_df.at[0,'o_tk_s'] + pts_df.at[0,'o_te_s'] + 
-                            pts_df.at[0,'p_tk_r'] + pts_df.at[0,'p_te_r'] + pts_df.at[0,'o_tk_r'] + pts_df.at[0,'o_te_r'] )
-    scor_table.at[2,"%"] = scor_table.at[2,'#'] / pts_df.at[0,'pts_total']
+    scor_table.at[2,'#'] =(( pts_df.at[0,'p_tk_s'] + pts_df.at[0,'p_tk_r'] + pts_df.at[0,'o_te_s'] + pts_df.at[0,'o_te_r']) -
+                          ( pts_df.at[0,'p_te_s'] + pts_df.at[0,'p_te_r'] + pts_df.at[0,'o_tk_s'] + pts_df.at[0,'o_tk_r'] ))
+    scor_table.at[2,"%"] = scor_table.at[2,'#'] / (( pts_df.at[0,'p_tk_s'] + pts_df.at[0,'p_tk_r'] + pts_df.at[0,'o_te_s'] + pts_df.at[0,'o_te_r']) +
+                          ( pts_df.at[0,'p_te_s'] + pts_df.at[0,'p_te_r'] + pts_df.at[0,'o_tk_s'] + pts_df.at[0,'o_tk_r'] ))
     scor_table.at[2,'%'] = str('{:.1%}'.format(scor_table.at[2,'%'])) 
 
     # blank row
@@ -188,10 +189,10 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
     #----------------------------
     #... i think we have an issue here as we want TK only when we were served?  Or both TE and TK when we were served?
     #----------------------
-    scor_table.at[4,'#'] = pts_df.at[0,'p_fbk']
+    scor_table.at[4,'#'] = pts_df.at[0,'p_fbk'] + pts_df.at[0,'p_tk_r'] + pts_df.at[0,'o_te_s']
     scor_table.at[4,"%"] = scor_table.at[4,'#'] / (pts_df.at[0,'o_serves']-pts_df.at[0,'o_tse'] )
     scor_table.at[4,'%'] = str('{:.1%}'.format(scor_table.at[4,'%'])) 
-    scor_table.at[5,'#'] = pts_df.at[0,'o_fbk'] 
+    scor_table.at[5,'#'] = pts_df.at[0,'o_fbk'] + pts_df.at[0,'o_tk_r'] + pts_df.at[0,'p_te_s'] 
     scor_table.at[5,"%"] = scor_table.at[5,'#'] // (pts_df.at[0,'p_serves']-pts_df.at[0,'p_tse'] )
     scor_table.at[5,'%'] = str('{:.1%}'.format(scor_table.at[5,'%'])) 
 
@@ -221,7 +222,27 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
 
     # blank row
     #Transition Win - Number of transitiono points we won! and they won
- 
+    scor_table.at[15,'#'] = ( pts_df.at[0,'p_tk_s'] + pts_df.at[0,'p_tk_r']+ pts_df.at[0,'o_te_s']+ pts_df.at[0,'o_te_r'])
+    scor_table.at[15,'%'] = scor_table.at[15,"#"] / (pts_df.at[0,'pts_total']-pts_df.at[0,'p_tse']-pts_df.at[0,'o_tse'])
+    scor_table.at[15,'%'] = str('{:.1%}'.format(scor_table.at[15,'%'])) 
+    scor_table.at[16,'#'] = ( pts_df.at[0,'o_tk_s'] + pts_df.at[0,'o_tk_r']+ pts_df.at[0,'p_te_s']+ pts_df.at[0,'p_te_r'])
+    scor_table.at[16,'%'] = scor_table.at[16,"#"] / (pts_df.at[0,'pts_total']-pts_df.at[0,'p_tse']-pts_df.at[0,'o_tse'])
+    scor_table.at[16,'%'] = str('{:.1%}'.format(scor_table.at[16,'%'])) 
+
+    # digging ?? Need to look at this
+
+    # Point Breakdowns
+    scor_table.at[22,'#'] = (pts_df.at[0,'p_tsa']+pts_df.at[0,'o_tse']+pts_df.at[0,'o_tsa']+pts_df.at[0,'p_tse']) # terminal serve points
+    scor_table.at[22,'%'] = scor_table.at[22,'#']/(pts_df.at[0,'pts_total'])
+    scor_table.at[22,'%'] = str('{:.1%}'.format(scor_table.at[22,'%'])) 
+    scor_table.at[23,'#'] = (pts_df.at[0,'p_fbk']+pts_df.at[0,'p_fbe']+pts_df.at[0,'o_fbk']+pts_df.at[0,'o_fbe']) # first ball points
+    scor_table.at[23,'%'] = scor_table.at[23,'#']/(pts_df.at[0,'pts_total'])  
+    scor_table.at[23,'%'] = str('{:.1%}'.format(scor_table.at[23,'%'])) 
+    scor_table.at[24,'#'] = ((pts_df.at[0,'p_tk_s']+pts_df.at[0,'p_tk_r']+pts_df.at[0,'p_te_s']+pts_df.at[0,'p_te_r']) + 
+                             (pts_df.at[0,'o_tk_s']+pts_df.at[0,'o_tk_r']+pts_df.at[0,'o_te_s']+pts_df.at[0,'o_te_r'])) # transition points
+    scor_table.at[24,'%'] = scor_table.at[24,'#']/(pts_df.at[0,'pts_total'])  
+    scor_table.at[24,'%'] = str('{:.1%}'.format(scor_table.at[24,'%'])) 
+    
     # now create the markdown text to return
     scor_markdown = pd.DataFrame.to_markdown(scor_table)
   else:
