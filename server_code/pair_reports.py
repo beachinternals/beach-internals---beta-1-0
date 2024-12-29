@@ -257,14 +257,34 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
 
   rot_table = pd.DataFrame.from_dict( rot_dict )
 
-  # working thru the rows ...
-  # FB Wins - Serving
-  #rot_table.at[4,'col1'] = # Opponent error
-
-  
   rot_markdown = pd.DataFrame.to_markdown(rot_table)
+
+  # now, next section, Rotations
+  stat_dict = {'col1':[ disp_player1+' Stats','Serving KO %','Aces','Bad Pass', 'Good Pass','Serve Error ', ' ',
+                                'Terminal Serves', ' ',
+                                'Digging %','Digs','Dig Err', ' ',
+                                'Block Ratio', 'Blocks','Block Errors',' ',
+                                'Passing %','Aced','Bad Pass','Good Pass','Opp Serve Err',' ',
+                                'First Ball Eff','Kills','Atk Blocked','Att Error','Continues',' ',
+                                'Make Them Pay','',
+                                'Trans Eff','Kills','Atk Blocked','Atk Err','Continues'],
+              'col2':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,0,'',0,'',0,0,0,0,0],
+              'col3':[ disp_player2+' Stats','Serving KO %','Aces','Bad Pass', 'Good Pass','Serve Error ', ' ',
+                                'Terminal Serves', ' ',
+                                'Digging %','Digs','Dig Err', ' ',
+                                'Block Ratio', 'Blocks','Block Errors',' ',
+                                'Passing %','Aced','Bad Pass','Good Pass','Opp Serve Err',' ',
+                                'First Ball Eff','Kills','Atk Blocked','Att Error', 'Continues',' ',
+                                'Make Them Pay','',
+                                'Trans Eff','Kills','Atk Blocked','Atk Err','Continues'],
+              'col4':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,0,'',0,'',0,0,0,0,0]
+             }
+
+  stat_table = pd.DataFrame.from_dict( stat_dict )
+
+  stat_markdown = pd.DataFrame.to_markdown(stat_table)
   
-  return scor_markdown,  rot_markdown, ' '
+  return scor_markdown,  rot_markdown, stat_markdown
   
 
 #-------------------------------------------------------
