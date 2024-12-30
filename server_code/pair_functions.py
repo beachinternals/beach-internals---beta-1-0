@@ -195,6 +195,8 @@ def player_pt_total(ppr_df, disp_player):
   pts_df.at[0,'p_te_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['serve_player'] == disp_player) & (ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'p_tk_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['pass_player'] == disp_player) & (ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'p_te_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['pass_player'] == disp_player)& (ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
+  pts_df.at[0,'p_good_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] <= 0)].shape[0]
+  pts_df.at[0,'p_bad_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] >= 1)].shape[0]
   pts_df.at[0,'p_serves'] = ppr_df[ ppr_df['serve_player'] == disp_player  ].shape[0]
   
   pts_df.at[0,'o_tsa'] = ppr_df[ (ppr_df['point_outcome'] == 'TSA') & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0] /2
@@ -205,6 +207,8 @@ def player_pt_total(ppr_df, disp_player):
   pts_df.at[0,'o_te_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['serve_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'o_tk_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['pass_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'o_te_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['pass_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
+  pts_df.at[0,'o_good_pass'] = ppr_df[ (ppr_df['pass_player'] == disp_player) & (ppr_df['pass_oos'] <= 0)].shape[0]
+  pts_df.at[0,'o_bad_pass'] = ppr_df[ (ppr_df['pass_player'] == disp_player) & (ppr_df['pass_oos'] >= 1)].shape[0]
   
   pts_df.at[0,'pts_total'] = ppr_df.shape[0]
 

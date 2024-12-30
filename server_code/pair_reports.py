@@ -433,7 +433,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
                                 'First Ball Eff','Kills','Atk Blocked','Att Error','Continues',' ',
                                 'Make Them Pay','',
                                 'Trans Eff','Kills','Atk Blocked','Atk Err','Continues'],
-              'col2':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,0,'',0,'',0,0,0,0,0],
+              'p1':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,0,'',0,'',0,0,0,0,0],
               'col3':[ disp_player2+' Stats','Serving KO %','Aces','Bad Pass', 'Good Pass','Serve Error ', ' ',
                                 'Terminal Serves', ' ',
                                 'Digging %','Digs','Dig Err', ' ',
@@ -442,12 +442,68 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
                                 'First Ball Eff','Kills','Atk Blocked','Att Error', 'Continues',' ',
                                 'Make Them Pay','',
                                 'Trans Eff','Kills','Atk Blocked','Atk Err','Continues'],
-              'col4':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,0,'',0,'',0,0,0,0,0]
+              'p2':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,0,'',0,'',0,0,0,0,0]
              }
 
   stat_table = pd.DataFrame.from_dict( stat_dict )
 
+  # serve knock out
+  stat_table.at[1,'p1'] = (pts1s_df.at[0,'p_tsa'] + pts1s_df.at[0,'p_bad_pass'])/(pts1s_df.at[0,'p_serves'])
+  stat_table.at[1,'p1']  = str('{:0.0%}'.format(stat_table.at[1,'p1']))
+  stat_table.at[1,'p2'] = (pts2s_df.at[0,'p_tsa'] + pts2s_df.at[0,'p_bad_pass'])/(pts2s_df.at[0,'p_serves'])
+  stat_table.at[1,'p2']  = str('{:0.0%}'.format(stat_table.at[1,'p2']))
 
+  # Aces
+  stat_table.at[2,'p1'] = pts1s_df.at[0,'p_tsa'] 
+  stat_table.at[2,'p2'] = pts2s_df.at[0,'p_tsa']
+  
+  # Good Pass result when serving
+  stat_table.at[2,'p1'] = pts1s_df.at[0,'p_good_pass'] 
+  stat_table.at[2,'p2'] = pts2s_df.at[0,'p_good_pass']
+  
+  # Bad Pass, result when serving
+  stat_table.at[2,'p1'] = pts1s_df.at[0,'p_bad_pass'] 
+  stat_table.at[2,'p2'] = pts2s_df.at[0,'p_bad_pass']
+  
+  # service errrors
+  stat_table.at[5,'p1'] = pts1s_df.at[0,'p_tse'] 
+  stat_table.at[5,'p2'] = pts2s_df.at[0,'p_tse']
+
+  # Terminal Serves, My aces plus my errors divided by my number of serves
+  stat_table.at[6,'p1'] = (pts1s_df.at[0,'p_tsa'] + pts1s_df.at[0,'p_tse'])/(pts1s_df.at[0,'p_serves'])
+  stat_table.at[6,'p1']  = str('{:0.0%}'.format(stat_table.at[6,'p1']))
+  stat_table.at[6,'p2'] = (pts2s_df.at[0,'p_tsa'] + pts2s_df.at[0,'p_tse'])/(pts2s_df.at[0,'p_serves'])
+  stat_table.at[6,'p2']  = str('{:0.0%}'.format(stat_table.at[6,'p2']))
+
+  # Digging ... we don't really have this
+  # three lines here
+
+  # Blocking, also don't have this, three more lines
+
+  # Passing, percent is good passes plus opp service errors divided by serves received
+  stat_table.at[16,'p1'] = (pts1r_df.at[0,'p_good_pass'])/(pts1r_df.at[0,'o_serves']-pts1r_df.at[0,'o_tse'])
+  stat_table.at[16,'p1']  = str('{:0.0%}'.format(stat_table.at[16,'p1']))
+  stat_table.at[16,'p2'] = (pts2r_df.at[0,'p_good_pass'])/(pts2r_df.at[0,'o_serves']-pts2r_df.at[0,'o_tse'])
+  stat_table.at[16,'p2']  = str('{:0.0%}'.format(stat_table.at[16,'p2']))
+
+  # aced (hal fof total?  Or jsut leave it along right now)
+  
+  # bad pass
+  stat_table.at[18,'p1'] = (pts1r_df.at[0,'p_bad_pass'])
+  stat_table.at[18,'p2'] = (pts2r_df.at[0,'p_bad_pass'])
+
+  # good pass
+  stat_table.at[19,'p1'] = (pts1r_df.at[0,'p_good_pass'])
+  stat_table.at[19,'p2'] = (pts2r_df.at[0,'p_good_pass'])
+
+  # opp serve err
+  stat_table.at[20,'p1'] = (pts1r_df.at[0,'o_tse'])
+  stat_table.at[20,'p2'] = (pts2r_df.at[0,'o_tse'])
+
+  # make them play (fbk + tk + tsa / points)
+  #stat_table.at[22,'p1'] = (pts1r_df.at[0,'p_fbk']+pts1s_df.at[0,'p_tsa']+pts1_df.at[0,'p_tk_r']+pts1_df.at[0,'p_tk_s'])
+  #stat_table.at[22,'p2'] = (pts2r_df.at[0,'p_bad_pass'])
+  
   
   stat_markdown = pd.DataFrame.to_markdown(stat_table)
   
