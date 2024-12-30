@@ -142,7 +142,8 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
                          date_checked, disp_start_date, disp_end_date
                          ) # limit all data available to the parameters given for comp level 1,2,3 and dates.
   ppr_df = pair_filter(ppr_df, disp_pair) # lastly, filter the data to all play that include the pair of interest
-
+  print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
+  
   scor_dict = {' ':['Pt Diff','Term Srv','Live Rallies',   # 0,1,2
                     'SideOut', 'Opp Sideout', # 3,4
                     'FB Sideout','OppFb Sideout', # 5,6
@@ -159,8 +160,10 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   # Call number of points
   pts_df = pair_pt_total(ppr_df,disp_pair)
+  print(f"Pair Total : ppr_df size:{ppr_df.shape[0]}")
   p1_df = player_pt_total(ppr_df,disp_player1)
   p2_df = player_pt_total(ppr_df,disp_player2)
+  print(f"Pair Total2 : ppr_df size:{ppr_df.shape[0]}")
 
   
   if pts_df.shape[0] != 0:
@@ -192,57 +195,64 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
     #----------------------
     scor_table.at[3,'#'] = pts_df.at[0,'p_fbk'] + pts_df.at[0,'p_tk_r'] + pts_df.at[0,'o_te_s']
     scor_table.at[3,"%"] = scor_table.at[3,'#'] / (pts_df.at[0,'o_serves']-pts_df.at[0,'o_tse'] )
-    scor_table.at[3,'%'] = str('{:.1%}'.format(scor_table.at[3,'%'])) 
+    scor_table.at[3,'%'] = str('{:.0%}'.format(scor_table.at[3,'%'])) 
     scor_table.at[4,'#'] = pts_df.at[0,'o_fbk'] + pts_df.at[0,'o_tk_r'] + pts_df.at[0,'p_te_s'] 
     scor_table.at[4,"%"] = scor_table.at[4,'#'] / (pts_df.at[0,'p_serves']-pts_df.at[0,'p_tse'] )
-    scor_table.at[4,'%'] = str('{:.1%}'.format(scor_table.at[4,'%'])) 
+    scor_table.at[4,'%'] = str('{:.0%}'.format(scor_table.at[4,'%'])) 
 
     # first ball sideout - FBK/points
     scor_table.at[5,"#"] = pts_df.at[0,'p_fbk']
     if pts_df.at[0,'o_serves'] != 0:
       scor_table.at[5,"%"] = pts_df.at[0,'p_fbk']/(pts_df.at[0,'o_serves']-pts_df.at[0,'o_tse'])
-      scor_table.at[5,'%'] = str('{:.1%}'.format(scor_table.at[5,'%'])) 
+      scor_table.at[5,'%'] = str('{:.0%}'.format(scor_table.at[5,'%'])) 
     scor_table.at[6,"#"] = pts_df.at[0,'o_fbk']
     if pts_df.at[0,'p_serves'] != 0:
       scor_table.at[6,"%"] = pts_df.at[0,'o_fbk']/(pts_df.at[0,'p_serves']-pts_df.at[0,'p_tse'])
-      scor_table.at[6,'%'] = str('{:.1%}'.format(scor_table.at[6,'%'])) 
+      scor_table.at[6,'%'] = str('{:.0%}'.format(scor_table.at[6,'%'])) 
 
     # blank row
     # first ball stop - fbe / serves (attempts)
     scor_table.at[7,"#"] = pts_df.at[0,'o_fbe']
     scor_table.at[7,"%"] = pts_df.at[0,'o_fbe']/(pts_df.at[0,'p_serves'] - pts_df.at[0,'p_tse'])
-    scor_table.at[7,'%'] = str('{:.1%}'.format(scor_table.at[7,'%'])) 
+    scor_table.at[7,'%'] = str('{:.0%}'.format(scor_table.at[7,'%'])) 
     scor_table.at[8,"#"] = pts_df.at[0,'p_fbe']
     scor_table.at[8,"%"] = pts_df.at[0,'p_fbe']/(pts_df.at[0,'o_serves'] - pts_df.at[0,'o_tse'])
-    scor_table.at[8,'%'] = str('{:.1%}'.format(scor_table.at[8,'%'])) 
+    scor_table.at[8,'%'] = str('{:.0%}'.format(scor_table.at[8,'%'])) 
 
     # blank row
     # first ball win %
+    scor_table.at[9,'#'] = ''
     scor_table.at[9,'%'] = ( pts_df.at[0,'p_fbk'] + pts_df.at[0,'o_fbe']) / (pts_df.at[0,'pts_total']-pts_df.at[0,'o_tse']-pts_df.at[0,'p_tse'])
-    scor_table.at[9,'%'] = str('{:.1%}'.format(scor_table.at[9,'%'])) 
+    scor_table.at[9,'%'] = str('{:.0%}'.format(scor_table.at[9,'%'])) 
 
     # blank row
     #Transition Win - Number of transitiono points we won! and they won
     scor_table.at[10,'#'] = ( pts_df.at[0,'p_tk_s'] + pts_df.at[0,'p_tk_r']+ pts_df.at[0,'o_te_s']+ pts_df.at[0,'o_te_r'])
-    scor_table.at[10,'%'] = scor_table.at[10,"#"] / (pts_df.at[0,'p_tk_r']+pts_df.at[0,'p_te_r']+pts_df.at[0,'o_tk_s']+pts_df.at[0,'o_te_s'])
-    scor_table.at[10,'%'] = str('{:.1%}'.format(scor_table.at[10,'%'])) 
+    scor_table.at[10,'%'] = scor_table.at[10,"#"] / (pts_df.at[0,'p_tk_r']+pts_df.at[0,'p_te_r']+pts_df.at[0,'p_tk_s']+pts_df.at[0,'p_te_s'] + pts_df.at[0,'o_tk_r']+pts_df.at[0,'o_te_r']+pts_df.at[0,'o_tk_s']+pts_df.at[0,'o_te_s'])
+    scor_table.at[10,'%'] = str('{:.0%}'.format(scor_table.at[10,'%'])) 
     scor_table.at[11,'#'] = ( pts_df.at[0,'o_tk_s'] + pts_df.at[0,'o_tk_r']+ pts_df.at[0,'p_te_s']+ pts_df.at[0,'p_te_r'])
-    scor_table.at[11,'%'] = scor_table.at[11,"#"] / (pts_df.at[0,'o_tk_r']+pts_df.at[0,'o_te_r']+pts_df.at[0,'p_tk_s']+pts_df.at[0,'p_te_s'])
-    scor_table.at[11,'%'] = str('{:.1%}'.format(scor_table.at[11,'%'])) 
+    scor_table.at[11,'%'] = scor_table.at[11,"#"] / (pts_df.at[0,'p_tk_r']+pts_df.at[0,'p_te_r']+pts_df.at[0,'p_tk_s']+pts_df.at[0,'p_te_s'] + pts_df.at[0,'o_tk_r']+pts_df.at[0,'o_te_r']+pts_df.at[0,'o_tk_s']+pts_df.at[0,'o_te_s'])
+    scor_table.at[11,'%'] = str('{:.0%}'.format(scor_table.at[11,'%'])) 
 
     # digging ?? Need to look at this
-
+    scor_table.at[12,'#'] = ''
+    scor_table.at[12,'%'] = ''
+    scor_table.at[13,'#'] = ''
+    scor_table.at[13,'%'] = ''
+    scor_table.at[14,'#'] = ''
+    scor_table.at[14,'%'] = ''
+    
     # Point Breakdowns
     scor_table.at[15,'#'] = (pts_df.at[0,'p_tsa']+pts_df.at[0,'o_tse']+pts_df.at[0,'o_tsa']+pts_df.at[0,'p_tse']) # terminal serve points
     scor_table.at[15,'%'] = scor_table.at[15,'#']/(pts_df.at[0,'pts_total'])
-    scor_table.at[15,'%'] = str('{:.1%}'.format(scor_table.at[15,'%'])) 
+    scor_table.at[15,'%'] = str('{:.0%}'.format(scor_table.at[15,'%'])) 
     scor_table.at[16,'#'] = (pts_df.at[0,'p_fbk']+pts_df.at[0,'p_fbe']+pts_df.at[0,'o_fbk']+pts_df.at[0,'o_fbe']) # first ball points
     scor_table.at[16,'%'] = scor_table.at[16,'#']/(pts_df.at[0,'pts_total'])  
-    scor_table.at[16,'%'] = str('{:.1%}'.format(scor_table.at[16,'%'])) 
+    scor_table.at[16,'%'] = str('{:.0%}'.format(scor_table.at[16,'%'])) 
     scor_table.at[17,'#'] = ((pts_df.at[0,'p_tk_s']+pts_df.at[0,'p_tk_r']+pts_df.at[0,'p_te_s']+pts_df.at[0,'p_te_r']) + 
                              (pts_df.at[0,'o_tk_s']+pts_df.at[0,'o_tk_r']+pts_df.at[0,'o_te_s']+pts_df.at[0,'o_te_r'])) # transition points
     scor_table.at[17,'%'] = scor_table.at[17,'#']/(pts_df.at[0,'pts_total'])  
-    scor_table.at[17,'%'] = str('{:.1%}'.format(scor_table.at[17,'%'])) 
+    scor_table.at[17,'%'] = str('{:.0%}'.format(scor_table.at[17,'%'])) 
     
     # now create the markdown text to return
     scor_markdown = pd.DataFrame.to_markdown(scor_table)
@@ -255,30 +265,31 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
                                 'FB Loss', 'Srv Err','Opp FB Kill','',  # 4,5,6,7
                                 'Trans Win', 'Kill','Opp Err','', #8,9,10,11
                                 'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
-                                'Opp SO','Opp FBSO','FB Stop','Trans Win'], #16,17,88,19
-              'p1_s':['',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                                'Opp SO','Opp FBSO','Opp FB Stop','Trans Win'], #16,17,88,19
+              'p1_s':['',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,0],
               'col3':[ disp_player1+' Receive','FB Wins','Opp Srv Err','FB Kill','', # 1,2,3
                                 'FB Loss', 'Opp Srv Err','FB Err','',  # 4,5,6,7
                                 'Trans Win', 'Kill','Opp Err','', #8,9,10,11
                                 'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
                                 'Sideout','FBSO','FB Stop','Trans Win'], #16,17,88,19
-              'p1_r':['',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+              'p1_r':['',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,0],
               'col5':[ disp_player2+' Serve','FB Wins','Ace','Opp FB Err','', # 1,2,3
                                 'FB Loss', 'Srv Err','Opp FB Kill','',  # 4,5,6,7
                                 'Trans Win', 'Kill','Opp Err','', #8,9,10,11
                                 'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
-                                'Opp SO','Opp FBSO','FB Stop','Trans Win'], #16,17,88,19
-              'p2_s':['',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                                'Opp SO','Opp FBSO','Opp FB Stop','Trans Win'], #16,17,88,19
+              'p2_s':['',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,0],
               'col7':[ disp_player2+' Receive','FB Wins','Opp Srv Err','FB Kill','', # 1,2,3
                                 'FB Loss', 'Opp Srv Err','FB Err','',  # 4,5,6,7
                                 'Trans Win', 'Kill','Opp Err','', #8,9,10,11
                                 'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
                                 'Sideout','FBSO','FB Stop','Trans Win'], #16,17,88,19
-              'p2_r':['',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+              'p2_r':['',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,0]
              }
 
   rot_table = pd.DataFrame.from_dict( rot_dict )
-
+  print(f"Pair Total Rotation Table : ppr_df size:{ppr_df.shape[0]}")
+  
   # first ball wins
   rot_table.at[1,'p1_s'] = p1_df.at[0,'o_fbe'] + p1_df.at[0,'p_tsa']
   rot_table.at[1,'p1_r'] = p1_df.at[0,'p_fbk'] + p1_df.at[0,'o_tse']
@@ -344,31 +355,72 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   rot_table.at[15,'p2_r'] = p2_df.at[0,'o_tk_s'] 
 
   # get a set of point totals with player1 serving, then with player 2 serving, points for hte pair:
-  pts1_df = pair_pt_total(ppr_df[ppr_df['serve_player']==disp_player1],disp_pair)
-  pts2_df = pair_pt_total(ppr_df[ppr_df['serve_player']==disp_player2],disp_pair)
+  #print(f"Points for {disp_player1} Serving")
+  pts1s_df = pair_pt_total(ppr_df[ppr_df['serve_player']==disp_player1],disp_pair)
+  #print(f"Points for {disp_player1} Passing")
+  pts1r_df = pair_pt_total(ppr_df[ppr_df['pass_player']==disp_player1],disp_pair)
+  #print(f"Points for {disp_player2} Serving")
+  pts2s_df = pair_pt_total(ppr_df[ppr_df['serve_player']==disp_player2],disp_pair)
+  #print(f"Points for {disp_player2} Paasing")
+  pts2r_df = pair_pt_total(ppr_df[ppr_df['pass_player']==disp_player2],disp_pair)
+  #print(f"Pair Total after 4 points call : ppr_df size:{ppr_df.shape[0]}")
 
   # Opp SO, our Side Out - All %
   # (Opp FBK + opp tk + fbe + te)/(pair serves - serve errors )
-  rot_table.at[17,'p1_s'] = ( pts1_df.at[0,'o_fbk'] + pts1_df.at[0,'o_tk_s'] + pts1_df.at[0,'o_tk_r'] + pts1_df.at[0,'p_fbe'] + pts1_df.at[0,'p_te_s'] + pts1_df.at[0,'p_te_r'])/(pts1_df.at[0,'p_serves']-pts1_df.at[0,'p_tse'])
+  rot_table.at[17,'p1_s'] = ( pts1s_df.at[0,'o_fbk'] + pts1s_df.at[0,'o_tk_s'] + pts1s_df.at[0,'o_tk_r'] + pts1s_df.at[0,'p_fbe'] + pts1s_df.at[0,'p_te_s'] + pts1s_df.at[0,'p_te_r'])/(pts1s_df.at[0,'p_serves']-pts1s_df.at[0,'p_tse'])
   rot_table.at[17,'p1_s'] = str('{:.0%}'.format(rot_table.at[17,'p1_s']))
-  rot_table.at[17,'p1_r'] = ( pts1_df.at[0,'p_fbk'] + pts1_df.at[0,'p_tk_s'] + pts1_df.at[0,'p_tk_r'] + pts1_df.at[0,'o_fbe'] + pts1_df.at[0,'o_te_s'] + pts1_df.at[0,'o_te_r'])/(pts1_df.at[0,'o_serves']-pts1_df.at[0,'o_tse'])
+  rot_table.at[17,'p1_r'] = ( pts1r_df.at[0,'p_fbk'] + pts1r_df.at[0,'p_tk_s'] + pts1r_df.at[0,'p_tk_r'] + pts1r_df.at[0,'o_fbe'] + pts1r_df.at[0,'o_te_s'] + pts1r_df.at[0,'o_te_r'])/(pts1r_df.at[0,'o_serves']-pts1r_df.at[0,'o_tse'])
   rot_table.at[17,'p1_r'] = str('{:.0%}'.format(rot_table.at[17,'p1_r']))
 
-  rot_table.at[17,'p1_s'] = ( pts2_df.at[0,'o_fbk'] + pts2_df.at[0,'o_tk_s'] + pts2_df.at[0,'o_tk_r'] + pts2_df.at[0,'p_fbe'] + pts2_df.at[0,'p_te_s'] + pts2_df.at[0,'p_te_r'])/(pts2_df.at[0,'p_serves']-pts2_df.at[0,'p_tse'])
-  rot_table.at[17,'p1_s'] = str('{:.0%}'.format(rot_table.at[17,'p1_s']))
-  rot_table.at[17,'p1_r'] = ( pts2_df.at[0,'p_fbk'] + pts2_df.at[0,'p_tk_s'] + pts2_df.at[0,'p_tk_r'] + pts2_df.at[0,'o_fbe'] + pts2_df.at[0,'o_te_s'] + pts2_df.at[0,'o_te_r'])/(pts2_df.at[0,'o_serves']-pts2_df.at[0,'o_tse'])
-  rot_table.at[17,'p1_r'] = str('{:.0%}'.format(rot_table.at[17,'p1_r']))
+  rot_table.at[17,'p2_s'] = ( pts2s_df.at[0,'o_fbk'] + pts2s_df.at[0,'o_tk_s'] + pts2s_df.at[0,'o_tk_r'] + pts2s_df.at[0,'p_fbe'] + pts2s_df.at[0,'p_te_s'] + pts2s_df.at[0,'p_te_r'])/(pts2s_df.at[0,'p_serves']-pts2s_df.at[0,'p_tse'])
+  rot_table.at[17,'p2_s'] = str('{:.0%}'.format(rot_table.at[17,'p2_s']))
+  rot_table.at[17,'p2_r'] = ( pts2r_df.at[0,'p_fbk'] + pts2r_df.at[0,'p_tk_s'] + pts2r_df.at[0,'p_tk_r'] + pts2r_df.at[0,'o_fbe'] + pts2r_df.at[0,'o_te_s'] + pts2r_df.at[0,'o_te_r'])/(pts2r_df.at[0,'o_serves']-pts2r_df.at[0,'o_tse'])
+  rot_table.at[17,'p2_r'] = str('{:.0%}'.format(rot_table.at[17,'p2_r']))
   
-  # opp FBSO, our FBSO
+  # opp FBSO, our FBSO : fbk/(serves-serve errors)
+  rot_table.at[18,'p1_s'] = ( pts1s_df.at[0,'o_fbk'])/(pts1s_df.at[0,'p_serves']-pts1s_df.at[0,'p_tse'])
+  rot_table.at[18,'p1_s'] = str('{:.0%}'.format(rot_table.at[18,'p1_s']))
+  rot_table.at[18,'p1_r'] = ( pts1r_df.at[0,'p_fbk'])/(pts1r_df.at[0,'o_serves']-pts1r_df.at[0,'o_tse'])
+  rot_table.at[18,'p1_r'] = str('{:.0%}'.format(rot_table.at[18,'p1_r']))
 
+  rot_table.at[18,'p2_s'] = ( pts2s_df.at[0,'o_fbk'])/(pts2s_df.at[0,'p_serves']-pts2s_df.at[0,'p_tse'])
+  rot_table.at[18,'p2_s'] = str('{:.0%}'.format(rot_table.at[18,'p2_s']))
+  rot_table.at[18,'p2_r'] = ( pts2r_df.at[0,'p_fbk'])/(pts2r_df.at[0,'o_serves']-pts2r_df.at[0,'o_tse'])
+  rot_table.at[18,'p2_r'] = str('{:.0%}'.format(rot_table.at[18,'p2_r']))
+  
   # opp FB Stop, our FB Stop
+  rot_table.at[19,'p1_s'] = ( pts1s_df.at[0,'o_fbe'])/(pts1s_df.at[0,'p_serves']-pts1s_df.at[0,'p_tse'])
+  rot_table.at[19,'p1_s'] = str('{:.0%}'.format(rot_table.at[19,'p1_s']))
+  rot_table.at[19,'p1_r'] = ( pts1r_df.at[0,'p_fbe'])/(pts1r_df.at[0,'o_serves']-pts1r_df.at[0,'o_tse'])
+  rot_table.at[19,'p1_r'] = str('{:.0%}'.format(rot_table.at[19,'p1_r']))
 
+  rot_table.at[19,'p2_s'] = ( pts2s_df.at[0,'o_fbe'])/(pts2s_df.at[0,'p_serves']-pts2s_df.at[0,'p_tse'])
+  rot_table.at[19,'p2_s'] = str('{:.0%}'.format(rot_table.at[19,'p2_s']))
+  rot_table.at[19,'p2_r'] = ( pts2r_df.at[0,'p_fbe'])/(pts2r_df.at[0,'o_serves']-pts2r_df.at[0,'o_tse'])
+  rot_table.at[19,'p2_r'] = str('{:.0%}'.format(rot_table.at[19,'p2_r']))
+  
   # opp trans win, our trans win
-  
-  
-  # 
-  print(f" p1_pts_df {p1_df}")
-  print(f" player 2 points dataframe: {p2_df}")
+  rot_table.at[20,'p1_s'] = ( pts1s_df.at[0,'o_tk_s']+pts1s_df.at[0,'o_tk_r']+pts1s_df.at[0,'p_te_s']+pts1s_df.at[0,'p_te_r']
+                            ) / (
+                            pts1s_df.at[0,'o_tk_s']+pts1s_df.at[0,'o_tk_r']+pts1s_df.at[0,'o_te_s']+pts1s_df.at[0,'o_te_r'] + 
+                            pts1s_df.at[0,'p_tk_s']+pts1s_df.at[0,'p_tk_r']+pts1s_df.at[0,'p_te_s']+pts1s_df.at[0,'p_te_r'])
+  rot_table.at[20,'p1_s'] = str('{:.0%}'.format(rot_table.at[20,'p1_s']))
+  rot_table.at[20,'p1_r'] = ( pts1r_df.at[0,'o_tk_s']+pts1r_df.at[0,'o_tk_r']+pts1r_df.at[0,'p_te_s']+pts1r_df.at[0,'p_te_r']
+                            ) / (
+                            pts1r_df.at[0,'o_tk_s']+pts1r_df.at[0,'o_tk_r']+pts1r_df.at[0,'o_te_s']+pts1r_df.at[0,'o_te_r'] + 
+                            pts1r_df.at[0,'p_tk_s']+pts1r_df.at[0,'p_tk_r']+pts1r_df.at[0,'p_te_s']+pts1r_df.at[0,'p_te_r'])
+  rot_table.at[20,'p1_r'] = str('{:.0%}'.format(rot_table.at[20,'p1_r']))
+
+  rot_table.at[20,'p2_s'] = ( pts2s_df.at[0,'o_tk_s']+pts2s_df.at[0,'o_tk_r']+pts2s_df.at[0,'p_te_s']+pts2s_df.at[0,'p_te_r']
+                            ) / (
+                            pts2s_df.at[0,'o_tk_s']+pts2s_df.at[0,'o_tk_r']+pts2s_df.at[0,'o_te_s']+pts2s_df.at[0,'o_te_r'] + 
+                            pts2s_df.at[0,'p_tk_s']+pts2s_df.at[0,'p_tk_r']+pts2s_df.at[0,'p_te_s']+pts2s_df.at[0,'p_te_r'])
+  rot_table.at[20,'p2_s'] = str('{:.0%}'.format(rot_table.at[20,'p2_s']))
+  rot_table.at[20,'p2_r'] = ( pts2r_df.at[0,'o_tk_s']+pts2r_df.at[0,'o_tk_r']+pts2r_df.at[0,'p_te_s']+pts2r_df.at[0,'p_te_r']
+                            ) / (
+                            pts2r_df.at[0,'o_tk_s']+pts2r_df.at[0,'o_tk_r']+pts2r_df.at[0,'o_te_s']+pts2r_df.at[0,'o_te_r'] + 
+                            pts2r_df.at[0,'p_tk_s']+pts2r_df.at[0,'p_tk_r']+pts2r_df.at[0,'p_te_s']+pts2r_df.at[0,'p_te_r'])
+  rot_table.at[20,'p2_r'] = str('{:.0%}'.format(rot_table.at[20,'p2_r']))
   
   rot_markdown = pd.DataFrame.to_markdown(rot_table)
 
