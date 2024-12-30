@@ -273,7 +273,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
                                 'FB Loss', 'Opp Srv Err','FB Err','',  # 4,5,6,7
                                 'Trans Win', 'Kill','Opp Err','', #8,9,10,11
                                 'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
-                                'Opp SO','Opp FBSO','FB Stop','Trans Win'], #16,17,88,19
+                                'Sideout','FBSO','FB Stop','Trans Win'], #16,17,88,19
               'p2_r':['',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
              }
 
@@ -343,6 +343,28 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   rot_table.at[15,'p2_s'] = p2_df.at[0,'o_tk_r']
   rot_table.at[15,'p2_r'] = p2_df.at[0,'o_tk_s'] 
 
+  # get a set of point totals with player1 serving, then with player 2 serving, points for hte pair:
+  pts1_df = pair_pt_total(ppr_df[ppr_df['serve_player']==disp_player1],disp_pair)
+  pts2_df = pair_pt_total(ppr_df[ppr_df['serve_player']==disp_player2],disp_pair)
+
+  # Opp SO, our Side Out - All %
+  # (Opp FBK + opp tk + fbe + te)/(pair serves - serve errors )
+  rot_table.at[17,'p1_s'] = ( pts1_df.at[0,'o_fbk'] + pts1_df.at[0,'o_tk_s'] + pts1_df.at[0,'o_tk_r'] + pts1_df.at[0,'p_fbe'] + pts1_df.at[0,'p_te_s'] + pts1_df.at[0,'p_te_r'])/(pts1_df.at[0,'p_serves']-pts1_df.at[0,'p_tse'])
+  rot_table.at[17,'p1_s'] = str('{:.0%}'.format(rot_table.at[17,'p1_s']))
+  rot_table.at[17,'p1_r'] = ( pts1_df.at[0,'p_fbk'] + pts1_df.at[0,'p_tk_s'] + pts1_df.at[0,'p_tk_r'] + pts1_df.at[0,'o_fbe'] + pts1_df.at[0,'o_te_s'] + pts1_df.at[0,'o_te_r'])/(pts1_df.at[0,'o_serves']-pts1_df.at[0,'o_tse'])
+  rot_table.at[17,'p1_r'] = str('{:.0%}'.format(rot_table.at[17,'p1_r']))
+
+  rot_table.at[17,'p1_s'] = ( pts2_df.at[0,'o_fbk'] + pts2_df.at[0,'o_tk_s'] + pts2_df.at[0,'o_tk_r'] + pts2_df.at[0,'p_fbe'] + pts2_df.at[0,'p_te_s'] + pts2_df.at[0,'p_te_r'])/(pts2_df.at[0,'p_serves']-pts2_df.at[0,'p_tse'])
+  rot_table.at[17,'p1_s'] = str('{:.0%}'.format(rot_table.at[17,'p1_s']))
+  rot_table.at[17,'p1_r'] = ( pts2_df.at[0,'p_fbk'] + pts2_df.at[0,'p_tk_s'] + pts2_df.at[0,'p_tk_r'] + pts2_df.at[0,'o_fbe'] + pts2_df.at[0,'o_te_s'] + pts2_df.at[0,'o_te_r'])/(pts2_df.at[0,'o_serves']-pts2_df.at[0,'o_tse'])
+  rot_table.at[17,'p1_r'] = str('{:.0%}'.format(rot_table.at[17,'p1_r']))
+  
+  # opp FBSO, our FBSO
+
+  # opp FB Stop, our FB Stop
+
+  # opp trans win, our trans win
+  
   
   # 
   print(f" p1_pts_df {p1_df}")
