@@ -251,28 +251,28 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
     # So I think we are done:-)
 
   # now, next section, Rotations
-  rot_dict = {'col1':[ disp_player1+' Serve','FB Wins','Ace','Opp FB Err', # 1,2,3
-                                'FB Loss', 'Srv Err','Blk Err','Dig Err',  # 4,5,6,7
-                                'Trans Win', 'Att Kill','Blk','Opp Err', #8,9,10,11
-                                'Trans Loss','Att Err','Atk Blk','Blk Err','Dig Err', #12,13,14,15
+  rot_dict = {'col1':[ disp_player1+' Serve','FB Wins','Ace','Opp FB Err','', # 1,2,3
+                                'FB Loss', 'Srv Err','Opp FB Kill','',  # 4,5,6,7
+                                'Trans Win', 'Kill','Opp Err','', #8,9,10,11
+                                'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
                                 'Opp SO','Opp FBSO','FB Stop','Trans Win'], #16,17,88,19
               'p1_s':['',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              'col3':[ disp_player1+' Receive','FB Wins','Opp Srv Err','FB Kill', # 1,2,3
-                                'FB Loss', 'Srv Err','Blk Err','Dig Err',  # 4,5,6,7
-                                'Trans Win', 'Att Kill','Blk','Opp Err', #8,9,10,11
-                                'Trans Loss','Att Err','Atk Blk','Blk Err','Dig Err', #12,13,14,15
-                                'Opp SO','Opp FBSO','FB Stop','Trans Win'], #16,17,88,19
+              'col3':[ disp_player1+' Receive','FB Wins','Opp Srv Err','FB Kill','', # 1,2,3
+                                'FB Loss', 'Opp Srv Err','FB Err','',  # 4,5,6,7
+                                'Trans Win', 'Kill','Opp Err','', #8,9,10,11
+                                'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
+                                'Sideout','FBSO','FB Stop','Trans Win'], #16,17,88,19
               'p1_r':['',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              'col5':[ disp_player2+' Serve','FB Wins','Ace','Opp FB Err', # 1,2,3
-                                'FB Loss', 'Srv Err','Blk Err','Dig Err',  # 4,5,6,7
-                                'Trans Win', 'Att Kill','Blk','Opp Err', #8,9,10,11
-                                'Trans Loss','Att Err','Atk Blk','Blk Err','Dig Err', #12,13,14,15
+              'col5':[ disp_player2+' Serve','FB Wins','Ace','Opp FB Err','', # 1,2,3
+                                'FB Loss', 'Srv Err','Opp FB Kill','',  # 4,5,6,7
+                                'Trans Win', 'Kill','Opp Err','', #8,9,10,11
+                                'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
                                 'Opp SO','Opp FBSO','FB Stop','Trans Win'], #16,17,88,19
               'p2_s':['',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-              'col7':[ disp_player2+' Receive','FB Wins','Opp Srv Err','FB Kill', # 1,2,3
-                                'FB Loss', 'Srv Err','Blk Err','Dig Err',  # 4,5,6,7
-                                'Trans Win', 'Att Kill','Blk','Opp Err', #8,9,10,11
-                                'Trans Loss','Att Err','Atk Blk','Blk Err','Dig Err', #12,13,14,15
+              'col7':[ disp_player2+' Receive','FB Wins','Opp Srv Err','FB Kill','', # 1,2,3
+                                'FB Loss', 'Opp Srv Err','FB Err','',  # 4,5,6,7
+                                'Trans Win', 'Kill','Opp Err','', #8,9,10,11
+                                'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
                                 'Opp SO','Opp FBSO','FB Stop','Trans Win'], #16,17,88,19
               'p2_r':['',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
              }
@@ -290,12 +290,58 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   rot_table.at[2,'p2_s'] = p2_df.at[0,'p_tsa']
   rot_table.at[2,'p2_r'] = p2_df.at[0,'o_tse']
   # Frist Ball Kill/Error
-  rot_table.at[3,'p1_s'] = p1_df.at[0,'p_fbk']
-  rot_table.at[3,'p1_r'] = p1_df.at[0,'o_fbe']
-  rot_table.at[3,'p2_s'] = p2_df.at[0,'p_fbk']
-  rot_table.at[3,'p2_r'] = p2_df.at[0,'o_fbe']
+  rot_table.at[3,'p1_s'] = p1_df.at[0,'o_fbe']
+  rot_table.at[3,'p1_r'] = p1_df.at[0,'p_fbk']
+  rot_table.at[3,'p2_s'] = p2_df.at[0,'o_fbe']
+  rot_table.at[3,'p2_r'] = p2_df.at[0,'p_fbk']
   
+  # first ball loss
+  rot_table.at[5,'p1_s'] = p1_df.at[0,'p_tse'] + p1_df.at[0,'o_fbk']
+  rot_table.at[5,'p1_r'] = p1_df.at[0,'o_tsa'] + p1_df.at[0,'p_fbe']
+  rot_table.at[5,'p2_s'] = p2_df.at[0,'p_tse'] + p2_df.at[0,'o_fbk']
+  rot_table.at[5,'p2_r'] = p2_df.at[0,'o_tsa'] + p2_df.at[0,'p_fbe']
+  # Service Ace/Error
+  rot_table.at[6,'p1_s'] = p1_df.at[0,'p_tse']
+  rot_table.at[6,'p1_r'] = p1_df.at[0,'o_tsa']
+  rot_table.at[6,'p2_s'] = p2_df.at[0,'p_tse']
+  rot_table.at[6,'p2_r'] = p2_df.at[0,'o_tsa']
+  # Frist Ball Kill/Error
+  rot_table.at[7,'p1_s'] = p1_df.at[0,'o_fbk']
+  rot_table.at[7,'p1_r'] = p1_df.at[0,'p_fbe']
+  rot_table.at[7,'p2_s'] = p2_df.at[0,'o_fbk']
+  rot_table.at[7,'p2_r'] = p2_df.at[0,'p_fbe']  
+  
+  # Transition Wins
+  rot_table.at[9,'p1_s'] = p1_df.at[0,'p_tk_s'] + p1_df.at[0,'o_te_r']
+  rot_table.at[9,'p1_r'] = p1_df.at[0,'p_tk_r'] + p1_df.at[0,'o_te_s']
+  rot_table.at[9,'p2_s'] = p2_df.at[0,'p_tk_s'] + p2_df.at[0,'o_te_r']
+  rot_table.at[9,'p2_r'] = p2_df.at[0,'p_tk_r'] + p2_df.at[0,'o_te_s']
+  # Trans Ace/Error - Player
+  rot_table.at[10,'p1_s'] = p1_df.at[0,'p_tk_s']
+  rot_table.at[10,'p1_r'] = p1_df.at[0,'p_tk_r']
+  rot_table.at[10,'p2_s'] = p2_df.at[0,'p_tk_s']
+  rot_table.at[10,'p2_r'] = p2_df.at[0,'p_tk_r']
+  # Trans Ball Kill/Error - Opponent
+  rot_table.at[11,'p1_s'] = p1_df.at[0,'o_te_r']
+  rot_table.at[11,'p1_r'] = p1_df.at[0,'o_te_s']
+  rot_table.at[11,'p2_s'] = p2_df.at[0,'o_te_r']
+  rot_table.at[11,'p2_r'] = p2_df.at[0,'o_te_s']  
 
+  # Transition Losses
+  rot_table.at[13,'p1_s'] = p1_df.at[0,'p_te_s'] + p1_df.at[0,'o_tk_r']
+  rot_table.at[13,'p1_r'] = p1_df.at[0,'p_te_r'] + p1_df.at[0,'o_tk_s']
+  rot_table.at[13,'p2_s'] = p2_df.at[0,'p_te_s'] + p2_df.at[0,'o_tk_r']
+  rot_table.at[13,'p2_r'] = p2_df.at[0,'p_te_r'] + p2_df.at[0,'o_tk_s']
+  # Trans Ace/Error - Player
+  rot_table.at[14,'p1_s'] = p1_df.at[0,'p_te_s']
+  rot_table.at[14,'p1_r'] = p1_df.at[0,'p_te_r']
+  rot_table.at[14,'p2_s'] = p2_df.at[0,'p_te_s']
+  rot_table.at[14,'p2_r'] = p2_df.at[0,'p_te_r']
+  # Trans Ball Kill/Error - Opponent
+  rot_table.at[15,'p1_s'] = p1_df.at[0,'o_tk_r']
+  rot_table.at[15,'p1_r'] = p1_df.at[0,'o_tk_s']
+  rot_table.at[15,'p2_s'] = p2_df.at[0,'o_tk_r']
+  rot_table.at[15,'p2_r'] = p2_df.at[0,'o_tk_s'] 
 
   
   # 
