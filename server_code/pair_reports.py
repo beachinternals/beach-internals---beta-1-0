@@ -160,10 +160,20 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   ############### Third Populate the dataframe, assuming we have data returned
   # Call number of points
   pts_df = pair_pt_total(ppr_df,disp_pair)
-  print(f"Pair Total : ppr_df size:{ppr_df.shape[0]}")
+  #print(f"Pair Total : ppr_df size:{ppr_df.shape[0]}")
   p1_df = player_pt_total(ppr_df,disp_player1)
   p2_df = player_pt_total(ppr_df,disp_player2)
-  print(f"Pair Total2 : ppr_df size:{ppr_df.shape[0]}")
+  #print(f"Pair Total2 : ppr_df size:{ppr_df.shape[0]}")
+  # get a set of point totals with player1 serving, then with player 2 serving, points for hte pair:
+  #print(f"Points for {disp_player1} Serving")
+  pts1s_df = player_pt_total(ppr_df[ppr_df['serve_player']==disp_player1],disp_pair)
+  #print(f"Points for {disp_player1} Passing")
+  pts1r_df = player_pt_total(ppr_df[ppr_df['pass_player']==disp_player1],disp_pair)
+  #print(f"Points for {disp_player2} Serving")
+  pts2s_df = player_pt_total(ppr_df[ppr_df['serve_player']==disp_player2],disp_pair)
+  #print(f"Points for {disp_player2} Paasing")
+  pts2r_df = player_pt_total(ppr_df[ppr_df['pass_player']==disp_player2],disp_pair)
+  #print(f"Pair Total after 4 points call : ppr_df size:{ppr_df.shape[0]}")
 
   
   if pts_df.shape[0] != 0:
@@ -354,16 +364,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   rot_table.at[15,'p2_s'] = p2_df.at[0,'o_tk_r']
   rot_table.at[15,'p2_r'] = p2_df.at[0,'o_tk_s'] 
 
-  # get a set of point totals with player1 serving, then with player 2 serving, points for hte pair:
-  #print(f"Points for {disp_player1} Serving")
-  pts1s_df = pair_pt_total(ppr_df[ppr_df['serve_player']==disp_player1],disp_pair)
-  #print(f"Points for {disp_player1} Passing")
-  pts1r_df = pair_pt_total(ppr_df[ppr_df['pass_player']==disp_player1],disp_pair)
-  #print(f"Points for {disp_player2} Serving")
-  pts2s_df = pair_pt_total(ppr_df[ppr_df['serve_player']==disp_player2],disp_pair)
-  #print(f"Points for {disp_player2} Paasing")
-  pts2r_df = pair_pt_total(ppr_df[ppr_df['pass_player']==disp_player2],disp_pair)
-  #print(f"Pair Total after 4 points call : ppr_df size:{ppr_df.shape[0]}")
+
 
   # Opp SO, our Side Out - All %
   # (Opp FBK + opp tk + fbe + te)/(pair serves - serve errors )
