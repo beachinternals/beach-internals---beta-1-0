@@ -36,11 +36,11 @@ def calc_player_data_background( c_league, c_gender, c_year):
   # calculate the player data files for all teams in the league, gender, year given
   #
 
-  print(f'Calling Background Task calculate_player_data for {c_league},{c_gender},{c_year}')
+  #print(f'Calling Background Task calculate_player_data for {c_league},{c_gender},{c_year}')
   task = anvil.server.launch_background_task('calculate_player_data', c_league, c_gender, c_year)
 
   # check return status
-  print(f' Background Task, Task id:{task.get_id()} return Status:{task.get_termination_status()}')
+  #print(f' Background Task, Task id:{task.get_id()} return Status:{task.get_termination_status()}')
   
   return task
 
@@ -54,7 +54,7 @@ def calculate_player_data( c_league, c_gender, c_year):
   result_string = "Calculate Player Data server module Called"
 
   c_team = "League"    # only updating the league tables
-  print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = c_league,
@@ -130,7 +130,7 @@ def calculate_player_data( c_league, c_gender, c_year):
   #print(f"player stats df:{player_stats_df}")
   
   for i in range(0,num_players):
-    print(f"player: {p_list[i]}")
+    #print(f"player: {p_list[i]}")
     player_df.at[i,'player'] = p_list[i]
 
     # unpack the player into the team, number, and short name

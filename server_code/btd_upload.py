@@ -70,7 +70,7 @@ def update_btd_characteristics( file ):
   per_srv_players = str('{:.2%}'.format(per_srv_players))
   per_action_players = str('{:.2%}'.format(per_action_players))
   
-  print(f"how are we doing?  Actions: {num_actions} Serves: {num_serves}, % Srv Players: {per_srv_players} % Coordiantes {per_coord} % Acion Players {per_action_players} Completion Score: {comp_score}")
+  #print(f"how are we doing?  Actions: {num_actions} Serves: {num_serves}, % Srv Players: {per_srv_players} % Coordiantes {per_coord} % Acion Players {per_action_players} Completion Score: {comp_score}")
   #print("  ")
 
     # now find the four or more) players in the file

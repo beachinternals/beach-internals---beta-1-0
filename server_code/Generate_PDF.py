@@ -136,13 +136,14 @@ def  render_all_rpts_pdf_background(
   # get all the reports out of the table, then loop thruy them all for the disp player
   function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(private=False)]
   text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(private=False)]
+  form_list = [(f_row['rpt_form']) for f_row in app_tables.report_list.search(private=False)]
   print(function_list)
   full_rpt_pdf = None
   
   # now loop over the items in the functioj list
-  for value in function_list:
-    print(value)
-    pdf1 = anvil.server.call('create_pdf_reports', value, 
+  for index, value in enumerate(function_list):
+    print(index,value)
+    pdf1 = anvil.server.call('create_pdf_reports', value, form_list[index],
                           disp_league, disp_gender, disp_year, 
                           disp_team, disp_player,
                           comp_l1_checked, disp_comp_l1,

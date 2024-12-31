@@ -73,7 +73,7 @@ def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player
       fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
 
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
   
@@ -143,7 +143,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
       fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
 
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
 
@@ -265,7 +265,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'Other'] = fbhe_vector[5]  # URL
     
     # Now, convert to a markdown file
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
   
@@ -328,7 +328,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
       fbhe_table.at[5,column[i]] = fbhe_vector[5]  # URL
 
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
   
@@ -415,7 +415,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'Bang/Hard'] = fbhe_vector[5]  # URL
     
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
   
@@ -512,7 +512,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'No Zone'] = fbhe_vector[5]  # URL
     
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
   
@@ -577,10 +577,9 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
 
     # now create the markdown text to return
     #print(fbhe_table)
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
-    fbhe_return2 = pd.DataFrame.to_markdown(att_table)
-    fbhe_return3 = pd.DataFrame.to_markdown(url_table)
-    fbhe_return4 = "Explain the data here"
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
+    fbhe_return2 = pd.DataFrame.to_markdown(att_table, index = False )
+    fbhe_return3 = pd.DataFrame.to_markdown(url_table, index = False )
   else:
     fbhe_return = "No Data Found"
     fbhe_return2 = ''
@@ -660,7 +659,7 @@ def tri_score(disp_league, disp_gender, disp_year,
     i = i + 1
     
   # now create the markdown text to return
-  tri_return = pd.DataFrame.to_markdown(tri_table)
+  tri_return = pd.DataFrame.to_markdown(tri_table, index = False )
   
   return tri_return, ' ', ' '
 
@@ -719,7 +718,7 @@ def error_density(disp_league, disp_gender, disp_year,
     error_table['Total Points'] = error_vector[6]
     
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(error_table)
+    fbhe_return = pd.DataFrame.to_markdown(error_table, index = False )
   else:
     fbhe_return = "No Data Found"
 
@@ -813,7 +812,7 @@ def tcr(disp_league, disp_gender, disp_year,
 
 
     # now create the markdown text to return
-    trans_return = pd.DataFrame.to_markdown(trans_table)
+    trans_return = pd.DataFrame.to_markdown(trans_table, index = False )
   else:
     trans_return = "No Data Found"
 
@@ -880,7 +879,7 @@ def expected_value(disp_league, disp_gender, disp_year,
       ev_table.loc['Service Ace Lost','All']=ev_vector[11]
  
      # now create the markdown text to return
-      ev_return = pd.DataFrame.to_markdown(ev_table)
+      ev_return = pd.DataFrame.to_markdown(ev_table, index = False )
     else:
       ev_return = "No Data Found"
   else:
@@ -951,7 +950,7 @@ def out_of_system(disp_league, disp_gender, disp_year,
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
  
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
   
@@ -1019,7 +1018,7 @@ def out_of_system_angle(disp_league, disp_gender, disp_year,
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
  
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
   
@@ -1087,7 +1086,7 @@ def out_of_system_location(disp_league, disp_gender, disp_year,
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
  
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
   
@@ -1155,7 +1154,7 @@ def out_of_system_height(disp_league, disp_gender, disp_year,
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
  
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
   
@@ -1239,7 +1238,7 @@ def fbhe_in_out_system(disp_league, disp_gender, disp_year,
 
  
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
 
@@ -1340,7 +1339,7 @@ def player_sum_rpt(disp_league, disp_gender, disp_year,
     #Transition Win - Number of transitiono points we won! and they won
  
     # now create the markdown text to return
-    scor_return = pd.DataFrame.to_markdown(scor_table)
+    scor_return = pd.DataFrame.to_markdown(scor_table, index = False )
   else:
     scor_return = "No Data Found"
     
@@ -1407,7 +1406,7 @@ def report_stuba(disp_league, disp_gender, disp_year,
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
  
     # now create the markdown text to return
-    fbhe_return = pd.DataFrame.to_markdown(fbhe_table)
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
     fbhe_return = "No Data Found"
 

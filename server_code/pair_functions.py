@@ -103,8 +103,8 @@ def pair_pt_total(ppr_df, disp_pair):
   pts_df.at[0,'p_te_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & ((ppr_df['serve_player'] == player1) | (ppr_df['serve_player'] == player2)) & ( ppr_df['point_outcome_team'] == disp_pair)].shape[0]
   pts_df.at[0,'p_tk_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ((ppr_df['pass_player'] == player1) | (ppr_df['pass_player'] == player2)) & ( ppr_df['point_outcome_team'] == disp_pair)].shape[0]
   pts_df.at[0,'p_te_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & ((ppr_df['pass_player'] == player1) | (ppr_df['pass_player'] == player2)) & ( ppr_df['point_outcome_team'] == disp_pair)].shape[0]
-  pts_df.at[0,'p_good_pass'] = ppr_df[ ((ppr_df['serve_player'] == player1) | (ppr_df['serve_player'] == player2)) & (ppr_df['pass_oos'] <= 0)].shape[0]
-  pts_df.at[0,'p_bad_pass']  = ppr_df[ ((ppr_df['serve_player'] == player2) | (ppr_df['serve_player'] == player2)) & (ppr_df['pass_oos'] >= 1)].shape[0]
+  pts_df.at[0,'p_good_pass'] = ppr_df[ ((ppr_df['serve_player'] == player1) | (ppr_df['serve_player'] == player2)) & (ppr_df['pass_oos'] <= 0) & (ppr_df['point_outcome'] != "TSE")].shape[0]
+  pts_df.at[0,'p_bad_pass']  = ppr_df[ ((ppr_df['serve_player'] == player2) | (ppr_df['serve_player'] == player2)) & (ppr_df['pass_oos'] >= 1) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'p_serves'] = ppr_df[ ppr_df['serve_player'] == player1  ].shape[0] + ppr_df[ ppr_df['serve_player'] == player2  ].shape[0]
   
   pts_df.at[0,'o_tsa'] = ppr_df[ (ppr_df['point_outcome'] == 'TSA') & ( ppr_df['point_outcome_team'] != disp_pair) ].shape[0]
@@ -115,13 +115,13 @@ def pair_pt_total(ppr_df, disp_pair):
   pts_df.at[0,'o_te_s'] = ppr_df[ (ppr_df['point_outcome'] == 'TE') & ((ppr_df['pass_player'] == player1) | (ppr_df['pass_player'] == player2 )) & (ppr_df['point_outcome_team'] != disp_pair)].shape[0]
   pts_df.at[0,'o_tk_r'] = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ((ppr_df['serve_player'] == player1) | (ppr_df['serve_player'] == player2)) & (ppr_df['point_outcome_team'] != disp_pair)].shape[0]
   pts_df.at[0,'o_te_r'] = ppr_df[ (ppr_df['point_outcome'] == 'TE') & ((ppr_df['serve_player'] == player1) | (ppr_df['serve_player'] == player2)) & (ppr_df['point_outcome_team'] != disp_pair)].shape[0]
-  pts_df.at[0,'o_good_pass'] = ppr_df[ ((ppr_df['pass_player'] == player1) | (ppr_df['pass_player'] == player2)) & (ppr_df['pass_oos'] <= 0)].shape[0]
-  pts_df.at[0,'o_bad_pass']  = ppr_df[ ((ppr_df['pass_player'] == player2) | (ppr_df['pass_player'] == player2)) & (ppr_df['pass_oos'] >= 1)].shape[0]
+  pts_df.at[0,'o_good_pass'] = ppr_df[ ((ppr_df['pass_player'] == player1) | (ppr_df['pass_player'] == player2)) & (ppr_df['pass_oos'] <= 0) & (ppr_df['point_outcome'] != "TSE")].shape[0]
+  pts_df.at[0,'o_bad_pass']  = ppr_df[ ((ppr_df['pass_player'] == player2) | (ppr_df['pass_player'] == player2)) & (ppr_df['pass_oos'] >= 1) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'o_serves'] = ppr_df[ (ppr_df['serve_player'] != player2) & (ppr_df['serve_player'] != player1)].shape[0]
   
   pts_df.at[0,'pts_total'] = ppr_df.shape[0]
 
-  if True:  # make true if you want to check the numers
+  if False:  # make true if you want to check the numers
     print(f"Points Data Frame for Pair {disp_pair}")
     print(f"p_tsa: {pts_df.at[0,'p_tsa']}")
     print(f"p_tse: {pts_df.at[0,'p_tse']}")
@@ -196,24 +196,24 @@ def player_pt_total(ppr_df, disp_player):
   pts_df.at[0,'p_te_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['serve_player'] == disp_player) & (ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'p_tk_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['pass_player'] == disp_player) & (ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'p_te_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['pass_player'] == disp_player)& (ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
-  pts_df.at[0,'p_good_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] <= 0)].shape[0]
-  pts_df.at[0,'p_bad_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] >= 1)].shape[0]
+  pts_df.at[0,'p_good_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] <= 0) & (ppr_df['point_outcome'] != "TSE")].shape[0]
+  pts_df.at[0,'p_bad_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] >= 1) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'p_serves'] = ppr_df[ ppr_df['serve_player'] == disp_player  ].shape[0]
   
   pts_df.at[0,'o_tsa'] = ppr_df[ (ppr_df['point_outcome'] == 'TSA') & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0] /2
   pts_df.at[0,'o_tse'] = ppr_df[ (ppr_df['point_outcome'] == 'TSE') & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0] /2
-  pts_df.at[0,'o_fbk'] = ppr_df[ (ppr_df['point_outcome'] == 'FBK') & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0] /2
-  pts_df.at[0,'o_fbe'] = ppr_df[ (ppr_df['point_outcome'] == 'FBE') & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0] /2
-  pts_df.at[0,'o_tk_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['serve_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
-  pts_df.at[0,'o_te_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['serve_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
-  pts_df.at[0,'o_tk_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['pass_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
-  pts_df.at[0,'o_te_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['pass_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
-  pts_df.at[0,'o_good_pass'] = ppr_df[ (ppr_df['pass_player'] == disp_player) & (ppr_df['pass_oos'] <= 0)].shape[0]
-  pts_df.at[0,'o_bad_pass'] = ppr_df[ (ppr_df['pass_player'] == disp_player) & (ppr_df['pass_oos'] >= 1)].shape[0]
-  
+  pts_df.at[0,'o_fbk'] = ppr_df[ (ppr_df['point_outcome'] == 'FBK') & (ppr_df['serve_player'] == disp_player)].shape[0]
+  pts_df.at[0,'o_fbe'] = ppr_df[ (ppr_df['point_outcome'] == 'FBE') & (ppr_df['serve_player'] == disp_player)].shape[0] 
+  pts_df.at[0,'o_tk_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['pass_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
+  pts_df.at[0,'o_te_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['pass_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
+  pts_df.at[0,'o_tk_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['serve_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
+  pts_df.at[0,'o_te_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['serve_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
+  pts_df.at[0,'o_good_pass'] = ppr_df[ (ppr_df['pass_player'] == disp_player) & (ppr_df['pass_oos'] <= 0) & (ppr_df['point_outcome'] != "TSE")].shape[0]
+  pts_df.at[0,'o_bad_pass'] = ppr_df[ (ppr_df['pass_player'] == disp_player) & (ppr_df['pass_oos'] >= 1) & (ppr_df['point_outcome'] != "TSE")].shape[0]
+  pts_df.at[0,'o_serves'] = pts_df.at[0,'o_good_pass'] + pts_df.at[0,'o_bad_pass'] + pts_df.at[0,'o_tse'] + pts_df.at[0,'o_tsa']
   pts_df.at[0,'pts_total'] = ppr_df.shape[0]
 
-  if True:  # make true if you want to check the numers
+  if False:  # make true if you want to check the numers
     print(f"Points Data Frame for Player  {disp_player}")
     print(f"p_tsa: {pts_df.at[0,'p_tsa']}")
     print(f"p_tse: {pts_df.at[0,'p_tse']}")

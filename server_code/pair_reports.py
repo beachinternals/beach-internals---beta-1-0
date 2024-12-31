@@ -30,7 +30,7 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
 
   # First, get the data, and narrow to the filter, now, limit to only pair players
   disp_player1, disp_player2 = pair_players(disp_pair)
-  print(f"Pair: {disp_pair}, P1: {disp_player1}, P2: {disp_player2}")
+  #print(f"Pair: {disp_pair}, P1: {disp_player1}, P2: {disp_player2}")
   ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True )
   #print(f"ppr_df size: {ppr_df.shape[0]}")
   ppr_df = ppr_df_limit( ppr_df, 
@@ -75,7 +75,7 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
   p2_fbhe_table.at[4,'All'] = fbhe_vector[5]  # URL
 
   # calculate the df for the pair
-  pair_fbhe_table.at[1,'All'] = p1_fbhe_table.at[1,'All'] + p2_fbhe_table.at[2,'All']
+  pair_fbhe_table.at[1,'All'] = p1_fbhe_table.at[1,'All'] + p2_fbhe_table.at[1,'All']
   pair_fbhe_table.at[2,'All'] = p1_fbhe_table.at[2,'All'] + p2_fbhe_table.at[2,'All']
   pair_fbhe_table.at[3,'All'] = p1_fbhe_table.at[3,'All'] + p2_fbhe_table.at[3,'All']
   pair_fbhe_table.at[0,'All'] = (pair_fbhe_table.at[1,'All'] - pair_fbhe_table.at[2,'All']) / (pair_fbhe_table.at[3,'All'])
@@ -112,9 +112,9 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
 
     # So I think we are done:-)
   # now, turn them all into markup
-  pair_markdown = pd.DataFrame.to_markdown(pair_fbhe_table)
-  p1_markdown = pd.DataFrame.to_markdown(p1_fbhe_table)
-  p2_markdown = pd.DataFrame.to_markdown(p2_fbhe_table)
+  pair_markdown = pd.DataFrame.to_markdown(pair_fbhe_table, index = False )
+  p1_markdown = pd.DataFrame.to_markdown(p1_fbhe_table, index = False )
+  p2_markdown = pd.DataFrame.to_markdown(p2_fbhe_table, index = False )
   
   return pair_markdown, p1_markdown, p2_markdown
 
@@ -159,22 +159,20 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
 
   ############### Third Populate the dataframe, assuming we have data returned
   # Call number of points
+  #print(f"Points for the Pair: {disp_pair}")
   pts_df = pair_pt_total(ppr_df,disp_pair)
-  #print(f"Pair Total : ppr_df size:{ppr_df.shape[0]}")
+  #print(f"Points for the player: {disp_player1}")
   p1_df = player_pt_total(ppr_df,disp_player1)
+  #print(f"Points for the player: {disp_player2}")
   p2_df = player_pt_total(ppr_df,disp_player2)
-  #print(f"Pair Total2 : ppr_df size:{ppr_df.shape[0]}")
-  # get a set of point totals with player1 serving, then with player 2 serving, points for hte pair:
-  #print(f"Points for {disp_player1} Serving")
-  pts1s_df = player_pt_total(ppr_df[ppr_df['serve_player']==disp_player1],disp_pair)
-  #print(f"Points for {disp_player1} Passing")
-  pts1r_df = player_pt_total(ppr_df[ppr_df['pass_player']==disp_player1],disp_pair)
-  #print(f"Points for {disp_player2} Serving")
-  pts2s_df = player_pt_total(ppr_df[ppr_df['serve_player']==disp_player2],disp_pair)
-  #print(f"Points for {disp_player2} Paasing")
-  pts2r_df = player_pt_total(ppr_df[ppr_df['pass_player']==disp_player2],disp_pair)
-  #print(f"Pair Total after 4 points call : ppr_df size:{ppr_df.shape[0]}")
-
+  #print(f"Points for {disp_player1} when Serving")
+  pts1s_df = player_pt_total(ppr_df[ppr_df['serve_player']==disp_player1],disp_player1)
+  #print(f"Points for {disp_player1} when Passing")
+  pts1r_df = player_pt_total(ppr_df[ppr_df['pass_player']==disp_player1],disp_player1)
+  #print(f"Points for {disp_player2} when Serving")
+  pts2s_df = player_pt_total(ppr_df[ppr_df['serve_player']==disp_player2],disp_player2)
+ # print(f"Points for {disp_player2} when Passing")
+  pts2r_df = player_pt_total(ppr_df[ppr_df['pass_player']==disp_player2],disp_player2)
   
   if pts_df.shape[0] != 0:
     # now store the values into t scor_return array
@@ -265,7 +263,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
     scor_table.at[17,'%'] = str('{:.0%}'.format(scor_table.at[17,'%'])) 
     
     # now create the markdown text to return
-    scor_markdown = pd.DataFrame.to_markdown(scor_table)
+    scor_markdown = pd.DataFrame.to_markdown(scor_table, index = False )
   else:
     scor_markdown = "No Data Found"
     # So I think we are done:-)
@@ -423,7 +421,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
                             pts2r_df.at[0,'p_tk_s']+pts2r_df.at[0,'p_tk_r']+pts2r_df.at[0,'p_te_s']+pts2r_df.at[0,'p_te_r'])
   rot_table.at[20,'p2_r'] = str('{:.0%}'.format(rot_table.at[20,'p2_r']))
   
-  rot_markdown = pd.DataFrame.to_markdown(rot_table)
+  rot_markdown = pd.DataFrame.to_markdown(rot_table, index = False )
 
   # now, next section, Rotations
   stat_dict = {'col1':[ disp_player1+' Stats','Serving KO %','Aces','Bad Pass', 'Good Pass','Serve Error ', ' ',
@@ -431,19 +429,19 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
                                 'Digging %','Digs','Dig Err', ' ',
                                 'Block Ratio', 'Blocks','Block Errors',' ',
                                 'Passing %','Aced','Bad Pass','Good Pass','Opp Serve Err',' ',
-                                'First Ball Eff','Kills','Atk Blocked','Att Error','Continues',' ',
+                                'First Ball Eff','Kills','Att Error','Continues',' ',
                                 'Make Them Pay','',
-                                'Trans Eff','Kills','Atk Blocked','Atk Err','Continues'],
-              'p1':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,0,'',0,'',0,0,0,0,0],
+                                'Trans Eff','Kills','Atk Err','Continues'],
+              'p1':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,'',0,'',0,0,0,0],
               'col3':[ disp_player2+' Stats','Serving KO %','Aces','Bad Pass', 'Good Pass','Serve Error ', ' ',
                                 'Terminal Serves', ' ',
                                 'Digging %','Digs','Dig Err', ' ',
                                 'Block Ratio', 'Blocks','Block Errors',' ',
                                 'Passing %','Aced','Bad Pass','Good Pass','Opp Serve Err',' ',
-                                'First Ball Eff','Kills','Atk Blocked','Att Error', 'Continues',' ',
+                                'First Ball Eff','Kills','Att Error', 'Continues',' ',
                                 'Make Them Pay','',
-                                'Trans Eff','Kills','Atk Blocked','Atk Err','Continues'],
-              'p2':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,0,'',0,'',0,0,0,0,0]
+                                'Trans Eff','Kills','Atk Err','Continues'],
+              'p2':['',0,0,0,0,0,'',0,'',0,0,0,'',0,0,0,'',0,0,0,0,0,'',0,0,0,0,'',0,'',0,0,0,0]
              }
 
   stat_table = pd.DataFrame.from_dict( stat_dict )
@@ -458,23 +456,23 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   stat_table.at[2,'p1'] = pts1s_df.at[0,'p_tsa'] 
   stat_table.at[2,'p2'] = pts2s_df.at[0,'p_tsa']
   
-  # Good Pass result when serving
-  stat_table.at[2,'p1'] = pts1s_df.at[0,'p_good_pass'] 
-  stat_table.at[2,'p2'] = pts2s_df.at[0,'p_good_pass']
+  # bad Pass result when serving
+  stat_table.at[3,'p1'] = pts1s_df.at[0,'p_bad_pass'] 
+  stat_table.at[3,'p2'] = pts2s_df.at[0,'p_bad_pass']
   
-  # Bad Pass, result when serving
-  stat_table.at[2,'p1'] = pts1s_df.at[0,'p_bad_pass'] 
-  stat_table.at[2,'p2'] = pts2s_df.at[0,'p_bad_pass']
+  # good Pass, result when serving
+  stat_table.at[4,'p1'] = pts1s_df.at[0,'p_good_pass'] 
+  stat_table.at[4,'p2'] = pts2s_df.at[0,'p_good_pass']
   
   # service errrors
   stat_table.at[5,'p1'] = pts1s_df.at[0,'p_tse'] 
   stat_table.at[5,'p2'] = pts2s_df.at[0,'p_tse']
 
   # Terminal Serves, My aces plus my errors divided by my number of serves
-  stat_table.at[6,'p1'] = (pts1s_df.at[0,'p_tsa'] + pts1s_df.at[0,'p_tse'])/(pts1s_df.at[0,'p_serves'])
-  stat_table.at[6,'p1']  = str('{:0.0%}'.format(stat_table.at[6,'p1']))
-  stat_table.at[6,'p2'] = (pts2s_df.at[0,'p_tsa'] + pts2s_df.at[0,'p_tse'])/(pts2s_df.at[0,'p_serves'])
-  stat_table.at[6,'p2']  = str('{:0.0%}'.format(stat_table.at[6,'p2']))
+  stat_table.at[7,'p1'] = (pts1s_df.at[0,'p_tsa'] + pts1s_df.at[0,'p_tse'])/(pts1s_df.at[0,'p_serves'])
+  stat_table.at[7,'p1']  = str('{:0.0%}'.format(stat_table.at[7,'p1']))
+  stat_table.at[7,'p2'] = (pts2s_df.at[0,'p_tsa'] + pts2s_df.at[0,'p_tse'])/(pts2s_df.at[0,'p_serves'])
+  stat_table.at[7,'p2']  = str('{:0.0%}'.format(stat_table.at[7,'p2']))
 
   # Digging ... we don't really have this
   # three lines here
@@ -482,31 +480,78 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   # Blocking, also don't have this, three more lines
 
   # Passing, percent is good passes plus opp service errors divided by serves received
-  stat_table.at[16,'p1'] = (pts1r_df.at[0,'p_good_pass'])/(pts1r_df.at[0,'o_serves']-pts1r_df.at[0,'o_tse'])
-  stat_table.at[16,'p1']  = str('{:0.0%}'.format(stat_table.at[16,'p1']))
-  stat_table.at[16,'p2'] = (pts2r_df.at[0,'p_good_pass'])/(pts2r_df.at[0,'o_serves']-pts2r_df.at[0,'o_tse'])
-  stat_table.at[16,'p2']  = str('{:0.0%}'.format(stat_table.at[16,'p2']))
+  stat_table.at[17,'p1'] = (pts1r_df.at[0,'o_good_pass'])/(pts1r_df.at[0,'o_serves']-pts1r_df.at[0,'o_tse'])
+  stat_table.at[17,'p1']  = str('{:0.0%}'.format(stat_table.at[17,'p1']))
+  stat_table.at[17,'p2'] = (pts2r_df.at[0,'o_good_pass'])/(pts2r_df.at[0,'o_serves']-pts2r_df.at[0,'o_tse'])
+  stat_table.at[17,'p2']  = str('{:0.0%}'.format(stat_table.at[17,'p2']))
 
   # aced (hal fof total?  Or jsut leave it along right now)
   
   # bad pass
-  stat_table.at[18,'p1'] = (pts1r_df.at[0,'p_bad_pass'])
-  stat_table.at[18,'p2'] = (pts2r_df.at[0,'p_bad_pass'])
+  stat_table.at[19,'p1'] = (pts1r_df.at[0,'o_bad_pass'])
+  stat_table.at[19,'p2'] = (pts2r_df.at[0,'o_bad_pass'])
 
   # good pass
-  stat_table.at[19,'p1'] = (pts1r_df.at[0,'p_good_pass'])
-  stat_table.at[19,'p2'] = (pts2r_df.at[0,'p_good_pass'])
+  stat_table.at[20,'p1'] = (pts1r_df.at[0,'o_good_pass'])
+  stat_table.at[20,'p2'] = (pts2r_df.at[0,'o_good_pass'])
 
   # opp serve err
-  stat_table.at[20,'p1'] = (pts1r_df.at[0,'o_tse'])
-  stat_table.at[20,'p2'] = (pts2r_df.at[0,'o_tse'])
+  stat_table.at[21,'p1'] = (pts1r_df.at[0,'o_tse'])
+  stat_table.at[21,'p2'] = (pts2r_df.at[0,'o_tse'])
 
-  # make them play (fbk + tk + tsa / points)
-  #stat_table.at[22,'p1'] = (pts1r_df.at[0,'p_fbk']+pts1s_df.at[0,'p_tsa']+pts1_df.at[0,'p_tk_r']+pts1_df.at[0,'p_tk_s'])
-  #stat_table.at[22,'p2'] = (pts2r_df.at[0,'p_bad_pass'])
+  # callfbnhe for the two players
+  fbhe_vector1 = fbhe(ppr_df,disp_player1,'att', 'N')
+  fbhe_vector2 = fbhe(ppr_df,disp_player2,'att', 'N')
+
+  # 23 - FBHE
+  stat_table.at[23,'p1'] = fbhe_vector1[0]
+  stat_table.at[23,'p2'] = fbhe_vector2[0]
   
+  # 24 - kills
+  stat_table.at[24,'p1'] = fbhe_vector1[1]
+  stat_table.at[24,'p2'] = fbhe_vector2[1]
   
-  stat_markdown = pd.DataFrame.to_markdown(stat_table)
+  # 25 - Errors
+  stat_table.at[24,'p1'] = fbhe_vector1[2]
+  stat_table.at[24,'p2'] = fbhe_vector2[2]
+
+  # 26 - Continues
+  stat_table.at[26,'p1'] = fbhe_vector1[3] - fbhe_vector1[1] - fbhe_vector1[2]
+  stat_table.at[26,'p2'] = fbhe_vector2[3] - fbhe_vector2[1] - fbhe_vector2[2]
+  
+  # make them play (fbk + tk + tsa / points) - Let's call error density for each player
+  # make them play is the inverse of erropr density, 1 - ed
+  error_vector_p1 = calc_error_den(ppr_df, disp_player1)
+  error_vector_p2 = calc_error_den(ppr_df, disp_player2)
+  stat_table.at[28,'p1'] = 100 - float(error_vector_p1[0][:-1])
+  #stat_table.at[28,'p1'] = str('{:0.0%}'.format(stat_table.at[28,'p1']))
+  stat_table.at[28,'p2'] = 100 - float(error_vector_p2[0][:-1])
+  #stat_table.at[28,'p2'] = str('{:0.0%}'.format(stat_table.at[28,'p2']))
+  
+  # transition conversion
+  tcr_v1 = calc_trans(ppr_df, disp_player1, 'srv')
+  tcr_v2 = calc_trans(ppr_df, disp_player2, 'srv')
+  #print(f"TCR V1: {tcr_v1}, TCR V2 : {tcr_v2}")
+  
+  # 30 trans efficiency
+  stat_table.at[30,'p1'] = (tcr_v1[3]-tcr_v1[6])/tcr_v1[9]
+  stat_table.at[30,'p1'] = str('{:0.0%}'.format(stat_table.at[30,'p1']))
+  stat_table.at[30,'p2'] = (tcr_v2[3]-tcr_v2[6])/tcr_v2[9]
+  stat_table.at[30,'p2'] = str('{:0.0%}'.format(stat_table.at[30,'p2']))
+  
+  # 31 trans kills
+  stat_table.at[31,'p1'] = tcr_v1[3]
+  stat_table.at[31,'p2'] = tcr_v2[3]
+  
+  # 32 trans errors
+  stat_table.at[32,'p1'] = tcr_v1[6]
+  stat_table.at[32,'p2'] = tcr_v2[6]  
+
+  # 33 trans continues
+  stat_table.at[33,'p1'] = tcr_v1[9] - tcr_v1[6] - tcr_v1[3]
+  stat_table.at[33,'p2'] = tcr_v2[9] - tcr_v2[6] - tcr_v2[3]
+  
+  stat_markdown = pd.DataFrame.to_markdown(stat_table, index = False)
   
   return scor_markdown,  rot_markdown, stat_markdown
   
@@ -525,6 +570,7 @@ def pair_rpt_stub(disp_league, disp_gender, disp_year,
                   date_checked, disp_start_date, disp_end_date,
                   scout, explain_text
                 ):
+  
   # note, added disp_pair in the arguments
 
   disp_player1, disp_player2 = pair_players(disp_pair) # looks iinto master_pairs to get player 1 and 2 for the given pair
@@ -603,9 +649,9 @@ def pair_rpt_stub(disp_league, disp_gender, disp_year,
 
     # So I think we are done:-)
   # now, turn them all into markup
-  pair_markdown = pd.DataFrame.to_markdown(pair_table)
-  p1_markdown = pd.DataFrame.to_markdown(p1_table)
-  p2_markdown = pd.DataFrame.to_markdown(p2_table)
+  pair_markdown = pd.DataFrame.to_markdown(pair_table, index = False )
+  p1_markdown = pd.DataFrame.to_markdown(p1_table, index = False )
+  p2_markdown = pd.DataFrame.to_markdown(p2_table, index = False )
   
   return pair_markdown, p1_markdown, p2_markdown
   

@@ -250,7 +250,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
     
   # now I can store it in the btd files database
   # find the correct row
-  print(f"looking in ppr csv tables: League:{user_league}, Gender:{user_gender}, Year:{user_year}, Team:{user_team}")
+  #print(f"looking in ppr csv tables: League:{user_league}, Gender:{user_gender}, Year:{user_year}, Team:{user_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = user_league,

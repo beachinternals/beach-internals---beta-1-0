@@ -247,7 +247,7 @@ def build_pair_table_background(c_league, c_gender, c_year):
 
   # get the ppr file
   c_team = "League"    # only updating the league tables
-  print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = c_league,
@@ -267,20 +267,20 @@ def build_pair_table_background(c_league, c_gender, c_year):
   # extract team a and team b lists
   team_list_a = ppr_df[['teama','player_a1','player_a2']]
   team_list_a = team_list_a.rename( columns={'teama':'team', 'player_a1':'player1', 'player_a2':'player2'} )
-  print(f"Team List A: {team_list_a}")
+  #print(f"Team List A: {team_list_a}")
   
   team_list_b = ppr_df[['teamb','player_b1','player_b2']]
   team_list_b = team_list_b.rename( columns={'teamb':'team', 'player_b1':'player1','player_b2':'player2'} )
-  print(f"Team List B: {team_list_b}")
+  #print(f"Team List B: {team_list_b}")
   
   team_list = pd.concat([team_list_a,team_list_b])
-  print(f"Pair List Concat:{team_list}")
+  #print(f"Pair List Concat:{team_list}")
   
   team_list = team_list.drop_duplicates()
-  print(f"Pair List Unique:{team_list}")
+  #print(f"Pair List Unique:{team_list}")
   
   team_list = team_list.sort_values(by=['team'])
-  print(f"Pair List Sort:{team_list}")
+  #print(f"Pair List Sort:{team_list}")
 
   # save it back to the ppr_csv table
   # first, I need to cahnge the ppr_file dataframe to a csv file.
@@ -304,7 +304,7 @@ def build_pair_data_background():
   # get a set of rows from ppr_ccv table for team = league, loop thru the rows
 
   for lrow in app_tables.ppr_csv_tables.search( team=q.like("League") ):
-    print(f"League Row:,{lrow['league']}, {lrow['gender']},{lrow['year']}")
+    #print(f"League Row:,{lrow['league']}, {lrow['gender']},{lrow['year']}")
     if lrow['pair_list']:
       pair_df =  pd.read_csv(io.BytesIO( lrow['pair_list'].get_bytes()))
       if pair_df.shape[0] == 0:
