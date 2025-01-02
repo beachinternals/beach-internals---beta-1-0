@@ -67,19 +67,20 @@ def calc_s_w_player( c_league, c_gender, c_year ):
              'Criteria':[0], # creitria, +/-1 stdev?
              'Criteria Value':[0]
             }
-  
-  sw_df = pd.DataFrame.from_dict(sw_dict)
-  sw_df_new = pd.DataFrame.from_dict(sw_dict)
-
-  print(f"sw df: {sw_df}")
-  print(f"sw df new : {sw_df_new}")
 
   # loop thru the player file
   print(f"Length of pdata df: {pdata_df.shape[0]}")
   for p,p_row in pdata_df.iterrows():
+    # put the dataframe definition inside the loop overr players to reset the dataframe for each player
+    
+    sw_df = pd.DataFrame.from_dict(sw_dict)
+    sw_df_new = pd.DataFrame.from_dict(sw_dict)
 
-    print(f"in loop over player data, p=:{p}")
-    print(f"player: {pdata_df.at[p,'player']}")
+    #print(f"sw df: {sw_df}")
+    #print(f"sw df new : {sw_df_new}")
+    
+    #print(f"in loop over player data, p=:{p}")
+    #print(f"player: {pdata_df.at[p,'player']}")
     
     # loop thru the criteria file
     for c_row in app_tables.strength_weakness_criteria.search( q.all_of(active=True,type='player')):
@@ -88,7 +89,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
       var_mean = variable + '_mean'
       var_sd = variable + '_stdev'
 
-      print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
+      #print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
       
       crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
 
@@ -107,26 +108,26 @@ def calc_s_w_player( c_league, c_gender, c_year ):
         sw_df_new.at[0,'Var Percentile'] = stats.norm.ppf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean] )/ pstat_df.at[0,var_sd])
         sw_df_new.at[0,'Criteria'] = c_row['criteria']
         sw_df_new.at[0,'Criteria Value'] = crit_value
-        print(sw_df_new)
+        #print(sw_df_new)
 
         # Now append this to the df
-        print(f"sw_df: {sw_df.shape[0]}, {sw_df}")
-        print(f"sw_df_new: {sw_df_new.shape[0]},{sw_df_new}")
-        print(f"sw_df Player:{sw_df.at[0,'Player']}")
-        print(f"sw_df_new Player: {sw_df_new.at[0,'Player']}")
-        print(f"sw_df Category:{sw_df.at[0,'Category']}, sw_df_new Category: {sw_df_new.at[0,'Category']}")
-        print(f"sw_df Section:{sw_df.at[0,'Section']}, sw_df_new Section: {sw_df_new.at[0,'Section']}")
-        print(f"sw_df Description:{sw_df.at[0,'Description']}, sw_df_new Description: {sw_df_new.at[0,'Description']}")
-        print(f"sw_df Var Name:{sw_df.at[0,'Var Name']}, sw_df_new Var Name: {sw_df_new.at[0,'Var Name']}")
-        print(f"sw_df Var Desc:{sw_df.at[0,'Var Desc']}, sw_df_new Var Desc: {sw_df_new.at[0,'Var Desc']}")
-        print(f"sw_df Var Value:{sw_df.at[0,'Var Value']}, sw_df_new Var Value: {sw_df_new.at[0,'Var Value']}")
-        print(f"sw_df Var Percentile:{sw_df.at[0,'Var Percentile']}, sw_df_new Var Percentile: {sw_df_new.at[0,'Var Percentile']}")
-        print(f"sw_df Criteria:{sw_df.at[0,'Criteria']}, sw_df_new Criteria: {sw_df_new.at[0,'Criteria']}")
-        print(f"sw_df Criteria Value:{sw_df.at[0,'Criteria Value']}, sw_df_new Criteria Value: {sw_df_new.at[0,'Criteria Value']}")
+        #print(f"sw_df: {sw_df.shape[0]}, {sw_df}")
+        #print(f"sw_df_new: {sw_df_new.shape[0]},{sw_df_new}")
+        #print(f"sw_df Player:{sw_df.at[0,'Player']}")
+        #print(f"sw_df_new Player: {sw_df_new.at[0,'Player']}")
+        #print(f"sw_df Category:{sw_df.at[0,'Category']}, sw_df_new Category: {sw_df_new.at[0,'Category']}")
+        #print(f"sw_df Section:{sw_df.at[0,'Section']}, sw_df_new Section: {sw_df_new.at[0,'Section']}")
+        #print(f"sw_df Description:{sw_df.at[0,'Description']}, sw_df_new Description: {sw_df_new.at[0,'Description']}")
+        #print(f"sw_df Var Name:{sw_df.at[0,'Var Name']}, sw_df_new Var Name: {sw_df_new.at[0,'Var Name']}")
+        #print(f"sw_df Var Desc:{sw_df.at[0,'Var Desc']}, sw_df_new Var Desc: {sw_df_new.at[0,'Var Desc']}")
+        #print(f"sw_df Var Value:{sw_df.at[0,'Var Value']}, sw_df_new Var Value: {sw_df_new.at[0,'Var Value']}")
+        #print(f"sw_df Var Percentile:{sw_df.at[0,'Var Percentile']}, sw_df_new Var Percentile: {sw_df_new.at[0,'Var Percentile']}")
+        #print(f"sw_df Criteria:{sw_df.at[0,'Criteria']}, sw_df_new Criteria: {sw_df_new.at[0,'Criteria']}")
+        #print(f"sw_df Criteria Value:{sw_df.at[0,'Criteria Value']}, sw_df_new Criteria Value: {sw_df_new.at[0,'Criteria Value']}")
 
-        print(f"Len of sw_df: {len(sw_df)}")
+        #print(f"Len of sw_df: {len(sw_df)}")
         sw_df = pd.concat([sw_df,sw_df_new])
-        print(f"updated sw df:{sw_df}, p:{p}")
+        #print(f"updated sw df:{sw_df}, p:{p}")
 
       # unpack the team, number, and short name from our player defiition
       p_player = pdata_df.at[p,'player']
@@ -155,7 +156,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
         sw_csv_file = pd.DataFrame.to_csv(sw_df)
         sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw.csv")
         save_result = mplayer_row.update( s_w = sw_media )
-        print(f"UPdated row in master player, result is: {save_result}, p:{p}")
+        #print(f"UPdated row in master player, result is: {save_result}, p:{p}")
   
     # next player
 
