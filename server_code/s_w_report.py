@@ -56,12 +56,12 @@ def calc_s_w_player( c_league, c_gender, c_year ):
     return 'No Player Data Found'
     
   # create the dataframe for the s_w to be stored
-  sw_dict = {'Player':[''],
-             'Category':[''], # Category - Strength, Weakness, Of Note
-             'Section':[''], # Offense, Defense, Other ...
-             'Description':[''], # Description of the event
-             'Var Name':[''], # Name of Variable
-             'Var Desc':[''], # Description of the variable
+  sw_dict = {'Player':[' '],
+             'Category':[' '], # Category - Strength, Weakness, Of Note
+             'Section':[' '], # Offense, Defense, Other ...
+             'Description':[' '], # Description of the event
+             'Var Name':[' '], # Name of Variable
+             'Var Desc':[' '], # Description of the variable
              'Var Value':[0], # Value of the variable
              'Var Percentile':[0], # Percentile of this variable
              'Criteria':[0], # creitria, +/-1 stdev?
@@ -94,7 +94,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
 
       print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")
 
-      if ((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)): 
+      if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value ))): 
         # then add a row to the sw_df dataframe
         print("adding a row to new sw df, p:{p}")
         sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
@@ -117,14 +117,15 @@ def calc_s_w_player( c_league, c_gender, c_year ):
         print(f"sw_df Category:{sw_df.at[0,'Category']}, sw_df_new Category: {sw_df_new.at[0,'Category']}")
         print(f"sw_df Section:{sw_df.at[0,'Section']}, sw_df_new Section: {sw_df_new.at[0,'Section']}")
         print(f"sw_df Description:{sw_df.at[0,'Description']}, sw_df_new Description: {sw_df_new.at[0,'Description']}")
-        print(f"sw_df Var Name:{sw_df.at[0,'Var Name']}, sw_df_new Player: {sw_df_new.at[0,'Var Name']}")
+        print(f"sw_df Var Name:{sw_df.at[0,'Var Name']}, sw_df_new Var Name: {sw_df_new.at[0,'Var Name']}")
         print(f"sw_df Var Desc:{sw_df.at[0,'Var Desc']}, sw_df_new Var Desc: {sw_df_new.at[0,'Var Desc']}")
-        print(f"sw_df Var Value:{sw_df.at[0,'Var Value']}, sw_df_new Player: {sw_df_new.at[0,'Var Value']}")
+        print(f"sw_df Var Value:{sw_df.at[0,'Var Value']}, sw_df_new Var Value: {sw_df_new.at[0,'Var Value']}")
         print(f"sw_df Var Percentile:{sw_df.at[0,'Var Percentile']}, sw_df_new Var Percentile: {sw_df_new.at[0,'Var Percentile']}")
         print(f"sw_df Criteria:{sw_df.at[0,'Criteria']}, sw_df_new Criteria: {sw_df_new.at[0,'Criteria']}")
         print(f"sw_df Criteria Value:{sw_df.at[0,'Criteria Value']}, sw_df_new Criteria Value: {sw_df_new.at[0,'Criteria Value']}")
-        
-        sw_df.loc[len(sw_df)] = sw_df_new
+
+        print(f"Len of sw_df: {len(sw_df)}")
+        sw_df = pd.concat([sw_df,sw_df_new])
         print(f"updated sw df:{sw_df}, p:{p}")
 
       # unpack the team, number, and short name from our player defiition
