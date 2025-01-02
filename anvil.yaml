@@ -297,7 +297,7 @@ db_schema:
       type: string
     server: full
     title: report_list
-  s_w_crit_player:
+  strength_weakness_criteria:
     client: none
     columns:
     - admin_ui: {order: 0, width: 203}
@@ -328,7 +328,7 @@ db_schema:
       name: var desc
       type: string
     server: full
-    title: s_w_crit_player
+    title: strength_weakness_criteria
   subscriptions:
     client: search
     columns:
