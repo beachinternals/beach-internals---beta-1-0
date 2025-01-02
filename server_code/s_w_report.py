@@ -7,7 +7,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
 import io
-from spicy.stats import norm
+import spicy
 
 
 # This is a server module. It runs on the Anvil server,
