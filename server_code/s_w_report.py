@@ -76,7 +76,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
 
   # loop thru the player file
   print(f"Length of pdata df: {pdata_df.shape[0]}")
-  for p in (0,pdata_df.shape[0]-1):
+  for p,p_row in pdata_df.iterrows():
 
     print(f"in loop over player data, p=:{p}")
     print(f"player: {pdata_df.at[p,'player']}")
@@ -88,15 +88,15 @@ def calc_s_w_player( c_league, c_gender, c_year ):
       var_mean = variable + '_mean'
       var_sd = variable + '_stdev'
 
-      print(f"In teh loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}")
+      print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
       
       crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
 
-      print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}")
+      print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")
 
       if ((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)): 
         # then add a row to the sw_df dataframe
-        print("adding a row to new sw df")
+        print("adding a row to new sw df, p:{p}")
         sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
         sw_df_new.at[0,'Category'] = c_row['category']
         sw_df_new.at[0,'Section'] = c_row['section']
@@ -111,36 +111,36 @@ def calc_s_w_player( c_league, c_gender, c_year ):
 
         # Now append this to the df
         sw_df = sw_df.append(sw_df_new)
-        print(f"updated sw df:{sw_df}")
+        print(f"updated sw df:{sw_df}, p:{p}")
 
-    # unpack the team, number, and short name from our player defiition
-    p_player = pdata_df.at[p,'player']
-    str_loc = p_player.index(' ')
-    p_team = p_player[:str_loc].strip()
-    p_player = p_player[str_loc+1:]
-    str_loc = p_player.index(' ')
-    p_num = p_player[:str_loc].strip()
-    p_sname = p_player[str_loc+1:].strip()
-    print(f"Updating the sw_df into the master player for: {c_league}, {c_gender}, {c_year}, {p_team}, {p_num}, {p_sname}")
+      # unpack the team, number, and short name from our player defiition
+      p_player = pdata_df.at[p,'player']
+      str_loc = p_player.index(' ')
+      p_team = p_player[:str_loc].strip()
+      p_player = p_player[str_loc+1:]
+      str_loc = p_player.index(' ')
+      p_num = p_player[:str_loc].strip()
+      p_sname = p_player[str_loc+1:].strip()
+      print(f"Updating the sw_df into the master player for: {c_league}, {c_gender}, {c_year}, {p_team}, {p_num}, {p_sname}, p:{p}")
     
-    # save the dataframe into s_w in master_player
-    for mplayer_row in app_tables.master_player.search(
-      q.all_of(
-        league = c_league,
-        gender = c_gender,
-        year = c_year,
-        team = p_team,
-        number = p_num,
-        shortname = p_sname
-      )
-    ):
+      # save the dataframe into s_w in master_player
+      for mplayer_row in app_tables.master_player.search(
+        q.all_of(
+          league = c_league,
+          gender = c_gender,
+          year = c_year,
+          team = p_team,
+          number = p_num,
+          shortname = p_sname
+        )
+      ):
 
-      # convert DF to a media object
-      print(f"Saving SW DF for this player: {p_team}, {p_num},{p_sname}, SW DF: {sw_df}")
-      sw_csv_file = pd.DataFrame.to_csv(sw_df)
-      sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw.csv")
-      save_result = mplayer_row.update( s_w = sw_media )
-      print(f"UPdated row in master player, result is: {save_result}")
+        # convert DF to a media object
+        print(f"Saving SW DF for this player: {p_team}, {p_num},{p_sname}, SW DF: {sw_df}, p:{p}")
+        sw_csv_file = pd.DataFrame.to_csv(sw_df)
+        sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw.csv")
+        save_result = mplayer_row.update( s_w = sw_media )
+        print(f"UPdated row in master player, result is: {save_result}, p:{p}")
   
     # next player
 
