@@ -301,7 +301,7 @@ db_schema:
     client: none
     columns:
     - admin_ui: {order: 0, width: 203}
-      name: text
+      name: description
       type: string
     - admin_ui: {order: 1, width: 133}
       name: active
@@ -325,7 +325,7 @@ db_schema:
       name: type
       type: string
     - admin_ui: {order: 3.5, width: 92}
-      name: var desc
+      name: var_desc
       type: string
     server: full
     title: strength_weakness_criteria

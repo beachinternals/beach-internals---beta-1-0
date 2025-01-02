@@ -110,7 +110,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
         print(sw_df_new)
 
         # Now append this to the df
-        sw_df = sw_df.append(sw_df_new)
+        sw_df.loc = sw_df.append(sw_df_new)
         print(f"updated sw df:{sw_df}, p:{p}")
 
       # unpack the team, number, and short name from our player defiition
