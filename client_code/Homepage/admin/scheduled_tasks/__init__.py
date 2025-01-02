@@ -15,6 +15,18 @@ class scheduled_tasks(scheduled_tasksTemplate):
     self.init_components(**properties)
 
     # Any code you write here will run before the form opens.
+    # Check for login
+    user_row = anvil.users.get_user(allow_remembered=True)
+    if not user_row:
+      alert('Please Sign In to Beach Internals')
+      open_form('Homepage.UserMgr')
+    elif not user_row["team"]:
+      alert('Please Contact Beach Internals to be Assigned to a Team')
+      open_form('Homepage.Contact')
+      
+    # First, populate the selected values
+    self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
+    self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
 
   def login_hist_click(self, **event_args):
     """This method is called when the button is clicked"""
@@ -53,4 +65,23 @@ class scheduled_tasks(scheduled_tasksTemplate):
     return_text = anvil.server.call(('build_pair_table'))
     alert(return_text)
     pass
+
+  def league_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    pass
+
+  def calc_sw_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+
+    return_value = anvil.server.call('calc_s_w_player', disp_league, disp_gender, disp_year )
+
+    return return_value
 

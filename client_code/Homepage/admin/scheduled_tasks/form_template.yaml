@@ -75,6 +75,20 @@ components:
     name: outlined_button_4
     properties: {role: outlined-button, text: Calc Data}
     type: Button
+  - layout_properties: {grid_position: 'QPMOOA,IVCSSS'}
+    name: label_8
+    properties: {text: Calculate Strengths and Weaknesses}
+    type: Label
+  - event_bindings: {change: league_drop_down_change}
+    layout_properties: {grid_position: 'QPMOOA,EVQDQP'}
+    name: league_drop_down
+    properties: {}
+    type: DropDown
+  - event_bindings: {click: calc_sw_click}
+    layout_properties: {grid_position: 'QPMOOA,XSIDLQ'}
+    name: calc_sw
+    properties: {role: outlined-button, text: Calculate Strengths & Weaknesses}
+    type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5
   properties: {col_widths: '{"VYNCIF":20,"RLNRSN":15,"NHRAUN":25}', role: outlined-card}
