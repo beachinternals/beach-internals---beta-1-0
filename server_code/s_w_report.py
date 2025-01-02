@@ -59,15 +59,15 @@ def calc_s_w_player( c_league, c_gender, c_year ):
   sw_dict = {'Player':[''],
              'Category':[''], # Category - Strength, Weakness, Of Note
              'Section':[''], # Offense, Defense, Other ...
-             'Descripton':[''], # Description of the event
+             'Description':[''], # Description of the event
              'Var Name':[''], # Name of Variable
              'Var Desc':[''], # Description of the variable
              'Var Value':[0], # Value of the variable
-              'Var Percentile':[0], # Percentile of this variable
-              'Criteria':[0], # creitria, +/-1 stdev?
-              'Criteria Value':[0]
+             'Var Percentile':[0], # Percentile of this variable
+             'Criteria':[0], # creitria, +/-1 stdev?
+             'Criteria Value':[0]
             }
-
+  
   sw_df = pd.DataFrame.from_dict(sw_dict)
   sw_df_new = pd.DataFrame.from_dict(sw_dict)
 
@@ -102,7 +102,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
         sw_df_new.at[0,'Section'] = c_row['section']
         sw_df_new.at[0,'Description'] = c_row['description']
         sw_df_new.at[0,'Var Name'] = c_row['var']
-        sw_df_new.at[0,'Var Description'] = c_row['var_desc']
+        sw_df_new.at[0,'Var Desc'] = c_row['var_desc']
         sw_df_new.at[0,'Var Value'] = pdata_df.at[p,variable]
         sw_df_new.at[0,'Var Percentile'] = stats.norm.ppf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean] )/ pstat_df.at[0,var_sd])
         sw_df_new.at[0,'Criteria'] = c_row['criteria']
@@ -110,7 +110,21 @@ def calc_s_w_player( c_league, c_gender, c_year ):
         print(sw_df_new)
 
         # Now append this to the df
-        sw_df.loc = sw_df.append(sw_df_new)
+        print(f"sw_df: {sw_df.shape[0]}, {sw_df}")
+        print(f"sw_df_new: {sw_df_new.shape[0]},{sw_df_new}")
+        print(f"sw_df Player:{sw_df.at[0,'Player']}")
+        print(f"sw_df_new Player: {sw_df_new.at[0,'Player']}")
+        print(f"sw_df Category:{sw_df.at[0,'Category']}, sw_df_new Category: {sw_df_new.at[0,'Category']}")
+        print(f"sw_df Section:{sw_df.at[0,'Section']}, sw_df_new Section: {sw_df_new.at[0,'Section']}")
+        print(f"sw_df Description:{sw_df.at[0,'Description']}, sw_df_new Description: {sw_df_new.at[0,'Description']}")
+        print(f"sw_df Var Name:{sw_df.at[0,'Var Name']}, sw_df_new Player: {sw_df_new.at[0,'Var Name']}")
+        print(f"sw_df Var Desc:{sw_df.at[0,'Var Desc']}, sw_df_new Var Desc: {sw_df_new.at[0,'Var Desc']}")
+        print(f"sw_df Var Value:{sw_df.at[0,'Var Value']}, sw_df_new Player: {sw_df_new.at[0,'Var Value']}")
+        print(f"sw_df Var Percentile:{sw_df.at[0,'Var Percentile']}, sw_df_new Var Percentile: {sw_df_new.at[0,'Var Percentile']}")
+        print(f"sw_df Criteria:{sw_df.at[0,'Criteria']}, sw_df_new Criteria: {sw_df_new.at[0,'Criteria']}")
+        print(f"sw_df Criteria Value:{sw_df.at[0,'Criteria Value']}, sw_df_new Criteria Value: {sw_df_new.at[0,'Criteria Value']}")
+        
+        sw_df.loc[len(sw_df)] = sw_df_new
         print(f"updated sw df:{sw_df}, p:{p}")
 
       # unpack the team, number, and short name from our player defiition
