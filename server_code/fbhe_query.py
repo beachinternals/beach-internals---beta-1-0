@@ -879,7 +879,7 @@ def expected_value(disp_league, disp_gender, disp_year,
       ev_table.loc['Service Ace Lost','All']=ev_vector[11]
  
      # now create the markdown text to return
-      ev_return = pd.DataFrame.to_markdown(ev_table, index = False )
+      ev_return = pd.DataFrame.to_markdown(ev_table )
     else:
       ev_return = "No Data Found"
   else:
