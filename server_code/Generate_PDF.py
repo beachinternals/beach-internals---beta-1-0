@@ -78,7 +78,7 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
   
   # call render form
   #print(f"Rendering Form for {table_data1}")
-  pdf = PDFRenderer.render_form(rpt_form, table_data1, table_data2, table_data3, filter_text, explain_text, disp_player)
+  pdf = PDFRenderer.render_form(rpt_form, table_data1, table_data2, table_data3, filter_text, explain_text, disp_player, rpt_form, box1_lable, box2_label, box3_label )
   return pdf
 
   
