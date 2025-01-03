@@ -204,6 +204,7 @@ class PlayerRpt(PlayerRptTemplate):
     # now put this into the rtf box
     filter_text = f"""
     Data Filters:
+    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
@@ -215,13 +216,15 @@ class PlayerRpt(PlayerRptTemplate):
     """
 
     self.rich_text_2.content = filter_text
-    self.rpt_disp_box.content = table_data1
+    self.rpt_disp_box1.content = table_data1
     self.rpt_disp_box2.content = table_data2
     self.rpt_disp_box3.content = table_data3
     self.rpt_disp_box4.content = explain_text
     self.box1_label.text = box1_title
     self.box2_label.text = box2_title
     self.box3_label.text = box3_title
+    self.rpt_title.text = rpt_name
+    self.player_label.text = disp_player
     
     pass
 
@@ -340,7 +343,7 @@ class PlayerRpt(PlayerRptTemplate):
                                    scout, table_data4
                                   )
 
-    alert('PDF report running in background')
+    alert('PDF report running in background, PDF will be emailed')
 
     pass
 

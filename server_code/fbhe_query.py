@@ -308,7 +308,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player, 'att', True )
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'pass', True )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
@@ -601,7 +601,7 @@ def tri_score(disp_league, disp_gender, disp_year,
 
   ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
   tri_df, tri_data_found = get_tri_data( disp_league, disp_gender, disp_year )
-  print(f" Data Found? {tri_data_found}m=, records={tri_df.shape[0]}, Displayer Player: {disp_player}")
+  #print(f" Data Found? {tri_data_found}m=, records={tri_df.shape[0]}, Displayer Player: {disp_player}")
   
   if (tri_df.shape[0] == 0):
     return "No Triangle Scoring Data Found"
@@ -613,7 +613,7 @@ def tri_score(disp_league, disp_gender, disp_year,
   tri4_df = tri_df[ tri_df['player_b2'].str.strip() == disp_player ]
 
   tri_df = pd.concat([ tri1_df, tri2_df, tri3_df, tri4_df ])
-  print(f"tri_df size:{tri_df.shape[0]}, Tri1 = {tri1_df.shape[0]}, Tri2 = {tri2_df.shape[0]}, Tri3 = {tri3_df.shape[0]}, Tri4 = {tri4_df.shape[0]}")
+  #print(f"tri_df size:{tri_df.shape[0]}, Tri1 = {tri1_df.shape[0]}, Tri2 = {tri2_df.shape[0]}, Tri3 = {tri3_df.shape[0]}, Tri4 = {tri4_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
@@ -634,11 +634,11 @@ def tri_score(disp_league, disp_gender, disp_year,
 
   ############### Third Populate the dataframe, assuming we have data returned
   num_row = tri_df.shape[0]
-  print(f"Number of Rows in Tri Data:{num_row}")
-  print(tri_df)
+  #print(f"Number of Rows in Tri Data:{num_row}")
+  #print(tri_df)
   i = 0
   for index, row in tri_df.iterrows():
-    print(f"i: {i}, Tri Table:{tri_table}")
+    #print(f"i: {i}, Tri Table:{tri_table}")
 
     if ( i != 0):
       # need to add a row to tri_table

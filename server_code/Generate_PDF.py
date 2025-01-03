@@ -11,6 +11,7 @@ from PyPDF2 import PdfMerger
 import io
 import pair_functions
 import pair_reports
+import datetime
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -64,6 +65,7 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
   # calculate the query text
   filter_text = f"""
     Data Filters:
+    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
@@ -75,7 +77,7 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
     """
   
   # call render form
-  print(f"Rendering Form for {table_data1}")
+  #print(f"Rendering Form for {table_data1}")
   pdf = PDFRenderer.render_form(rpt_form, table_data1, table_data2, table_data3, filter_text, explain_text, disp_player)
   return pdf
 
@@ -134,15 +136,15 @@ def  render_all_rpts_pdf_background(
                     ):
 
   # get all the reports out of the table, then loop thruy them all for the disp player
-  function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(private=False)]
-  text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(private=False)]
-  form_list = [(f_row['rpt_form']) for f_row in app_tables.report_list.search(private=False)]
+  function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(private=False,rpt_type='player')]
+  text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(private=False,rpt_type='player')]
+  form_list = [(f_row['rpt_form']) for f_row in app_tables.report_list.search(private=False,rpt_type='player')]
   print(function_list)
   full_rpt_pdf = None
   
   # now loop over the items in the functioj list
   for index, value in enumerate(function_list):
-    print(index,value)
+    #print(index,value)
     pdf1 = anvil.server.call('create_pdf_reports', value, form_list[index],
                           disp_league, disp_gender, disp_year, 
                           disp_team, disp_player,
@@ -154,19 +156,19 @@ def  render_all_rpts_pdf_background(
                           )
     #print(pdf1)
     if pdf1 and full_rpt_pdf:
-      print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+      #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
       full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1)
     else:
-      print('no original pdf file, setting to pdf1')
+      #print('no original pdf file, setting to pdf1')
       full_rpt_pdf = pdf1
-      print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+      #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
 
   # now that we are done, send this to the user
   return_value = send_email("Beach Internals - Player Detailed Report", "Please find the attached full player report.", full_rpt_pdf, 'beachinternals@gmail.com', 'no-reply')
 
   # and, let's write to the Google Drive
-  return_string = save_to_google_drive(full_rpt_pdf)
-  print(return_string)
+  #return_string = save_to_google_drive(full_rpt_pdf)
+  #print(return_string)
   
   return return_value
 
