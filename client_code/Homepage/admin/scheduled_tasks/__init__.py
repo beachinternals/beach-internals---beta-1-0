@@ -81,7 +81,7 @@ class scheduled_tasks(scheduled_tasksTemplate):
     disp_gender = league_value[:str_loc-1].strip()
     disp_year = league_value[str_loc+1:].strip()
 
-    return_value = anvil.server.call('calc_s_w_player', disp_league, disp_gender, disp_year )
+    return_value = anvil.server.call('calc_sw_player_clientcallable', disp_league, disp_gender, disp_year )
 
     return return_value
 

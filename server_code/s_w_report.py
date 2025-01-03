@@ -23,6 +23,16 @@ import pandas as pd
 #-----------------------------------------------------------------------------#
 
 @anvil.server.callable
+def calc_sw_player_clientcallable(c_league, c_gender, c_year ):
+  task = anvil.server.launch_background_task('calc_s_w_player_background',c_league, c_gender, c_year )
+  return task
+  
+@anvil.server.background_task
+def calc_s_w_player_background( c_league, c_gender, c_year ):
+  return_value = calc_s_w_player(c_league, c_gender, c_year )
+  return return_value
+  
+@anvil.server.callable
 def calc_s_w_player( c_league, c_gender, c_year ):
   #
   # calculate the strengths and weaknesses dataframe based on:
@@ -69,7 +79,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
             }
 
   # loop thru the player file
-  print(f"Length of pdata df: {pdata_df.shape[0]}")
+  #print(f"Length of pdata df: {pdata_df.shape[0]}")
   for p,p_row in pdata_df.iterrows():
     # put the dataframe definition inside the loop overr players to reset the dataframe for each player
     
@@ -93,11 +103,11 @@ def calc_s_w_player( c_league, c_gender, c_year ):
       
       crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
 
-      print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")
+      #print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")
 
       if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value ))): 
         # then add a row to the sw_df dataframe
-        print("adding a row to new sw df, p:{p}")
+        #print("adding a row to new sw df, p:{p}")
         sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
         sw_df_new.at[0,'Category'] = c_row['category']
         sw_df_new.at[0,'Section'] = c_row['section']
@@ -137,7 +147,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
       str_loc = p_player.index(' ')
       p_num = p_player[:str_loc].strip()
       p_sname = p_player[str_loc+1:].strip()
-      print(f"Updating the sw_df into the master player for: {c_league}, {c_gender}, {c_year}, {p_team}, {p_num}, {p_sname}, p:{p}")
+      #print(f"Updating the sw_df into the master player for: {c_league}, {c_gender}, {c_year}, {p_team}, {p_num}, {p_sname}, p:{p}")
     
       # save the dataframe into s_w in master_player
       for mplayer_row in app_tables.master_player.search(
