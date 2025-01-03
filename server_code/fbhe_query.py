@@ -1346,6 +1346,46 @@ def player_sum_rpt(disp_league, disp_gender, disp_year,
   return scor_return, ' ', ' '
 
 
+@anvil.server.callable
+def player_sw(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+               ):
+  # return a markdown text to display
+  # given the parameters
+
+  ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
+  # for this report, we look in to the master_player file, at the s_w field.
+
+  # unpack player into team, number and short name
+  str_loc = disp_player.index(' ')
+  p_team = disp_player[:str_loc].strip()
+  p_player = disp_player[str_loc+1:]
+  str_loc = p_player.index(' ')
+  p_num = p_player[:str_loc].strip()
+  p_sname = p_player[str_loc+1:].strip()
+  
+  sw_list = [(f_row['s_w']) for f_row in app_tables.master_player.search(league=disp_league,gender=disp_gender,year=disp_year,team=p_team,number=p_num,shortname=p_sname)]
+
+  if sw_list[0]:
+    # sw_list is now a media object, need to turn it back into a dataframe
+    sw_df =  pd.read_csv(io.BytesIO( sw_list[0].get_bytes()))
+
+    # do we want to sort the sw dataframe?  Or hide some columns?
+    
+    # now create the markdown text to return
+    sw_return = pd.DataFrame.to_markdown(sw_df, index = False )
+  else:
+    sw_return = "No Data Found"
+
+  
+  return sw_return, ' ', ' '
+
+
 
 @anvil.server.callable
 def report_stuba(disp_league, disp_gender, disp_year, 
