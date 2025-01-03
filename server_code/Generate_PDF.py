@@ -139,7 +139,7 @@ def  render_all_rpts_pdf_background(
                     ):
 
   # get all the reports out of the table, then loop thruy them all for the disp player
-  function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(private=False,rpt_type='player')]
+  function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(tables.order_by("order"),private=False,rpt_type='player')]
   text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(private=False,rpt_type='player')]
   form_list = [(f_row['rpt_form']) for f_row in app_tables.report_list.search(private=False,rpt_type='player')]
   print(function_list)
