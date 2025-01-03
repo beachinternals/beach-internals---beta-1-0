@@ -75,10 +75,13 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
     - Competition 3 : {disp_comp_l3 if comp_l3_checked else ''}
     - Date Filtered : {str(disp_start_date)+' to '+str(disp_end_date) if date_checked else ''}
     """
+
+  # fetch the labels from the report file
+  report_row = app_tables.report_list.get(function_name=fnct_name)
   
   # call render form
   #print(f"Rendering Form for {table_data1}")
-  pdf = PDFRenderer.render_form(rpt_form, table_data1, table_data2, table_data3, filter_text, explain_text, disp_player, rpt_form, box1_lable, box2_label, box3_label )
+  pdf = PDFRenderer.render_form(rpt_form, table_data1, table_data2, table_data3, filter_text, report_row['explain_text'], disp_player, report_row['report_name'], report_row['box1_title'], report_row['box2_title'], report_row['box3_title'] )
   return pdf
 
   
