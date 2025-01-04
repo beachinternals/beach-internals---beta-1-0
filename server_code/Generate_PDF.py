@@ -6,7 +6,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
-import anvil.pdf as PDFRenderer
+from anvil.pdf import PDFRenderer
 from PyPDF2 import PdfMerger
 import io
 import pair_functions
@@ -81,7 +81,19 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
   
   # call render form
   #print(f"Rendering Form for {table_data1}")
-  pdf = PDFRenderer.render_form(rpt_form, table_data1, table_data2, table_data3, filter_text, report_row['explain_text'], disp_player, report_row['report_name'], report_row['box1_title'], report_row['box2_title'], report_row['box3_title'] )
+  pdf_file =disp_player + ' ' + report_row['report_name'] 
+  pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form, 
+                                table_data1, 
+                                table_data2, 
+                                table_data3, 
+                                filter_text, 
+                                report_row['explain_text'], 
+                                disp_player, 
+                                report_row['report_name'], 
+                                report_row['box1_title'], 
+                                report_row['box2_title'], 
+                                report_row['box3_title']
+                               )
   return pdf
 
   
@@ -112,7 +124,7 @@ def render_all_rpts_pdf_callable(
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text
+                    scout, explain_text, player_pair
                     ):
   # just kick off the background task to do this
   return_value = anvil.server.launch_background_task('render_all_rpts_pdf_background',
@@ -122,7 +134,7 @@ def render_all_rpts_pdf_callable(
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text
+                    scout, explain_text, player_pair
                     )
 
   return return_value
@@ -135,13 +147,13 @@ def  render_all_rpts_pdf_background(
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text
+                    scout, explain_text, player_pair
                     ):
 
   # get all the reports out of the table, then loop thruy them all for the disp player
-  function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(tables.order_by("order"),private=False,rpt_type='player')]
-  text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(private=False,rpt_type='player')]
-  form_list = [(f_row['rpt_form']) for f_row in app_tables.report_list.search(private=False,rpt_type='player')]
+  function_list = [(f_row['function_name']) for f_row in app_tables.report_list.search(tables.order_by("order"),private=False,rpt_type=player_pair)]
+  text_list = [(f_row['explain_text']) for f_row in app_tables.report_list.search(private=False,rpt_type=player_pair)]
+  form_list = [(f_row['rpt_form']) for f_row in app_tables.report_list.search(private=False,rpt_type=player_pair)]
   print(function_list)
   full_rpt_pdf = None
   

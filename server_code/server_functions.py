@@ -302,12 +302,12 @@ def calc_error_den( ppr_df, disp_player):
     error_vector[0] = str('{:.2%}').format(error_vector[0])
     error_vector[1] = 0
   else:
-    error_vector[0] = None
-    error_vector[1] = None
-    error_vector[2] = None
-    error_vector[3] = None
-    error_vector[4] = None
-    error_vector[5] = None
+    error_vector[0] = 0
+    error_vector[1] = 0
+    error_vector[2] = 0
+    error_vector[3] = 0
+    error_vector[4] = 0
+    error_vector[5] = 0
 
     
   return error_vector

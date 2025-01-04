@@ -1,9 +1,9 @@
 components:
+- layout_properties: {grid_position: 'MLVCDI,ANJPXU'}
+  name: label_1
+  properties: {align: center, bold: true, font_size: 30, text: Pair Summary}
+  type: Label
 - components:
-  - layout_properties: {}
-    name: label_1
-    properties: {align: center, bold: true, font_size: 30, text: Pair Summary}
-    type: Label
   - name: pair_label
     properties: {align: center, bold: true, font_size: 24}
     type: Label
@@ -12,34 +12,44 @@ components:
   properties: {}
   type: LinearPanel
 - components:
-  - layout_properties: {grid_position: 'VVOYIG,JXVMLW WGVBEJ,CLPBFH'}
+  - layout_properties: {grid_position: 'NHNPWN,CLHICG'}
     name: label_2
     properties: {align: center, bold: true, text: Scoring}
     type: Label
-  - layout_properties: {grid_position: 'VVOYIG,JXVMLW AITUXC,YKSJAN'}
+  - layout_properties: {grid_position: 'EPONGQ,IQWIRO'}
     name: rpt_disp_box
-    properties: {}
+    properties: {font_size: 10}
     type: RichText
-  - layout_properties: {grid_position: 'VVOYIG,XHELYG ARLSXM,MNYPDS'}
+  layout_properties: {grid_position: 'VJFMBO,CHGDSU'}
+  name: column_panel_3
+  properties: {}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'LWWNHL,CFUVNJ'}
     name: label_3
     properties: {align: center, bold: true, text: Rotations}
     type: Label
-  - layout_properties: {grid_position: 'VVOYIG,XHELYG NITXZQ,PKVQOC'}
-    name: rpt_disp_box2
-    properties: {}
-    type: RichText
-  - layout_properties: {grid_position: 'VVOYIG,TXBZVK VADOIR,KEMIVE'}
+  layout_properties: {grid_position: 'VJFMBO,KSUADK OUTMRA,UMLZWW'}
+  name: column_panel_4
+  properties: {}
+  type: ColumnPanel
+- layout_properties: {grid_position: 'VJFMBO,KSUADK GJGQSB,HUPPYE'}
+  name: rpt_disp_box2
+  properties: {font_size: 10}
+  type: RichText
+- components:
+  - layout_properties: {grid_position: 'JOFXYU,UHWQMV'}
     name: label_4
     properties: {align: center, bold: true, text: Stats}
     type: Label
-  - layout_properties: {grid_position: 'VVOYIG,TXBZVK NYXPGA,TTQXFH'}
-    name: rpt_disp_box3
-    properties: {}
-    type: RichText
-  layout_properties: {grid_position: 'KYXLMK,AROPVN'}
-  name: column_panel_2
+  layout_properties: {grid_position: 'VJFMBO,KBZTRV UZWPVD,YUNVBQ'}
+  name: column_panel_5
   properties: {}
   type: ColumnPanel
+- layout_properties: {grid_position: 'VJFMBO,KBZTRV BJERNO,NSXMAD'}
+  name: rpt_disp_box3
+  properties: {font_size: 10}
+  type: RichText
 - components:
   - components: []
     layout_properties: {grid_position: 'UJSIMN,AXCVRJ'}
@@ -54,9 +64,11 @@ components:
     name: flow_panel_5
     properties: {}
     type: FlowPanel
-  layout_properties: {grid_position: 'YCJHSA,TEOQTU'}
+  layout_properties: {grid_position: 'JTPQHY,MTATBC'}
   name: column_panel_1
   properties: {}
   type: ColumnPanel
-container: {type: ColumnPanel}
+container:
+  properties: {col_widths: '{"CHGDSU":15,"KSUADK":30,"KBZTRV":15}'}
+  type: ColumnPanel
 is_package: true

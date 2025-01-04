@@ -10,6 +10,7 @@ from anvil.tables import app_tables
 import datetime
 
 
+
 class PairRpt(PairRptTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
@@ -194,9 +195,8 @@ class PairRpt(PairRptTemplate):
     disp_gender = league_value[: str_loc - 1].strip()
     disp_year = league_value[str_loc + 1 :].strip()
     disp_pair = self.pair_drop_down.selected_value['pair']
-    disp_player1, disp_player2 = pair_players_client(disp_pair)
+    disp_player1, disp_player2 = anvil.server.call('pair_players',disp_pair)
     
-
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
     disp_team = user_row["team"]
@@ -426,7 +426,7 @@ class PairRpt(PairRptTemplate):
       disp_gender,
       disp_year,
       disp_team,
-      disp_player,
+      self.pair_drop_down.selected_value['pair'],
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
       self.comp_l2_check_box.checked,
@@ -438,6 +438,7 @@ class PairRpt(PairRptTemplate):
       self.end_date_picker.date,
       scout,
       table_data4,
+      'pair'
     )
 
     alert("PDF report running in background")
@@ -529,16 +530,7 @@ class PairRpt(PairRptTemplate):
       "",
     )
     alert(("PDF report emailed" + str(result)))
-    anvil.media.download(pdf_rpt)
+    anvil.media.download(pdf_rpt, filename = 'filename')
     pass
 
 
-def pair_players_client(disp_pair):
-  # search the master pair table to find the two players
-  disp_pair = disp_pair.strip()
-  disp_player1 = ''
-  disp_player2 = ''
-  for pair_row in app_tables.master_pair.search(pair=disp_pair):
-    disp_player1 = pair_row['player1']
-    disp_player2 = pair_row['player2']
-  return disp_player1, disp_player2

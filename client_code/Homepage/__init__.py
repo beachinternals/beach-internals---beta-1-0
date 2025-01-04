@@ -142,3 +142,4 @@ class Homepage(HomepageTemplate):
     """This method is called when the link is clicked"""
     open_form('Homepage.Dashboard')
     pass
+

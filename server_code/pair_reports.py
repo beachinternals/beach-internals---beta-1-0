@@ -521,6 +521,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   
   # make them play (fbk + tk + tsa / points) - Let's call error density for each player
   # make them play is the inverse of erropr density, 1 - ed
+  print(f"ppr size and display players: {ppr_df.shape[0]},{disp_player1},{disp_player2}")
   error_vector_p1 = calc_error_den(ppr_df, disp_player1)
   error_vector_p2 = calc_error_den(ppr_df, disp_player2)
   stat_table.at[28,'p1'] = 100 - float(error_vector_p1[0][:-1])

@@ -88,7 +88,7 @@ class pdf_reports(pdf_reportsTemplate):
                                    self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
                                    self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
                                    self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date,
-                                   scout, table_data4
+                                   scout, table_data4, 'player'
                                   )
 
     alert('PDF report running in background'+return_value)
