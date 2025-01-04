@@ -408,5 +408,3 @@ def point_totals(ppr_df, disp_player):
 
   return pts_df
 
-  
-  

@@ -120,7 +120,7 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
 
 #-------------------------------------------------------
 #
-#         Pair Report Stub
+#         Pair Summary Repport
 #
 #--------------------------------------------------------
 @anvil.server.callable

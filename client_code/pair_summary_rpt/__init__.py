@@ -18,6 +18,10 @@ class pair_summary_rpt(pair_summary_rptTemplate):
     filter_text,
     explain_text,
     disp_player,
+    report_title, 
+    box1_title, 
+    box2_title, 
+    box3_title,
     **properties,
   ):
     # Set Form properties and Data Bindings.

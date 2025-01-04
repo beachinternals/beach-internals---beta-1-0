@@ -193,6 +193,9 @@ class PairRpt(PairRptTemplate):
     str_loc = league_value.index("|")
     disp_gender = league_value[: str_loc - 1].strip()
     disp_year = league_value[str_loc + 1 :].strip()
+    disp_pair = self.pair_drop_down.selected_value['pair']
+    disp_player1, disp_player2 = pair_players_client(disp_pair)
+    
 
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
@@ -275,8 +278,8 @@ class PairRpt(PairRptTemplate):
     self.rpt_disp_box3.content = table_data3
     self.rpt_disp_box4.content = explain_text
     self.box1_label.text = box1_title
-    self.box2_label.text = box2_title
-    self.box3_label.text = box3_title
+    self.box2_label.text = box2_title + ' ' + disp_player1
+    self.box3_label.text = box3_title + ' ' + disp_player2
 
     pass
 
@@ -390,14 +393,6 @@ class PairRpt(PairRptTemplate):
     disp_gender = league_value[: str_loc - 1].strip()
     disp_year = league_value[str_loc + 1 :].strip()
 
-    # unpack the player
-    disp_player = (
-      self.player_drop_down.selected_value["team"]
-      + " "
-      + self.player_drop_down.selected_value["number"]
-      + " "
-      + self.player_drop_down.selected_value["shortname"]
-    )
 
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
@@ -536,3 +531,14 @@ class PairRpt(PairRptTemplate):
     alert(("PDF report emailed" + str(result)))
     anvil.media.download(pdf_rpt)
     pass
+
+
+def pair_players_client(disp_pair):
+  # search the master pair table to find the two players
+  disp_pair = disp_pair.strip()
+  disp_player1 = ''
+  disp_player2 = ''
+  for pair_row in app_tables.master_pair.search(pair=disp_pair):
+    disp_player1 = pair_row['player1']
+    disp_player2 = pair_row['player2']
+  return disp_player1, disp_player2
