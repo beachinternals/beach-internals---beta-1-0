@@ -316,6 +316,7 @@ class PlayerRpt(PlayerRptTemplate):
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
     disp_team = user_row['team']
+    user_email = user_row['email']
 
     # unpack the report to process
     # replace this with a data driven approach
@@ -340,7 +341,7 @@ class PlayerRpt(PlayerRptTemplate):
                                    self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
                                    self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
                                    self.date_check_box.checked, self.start_date_picker.date, self.end_date_picker.date,
-                                   scout, table_data4, 'player'
+                                   scout, table_data4, 'player', user_email
                                   )
 
     alert('PDF report running in background, PDF will be emailed')

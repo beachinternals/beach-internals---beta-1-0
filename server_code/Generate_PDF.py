@@ -124,7 +124,7 @@ def render_all_rpts_pdf_callable(
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text, player_pair
+                    scout, explain_text, player_pair, user_email
                     ):
   # just kick off the background task to do this
   return_value = anvil.server.launch_background_task('render_all_rpts_pdf_background',
@@ -134,7 +134,7 @@ def render_all_rpts_pdf_callable(
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text, player_pair
+                    scout, explain_text, player_pair, user_email
                     )
 
   return return_value
@@ -147,7 +147,7 @@ def  render_all_rpts_pdf_background(
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text, player_pair
+                    scout, explain_text, player_pair, user_email
                     ):
 
   # get all the reports out of the table, then loop thruy them all for the disp player
@@ -156,6 +156,8 @@ def  render_all_rpts_pdf_background(
   form_list = [(f_row['rpt_form']) for f_row in app_tables.report_list.search(private=False,rpt_type=player_pair)]
   print(function_list)
   full_rpt_pdf = None
+  pdf_name = disp_player + ' Summary.pdf'
+
   
   # now loop over the items in the functioj list
   for index, value in enumerate(function_list):
@@ -172,14 +174,14 @@ def  render_all_rpts_pdf_background(
     #print(pdf1)
     if pdf1 and full_rpt_pdf:
       #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-      full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1)
+      full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
     else:
       #print('no original pdf file, setting to pdf1')
       full_rpt_pdf = pdf1
       #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
 
   # now that we are done, send this to the user
-  return_value = send_email("Beach Internals - Player Detailed Report", "Please find the attached full player report.", full_rpt_pdf, 'beachinternals@gmail.com', 'no-reply')
+  return_value = send_email("Beach Internals - Detailed Report", "Please find the attached full player report.", full_rpt_pdf, user_email, 'no-reply')
 
   # and, let's write to the Google Drive
   #return_string = save_to_google_drive(full_rpt_pdf)
@@ -188,7 +190,7 @@ def  render_all_rpts_pdf_background(
   return return_value
 
 
-def merge_pdfs( file1, file2):
+def merge_pdfs( file1, file2, pdf_name):
   # initialize PdfMerger
   merger = PdfMerger()
 
@@ -205,7 +207,7 @@ def merge_pdfs( file1, file2):
   merger.write(merged_pdf)
   merger.close()
   
-  return anvil.BlobMedia('application/pdf',merged_pdf.getvalue(), name='merged.pdf')
+  return anvil.BlobMedia('application/pdf',merged_pdf.getvalue(), name=pdf_name)
 
 @anvil.server.callable
 def save_to_google_drive(file):

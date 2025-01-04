@@ -27,6 +27,8 @@ class PairRpt(PairRptTemplate):
       alert("Please Contact Beach Internals to be Assigned to a Team")
       open_form("Homepage.Contact")
 
+    user_email = user_row['email']
+
     # First, populate the selected values
     self.league_drop_down.selected_value = (
       user_row["def_league"] + "|" + user_row["def_gender"] + "|" + user_row["def_year"]
@@ -397,6 +399,7 @@ class PairRpt(PairRptTemplate):
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
     disp_team = user_row["team"]
+    user_email = user_row['email']
 
     # unpack the report to process
     # replace this with a data driven approach
@@ -438,7 +441,8 @@ class PairRpt(PairRptTemplate):
       self.end_date_picker.date,
       scout,
       table_data4,
-      'pair'
+      'pair',
+      user_email
     )
 
     alert("PDF report running in background")
@@ -471,6 +475,7 @@ class PairRpt(PairRptTemplate):
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
     disp_team = user_row["team"]
+
 
     # unpack the report to process
     # replace this with a data driven approach
