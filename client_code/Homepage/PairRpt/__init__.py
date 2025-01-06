@@ -63,14 +63,23 @@ class PairRpt(PairRptTemplate):
       for row in app_tables.league_comp_l3.search(comp_l3_label=comp3lbl[0][0])
     ]
 
+    # before populating the pair table, re-unpack the league drop down vallue
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index("|")
+    disp_league = league_value[: str_loc - 1].strip()
+    league_value = league_value[str_loc + 1 :]
+    str_loc = league_value.index("|")
+    disp_gender = league_value[: str_loc - 1].strip()
+    disp_year = league_value[str_loc + 1 :].strip()
+    
     # populate the player drop down
     self.pair_drop_down.items = [
       (row["pair"], row)
       for row in app_tables.master_pair.search(
         tables.order_by("pair"),
-        league=user_row["def_league"],
-        gender=user_row["def_gender"],
-        year=user_row["def_year"],
+        league=disp_league,
+        gender=disp_gender,
+        year=disp_year,
       )
     ]
 

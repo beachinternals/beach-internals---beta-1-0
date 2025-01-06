@@ -135,15 +135,19 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   # note, added disp_pair in the arguments
   disp_player1, disp_player2 = pair_players(disp_pair) # looks iinto master_pairs to get player 1 and 2 for the given pair
   ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
+  print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
   ppr_df = ppr_df_limit( ppr_df, 
                          comp_l1_checked, disp_comp_l1, 
                          comp_l2_checked, disp_comp_l2, 
                          comp_l3_checked, disp_comp_l3, 
                          date_checked, disp_start_date, disp_end_date
                          ) # limit all data available to the parameters given for comp level 1,2,3 and dates.
+  print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
   ppr_df = pair_filter(ppr_df, disp_pair) # lastly, filter the data to all play that include the pair of interest
   print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
-  
+  if ppr_df.shape[0] == 0:
+    return 'No Data Available','',''
+    
   scor_dict = {' ':['Pt Diff','Term Srv','Live Rallies',   # 0,1,2
                     'SideOut', 'Opp Sideout', # 3,4
                     'FB Sideout','OppFb Sideout', # 5,6
@@ -535,9 +539,15 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   #print(f"TCR V1: {tcr_v1}, TCR V2 : {tcr_v2}")
   
   # 30 trans efficiency
-  stat_table.at[30,'p1'] = (tcr_v1[3]-tcr_v1[6])/tcr_v1[9]
+  if tcr_v1[9] != 0 :
+    stat_table.at[30,'p1'] = (tcr_v1[3]-tcr_v1[6])/tcr_v1[9] 
+  else:
+    stat_table.at[30,'p1'] = 0
   stat_table.at[30,'p1'] = str('{:0.0%}'.format(stat_table.at[30,'p1']))
-  stat_table.at[30,'p2'] = (tcr_v2[3]-tcr_v2[6])/tcr_v2[9]
+  if tcr_v2[9] != 0:
+    stat_table.at[30,'p2'] = (tcr_v2[3]-tcr_v2[6])/tcr_v2[9]
+  else:
+    tcr_v2[0] = 0
   stat_table.at[30,'p2'] = str('{:0.0%}'.format(stat_table.at[30,'p2']))
   
   # 31 trans kills

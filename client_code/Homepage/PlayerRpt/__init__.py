@@ -40,14 +40,23 @@ class PlayerRpt(PlayerRptTemplate):
     comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=user_row['def_league'])]
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
 
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    
     # populate the player drop down
     self.player_drop_down.items = [
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
       for row in app_tables.master_player.search(
         tables.order_by("team"),
-        league=user_row['def_league'],
-        gender=user_row['def_gender'],
-        year=user_row['def_year'],
+        league=disp_league,
+        gender=disp_gender,
+        year=disp_year,
       )
     ]
 
