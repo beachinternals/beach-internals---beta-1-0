@@ -280,7 +280,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
                                 'Opp SO','Opp FBSO','Opp FB Stop','Trans Win'], #16,17,88,19
               'p1_s':['',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,0],
               'col3':[ disp_player1+' Receive','FB Wins','Opp Srv Err','FB Kill','', # 1,2,3
-                                'FB Loss', 'Opp Srv Err','FB Err','',  # 4,5,6,7
+                                'FB Loss', 'Opp Srv Ace','FB Err','',  # 4,5,6,7
                                 'Trans Win', 'Kill','Opp Err','', #8,9,10,11
                                 'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
                                 'Sideout','FBSO','FB Stop','Trans Win'], #16,17,88,19
@@ -292,7 +292,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
                                 'Opp SO','Opp FBSO','Opp FB Stop','Trans Win'], #16,17,88,19
               'p2_s':['',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,'',0,0,0,0],
               'col7':[ disp_player2+' Receive','FB Wins','Opp Srv Err','FB Kill','', # 1,2,3
-                                'FB Loss', 'Opp Srv Err','FB Err','',  # 4,5,6,7
+                                'FB Loss', 'Opp Srv Ace','FB Err','',  # 4,5,6,7
                                 'Trans Win', 'Kill','Opp Err','', #8,9,10,11
                                 'Trans Loss','Att Err','Opp Kill','', #12,13,14,15
                                 'Sideout','FBSO','FB Stop','Trans Win'], #16,17,88,19
@@ -370,9 +370,11 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
 
   # Opp SO, our Side Out - All %
   # (Opp FBK + opp tk + fbe + te)/(pair serves - serve errors )
-  rot_table.at[17,'p1_s'] = ( pts1s_df.at[0,'o_fbk'] + pts1s_df.at[0,'o_tk_s'] + pts1s_df.at[0,'o_tk_r'] + pts1s_df.at[0,'p_fbe'] + pts1s_df.at[0,'p_te_s'] + pts1s_df.at[0,'p_te_r'])/(pts1s_df.at[0,'p_serves']-pts1s_df.at[0,'p_tse'])
+  # Opponent Sideoout
+  rot_table.at[17,'p1_s'] = ( pts1s_df.at[0,'o_fbk'] + pts1s_df.at[0,'o_tk_r'] + pts1s_df.at[0,'p_te_s'] )/(pts1s_df.at[0,'p_serves']-pts1s_df.at[0,'p_tse'])
   rot_table.at[17,'p1_s'] = str('{:.0%}'.format(rot_table.at[17,'p1_s']))
-  rot_table.at[17,'p1_r'] = ( pts1r_df.at[0,'p_fbk'] + pts1r_df.at[0,'p_tk_s'] + pts1r_df.at[0,'p_tk_r'] + pts1r_df.at[0,'o_fbe'] + pts1r_df.at[0,'o_te_s'] + pts1r_df.at[0,'o_te_r'])/(pts1r_df.at[0,'o_serves']-pts1r_df.at[0,'o_tse'])
+  # Pair Sideout
+  rot_table.at[17,'p1_r'] = ( pts1r_df.at[0,'p_fbk'] + pts1r_df.at[0,'p_tk_r'] + pts1r_df.at[0,'o_te_s'] )/(pts1r_df.at[0,'o_serves']-pts1r_df.at[0,'o_tse'])
   rot_table.at[17,'p1_r'] = str('{:.0%}'.format(rot_table.at[17,'p1_r']))
 
   rot_table.at[17,'p2_s'] = ( pts2s_df.at[0,'o_fbk'] + pts2s_df.at[0,'o_tk_s'] + pts2s_df.at[0,'o_tk_r'] + pts2s_df.at[0,'p_fbe'] + pts2s_df.at[0,'p_te_s'] + pts2s_df.at[0,'p_te_r'])/(pts2s_df.at[0,'p_serves']-pts2s_df.at[0,'p_tse'])
