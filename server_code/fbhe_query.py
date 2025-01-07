@@ -1191,7 +1191,8 @@ def fbhe_in_out_system(disp_league, disp_gender, disp_year,
              'All':[0,0,0,0,0,' '],
              'In System':[0,0,0,0,0,' '],
              "Out of System":[0,0,0,0,0,' '],
-             'Option':[0,0,0,0,0,' ']
+             'Option - In System':[0,0,0,0,0,' '],
+             'Option - Out of System':[0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
@@ -1208,8 +1209,7 @@ def fbhe_in_out_system(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
 
     # in system only
-    tmp_df = m_ppr_df[ m_ppr_df['pass_oos'] == 0 ]
-    fbhe_vector = fbhe( tmp_df[ tmp_df['tactic'] != 'option'], disp_player, 'pass', True )
+    fbhe_vector = fbhe( m_ppr_df[ m_ppr_df['pass_oos'] == 0], disp_player, 'pass', True )
     fbhe_table.at[0,'In System'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'In System'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'In System'] = fbhe_vector[2]  # errors
@@ -1218,8 +1218,7 @@ def fbhe_in_out_system(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'In System'] = fbhe_vector[5]  # URL
 
     # OUT OF  system only
-    tmp_df = m_ppr_df[ m_ppr_df['pass_oos'] != 0 ]
-    fbhe_vector = fbhe( tmp_df[ tmp_df['tactic'] != 'option'], disp_player, 'pass', True )
+    fbhe_vector = fbhe( m_ppr_df[ m_ppr_df['pass_oos'] != 0 ], disp_player, 'pass', True )
     fbhe_table.at[0,'Out of System'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[1,'Out of System'] = fbhe_vector[1]  # attacks
     fbhe_table.at[2,'Out of System'] = fbhe_vector[2]  # errors
@@ -1227,14 +1226,23 @@ def fbhe_in_out_system(disp_league, disp_gender, disp_year,
     fbhe_table.at[4,'Out of System'] = fbhe_vector[4]  # confidence interval
     fbhe_table.at[5,'Out of System'] = fbhe_vector[5]  # URL
 
-    # option only
-    fbhe_vector = fbhe( m_ppr_df[  m_ppr_df['tactic'] == 'option'], disp_player, 'pass', True )
-    fbhe_table.at[0,'Option'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[1,'Option'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[2,'Option'] = fbhe_vector[2]  # errors
-    fbhe_table.at[3,'Option'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[4,'Option'] = fbhe_vector[4]  # confidence interval
-    fbhe_table.at[5,'Option'] = fbhe_vector[5]  # URL
+    # option, in system
+    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['tactic'] == 'option') & (m_ppr_df['pass_oos'] == 0)], disp_player, 'pass', True )
+    fbhe_table.at[0,'Option - In System'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'Option - In System'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'Option - In System'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'Option - In System'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'Option - In System'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'Option - In System'] = fbhe_vector[5]  # URL
+
+    # option, out of system
+    fbhe_vector = fbhe( m_ppr_df[ (m_ppr_df['tactic'] == 'option') & (m_ppr_df['pass_oos'] != 0)], disp_player, 'pass', True )
+    fbhe_table.at[0,'Option - Out of System'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[1,'Option - Out of System'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[2,'Option - Out of System'] = fbhe_vector[2]  # errors
+    fbhe_table.at[3,'Option - Out of System'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[4,'Option - Out of System'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'Option - Out of System'] = fbhe_vector[5]  # URL
 
  
     # now create the markdown text to return
