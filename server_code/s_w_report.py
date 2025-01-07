@@ -115,7 +115,8 @@ def calc_s_w_player( c_league, c_gender, c_year ):
         sw_df_new.at[0,'Var Name'] = c_row['var']
         sw_df_new.at[0,'Var Desc'] = c_row['var_desc']
         sw_df_new.at[0,'Var Value'] = pdata_df.at[p,variable]
-        sw_df_new.at[0,'Var Percentile'] = stats.norm.ppf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean] )/ pstat_df.at[0,var_sd])
+        print(f"Calc Percentile: value:{pdata_df.at[p,variable]}, Mean: {pstat_df.at[0,var_mean]}, Stdev {pstat_df.at[0,var_sd]} Percentile:{stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )}")
+        sw_df_new.at[0,'Var Percentile'] = stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )
         sw_df_new.at[0,'Criteria'] = c_row['criteria']
         sw_df_new.at[0,'Criteria Value'] = crit_value
         #print(sw_df_new)
@@ -162,7 +163,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
       ):
 
         # convert DF to a media object
-        print(f"Saving SW DF for this player: {p_team}, {p_num},{p_sname}, SW DF: {sw_df}, p:{p}")
+        print(f"Saving SW DF for this player: {p_team}, {p_num},{p_sname}")
         sw_csv_file = pd.DataFrame.to_csv(sw_df)
         sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw.csv")
         save_result = mplayer_row.update( s_w = sw_media )

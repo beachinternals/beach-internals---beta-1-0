@@ -309,13 +309,13 @@ db_schema:
     - admin_ui: {order: 1, width: 133}
       name: active
       type: bool
-    - admin_ui: {order: 1.375, width: 135}
+    - admin_ui: {order: 1.375, width: 89}
       name: section
       type: string
-    - admin_ui: {order: 3, width: 200}
+    - admin_ui: {order: 3, width: 103}
       name: var
       type: string
-    - admin_ui: {order: 4, width: 128}
+    - admin_ui: {order: 4, width: 88}
       name: criteria
       type: number
     - admin_ui: {order: 1.25, width: 115}
@@ -327,7 +327,7 @@ db_schema:
     - admin_ui: {order: 7, width: 102}
       name: type
       type: string
-    - admin_ui: {order: 3.5, width: 92}
+    - admin_ui: {order: 3.5, width: 611}
       name: var_desc
       type: string
     server: full
