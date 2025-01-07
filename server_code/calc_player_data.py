@@ -106,6 +106,8 @@ def calculate_player_data( c_league, c_gender, c_year):
                  'fbhe_poke':None,'fbhe_poke_per':None,'fbhe_poke_n':None,
                  'fbhe_shoot':None,'fbhe_shoot_per':None,'fbhe_shoot_n':None,
                  'fbhe_bang':None,'fbhe_bang_per':None,'fbhe_bang_n':None,
+                 'fbhe_oos':None,'fbhe_oos_n':None,'fbhe_oos_per':None,
+                 'fbhe_insys':None,'fbhe_insys'
                  'fbhe_srv1':None,'fbhe_srv3':None,'fbhe_srv5':None,
                  'fbhe_srv1_n':None,'fbhe_srv3_n':None,'fbhe_srv5_n':None,
                  'err_den':None,'tcr':None,'tcr_r':None,'tcr_s':None,'expected':None,
