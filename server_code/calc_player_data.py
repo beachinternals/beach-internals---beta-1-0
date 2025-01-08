@@ -169,7 +169,7 @@ def calculate_player_data( c_league, c_gender, c_year):
       field_n = field + str('_n')
       #print(f"Field:{field}, fbhe vector:{fbhe_vector}")
       if fbhe_vector[3] >= min_att:
-        player_df.at[i,field] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+        player_df.at[i,field] = fbhe_vector[0] 
         player_df.at[i,field_n] = fbhe_vector[3]
         fbhe_min = fbhe_vector[0] if fbhe_vector[0] < fbhe_min else fbhe_min
         fbhe_max = fbhe_vector[0] if fbhe_vector[0] > fbhe_max else fbhe_max
