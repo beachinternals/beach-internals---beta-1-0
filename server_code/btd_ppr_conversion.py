@@ -141,18 +141,26 @@ def btd_to_ppr_df(btd_df, flist_r):
   # we need to sor the players alphs
   player_a1 = flist_r['ppr_playera1']
   player_a2 = flist_r['ppr_playera2']
-  if player_a1 > player_a2:
-    tmp = player_a1 
-    player_a1 = player_a2
-    player_a2 = tmp
+  btd_playera1 = flist_r['player1']
+  btd_playera2 = flist_r['player2']
+  if player_a1 > player_a2: # if I switch, I also need to switch the ppr player mapping
+    player_a2 = flist_r['ppr_playera1']
+    player_a1 = flist_r['ppr_playera2']
+    btd_playera2 = flist_r['player1']
+    btd_playera1 = flist_r['player2']
   teama = player_a1 + " " + player_a2
+  
   player_b1 = flist_r['ppr_playerb1']
   player_b2 = flist_r['ppr_playerb2']
-  if player_b1 > player_b2:
-    tmp = player_b1 
-    player_b1 = player_b2
-    player_b2 = tmp
+  btd_playerb1 = flist_r['player3']
+  btd_playerb2 = flist_r['player4']
+  if player_b1 > player_b2: # if I switch, I also need to switch the ppr player mapping
+    player_b2 = flist_r['ppr_playerb1']
+    player_b1 = flist_r['ppr_playerb2']
+    btd_playerb2 = flist_r['player3']
+    btd_playerb1 = flist_r['player4']
   teamb =  player_b1 + " " + player_b2 
+  
   zero = 0
   yn = "N"
   blank = 'empty'
@@ -209,13 +217,13 @@ def btd_to_ppr_df(btd_df, flist_r):
     #print(f"loop over rows, index = {index}, Transition? {in_trans}, Action Type?{btd_r['action_type']}, Player: {btd_r['player']}")
     
     # replace the btd players with the master player reference
-    if btd_r['player'] == flist_r['player1']:
+    if btd_r['player'] == btd_playera1:
       btd_r['player'] = player_a1
-    elif btd_r['player'] == flist_r['player2']:
+    elif btd_r['player'] == btd_playera2:
       btd_r['player'] = player_a2
-    elif btd_r['player'] == flist_r['player3']:
+    elif btd_r['player'] == btd_playerb1:
       btd_r['player'] = player_b1
-    elif btd_r['player'] == flist_r['player4']:
+    elif btd_r['player'] == btd_playerb2:
       btd_r['player'] = player_b2
     else:
       # ######## print this to a file to display as this is an error in the data #####################
