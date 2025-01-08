@@ -184,15 +184,25 @@ def calculate_player_data( c_league, c_gender, c_year):
     fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'option'],p_list[i],'pass', False)
     player_df.at[i,'fbhe_option'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
     player_df.at[i,'fbhe_option_n'] = fbhe_vector[3]
-    player_df.at[i,'fbhe_option_per'] = int(fbhe_vector[3])/total_attempts
+    if total_attempts != 0:
+      player_df.at[i,'fbhe_option_per'] = int(fbhe_vector[3])/total_attempts
+    else:
+      player_df.at[i,'fbhe_option_per'] = None 
     fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'behind'],p_list[i],'pass', False)
     player_df.at[i,'fbhe_behind'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
     player_df.at[i,'fbhe_behind_n'] = fbhe_vector[3]
-    player_df.at[i,'fbhe_behind_per'] = int(fbhe_vector[3])/total_attempts
+    if total_attempts != 0:
+      player_df.at[i,'fbhe_behind_per'] = int(fbhe_vector[3])/total_attempts
+    else:
+      player_df.at[i,'fbhe_behind_per'] = None 
     fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'tempo'],p_list[i],'pass', False)
     player_df.at[i,'fbhe_tempo'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
     player_df.at[i,'fbhe_tempo_n'] = fbhe_vector[3]
-    player_df.at[i,'fbhe_tempo_per'] = fbhe_vector[3]/total_attempts
+    if total_attempts != 0:
+      player_df.at[i,'fbhe_tempo_per'] = int(fbhe_vector[3])/total_attempts
+    else:
+      player_df.at[i,'fbhe_tempo_per'] = None 
+
 
     #------------------- Calculate Poke, Shoot, and Bang fbhe and %
     fbhe_vector = fbhe( ppr_df, p_list[i], 'all', False)

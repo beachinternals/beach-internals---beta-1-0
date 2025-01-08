@@ -160,7 +160,8 @@ def btd_to_ppr_df(btd_df, flist_r):
     btd_playerb2 = flist_r['player3']
     btd_playerb1 = flist_r['player4']
   teamb =  player_b1 + " " + player_b2 
-  
+
+  print(f"BTD 2 PPR: 4 players, a1, a2 {player_a1,player_a2}, b1 b2 {player_b1},{player_b2}")
   zero = 0
   yn = "N"
   blank = 'empty'
