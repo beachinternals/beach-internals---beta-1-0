@@ -41,12 +41,12 @@ def night_processing_callable(c_league,c_gender,c_year,rebuild_all, all_leagues)
   # allows to call for just one league or all
   # all_leagues  = True for all leagues
   # rebuild_all = True to rebuild the ppr files for all btd file
-  return anvil.server.launch_background_task('night_processing_background',c_league,c_gender,c_year,rebuild_all, all_leagues)
+  return anvil.server.launch_background_task('night_processing_backgound',c_league,c_gender,c_year,rebuild_all, all_leagues)
 
 @anvil.server.background_task
 def night_processing_cron():
   # this stub to put into the cron with the parameters desired
-  return anvil.server.launch_background_task('night_processing_background','','','',False,True)
+  return anvil.server.launch_background_task('night_processing_backgound','','','',False,True)
 
 
 @anvil.server.background_task
@@ -55,7 +55,7 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
 
   # set up email text
   email_message = 'Night Processing Started at :' + str(datetime.now()) + "\n"
-  email_message = email_message +'All Leagues:'+all_leagues+' Rebuild All:'+rebuild_all+' League:'+d_league+' Gender:'+d_gender+' Year:'+d_year+'\n'
+  email_message = email_message +'All Leagues:'+str(all_leagues)+' Rebuild All:'+str(rebuild_all)+' League:'+d_league+' Gender:'+d_gender+' Year:'+d_year+'\n'
 
   # do the btd -> ppr conversion for all btf files
   dict = {'league':[str()],
@@ -80,58 +80,60 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
   year_list = pd.unique(btd_df['year'])
   team_list = pd.unique(btd_df['team'])
   
-  if all_leagues:
-    for c_league in league_list:
-      # loop ober gender
-      #print(f"processing for league: {c_league}")
-      for c_gender in gender_list:
-        #print(f"processing for gender: {c_gender}")
-        # loop over year
-        for c_year in year_list:
-          # loop over team
-          #print(f"processing for year: {c_year}")
-          if ( all_leagues) or (c_league == d_league) and (c_gender == d_gender) and (c_year == d_year):
-            for c_team in team_list:
-              email_message = email_message + 'Generating PPR files for:'+c_league+c_gender+c_year+c_team+'\n'
-              r_value = generate_ppr_files_not_background( c_league, c_gender, c_year, c_team, rebuild_all )
+  for c_league in league_list:
+    # loop ober gender
+    print(f"processing for league: {c_league}")
+    for c_gender in gender_list:
+      print(f"processing for gender: {c_gender}")
+      # loop over year
+      for c_year in year_list:
+        # loop over team
+        print(f"processing for year: {c_year}")
+        #print(f"Checking all league iff statement, All League: {str(all_leagues)}")
+        #print(f" c :{c_league}, d:{d_league} c :{c_gender}, d:{d_gender}, c:{c_year}, d:{d_year}")
+        if ( all_leagues) or ((c_league == d_league) and (c_gender == d_gender) and (c_year == d_year)):
+          for c_team in team_list:
+            email_message = email_message + 'Generating PPR files for:'+c_league+' '+c_gender+' '+c_year+' '+c_team+'\n'
+            print(email_message)
+            r_value = generate_ppr_files_not_background( c_league, c_gender, c_year, c_team, rebuild_all )
+    
+            # now merge the data for this league
+            #-------------------------------------
+            email_message = email_message + ' Merging PPR Files for' + c_league +" "+ c_gender +" "+ c_year +" "+ c_team + "\n"
+            #print(email_text)
+            r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Private' )
+            r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Scouting' )
+            if c_team == 'INTERNALS':                
+              email_message = email_message + ' Merging PPR Files for' + c_league + ' '+ c_gender + ' '+ c_year+"\n" ' League'+ "\n"
+              r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'League' )
 
-              # now merge the data for this league
-              #-------------------------------------
-              email_message = email_message + ' Merging PPR Files for' + c_league +" "+ c_gender +" "+ c_year +" "+ c_team + "\n"
-              #print(email_text)
-              r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Private' )
-              r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Scouting' )
-              if c_team == 'INTERNALS':
-                email_text = email_text + ' Merging PPR Files for' + c_league + ' '+ c_gender + ' '+ c_year+"\n" ' League'+ "\n"
-                r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'League' )
+          # now calculate player data
+          #-----------------------------
+          email_message = email_message + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
+          r_val = calculate_player_data_not_background(c_league, c_gender, c_year)
 
-            # now calculate player data
-            #-----------------------------
-            email_message = email_message + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
-            r_val = calculate_player_data_not_background(c_league, c_gender, c_year)
+          # Calculate Triangle Data
+          #------------------------
+          email_message = email_message + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = calculate_triangle_scoring_not_background( c_league, c_gender, c_year)
 
-            # Calculate Triangle Data
-            #------------------------
-            email_message = email_message + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-            r_val = calculate_triangle_scoring_not_background( c_league, c_gender, c_year)
+          # Calculate Pair Table
+          #-----------------------
+          email_message = email_message + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = build_pair_df( c_league, c_gender, c_year)
 
-            # Calculate Pair Table
-            #-----------------------
-            email_message = email_message + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-            r_val = build_pair_df( c_league, c_gender, c_year)
+          # calculate pair data
+          #----------------------
+          email_message = email_message + ' SOMEDAY : Building Pair Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
 
-            # calculate pair data
-            #----------------------
-            email_message = email_message + ' SOMEDAY : Building Pair Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-
-            # calculate the strenght and weaknesses
-            email_message = email_message + ' Building Strengths & Weaknesses for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-            r_val = calc_s_w_player( c_league, c_gender, c_year )
+          # calculate the strenght and weaknesses
+          email_message = email_message + ' Building Strengths & Weaknesses for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = calc_s_w_player( c_league, c_gender, c_year )
 
 
   # the very last thing, load the pair's data table
   email_message = email_message + ' Loading Pair data Table ' +"\n"
-  r_val = load_pair_data_table(c_league,c_gender,c_year)
+  r_val = load_pair_data_table()
   
   #now, send an email with the updates
   internals_email = 'spccoach@gmail.com'
