@@ -300,6 +300,38 @@ db_schema:
       type: number
     server: full
     title: report_list
+  rpt_mgr:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: email
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: emailto
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: dow
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      name: rpt_type
+      type: string
+    - admin_ui: {order: 5, width: 200}
+      name: player_list
+      target: master_player
+      type: link_multiple
+    - admin_ui: {order: 6, width: 200}
+      name: pair_list
+      target: master_pair
+      type: link_multiple
+    - admin_ui: {order: 7, width: 200}
+      name: rpts_inc
+      target: report_list
+      type: link_multiple
+    - admin_ui: {order: 3, width: 200}
+      name: tod
+      type: number
+    server: full
+    title: rpt_mgr
   strength_weakness_criteria:
     client: none
     columns:
