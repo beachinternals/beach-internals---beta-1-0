@@ -51,7 +51,7 @@ def make_master_ppr( user_league, user_gender, user_year, user_team, data_set ):
 @anvil.server.callable
 def make_master_ppr_not_background(user_league, user_gender, user_year, user_team, data_set):
   # initialize a dataframe to hold hte master ppr data
-  print(f"Started Make Master PPR for: {user_league}, {user_gender}, {user_year}, {user_team}, {data_set}")
+  #print(f"Started Make Master PPR for: {user_league}, {user_gender}, {user_year}, {user_team}, {data_set}")
   master_ppr_df = pd.DataFrame()
   
   # open btd file list, filer for the desired group
@@ -260,7 +260,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
     ) )
 
   if ppr_csv_row:
-    print(f"Updating a row to the csv table {user_league}, {user_gender}, {user_year}, {user_team}")
+    #print(f"Updating a row to the csv table {user_league}, {user_gender}, {user_year}, {user_team}")
     ppr_csv_row.update(
       league = user_league,
       gender = user_gender,
@@ -270,7 +270,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
       date = datetime.datetime.now()
     )
   else:
-    print("adding a row to the csv table")
+    #print("adding a row to the csv table")
     app_tables.ppr_csv_tables.add_row(
       league = user_league,
       gender = user_gender,

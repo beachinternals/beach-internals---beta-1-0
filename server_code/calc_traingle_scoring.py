@@ -25,11 +25,11 @@ def calc_triangle_scoring_background( c_league, c_gender, c_year):
   # calculate the player data files for all teams in the league, gender, year given
   #
 
-  print(f'Calling Background Task calculate_triangle_scoring for {c_league},{c_gender},{c_year}')
+  #print(f'Calling Background Task calculate_triangle_scoring for {c_league},{c_gender},{c_year}')
   task = anvil.server.launch_background_task('calculate_triangle_scoring', c_league, c_gender, c_year)
 
   # check return status
-  print(f' Background Task, Task id:{task.get_id()} return Status:{task.get_termination_status()}')
+  #print(f' Background Task, Task id:{task.get_id()} return Status:{task.get_termination_status()}')
   
   return task
 
@@ -46,7 +46,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   result_string = "Calculate Triangle Scoring server module Called"
 
   c_team = "League"    # only updating the league tables
-  print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = c_league,
@@ -272,7 +272,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
           else:
             tri_df.at[tri_row,'tcr_criteria_met_a'] = False
         else:
-          print("tcr not a Float")
+          #print("tcr not a Float")
+          a=1
           
         # tcr criteria for team b
         if ( isinstance(tri_df.at[tri_row,'tcr_b'],float)):
@@ -283,7 +284,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
           else:
             tri_df.at[tri_row,'tcr_criteria_met_b'] = False
         else:
-          print("tcr not a Float")
+          #print("tcr not a Float")
+          a=1
 
         # error density criteria for team a
         if ( isinstance(tri_df.at[tri_row,'err_den_a'],float)):
@@ -295,7 +297,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
             #print(f"err den a False: {tri_df.at[tri_row,'err_den_a'], err_den_75}")
             tri_df.at[tri_row,'err_den_criteria_met_a'] = False
         else:
-          print("Error Density not a Float")
+          #print("Error Density not a Float")
+          a=1
           
         # error density criteria for team b
         if ( isinstance(tri_df.at[tri_row,'err_den_b'],float)):
@@ -307,7 +310,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
             #print(f"err den b False: {tri_df.at[tri_row,'err_den_b'], err_den_75}")
             tri_df.at[tri_row,'err_den_criteria_met_b'] = False         
         else:
-          print("Error Density not a Float")
+          #print("Error Density not a Float")
+          a=1
           
         # error density criteria for winning team
         if ( tri_df.at[tri_row,'winning_team'] == teama  ):
@@ -362,7 +366,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   # now lets store our triangle stats data file back as a csv file in the database
   #---------------------------------------------------------------------------
   # first, I need to change the ppr_file dataframe to a csv file.
-  print("Saving Tri_df back to database")
+  #print("Saving Tri_df back to database")
   tri_csv_file = pd.DataFrame.to_csv(tri_df)
   tri_media = anvil.BlobMedia(content_type="text/plain", content=tri_csv_file.encode(), name="triangle_data.csv")
 

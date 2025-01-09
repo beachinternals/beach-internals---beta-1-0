@@ -53,13 +53,19 @@ def calc_s_w_player( c_league, c_gender, c_year ):
       ))
 
   if ppr_csv_row:
-    pdata_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data'].get_bytes()))
-    pstat_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
-    player_data_found= True
+    if ppr_csv_row['player_data']:
+      pdata_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data'].get_bytes()))
+      pstat_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
+      player_data_found= True
+    else:
+      pdata_df = ['']
+      pstat_df = ['']
+      print('No Team Rows Found')
+      player_data_found = False
   else:
     pdata_df = ['']
     pstat_df = ['']
-    #print('No Team Rows Found')
+    print('No Team Rows Found')
     player_data_found = False
 
   if not player_data_found:
@@ -171,7 +177,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
       ):
 
       # convert DF to a media object
-      print(f"Saving SW DF for this player: {p_team}, {p_num},{p_sname}")
+      #print(f"Saving SW DF for this player: {p_team}, {p_num},{p_sname}")
       sw_csv_file = pd.DataFrame.to_csv(sw_df[['Category','Section','Description','Var Name','Var Desc','Var Value','Var Percentile','Criteria','Criteria Value']])
       sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw.csv")
       save_result = mplayer_row.update( s_w = sw_media )

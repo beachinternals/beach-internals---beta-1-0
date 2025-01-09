@@ -8,11 +8,14 @@ from anvil.tables import app_tables
 import anvil.server
 from datetime import datetime, timedelta
 import pandas as pd
-import btd_ppr_conversion
-import ppr_master_merge
 import io
 import rebuild_data
 import numpy as np
+from btd_ppr_conversion import *
+from ppr_master_merge import *
+from calc_player_data import *
+from calc_traingle_scoring import *
+from s_w_report import *
 
 # functions to update / rebuild all the data files
 
@@ -54,8 +57,9 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
   # call all the different night processing tasks in sequence, league by leaguye
 
   # set up email text
-  email_message = 'Night Processing Started at :' + str(datetime.now()) + "\n"
-  email_message = email_message +'All Leagues:'+str(all_leagues)+' Rebuild All:'+str(rebuild_all)+' League:'+d_league+' Gender:'+d_gender+' Year:'+d_year+'\n'
+  now = datetime.datetime.now()
+  email_message = 'Night Processing Started at :' + str( now ) + "\n"
+  email_message = email_message +'All Leagues:'+str(all_leagues)+'.  Rebuild All:'+str(rebuild_all)+'   League:'+d_league+'   Gender:'+d_gender+'.  Year:'+d_year+'\n'
 
   # do the btd -> ppr conversion for all btf files
   dict = {'league':[str()],
@@ -82,29 +86,29 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
   
   for c_league in league_list:
     # loop ober gender
-    print(f"processing for league: {c_league}")
+    #print(f"processing for league: {c_league}")
     for c_gender in gender_list:
-      print(f"processing for gender: {c_gender}")
+      #print(f"processing for gender: {c_gender}")
       # loop over year
       for c_year in year_list:
         # loop over team
-        print(f"processing for year: {c_year}")
+        #print(f"processing for year: {c_year}")
         #print(f"Checking all league iff statement, All League: {str(all_leagues)}")
         #print(f" c :{c_league}, d:{d_league} c :{c_gender}, d:{d_gender}, c:{c_year}, d:{d_year}")
         if ( all_leagues) or ((c_league == d_league) and (c_gender == d_gender) and (c_year == d_year)):
           for c_team in team_list:
-            email_message = email_message + 'Generating PPR files for:'+c_league+' '+c_gender+' '+c_year+' '+c_team+'\n'
-            print(email_message)
-            r_value = generate_ppr_files_not_background( c_league, c_gender, c_year, c_team, rebuild_all )
+            email_message = email_message + 'Generating PPR files for: '+c_league+' '+c_gender+' '+c_year+' '+c_team+'\n'
+            #print(email_message)
+            r_value = generate_ppr_files_not_background(c_league, c_gender, c_year, c_team, rebuild_all  )
     
             # now merge the data for this league
             #-------------------------------------
-            email_message = email_message + ' Merging PPR Files for' + c_league +" "+ c_gender +" "+ c_year +" "+ c_team + "\n"
+            email_message = email_message + ' Merging PPR Files for ' + c_league +" "+ c_gender +" "+ c_year +" "+ c_team + "\n"
             #print(email_text)
             r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Private' )
             r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Scouting' )
             if c_team == 'INTERNALS':                
-              email_message = email_message + ' Merging PPR Files for' + c_league + ' '+ c_gender + ' '+ c_year+"\n" ' League'+ "\n"
+              email_message = email_message + ' Merging PPR Files for ' + c_league + ' '+ c_gender + ' '+ c_year+' League'+ "\n"
               r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'League' )
 
           # now calculate player data
@@ -137,7 +141,8 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
   
   #now, send an email with the updates
   internals_email = 'spccoach@gmail.com'
-  email_message = email_message + "Night Processing Completed at:" + str(datetime.now()) + "\n"
+  now1 = datetime.datetime.now()
+  email_message = email_message + "Night Processing Completed at:" + str(now1) + ' Compute time: '+str(now1-now)+ "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Night Processing',text=email_message)
 
   return True
@@ -195,7 +200,7 @@ def calculate_ppr_data(rebuild):
     i = i + 1
 
   # now we need to make this unique  
-  print(btd_df)
+  #print(btd_df)
   league_list = pd.unique(btd_df['league'])
   gender_list = pd.unique(btd_df['gender'])
   year_list = pd.unique(btd_df['year'])
@@ -260,7 +265,7 @@ def merge_ppr_data():
     i = i + 1
 
   # now we need to make this unique  
-  print(btd_df)
+  #print(btd_df)
   league_list = pd.unique(btd_df['league'])
   gender_list = pd.unique(btd_df['gender'])
   year_list = pd.unique(btd_df['year'])
@@ -322,7 +327,7 @@ def calculate_data1():
     i = i + 1
 
   # now we need to make this unique  
-  print(btd_df)
+  #print(btd_df)
   league_list = pd.unique(btd_df['league'])
   gender_list = pd.unique(btd_df['gender'])
   year_list = pd.unique(btd_df['year'])
@@ -429,7 +434,7 @@ def load_pair_data_table():
     if lrow['pair_list']:
       pair_df =  pd.read_csv(io.BytesIO( lrow['pair_list'].get_bytes()))
       if pair_df.shape[0] == 0:
-        print(f"Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
+        #print(f"Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
         return ["No Pair List Found"]
       
       # loop thru the rows in in teh pair-list
@@ -446,7 +451,7 @@ def load_pair_data_table():
                                         pair = p[1]
                                         )
     else:
-      print(f"No Pair List Data Frame Found : {lrow['league']}, {lrow['gender']},{lrow['year']}")
+      #print(f"No Pair List Data Frame Found : {lrow['league']}, {lrow['gender']},{lrow['year']}")
       return False
 
   return True

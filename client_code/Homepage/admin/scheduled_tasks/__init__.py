@@ -95,6 +95,18 @@ class scheduled_tasks(scheduled_tasksTemplate):
     str_loc = league_value.index('|')
     disp_gender = league_value[:str_loc-1].strip()
     disp_year = league_value[str_loc+1:].strip()
-    r_val = anvil.server.call('night_processing_callable',disp_league,disp_gender,disp_year,False,False)
+    r_val = anvil.server.call('night_processing_callable',disp_league,disp_gender,disp_year,True,False)
     pass
+
+  def night_proc_all_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    r_val = anvil.server.call('night_processing_callable',disp_league,disp_gender,disp_year,False,True)
+  pass
 

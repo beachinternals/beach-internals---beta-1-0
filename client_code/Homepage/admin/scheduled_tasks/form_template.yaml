@@ -92,7 +92,12 @@ components:
   - event_bindings: {click: night_processing_button_click}
     layout_properties: {grid_position: 'QPMOOA,XSIDLQ HBZHSQ,ENYPTZ'}
     name: night_processing_button
-    properties: {text: Run Night Processing}
+    properties: {text: Night Processing - Rebuild Selected League}
+    type: Button
+  - event_bindings: {click: night_proc_all_click}
+    layout_properties: {grid_position: 'QPMOOA,XSIDLQ OZAKRR,BJMUZS'}
+    name: night_proc_all
+    properties: {role: outlined-button, text: Night Processing - All}
     type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5

@@ -138,7 +138,8 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
         m_ppr_df = scout_ppr_df
       #print(f'Scout DB Found:{scout_ppr_df.shape}')
     else:
-      print('No Scout Rows Found')
+      #print('No Scout Rows Found')
+      a=b
 
 
   return m_ppr_df
@@ -348,11 +349,11 @@ def get_tri_data( disp_league, disp_gender, disp_year ):
 
   if ppr_csv_row:
     tri_df =  pd.read_csv(io.BytesIO( ppr_csv_row['tri_data'].get_bytes()))
-    print(f"tri data found!, records:{tri_df.shape[0]}")
+    #print(f"tri data found!, records:{tri_df.shape[0]}")
     tri_data_found = True
   else:
     tri_df = [" "]
-    print(f"No Tri data Found, {disp_league, disp_gender, disp_year, disp_team}")
+    #print(f"No Tri data Found, {disp_league, disp_gender, disp_year, disp_team}")
     #print('No Team Rows Found')
     tri_data_found = False
 

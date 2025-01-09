@@ -41,7 +41,7 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
                          )
   #print(f"ppr_df size after limits: {ppr_df.shape[0]}")
   ppr_df = pair_filter(ppr_df, disp_pair)
-  print(f"ppr_df size after pair only points: {ppr_df.shape[0]}")
+  #print(f"ppr_df size after pair only points: {ppr_df.shape[0]}")
 
   # create the output dataframe
   df_dict = {' ':['FBHE','Kills','Errors','Attempts','URL'],
@@ -135,16 +135,16 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   # note, added disp_pair in the arguments
   disp_player1, disp_player2 = pair_players(disp_pair) # looks iinto master_pairs to get player 1 and 2 for the given pair
   ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
-  print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
+  #print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
   ppr_df = ppr_df_limit( ppr_df, 
                          comp_l1_checked, disp_comp_l1, 
                          comp_l2_checked, disp_comp_l2, 
                          comp_l3_checked, disp_comp_l3, 
                          date_checked, disp_start_date, disp_end_date
                          ) # limit all data available to the parameters given for comp level 1,2,3 and dates.
-  print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
+  #print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
   ppr_df = pair_filter(ppr_df, disp_pair) # lastly, filter the data to all play that include the pair of interest
-  print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
+  #print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
   if ppr_df.shape[0] == 0:
     return 'No Data Available','',''
     
@@ -300,7 +300,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
              }
 
   rot_table = pd.DataFrame.from_dict( rot_dict )
-  print(f"Pair Total Rotation Table : ppr_df size:{ppr_df.shape[0]}")
+  #print(f"Pair Total Rotation Table : ppr_df size:{ppr_df.shape[0]}")
   
   # first ball wins
   rot_table.at[1,'p1_s'] = p1_df.at[0,'o_fbe'] + p1_df.at[0,'p_tsa']
@@ -527,7 +527,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   
   # make them play (fbk + tk + tsa / points) - Let's call error density for each player
   # make them play is the inverse of erropr density, 1 - ed
-  print(f"ppr size and display players: {ppr_df.shape[0]},{disp_player1},{disp_player2}")
+  #print(f"ppr size and display players: {ppr_df.shape[0]},{disp_player1},{disp_player2}")
   error_vector_p1 = calc_error_den(ppr_df, disp_player1)
   error_vector_p2 = calc_error_den(ppr_df, disp_player2)
   stat_table.at[28,'p1'] = 100 - float(error_vector_p1[0][:-1])
