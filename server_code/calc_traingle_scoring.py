@@ -40,6 +40,9 @@ def calc_triangle_scoring_background( c_league, c_gender, c_year):
 #---------------------------------------------
 @anvil.server.background_task
 def calculate_triangle_scoring( c_league, c_gender, c_year):
+  return calculate_triangle_scoring_not_background( c_league, c_gender, c_year)
+
+def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   result_string = "Calculate Triangle Scoring server module Called"
 
   c_team = "League"    # only updating the league tables
