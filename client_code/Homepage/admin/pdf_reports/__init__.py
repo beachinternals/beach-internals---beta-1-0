@@ -119,6 +119,15 @@ class pdf_reports(pdf_reportsTemplate):
 
     pass
 
+  def rpt_mgr_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    anvil.server.call('rpt_mgr_generate')
+    pass
+
+  def player_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    pass
+
 
 
 

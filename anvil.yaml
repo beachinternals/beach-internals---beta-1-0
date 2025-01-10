@@ -330,6 +330,9 @@ db_schema:
     - admin_ui: {order: 3, width: 200}
       name: tod
       type: number
+    - admin_ui: {order: -1, width: 125}
+      name: active
+      type: bool
     server: full
     title: rpt_mgr
   strength_weakness_criteria:

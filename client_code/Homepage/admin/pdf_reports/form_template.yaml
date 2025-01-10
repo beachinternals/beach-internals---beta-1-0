@@ -55,6 +55,19 @@ components:
     name: gen_all_rpt_pdf
     properties: {role: outlined-button, text: All Report PDF}
     type: Button
+  - layout_properties: {grid_position: 'ZNKRMX,ICQEGD'}
+    name: column_panel_1
+    properties: {}
+    type: ColumnPanel
+  - layout_properties: {grid_position: 'ZNKRMX,EGFESH'}
+    name: label_3
+    properties: {align: right, text: Run the Report Manager}
+    type: Label
+  - event_bindings: {click: rpt_mgr_button_click}
+    layout_properties: {grid_position: 'ZNKRMX,FNIWNK'}
+    name: rpt_mgr_button
+    properties: {role: outlined-button, text: Report Manager}
+    type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5
   properties: {col_widths: '{"VYNCIF":15,"STEGGX":12,"BOPASV":12,"NBKPXK":10,"UYUCGW":11}', role: outlined-card}
