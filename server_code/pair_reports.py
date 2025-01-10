@@ -107,7 +107,8 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
     pair_fbhe_table.at[1,column[i-1]] = p1_fbhe_table.at[1,column[i-1]] + p2_fbhe_table.at[1,column[i-1]]
     pair_fbhe_table.at[2,column[i-1]] = p1_fbhe_table.at[2,column[i-1]] + p2_fbhe_table.at[2,column[i-1]]
     pair_fbhe_table.at[3,column[i-1]] = p1_fbhe_table.at[3,column[i-1]] + p2_fbhe_table.at[3,column[i-1]]
-    pair_fbhe_table.at[0,column[i-1]] = (pair_fbhe_table.at[1,column[i-1]] - pair_fbhe_table.at[2,column[i-1]]) / (pair_fbhe_table.at[3,column[i-1]])
+    if ( pair_fbhe_table.at[3,column[i-1]]) != 0:
+      pair_fbhe_table.at[0,column[i-1]] = (pair_fbhe_table.at[1,column[i-1]] - pair_fbhe_table.at[2,column[i-1]]) / (pair_fbhe_table.at[3,column[i-1]])
     pair_fbhe_table.at[0,column[i-1]] = float("{:.3f}".format(pair_fbhe_table.at[0,column[i-1]]))
 
     # So I think we are done:-)

@@ -47,24 +47,32 @@ def rpt_mgr_generate_background():
     #print(f" number of rows returned: {len(rpt_r)}")
     #print(f"Fields:{rpt_r['email']}, {rpt_r['emailto']}, {rpt_r['dow']}, {rpt_r['tod']}, {rpt_r['rpt_type']} \n\n")
 
+    # get and store the team of the user asking for hte report
+    disp_team = rpt_r['team']
     if rpt_r['rpt_type'] == 'player':
+
       # loop over all the players for this report listing
       for player_r in rpt_r['player_list']:
         print("Processing Player Reports")
         print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
-
+        
+        # build player string
+        disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
+        
+        full_rpt_pdf = None
+        pdf_name = disp_player + ' Summary.pdf'
+        
         # loop over all the reports for this player
         for rpt_print in rpt_r['rpts_inc']:
           print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
-          # build player string
-          disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
+
           # call pdf report
           pdf1 = create_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
                                     player_r['league'],
                                     player_r['gender'],
                                     player_r['year'],
-                                    player_r['team'],
+                                    disp_team,
                                     disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
@@ -72,22 +80,75 @@ def rpt_mgr_generate_background():
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                     )
+          # now, need to merge this report with the next one
+          if full_rpt_pdf:
+            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+            full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+          else:
+            #print('no original pdf file, setting to pdf1')
+            full_rpt_pdf = pdf1
+            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+          
           #pdf2 = anvil.BlobMedia('application/pdf',pdf1.getvalue(), name='player pdf')
-          email_status = anvil.email.send(to=rpt_r['emailto'],from_address="no-reply",subject='Beach Internals - Report Manager',text='Testing 123',attachments=[pdf1])
+          email_status = anvil.email.send(to=rpt_r['emailto'],
+                                          from_address="no-reply",
+                                          subject='Beach Internals - Player Summary '+disp_player,
+                                          text='Attached please find the summary report(s) for '+disp_player,
+                                          attachments=[full_rpt_pdf])
           
       print(". ")
     elif rpt_r['rpt_type'] == 'pair':
       print("processing pair report")
-      print(' ')
+      # loop over all the players for this report listing
+      for pair_r in rpt_r['pair_list']:
+        print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
+        
+        # build pair string
+        disp_pair = pair_r['pair']
+        
+        full_rpt_pdf = None
+        pdf_name = disp_pair + ' Summary.pdf'
+        
+        # loop over all the reports for this player
+        for rpt_print in rpt_r['rpts_inc']:
+          print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+
+          # call pdf report
+          pdf1 = create_pdf_reports(rpt_print['function_name'],
+                                    rpt_print['rpt_form'], 
+                                    pair_r['league'],
+                                    pair_r['gender'],
+                                    pair_r['year'],
+                                    disp_team,
+                                    disp_pair,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    )
+          # now, need to merge this report with the next one
+          if full_rpt_pdf:
+            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+            full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+          else:
+            #print('no original pdf file, setting to pdf1')
+            full_rpt_pdf = pdf1
+            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+          
+          #pdf2 = anvil.BlobMedia('application/pdf',pdf1.getvalue(), name='player pdf')
+          email_status = anvil.email.send(to=rpt_r['emailto'],
+                                          from_address="no-reply",
+                                          subject='Beach Internals - Pair Summary '+disp_pair,
+                                          text='Attached please find the summary report(s) for '+disp_pair,
+                                          attachments=[full_rpt_pdf])
+          
+      print(". ")
 
       # now, merge the new rpt_pdf into the master rpt_pdf to be returned
 
-  email_text = "wow, we are done!"
-  rpt_pdf = ""
-  # now email the report to the email
-  email_status = anvil.email.send(to=rpt_r['emailto'],from_address="no-reply",subject='Beach Internals - Report Manager',text=email_text,attachments=[rpt_pdf])
 
-  return email_status
+  return True
   
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Player Reports
