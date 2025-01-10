@@ -6,6 +6,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
+from Generate_PDF import *
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -58,7 +59,8 @@ def rpt_mgr_generate_background():
           # build player string
           disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
           # call pdf report
-          pdf1 = anvil.server.call( rpt_print['function_name'], 
+          pdf1 = create_pdf_reports(rpt_print['function_name'],
+                                    rpt_print['rpt_form'], 
                                     player_r['league'],
                                     player_r['gender'],
                                     player_r['year'],
@@ -70,8 +72,8 @@ def rpt_mgr_generate_background():
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                     )
-          pdf2 = anvil.BlobMedia('application/pdf',pdf1.getvalue(), name='player pdf')
-          email_status = anvil.email.send(to=rpt_r['emailto'],from_address="no-reply",subject='Beach Internals - Report Manager',text='Testing 123',attachments=[pdf2])
+          #pdf2 = anvil.BlobMedia('application/pdf',pdf1.getvalue(), name='player pdf')
+          email_status = anvil.email.send(to=rpt_r['emailto'],from_address="no-reply",subject='Beach Internals - Report Manager',text='Testing 123',attachments=[pdf1])
           
       print(". ")
     elif rpt_r['rpt_type'] == 'pair':
