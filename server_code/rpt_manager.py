@@ -56,7 +56,7 @@ def rpt_mgr_generate_background():
     today = datetime.now()
     day_of_week = today.strftime("%A")
     print(f"Day of the week: {day_of_week}")
-    if rpt_r['dow'] == day_of_week:
+    if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
     
       if rpt_r['rpt_type'] == 'player':
       # loop over all the players for this report listing
