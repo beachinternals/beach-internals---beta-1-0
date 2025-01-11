@@ -49,6 +49,9 @@ def rpt_mgr_generate_background():
 
     # get and store the team of the user asking for hte report
     disp_team = rpt_r['team']
+
+    # check if this report should be run today
+    
     if rpt_r['rpt_type'] == 'player':
 
       # loop over all the players for this report listing
