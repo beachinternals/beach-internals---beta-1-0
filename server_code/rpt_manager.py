@@ -7,6 +7,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
 from Generate_PDF import *
+from datetime import datetime, timedelta
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -39,6 +40,7 @@ def rpt_mgr_generate_background():
   scout = True
   explain_text = ' '
 
+
   # Open the data file, loop over rows
   for rpt_r in app_tables.rpt_mgr.search( active="Yes" ):
     
@@ -51,26 +53,29 @@ def rpt_mgr_generate_background():
     disp_team = rpt_r['team']
 
     # check if this report should be run today
+    today = datetime.now()
+    day_of_week = today.strftime("%A")
+    print(f"Day of the week: {day_of_week}")
+    if rpt_r['dow'] == day_of_week:
     
-    if rpt_r['rpt_type'] == 'player':
-
+      if rpt_r['rpt_type'] == 'player':
       # loop over all the players for this report listing
-      for player_r in rpt_r['player_list']:
-        print("Processing Player Reports")
-        print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
+        for player_r in rpt_r['player_list']:
+          print("Processing Player Reports")
+          print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
         
-        # build player string
-        disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
+          # build player string
+          disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
         
-        full_rpt_pdf = None
-        pdf_name = disp_player + ' Summary.pdf'
+          full_rpt_pdf = None
+          pdf_name = disp_player + ' Summary.pdf'
         
-        # loop over all the reports for this player
-        for rpt_print in rpt_r['rpts_inc']:
-          print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+          # loop over all the reports for this player
+          for rpt_print in rpt_r['rpts_inc']:
+            print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
-          # call pdf report
-          pdf1 = create_pdf_reports(rpt_print['function_name'],
+            # call pdf report
+            pdf1 = create_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
                                     player_r['league'],
                                     player_r['gender'],
@@ -83,41 +88,41 @@ def rpt_mgr_generate_background():
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                     )
-          # now, need to merge this report with the next one
-          if full_rpt_pdf:
-            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-            full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
-          else:
-            #print('no original pdf file, setting to pdf1')
-            full_rpt_pdf = pdf1
-            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+            # now, need to merge this report with the next one
+            if full_rpt_pdf:
+              #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+              full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+            else:
+              #print('no original pdf file, setting to pdf1')
+              full_rpt_pdf = pdf1
+              #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
           
-          #pdf2 = anvil.BlobMedia('application/pdf',pdf1.getvalue(), name='player pdf')
           email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           subject='Beach Internals - Player Summary '+disp_player,
                                           text='Attached please find the summary report(s) for '+disp_player,
                                           attachments=[full_rpt_pdf])
           
-      print(". ")
-    elif rpt_r['rpt_type'] == 'pair':
-      print("processing pair report")
-      # loop over all the players for this report listing
-      for pair_r in rpt_r['pair_list']:
-        print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
+        print(". ")
+      elif rpt_r['rpt_type'] == 'pair':
+        print("processing pair report")
+        print(f"Pair List: {rpt_r['pair_list']}")
+        # loop over all the players for this report listing
+        for pair_r in rpt_r['pair_list']:
+          print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
         
-        # build pair string
-        disp_pair = pair_r['pair']
+          # build pair string
+          disp_pair = pair_r['pair']
         
-        full_rpt_pdf = None
-        pdf_name = disp_pair + ' Summary.pdf'
+          full_rpt_pdf = None
+          pdf_name = disp_pair + ' Summary.pdf'
         
-        # loop over all the reports for this player
-        for rpt_print in rpt_r['rpts_inc']:
-          print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+          # loop over all the reports for this player
+          for rpt_print in rpt_r['rpts_inc']:
+            print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
-          # call pdf report
-          pdf1 = create_pdf_reports(rpt_print['function_name'],
+            # call pdf report
+            pdf1 = create_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
                                     pair_r['league'],
                                     pair_r['gender'],
@@ -130,26 +135,34 @@ def rpt_mgr_generate_background():
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                     )
-          # now, need to merge this report with the next one
-          if full_rpt_pdf:
-            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-            full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
-          else:
-            #print('no original pdf file, setting to pdf1')
-            full_rpt_pdf = pdf1
-            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+            
+            # now, need to merge this report with the next one
+            if full_rpt_pdf:
+              #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+              full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+            else:
+              #print('no original pdf file, setting to pdf1')
+              full_rpt_pdf = pdf1
+              #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
           
-          #pdf2 = anvil.BlobMedia('application/pdf',pdf1.getvalue(), name='player pdf')
+
           email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           subject='Beach Internals - Pair Summary '+disp_pair,
                                           text='Attached please find the summary report(s) for '+disp_pair,
                                           attachments=[full_rpt_pdf])
-          
-      print(". ")
-
-      # now, merge the new rpt_pdf into the master rpt_pdf to be returned
-
+      elif rpt_r['rpt_type'] == 'dashboard':
+        email_status = anvil.email.send(to=rpt_r['emailto'],
+                                          from_address="no-reply",
+                                          subject='Beach Internals - Dashboard Summary '+disp_team,
+                                          text='Attached please find the summary report(s) for '+disp_team)
+                                          #attachments=[full_rpt_pdf])
+      elif rpt_r['rpt_type'] == 'internals':
+        email_status = anvil.email.send(to=rpt_r['emailto'],
+                                          from_address="no-reply",
+                                          subject='Beach Internals - Administrative Data ',
+                                          text='Attached please find the summary report(s)')
+                                          #attachments=[full_rpt_pdf])
 
   return True
   

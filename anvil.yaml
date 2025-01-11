@@ -327,9 +327,6 @@ db_schema:
       name: rpts_inc
       target: report_list
       type: link_multiple
-    - admin_ui: {order: 3, width: 200}
-      name: tod
-      type: number
     - admin_ui: {order: -2, width: 200}
       name: active
       type: string
@@ -476,6 +473,12 @@ scheduled_tasks:
   task_name: night_processing_cron
   time_spec:
     at: {hour: 9, minute: 0}
+    every: day
+    n: 1
+- job_id: DKEDORCD
+  task_name: rpt_mgr_generate_background
+  time_spec:
+    at: {hour: 10, minute: 0}
     every: day
     n: 1
 services:

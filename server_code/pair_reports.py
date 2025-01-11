@@ -78,7 +78,8 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
   pair_fbhe_table.at[1,'All'] = p1_fbhe_table.at[1,'All'] + p2_fbhe_table.at[1,'All']
   pair_fbhe_table.at[2,'All'] = p1_fbhe_table.at[2,'All'] + p2_fbhe_table.at[2,'All']
   pair_fbhe_table.at[3,'All'] = p1_fbhe_table.at[3,'All'] + p2_fbhe_table.at[3,'All']
-  pair_fbhe_table.at[0,'All'] = (pair_fbhe_table.at[1,'All'] - pair_fbhe_table.at[2,'All']) / (pair_fbhe_table.at[3,'All'])
+  if pair_fbhe_table.at[3,'All'] != 0:
+    pair_fbhe_table.at[0,'All'] = (pair_fbhe_table.at[1,'All'] - pair_fbhe_table.at[2,'All']) / (pair_fbhe_table.at[3,'All'])
   pair_fbhe_table.at[0,'All'] = float("{:.3f}".format(pair_fbhe_table.at[0,'All']))
 
   # now, zones 1 thru 5
