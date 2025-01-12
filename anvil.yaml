@@ -333,6 +333,21 @@ db_schema:
     - admin_ui: {order: -1, width: 200}
       name: team
       type: string
+    - admin_ui: {order: 8, width: 200}
+      name: comp1
+      type: string
+    - admin_ui: {order: 9, width: 200}
+      name: comp2
+      type: string
+    - admin_ui: {order: 10, width: 200}
+      name: comp3
+      type: string
+    - admin_ui: {order: 11, width: 200}
+      name: startdate
+      type: date
+    - admin_ui: {order: 12, width: 200}
+      name: enddate
+      type: date
     server: full
     title: rpt_mgr
   strength_weakness_criteria:

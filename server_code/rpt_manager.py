@@ -52,6 +52,22 @@ def rpt_mgr_generate_background():
     # get and store the team of the user asking for hte report
     disp_team = rpt_r['team']
 
+    # items needed to limit/compatible with report function calls
+    if rpt_r['comp1']:
+      comp_l1_checked = True
+      disp_comp_l1 = rpt_r['comp1']
+    if rpt_r['comp2']:
+      comp_l2_checked = True
+      disp_comp_l2 = rpt_r['comp2']
+    if rpt_r['comp3']:
+      comp_l3_checked = True
+      disp_comp_l3 = rpt_r['comp3']
+    if rpt_r['startdate']:
+      disp_start_date = rpt_r['startdate']
+      disp_end_date = rpt_r['enddate']
+    scout = True
+    explain_text = ' '
+
     # check if this report should be run today
     today = datetime.now()
     day_of_week = today.strftime("%A")

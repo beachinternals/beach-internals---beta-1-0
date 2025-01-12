@@ -425,7 +425,7 @@ def load_pair_data_table():
   # here we put the pair dataframe into the pairs table in Anvil, using the pair_list in the 'league' entries
 
   # dump the contents of the master_pairs table in anvil
-  app_tables.master_pair.delete_all_rows()
+  #app_tables.master_pair.delete_all_rows()
   
   # get a set of rows from ppr_ccv table for team = league, loop thru the rows
 
@@ -443,13 +443,22 @@ def load_pair_data_table():
         # create a new row in the master_pair table
         #print(f"Row; {p}")
         #print(f"Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
-        app_tables.master_pair.add_row( league = lrow['league'],
+        if not app_tables.master_pair.get( league = lrow['league'],
+                                        gender = lrow['gender'],
+                                        year = lrow['year'],
+                                        player1 = p[2],
+                                        player2 = p[3],
+                                        pair = p[1]
+                                        ):
+          # add a row for this pair
+          app_tables.master_pair.add_row( league = lrow['league'],
                                         gender = lrow['gender'],
                                         year = lrow['year'],
                                         player1 = p[2],
                                         player2 = p[3],
                                         pair = p[1]
                                         )
+
     else:
       #print(f"No Pair List Data Frame Found : {lrow['league']}, {lrow['gender']},{lrow['year']}")
       return False
