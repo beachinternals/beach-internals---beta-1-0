@@ -39,7 +39,7 @@ def scout_srv_strategy(disp_league,
   ):
 
   # try to build to scouting report - Serving Strategy
-  #player_label = disp_player
+  player_label = disp_player
 
   # lets find the serve strategy Text:
   if (srv_to_1[0] == True) or (srv_to_1[1] == True) or (srv_to_1[2] == True) or (srv_to_5[0] == True) or (srv_to_5[1] == True) or (srv_to_5[2] == True):
@@ -97,9 +97,27 @@ def scout_srv_strategy(disp_league,
         srv_fr_list = [3]
   elif srv_fr[2]:
     srv_fr_list = [5]
-    
+
   srv_strategy_title = 'Serving '+disp_player+' from '+srv_fr_text+' to '+srv_to_text
 
+  # make a list of tuples for hte serve to zones
+  srv_2 = []
+  for j in (0,1,2):
+    if serve_to_1[j]:
+      srv_2.append([1,j])
+    if serve_to_2[j]:
+      srv_2.append([2,j])
+    if serve_to_3[j]:
+      srv_2.append([3,j])
+    if serve_to_4[j]:
+      srv_2.append([4,j])
+    if serve_to_5[j]:
+      srv_2.append([5,j])
+
+      
+
+
+print(res)
   # get the ppr data
   ppr_df =  get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
   ppr_df = ppr_df_limit( ppr_df, 
