@@ -298,7 +298,7 @@ components_by_slot:
         - components:
           - layout_properties: {grid_position: 'WWBVEU,WTWQBO'}
             name: label_18
-            properties: {align: center, text: Resulting Attacks}
+            properties: {align: center, text: Resulting Attacks - Hard Driven}
             type: Label
           - components:
             - layout_properties: {grid_position: 'WJULFT,MCWMCC'}
@@ -385,6 +385,93 @@ components_by_slot:
         layout_properties: {grid_position: 'KQJMIC,ALJDEA'}
         name: column_panel_3
         properties: {col_widths: '{"VLGDZO":10,"VUDURV":50,"WSEIWQ":35,"NZJPNO":25}'}
+        type: ColumnPanel
+      - components:
+        - layout_properties: {grid_position: 'THJAMN,AQHGRJ'}
+          name: label_24
+          properties: {align: center, text: Resulting Attacks - Off Speed}
+          type: Label
+        layout_properties: {grid_position: 'TRKVCX,QRGUQK'}
+        name: column_panel_11
+        properties: {}
+        type: ColumnPanel
+      - components:
+        - layout_properties: {grid_position: 'RYMARV,KZHNUT'}
+          name: label_25
+          properties: {text: 'Zone 1 : # / FBSO / FBHE / URL'}
+          type: Label
+        - layout_properties: {grid_position: 'AUVMDT,AMRTNX'}
+          name: image_10
+          properties: {}
+          type: Image
+        layout_properties: {grid_position: 'CBUMSL,CVNYYW'}
+        name: column_panel_12
+        properties: {}
+        type: ColumnPanel
+      - components:
+        - layout_properties: {grid_position: 'UOYFOV,RSBTZY'}
+          name: label_26
+          properties: {text: 'Zone 2 : # / FBSO / FBHE / URL'}
+          type: Label
+        - layout_properties: {grid_position: 'KOTVTO,KZLLUL'}
+          name: image_11
+          properties: {}
+          type: Image
+        layout_properties: {grid_position: 'CBUMSL,DRNBBX'}
+        name: column_panel_14
+        properties: {}
+        type: ColumnPanel
+      - components:
+        - layout_properties: {grid_position: 'YMPMNU,KMDFMC'}
+          name: label_27
+          properties: {text: 'Zone 3 : # / FBSO / FBHE / URL'}
+          type: Label
+        - layout_properties: {grid_position: 'IOJVYJ,RHDCGP'}
+          name: image_12
+          properties: {}
+          type: Image
+        layout_properties: {grid_position: 'CBUMSL,HPWQSK'}
+        name: column_panel_15
+        properties: {}
+        type: ColumnPanel
+      - components:
+        - layout_properties: {grid_position: 'NUIVJK,ABJPHZ'}
+          name: label_28
+          properties: {text: 'Zone 4 : # / FBSO / FBHE / URL'}
+          type: Label
+        - layout_properties: {grid_position: 'EBWTHT,ZUTFTK'}
+          name: image_13
+          properties: {}
+          type: Image
+        layout_properties: {grid_position: 'CBUMSL,LBMNNG'}
+        name: column_panel_17
+        properties: {}
+        type: ColumnPanel
+      - components:
+        - layout_properties: {grid_position: 'FBAHIQ,EKMIHS'}
+          name: label_29
+          properties: {text: 'Zone 4 : # / FBSO / FBHE / URL'}
+          type: Label
+        - layout_properties: {grid_position: 'VKXFIV,XAKHXZ'}
+          name: image_14
+          properties: {}
+          type: Image
+        layout_properties: {grid_position: 'CBUMSL,UGOOQE'}
+        name: column_panel_16
+        properties: {}
+        type: ColumnPanel
+      - components:
+        - layout_properties: {grid_position: 'WBJVZT,GMBGSP'}
+          name: label_30
+          properties: {text: 'Option : # / FBSO / FBHE / URL'}
+          type: Label
+        - layout_properties: {grid_position: 'DAIUVI,HYBZED'}
+          name: image_15
+          properties: {}
+          type: Image
+        layout_properties: {grid_position: 'CBUMSL,BVKVDR'}
+        name: column_panel_13
+        properties: {}
         type: ColumnPanel
       layout_properties: {grid_position: 'KCZYCU,LQEYDV'}
       name: outlined_card_3

@@ -28,25 +28,33 @@ components_by_slot:
       properties: {}
       type: FlowPanel
     - components:
-      - layout_properties: {grid_position: 'BOYQME,HUZHBP'}
+      - layout_properties: {grid_position: 'KHZDZW,BPBZVE'}
         name: label_3
-        properties: {text: 'Data Summary:'}
+        properties: {align: center, text: FBHE}
         type: Label
-      - layout_properties: {grid_position: 'BOYQME,ZYMSGU'}
-        name: data_summary_markdown_box
-        properties: {}
-        type: RichText
-      layout_properties: {grid_position: 'KCZYCU,LQEYDV'}
-      name: outlined_card_3
-      properties: {col_widths: '{"HUZHBP":10,"ZYMSGU":50}', role: outlined-card}
-      type: ColumnPanel
-    - components:
-      - layout_properties: {grid_position: 'YCVSJI,YSHXUT'}
-        name: fbhe_histogram_plot
-        properties: {}
-        type: Plot
       layout_properties: {grid_position: 'PJEIVH,LKAFOT'}
       name: column_panel_1
+      properties: {}
+      type: ColumnPanel
+    - layout_properties: {grid_position: 'DJDGOZ,TYQOMS'}
+      name: data_table_1
+      properties: {content: '17%, 25%, 50%, 75%, 83%'}
+      type: RichText
+    - layout_properties: {grid_position: 'DJDGOZ,MFUGXC'}
+      name: fbhe_histogram_plot
+      properties: {}
+      type: Image
+    - components:
+      - layout_properties: {grid_position: 'VAQPIH,WUXEKI'}
+        name: explain_text
+        properties: {content: Explanation}
+        type: RichText
+      - layout_properties: {grid_position: 'VAQPIH,MJERMF'}
+        name: filter_text
+        properties: {content: Filter Text}
+        type: RichText
+      layout_properties: {grid_position: 'HJQOPL,NBLGBA'}
+      name: column_panel_2
       properties: {}
       type: ColumnPanel
     layout_properties: {}
