@@ -113,11 +113,9 @@ def scout_srv_strategy(disp_league,
       srv_2.append([4,j])
     if serve_to_5[j]:
       srv_2.append([5,j])
-
-      
-
-
-print(res)
+  # let's see what we have
+  print(f"svr list of tubles {srv_2}")
+  
   # get the ppr data
   ppr_df =  get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
   ppr_df = ppr_df_limit( ppr_df, 
@@ -129,11 +127,52 @@ print(res)
   ppr_df = pair_filter(ppr_df, disp_pair) # lastly, filter the data to all play that include the pair of interest
 
   # lastly, lmit this by the source and desitnation locations
-  ppr_df = ppr_df[ppr_df['serve_src_net_zone'] == srv_fr_list]
-  ppr_df = ppr_df[ppr_df['serve_dest_net_zone'] == srv_to_list]
+  ppr_df_s1 = ppr_df[ppr_df['serve_src_zone_net'] == 1]
+  ppr_df_s3 = ppr_df[ppr_df['serve_src_zone_net'] == 3]
+  ppr_df_s5 = ppr_df[ppr_df['serve_src_zone_net'] == 5]
+  if srv_fr[0]:
+    ppr_df_n = ppr_df_s1
+    if srv_fr[1]:
+      ppr_df_n = pd.concat(1,2)
+      ppr_df_n.append(ppr_df_s2)
+
+  # filter the data by serve sones
+  ppr_df = ppr_df[ (ppr_df['serve_src_zone_net'] == 1 & srv_fr[0] ) | 
+                   (ppr_df['serve_src_zone_net'] == 3 & srv_fr[1] ) |
+                   (ppr_df['serve_src_zone_net'] == 5 & srv_fr[2] )
+                    ]
+
+  # filter the data by serve destination zones
+  ppr_df = ppr_df[ (ppr_df['serve_dest_zone_net'] == 1 & ppr_df['serve_dest_zone_depth'] == 'E' & srv_to_1[0] ) | 
+                   (ppr_df['serve_dest_zone_net'] == 1 & ppr_df['serve_dest_zone_depth'] == 'D' & srv_to_1[1] ) |
+                   (ppr_df['serve_dest_zone_net'] == 1 & ppr_df['serve_dest_zone_depth'],isin(['A','B','C']) & srv_to_1[3] )
+                   (ppr_df['serve_dest_zone_net'] == 2 & ppr_df['serve_dest_zone_depth'] == 'E' & srv_to_2[0] ) | 
+                   (ppr_df['serve_dest_zone_net'] == 2 & ppr_df['serve_dest_zone_depth'] == 'D' & srv_to_2[1] ) |
+                   (ppr_df['serve_dest_zone_net'] == 2 & ppr_df['serve_dest_zone_depth'],isin(['A','B','C']) & srv_to_2[3] )
+                   (ppr_df['serve_dest_zone_net'] == 3 & ppr_df['serve_dest_zone_depth'] == 'E' & srv_to_3[0] ) | 
+                   (ppr_df['serve_dest_zone_net'] == 3 & ppr_df['serve_dest_zone_depth'] == 'D' & srv_to_3[1] ) |
+                   (ppr_df['serve_dest_zone_net'] == 3 & ppr_df['serve_dest_zone_depth'],isin(['A','B','C']) & srv_to_3[3] )
+                   (ppr_df['serve_dest_zone_net'] == 4 & ppr_df['serve_dest_zone_depth'] == 'E' & srv_to_4[0] ) | 
+                   (ppr_df['serve_dest_zone_net'] == 4 & ppr_df['serve_dest_zone_depth'] == 'D' & srv_to_4[1] ) |
+                   (ppr_df['serve_dest_zone_net'] == 4 & ppr_df['serve_dest_zone_depth'],isin(['A','B','C']) & srv_to_4[3] )
+                   (ppr_df['serve_dest_zone_net'] == 5 & ppr_df['serve_dest_zone_depth'] == 'E' & srv_to_5[0] ) | 
+                   (ppr_df['serve_dest_zone_net'] == 5 & ppr_df['serve_dest_zone_depth'] == 'D' & srv_to_5[1] ) |
+                   (ppr_df['serve_dest_zone_net'] == 5 & ppr_df['serve_dest_zone_depth'],isin(['A','B','C']) & srv_to_5[3] )
+                    ]
+
+  print(f"Finally, we have {ppr_df.shape[0]} serves to analyze")
   
   # calculate a quick table FBHE
   fbhe_vector = fbhe(ppr_df, disp_pair, 'att',True)
+  srv_strat_dict = {'From':[0],
+                     'To':[0],
+                    'Attempts':[0],
+                    'FBSO':[0],
+                    'FBHE':[0]
+                   }
+  srv_strat_df = pd.DataFrame.from_dict(srv_strat_dict)
+  print(f"Srv Strat DF: {srv_strat_df}")
+  
   serves_plot
   pass_loc_plot
   set_loc_plot
