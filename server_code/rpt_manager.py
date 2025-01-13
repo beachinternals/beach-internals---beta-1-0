@@ -7,7 +7,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
 from Generate_PDF import *
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -56,22 +56,41 @@ def rpt_mgr_generate_background():
     if rpt_r['comp1']:
       comp_l1_checked = True
       disp_comp_l1 = rpt_r['comp1']
+    else:
+      comp_l1_checked = False
+      disp_comp_l1 = ''
+    
     if rpt_r['comp2']:
       comp_l2_checked = True
       disp_comp_l2 = rpt_r['comp2']
+    else:
+      comp_l2_checked = False
+      disp_comp_l2 =''
+    
     if rpt_r['comp3']:
       comp_l3_checked = True
-      disp_comp_l3 = rpt_r['comp3']
-    if rpt_r['startdate']:
-      disp_start_date = rpt_r['startdate']
-      disp_end_date = rpt_r['enddate']
+      disp_comp_l3 = rpt_r['comp3']    
+    else:
+      comp_l3_checked = False 
+      disp_comp_l3 = ''
+      
+    if rpt_r['days_hist'] != 0:
+      disp_end_date = date.today()
+      disp_start_date = disp_end_date - timedelta(days = rpt_r['days_hist'])
+      date_checked = True
+    else:
+      date_checked = False
+      disp_end_date = date.today()
+      disp_start_date = disp_end_date - timedelta(days = 365)
+      
     scout = True
     explain_text = ' '
+    print(f"Report Filters: {comp_l1_checked}, {disp_comp_l1},{comp_l2_checked},{disp_comp_l2},{comp_l3_checked},{comp_l3_checked},{date_checked},{disp_start_date},{disp_end_date}")
 
     # check if this report should be run today
     today = datetime.now()
     day_of_week = today.strftime("%A")
-    print(f"Day of the week: {day_of_week}")
+    print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
     
       if rpt_r['rpt_type'] == 'player':
