@@ -264,6 +264,7 @@ class ScoutingRpt(ScoutingRptTemplate):
       disp_year,
       disp_team,
       self.pair_drop_down.selected_value["pair"],
+      self.player_drop_down.selected_value,
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
       self.comp_l2_check_box.checked,

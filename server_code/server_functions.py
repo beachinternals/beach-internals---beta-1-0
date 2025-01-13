@@ -27,7 +27,7 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
   # 1 = kills
   # 2 = errors
   # 3 = attempts
-  # 4 = accuracy (currently 0)
+  # 4 = first ball sideout (FBSO)
   # 5 = URL
   
   fbhe_list = [ 0.0, 0, 0, 0, 0, " " ]    # FBHE
@@ -90,7 +90,8 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
     fbhe_list[2] = ppr_df[ppr_df.point_outcome == "FBE"].shape[0] # errors
     fbhe_list[0] = ( fbhe_list[1] - fbhe_list[2]) / fbhe_list[3] if fbhe_list[3] != 0 else 0  # fbhe
     fbhe_list[0] = float("{:.3f}".format(fbhe_list[0]))
-    fbhe_list[4] = 0 # need to calculate 95% confidence interval
+    fbhe_list[4] = fbhe_list[1] / fbhe_list[3] if fbhe_list[3] != 0 else 0
+    fbhe_list[4] = float("{:.3f}".format(fbhe_list[4]))    
     fbhe_list[5] = video_link
     #print(f"fbhe Funct: fbhe_list:{fbhe_list}")
 

@@ -258,7 +258,7 @@ components_by_slot:
         properties: {align: right, text: 'Serving Player:'}
         type: Label
       - layout_properties: {grid_position: 'BLZLCS,AXYCOV'}
-        name: label_13
+        name: player_label
         properties: {}
         type: Label
       - layout_properties: {grid_position: 'BLZLCS,MNQKUG'}
