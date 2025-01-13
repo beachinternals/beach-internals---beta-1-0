@@ -8,6 +8,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import datetime
+from server_functions import *
 
 
 class ScoutingRpt(ScoutingRptTemplate):
@@ -81,16 +82,18 @@ class ScoutingRpt(ScoutingRptTemplate):
         year=disp_year,
       )
     ]
+    # now find the players
+    
 
     # populate the reports drop down
     if anvil.users.get_user()["team"] == "INTERNALS":
       self.report_drop_down.items = [
-        (row["report_name"]) for row in app_tables.report_list.search(rpt_type="pair")
+        (row["report_name"]) for row in app_tables.report_list.search(rpt_type="scouting")
       ]
     else:
       self.report_drop_down.items = [
         (row["report_name"])
-        for row in app_tables.report_list.search(private=False, rpt_type="pair")
+        for row in app_tables.report_list.search(private=False, rpt_type="scouting")
       ]
 
   def PlayerRpt1_click_click(self, **event_args):
@@ -198,13 +201,7 @@ class ScoutingRpt(ScoutingRptTemplate):
     """This method is called when the button is clicked"""
     # unpack the league data:
     # extract league, gender, year from league selected value
-    league_value = self.league_drop_down.selected_value
-    str_loc = league_value.index("|")
-    disp_league = league_value[: str_loc - 1].strip()
-    league_value = league_value[str_loc + 1 :]
-    str_loc = league_value.index("|")
-    disp_gender = league_value[: str_loc - 1].strip()
-    disp_year = league_value[str_loc + 1 :].strip()
+    disp_league, disp_gender, disp_year = anvil.server.call('unpack_league',self.league_drop_down.selected_value )    
     disp_pair = self.pair_drop_down.selected_value["pair"]
     disp_player1, disp_player2 = anvil.server.call("pair_players", disp_pair)
 
@@ -249,6 +246,20 @@ class ScoutingRpt(ScoutingRptTemplate):
     if type(self.comp_l3_drop_down.selected_value["comp_l3"]) == type(None):
       self.comp_l3_drop_down.selected_value["comp_l3"] = str()
 
+    # build list to pass for srv_to and srv_fr
+    srv_fr_dict = { '1':self.srv_from_1.checked,'3':self.srv_from_3.checked,'5':self.srv_from_5.checked}
+    srv_fr_df = pd.DataFrame.from_dict(srv_fr_dict)
+    srv_to_dict = { '1':[self.srv_to_1E,self.srv_to_1D,self.srv_to_1C],
+                    '2':[self.srv_to_2E,self.srv_to_2D,self.srv_to_2C],
+                    '3':[self.srv_to_3E,self.srv_to_3D,self.srv_to_3C],
+                    '4':[self.srv_to_4E,self.srv_to_4D,self.srv_to_4C],
+                    '5':[self.srv_to_5E,self.srv_to_5D,self.srv_to_5C]
+                  }
+    srv_to_df = pd.DataFrame.from_dict(srv_to_dict)
+    print(f"Serve From: {srv_fr_df}")
+    print(f"Serve To: {srv_fr_df}")
+
+    
     # call the server function
     table_data1, table_data2, table_data3 = anvil.server.call(
       fnct_name,
@@ -268,6 +279,8 @@ class ScoutingRpt(ScoutingRptTemplate):
       self.end_date_picker.date,
       scout,
       explain_text,
+      srv_fr_df,
+      srv_to_df
     )
 
     # now put this into the rtf box

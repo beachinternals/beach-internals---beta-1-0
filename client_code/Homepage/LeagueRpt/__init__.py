@@ -37,7 +37,20 @@ class LeagueRpt(LeagueRptTemplate):
 
   def generate_report_button_click(self, **event_args):
     """This method is called when the button is clicked"""
-    histogram = anvil.server.call('fbhe_histogram',self.league_drop_down.selected_value)
-    print(histogram)
-    self.fbhe_histogram_plot.data = histogram
+    stat_text, hist_plot = anvil.server.call('plot_histogram',self.league_drop_down.selected_value,'fbhe','First Ball Hitting Efficiency')
+    self.data_table_1.content = stat_text
+    self.fbhe_histogram_plot.source = hist_plot
+
+    ed_text, ed_plot = anvil.server.call('plot_histogram',self.league_drop_down.selected_value,'err_den','Error Density')
+    self.ed_stats.content = ed_text
+    self.ed_plot.source = ed_plot
+
+    tcr_text, tcr_plot = anvil.server.call('plot_histogram',self.league_drop_down.selected_value,'tcr', 'Transition Conversion Rate')
+    self.tcr_stats.content = tcr_text
+    self.tcr_plot.source = tcr_plot
+
+    ev_text, ev_plot = anvil.server.call('plot_histogram',self.league_drop_down.selected_value,'expected','Expected Value')
+    self.ev_stats.content = ev_text
+    self.ev_plot.source = ev_plot
+    
     pass

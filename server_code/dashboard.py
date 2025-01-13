@@ -9,6 +9,7 @@ import anvil.server
 import pandas as pd
 import io
 from tabulate import tabulate
+from server_functions import *
 
 
 # This is a server module. It runs on the Anvil server,
@@ -18,39 +19,10 @@ from tabulate import tabulate
 def coaches_dashboard(league_value, disp_team):
 
   # unpack the league value
-  str_loc = league_value.index('|')
-  disp_league = league_value[:str_loc-1].strip()
-  league_value = league_value[str_loc+1:]
-  str_loc = league_value.index('|')
-  disp_gender = league_value[:str_loc-1].strip()
-  disp_year = league_value[str_loc+1:].strip()
-  
-  # find the play_data table
-  # pull out the player_data csv file
-  #print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}")
-  ppr_csv_row = app_tables.ppr_csv_tables.get( 
-    q.all_of(
-      league = disp_league,
-      gender = disp_gender,
-      year = disp_year,
-      team = "League"
-      ) )
+  disp_league, disp_gender, disp_year = unpack_league(league_value)
 
-  if ppr_csv_row:
-    player_data_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data'].get_bytes()))
-    player_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
-  else:
-    #print('No Rows Found')
-    return ["No Rows"], ["No Rows"], ["No Rows"], ["No Stats Found"]
-
-  # somehow, we are getting a column called unamed: 0, so drop taht
-  #print(player_data_df.to_dict())
-  player_data_df = player_data_df.drop(['Unnamed: 0'], axis = 1 )
-  player_stats_df = player_stats_df.drop(['Unnamed: 0'], axis = 1 )
-  #print(player_data_df.to_dict())
-
-  # need to replace a space with NaN 
-  player_data_df = player_data_df.replace( " " , None )
+  # fetch the player data and stats dataframes
+  player_data_df, player_stats_df = get_player_data(disp_league, disp_gender, disp_year)
   
   # limit to player_data table to just this team
   if ( disp_team != "INTERNALS"):

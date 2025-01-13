@@ -409,3 +409,47 @@ def point_totals(ppr_df, disp_player):
 
   return pts_df
 
+
+def unpack_league( league_string):
+  # unpack 'FIVB | M | 2024' into 'FIVB' "M" '2024'
+  # unpack the league data
+  str_loc = league_string.index('|')
+  disp_league = league_string[:str_loc-1].strip()
+  league_string = league_string[str_loc+1:]
+  str_loc = league_string.index('|')
+  disp_gender = league_string[:str_loc-1].strip()
+  disp_year = league_string[str_loc+1:].strip()
+
+  return disp_league, disp_gender,disp_year
+
+def get_player_data( disp_league, disp_gender, disp_year):
+  # return the player_data dataframe
+  
+  # find the play_data table
+  # pull out the player_data csv file
+  #print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}")
+  ppr_csv_row = app_tables.ppr_csv_tables.get( 
+    q.all_of(
+      league = disp_league,
+      gender = disp_gender,
+      year = disp_year,
+      team = "League"
+      ) )
+
+  if ppr_csv_row:
+    player_data_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data'].get_bytes()))
+    player_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
+  else:
+    #print('No Rows Found')
+    return ["No Player Data Found"], ["No Player Stats Found"]
+
+  # somehow, we are getting a column called unamed: 0, so drop taht
+  #print(player_data_df.to_dict())
+  player_data_df = player_data_df.drop(['Unnamed: 0'], axis = 1 )
+  player_stats_df = player_stats_df.drop(['Unnamed: 0'], axis = 1 )
+  #print(player_data_df.to_dict())
+
+  # need to replace a space with NaN 
+  player_data_df = player_data_df.replace( " " , None )
+
+  return player_data_df, player_stats_df
