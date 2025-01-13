@@ -409,7 +409,7 @@ def point_totals(ppr_df, disp_player):
 
   return pts_df
 
-
+@anvil.server.callable
 def unpack_league( league_string):
   # unpack 'FIVB | M | 2024' into 'FIVB' "M" '2024'
   # unpack the league data
