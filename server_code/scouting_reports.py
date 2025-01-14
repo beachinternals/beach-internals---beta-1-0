@@ -8,6 +8,7 @@ from anvil.tables import app_tables
 import anvil.server
 from server_functions import *
 from pair_functions import *
+import pandas as pd
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -140,48 +141,28 @@ def scout_srv_strategy(disp_league,
   print(f"ppr_df pair lmited:{ppr_df.shape[0]}")
 
   # lastly, lmit this by the source and desitnation locations
-  ppr_df_s1 = ppr_df[ppr_df['serve_src_zone_net'] == 1]
-  ppr_df_s3 = ppr_df[ppr_df['serve_src_zone_net'] == 3]
-  ppr_df_s5 = ppr_df[ppr_df['serve_src_zone_net'] == 5]
-  if srv_fr[0]:
-    ppr_df_n = ppr_df_s1
-    if srv_fr[1]:
-      ppr_df_n = pd.concat(1,2)
-      ppr_df_n.append(ppr_df_s2)
+  ppr_df = ppr_df[ ((ppr_df['serve_src_zone_net'] == 1) & (srv_fr[0])) | 
+                   ((ppr_df['serve_src_zone_net'] == 3) & (srv_fr[1])) |
+                   ((ppr_df['serve_src_zone_net'] == 5) & (srv_fr[2]))
+  ]
+  print(f"ppr_df lmited srv from zones:{ppr_df.shape[0]}")
 
-  # filter the data by serve sones
-  ppr_df = ppr_df[ ((ppr_df['serve_src_zone_net'] == 1) & (srv_fr[0] )) | 
-                   ((ppr_df['serve_src_zone_net'] == 3) & (srv_fr[1] )) |
-                   ((ppr_df['serve_src_zone_net'] == 5) & (srv_fr[2] ))
-                    ]
-  print(f"ppr_df serve source lmited:{ppr_df.shape[0]}")
-
-  print(f" List of first terms in tuples: {srv_2[0]}")
-  print(f" List of second terms in tuples: {srv_2[1]}")
-  print(f" List of second terms in tuples: {srv_2[3]}")
-
-  # filter the data by serve destination zones
-  ppr_df = ppr_df[ (((ppr_df['serve_dest_zone_net'] == 1) & (ppr_df['serve_dest_zone_depth'] == 'E') & srv_to_1[0] )) | 
-                   (((ppr_df['serve_dest_zone_net'] == 1) & (ppr_df['serve_dest_zone_depth'] == 'D') & srv_to_1[1] )) |
-                   (((ppr_df['serve_dest_zone_net'] == 1) & (ppr_df['serve_dest_zone_depth'].isin(['A','B','C'])) & srv_to_1[2] )) |
-                   (((ppr_df['serve_dest_zone_net'] == 2) & (ppr_df['serve_dest_zone_depth'] == 'E') & srv_to_2[0] )) | 
-                   (((ppr_df['serve_dest_zone_net'] == 2) & (ppr_df['serve_dest_zone_depth'] == 'D') & srv_to_2[1] )) |
-                   (((ppr_df['serve_dest_zone_net'] == 2) & (ppr_df['serve_dest_zone_depth'] == 'C') & srv_to_2[2] ))
-                   (((ppr_df['serve_dest_zone_net'] == 3) & (ppr_df['serve_dest_zone_depth'] == 'E') & srv_to_3[0] )) | 
-                   (((ppr_df['serve_dest_zone_net'] == 3) & (ppr_df['serve_dest_zone_depth'] == 'D') & srv_to_3[1] )) |
-                   (((ppr_df['serve_dest_zone_net'] == 3) & (ppr_df['serve_dest_zone_depth'].isin(['A','B','C'])) & srv_to_3[2] )) |
-                   (((ppr_df['serve_dest_zone_net'] == 4) & (ppr_df['serve_dest_zone_depth'] == 'E') & srv_to_4[0] )) | 
-                   (((ppr_df['serve_dest_zone_net'] == 4) & (ppr_df['serve_dest_zone_depth'] == 'D') & srv_to_4[1] )) |
-                   (((ppr_df['serve_dest_zone_net'] == 4) & (ppr_df['serve_dest_zone_depth'].isin(['A','B','C'])) & srv_to_4[2] )) |
-                   (((ppr_df['serve_dest_zone_net'] == 5) & (ppr_df['serve_dest_zone_depth'] == 'E') & srv_to_5[0] )) | 
-                   (((ppr_df['serve_dest_zone_net'] == 5) & (ppr_df['serve_dest_zone_depth'] == 'D') & srv_to_5[1] )) |
-                   (((ppr_df['serve_dest_zone_net'] == 5) & (ppr_df['serve_dest_zone_depth'].isin(['A','B','C'])) & srv_to_5[2] )) 
-                    ]
-
-  print(f"Finally, we have {ppr_df.shape[0]} serves to analyze")
+  # now start a loop of the number of desitnation tuples (srv2[])
+  first_zone = True
+  for i in range(0,len(srv_2),1):
+    print(f" i:{i}, srv_2[i,0] {srv_2[i][0]}, srv_2[i,1] {srv_2[i][1]}")
+    tmp_df = ppr_df[ (ppr_df['serve_dest_zone_net'] == srv_2[i][0]) & (ppr_df['serve_dest_zone_depth'] == srv_2[i][1]) ]
+    print(f"Number of rows in Filter db by serve dest: {tmp_df.shape[0]}")
+    if not first_zone:
+      new_ppr = pd.concat([new_ppr,tmp_df])
+    else:
+      new_ppr = tmp_df
+      first_zone = False
+     
+  print(f"Number of final db to analze: {new_ppr.shape[0]}")
   
   # calculate a quick table FBHE
-  fbhe_vector = fbhe(ppr_df, disp_pair, 'att',True)
+  fbhe_vector = fbhe(new_ppr, disp_player, 'att',True)
   print(f"fbhe Vector: {fbhe_vector}")
   srv_strat_dict = {'From':[0],
                      'To':[0],
