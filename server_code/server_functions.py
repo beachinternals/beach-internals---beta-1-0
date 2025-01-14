@@ -119,6 +119,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
     #print('No Team Rows Found')
     ppr_for_team_found = False
 
+  print(f"GET PPR DATA ppr team db: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{m_ppr_df.shape[0]}")
   if scout:
     # now look for the scout data (league wide public data) and merge the two
     # print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
@@ -133,6 +134,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
 
     if ppr_scout_row:
       scout_ppr_df =  pd.read_csv(io.BytesIO( ppr_scout_row['ppr_csv'].get_bytes()))
+      print(f"GET PPR DATA ppr Scout db: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{scout_ppr_df.shape[0]}")
       if ppr_for_team_found:
         m_ppr_df = pd.concat([m_ppr_df,scout_ppr_df])
       else:
@@ -141,6 +143,8 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
     else:
       #print('No Scout Rows Found')
       a=b
+
+  print(f"GET PPR DATA ppr db returned: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{m_ppr_df.shape[0]}")
 
 
   return m_ppr_df

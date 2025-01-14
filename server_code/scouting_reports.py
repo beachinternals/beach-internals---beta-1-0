@@ -128,6 +128,7 @@ def scout_srv_strategy(disp_league,
   # this list should now have as many tuples as points selected.  First number is 1 - 5 for net zones, second number is depth: 0=E, 1=D, 2+A,B,C
   
   # get the ppr data
+  print(f"league: {disp_league}, gender: {disp_gender}, year: {disp_year}, team: {disp_team}")
   ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
   print(f"ppr_df all:{ppr_df.shape[0]}")
   ppr_df = ppr_df_limit( ppr_df, 
@@ -168,9 +169,37 @@ def scout_srv_strategy(disp_league,
                      'To':[0],
                     'Attempts':[0],
                     'FBSO':[0],
-                    'FBHE':[0]
+                    'FBHE':[0],
+                    'URL':[0]
                    }
   srv_strat_df = pd.DataFrame.from_dict(srv_strat_dict)
-  print(f"Srv Strat DF: {srv_strat_df}")
+  srv_strat_df.at[0,'From'] = 'All'
+  srv_strat_df.at[0,'To'] = 'All'
+  srv_strat_df.at[0,'Attempts'] = fbhe_vector[3]
+  srv_strat_df.at[0,'FBSO'] = float("{:.3}".format(fbhe_vector[4]))
+  srv_strat_df.at[0,'FBHE'] = float("{:.3}".format(fbhe_vector[0]))
+  srv_strat_df.at[0,'URL'] = fbhe_vector[5]  
 
-  return
+  # now a loop over the different serving options:
+  for i in [0,1,2]:
+    if srv_fr[i]:
+      srv_src = i*2+1
+      for j in range(0,len(srv_2),1):
+        fbhe_vector = fbhe( (new_ppr[( new_ppr['serve_src_zone_net'] == srv_src) & 
+                              ( new_ppr['serve_dest_zone_net'] == srv_2[j][0] ) & 
+                              ( new_ppr['serve_dest_zone_depth'] == srv_2[j][1])]),
+                              disp_player,
+                              'att',
+                              True 
+                            )
+        srv_strat_df.at[i+j,'From'] = srv_src
+        srv_strat_df.at[i+j,'To'] = str(srv_2[j][0]) + str(srv_2[j][1])
+        srv_strat_df.at[i+j,'Attempts'] = fbhe_vector[3]
+        srv_strat_df.at[i+j,'FBSO'] = fbhe_vector[4]
+        srv_strat_df.at[i+j,'FBHE'] = fbhe_vector[0]
+        srv_strat_df.at[i+j,'URL'] = fbhe_vector[5]  
+                                  
+  print(f"Srv Strat DF: {srv_strat_df}")
+  srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df)
+
+  return srv_strategy_title, srv_strat_md

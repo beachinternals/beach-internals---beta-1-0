@@ -257,7 +257,7 @@ class ScoutingRpt(ScoutingRptTemplate):
 
     
     # call the server function
-    table_data1, table_data2, table_data3 = anvil.server.call(
+    serve_strategy_title, table_data = anvil.server.call(
       fnct_name,
       disp_league,
       disp_gender,
@@ -292,14 +292,9 @@ class ScoutingRpt(ScoutingRptTemplate):
     - Date Filtered : {str(self.start_date_picker.date)+' to '+str(self.end_date_picker.date) if self.date_check_box.checked else ''}
     """
 
-    self.rich_text_2.content = filter_text
-    self.rpt_disp_box.content = table_data1
-    self.rpt_disp_box2.content = table_data2
-    self.rpt_disp_box3.content = table_data3
-    self.rpt_disp_box4.content = explain_text
-    self.box1_label.text = box1_title
-    self.box2_label.text = box2_title + " " + disp_player1
-    self.box3_label.text = box3_title + " " + disp_player2
+    self.srv_strategy1_title.text = serve_strategy_title
+    self.player_label.text = self.player_drop_down.selected_value
+    self.rpt_disp_box.content = table_data
 
     pass
 
