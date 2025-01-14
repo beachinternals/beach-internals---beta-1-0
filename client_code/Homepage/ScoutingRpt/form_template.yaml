@@ -130,7 +130,7 @@ components_by_slot:
             type: CheckBox
           - layout_properties: {grid_position: 'IIOOUO,EXKHGA'}
             name: srv_to_3E
-            properties: {text: Seam-Mid}
+            properties: {text: Seam-Deep}
             type: CheckBox
           - layout_properties: {grid_position: 'IIOOUO,GIXJAQ'}
             name: srv_to_4E
@@ -165,8 +165,8 @@ components_by_slot:
             properties: {text: Line-Short}
             type: CheckBox
           - layout_properties: {grid_position: 'XRQBSR,IYWQKO'}
-            name: ssrv_to_2C
-            properties: {text: Line-Short}
+            name: srv_to_2C
+            properties: {text: Body-Short}
             type: CheckBox
           - layout_properties: {grid_position: 'XRQBSR,WHUDIU'}
             name: srv_to_3C
