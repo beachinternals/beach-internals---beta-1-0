@@ -281,7 +281,7 @@ def pair_fbhe_pass(disp_league, disp_gender, disp_year,
   pair_fbhe_table.at[2,'No Zone'] = p1_fbhe_table.at[2,'No Zone'] + p2_fbhe_table.at[2,'No Zone']
   pair_fbhe_table.at[3,'No Zone'] = p1_fbhe_table.at[3,'No Zone'] + p2_fbhe_table.at[3,'No Zone']
   pair_fbhe_table.at[4,'No Zone'] = p1_fbhe_table.at[4,'No Zone'] + p2_fbhe_table.at[4,'No Zone']
-  if pair_fbhe_table.at[5,'No Zone'] != 0:
+  if pair_fbhe_table.at[4,'No Zone'] != 0:
     pair_fbhe_table.at[0,'No Zone'] = (pair_fbhe_table.at[2,'No Zone'] - pair_fbhe_table.at[3,'No Zone']) / (pair_fbhe_table.at[4,'No Zone'])
     pair_fbhe_table.at[1,'No Zone'] = (pair_fbhe_table.at[2,'No Zone']) / (pair_fbhe_table.at[4,'No Zone'])
   pair_fbhe_table.at[0,'No Zone'] = float("{:.3f}".format(pair_fbhe_table.at[0,'No Zone']))
