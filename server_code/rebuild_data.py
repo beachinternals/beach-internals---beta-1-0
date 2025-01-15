@@ -126,18 +126,12 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
           email_message = email_message + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
           r_val = build_pair_df( c_league, c_gender, c_year)
 
-          # calculate pair data
-          #----------------------
-          email_message = email_message + ' SOMEDAY : Building Pair Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-          r_val = asdf( c_league, c_gender, c_year)
-
           # calculate the strenght and weaknesses
           email_message = email_message + ' Building Strengths & Weaknesses for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
           r_val = calc_s_w_player( c_league, c_gender, c_year )
-
-
+          
   # the very last thing, load the pair's data table
-  email_message = email_message + ' Loading Pair data Table ' +"\n"
+  email_message = email_message + ' Loading Pair data Table ' + "\n"
   r_val = load_pair_data_table()
   
   #now, send an email with the updates
@@ -435,7 +429,7 @@ def load_pair_data_table():
     if lrow['pair_list']:
       pair_df =  pd.read_csv(io.BytesIO( lrow['pair_list'].get_bytes()))
       if pair_df.shape[0] == 0:
-        #print(f"Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
+        print(f"load_pair_data_table: Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
         return ["No Pair List Found"]
       
       # loop thru the rows in in teh pair-list
@@ -443,6 +437,7 @@ def load_pair_data_table():
       for index, p in pair_df.iterrows():
         # create a new row in the master_pair table
         #print(f"Row; {p}")
+        print(f"load_pair_data_table: Looking for:{lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}")
         #print(f"Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
         if not app_tables.master_pair.get( league = lrow['league'],
                                         gender = lrow['gender'],
@@ -452,6 +447,7 @@ def load_pair_data_table():
                                         pair = p[1]
                                         ):
           # add a row for this pair
+          print(f"load_pair_data_table: Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
           app_tables.master_pair.add_row( league = lrow['league'],
                                         gender = lrow['gender'],
                                         year = lrow['year'],
@@ -461,7 +457,7 @@ def load_pair_data_table():
                                         )
 
     else:
-      #print(f"No Pair List Data Frame Found : {lrow['league']}, {lrow['gender']},{lrow['year']}")
+      print(f"No Pair List Data Frame Found : {lrow['league']}, {lrow['gender']},{lrow['year']}")
       return False
 
   return True
