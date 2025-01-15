@@ -129,6 +129,7 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
           # calculate pair data
           #----------------------
           email_message = email_message + ' SOMEDAY : Building Pair Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = asdf( c_league, c_gender, c_year)
 
           # calculate the strenght and weaknesses
           email_message = email_message + ' Building Strengths & Weaknesses for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
