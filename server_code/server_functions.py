@@ -119,7 +119,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
     #print('No Team Rows Found')
     ppr_for_team_found = False
 
-  print(f"GET PPR DATA ppr team db: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{m_ppr_df.shape[0]}")
+  #print(f"GET PPR DATA ppr team db: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{m_ppr_df.shape[0]}")
   if scout:
     # now look for the scout data (league wide public data) and merge the two
     # print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
@@ -458,3 +458,20 @@ def get_player_data( disp_league, disp_gender, disp_year):
   player_data_df = player_data_df.replace( " " , None )
 
   return player_data_df, player_stats_df
+
+@anvil.server.callable
+def get_team_num(disp_player):
+  # when we want just "FSU 12" when given 'FSU 12 Alexis'
+
+  # break disp_player down into its components
+  first_space = disp_player.find(' ')
+  if first_space == -1:
+    return "No Space found in "+disp_player
+  team = disp_player[:first_space]
+  rest_of_string = disp_player[first_space+1:]
+  second_space = rest_of_string.find(' ')
+  if second_space == -1:
+    return "No Space Found in "+rest_of_string
+  number = rest_of_string[:second_space]
+
+  return team+' '+number
