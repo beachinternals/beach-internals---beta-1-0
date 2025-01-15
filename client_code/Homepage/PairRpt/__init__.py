@@ -283,6 +283,7 @@ class PairRpt(PairRptTemplate):
     - Date Filtered : {str(self.start_date_picker.date)+' to '+str(self.end_date_picker.date) if self.date_check_box.checked else ''}
     """
 
+    print(f" disp player 1, 2 {disp_player1}, {disp_player2}")
     self.rich_text_2.content = filter_text
     self.rpt_disp_box.content = table_data1
     self.rpt_disp_box2.content = table_data2
