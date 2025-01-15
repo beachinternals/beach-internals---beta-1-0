@@ -475,3 +475,34 @@ def get_team_num(disp_player):
   number = rest_of_string[:second_space]
 
   return team+' '+number
+
+@anvil.server.callable
+def count_out_of_system(ppr_df,disp_player,action):
+  #
+  # out of system vector:
+  #  0 = number out of system int()
+  #  1 = percent out of system float()
+  #  2 = number of attempts
+  #
+  #  action = 'pass', 'att', 'srv'
+
+  oos_vector = [0,0,0]
+  if action == 'att':
+    action_filter = 'att_player'
+  elif action == 'pass':
+    action_filter = 'pass_player'
+  elif action == 'srv':
+    action_filter = 'serve_player'
+  else:
+    print(f'Invalid action passed to out_of_sytem, Action:{action}, using Pass')
+    action_filter = 'pass_player'
+    
+  # let's count!!
+  oos_vector[2] = ppr_df[ ppr_df[action_filter] == disp_player].shape[0]
+  oos_vector[0] = ppr_df[ (ppr_df[action_filter] == disp_player) & (ppr_df['pass_oos'] > 0)].shape[0]
+  if oos_vector[2] != 0:
+    oos_vector[1] = oos_vector[0]/oos_vector[2]
+  else:
+    oos_vector[1] = 0
+
+  return oos_vector
