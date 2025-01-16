@@ -320,7 +320,7 @@ def pair_fbhe_pass(disp_league, disp_gender, disp_year,
   pair_fbhe_table.at[2,'Option'] = p1_fbhe_table.at[2,'Option'] + p2_fbhe_table.at[2,'Option']
   pair_fbhe_table.at[3,'Option'] = p1_fbhe_table.at[3,'Option'] + p2_fbhe_table.at[3,'Option']
   pair_fbhe_table.at[4,'Option'] = p1_fbhe_table.at[4,'Option'] + p2_fbhe_table.at[4,'Option']
-  if pair_fbhe_table.at[5,'Option'] != 0:
+  if pair_fbhe_table.at[4,'Option'] != 0:
     pair_fbhe_table.at[0,'Option'] = (pair_fbhe_table.at[2,'Option'] - pair_fbhe_table.at[3,'Option']) / (pair_fbhe_table.at[4,'Option'])
     pair_fbhe_table.at[1,'Option'] = (pair_fbhe_table.at[2,'Option']) / (pair_fbhe_table.at[4,'Option'])
   pair_fbhe_table.at[0,'Option'] = float("{:.3f}".format(pair_fbhe_table.at[0,'Option']))
