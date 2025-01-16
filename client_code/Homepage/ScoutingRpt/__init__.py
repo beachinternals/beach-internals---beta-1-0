@@ -552,6 +552,6 @@ class ScoutingRpt(ScoutingRptTemplate):
     anvil.media.download(pdf_rpt, filename="filename")
     pass
 
-  def srv_to_1E_change(self, **event_args):
+  def srv_to_5E_change(self, **event_args):
     """This method is called when this checkbox is checked or unchecked"""
     pass

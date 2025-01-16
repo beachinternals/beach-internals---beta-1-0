@@ -112,20 +112,30 @@ components_by_slot:
         - components:
           - layout_properties: {col_xs: 0, row: MMYZKM, width_xs: 9}
             name: label_7
-            properties: {text: 'Serve To:'}
+            properties: {align: right, text: 'Serve To:'}
             type: Label
-          layout_properties: {grid_position: 'HHOWHX,FCHPQA'}
+          - layout_properties: {col_xs: 0, row: ZSFBXF, width_xs: 12}
+            name: column_panel_19
+            properties:
+              spacing:
+                margin: [null, null, 29, null]
+            type: ColumnPanel
+          layout_properties: {grid_position: 'HHOWHX,FCHPQA RYAIRW,JKGLHZ'}
           name: Serve_to_grid_panel
           properties: {}
           type: GridPanel
+        - layout_properties: {grid_position: 'HHOWHX,FCHPQA UNJGXI,GSBZGW'}
+          name: label_4
+          properties: {align: right, text: 'Serve From:'}
+          type: Label
         - components:
-          - event_bindings: {change: srv_to_1E_change}
+          - event_bindings: {change: srv_to_5E_change}
             layout_properties: {grid_position: 'IIOOUO,MVXQMW'}
-            name: srv_to_1E
+            name: srv_to_5E
             properties: {text: Line-Deep}
             type: CheckBox
           - layout_properties: {grid_position: 'IIOOUO,IXQWWL'}
-            name: srv_to_2E
+            name: srv_to_4E
             properties: {text: Body-Deep}
             type: CheckBox
           - layout_properties: {grid_position: 'IIOOUO,EXKHGA'}
@@ -133,19 +143,19 @@ components_by_slot:
             properties: {text: Seam-Deep}
             type: CheckBox
           - layout_properties: {grid_position: 'IIOOUO,GIXJAQ'}
-            name: srv_to_4E
+            name: srv_to_2E
             properties: {text: Body-Deep}
             type: CheckBox
           - layout_properties: {grid_position: 'IIOOUO,XSROMI'}
-            name: srv_to_5E
+            name: srv_to_1E
             properties: {text: Line-Deep}
             type: CheckBox
           - layout_properties: {grid_position: 'VFOETL,DPDRZP'}
-            name: srv_to_1D
+            name: srv_to_5D
             properties: {text: Line-Mid}
             type: CheckBox
           - layout_properties: {grid_position: 'VFOETL,HASEUT'}
-            name: srv_to_2D
+            name: srv_to_4D
             properties: {text: Body-Mid}
             type: CheckBox
           - layout_properties: {grid_position: 'VFOETL,QBQBYN'}
@@ -153,19 +163,19 @@ components_by_slot:
             properties: {text: Seam-Mid}
             type: CheckBox
           - layout_properties: {grid_position: 'VFOETL,ZPCVQV'}
-            name: srv_to_4D
+            name: srv_to_2D
             properties: {text: Body-Mid}
             type: CheckBox
           - layout_properties: {grid_position: 'VFOETL,PHKNRA'}
-            name: srv_to_5D
+            name: srv_to_1D
             properties: {text: Line-Mid}
             type: CheckBox
           - layout_properties: {grid_position: 'XRQBSR,GOPBVW'}
-            name: srv_to_1C
+            name: srv_to_5C
             properties: {text: Line-Short}
             type: CheckBox
           - layout_properties: {grid_position: 'XRQBSR,IYWQKO'}
-            name: srv_to_2C
+            name: srv_to_4C
             properties: {text: Body-Short}
             type: CheckBox
           - layout_properties: {grid_position: 'XRQBSR,WHUDIU'}
@@ -173,37 +183,35 @@ components_by_slot:
             properties: {text: Seam-Short}
             type: CheckBox
           - layout_properties: {grid_position: 'XRQBSR,NWOMCI'}
-            name: srv_to_4C
+            name: srv_to_2C
             properties: {text: Body-Short}
             type: CheckBox
           - layout_properties: {grid_position: 'XRQBSR,NUBJOT'}
-            name: srv_to_5C
+            name: srv_to_1C
             properties: {text: Line-Short}
             type: CheckBox
+          data_bindings:
+          - {code: '', property: border, writeback: false}
           layout_properties: {grid_position: 'HHOWHX,AUHKEK EKELIM,UVRSCM'}
           name: column_panel_2
-          properties: {}
+          properties: {background: 'theme:Secondary Container'}
           type: ColumnPanel
         - components:
-          - layout_properties: {grid_position: 'MSQYFF,LIYEWB'}
-            name: label_4
-            properties: {text: 'Serve From:'}
-            type: Label
-          - layout_properties: {grid_position: 'MSQYFF,MJMXBK'}
+          - layout_properties: {grid_position: 'GSIFPT,RQUNXR'}
             name: srv_from_1
             properties: {text: Left - Line}
             type: CheckBox
-          - layout_properties: {grid_position: 'MSQYFF,EBBTPH'}
+          - layout_properties: {grid_position: 'GSIFPT,QKGXEV'}
             name: srv_from_3
-            properties: {text: Middle}
+            properties: {align: center, text: Middle}
             type: CheckBox
-          - layout_properties: {grid_position: 'MSQYFF,SALHZL'}
+          - layout_properties: {grid_position: 'GSIFPT,RVTCCF'}
             name: srv_from_5
-            properties: {text: Right - Line}
+            properties: {align: right, text: Right - Line}
             type: CheckBox
-          layout_properties: {grid_position: 'OIZQGC,DMDFZQ'}
-          name: serve_from_panel
-          properties: {col_widths: '{"LIYEWB":9,"AFSBVF":15,"MJMXBK":11,"EBBTPH":11}'}
+          layout_properties: {grid_position: 'HHOWHX,AUHKEK NIREAB,JCGBVA'}
+          name: column_panel_18
+          properties: {background: 'theme:On Primary'}
           type: ColumnPanel
         layout_properties: {}
         name: column_panel_1
