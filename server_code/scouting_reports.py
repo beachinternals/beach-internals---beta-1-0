@@ -176,8 +176,8 @@ def scout_srv_strategy(disp_league,
   srv_strat_df.at[0,'From'] = 'All'
   srv_strat_df.at[0,'To'] = 'All'
   srv_strat_df.at[0,'Attempts'] = fbhe_vector[3]
-  srv_strat_df.at[0,'FBSO'] = float("{:.3}".format(fbhe_vector[4]))
-  srv_strat_df.at[0,'FBHE'] = float("{:.3}".format(fbhe_vector[0]))
+  srv_strat_df.at[0,'FBSO'] = fbhe_vector[4]
+  srv_strat_df.at[0,'FBHE'] = fbhe_vector[0]
   srv_strat_df.at[0,'URL'] = fbhe_vector[5]  
 
   # now a loop over the different serving options:
