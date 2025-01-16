@@ -479,10 +479,10 @@ def calc_ppr_data(ppr_df):
   for index, ppr_r in ppr_df.iterrows():
     # calculate the data for the serve
     ppr_df.at[index,'serve_dist'] = calc_dist(ppr_r['serve_src_x'],ppr_r['serve_src_y'],ppr_r['serve_dest_x'],ppr_r['serve_dest_y'])
-    ppr_df.at[index,'serve_src_zone_depth'] = zone_depth(ppr_r['serve_src_y'])
+    ppr_df.at[index,'serve_src_zone_depth'] = srv_zone_depth(ppr_r['serve_src_y'])
     ppr_df.at[index,'serve_src_zone_net'] = srv_zone_net(ppr_r['serve_src_x'])
     ppr_df.at[index,'serve_dest_zone_depth'] = zone_depth(ppr_r['serve_dest_y'])
-    ppr_df.at[index,'serve_dest_zone_net'] = zone_net(ppr_r['serve_src_x'])
+    ppr_df.at[index,'serve_dest_zone_net'] = zone_net(ppr_r['serve_dest_x'])
     ppr_df.at[index,"serve_angle"] = calc_angle(ppr_r['serve_src_x'],ppr_r['serve_dest_x'],ppr_r['serve_src_y'],ppr_r['serve_dest_y'])
    # print(f"serve dest time:{ppr_r['serve_dest_t']}, rally id: {ppr_r['rally_id']}")
     if isinstance(ppr_r['serve_dest_t'],(float,int)):
@@ -733,7 +733,28 @@ def zone_depth(x1):
       zone = " "
     
   return zone
-  
+
+def srv_zone_depth(x1):
+  if x1 is not None:
+    if math.isnan(x1):
+      zone = " "
+    elif isinstance(x1,(float,int)):
+      #print(f"zone depth x1:{x1}, Type:{type(x1)}")
+      zone = "E"
+      if abs(x1) < 4*1.6:
+        zone = "D"
+      if abs(x1) <3*1.6:
+        zone = "C"
+      if abs(x1) <2*1.6:
+        zone = "B"
+      if abs(x1) <1*1.6:
+        zone = "A"
+    else:
+      zone = " "
+  else:
+      zone = " "
+    
+  return zone
 def zone_net(x1):
   if x1 is not None:
     if math.isnan(x1):
