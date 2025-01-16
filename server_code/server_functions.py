@@ -134,7 +134,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
 
     if ppr_scout_row:
       scout_ppr_df =  pd.read_csv(io.BytesIO( ppr_scout_row['ppr_csv'].get_bytes()))
-      print(f"GET PPR DATA ppr Scout db: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{scout_ppr_df.shape[0]}")
+      #print(f"GET PPR DATA ppr Scout db: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{scout_ppr_df.shape[0]}")
       if ppr_for_team_found:
         m_ppr_df = pd.concat([m_ppr_df,scout_ppr_df])
       else:
@@ -144,7 +144,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
       #print('No Scout Rows Found')
       a=b
 
-  print(f"GET PPR DATA ppr db returned: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{m_ppr_df.shape[0]}")
+  #print(f"GET PPR DATA ppr db returned: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{m_ppr_df.shape[0]}")
 
 
   return m_ppr_df
@@ -504,6 +504,6 @@ def count_out_of_system(ppr_df,disp_player,action):
     oos_vector[1] = oos_vector[0]/oos_vector[2]
   else:
     oos_vector[1] = 0
-  print(f"count_out_of_system: action filter: {action_filter}, ROws in ppr_df: {ppr_df.shape[0]}")
-  print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
+  #print(f"count_out_of_system: action filter: {action_filter}, ROws in ppr_df: {ppr_df.shape[0]}")
+  #print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
   return oos_vector

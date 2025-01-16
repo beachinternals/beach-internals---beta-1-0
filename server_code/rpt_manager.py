@@ -73,8 +73,9 @@ def rpt_mgr_generate_background():
     else:
       comp_l3_checked = False 
       disp_comp_l3 = ''
-      
-    if rpt_r['days_hist'] != 0:
+
+    print(f"rpt_mgr_generate_background: report row, days_history: {rpt_r['days_hist']}")
+    if (rpt_r['days_hist'] != 0) and (rpt_r['days_hist']):
       disp_end_date = date.today()
       disp_start_date = disp_end_date - timedelta(days = rpt_r['days_hist'])
       date_checked = True
@@ -85,19 +86,19 @@ def rpt_mgr_generate_background():
       
     scout = True
     explain_text = ' '
-    print(f"Report Filters: {comp_l1_checked}, {disp_comp_l1},{comp_l2_checked},{disp_comp_l2},{comp_l3_checked},{comp_l3_checked},{date_checked},{disp_start_date},{disp_end_date}")
+    #print(f"Report Filters: {comp_l1_checked}, {disp_comp_l1},{comp_l2_checked},{disp_comp_l2},{comp_l3_checked},{comp_l3_checked},{date_checked},{disp_start_date},{disp_end_date}")
 
     # check if this report should be run today
     today = datetime.now()
     day_of_week = today.strftime("%A")
-    print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
+    #print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
     
       if rpt_r['rpt_type'] == 'player':
       # loop over all the players for this report listing
         for player_r in rpt_r['player_list']:
-          print("Processing Player Reports")
-          print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
+          #print("Processing Player Reports")
+          #print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
         
           # build player string
           disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
@@ -107,7 +108,7 @@ def rpt_mgr_generate_background():
         
           # loop over all the reports for this player
           for rpt_print in rpt_r['rpts_inc']:
-            print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+            #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
             # call pdf report
             pdf1 = create_pdf_reports(rpt_print['function_name'],
@@ -138,13 +139,13 @@ def rpt_mgr_generate_background():
                                           text='Attached please find the summary report(s) for '+disp_player,
                                           attachments=[full_rpt_pdf])
           
-        print(". ")
+        #print(". ")
       elif rpt_r['rpt_type'] == 'pair':
-        print("processing pair report")
-        print(f"Pair List: {rpt_r['pair_list']}")
+        #print("processing pair report")
+        #print(f"Pair List: {rpt_r['pair_list']}")
         # loop over all the players for this report listing
         for pair_r in rpt_r['pair_list']:
-          print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
+          #print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
         
           # build pair string
           disp_pair = pair_r['pair']
@@ -154,7 +155,7 @@ def rpt_mgr_generate_background():
         
           # loop over all the reports for this player
           for rpt_print in rpt_r['rpts_inc']:
-            print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+            #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
             # call pdf report
             pdf1 = create_pdf_reports(rpt_print['function_name'],
@@ -207,9 +208,9 @@ def rpt_mgr_generate_background():
 def rpt_mgr_player_rpts(rptlist_r,p_list):
   # make the pdf of player type reports
   
-  print(f"In rpt_mgr_player_rpts {rptlist_r}")
-  print(f"Row: {rptlist_r['report_name']},{rptlist_r['function_name']}")
-  print(f"Player List : {p_list}")
+  #print(f"In rpt_mgr_player_rpts {rptlist_r}")
+  #print(f"Row: {rptlist_r['report_name']},{rptlist_r['function_name']}")
+  #print(f"Player List : {p_list}")
   
   for p in p_list:
     print(f"player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")

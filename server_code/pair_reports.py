@@ -156,7 +156,7 @@ def pair_fbhe_pass(disp_league, disp_gender, disp_year,
   ppr_df_no_option = ppr_df[ ppr_df['tactic'] != 'option']
   ppr_df_option = ppr_df[ ppr_df['tactic'] == 'option']
   #print(f"ppr_df size after pair only points: {ppr_df.shape[0]}")
-  print(f"PPD DF Size: All:{ppr_df.shape[0]}, No Option: {ppr_df_no_option.shape[0]}, Option: {ppr_df_option.shape[0]}")
+  #print(f"PPD DF Size: All:{ppr_df.shape[0]}, No Option: {ppr_df_no_option.shape[0]}, Option: {ppr_df_option.shape[0]}")
 
   # create the output dataframe
   df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','% out of System','URL'],
