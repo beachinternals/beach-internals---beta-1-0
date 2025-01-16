@@ -504,5 +504,6 @@ def count_out_of_system(ppr_df,disp_player,action):
     oos_vector[1] = oos_vector[0]/oos_vector[2]
   else:
     oos_vector[1] = 0
-
+  print(f"count_out_of_system: action filter: {action_filter}, ROws in ppr_df: {ppr_df.shape[0]}")
+  print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
   return oos_vector
