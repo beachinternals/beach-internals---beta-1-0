@@ -287,7 +287,7 @@ components_by_slot:
           properties: {align: center, text: Serves}
           type: Label
         - layout_properties: {grid_position: 'KZVQUQ,WSEIWQ BBMZWS,ELJZZW'}
-          name: image_1
+          name: serve_plot
           properties: {height: 451.9713134765625}
           type: Image
         - layout_properties: {grid_position: 'KZVQUQ,NZJPNO ZCBACJ,TABUMY'}
@@ -295,7 +295,7 @@ components_by_slot:
           properties: {align: center, text: Pass Location}
           type: Label
         - layout_properties: {grid_position: 'KZVQUQ,NZJPNO LATYAP,CRULQR'}
-          name: image_2
+          name: pass_plot
           properties: {}
           type: Image
         - layout_properties: {grid_position: 'KZVQUQ,NZJPNO PSLQRA,TINMKE'}
@@ -303,7 +303,7 @@ components_by_slot:
           properties: {align: center, text: Set Location}
           type: Label
         - layout_properties: {grid_position: 'KZVQUQ,NZJPNO CHZDLK,TPRBLQ'}
-          name: image_3
+          name: set_plot
           properties: {}
           type: Image
         - components:
