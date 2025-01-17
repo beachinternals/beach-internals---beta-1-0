@@ -22,18 +22,41 @@ import matplotlib.pyplot as plt
 #----------------------------------------------
 
 @anvil.server.callable
-def plot_lines_on_court( ppr_src_x, ppr_dest_x, ppr_src_y, ppr_dest_y, plt_num):
+def plot_lines_on_court( ppr_df, action, plt_num):
   #
   # line drawing of the serve from source to destination
   #
 
   # we want a line drawing with on line for each serve, or each instance.
 
+  if action == 'srv':
+    x1 = 'serve_src_x'
+    x2 = 'serve_dest_x'
+    y1 = 'serve_src_y'
+    y2 = 'serve_dest_y'
+  elif action == 'pass':
+    x1 = 'pass_src_x'
+    x2 = 'pass_dest_x'
+    y1 = 'pass_src_y'
+    y2 = 'pass_dest_y'
+  elif action == 'set':
+    x1 = 'set_src_x'
+    x2 = 'set_dest_x'
+    y1 = 'set_src_y'
+    y2 = 'set_dest_y'
+  elif action == 'att':
+    x1 = 'att_src_x'
+    x2 = 'att_dest_x'
+    y1 = 'att_src_y'
+    y2 = 'att_dest_y'
+  else:
+    print(f"plot_lines_on_court: Invalid action passed : {action}")
+    
   # Plot it in the normal Matplotlib way
   plt.figure(plt_num, figsize=(10,20))
   
-  for index, ppr_r in ppr_src_x.iterrows():
-    plt.plot( ppr_src_x.at[index], ppr_dest_x.at[index], ppr_src_y.at[index], ppr_dest_y.at[index], 'blue') 
+  for index, ppr_r in ppr_df.iterrows():
+    plt.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], 'blue') 
 
   plot_court_background()
   # Return this plot as a PNG image in a Media object
@@ -48,7 +71,7 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num ):
   x = ppr_x.dropna().values
   y = ppr_y.dropna().values
   #print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
-  point_size = np.full(len(x),10) # numpy array of size len(x), filled with character 2
+  point_size = np.full(len(x),100) # numpy array of size len(x), filled with character 2
   print(f"plot_points_on_the_court: size array: {point_size}")
   plt.scatter( x, y, s = point_size )  
   plot_court_background()
@@ -63,24 +86,71 @@ def plot_court_background():
   plt.grid()
   return True
 
-def plot_attack_zones( ppr_df, disp_player, plt_num):
+def plot_attack_zones( ppr_df, plt_num):
   # working to plot 6 across, zones 1 - 5, then option based on player as passer
 
+  # ppr_df should be limited to the pass player and the pass zone(s) desited
   # set up the 6 plots, start on plot 1
-  for i in [1,2,3,4,5]:
-    plt.subplot(1,6,i) # 1 row, 6 across, working on plot 1
-    plot_court_background()
-    tmp_df = ppr_df[ (ppr_df['pass_player'] == disp_player) & 
-                     (ppr_df['att_src_zone_net'] == i) & 
-                     (ppr_df['tactic'] != 'option') ]
-    plot_lines_on_court( tmp_df['att_src_x'],tmp_df['att_dest_x'],tmp_df['att_src_y'],tmp_df['att_dest_y'],i)
 
-  # now plot the options
-  plt.subplot(1,6,6) # 1 row, 6 across, working on plot 1
-  plot_court_background()
-  tmp_df = ppr_df[ (ppr_df['pass_player'] == disp_player) & 
-                   (ppr_df['tactic'] == 'option') ]
-  plot_lines_on_court( tmp_df['att_src_x'],tmp_df['att_dest_x'],tmp_df['att_src_y'],tmp_df['att_dest_y'],6)  
+  # court boundries
+  xpts = np.array([0,8,8,0,0,0,8])
+  ypts = np.array([-8,-8,8,8,-8,0,0])
+
+  fig, (pz1, pz2, pz3, pz4, pz5, popt) = plt.subplots(1,6, figsize = (100,30)) # 1 row, 6 across, working on plot 1
+  fig.suptitle('Attacking Profile, Zone 1 -5 and Second Ball Option')
+
+  # plot zone 1:
+  tmp_df = ppr_df [ (ppr_df['att_src_zone_net'] == 1) & (ppr_df['tactic'] != 'option') ]
+  for index,ppr_r in tmp_df.iterrows():
+    pz1.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
+  pz1.set_title('Zone 1 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz1.plot( xpts, ypts, c = 'black', linewidth = '3')
+  pz1.grid()
+
+  # plot zone 2:
+  tmp_df = ppr_df [ (ppr_df['att_src_zone_net'] == 2) & (ppr_df['tactic'] != 'option') ]
+  for index,ppr_r in tmp_df.iterrows():
+    pz2.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
+  pz2.set_title('Zone 2 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz2.plot( xpts, ypts, c = 'black', linewidth = '3')
+  pz2.grid()
+  
+  # plot zone 3:
+  tmp_df = ppr_df [ (ppr_df['att_src_zone_net'] == 3) & (ppr_df['tactic'] != 'option') ]
+  for index,ppr_r in tmp_df.iterrows():
+    pz3.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
+  pz3.set_title('Zone 3 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz3.plot( xpts, ypts, c = 'black', linewidth = '3')
+  pz3.grid()
+  
+  # plot zone 4:
+  tmp_df = ppr_df [ (ppr_df['att_src_zone_net'] == 4) & (ppr_df['tactic'] != 'option') ]
+  for index,ppr_r in tmp_df.iterrows():
+    pz4.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
+  pz4.set_title('Zone 4 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz4.plot( xpts, ypts, c = 'black', linewidth = '3')
+  pz4.grid()
+  
+  # plot zone 5:
+  tmp_df = ppr_df [ (ppr_df['att_src_zone_net'] == 5) & (ppr_df['tactic'] != 'option') ]
+  for index,ppr_r in tmp_df.iterrows():
+    pz5.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
+  pz5.set_title('Zone 5 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz5.plot( xpts, ypts, c = 'black', linewidth = '3')
+  pz5.grid()
+  
+  # plot Option:
+  tmp_df = ppr_df [ (ppr_df['tactic'] == 'option') ]
+  for index,ppr_r in tmp_df.iterrows():
+    popt.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
+  popt.set_title('On 2 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  popt.plot( xpts, ypts, c = 'black', linewidth = '3')
+  popt.grid()
+  
+  pz1.plot()
+
+  # Return this plot as a PNG image in a Media object
+  return anvil.mpl_util.plot_image()
                          
     
   

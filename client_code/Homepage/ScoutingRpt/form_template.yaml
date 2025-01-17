@@ -253,7 +253,12 @@ components_by_slot:
       type: FlowPanel
     layout_properties: {}
     name: outlined_card_4
-    properties: {col_widths: '{"DDSDSX":30}', role: outlined-card}
+    properties:
+      col_spacing: small
+      col_widths: '{"DDSDSX":30}'
+      role: outlined-card
+      spacing:
+        padding: [0, 0, 0, 0]
     type: ColumnPanel
   - components:
     - components:
@@ -309,86 +314,81 @@ components_by_slot:
         - components:
           - layout_properties: {grid_position: 'WWBVEU,WTWQBO'}
             name: label_18
-            properties: {align: center, text: Resulting Attacks - Hard Driven}
+            properties: {align: center, text: 'Resulting Attacks '}
             type: Label
-          - components:
-            - layout_properties: {grid_position: 'WJULFT,MCWMCC'}
-              name: rich_text_3
-              properties: {content: 'Zone 1 : # / FBSO / FBHE / URL'}
-              type: RichText
-            - layout_properties: {grid_position: 'AWBBZZ,ZXODAB'}
-              name: image_4
-              properties: {}
-              type: Image
-            layout_properties: {grid_position: 'TLZJMD,MCTCJB'}
-            name: column_panel_5
-            properties: {}
-            type: ColumnPanel
+          - layout_properties: {grid_position: 'TLZJMD,XURQYW DJJNYP,SGSFCL'}
+            name: label_13
+            properties: {align: center, text: Zone 5 Attacks}
+            type: Label
+          - layout_properties: {grid_position: 'TLZJMD,XURQYW KNIDMA,LBHLAS'}
+            name: z5_att_plot
+            properties: {display_mode: zoom_to_fill, height: 243.19921875}
+            type: Image
           - components:
             - layout_properties: {grid_position: 'QVWJCB,VVBEXU'}
               name: label_19
-              properties: {text: 'Zone 2 : # / FBSO / FBHE / URL'}
+              properties: {align: center, text: Zone 4  Attacks}
               type: Label
-            layout_properties: {grid_position: 'TLZJMD,MZXRUD CRBWAY,JNDOFW'}
+            - layout_properties: {grid_position: 'SAWWWE,RTVSWQ'}
+              name: z4_att_plot
+              properties: {display_mode: zoom_to_fill, height: 235.6640625}
+              type: Image
+            layout_properties: {grid_position: 'TLZJMD,MZXRUD'}
             name: column_panel_7
             properties: {}
             type: ColumnPanel
-          - layout_properties: {grid_position: 'TLZJMD,MZXRUD RCCJOG,KDVJCQ'}
-            name: image_5
-            properties: {}
-            type: Image
           - components:
             - layout_properties: {grid_position: 'SRWIGL,FAFJAD'}
               name: label_20
-              properties: {text: 'Zone 3 : # / FBSO / FBHE / URL'}
+              properties: {align: center, text: Zone 3 Attacks}
               type: Label
-            layout_properties: {grid_position: 'TLZJMD,HXYRCZ HVXEZL,YHTYIS'}
+            - layout_properties: {grid_position: 'REWWAZ,QSIWCD'}
+              name: z3_att_plot
+              properties: {display_mode: zoom_to_fill, height: 231.1953125}
+              type: Image
+            layout_properties: {grid_position: 'TLZJMD,HXYRCZ'}
             name: column_panel_8
             properties: {}
             type: ColumnPanel
-          - layout_properties: {grid_position: 'TLZJMD,HXYRCZ DEUXPY,MRAAHO'}
-            name: image_6
-            properties: {}
-            type: Image
           - components:
             - layout_properties: {grid_position: 'YHNISX,EZYHMI'}
               name: label_21
-              properties: {text: 'Zone 4 : # / FBSO / FBHE / URL'}
+              properties: {align: center, text: Zone 2 Attacks}
               type: Label
-            layout_properties: {grid_position: 'TLZJMD,JPTKOT VHGTCV,JNUMEO'}
+            - layout_properties: {grid_position: 'NAEPRE,LZBMOD'}
+              name: z2_att_plot
+              properties: {display_mode: zoom_to_fill, height: 229.54296875}
+              type: Image
+            layout_properties: {grid_position: 'TLZJMD,JPTKOT'}
             name: column_panel_9
             properties: {}
             type: ColumnPanel
-          - layout_properties: {grid_position: 'TLZJMD,JPTKOT KMFLBW,PHOYKU'}
-            name: image_7
-            properties: {}
-            type: Image
           - components:
             - layout_properties: {grid_position: 'MNKWKE,CIQLZW'}
               name: label_22
-              properties: {text: 'Zone 5 : # / FBSO / FBHE / URL'}
+              properties: {align: center, text: Zone 1 Attacks}
               type: Label
-            layout_properties: {grid_position: 'TLZJMD,ZNXMEM LHLAHG,UQIUPY'}
+            - layout_properties: {grid_position: 'DAVCFU,JSRMSP'}
+              name: z1_att_plot
+              properties: {display_mode: zoom_to_fill, height: 225.765625}
+              type: Image
+            layout_properties: {grid_position: 'TLZJMD,ZNXMEM'}
             name: column_panel_10
             properties: {}
             type: ColumnPanel
-          - layout_properties: {grid_position: 'TLZJMD,ZNXMEM GEUJDN,MDOKTJ'}
-            name: image_8
-            properties: {}
-            type: Image
           - components:
             - layout_properties: {grid_position: 'PVVBGP,HUIDZW'}
               name: label_23
-              properties: {text: 'Option : # / FBSO / FBHE / URL'}
+              properties: {align: center, text: On 2 Attacks}
               type: Label
-            layout_properties: {grid_position: 'TLZJMD,HFVHJI OJKRXT,DMVNNT'}
+            - layout_properties: {grid_position: 'ETHJDH,XPGQPL'}
+              name: opt_att_plot
+              properties: {display_mode: zoom_to_fill, height: 225.03515625}
+              type: Image
+            layout_properties: {grid_position: 'TLZJMD,HFVHJI'}
             name: column_panel_6
             properties: {}
             type: ColumnPanel
-          - layout_properties: {grid_position: 'TLZJMD,HFVHJI SPQYTO,CITZNR'}
-            name: image_9
-            properties: {}
-            type: Image
           layout_properties: {grid_position: 'SEABTV,ANAUPI'}
           name: column_panel_4
           properties: {}
@@ -397,96 +397,14 @@ components_by_slot:
         name: column_panel_3
         properties: {col_widths: '{"VLGDZO":10,"VUDURV":50,"WSEIWQ":20,"CNNAVS":20,"RSJBQL":20}'}
         type: ColumnPanel
-      - components:
-        - layout_properties: {grid_position: 'THJAMN,AQHGRJ'}
-          name: label_24
-          properties: {align: center, text: Resulting Attacks - Off Speed}
-          type: Label
-        layout_properties: {grid_position: 'TRKVCX,QRGUQK'}
-        name: column_panel_11
-        properties: {}
-        type: ColumnPanel
-      - components:
-        - layout_properties: {grid_position: 'RYMARV,KZHNUT'}
-          name: label_25
-          properties: {text: 'Zone 1 : # / FBSO / FBHE / URL'}
-          type: Label
-        - layout_properties: {grid_position: 'AUVMDT,AMRTNX'}
-          name: image_10
-          properties: {}
-          type: Image
-        layout_properties: {grid_position: 'CBUMSL,CVNYYW'}
-        name: column_panel_12
-        properties: {}
-        type: ColumnPanel
-      - components:
-        - layout_properties: {grid_position: 'UOYFOV,RSBTZY'}
-          name: label_26
-          properties: {text: 'Zone 2 : # / FBSO / FBHE / URL'}
-          type: Label
-        - layout_properties: {grid_position: 'KOTVTO,KZLLUL'}
-          name: image_11
-          properties: {}
-          type: Image
-        layout_properties: {grid_position: 'CBUMSL,DRNBBX'}
-        name: column_panel_14
-        properties: {}
-        type: ColumnPanel
-      - components:
-        - layout_properties: {grid_position: 'YMPMNU,KMDFMC'}
-          name: label_27
-          properties: {text: 'Zone 3 : # / FBSO / FBHE / URL'}
-          type: Label
-        - layout_properties: {grid_position: 'IOJVYJ,RHDCGP'}
-          name: image_12
-          properties: {}
-          type: Image
-        layout_properties: {grid_position: 'CBUMSL,HPWQSK'}
-        name: column_panel_15
-        properties: {}
-        type: ColumnPanel
-      - components:
-        - layout_properties: {grid_position: 'NUIVJK,ABJPHZ'}
-          name: label_28
-          properties: {text: 'Zone 4 : # / FBSO / FBHE / URL'}
-          type: Label
-        - layout_properties: {grid_position: 'EBWTHT,ZUTFTK'}
-          name: image_13
-          properties: {}
-          type: Image
-        layout_properties: {grid_position: 'CBUMSL,LBMNNG'}
-        name: column_panel_17
-        properties: {}
-        type: ColumnPanel
-      - components:
-        - layout_properties: {grid_position: 'FBAHIQ,EKMIHS'}
-          name: label_29
-          properties: {text: 'Zone 4 : # / FBSO / FBHE / URL'}
-          type: Label
-        - layout_properties: {grid_position: 'VKXFIV,XAKHXZ'}
-          name: image_14
-          properties: {}
-          type: Image
-        layout_properties: {grid_position: 'CBUMSL,UGOOQE'}
-        name: column_panel_16
-        properties: {}
-        type: ColumnPanel
-      - components:
-        - layout_properties: {grid_position: 'WBJVZT,GMBGSP'}
-          name: label_30
-          properties: {text: 'Option : # / FBSO / FBHE / URL'}
-          type: Label
-        - layout_properties: {grid_position: 'DAIUVI,HYBZED'}
-          name: image_15
-          properties: {}
-          type: Image
-        layout_properties: {grid_position: 'CBUMSL,BVKVDR'}
-        name: column_panel_13
-        properties: {}
-        type: ColumnPanel
       layout_properties: {grid_position: 'KCZYCU,LQEYDV'}
       name: outlined_card_3
-      properties: {background: '', col_widths: '{"SJLDQA":5,"AXYCOV":10,"MNQKUG":45}', role: outlined-card}
+      properties:
+        background: ''
+        col_widths: '{"SJLDQA":5,"AXYCOV":10,"MNQKUG":45}'
+        role: outlined-card
+        spacing:
+          padding: [0, 0, 0, 0]
       type: ColumnPanel
     - components:
       - layout_properties: {grid_position: 'OULBBH,UTZUNT'}
@@ -512,7 +430,12 @@ components_by_slot:
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_2
-    properties: {background: '', col_widths: '{"LQEYDV":50}', role: outlined-card}
+    properties:
+      background: ''
+      col_widths: '{"LQEYDV":50}'
+      role: outlined-card
+      spacing:
+        padding: ['2', '2', '2', 2]
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}

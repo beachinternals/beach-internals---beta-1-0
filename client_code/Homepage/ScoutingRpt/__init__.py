@@ -257,7 +257,7 @@ class ScoutingRpt(ScoutingRptTemplate):
 
     
     # call the server function
-    serve_strategy_title, table_data, srv_plot, pass_plot, set_plot = anvil.server.call(
+    serve_strategy_title, table_data, srv_plot, pass_plot, set_plot, z1_att, z2_att, z3_att, z4_att, z5_att, opt_att = anvil.server.call(
       fnct_name,
       disp_league,
       disp_gender,
@@ -298,6 +298,12 @@ class ScoutingRpt(ScoutingRptTemplate):
     self.serve_plot.source = srv_plot
     self.pass_plot.source = pass_plot
     self.set_plot.source = set_plot
+    self.z1_att_plot.source = z1_att
+    self.z2_att_plot.source = z2_att
+    self.z3_att_plot.source = z3_att
+    self.z4_att_plot.source = z4_att
+    self.z5_att_plot.source = z5_att
+    self.opt_att_plot.source = opt_att
 
     pass
 

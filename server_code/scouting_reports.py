@@ -193,19 +193,29 @@ def scout_srv_strategy(disp_league,
   # now, time to make plots.
   # want to plot data from new_ppr
 
+  # limit the data to passes by the player
+  new_ppr = new_ppr[ new_ppr['pass_player'] == disp_player]
+
   # make a plot to chart the serves: (line chart, court in the background)
-  serve_diagram_plot_object = plot_lines_on_court(new_ppr['serve_src_x'], new_ppr['serve_dest_x'], new_ppr['serve_src_y'], new_ppr['serve_dest_y'],1)
+  serve_diagram_plot_object = plot_lines_on_court(new_ppr, 'srv', 1)
+  #serve_diagram_plot_object = ''
 
   # make a plot to chart the pass locations: (dot splatter with half court in background)
   pass_locations_plot_object = plot_points_on_the_court(new_ppr['pass_dest_x'],new_ppr['pass_dest_y'], 2)
+  #pass_locations_plot_object = ''
 
   # make a plot to chart the set locations: (dot splatter with half court in background)
-  set_locati0ons_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 2)
+  set_locations_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 3)
+  #set_locations_plot_object = ''
 
   # Next, build the 6 plots across the page as subplots, zone's 1 - 5 plus Optioon
 
   # set up 6 sub plots
-  plt.subplot(1,6,1)
+  attack_z1_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')],'att',4)
+  attack_z2_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')],'att',5)
+  attack_z3_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')],'att',6)
+  attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',7)
+  attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',8)
+  attack_opt_plot_object = plot_lines_on_court(new_ppr[ new_ppr['tactic'] == 'option'],'att',9)
   
-  
-  return srv_strategy_title, srv_strat_md, serve_diagram_plot_object, pass_locations_plot_object, set_locati0ons_plot_object
+  return srv_strategy_title, srv_strat_md, serve_diagram_plot_object, pass_locations_plot_object, set_locations_plot_object, attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, attack_opt_plot_object
