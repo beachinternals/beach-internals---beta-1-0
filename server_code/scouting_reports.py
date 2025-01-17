@@ -194,13 +194,18 @@ def scout_srv_strategy(disp_league,
   # want to plot data from new_ppr
 
   # make a plot to chart the serves: (line chart, court in the background)
-  serve_diagram_plot_object = plot_serve_src_dest(new_ppr)
+  serve_diagram_plot_object = plot_lines_on_court(new_ppr['serve_src_x'], new_ppr['serve_dest_x'], new_ppr['serve_src_y'], new_ppr['serve_dest_y'],1)
 
   # make a plot to chart the pass locations: (dot splatter with half court in background)
-  pass_locations_plot_object = plot_pass_dest(new_ppr)
+  pass_locations_plot_object = plot_points_on_the_court(new_ppr['pass_dest_x'],new_ppr['pass_dest_y'], 2)
 
   # make a plot to chart the set locations: (dot splatter with half court in background)
-  set_locati0ons_plot_object = plot_set_dest(new_ppr)
+  set_locati0ons_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 2)
+
+  # Next, build the 6 plots across the page as subplots, zone's 1 - 5 plus Optioon
+
+  # set up 6 sub plots
+  plt.subplot(1,6,1)
   
   
   return srv_strategy_title, srv_strat_md, serve_diagram_plot_object, pass_locations_plot_object, set_locati0ons_plot_object
