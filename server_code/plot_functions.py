@@ -49,10 +49,10 @@ def plot_pass_dest( ppr_df ):
 
   # Plot it in the normal Matplotlib way
   plt.figure(1, figsize=(10,5))
-  x = ppr_df['pass_dest_x'].values
-  y = ppr_df['pass_dest_y'].values
-  print(f"plot_pass_dest: x and y: {x}, {y}")
-  plt.scatter( x, y, 'blue')  
+  x = ppr_df['pass_dest_x'].dropna().values
+  y = ppr_df['pass_dest_y'].dropna().values
+  print(f"plot_pass_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
+  plt.scatter( x, y )  
   
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()
@@ -64,8 +64,10 @@ def plot_set_dest( ppr_df ):
   # line drawing of the set location(s) as dot
   #
   plt.figure(1, figsize=(10,5))
-  for index, ppr_r in ppr_df.iterrows():
-    plt.scatter( ppr_r['set_dest_x'], ppr_r['set_dest_y'], 'blue')  
+  x = ppr_df['set_dest_x'].dropna().values
+  y = ppr_df['set_dest_y'].dropna().values
+  print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
+  plt.scatter( x, y )  
   
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()
