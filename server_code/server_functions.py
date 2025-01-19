@@ -57,7 +57,7 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
           # build a new link
           #print(f"start new link, video_btd_id:{video_btd_id}, Lenght: {len(video_btd_id)}")
           video_link = video_link + ")" if len(video_btd_id) != 0 else video_link
-          video_list[i] = " [Game "+str(i)+"](https://app.balltime.com/video/"+r['video_id']+"?actionIds="+str(r['serve_action_id'])
+          video_list[i] = " [G"+str(i)+"](https://app.balltime.com/video/"+r['video_id']+"?actionIds="+str(r['serve_action_id'])
           video_list[i] = video_list[i] + ',' + str(r['pass_action_id']) if r['pass_action_id'] != 0 else video_list[i]
           video_list[i] = video_list[i] + ',' + str(r['set_action_id']) if r['set_action_id'] != 0 else video_list[i]
           video_list[i] = video_list[i] + ',' + str(r['att_action_id']) if r['att_action_id'] != 0 else video_list[i]

@@ -325,7 +325,7 @@ components_by_slot:
             properties: {display_mode: zoom_to_fill, height: 243.19921875}
             type: Image
           - layout_properties: {grid_position: 'TLZJMD,XURQYW IMWCKO,NVVKTP'}
-            name: z1_table
+            name: z5_table
             properties:
               font_size: 11
               spacing:
@@ -345,7 +345,7 @@ components_by_slot:
             properties: {}
             type: ColumnPanel
           - layout_properties: {grid_position: 'TLZJMD,MZXRUD THIOAO,JYEYDT'}
-            name: z2_table
+            name: z4_table
             properties:
               font_size: 11
               spacing:
@@ -385,7 +385,7 @@ components_by_slot:
             properties: {}
             type: ColumnPanel
           - layout_properties: {grid_position: 'TLZJMD,JPTKOT RTRIPC,NDZUGI'}
-            name: z4_table
+            name: z2_table
             properties:
               font_size: 11
               spacing:
@@ -405,7 +405,7 @@ components_by_slot:
             properties: {}
             type: ColumnPanel
           - layout_properties: {grid_position: 'TLZJMD,ZNXMEM UBSPRL,DRIGTQ'}
-            name: z5_table
+            name: z1_table
             properties:
               font_size: 11
               spacing:

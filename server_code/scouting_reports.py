@@ -225,7 +225,7 @@ def scout_srv_strategy(disp_league,
   #. 3 = Out of System
   #. 4 = URL
 
-  zone_dict = {'1':['FBHE','FBSO','ATT','O SYS','URL'],"Value":[0,0,0,0,'']}
+  zone_dict = {'1':['FBHE','FBSO','ATT','OSYS','URL'],'Value':[0,0,0,0,'']}
   z1_df = pd.DataFrame.from_dict(zone_dict)
   z2_df = pd.DataFrame.from_dict(zone_dict)
   z3_df = pd.DataFrame.from_dict(zone_dict)
@@ -235,58 +235,58 @@ def scout_srv_strategy(disp_league,
 
   fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z1_df.at['FBHE','Value'] = fbhe_vector[0]
-  z1_df[1] = fbhe_vector[4]
-  z1_df[2] = fbhe_vector[3]
-  z1_df[4] = fbhe_vector[5]
-  z1_df[3] = oos_vector[0]
+  z1_df.at[0,'Value'] = fbhe_vector[0]
+  z1_df.at[1,'Value'] = fbhe_vector[4]
+  z1_df.at[2,'Value'] = fbhe_vector[3]
+  z1_df.at[4,'Value'] = fbhe_vector[5]
+  z1_df.at[3,'Value'] = oos_vector[0]
 
   fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z2_df[0] = fbhe_vector[0]
-  z2_df[1] = fbhe_vector[4]
-  z2_df[2] = fbhe_vector[3]
-  z2_df[4] = fbhe_vector[5]
-  z2_df[3] = oos_vector[0]
+  z2_df.at[0,'Value'] = fbhe_vector[0]
+  z2_df.at[1,'Value'] = fbhe_vector[4]
+  z2_df.at[2,'Value'] = fbhe_vector[3]
+  z2_df.at[4,'Value'] = fbhe_vector[5]
+  z2_df.at[3,'Value'] = oos_vector[0]
 
   fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z3_df[0] = fbhe_vector[0]
-  z3_df[1] = fbhe_vector[4]
-  z3_df[2] = fbhe_vector[3]
-  z3_df[4] = fbhe_vector[5]
-  z3_df[3] = oos_vector[0]
+  z3_df.at[0,'Value'] = fbhe_vector[0]
+  z3_df.at[1,'Value'] = fbhe_vector[4]
+  z3_df.at[2,'Value'] = fbhe_vector[3]
+  z3_df.at[4,'Value'] = fbhe_vector[5]
+  z3_df.at[3,'Value'] = oos_vector[0]
 
   fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z4_df[0] = fbhe_vector[0]
-  z4_df[1] = fbhe_vector[4]
-  z4_df[2] = fbhe_vector[3]
-  z4_df[4] = fbhe_vector[5]
-  z4_df[3] = oos_vector[0]
+  z4_df.at[0,'Value'] = fbhe_vector[0]
+  z4_df.at[1,'Value'] = fbhe_vector[4]
+  z4_df.at[2,'Value'] = fbhe_vector[3]
+  z4_df.at[4,'Value'] = fbhe_vector[5]
+  z4_df.at[3,'Value'] = oos_vector[0]
 
   fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z5_df[0] = fbhe_vector[0]
-  z5_df[1] = fbhe_vector[4]
-  z5_df[2] = fbhe_vector[3]
-  z5_df[4] = fbhe_vector[5]
-  z5_df[3] = oos_vector[0]
+  z5_df.at[0,'Value'] = fbhe_vector[0]
+  z5_df.at[1,'Value'] = fbhe_vector[4]
+  z5_df.at[2,'Value'] = fbhe_vector[3]
+  z5_df.at[4,'Value'] = fbhe_vector[5]
+  z5_df.at[3,'Value'] = oos_vector[0]
 
   fbhe_vector = fbhe(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'att', 'Yes')
   oos_vector = count_out_of_system(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'pass' )
-  opt_df[0] = fbhe_vector[0]
-  opt_df[1] = fbhe_vector[4]
-  opt_df[2] = fbhe_vector[3]
-  opt_df[4] = fbhe_vector[5]
-  opt_df[3] = oos_vector[0]
+  opt_df.at[0,'Value'] = fbhe_vector[0]
+  opt_df.at[1,'Value'] = fbhe_vector[4]
+  opt_df.at[2,'Value'] = fbhe_vector[3]
+  opt_df.at[4,'Value'] = fbhe_vector[5]
+  opt_df.at[3,'Value'] = oos_vector[0]
 
-  z1_mkdn = pd.DataFrame.to_markdown(z1_df)
-  z2_mkdn = pd.DataFrame.to_markdown(z2_df)
-  z3_mkdn = pd.DataFrame.to_markdown(z3_df)
-  z4_mkdn = pd.DataFrame.to_markdown(z4_df)
-  z5_mkdn = pd.DataFrame.to_markdown(z5_df)
-  opt_mkdn = pd.DataFrame.to_markdown(opt_df)
+  z1_mkdn = pd.DataFrame.to_markdown(z1_df, index=False, headers=['',''] )
+  z2_mkdn = pd.DataFrame.to_markdown(z2_df, index=False, headers=['',''])
+  z3_mkdn = pd.DataFrame.to_markdown(z3_df, index=False, headers=['',''])
+  z4_mkdn = pd.DataFrame.to_markdown(z4_df, index=False, headers=['',''])
+  z5_mkdn = pd.DataFrame.to_markdown(z5_df, index=False, headers=['',''])
+  opt_mkdn = pd.DataFrame.to_markdown(opt_df, index=False, headers=['',''])
   
 
   
