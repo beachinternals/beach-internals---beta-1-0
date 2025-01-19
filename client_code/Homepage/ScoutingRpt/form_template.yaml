@@ -266,17 +266,25 @@ components_by_slot:
         name: box1_label
         properties: {align: center, bold: true, text: Serving Strategies}
         type: Label
-      - layout_properties: {grid_position: 'BLZLCS,SJLDQA'}
+      - layout_properties: {grid_position: 'BLZLCS,SJLDQA DVYPWR,MOBULC'}
         name: label_8
-        properties: {align: right, text: 'Serving Player:'}
+        properties: {align: right, text: 'Player:'}
         type: Label
-      - layout_properties: {grid_position: 'BLZLCS,AXYCOV'}
+      - layout_properties: {grid_position: 'BLZLCS,SJLDQA UGNVEC,KPAPKE'}
+        name: label_24
+        properties: {align: right, text: 'Pair:'}
+        type: Label
+      - layout_properties: {grid_position: 'BLZLCS,AXYCOV IUQGSV,DRPFAS'}
         name: player_label
+        properties: {}
+        type: Label
+      - layout_properties: {grid_position: 'BLZLCS,AXYCOV QZTAPY,RRDSSE'}
+        name: pair_label
         properties: {}
         type: Label
       - layout_properties: {grid_position: 'BLZLCS,MNQKUG'}
         name: rpt_disp_box
-        properties: {content: 'From / To / # / FBSO / FBHE /  URL '}
+        properties: {content: ''}
         type: RichText
       - components:
         - layout_properties: {grid_position: 'QNRTCH,VLGDZO'}

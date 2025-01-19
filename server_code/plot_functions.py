@@ -27,13 +27,21 @@ def plot_lines_on_court( ppr_df, action, plt_num):
   # line drawing of the serve from source to destination
   #
 
+  #. a little documentation ...
+  #plot(x, y, color='green', marker='o', linestyle='dashed',
+  #   linewidth=2, markersize=12)
+  
   # we want a line drawing with on line for each serve, or each instance.
 
+  err = ''
+  kill = ''
   if action == 'srv':
     x1 = 'serve_src_x'
     x2 = 'serve_dest_x'
     y1 = 'serve_src_y'
     y2 = 'serve_dest_y'
+    err = 'TSE'
+    kill = 'TSA'
   elif action == 'pass':
     x1 = 'pass_src_x'
     x2 = 'pass_dest_x'
@@ -49,6 +57,8 @@ def plot_lines_on_court( ppr_df, action, plt_num):
     x2 = 'att_dest_x'
     y1 = 'att_src_y'
     y2 = 'att_dest_y'
+    kill = 'FBK'
+    err = 'FBE'
   else:
     print(f"plot_lines_on_court: Invalid action passed : {action}")
     
@@ -56,7 +66,20 @@ def plot_lines_on_court( ppr_df, action, plt_num):
   plt.figure(plt_num, figsize=(10,20))
   
   for index, ppr_r in ppr_df.iterrows():
-    plt.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], 'blue') 
+    if ppr_r['point_outcome'] == err:
+      line_color = 'red'
+      l_style='dashed'
+      m_style ='X'
+    if ppr_r['point_outcome'] == kill:
+      line_color = 'green'
+      l_style='solid'
+      m_style ='o'
+    else:
+      line_color = 'blue'
+      l_style = 'dotted'
+      m_style = '.'
+      
+    plt.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], line_color, l_style, m_style) 
 
   plot_court_background()
   # Return this plot as a PNG image in a Media object
@@ -80,9 +103,12 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num ):
   return anvil.mpl_util.plot_image()
 
 def plot_court_background():
-  xpts = np.array([0,8,8,0,0,0,8])
-  ypts = np.array([-8,-8,8,8,-8,0,0])
+  xpts = np.array([0,8,8,0,0,0])
+  ypts = np.array([-8,-8,8,8,-8,0])
   plt.plot( xpts, ypts, c = 'black', linewidth = '3')
+  xpts = np.array([-1,9])
+  ypts = np.array([0,0])
+  plt.plot( xpts, ypts, c = 'black', linewidth = '9')
   plt.grid()
   return True
 
