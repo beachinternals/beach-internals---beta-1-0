@@ -324,6 +324,13 @@ components_by_slot:
             name: z5_att_plot
             properties: {display_mode: zoom_to_fill, height: 243.19921875}
             type: Image
+          - layout_properties: {grid_position: 'TLZJMD,XURQYW IMWCKO,NVVKTP'}
+            name: z1_table
+            properties:
+              font_size: 11
+              spacing:
+                padding: ['0', null, '0', null]
+            type: RichText
           - components:
             - layout_properties: {grid_position: 'QVWJCB,VVBEXU'}
               name: label_19
@@ -333,10 +340,17 @@ components_by_slot:
               name: z4_att_plot
               properties: {display_mode: zoom_to_fill, height: 235.6640625}
               type: Image
-            layout_properties: {grid_position: 'TLZJMD,MZXRUD'}
+            layout_properties: {grid_position: 'TLZJMD,MZXRUD GQDMQV,XWNWNR'}
             name: column_panel_7
             properties: {}
             type: ColumnPanel
+          - layout_properties: {grid_position: 'TLZJMD,MZXRUD THIOAO,JYEYDT'}
+            name: z2_table
+            properties:
+              font_size: 11
+              spacing:
+                padding: ['0', null, -1.4500000000000004, null]
+            type: RichText
           - components:
             - layout_properties: {grid_position: 'SRWIGL,FAFJAD'}
               name: label_20
@@ -346,10 +360,17 @@ components_by_slot:
               name: z3_att_plot
               properties: {display_mode: zoom_to_fill, height: 231.1953125}
               type: Image
-            layout_properties: {grid_position: 'TLZJMD,HXYRCZ'}
+            layout_properties: {grid_position: 'TLZJMD,HXYRCZ LIUXBX,ESFWEW'}
             name: column_panel_8
             properties: {}
             type: ColumnPanel
+          - layout_properties: {grid_position: 'TLZJMD,HXYRCZ YCCPIB,CEEUQM'}
+            name: z3_table
+            properties:
+              font_size: 11
+              spacing:
+                padding: ['0', null, -0.8200000000000002, null]
+            type: RichText
           - components:
             - layout_properties: {grid_position: 'YHNISX,EZYHMI'}
               name: label_21
@@ -359,10 +380,17 @@ components_by_slot:
               name: z2_att_plot
               properties: {display_mode: zoom_to_fill, height: 229.54296875}
               type: Image
-            layout_properties: {grid_position: 'TLZJMD,JPTKOT'}
+            layout_properties: {grid_position: 'TLZJMD,JPTKOT AYGNFA,HXHYRW'}
             name: column_panel_9
             properties: {}
             type: ColumnPanel
+          - layout_properties: {grid_position: 'TLZJMD,JPTKOT RTRIPC,NDZUGI'}
+            name: z4_table
+            properties:
+              font_size: 11
+              spacing:
+                padding: ['0', null, -0.8099999999999999, null]
+            type: RichText
           - components:
             - layout_properties: {grid_position: 'MNKWKE,CIQLZW'}
               name: label_22
@@ -372,10 +400,17 @@ components_by_slot:
               name: z1_att_plot
               properties: {display_mode: zoom_to_fill, height: 225.765625}
               type: Image
-            layout_properties: {grid_position: 'TLZJMD,ZNXMEM'}
+            layout_properties: {grid_position: 'TLZJMD,ZNXMEM QBMJFB,XDPDVQ'}
             name: column_panel_10
             properties: {}
             type: ColumnPanel
+          - layout_properties: {grid_position: 'TLZJMD,ZNXMEM UBSPRL,DRIGTQ'}
+            name: z5_table
+            properties:
+              font_size: 11
+              spacing:
+                padding: ['0', null, -1.1199999999999999, null]
+            type: RichText
           - components:
             - layout_properties: {grid_position: 'PVVBGP,HUIDZW'}
               name: label_23
@@ -385,10 +420,17 @@ components_by_slot:
               name: opt_att_plot
               properties: {display_mode: zoom_to_fill, height: 225.03515625}
               type: Image
-            layout_properties: {grid_position: 'TLZJMD,HFVHJI'}
+            layout_properties: {grid_position: 'TLZJMD,HFVHJI XYBVOO,IYFWKF'}
             name: column_panel_6
             properties: {}
             type: ColumnPanel
+          - layout_properties: {grid_position: 'TLZJMD,HFVHJI BIFHPJ,DCWROD'}
+            name: opt_table
+            properties:
+              font_size: 11
+              spacing:
+                padding: ['0', null, -1.3600000000000003, null]
+            type: RichText
           layout_properties: {grid_position: 'SEABTV,ANAUPI'}
           name: column_panel_4
           properties: {}

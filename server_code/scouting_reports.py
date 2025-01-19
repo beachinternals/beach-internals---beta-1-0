@@ -217,5 +217,77 @@ def scout_srv_strategy(disp_league,
   attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',7)
   attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',8)
   attack_opt_plot_object = plot_lines_on_court(new_ppr[ new_ppr['tactic'] == 'option'],'att',9)
+
+  # set up 6 small tables below with:
+  #. 0 = FBHE
+  #. 1 = FBSO
+  #  2 = Attempts
+  #. 3 = Out of System
+  #. 4 = URL
+
+  zone_dict = {'1':['FBHE','FBSO','ATT','O SYS','URL'],"Value":[0,0,0,0,'']}
+  z1_df = pd.DataFrame.from_dict(zone_dict)
+  z2_df = pd.DataFrame.from_dict(zone_dict)
+  z3_df = pd.DataFrame.from_dict(zone_dict)
+  z4_df = pd.DataFrame.from_dict(zone_dict)
+  z5_df = pd.DataFrame.from_dict(zone_dict)
+  opt_df = pd.DataFrame.from_dict(zone_dict)
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z1_df.at['FBHE','Value'] = fbhe_vector[0]
+  z1_df[1] = fbhe_vector[4]
+  z1_df[2] = fbhe_vector[3]
+  z1_df[4] = fbhe_vector[5]
+  z1_df[3] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z2_df[0] = fbhe_vector[0]
+  z2_df[1] = fbhe_vector[4]
+  z2_df[2] = fbhe_vector[3]
+  z2_df[4] = fbhe_vector[5]
+  z2_df[3] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z3_df[0] = fbhe_vector[0]
+  z3_df[1] = fbhe_vector[4]
+  z3_df[2] = fbhe_vector[3]
+  z3_df[4] = fbhe_vector[5]
+  z3_df[3] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z4_df[0] = fbhe_vector[0]
+  z4_df[1] = fbhe_vector[4]
+  z4_df[2] = fbhe_vector[3]
+  z4_df[4] = fbhe_vector[5]
+  z4_df[3] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z5_df[0] = fbhe_vector[0]
+  z5_df[1] = fbhe_vector[4]
+  z5_df[2] = fbhe_vector[3]
+  z5_df[4] = fbhe_vector[5]
+  z5_df[3] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'att', 'Yes')
+  oos_vector = count_out_of_system(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'pass' )
+  opt_df[0] = fbhe_vector[0]
+  opt_df[1] = fbhe_vector[4]
+  opt_df[2] = fbhe_vector[3]
+  opt_df[4] = fbhe_vector[5]
+  opt_df[3] = oos_vector[0]
+
+  z1_mkdn = pd.DataFrame.to_markdown(z1_df)
+  z2_mkdn = pd.DataFrame.to_markdown(z2_df)
+  z3_mkdn = pd.DataFrame.to_markdown(z3_df)
+  z4_mkdn = pd.DataFrame.to_markdown(z4_df)
+  z5_mkdn = pd.DataFrame.to_markdown(z5_df)
+  opt_mkdn = pd.DataFrame.to_markdown(opt_df)
   
-  return srv_strategy_title, srv_strat_md, serve_diagram_plot_object, pass_locations_plot_object, set_locations_plot_object, attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, attack_opt_plot_object
+
+  
+  return srv_strategy_title, srv_strat_md, serve_diagram_plot_object, pass_locations_plot_object, set_locations_plot_object, attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, attack_opt_plot_object, z1_mkdn, z2_mkdn,z3_mkdn,z4_mkdn,z5_mkdn,opt_mkdn

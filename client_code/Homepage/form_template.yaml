@@ -28,7 +28,11 @@ components:
       type: Link
     layout_properties: {grid_position: 'DHWYHY,UIPWBZ'}
     name: outlined_card_1
-    properties: {background: 'theme:Secondary Container', role: outlined-card}
+    properties:
+      background: theme:Secondary Container
+      role: outlined-card
+      spacing:
+        padding: ['5', null, '5', null]
     type: ColumnPanel
   layout_properties: {slot: default}
   name: content_panel
@@ -39,12 +43,21 @@ components:
     - {code: '', property: text, writeback: false}
     layout_properties: {}
     name: user_name_label
-    properties: {align: right, font: '6'}
+    properties:
+      align: right
+      font: '6'
+      spacing:
+        padding: ['4', null, '4', null]
     type: Label
   - event_bindings: {click: user_page_click}
     layout_properties: {}
     name: user_page
-    properties: {background: 'theme:Secondary Container', icon: 'fa:user-circle-o', text: ''}
+    properties:
+      background: theme:Secondary Container
+      icon: fa:user-circle-o
+      spacing:
+        padding: ['3', '2', '3', '2']
+      text: ''
     type: Link
   layout_properties: {slot: nav-right}
   name: navbar_links
@@ -53,12 +66,24 @@ components:
 - components:
   - layout_properties: {grid_position: 'FZVTGU,CMPTKD'}
     name: label_1
-    properties: {align: center, background: 'theme:Secondary Container', bold: true, spacing_above: none, spacing_below: none, text: Reports}
+    properties:
+      align: center
+      background: theme:Secondary Container
+      bold: true
+      spacing:
+        padding: ['4', null, '4', null]
+      spacing_above: none
+      spacing_below: none
+      text: Reports
     type: Label
   - event_bindings: {click: dashboard_link_click}
     layout_properties: {grid_position: 'GXUGWM,QZZBDA'}
     name: dashboard_link
-    properties: {align: left, text: Dashboard}
+    properties:
+      align: left
+      spacing:
+        padding: ['4', null, null, null]
+      text: Dashboard
     type: Link
   - event_bindings: {click: playerRpt_link_click}
     layout_properties: {grid_position: 'LITXTA,FHEEDA'}
@@ -132,11 +157,19 @@ components:
     type: Link
   layout_properties: {slot: left-nav}
   name: column_panel_1
-  properties: {background: '', col_spacing: small}
+  properties:
+    background: ''
+    col_spacing: small
+    spacing:
+      padding: ['10', null, '10', null]
   type: ColumnPanel
 - layout_properties: {slot: title}
   name: title_label
-  properties: {role: title, text: Beach Internals}
+  properties:
+    role: title
+    spacing:
+      padding: ['4', null, '4', null]
+    text: Beach Internals
   type: Label
 container:
   properties: {background: '', html: '@theme:standard-page.html'}

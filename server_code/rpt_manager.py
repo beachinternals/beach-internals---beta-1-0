@@ -107,7 +107,7 @@ def rpt_mgr_generate_background():
           pdf_name = disp_player + ' Summary.pdf'
         
           # loop over all the reports for this player
-          for rpt_print in rpt_r['rpts_inc']:
+          for rpt_print in rpt_r['rpts_inc'].sort():
             #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
             # call pdf report
