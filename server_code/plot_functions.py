@@ -66,6 +66,9 @@ def plot_lines_on_court( ppr_df, action, plt_num):
   plt.figure(plt_num, figsize=(10,20))
   
   for index, ppr_r in ppr_df.iterrows():
+    line_color = 'blue'
+    l_style = 'dotted'
+    m_style = '.'
     if ppr_r['point_outcome'] == err:
       line_color = 'red'
       l_style='dashed'
@@ -74,12 +77,11 @@ def plot_lines_on_court( ppr_df, action, plt_num):
       line_color = 'green'
       l_style='solid'
       m_style ='o'
-    else:
-      line_color = 'blue'
-      l_style = 'dotted'
-      m_style = '.'
-      
-    plt.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], line_color, l_style, m_style) 
+
+
+    print(f"Plotting points: x1,x2:{ppr_r[x1], ppr_r[x2]}, y1,y2:{ppr_r[y1], ppr_r[y2]}, outcome:{ppr_r['point_outcome']}, line color: {line_color}, line style {l_style}, marker = {m_style} ")
+    plt.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, linestyle=l_style )
+    plt.scatter([ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, s=[100,100], marker=m_style)
 
   plot_court_background()
   # Return this plot as a PNG image in a Media object
