@@ -310,6 +310,7 @@ class ScoutingRpt(ScoutingRptTemplate):
     self.z4_table.content = z4_tbl
     self.z5_table.content = z5_tbl
     self.opt_table.content = opt_tbl
+    self.pair_label.text = disp_pair
     
 
     pass
