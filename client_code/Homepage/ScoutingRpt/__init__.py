@@ -249,7 +249,7 @@ class ScoutingRpt(ScoutingRptTemplate):
 
     # build list to pass for srv_to and srv_fr
     srv_fr = [ self.srv_from_1.checked, self.srv_from_3.checked, self.srv_from_5.checked ]
-    srv_to_1 = [ self.srv_to_1E.checked, self.srv_to_1D.checked ,self.srv_to_1C.checked ]
+    srv_to_1 = [ self.srv_to_1E.checked, self.srv_to_1D.checked, self.srv_to_1C.checked ]
     srv_to_2 = [ self.srv_to_2E.checked, self.srv_to_2D.checked, self.srv_to_2C.checked ]
     srv_to_3 = [ self.srv_to_3E.checked, self.srv_to_3D.checked, self.srv_to_3C.checked ]
     srv_to_4 = [ self.srv_to_4E.checked, self.srv_to_4D.checked, self.srv_to_4C.checked ]

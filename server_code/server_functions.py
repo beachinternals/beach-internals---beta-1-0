@@ -501,16 +501,25 @@ def count_out_of_system(ppr_df,disp_player,action):
   else:
     print(f'Invalid action passed to out_of_sytem, Action:{action}, using Pass')
     action_filter = 'pass_player'
-    
-  # let's count!!
-  oos_vector[2] = ppr_df[ ppr_df[action_filter] == disp_player].shape[0]
-  oos_vector[0] = ppr_df[ (ppr_df[action_filter] == disp_player) & (ppr_df['pass_oos'] > 0)].shape[0]
-  if oos_vector[2] != 0:
-    oos_vector[1] = oos_vector[0]/oos_vector[2]
-  else:
+
+  # first check, did we get passed a df with no elements
+  if ppr_df.shape[0] == 0:
+    oos_vector[0] = 0
     oos_vector[1] = 0
-  #print(f"count_out_of_system: action filter: {action_filter}, ROws in ppr_df: {ppr_df.shape[0]}")
-  #print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
+    oos_vector[2] = 0
+  else:
+    # let's count!!
+    oos_vector[2] = ppr_df[ ppr_df[action_filter] == disp_player].shape[0]
+    oos_vector[0] = ppr_df[ (ppr_df[action_filter] == disp_player) & (ppr_df['pass_oos'] > 0)].shape[0]
+    if not oos_vector[0]:
+      oos_vector[0] = 0
+    if oos_vector[2] != 0:
+      oos_vector[1] = oos_vector[0]/oos_vector[2]
+    else:
+      oos_vector[1] = 0
+      
+  print(f"count_out_of_system: action filter: {action_filter}, Rows in ppr_df: {ppr_df.shape[0]} Display Player: {disp_player}")
+  print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
   return oos_vector
 
 def calculate_standard_deviation_ellipse(points, confidence=1.0):
