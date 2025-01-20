@@ -305,7 +305,7 @@ def scout_srv_strategy(disp_league,
   z5_df.at[3,'Value'] = fbhe_vector[5]
   #z5_df.at[3,'Value'] = oos_vector[0]
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'att', 'Yes')
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'pass', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'pass' )
   opt_df.at[0,'Value'] = fbhe_vector[0]
   opt_df.at[1,'Value'] = fbhe_vector[4]
