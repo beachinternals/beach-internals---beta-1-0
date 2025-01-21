@@ -103,24 +103,33 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
 #----------------------------------------------
 @anvil.server.callable
 def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text
+                    scout, explain_text, title_text,
+                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                     ):
 
   # call report function
   print(f'Calling Function:{fnct_name}')
-  table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
-                    comp_l1_checked, disp_comp_l1,
-                    comp_l2_checked, disp_comp_l2,
-                    comp_l3_checked, disp_comp_l3,
-                    date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text
-                    )
+  serve_strategy_title,table_data,srv_plot,pass_plot,set_plot,z1_att,z2_att,z3_att,z4_att,z5_att,opt_att,z1_tbl,z2_tbl,z3_tbl,z4_tbl,z5_tbl,opt_tbl = anvil.server.call(
+    fnct_name, 
+    disp_league, 
+    disp_gender, 
+    disp_year, 
+    disp_team, 
+    disp_pair,
+    disp_player,
+    comp_l1_checked, disp_comp_l1,
+    comp_l2_checked, disp_comp_l2,
+    comp_l3_checked, disp_comp_l3,
+    date_checked, disp_start_date, disp_end_date,
+    scout, explain_text, title_text,
+    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+  )
+                                                                                                                                                                                  
 
   # calculate the query text
   filter_text = f"""
@@ -163,7 +172,8 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
     opt_tbl,
     disp_pair,
     filter_text,
-    explain_text
+    explain_text,
+    title_text
              )
   
   return pdf

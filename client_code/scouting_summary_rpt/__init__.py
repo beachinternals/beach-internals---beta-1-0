@@ -33,6 +33,7 @@ class scouting_summary_rpt(scouting_summary_rptTemplate):
     disp_pair,
     filter_text,
     explain_text,
+    title_text,
     **properties,
     ):
 
@@ -40,7 +41,7 @@ class scouting_summary_rpt(scouting_summary_rptTemplate):
     self.init_components(**properties)
 
     self.srv_strategy_title.content = serve_strategy_title
-    self.player_label.text = self.player_drop_down.selected_value
+    self.player_label.text = disp_player
     self.rpt_disp_box.content = table_data
     self.serve_plot.source = srv_plot
     self.pass_plot.source = pass_plot
@@ -60,5 +61,6 @@ class scouting_summary_rpt(scouting_summary_rptTemplate):
     self.pair_label.text = disp_pair
     self.rich_text_2.content = filter_text
     self.rpt_disp_box4.content = explain_text
+    self.box1_label.text = title_text
 
     # Any code you write here will run before the form opens.

@@ -275,7 +275,7 @@ class ScoutingRpt(ScoutingRptTemplate):
       self.start_date_picker.date,
       self.end_date_picker.date,
       scout,
-      explain_text,
+      explain_text, box1_title_list[0],
       srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5
     )
 
@@ -349,6 +349,7 @@ class ScoutingRpt(ScoutingRptTemplate):
 
     # unpack the player
     disp_pair = self.pair_drop_down.selected_value["pair"]
+    disp_player = self.player_drop_down.selected_value
 
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
@@ -369,11 +370,16 @@ class ScoutingRpt(ScoutingRptTemplate):
       (f_row["rpt_form"])
       for f_row in app_tables.report_list.search(report_name=rpt_name)
     ]
+    title_list = [
+      (f_row["box1_title"])
+      for f_row in app_tables.report_list.search(report_name=rpt_name)
+    ]
     # print(function_list)
     fnct_name = function_list[0]
-    table_data4 = text_list[0]
+    table_data4 = text_list[0] # help text
     form = form_list[0]
     scout = True
+    title_text = title_list[0]
 
     # now, call the server module.
     # now including limits on competition (1,2,3) and dates
@@ -381,9 +387,17 @@ class ScoutingRpt(ScoutingRptTemplate):
     if type(self.comp_l3_drop_down.selected_value["comp_l3"]) == type(None):
       self.comp_l3_drop_down.selected_value["comp_l3"] = str()
 
+    # build list to pass for srv_to and srv_fr
+    srv_fr = [ self.srv_from_1.checked, self.srv_from_3.checked, self.srv_from_5.checked ]
+    srv_to_1 = [ self.srv_to_1E.checked, self.srv_to_1D.checked, self.srv_to_1C.checked ]
+    srv_to_2 = [ self.srv_to_2E.checked, self.srv_to_2D.checked, self.srv_to_2C.checked ]
+    srv_to_3 = [ self.srv_to_3E.checked, self.srv_to_3D.checked, self.srv_to_3C.checked ]
+    srv_to_4 = [ self.srv_to_4E.checked, self.srv_to_4D.checked, self.srv_to_4C.checked ]
+    srv_to_5 = [ self.srv_to_5E.checked, self.srv_to_5D.checked, self.srv_to_5C.checked ]
+    
     # call the server function
     pdf_rpt = anvil.server.call(
-      "create_pdf_reports",
+      "create_scouting_pdf_reports",
       fnct_name,
       form,
       disp_league,
@@ -391,6 +405,7 @@ class ScoutingRpt(ScoutingRptTemplate):
       disp_year,
       disp_team,
       disp_pair,
+      disp_player,
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
       self.comp_l2_check_box.checked,
@@ -401,7 +416,8 @@ class ScoutingRpt(ScoutingRptTemplate):
       self.start_date_picker.date,
       self.end_date_picker.date,
       scout,
-      table_data4,
+      table_data4, title_text,
+      srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
     )
     result = anvil.server.call(
       "send_email",

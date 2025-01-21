@@ -38,7 +38,7 @@ def scout_srv_strategy(disp_league,
                       disp_start_date,
                       disp_end_date,
                       scout,
-                      explain_text,
+                      explain_text, title_text,
                       srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5
   ):
 
@@ -102,7 +102,7 @@ def scout_srv_strategy(disp_league,
     srv_fr_text = srv_fr_text + ' & Line (Right)' if len(srv_fr_text) == 0 else 'Line (Right)'
   print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
 
-  srv_strategy_title = '** Strategy when Serving '+disp_player+' ** : Serving from '+srv_fr_text+' to '+srv_to_text
+  srv_strategy_title = 'Strategy when Serving to '+disp_player+' : Serving from '+srv_fr_text+' to '+srv_to_text
   print(f"Serving Strategy: {srv_strategy_title}")
   
   # make a list of tuples for the serve to zones
@@ -346,7 +346,7 @@ def scout_players_serve(disp_league,
                       disp_start_date,
                       disp_end_date,
                       scout,
-                      explain_text,
+                      explain_text, title_text,
                       srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5
   ):
 
