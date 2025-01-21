@@ -236,7 +236,7 @@ class ScoutingRpt(ScoutingRptTemplate):
     # print(function_list)
     fnct_name = function_list[0]
     explain_text = text_list[0]
-    box1_title = box1_title_list[0]
+    self.box1_label.text = box1_title_list[0]
     box2_title = box2_title_list[0]
     box3_title = box3_title_list[0]
     scout = True
@@ -292,7 +292,7 @@ class ScoutingRpt(ScoutingRptTemplate):
     - Date Filtered : {str(self.start_date_picker.date)+' to '+str(self.end_date_picker.date) if self.date_check_box.checked else ''}
     """
 
-    self.srv_strategy1_title.text = serve_strategy_title
+    self.srv_strategy_title.content = serve_strategy_title
     self.player_label.text = self.player_drop_down.selected_value
     self.rpt_disp_box.content = table_data
     self.serve_plot.source = srv_plot
@@ -311,7 +311,8 @@ class ScoutingRpt(ScoutingRptTemplate):
     self.z5_table.content = z5_tbl
     self.opt_table.content = opt_tbl
     self.pair_label.text = disp_pair
-    
+    self.rich_text_2.content = filter_text
+    self.rpt_disp_box4.content = text_list[0]
 
     pass
 
@@ -404,8 +405,8 @@ class ScoutingRpt(ScoutingRptTemplate):
     )
     result = anvil.server.call(
       "send_email",
-      "Beach Internals Pair Report - PDF Version",
-      "Attached please find the PDF version of the Pair Report",
+      "Beach Internals Scouting Report - PDF Version",
+      "Attached please find the PDF version of the Scouting Report",
       pdf_rpt,
       "",
       "",

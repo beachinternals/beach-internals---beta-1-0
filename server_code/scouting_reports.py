@@ -102,7 +102,7 @@ def scout_srv_strategy(disp_league,
     srv_fr_text = srv_fr_text + ' & Line (Right)' if len(srv_fr_text) == 0 else 'Line (Right)'
   print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
 
-  srv_strategy_title = 'Serving '+disp_player+' from '+srv_fr_text+' to '+srv_to_text
+  srv_strategy_title = '** Strategy when Serving '+disp_player+' ** : Serving from '+srv_fr_text+' to '+srv_to_text
   print(f"Serving Strategy: {srv_strategy_title}")
   
   # make a list of tuples for the serve to zones
@@ -354,6 +354,7 @@ def scout_players_serve(disp_league,
   player_label = disp_player
 
   # lets find the serve strategy Text:
+  srv_2_net_txt = ['','Line','Body','Seam','Body','Line']
   if (srv_to_1[0]) or (srv_to_1[1]) or (srv_to_1[2]) or (srv_to_5[0]) or (srv_to_5[1]) or (srv_to_5[2]):
     srv_line = True 
   else:
@@ -372,53 +373,74 @@ def scout_players_serve(disp_league,
   srv_short = True if (srv_to_1[2]) or (srv_to_2[2]) or (srv_to_3[2]) or (srv_to_4[2]) or (srv_to_5[2]) else False
 
   srv_to_text = ''
-  if srv_line:
-    srv_to_text = 'Line:'
-  elif srv_body:
-    srv_to_text = 'Body:'
-  elif srv_seam:
-    srv_to_text = 'Seam:'
-
   if srv_short:
-    srv_to_text = srv_to_text + ' Short'
+    srv_to_text = 'Short:'
+    if srv_line:
+      srv_to_text = srv_to_text + ' Line,'
+    if srv_body:
+      srv_to_text = srv_to_text + ' Body,'
+    if srv_seam:
+      srv_to_text = srv_to_text + ' Seam,'
+      
   if srv_mid:
-    srv_to_text = srv_to_text + ' Mid'
+    srv_to_text = srv_to_text + ' Mid:'
+    if srv_line:
+      srv_to_text = srv_to_text + ' Line,'
+    if srv_body:
+      srv_to_text = srv_to_text + ' Body,'
+    if srv_seam:
+      srv_to_text = srv_to_text + ' Seam,'
+      
   if srv_deep:
-    srv_to_text = srv_to_text + " Deep"
-
+    srv_to_text = srv_to_text + ' Deep:'
+    if srv_line:
+      srv_to_text = srv_to_text + ' Line,'
+    if srv_body:
+      srv_to_text = srv_to_text + ' Body,'
+    if srv_seam:
+      srv_to_text = srv_to_text + ' Seam'
+      
   srv_fr_text = ''
+  srv_fr_txt = ['Line (left)','Middle','Line (right)'] 
   if srv_fr[0]:
     srv_fr_text = 'Line (Left)'
   if srv_fr[1]:
-    srv_fr_text = srv_fr_text + ' Middle'
+    srv_fr_text = srv_fr_text + ' & Middle' if len(srv_fr_text) == 0 else 'Middle'
   if srv_fr[2]:
-    srv_fr_text = srv_fr_text + ' Line (Right)'
+    srv_fr_text = srv_fr_text + ' & Line (Right)' if len(srv_fr_text) == 0 else 'Line (Right)'
   print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
 
-  srv_strategy_title = 'Serving '+disp_player+' from '+srv_fr_text+' to '+srv_to_text
-  print(f"Serving Strategy: {srv_strategy_title}")
+  srv_strategy_title = '** Serving Tendency ** : '+disp_player+' is serving from '+srv_fr_text+' to '+srv_to_text
+  print(f"Serving Tendencies: {srv_strategy_title}")
   
   # make a list of tuples for the serve to zones
   srv_2 = []
+  srv_2_txt = []
   print(f"Serve To 1:{srv_to_1}")
   print(f"Serve To 2:{srv_to_2}")
   print(f"Serve To 3:{srv_to_3}")
   print(f"Serve To 4:{srv_to_4}")
   print(f"Serve To 5:{srv_to_5}")
   depth_list = ['E','D','C']
+  depth_text = ['Deep','Mid','Short']
   for j in (0,1,2):
     if srv_to_1[j]:
       srv_2.append([1,depth_list[j]])
+      srv_2_txt.append([1,depth_text[j]])
     if srv_to_2[j]:
       srv_2.append([2,depth_list[j]])
+      srv_2_txt.append([2,depth_text[j]])
     if srv_to_3[j]:
       srv_2.append([3,depth_list[j]])
+      srv_2_txt.append([3,depth_text[j]])
     if srv_to_4[j]:
       srv_2.append([4,depth_list[j]])
+      srv_2_txt.append([4,depth_text[j]])
     if srv_to_5[j]:
       srv_2.append([5,depth_list[j]])
+      srv_2_txt.append([5,depth_text[j]])
   # let's see what we have
-  print(f"scout_srv_strategy: svr to list of tuples {srv_2}")
+  print(f"scout_players_serv: svr to list of tuples {srv_2}")
   # this list should now have as many tuples as points selected.  First number is 1 - 5 for net zones, second number is depth: 0=E, 1=D, 2+A,B,C
   
   # get the ppr data
@@ -457,62 +479,62 @@ def scout_players_serve(disp_league,
   print(f"Number of final db to analze: {new_ppr.shape[0]}")
   
   # calculate a quick table FBHE
-  fbhe_vector = fbhe(new_ppr, disp_player, 'att',True)
-  oos_vector =count_out_of_system(new_ppr, disp_player, 'att')
-  print(f"fbhe Vector: {fbhe_vector}")
+  fbhe_vector = fbhe(new_ppr, disp_player, 'srv',True)
+  oos_vector =count_out_of_system(new_ppr, disp_player, 'srv')
+  #print(f"fbhe Vector: {fbhe_vector}")
   srv_strat_dict = {'From':[0],
                      'To':[0],
                     'Attempts':[0],
-                    'FBSO':[0],
-                    'FBHE':[0],
-                    'Out of Sys':[0],
+                    'Opp FBSO':[0],
+                    'Opp FBHE':[0],
+                    'Opp Out of Sys':[0],
                     'URL':[0]
                    }
   srv_strat_df = pd.DataFrame.from_dict(srv_strat_dict)
   srv_strat_df.at[0,'From'] = 'All'
   srv_strat_df.at[0,'To'] = 'All'
   srv_strat_df.at[0,'Attempts'] = fbhe_vector[3]
-  srv_strat_df.at[0,'FBSO'] = fbhe_vector[4]
-  srv_strat_df.at[0,'FBHE'] = fbhe_vector[0]
-  srv_strat_df.at[0,'Out of Sys'] = oos_vector[0]
+  srv_strat_df.at[0,'Opp FBSO'] = fbhe_vector[4]
+  srv_strat_df.at[0,'Opp FBHE'] = fbhe_vector[0]
+  srv_strat_df.at[0,'Opp Out of Sys'] = oos_vector[0] if oos_vector[0] else 0
   srv_strat_df.at[0,'URL'] = fbhe_vector[5]  
 
   # now a loop over the different serving options:
   rows = 1
   for i in [0,1,2]:
+    srv_src = i*2 + 1
     if srv_fr[i]:
-      srv_src = i*2+1
       for j in range(0,len(srv_2),1):
         rows = rows+1
         fbhe_vector = fbhe( (new_ppr[( new_ppr['serve_src_zone_net'] == srv_src) & 
                               ( new_ppr['serve_dest_zone_net'] == srv_2[j][0] ) & 
                               ( new_ppr['serve_dest_zone_depth'] == srv_2[j][1]) ]),
                               disp_player,
-                              'att',
+                              'srv',
                               True 
                             )
-        oos_vector =count_out_of_system( (new_ppr[( new_ppr['serve_src_zone_net'] == srv_src) & 
+        oos_vector = count_out_of_system( (new_ppr[( new_ppr['serve_src_zone_net'] == srv_src) & 
                               ( new_ppr['serve_dest_zone_net'] == srv_2[j][0] ) & 
                               ( new_ppr['serve_dest_zone_depth'] == srv_2[j][1]) ]),
                               disp_player,
-                              'att'
+                              'srv'
                                        )
-        srv_strat_df.at[rows,'From'] = srv_src
-        srv_strat_df.at[rows,'To'] = str(srv_2[j][0]) + str(srv_2[j][1])
+        srv_strat_df.at[rows,'From'] = srv_fr_txt[i]
+        srv_strat_df.at[rows,'To'] = str(srv_2_net_txt[srv_2_txt[j][0]]) + " " + str(srv_2_txt[j][1])
         srv_strat_df.at[rows,'Attempts'] = fbhe_vector[3]
-        srv_strat_df.at[rows,'FBSO'] = fbhe_vector[4]
-        srv_strat_df.at[rows,'FBHE'] = fbhe_vector[0]
-        srv_strat_df.at[0,'Out of Sys'] = oos_vector[0]
+        srv_strat_df.at[rows,'Opp FBSO'] = fbhe_vector[4]
+        srv_strat_df.at[rows,'Opp FBHE'] = fbhe_vector[0]
+        srv_strat_df.at[rows,'Opp Out of Sys'] = oos_vector[0]
         srv_strat_df.at[rows,'URL'] = fbhe_vector[5]  
                                   
-  print(f"Srv Strat DF: {srv_strat_df}")
+  #print(f"Srv Strat DF: {srv_strat_df}")
   srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df, index=False)
 
   # now, time to make plots.
   # want to plot data from new_ppr
 
-  # limit the data to passes by the player
-  new_ppr = new_ppr[ new_ppr['pass_player'] == disp_player]
+  # limit the data to serves by the player
+  new_ppr = new_ppr[ new_ppr['serve_player'] == disp_player]
 
   # make a plot to chart the serves: (line chart, court in the background)
   serve_diagram_plot_object = plot_lines_on_court(new_ppr, 'srv', 1)
@@ -551,7 +573,7 @@ def scout_players_serve(disp_league,
   z5_df = pd.DataFrame.from_dict(zone_dict)
   opt_df = pd.DataFrame.from_dict(zone_dict)
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'srv', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
   z1_df.at[0,'Value'] = fbhe_vector[0]
   z1_df.at[1,'Value'] = fbhe_vector[4]
@@ -559,7 +581,7 @@ def scout_players_serve(disp_league,
   z1_df.at[3,'Value'] = fbhe_vector[5]
   #z1_df.at[3,'Value'] = oos_vector[0]
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'srv', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
   z2_df.at[0,'Value'] = fbhe_vector[0]
   z2_df.at[1,'Value'] = fbhe_vector[4]
@@ -567,7 +589,7 @@ def scout_players_serve(disp_league,
   z2_df.at[3,'Value'] = fbhe_vector[5]
   #z2_df.at[3,'Value'] = oos_vector[0]
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'srv', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
   z3_df.at[0,'Value'] = fbhe_vector[0]
   z3_df.at[1,'Value'] = fbhe_vector[4]
@@ -575,7 +597,7 @@ def scout_players_serve(disp_league,
   z3_df.at[3,'Value'] = fbhe_vector[5]
   #z3_df.at[3,'Value'] = oos_vector[0]
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'srv', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
   z4_df.at[0,'Value'] = fbhe_vector[0]
   z4_df.at[1,'Value'] = fbhe_vector[4]
@@ -583,7 +605,7 @@ def scout_players_serve(disp_league,
   z4_df.at[3,'Value'] = fbhe_vector[5]
   #z4_df.at[3,'Value'] = oos_vector[0]
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'srv', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
   z5_df.at[0,'Value'] = fbhe_vector[0]
   z5_df.at[1,'Value'] = fbhe_vector[4]
@@ -591,7 +613,7 @@ def scout_players_serve(disp_league,
   z5_df.at[3,'Value'] = fbhe_vector[5]
   #z5_df.at[3,'Value'] = oos_vector[0]
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'att', 'Yes')
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'srv', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'pass' )
   opt_df.at[0,'Value'] = fbhe_vector[0]
   opt_df.at[1,'Value'] = fbhe_vector[4]

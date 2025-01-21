@@ -79,7 +79,7 @@ def plot_lines_on_court( ppr_df, action, plt_num):
       m_style ='o'
 
 
-    print(f"Plotting points: x1,x2:{ppr_r[x1], ppr_r[x2]}, y1,y2:{ppr_r[y1], ppr_r[y2]}, outcome:{ppr_r['point_outcome']}, line color: {line_color}, line style {l_style}, marker = {m_style} ")
+    #print(f"Plotting points: x1,x2:{ppr_r[x1], ppr_r[x2]}, y1,y2:{ppr_r[y1], ppr_r[y2]}, outcome:{ppr_r['point_outcome']}, line color: {line_color}, line style {l_style}, marker = {m_style} ")
     plt.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, linestyle=l_style )
     plt.scatter([ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, s=[100,100], marker=m_style)
 
@@ -105,6 +105,8 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num ):
   return anvil.mpl_util.plot_image()
 
 def plot_court_background():
+  plt.xlim( -1, 9)
+  plt.ylim( -9, 9)
   xpts = np.array([0,8,8,0,0,0])
   ypts = np.array([-8,-8,8,8,-8,0])
   plt.plot( xpts, ypts, c = 'black', linewidth = '3')
@@ -132,6 +134,8 @@ def plot_attack_zones( ppr_df, plt_num):
   for index,ppr_r in tmp_df.iterrows():
     pz1.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
   pz1.set_title('Zone 1 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz1.xlim( -1, 9)
+  pz1.ylim( -9, 9)
   pz1.plot( xpts, ypts, c = 'black', linewidth = '3')
   pz1.grid()
 
@@ -140,6 +144,8 @@ def plot_attack_zones( ppr_df, plt_num):
   for index,ppr_r in tmp_df.iterrows():
     pz2.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
   pz2.set_title('Zone 2 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz2.xlim( -1, 9)
+  pz2.ylim( -9, 9)
   pz2.plot( xpts, ypts, c = 'black', linewidth = '3')
   pz2.grid()
   
@@ -148,6 +154,8 @@ def plot_attack_zones( ppr_df, plt_num):
   for index,ppr_r in tmp_df.iterrows():
     pz3.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
   pz3.set_title('Zone 3 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz3.xlim( -1, 9)
+  pz3.ylim( -9, 9)
   pz3.plot( xpts, ypts, c = 'black', linewidth = '3')
   pz3.grid()
   
@@ -156,6 +164,8 @@ def plot_attack_zones( ppr_df, plt_num):
   for index,ppr_r in tmp_df.iterrows():
     pz4.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
   pz4.set_title('Zone 4 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz4.xlim( -1, 9)
+  pz4.ylim( -9, 9)
   pz4.plot( xpts, ypts, c = 'black', linewidth = '3')
   pz4.grid()
   
@@ -164,6 +174,8 @@ def plot_attack_zones( ppr_df, plt_num):
   for index,ppr_r in tmp_df.iterrows():
     pz5.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
   pz5.set_title('Zone 5 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  pz5.xlim( -1, 9)
+  pz5.ylim( -9, 9)
   pz5.plot( xpts, ypts, c = 'black', linewidth = '3')
   pz5.grid()
   
@@ -172,6 +184,8 @@ def plot_attack_zones( ppr_df, plt_num):
   for index,ppr_r in tmp_df.iterrows():
     popt.plot([ppr_r['att_src_x'], ppr_r['att_dest_x']], [ppr_r['att_src_y'], ppr_r['att_dest_y']], 'blue')
   popt.set_title('On 2 Attacks',loc='center',fontstyle='oblique', fontsize='medium')
+  popt.xlim( -1, 9)
+  popt.ylim( -9, 9)
   popt.plot( xpts, ypts, c = 'black', linewidth = '3')
   popt.grid()
   
