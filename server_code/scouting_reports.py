@@ -243,11 +243,17 @@ def scout_srv_strategy(disp_league,
   # Next, build the 6 plots across the page as subplots, zone's 1 - 5 plus Optioon
 
   # set up 6 sub plots
-  attack_z1_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')],'att',4)
+  print("scout_srv_strategy, Plotting Zone 1 Attempts")
+  attack_z1_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')],'att',4)  
+  print("scout_srv_strategy, Plotting Zone 2 Attempts")  
   attack_z2_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')],'att',5)
+  print("scout_srv_strategy, Plotting Zone 3 Attempts")
   attack_z3_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')],'att',6)
+  print("scout_srv_strategy, Plotting Zone 4 Attempts")
   attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',7)
+  print("scout_srv_strategy, Plotting Zone 5 Attempts")
   attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',8)
+  print("scout_srv_strategy, Plotting Option Attempts")
   attack_opt_plot_object = plot_lines_on_court(new_ppr[ new_ppr['tactic'] == 'option'],'att',9)
 
   # set up 6 small tables below with:
