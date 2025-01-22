@@ -10,6 +10,7 @@ import anvil.mpl_util
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 #import plotly.graph_objects as go
 
 # This is a server module. It runs on the Anvil server,
@@ -67,21 +68,32 @@ def plot_lines_on_court( ppr_df, action, plt_num):
   
   for index, ppr_r in ppr_df.iterrows():
     line_color = 'blue'
-    l_style = 'dotted'
-    m_style = '.'
+    l_style = 'solid'
+    m_style = '>'
+    l_width = 2.5
+    m_every = [-1] # to mark only the end point
     if ppr_r['point_outcome'] == err:
       line_color = 'red'
-      l_style='dashed'
+      l_style='solid'
       m_style ='X'
+      l_width = 2.5
+      m_every = [-1] # to mark only the end point
     if ppr_r['point_outcome'] == kill:
       line_color = 'green'
       l_style='solid'
       m_style ='o'
+      l_width = 2.5
+      m_every = [-1] # to mark only the end point
 
+    # line direction, to calculate dx and dy for the arrow
+    dx = (ppr_df[x2] - ppr_df[x1])/math.dist([ppr_r[x1], ppr_r[y1]], [ppr_r[x2], ppr_r[y2]])
+    dy = (ppr_df[y2] - ppr_df[y1])/math.dist([ppr_r[x1], ppr_r[y1]], [ppr_r[x2], ppr_r[y2]])
+    print(f"plot_lines_on_court: x,y: {ppr_df[x2]}, {ppr_df[y2]}, dx, dy: {dx}, {dy}")
 
     #print(f"Plotting points: x1,x2:{ppr_r[x1], ppr_r[x2]}, y1,y2:{ppr_r[y1], ppr_r[y2]}, outcome:{ppr_r['point_outcome']}, line color: {line_color}, line style {l_style}, marker = {m_style} ")
-    plt.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, linestyle=l_style )
-    plt.scatter([ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, s=[100,100], marker=m_style)
+    plt.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, linestyle=l_style, linewidth = l_width, markevery = m_every )
+    plt.plot([ppr_r[x1], ppr_r[y1]], 'o') # marker only at first point
+    #plt.arrow(ppr_r[x2], ppr_r[y2], dx, dy )
 
   plot_court_background()
   # Return this plot as a PNG image in a Media object
