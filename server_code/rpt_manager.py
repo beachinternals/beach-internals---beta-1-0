@@ -156,22 +156,40 @@ def rpt_mgr_generate_background():
           for rpt_print in rpt_r['rpts_inc'].sort():
             #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
-            # call pdf report
-            pdf1 = create_pdf_reports(rpt_print['function_name'],
+            # Different create pdf reports for scouting vs. pair or player reports
+            if ( rpt_r['rpt_type'] == 'player') or ( rpt_r['rpt_type'] == 'pair') :
+              # call pdf report
+              pdf1 = create_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
                                     player_r['league'],
                                     player_r['gender'],
                                     player_r['year'],
                                     disp_team,
-                                      pair,
                                     disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text, title_text, 
-                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5                                       
+                    scout, explain_text                                    
                     )
+            elif ( rpt_r['rpt_type'] == 'scouting' ):
+              pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
+                                    rpt_print['rpt_form'], 
+                                    player_r['league'],
+                                    player_r['gender'],
+                                    player_r['year'],
+                                    disp_team,
+                                    disp_pair,
+                                    disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text, title_text,    
+                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+                    )
+            else:
+              print(f"rpt_mgr_generate_background : Invalid Report Type: {rpt_r['rpt_type']}, report for team: {rpt_r['team']}")
             
             # now, need to merge this report with the next one
             if full_rpt_pdf:
@@ -249,7 +267,7 @@ def rpt_mgr_generate_background():
                                           text='Attached please find the summary report(s)')
                                           #attachments=[full_rpt_pdf])
 
-  return True
+  return True. 
   
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Player Reports
