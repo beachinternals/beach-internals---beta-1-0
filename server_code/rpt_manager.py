@@ -97,19 +97,39 @@ def rpt_mgr_generate_background():
         srv_from[2] = True
 
     # serve to zone will be for 3,e would have True at srv_to_zone.at[2,0] (3 and 1 but 0 based)
-    srv_to_zone = [[False,False,False,False,False],[False,False,False]]
+    srv_to_1 = [False, False, False] # E, D, C
+    srv_to_2 = [False, False, False] # E, D, C
+    srv_to_3 = [False, False, False] # E, D, C
+    srv_to_4 = [False, False, False] # E, D, C
+    srv_to_5 = [False, False, False] # E, D, C
     srv_to_txt = rpt_r['srv_to'].split(',')
-    for index,stt_r in srv_to_txt.iterrows():
-      
-    
+    for stt in srv_to_txt:
+      stt = stt.strip()
+      # parse this into a number and a letter
+      net_zone = str(stt[0])
+      depth_zone = str(stt[1])
+      match depth_zone:
+        case 'E':
+          index = 0
+        case 'D':
+          index = 1
+        case 'C':
+          index = 2
 
-        
-        
+      match net_zone:
+        case '1':
+          srv_to_1[index] = True
+        case '2':
+          srv_to_2[index] = True
+        case '3':
+          srv_to_3[index] = True
+        case '2':
+          srv_to_4[index] = True
+        case '2':
+          srv_to_5[index] = True
 
-      
-      
-      
-    
+    # should now have srv_to_ and srv_fr arrays ready
+
     scout = True
     explain_text = ' '
     #print(f"Report Filters: {comp_l1_checked}, {disp_comp_l1},{comp_l2_checked},{disp_comp_l2},{comp_l3_checked},{comp_l3_checked},{date_checked},{disp_start_date},{disp_end_date}")
@@ -143,13 +163,16 @@ def rpt_mgr_generate_background():
                                     player_r['gender'],
                                     player_r['year'],
                                     disp_team,
+                                      pair,
                                     disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text
+                    scout, explain_text, title_text, 
+                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5                                       
                     )
+            
             # now, need to merge this report with the next one
             if full_rpt_pdf:
               #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
