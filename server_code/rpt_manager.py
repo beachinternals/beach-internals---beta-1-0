@@ -25,7 +25,7 @@ def rpt_mgr_generate():
 
 @anvil.server.background_task
 def rpt_mgr_generate_background():
-  # gnerate reports from the report mgt data file
+  # generate reports from the report mgt data file
 
   # items needed to limit/compatible with report function calls
   comp_l1_checked = False
@@ -83,7 +83,33 @@ def rpt_mgr_generate_background():
       date_checked = False
       disp_end_date = date.today()
       disp_start_date = disp_end_date - timedelta(days = 365)
+
+    # now look for scouting report serve to and from arrays\
+    srv_from = [False, False, False ]
+    if (len(rpt_r['srv_fr'])) != 0:
+      # split the string into 3 parts ( looking for 1,3,5)
+      srv_from_txt = rpt_r['srv_fr'].split(',')
+      if ( srv_from_txt[0].strip() == str(1) ) or ( srv_from_txt[1].strip() == str(1) ) or (srv_from_txt[2].strip() == str(1) ):
+        srv_from[0] = True
+      if ( srv_from_txt[0].strip() == str(3) ) or ( srv_from_txt[1].strip() == str(3) ) or (srv_from_txt[2].strip() == str(3) ):
+        srv_from[1] = True
+      if ( srv_from_txt[0].strip() == str(5) ) or ( srv_from_txt[1].strip() == str(5) ) or (srv_from_txt[2].strip() == str(5) ):
+        srv_from[2] = True
+
+    # serve to zone will be for 3,e would have True at srv_to_zone.at[2,0] (3 and 1 but 0 based)
+    srv_to_zone = [[False,False,False,False,False],[False,False,False]]
+    srv_to_txt = rpt_r['srv_to'].split(',')
+    for index,stt_r in srv_to_txt.iterrows():
       
+    
+
+        
+        
+
+      
+      
+      
+    
     scout = True
     explain_text = ' '
     #print(f"Report Filters: {comp_l1_checked}, {disp_comp_l1},{comp_l2_checked},{disp_comp_l2},{comp_l3_checked},{comp_l3_checked},{date_checked},{disp_start_date},{disp_end_date}")

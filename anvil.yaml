@@ -345,6 +345,12 @@ db_schema:
     - admin_ui: {order: 11, width: 200}
       name: days_hist
       type: number
+    - admin_ui: {order: 12, width: 200}
+      name: srv_fr
+      type: string
+    - admin_ui: {order: 13, width: 200}
+      name: srv_to
+      type: string
     server: full
     title: rpt_mgr
   strength_weakness_criteria:
