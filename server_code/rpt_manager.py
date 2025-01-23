@@ -8,6 +8,7 @@ from anvil.tables import app_tables
 import anvil.server
 from Generate_PDF import *
 from datetime import datetime, timedelta, date
+from pair_functions import *
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -85,16 +86,16 @@ def rpt_mgr_generate_background():
       disp_start_date = disp_end_date - timedelta(days = 365)
 
     # now look for scouting report serve to and from arrays\
-    srv_from = [False, False, False ]
+    srv_fr = [False, False, False ]
     if (len(rpt_r['srv_fr'])) != 0:
       # split the string into 3 parts ( looking for 1,3,5)
       srv_from_txt = rpt_r['srv_fr'].split(',')
       if ( srv_from_txt[0].strip() == str(1) ) or ( srv_from_txt[1].strip() == str(1) ) or (srv_from_txt[2].strip() == str(1) ):
-        srv_from[0] = True
+        srv_fr[0] = True
       if ( srv_from_txt[0].strip() == str(3) ) or ( srv_from_txt[1].strip() == str(3) ) or (srv_from_txt[2].strip() == str(3) ):
-        srv_from[1] = True
+        srv_fr[1] = True
       if ( srv_from_txt[0].strip() == str(5) ) or ( srv_from_txt[1].strip() == str(5) ) or (srv_from_txt[2].strip() == str(5) ):
-        srv_from[2] = True
+        srv_fr[2] = True
 
     # serve to zone will be for 3,e would have True at srv_to_zone.at[2,0] (3 and 1 but 0 based)
     srv_to_1 = [False, False, False] # E, D, C
@@ -128,6 +129,7 @@ def rpt_mgr_generate_background():
         case '2':
           srv_to_5[index] = True
 
+    print(f"rpt_mgr_generate_background : Serve Parameters: srv_fr : {srv_fr}, serve to 1 {srv_to_1}, serve to 2 {srv_to_2}, serve to 3 {srv_to_3}, serve to 4 {srv_to_4}, serve to 5 {srv_to_5}")
     # should now have srv_to_ and srv_fr arrays ready
 
     scout = True
@@ -141,7 +143,7 @@ def rpt_mgr_generate_background():
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
     
       if rpt_r['rpt_type'] == 'player':
-      # loop over all the players for this report listing
+        # loop over all the players for this report listing
         for player_r in rpt_r['player_list']:
           #print("Processing Player Reports")
           #print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
@@ -156,10 +158,7 @@ def rpt_mgr_generate_background():
           for rpt_print in rpt_r['rpts_inc'].sort():
             #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
-            # Different create pdf reports for scouting vs. pair or player reports
-            if ( rpt_r['rpt_type'] == 'player') or ( rpt_r['rpt_type'] == 'pair') :
-              # call pdf report
-              pdf1 = create_pdf_reports(rpt_print['function_name'],
+            pdf1 = create_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
                                     player_r['league'],
                                     player_r['gender'],
@@ -172,25 +171,7 @@ def rpt_mgr_generate_background():
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text                                    
                     )
-            elif ( rpt_r['rpt_type'] == 'scouting' ):
-              pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
-                                    rpt_print['rpt_form'], 
-                                    player_r['league'],
-                                    player_r['gender'],
-                                    player_r['year'],
-                                    disp_team,
-                                    disp_pair,
-                                    disp_player,
-                    comp_l1_checked, disp_comp_l1,
-                    comp_l2_checked, disp_comp_l2,
-                    comp_l3_checked, disp_comp_l3,
-                    date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text, title_text,    
-                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
-                    )
-            else:
-              print(f"rpt_mgr_generate_background : Invalid Report Type: {rpt_r['rpt_type']}, report for team: {rpt_r['team']}")
-            
+
             # now, need to merge this report with the next one
             if full_rpt_pdf:
               #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
@@ -205,8 +186,6 @@ def rpt_mgr_generate_background():
                                           subject='Beach Internals - Player Summary '+disp_player,
                                           text='Attached please find the summary report(s) for '+disp_player,
                                           attachments=[full_rpt_pdf])
-          
-        #print(". ")
       elif rpt_r['rpt_type'] == 'pair':
         #print("processing pair report")
         #print(f"Pair List: {rpt_r['pair_list']}")
@@ -264,10 +243,58 @@ def rpt_mgr_generate_background():
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           subject='Beach Internals - Administrative Data ',
+                                          text='Attached please find the summary report(s) : Internals Reports')
+                                          #attachments=[full_rpt_pdf])
+      elif rpt_r['rpt_type'] == 'scouting':
+
+        # build pair string
+        disp_pair = pair_r['pair']
+        disp_player = []
+        disp_player[0], disp_player[1] = pair_players(disp_pair)
+
+        for i in [0,1]:
+          print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
+          # make the report for each player in the pair
+          full_rpt_pdf = None
+          pdf_name = disp_player[i] + ' Summary.pdf'
+        
+          # loop over all the reports for this player
+          for rpt_print in rpt_r['rpts_inc']:
+            #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+
+            pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
+                                    rpt_print['rpt_form'], 
+                                    player_r['league'],
+                                    player_r['gender'],
+                                    player_r['year'],
+                                    disp_team,
+                                    disp_pair,
+                                    disp_player[i],
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text, rpt_print['explain_text'],    
+                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+                    )
+            # now, need to merge this report with the next one
+            if full_rpt_pdf:
+              #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+              full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+            else:
+              #print('no original pdf file, setting to pdf1')
+              full_rpt_pdf = pdf1
+              #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+        
+        email_status = anvil.email.send(to=rpt_r['emailto'],
+                                          from_address="no-reply",
+                                          subject='Beach Internals - Scouting Reports ',
                                           text='Attached please find the summary report(s)')
                                           #attachments=[full_rpt_pdf])
+      else:
+        print(f"rpt_mgr_generate_background : Invalide Reprot Type : {rpt_r['rpt_type']}")
 
-  return True. 
+  return True
   
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Player Reports
