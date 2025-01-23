@@ -107,7 +107,7 @@ def plot_lines_on_court( ppr_df, action, plt_num):
   return anvil.mpl_util.plot_image()
 
 @anvil.server.callable
-def plot_points_on_the_court( ppr_x,ppr_y, plt_num ):
+def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num ):
   #
   # line drawing of the set location(s) as dot
   #
@@ -115,9 +115,9 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num ):
   x = ppr_x.dropna().values
   y = ppr_y.dropna().values
   #print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
-  point_size = np.full(len(x),100) # numpy array of size len(x), filled with character 2
+  point_size = np.full(len(x),75) # numpy array of size len(x), filled with character 2
   print(f"plot_points_on_the_court: size array: {point_size}")
-  plt.scatter( x, y, s = point_size )  
+  plt.scatter( x, y, s = point_size , url = 'http://app.balltime.com/video/'+video_id+'?actionIds='+str(action_num))  
   plot_court_background()
   
   # Return this plot as a PNG image in a Media object
