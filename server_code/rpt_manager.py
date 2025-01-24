@@ -286,7 +286,7 @@ def rpt_mgr_generate_background():
                                     pair_r['league'],
                                     pair_r['gender'],
                                     pair_r['year'],
-                                    disp_team,
+                                    rpt_print['team'],
                                     disp_pair,
                                     disp_player[i],
                     comp_l1_checked, disp_comp_l1,
