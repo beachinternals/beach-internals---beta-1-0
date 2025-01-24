@@ -83,8 +83,8 @@ def rpt_mgr_generate_background():
       date_checked = False
       disp_end_date = date.today()
       disp_start_date = disp_end_date - timedelta(days = 365)
-    print(f"rpt_mgr_generate_background: report row, days_history: {rpt_r['days_hist']}, Date Checked: {date_checked}, {disp_start_date}, {disp_end_date}")
-    print(f"rpt_mgr_generate_background: From the rpt_mgr DB - Serve From: {rpt_r['srv_fr']}, Serve to: {rpt_r['srv_to']}")
+    #print(f"rpt_mgr_generate_background: report row, days_history: {rpt_r['days_hist']}, Date Checked: {date_checked}, {disp_start_date}, {disp_end_date}")
+    #print(f"rpt_mgr_generate_background: From the rpt_mgr DB - Serve From: {rpt_r['srv_fr']}, Serve to: {rpt_r['srv_to']}")
     # now look for scouting report serve to and from arrays\
     srv_fr = [False, False, False ]
 
@@ -146,7 +146,7 @@ def rpt_mgr_generate_background():
         case '2':
           srv_to_5[index] = True
 
-    print(f"rpt_mgr_generate_background : Serve Parameters: srv_fr : {srv_fr}, serve to 1 {srv_to_1}, serve to 2 {srv_to_2}, serve to 3 {srv_to_3}, serve to 4 {srv_to_4}, serve to 5 {srv_to_5}")
+    #print(f"rpt_mgr_generate_background : Serve Parameters: srv_fr : {srv_fr}, serve to 1 {srv_to_1}, serve to 2 {srv_to_2}, serve to 3 {srv_to_3}, serve to 4 {srv_to_4}, serve to 5 {srv_to_5}")
     # should now have srv_to_ and srv_fr arrays ready
 
     scout = True
@@ -263,7 +263,7 @@ def rpt_mgr_generate_background():
                                           text='Attached please find the summary report(s) : Internals Reports')
                                           #attachments=[full_rpt_pdf])
       elif rpt_r['rpt_type'] == 'scouting':
-        pdf_list = [] # start a list of all pdf files to pass to email send
+        pdf_list = ['']*len(rpt_r['pair_list'])*2      # start a list of all pdf files to pass to email send
         pdf_num = 0
         for pair_r in rpt_r['pair_list']:
           # build pair string
@@ -305,9 +305,9 @@ def rpt_mgr_generate_background():
                 full_rpt_pdf = pdf1
                 print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
 
-          # put this pdf into the pdf list
-          pdf_list[pdf_num] = full_rpt_pdf
-          pdf_num = pdf_num + 1
+            # put this pdf into the pdf list
+            pdf_list[pdf_num] = full_rpt_pdf
+            pdf_num = pdf_num + 1
           
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
