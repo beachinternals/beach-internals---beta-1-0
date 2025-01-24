@@ -136,9 +136,9 @@ def scout_srv_strategy(disp_league,
   # this list should now have as many tuples as points selected.  First number is 1 - 5 for net zones, second number is depth: 0=E, 1=D, 2+A,B,C
   
   # get the ppr data
-  #print(f"scout_srv_strategy: league: {disp_league}, gender: {disp_gender}, year: {disp_year}, team: {disp_team}")
+  print(f"scout_srv_strategy: league: {disp_league}, gender: {disp_gender}, year: {disp_year}, team: {disp_team}")
   ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
-  #print(f"ppr_df all:{ppr_df.shape[0]}")
+  print(f"ppr_df all:{ppr_df.shape[0]}")
   ppr_df = ppr_df_limit( ppr_df, 
                          comp_l1_checked, disp_comp_l1, 
                          comp_l2_checked, disp_comp_l2, 

@@ -141,9 +141,9 @@ def rpt_mgr_generate_background():
           srv_to_2[index] = True
         case '3':
           srv_to_3[index] = True
-        case '2':
+        case '4':
           srv_to_4[index] = True
-        case '2':
+        case '5':
           srv_to_5[index] = True
 
     #print(f"rpt_mgr_generate_background : Serve Parameters: srv_fr : {srv_fr}, serve to 1 {srv_to_1}, serve to 2 {srv_to_2}, serve to 3 {srv_to_3}, serve to 4 {srv_to_4}, serve to 5 {srv_to_5}")
