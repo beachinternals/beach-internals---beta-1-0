@@ -88,6 +88,17 @@ def rpt_mgr_generate_background():
     # now look for scouting report serve to and from arrays\
     srv_fr = [False, False, False ]
 
+    # test for no srv_fr or srv_to text
+    if rpt_r['srv_fr'] is None:
+      rpt_r['srv_fr'] = '3'
+    if rpt_r['srv_to'] is None:
+      rpt_r['srv_to'] = '3D'
+    if len(rpt_r['srv_fr'].strip())  == 0:
+      rpt_r['srv_fr'] = '3'
+    if len(rpt_r['srv_to'].strip()) == 0:
+      rpt_r['srv_to'] = '3D'
+
+    print(f"rpt_mgr_generate_background: serve From: {rpt_r['srv_fr']}, Serve to: {rpt_r['srv_to']}")
     if (len(rpt_r['srv_fr'])) != 0:
       # split the string into 3 parts ( looking for 1,3,5)
       srv_from_txt = rpt_r['srv_fr'].split(',')
@@ -252,6 +263,8 @@ def rpt_mgr_generate_background():
                                           text='Attached please find the summary report(s) : Internals Reports')
                                           #attachments=[full_rpt_pdf])
       elif rpt_r['rpt_type'] == 'scouting':
+        pdf_list = [] # start a list of all pdf files to pass to email send
+        pdf_num = 0
         for pair_r in rpt_r['pair_list']:
           # build pair string
           disp_pair = pair_r['pair']
@@ -291,12 +304,18 @@ def rpt_mgr_generate_background():
                 print('no original pdf file, setting to pdf1')
                 full_rpt_pdf = pdf1
                 print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-        
+
+          # put this pdf into the pdf list
+          pdf_list[pdf_num] = full_rpt_pdf
+          pdf_num = pdf_num + 1
+          
         email_status = anvil.email.send(to=rpt_r['emailto'],
-                                          from_address="no-reply",
-                                          subject='Beach Internals - Scouting Reports ',
-                                          text='Attached please find the summary report(s)',
-                                          attachments=[full_rpt_pdf])
+                                      from_address="no-reply",
+                                      subject='Beach Internals - Scouting Reports ',
+                                      text='Attached please find the summary report(s)',
+                                      attachments=pdf_list)
+        if not email_status:
+          print("report:Manager, Scouting Reports, email send failed")
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
