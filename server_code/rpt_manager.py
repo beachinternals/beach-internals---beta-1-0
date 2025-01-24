@@ -191,7 +191,7 @@ def rpt_mgr_generate_background():
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text                                    
+                    scout, rpt_print['explain_text']                                 
                     )
 
             # now, need to merge this report with the next one
@@ -246,7 +246,7 @@ def rpt_mgr_generate_background():
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text
+                    scout, rpt_print['explain_text'] 
                     )
             
             # now, need to merge this report with the next one
@@ -310,7 +310,7 @@ def rpt_mgr_generate_background():
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
                     date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text, rpt_print['explain_text'],    
+                    scout, rpt_print['explain_text'], rpt_print['box1_title'],    
                     srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                     )
               # now, need to merge this report with the next one

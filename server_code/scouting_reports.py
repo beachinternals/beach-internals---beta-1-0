@@ -100,19 +100,19 @@ def scout_srv_strategy(disp_league,
     srv_fr_text = srv_fr_text + ' & Middle' if len(srv_fr_text) == 0 else 'Middle'
   if srv_fr[2]:
     srv_fr_text = srv_fr_text + ' & Line (Right)' if len(srv_fr_text) == 0 else 'Line (Right)'
-  print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
+  #print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
 
   srv_strategy_title = 'Strategy when Serving to '+disp_player+' : Serving from '+srv_fr_text+' to '+srv_to_text
-  print(f"Serving Strategy: {srv_strategy_title}")
+  #print(f"Serving Strategy: {srv_strategy_title}")
   
   # make a list of tuples for the serve to zones
   srv_2 = []
   srv_2_txt = []
-  print(f"Serve To 1:{srv_to_1}")
-  print(f"Serve To 2:{srv_to_2}")
-  print(f"Serve To 3:{srv_to_3}")
-  print(f"Serve To 4:{srv_to_4}")
-  print(f"Serve To 5:{srv_to_5}")
+  #print(f"Serve To 1:{srv_to_1}")
+  #print(f"Serve To 2:{srv_to_2}")
+  #print(f"Serve To 3:{srv_to_3}")
+  #print(f"Serve To 4:{srv_to_4}")
+  #print(f"Serve To 5:{srv_to_5}")
   depth_list = ['E','D','C']
   depth_text = ['Deep','Mid','Short']
   for j in (0,1,2):
@@ -132,13 +132,13 @@ def scout_srv_strategy(disp_league,
       srv_2.append([5,depth_list[j]])
       srv_2_txt.append([5,depth_text[j]])
   # let's see what we have
-  print(f"scout_srv_strategy: svr to list of tuples {srv_2}")
+  #print(f"scout_srv_strategy: svr to list of tuples {srv_2}")
   # this list should now have as many tuples as points selected.  First number is 1 - 5 for net zones, second number is depth: 0=E, 1=D, 2+A,B,C
   
   # get the ppr data
-  print(f"scout_srv_strategy: league: {disp_league}, gender: {disp_gender}, year: {disp_year}, team: {disp_team}")
+  #print(f"scout_srv_strategy: league: {disp_league}, gender: {disp_gender}, year: {disp_year}, team: {disp_team}")
   ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
-  print(f"ppr_df all:{ppr_df.shape[0]}")
+  #print(f"ppr_df all:{ppr_df.shape[0]}")
   ppr_df = ppr_df_limit( ppr_df, 
                          comp_l1_checked, disp_comp_l1, 
                          comp_l2_checked, disp_comp_l2, 
@@ -243,17 +243,17 @@ def scout_srv_strategy(disp_league,
   # Next, build the 6 plots across the page as subplots, zone's 1 - 5 plus Optioon
 
   # set up 6 sub plots
-  print("scout_srv_strategy, Plotting Zone 1 Attempts")
+  #print("scout_srv_strategy, Plotting Zone 1 Attempts")
   attack_z1_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')],'att',4)  
-  print("scout_srv_strategy, Plotting Zone 2 Attempts")  
+  #print("scout_srv_strategy, Plotting Zone 2 Attempts")  
   attack_z2_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')],'att',5)
-  print("scout_srv_strategy, Plotting Zone 3 Attempts")
+  #print("scout_srv_strategy, Plotting Zone 3 Attempts")
   attack_z3_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')],'att',6)
-  print("scout_srv_strategy, Plotting Zone 4 Attempts")
+  #print("scout_srv_strategy, Plotting Zone 4 Attempts")
   attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',7)
-  print("scout_srv_strategy, Plotting Zone 5 Attempts")
+  #print("scout_srv_strategy, Plotting Zone 5 Attempts")
   attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',8)
-  print("scout_srv_strategy, Plotting Option Attempts")
+  #print("scout_srv_strategy, Plotting Option Attempts")
   attack_opt_plot_object = plot_lines_on_court(new_ppr[ new_ppr['tactic'] == 'option'],'att',9)
 
   # set up 6 small tables below with:
@@ -422,11 +422,11 @@ def scout_players_serve(disp_league,
   # make a list of tuples for the serve to zones
   srv_2 = []
   srv_2_txt = []
-  print(f"Serve To 1:{srv_to_1}")
-  print(f"Serve To 2:{srv_to_2}")
-  print(f"Serve To 3:{srv_to_3}")
-  print(f"Serve To 4:{srv_to_4}")
-  print(f"Serve To 5:{srv_to_5}")
+  #print(f"Serve To 1:{srv_to_1}")
+  #print(f"Serve To 2:{srv_to_2}")
+  #print(f"Serve To 3:{srv_to_3}")
+  #print(f"Serve To 4:{srv_to_4}")
+  #print(f"Serve To 5:{srv_to_5}")
   depth_list = ['E','D','C']
   depth_text = ['Deep','Mid','Short']
   for j in (0,1,2):
@@ -446,7 +446,7 @@ def scout_players_serve(disp_league,
       srv_2.append([5,depth_list[j]])
       srv_2_txt.append([5,depth_text[j]])
   # let's see what we have
-  print(f"scout_players_serv: svr to list of tuples {srv_2}")
+  #print(f"scout_players_serv: svr to list of tuples {srv_2}")
   # this list should now have as many tuples as points selected.  First number is 1 - 5 for net zones, second number is depth: 0=E, 1=D, 2+A,B,C
   
   # get the ppr data

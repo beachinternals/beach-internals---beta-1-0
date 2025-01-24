@@ -364,7 +364,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   disp_player2_team_num = get_team_num(disp_player2)
 
   ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
-  #print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
+  print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}, league {disp_league}, gender:{disp_gender}, year:{disp_year}, team:{disp_team}")
   ppr_df = ppr_df_limit( ppr_df, 
                          comp_l1_checked, disp_comp_l1, 
                          comp_l2_checked, disp_comp_l2, 
