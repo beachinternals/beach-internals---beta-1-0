@@ -75,7 +75,6 @@ def rpt_mgr_generate_background():
       comp_l3_checked = False 
       disp_comp_l3 = ''
 
-    print(f"rpt_mgr_generate_background: report row, days_history: {rpt_r['days_hist']}")
     if (rpt_r['days_hist'] != 0) and (rpt_r['days_hist']):
       disp_end_date = date.today()
       disp_start_date = disp_end_date - timedelta(days = rpt_r['days_hist'])
@@ -84,18 +83,24 @@ def rpt_mgr_generate_background():
       date_checked = False
       disp_end_date = date.today()
       disp_start_date = disp_end_date - timedelta(days = 365)
-
+    print(f"rpt_mgr_generate_background: report row, days_history: {rpt_r['days_hist']}, Date Checked: {date_checked}, {disp_start_date}, {disp_end_date}")
+    print(f"rpt_mgr_generate_background: From the rpt_mgr DB - Serve From: {rpt_r['srv_fr']}, Serve to: {rpt_r['srv_to']}")
     # now look for scouting report serve to and from arrays\
     srv_fr = [False, False, False ]
+
     if (len(rpt_r['srv_fr'])) != 0:
       # split the string into 3 parts ( looking for 1,3,5)
       srv_from_txt = rpt_r['srv_fr'].split(',')
-      if ( srv_from_txt[0].strip() == str(1) ) or ( srv_from_txt[1].strip() == str(1) ) or (srv_from_txt[2].strip() == str(1) ):
-        srv_fr[0] = True
-      if ( srv_from_txt[0].strip() == str(3) ) or ( srv_from_txt[1].strip() == str(3) ) or (srv_from_txt[2].strip() == str(3) ):
-        srv_fr[1] = True
-      if ( srv_from_txt[0].strip() == str(5) ) or ( srv_from_txt[1].strip() == str(5) ) or (srv_from_txt[2].strip() == str(5) ):
-        srv_fr[2] = True
+      for fr in srv_from_txt:
+        print(f"rpt_mgr_generate_background: fr: {fr}")
+        match fr:
+          case str(1):
+            srv_fr[0] = True ## serve from zone 1
+          case str(3):
+            srv_fr[1] = True ## serve from zone 3
+          case str(5):
+            srv_fr[2] = True ## serve from zone 5
+    #print(f"rpt_mgr_generate_background: serve from: {srv_fr[0]}, {srv_fr[1]}, {srv_fr[2]}")
 
     # serve to zone will be for 3,e would have True at srv_to_zone.at[2,0] (3 and 1 but 0 based)
     srv_to_1 = [False, False, False] # E, D, C
@@ -107,8 +112,9 @@ def rpt_mgr_generate_background():
     for stt in srv_to_txt:
       stt = stt.strip()
       # parse this into a number and a letter
-      net_zone = str(stt[0])
-      depth_zone = str(stt[1])
+      net_zone = str(stt[0]).upper()
+      depth_zone = str(stt[1]).upper()
+      #print(f" net zone: {net_zone}, depth_zone : {depth_zone}")
       match depth_zone:
         case 'E':
           index = 0
@@ -246,27 +252,27 @@ def rpt_mgr_generate_background():
                                           text='Attached please find the summary report(s) : Internals Reports')
                                           #attachments=[full_rpt_pdf])
       elif rpt_r['rpt_type'] == 'scouting':
+        for pair_r in rpt_r['pair_list']:
+          # build pair string
+          disp_pair = pair_r['pair']
+          disp_player = ['','']
+          disp_player[0], disp_player[1] = pair_players(disp_pair)
 
-        # build pair string
-        disp_pair = pair_r['pair']
-        disp_player = []
-        disp_player[0], disp_player[1] = pair_players(disp_pair)
-
-        for i in [0,1]:
-          print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
-          # make the report for each player in the pair
-          full_rpt_pdf = None
-          pdf_name = disp_player[i] + ' Summary.pdf'
+          for i in [0,1]: # loop over two players in the pair
+            print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
+            # make the report for each player in the pair
+            full_rpt_pdf = None
+            pdf_name = disp_player[i] + ' Summary.pdf'
         
-          # loop over all the reports for this player
-          for rpt_print in rpt_r['rpts_inc']:
-            #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+            # loop over all the reports for this player
+            for rpt_print in rpt_r['rpts_inc']:
+              #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
-            pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
+              pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
-                                    player_r['league'],
-                                    player_r['gender'],
-                                    player_r['year'],
+                                    pair_r['league'],
+                                    pair_r['gender'],
+                                    pair_r['year'],
                                     disp_team,
                                     disp_pair,
                                     disp_player[i],
@@ -277,22 +283,22 @@ def rpt_mgr_generate_background():
                     scout, explain_text, rpt_print['explain_text'],    
                     srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                     )
-            # now, need to merge this report with the next one
-            if full_rpt_pdf:
-              #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-              full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
-            else:
-              #print('no original pdf file, setting to pdf1')
-              full_rpt_pdf = pdf1
-              #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+              # now, need to merge this report with the next one
+              if full_rpt_pdf:
+                print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+                full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+              else:
+                print('no original pdf file, setting to pdf1')
+                full_rpt_pdf = pdf1
+                print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
         
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           subject='Beach Internals - Scouting Reports ',
-                                          text='Attached please find the summary report(s)')
-                                          #attachments=[full_rpt_pdf])
+                                          text='Attached please find the summary report(s)',
+                                          attachments=[full_rpt_pdf])
       else:
-        print(f"rpt_mgr_generate_background : Invalide Reprot Type : {rpt_r['rpt_type']}")
+        print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
   return True
   
