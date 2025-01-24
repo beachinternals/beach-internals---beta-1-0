@@ -98,18 +98,18 @@ def rpt_mgr_generate_background():
     if len(rpt_r['srv_to'].strip()) == 0:
       rpt_r['srv_to'] = '3D'
 
-    print(f"rpt_mgr_generate_background: serve From: {rpt_r['srv_fr']}, Serve to: {rpt_r['srv_to']}")
+    #print(f"rpt_mgr_generate_background: serve From: {rpt_r['srv_fr']}, Serve to: {rpt_r['srv_to']}")
     if (len(rpt_r['srv_fr'])) != 0:
       # split the string into 3 parts ( looking for 1,3,5)
       srv_from_txt = rpt_r['srv_fr'].split(',')
       for fr in srv_from_txt:
-        print(f"rpt_mgr_generate_background: fr: {fr}")
+        #print(f"rpt_mgr_generate_background: fr: {fr}")
         match fr:
-          case str(1):
+          case '1':
             srv_fr[0] = True ## serve from zone 1
-          case str(3):
+          case '3':
             srv_fr[1] = True ## serve from zone 3
-          case str(5):
+          case '5':
             srv_fr[2] = True ## serve from zone 5
     #print(f"rpt_mgr_generate_background: serve from: {srv_fr[0]}, {srv_fr[1]}, {srv_fr[2]}")
 
@@ -289,21 +289,22 @@ def rpt_mgr_generate_background():
           disp_player[0], disp_player[1] = pair_players(disp_pair)
 
           for i in [0,1]: # loop over two players in the pair
-            print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
+            #print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
             # make the report for each player in the pair
             full_rpt_pdf = None
             pdf_name = disp_player[i] + ' Summary.pdf'
         
             # loop over all the reports for this player
             for rpt_print in rpt_r['rpts_inc']:
-              print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_print['team']}")
+              #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_r['team']}")
+              #print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
 
               pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
                                     pair_r['league'],
                                     pair_r['gender'],
                                     pair_r['year'],
-                                    rpt_print['team'],
+                                    rpt_r['team'],
                                     disp_pair,
                                     disp_player[i],
                     comp_l1_checked, disp_comp_l1,
@@ -315,12 +316,12 @@ def rpt_mgr_generate_background():
                     )
               # now, need to merge this report with the next one
               if full_rpt_pdf:
-                print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+                #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
                 full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
               else:
-                print('no original pdf file, setting to pdf1')
+                #print('no original pdf file, setting to pdf1')
                 full_rpt_pdf = pdf1
-                print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+                #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
 
             # put this pdf into the pdf list
             pdf_list[pdf_num] = full_rpt_pdf

@@ -159,16 +159,16 @@ def scout_srv_strategy(disp_league,
   # now start a loop of the number of desitnation tuples (srv2[])
   first_zone = True
   for i in range(0,len(srv_2),1):
-    print(f" i:{i}, srv_2[i,0] {srv_2[i][0]}, srv_2[i,1] {srv_2[i][1]}")
+    #print(f" i:{i}, srv_2[i,0] {srv_2[i][0]}, srv_2[i,1] {srv_2[i][1]}")
     tmp_df = ppr_df[ (ppr_df['serve_dest_zone_net'] == srv_2[i][0]) & (ppr_df['serve_dest_zone_depth'] == srv_2[i][1]) ]
-    print(f"Number of rows in Filter db by serve dest: {tmp_df.shape[0]}")
+    #print(f"Number of rows in Filter db by serve dest: {tmp_df.shape[0]}")
     if not first_zone:
       new_ppr = pd.concat([new_ppr,tmp_df])
     else:
       new_ppr = tmp_df
       first_zone = False
      
-  print(f"Number of final db to analze: {new_ppr.shape[0]}")
+  #print(f"Number of final db to analze: {new_ppr.shape[0]}")
   
   # calculate a quick table FBHE
   fbhe_vector = fbhe(new_ppr, disp_player, 'att',True)
@@ -414,10 +414,10 @@ def scout_players_serve(disp_league,
     srv_fr_text = srv_fr_text + ' & Middle' if len(srv_fr_text) == 0 else 'Middle'
   if srv_fr[2]:
     srv_fr_text = srv_fr_text + ' & Line (Right)' if len(srv_fr_text) == 0 else 'Line (Right)'
-  print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
+  #print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
 
   srv_strategy_title = '** Serving Tendency ** : '+disp_player+' is serving from '+srv_fr_text+' to '+srv_to_text
-  print(f"Serving Tendencies: {srv_strategy_title}")
+  #print(f"Serving Tendencies: {srv_strategy_title}")
   
   # make a list of tuples for the serve to zones
   srv_2 = []
@@ -475,14 +475,14 @@ def scout_players_serve(disp_league,
   for i in range(0,len(srv_2),1):
     print(f" i:{i}, srv_2[i,0] {srv_2[i][0]}, srv_2[i,1] {srv_2[i][1]}")
     tmp_df = ppr_df[ (ppr_df['serve_dest_zone_net'] == srv_2[i][0]) & (ppr_df['serve_dest_zone_depth'] == srv_2[i][1]) ]
-    print(f"Number of rows in Filter db by serve dest: {tmp_df.shape[0]}")
+    #print(f"Number of rows in Filter db by serve dest: {tmp_df.shape[0]}")
     if not first_zone:
       new_ppr = pd.concat([new_ppr,tmp_df])
     else:
       new_ppr = tmp_df
       first_zone = False
      
-  print(f"Number of final db to analze: {new_ppr.shape[0]}")
+  #print(f"Number of final db to analze: {new_ppr.shape[0]}")
   
   # calculate a quick table FBHE
   fbhe_vector = fbhe(new_ppr, disp_player, 'srv',True)
