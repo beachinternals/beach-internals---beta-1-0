@@ -161,6 +161,11 @@ def rpt_mgr_generate_background():
     
       if rpt_r['rpt_type'] == 'player':
         # loop over all the players for this report listing
+
+        pdf_list = ['']*len(rpt_r['player_list'])     # start a list of all pdf files to pass to email send
+        pdf_num = 0
+        print(f"Pdf_list (empty) : {pdf_list}, {len(pdf_list)}")
+      
         for player_r in rpt_r['player_list']:
           #print("Processing Player Reports")
           #print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
@@ -197,16 +202,25 @@ def rpt_mgr_generate_background():
               #print('no original pdf file, setting to pdf1')
               full_rpt_pdf = pdf1
               #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+
+          # put this pdf into the pdf list
+          pdf_list[pdf_num] = full_rpt_pdf
+          pdf_num = pdf_num + 1
+          print(f"Added a pdf to the list: {pdf_num}")
           
-          email_status = anvil.email.send(to=rpt_r['emailto'],
+        email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           subject='Beach Internals - Player Summary '+disp_player,
                                           text='Attached please find the summary report(s) for '+disp_player,
-                                          attachments=[full_rpt_pdf])
+                                          attachments=pdf_list)
       elif rpt_r['rpt_type'] == 'pair':
         #print("processing pair report")
         #print(f"Pair List: {rpt_r['pair_list']}")
         # loop over all the players for this report listing
+
+        pdf_list = ['']*len(rpt_r['pair_list'])      # start a list of all pdf files to pass to email send
+        pdf_num = 0
+      
         for pair_r in rpt_r['pair_list']:
           #print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
         
@@ -244,12 +258,15 @@ def rpt_mgr_generate_background():
               full_rpt_pdf = pdf1
               #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
           
-
-          email_status = anvil.email.send(to=rpt_r['emailto'],
+          # put this pdf into the pdf list
+          pdf_list[pdf_num] = full_rpt_pdf
+          pdf_num = pdf_num + 1
+          
+        email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           subject='Beach Internals - Pair Summary '+disp_pair,
                                           text='Attached please find the summary report(s) for '+disp_pair,
-                                          attachments=[full_rpt_pdf])
+                                          attachments=pdf_list)
       elif rpt_r['rpt_type'] == 'dashboard':
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
@@ -279,7 +296,7 @@ def rpt_mgr_generate_background():
         
             # loop over all the reports for this player
             for rpt_print in rpt_r['rpts_inc']:
-              #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+              print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_print['team']}")
 
               pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
