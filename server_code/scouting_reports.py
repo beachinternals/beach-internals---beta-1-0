@@ -473,7 +473,7 @@ def scout_players_serve(disp_league,
   # now start a loop of the number of desitnation tuples (srv2[])
   first_zone = True
   for i in range(0,len(srv_2),1):
-    print(f" i:{i}, srv_2[i,0] {srv_2[i][0]}, srv_2[i,1] {srv_2[i][1]}")
+    #print(f" i:{i}, srv_2[i,0] {srv_2[i][0]}, srv_2[i,1] {srv_2[i][1]}")
     tmp_df = ppr_df[ (ppr_df['serve_dest_zone_net'] == srv_2[i][0]) & (ppr_df['serve_dest_zone_depth'] == srv_2[i][1]) ]
     #print(f"Number of rows in Filter db by serve dest: {tmp_df.shape[0]}")
     if not first_zone:
