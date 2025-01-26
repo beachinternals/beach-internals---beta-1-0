@@ -227,130 +227,131 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
       else:
         pair_df.at[i,'fbhe_tempo_per'] = None 
 
-#>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    #------------------- Calculate Poke, Shoot, and Bang fbhe and %
-    fbhe_vector = fbhe( ppr_df, p_list[i], 'all', False)
-    #print(f"player: {p_list[i]}, fbhe_vector: {fbhe_vector}")
-    total_attempts = fbhe_vector[3] if fbhe_vector[3] != 0 else 1
-    fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'poke', False)
-    #print(f"player: {p_list[i]}, i: {i}, fbhe_vector line 188: {fbhe_vector}")
-    player_df.at[i,'fbhe_poke'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_poke_n'] = fbhe_vector[3]    
-    player_df.at[i,'poke_per_per'] = fbhe_vector[3]/total_attempts
-    fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'shoot', False)
-    player_df.at[i,'fbhe_shoot'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_shoot_n'] = fbhe_vector[3]
-    player_df.at[i,'fbhe_shoot_per'] = fbhe_vector[3]/total_attempts
-    bhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'bang', False)
-    player_df.at[i,'fbhe_bang'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_bang_n'] = fbhe_vector[3]
-    player_df.at[i,'fbhe_bang_per'] = fbhe_vector[3]/total_attempts
+      #------------------- Calculate Poke, Shoot, and Bang fbhe and %
+      fbhe_vector = fbhe( tmp_df, disp_player, 'all', False)
+      #print(f"player: {p_list[i]}, fbhe_vector: {fbhe_vector}")
+      total_attempts = fbhe_vector[3] if fbhe_vector[3] != 0 else 1
+      fbhe_vector = fbhe_attack_type( ppr_df, disp_player, 'poke', False)
+      #print(f"player: {p_list[i]}, i: {i}, fbhe_vector line 188: {fbhe_vector}")
+      pair_df.at[i,'fbhe_poke'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_poke_n'] = fbhe_vector[3]    
+      pair_df.at[i,'poke_per_per'] = fbhe_vector[3]/total_attempts
+      fbhe_vector = fbhe_attack_type( tmp_df, disp_player, 'shoot', False)
+      pair_df.at[i,'fbhe_shoot'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_shoot_n'] = fbhe_vector[3]
+      pair_df.at[i,'fbhe_shoot_per'] = fbhe_vector[3]/total_attempts
+      bhe_vector = fbhe_attack_type( tmp_df, disp_player, 'bang', False)
+      pair_df.at[i,'fbhe_bang'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_bang_n'] = fbhe_vector[3]
+      pair_df.at[i,'fbhe_bang_per'] = fbhe_vector[3]/total_attempts
 
-    #--------------calculate in and out of system
-    fbhe_vector = fbhe( ppr_df, p_list[i], 'pass', False)  
-    tot_att = fbhe_vector[3]
-    fbhe_vector = fbhe( ppr_df[ppr_df['pass_oos'] > 0], p_list[i], 'pass', False)
-    player_df.at[i,'fbhe_oos'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_oos_n'] = fbhe_vector[3]
-    fbhe_vector = fbhe( ppr_df[ppr_df['pass_oos'] == 0], p_list[i], 'pass', False)
-    player_df.at[i,'fbhe_insys'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_insys_n'] = fbhe_vector[3]  
-    if tot_att != 0:
-      player_df.at[i,'fbhe_oos_per'] = player_df.at[i,'fbhe_oos_n']/tot_att 
-      player_df.at[i,'fbhe_insys_per'] = player_df.at[i,'fbhe_insys_n']/tot_att 
-    else:
-      player_df.at[i,'fbhe_oos_per'] = None
-      player_df.at[i,'fbhe_insys_per'] = None
+      #--------------calculate in and out of system
+      fbhe_vector = fbhe( tmp_df, disp_player, 'pass', False)  
+      tot_att = fbhe_vector[3]
+      fbhe_vector = fbhe( tmp_df[tmp_df['pass_oos'] > 0], disp_player, 'pass', False)
+      pair_df.at[i,'fbhe_oos'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_oos_n'] = fbhe_vector[3]
+      fbhe_vector = fbhe( tmp_df[tmp_df['pass_oos'] == 0], disp_player, 'pass', False)
+      pair_df.at[i,'fbhe_insys'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_insys_n'] = fbhe_vector[3]  
+      if tot_att != 0:
+        pair_df.at[i,'fbhe_oos_per'] = pair_df.at[i,'fbhe_oos_n']/tot_att 
+        pair_df.at[i,'fbhe_insys_per'] = pair_df.at[i,'fbhe_insys_n']/tot_att 
+      else:
+        pair_df.at[i,'fbhe_oos_per'] = None
+        pair_df.at[i,'fbhe_insys_per'] = None
       
-    # ------------calculate transition Conversion ------------------
-    trans_vector = calc_trans( ppr_df, p_list[i], 'all' )
-    player_df.at[i,'tcr'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
-    trans_vector = calc_trans( ppr_df, p_list[i], 'srv' )
-    player_df.at[i,'tcr_s'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
-    trans_vector = calc_trans( ppr_df, p_list[i], 'rcv' )
-    player_df.at[i,'tcr_r'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
+      # ------------calculate transition Conversion ------------------
+      trans_vector = calc_trans( tmp_df, disp_player, 'all' )
+      pair_df.at[i,'tcr'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
+      trans_vector = calc_trans( tmp_df, disp_player, 'srv' )
+      pair_df.at[i,'tcr_s'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
+      trans_vector = calc_trans( tmp_df, disp_player, 'rcv' )
+      pair_df.at[i,'tcr_r'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
 
-    # -------------- calculate expected value ---------------
-    ev_vector = calc_ev(ppr_df, p_list[i])
-    player_df.at[i,'expected'] = float(ev_vector[0][:-1])
+      # -------------- calculate expected value ---------------
+      ev_vector = calc_ev(tmp_df, disp_player)
+      pair_df.at[i,'expected'] = float(ev_vector[0][:-1])
 
-    # ----------------- calculate error density ----------
-    ed_vector = calc_error_den( ppr_df, p_list[i] )
-    player_df.at[i,'err_den'] = float(ed_vector[0][:-1])
+      # ----------------- calculate error density ----------
+      ed_vector = calc_error_den( tmp_df, disp_player )
+      pair_df.at[i,'err_den'] = float(ed_vector[0][:-1])
 
-    #-------------------- Serving Effectiviness, fbhe on all, zone 1, 3, 5
-    #
-    #       All Serves
-    #
-    fbhe_vector = fbhe(ppr_df, p_list[i], 'srv', False)
-    player_df.at[i,'srv_fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'srv_n'] = fbhe_vector[3]
-    ace_n = ppr_df[ (ppr_df['point_outcome'] == "TSA") & (ppr_df['serve_player'] == p_list[i]) ].shape[0]
-    err_n = ppr_df[ (ppr_df['point_outcome'] == "TSE") & (ppr_df['serve_player'] == p_list[i]) ].shape[0]
-    if fbhe_vector[3] != 0:
-      player_df.at[i,'srv_ace_per'] = ace_n / fbhe_vector[3]
-      player_df.at[i,'srv_err_per'] = err_n / fbhe_vector[3] 
-    else:
-      player_df.at[i,'srv_ace_per'] = None
-      player_df.at[i,'srv_err_per'] = None
+      #-------------------- Serving Effectiviness, fbhe on all, zone 1, 3, 5
+      #
+      #       All Serves
+      #
+      fbhe_vector = fbhe(tmp_df, disp_player, 'srv', False)
+      pair_df.at[i,'srv_fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'srv_n'] = fbhe_vector[3]
+      ace_n = tmp_df[ (tmp_df['point_outcome'] == "TSA") & (tmp_df['serve_player'] == disp_player) ].shape[0]
+      err_n = tmp_df[ (tmp_df['point_outcome'] == "TSE") & (tmp_df['serve_player'] == disp_player) ].shape[0]
+      if fbhe_vector[3] != 0:
+        pair_df.at[i,'srv_ace_per'] = ace_n / fbhe_vector[3]
+        pair_df.at[i,'srv_err_per'] = err_n / fbhe_vector[3] 
+      else:
+        pair_df.at[i,'srv_ace_per'] = None
+        pair_df.at[i,'srv_err_per'] = None
     
-    #
-    #        Serves from Zone 1
-    #
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==1],p_list[i],'srv', False)
-    player_df.at[i,'srv1_fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'srv1_n'] = fbhe_vector[3]
-    ace_n = ppr_df[ (ppr_df['point_outcome'] == "TSA") & (ppr_df['serve_player'] == p_list[i]) & (ppr_df['serve_src_zone_net'] == 1) ].shape[0]
-    err_n = ppr_df[ (ppr_df['point_outcome'] == "TSE") & (ppr_df['serve_player'] == p_list[i]) & (ppr_df['serve_src_zone_net'] == 1) ].shape[0]
-    if fbhe_vector[3] != 0:
-      player_df.at[i,'srv1_ace_per'] = ace_n / fbhe_vector[3] 
-      player_df.at[i,'srv1_err_per'] = err_n / fbhe_vector[3]
-    else:
-      player_df.at[i,'srv1_ace_per'] = None
-      player_df.at[i,'srv1_err_per'] = None
+      #
+      #        Serves from Zone 1
+      #
+      fbhe_vector = fbhe(tmp_df[ppr_df['serve_src_zone_net']==1],disp_player,'srv', False)
+      pair_df.at[i,'srv1_fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'srv1_n'] = fbhe_vector[3]
+      ace_n = tmp_df[ (tmp_df['point_outcome'] == "TSA") & (tmp_df['serve_player'] == disp_player) & (tmp_df['serve_src_zone_net'] == 1) ].shape[0]
+      err_n = tmp_df[ (tmp_df['point_outcome'] == "TSE") & (tmp_df['serve_player'] == disp_player) & (tmp_df['serve_src_zone_net'] == 1) ].shape[0]
+      if fbhe_vector[3] != 0:
+        pair_df.at[i,'srv1_ace_per'] = ace_n / fbhe_vector[3] 
+        pair_df.at[i,'srv1_err_per'] = err_n / fbhe_vector[3]
+      else:
+        pair_df.at[i,'srv1_ace_per'] = None
+        pair_df.at[i,'srv1_err_per'] = None
       
-    #
-    #        Serves from Zone 3
-    #
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==3],p_list[i],'srv', False)
-    player_df.at[i,'srv3_fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'srv3_n'] = fbhe_vector[3]
-    ace_n = ppr_df[ (ppr_df['point_outcome'] == "TSA") & (ppr_df['serve_player'] == p_list[i]) & (ppr_df['serve_src_zone_net'] == 3) ].shape[0]
-    err_n = ppr_df[ (ppr_df['point_outcome'] == "TSE") & (ppr_df['serve_player'] == p_list[i]) & (ppr_df['serve_src_zone_net'] == 3) ].shape[0]
-    if fbhe_vector[3] != 0:
-      player_df.at[i,'srv3_ace_per'] = ace_n / fbhe_vector[3] 
-      player_df.at[i,'srv3_err_per'] = err_n / fbhe_vector[3]
-    else:
-      player_df.at[i,'srv3_ace_per'] = None
-      player_df.at[i,'srv3_err_per'] = None
+      #
+      #        Serves from Zone 3
+      #
+      fbhe_vector = fbhe(tmp_df[tmp_df['serve_src_zone_net']==3],disp_player,'srv', False)
+      pair_df.at[i,'srv3_fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'srv3_n'] = fbhe_vector[3]
+      ace_n = tmp_df[ (tmp_df['point_outcome'] == "TSA") & (tmp_df['serve_player'] == disp_player) & (tmp_df['serve_src_zone_net'] == 3) ].shape[0]
+      err_n = tmp_df[ (tmp_df['point_outcome'] == "TSE") & (tmp_df['serve_player'] == disp_player) & (tmp_df['serve_src_zone_net'] == 3) ].shape[0]
+      if fbhe_vector[3] != 0:
+        pair_df.at[i,'srv3_ace_per'] = ace_n / fbhe_vector[3] 
+        pair_df.at[i,'srv3_err_per'] = err_n / fbhe_vector[3]
+      else:
+        pair_df.at[i,'srv3_ace_per'] = None
+        pair_df.at[i,'srv3_err_per'] = None
       
-    #
-    #        Serves from Zone 5
-    #
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==5],p_list[i],'srv', False)
-    player_df.at[i,'srv5_fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'srv5_n'] = fbhe_vector[3]
-    ace_n = ppr_df[ (ppr_df['point_outcome'] == "TSA") & (ppr_df['serve_player'] == p_list[i]) & (ppr_df['serve_src_zone_net'] == 5) ].shape[0]
-    err_n = ppr_df[ (ppr_df['point_outcome'] == "TSE") & (ppr_df['serve_player'] == p_list[i]) & (ppr_df['serve_src_zone_net'] == 5) ].shape[0]
-    if fbhe_vector[3] != 0:
-      player_df.at[i,'srv5_ace_per'] = ace_n / fbhe_vector[3] 
-      player_df.at[i,'srv5_err_per'] = err_n / fbhe_vector[3]
-    else:
-      player_df.at[i,'srv5_ace_per'] = None
-      player_df.at[i,'srv5_err_per'] = None
+      #
+      #        Serves from Zone 5
+      #
+      fbhe_vector = fbhe(tmp_df[tmp_df['serve_src_zone_net']==5],disp_player,'srv', False)
+      pair_df.at[i,'srv5_fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'srv5_n'] = fbhe_vector[3]
+      ace_n = tmp_df[ (tmp_df['point_outcome'] == "TSA") & (tmp_df['serve_player'] == disp_player) & (tmp_df['serve_src_zone_net'] == 5) ].shape[0]
+      err_n = tmp_df[ (tmp_df['point_outcome'] == "TSE") & (tmp_df['serve_player'] == disp_player) & (tmp_df['serve_src_zone_net'] == 5) ].shape[0]
+      if fbhe_vector[3] != 0:
+        pair_df.at[i,'srv5_ace_per'] = ace_n / fbhe_vector[3] 
+        pair_df.at[i,'srv5_err_per'] = err_n / fbhe_vector[3]
+      else:
+        pair_df.at[i,'srv5_ace_per'] = None
+        pair_df.at[i,'srv5_err_per'] = None
 
 
-    #------------------- FBHE when served from 1, 3, 5
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==1],p_list[i],'pass', False)
-    player_df.at[i,'fbhe_srv1'] = fbhe_vector[0]  if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_srv1_n'] = fbhe_vector[3]
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==3],p_list[i],'pass', False)
-    player_df.at[i,'fbhe_srv3'] = fbhe_vector[0]  if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_srv3_n'] = fbhe_vector[3]
-    fbhe_vector = fbhe(ppr_df[ppr_df['serve_src_zone_net']==5],p_list[i],'pass', False)
-    player_df.at[i,'fbhe_srv5'] = fbhe_vector[0]  if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_srv5_n'] = fbhe_vector[3]
+      #------------------- FBHE when served from 1, 3, 5
+      fbhe_vector = fbhe(tmp_df[tmp_df['serve_src_zone_net']==1],disp_player,'pass', False)
+      pair_df.at[i,'fbhe_srv1'] = fbhe_vector[0]  if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_srv1_n'] = fbhe_vector[3]
+      fbhe_vector = fbhe(tmp_df[tmp_df['serve_src_zone_net']==3],disp_player,'pass', False)
+      pair_df.at[i,'fbhe_srv3'] = fbhe_vector[0]  if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_srv3_n'] = fbhe_vector[3]
+      fbhe_vector = fbhe(tmp_df[tmp_df['serve_src_zone_net']==5],disp_player,'pass', False)
+      pair_df.at[i,'fbhe_srv5'] = fbhe_vector[0]  if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_srv5_n'] = fbhe_vector[3]
 
+    #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    
     #--------------------Opponent's FBHE when we are serving, all, then zones 1,3,5
     fbhe_vector = fbhe(ppr_df,p_list[i],'srv', False)
     player_df.at[i,'srv_fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
