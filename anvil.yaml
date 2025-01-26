@@ -257,6 +257,24 @@ db_schema:
     - admin_ui: {order: 12, width: 200}
       name: pair_list
       type: media
+    - admin_ui: {order: 8, width: 200}
+      name: player_data_date
+      type: datetime
+    - admin_ui: {order: 9.5, width: 200}
+      name: player_data_stats_date
+      type: datetime
+    - admin_ui: {order: 11.5, width: 200}
+      name: tri_data_date
+      type: datetime
+    - admin_ui: {order: 11.75, width: 200}
+      name: pair_list_date
+      type: datetime
+    - admin_ui: {order: 13, width: 200}
+      name: pair_data
+      type: media
+    - admin_ui: {order: 12.5, width: 200}
+      name: pair_data_date
+      type: datetime
     server: full
     title: ppr_csv_tables
   report_list:

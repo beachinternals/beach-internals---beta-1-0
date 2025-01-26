@@ -407,7 +407,7 @@ def build_pair_df(c_league,c_gender,c_year):
   pair_csv_file = pd.DataFrame.to_csv(tmp)
   #print(f"Pair lisdt as a csv file :{pair_csv_file}")
   pair_media = anvil.BlobMedia(content_type="text/plain", content=pair_csv_file.encode(), name="pair_table.csv")
-  ppr_csv_row.update(pair_list = pair_media)
+  ppr_csv_row.update(pair_list = pair_media, pair_list_date=datetime.datetime.now())
 
   return True
 
