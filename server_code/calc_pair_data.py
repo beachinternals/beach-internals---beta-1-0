@@ -20,25 +20,25 @@ import datetime
 #  player_data is only for league entries in the ppr_csv_tables table.  We also sotre the list of player data stats
 
 @anvil.server.callable
-def calc_all_player_data():
+def calc_all_pair_data():
   # caluclate the plaeyr data for ALL leagues
   # so seach th eleague data base, then loop thru them
 
   # for each row:
   for l_row in app_tables.ppr_csv_tables.search(team='League'):
-    task = calc_player_data_background(l_row['league'],l_row['gender'],l_row['year'])
+    task = calc_pair_data_background(l_row['league'],l_row['gender'],l_row['year'])
         
   return task
 
 # begin with the server callable task, this then provides status and calls the background task
 @anvil.server.callable
-def calc_player_data_background( c_league, c_gender, c_year):
+def calc_pair_data_background( c_league, c_gender, c_year):
   # 
   # calculate the player data files for all teams in the league, gender, year given
   #
 
   #print(f'Calling Background Task calculate_player_data for {c_league},{c_gender},{c_year}')
-  task = anvil.server.launch_background_task('calculate_player_data', c_league, c_gender, c_year)
+  task = anvil.server.launch_background_task('calculate_pair_data', c_league, c_gender, c_year)
 
   # check return status
   #print(f' Background Task, Task id:{task.get_id()} return Status:{task.get_termination_status()}')
@@ -51,12 +51,12 @@ def calc_player_data_background( c_league, c_gender, c_year):
 #
 #---------------------------------------------
 @anvil.server.background_task
-def calculate_player_data( c_league, c_gender, c_year):
-  return calculate_player_data_not_background(c_league, c_gender, c_year)
+def calculate_pair_data( c_league, c_gender, c_year):
+  return calculate_pair_data_not_background(c_league, c_gender, c_year)
 
-def calculate_player_data_not_background(c_league, c_gender, c_year):
+def calculate_pair_data_not_background(c_league, c_gender, c_year):
   
-  result_string = "Calculate Player Data server module Called"
+  result_string = "Calculate Pair Data server module Called"
 
   c_team = "League"    # only updating the league tables
   #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
@@ -78,31 +78,11 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
 
   #print(f"shape of ppr_df :{ppr_df.shape}")
   min_att = ppr_csv_row['min_att']
-  
-  # now, how many player do we have>?  Create  a list of just the players
-  # first, four lists, one each for player 1a, 1b, 2a, 2b
-  p_list1 = ppr_df['player_a1'].unique()
-  #print(f"player list 1:{p_list1}")
-  p_list2 = ppr_df['player_a2'].unique()
-  p_list3 = ppr_df['player_b1'].unique() 
-  p_list4 = ppr_df['player_b2'].unique()
-
-  p_list = p_list1
-  p_list = np.append(p_list1, p_list2)
-  p_list = np.append(p_list,p_list3)
-  p_list = np.append(p_list,p_list4)
-  #print(f"Player List 2: {p_list}")
-  p_list = np.unique(p_list)
-  #print(f"Player List 3: {p_list}")
-  num_players = p_list.shape[0]
-  
-  #print(f"player list{p_list}")
-  #print(f"number of players: {num_players}")
 
   # build the ppr_dataframe out tpo the proper number of rows, equal total points,
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
 
-  player_dict = {'pair':[str()],'player':[str()], 'team':[str()],
+  pair_dict = {'pair':[str()],'player':[str()], 'team':[str()],
                  'fbhe':None,'fbhe1':None,'fbhe2':None,'fbhe3':None,'fbhe4':None,'fbhe5':None,'fbhe_range':None,
                  'fbhe_n':None,'fbhe1_n':None,'fbhe2_n':None,'fbhe3_n':None,'fbhe4_n':None,'fbhe5_n':None,
                  'fbhe_behind':None,'fbhe_behind_per':None,'fbhe_behind_n':None,
@@ -136,15 +116,12 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                  'fbhe_5_4c':None,'fbhe_5_4c_n':None,'fbhe_5_4d':None,'fbhe_5_4d_n':None,'fbhe_5_4e':None,'fbhe_5_4e_n':None,                 
                  'fbhe_5_5c':None,'fbhe_5_5c_n':None,'fbhe_5_5d':None,'fbhe_5_5d_n':None,'fbhe_5_5e':None,'fbhe_5_5e_n':None               
                 }
-  #print(f"Player Dict:{player_dict}")
-  player_df = pd.DataFrame.from_records(player_dict)
+  #print(f"Pair Dict:{pair_dict}")
+  pair_df = pd.DataFrame.from_records(pair_dict)
   #player_df = pd.DataFrame(player_dict, columns=['player', 'fbhe', 'fbhe1','fbhe2','fbhe3','fbhe4','fbhe5'])
-  
-  for i in  range(1,num_players):
-    player_df.loc[max(player_df.index)+1] = player_dict
-  
+
   # create the player_data_stats dataframe
-  player_stats_dict = {'fbhe_mean':[float()],'fbhe_stdev':[float()], 'fbhe_range_mean':[float()],'fbhe_range_stdev':[float()],
+  pair_stats_dict = {'fbhe_mean':[float()],'fbhe_stdev':[float()], 'fbhe_range_mean':[float()],'fbhe_range_stdev':[float()],
                        'fbhe1_mean':[float()],'fbhe2_mean':[float()],'fbhe3_mean':[float()],'fbhe4_mean':[float()],'fbhe5_mean':[float()],
                        'fbhe1_stdev':[float()],'fbhe2_stdev':[float()],'fbhe3_stdev':[float()],'fbhe4_stdev':[float()],'fbhe5_stdev':[float()],
                        'fbhe_behind_mean':[float()],'fbhe_behind_per_mean':[float()],'fbhe_option_mean':[float()],'fbhe_option_per_mean':[float()],'fbhe_tempo_mean':[float()],'fbhe_tempo_per_mean':[float()],
@@ -173,72 +150,84 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                        'fbhe_5_4c_mean':[float()],'fbhe_5_4c_stdev':[float()],'fbhe_5_4d_mean':[float()],'fbhe_5_4d_stdev':[float()],'fbhe_5_4e_mean':[float()],'fbhe_5_4e_stdev':[float()],
                        'fbhe_5_5c_mean':[float()],'fbhe_5_5c_stdev':[float()],'fbhe_5_5d_mean':[float()],'fbhe_5_5d_stdev':[float()],'fbhe_5_5e_mean':[float()],'fbhe_5_5e_stdev':[float()]                      
                       }
-  player_stats_df =  pd.DataFrame.from_records(player_stats_dict)    # shoudl only need one row here
+  pair_stats_df =  pd.DataFrame.from_records(pair_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")
-  
-  for i in range(0,num_players):
-    #print(f"player: {p_list[i]}")
-    player_df.at[i,'player'] = p_list[i]
 
-    # unpack the player into the team, number, and short name
-    # there is a space in between, built lie this:
-    #  ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
-    teama = player_df.at[i,'player']
-    teama_loc = teama.index(" ")
-    this_team = teama[:teama_loc].strip()
-    player_df.at[i,'team'] = this_team
+  # need a pair list, we will step thru the master pair database
+  num_pairs = len(app_tables.master_pair.search(league=c_league, gender=c_gender, year=c_year))
+  pair_df.loc[(num_pairs+1)*2] = pair_dict
 
-    # ----------- calculate FBHE, 1-5 ------------------
-    fbhe_vector = fbhe(ppr_df, p_list[i], 'att', True )
-    if fbhe_vector[3] >= min_att:
-      player_df.at[i,'fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      player_df.at[i,'fbhe_n'] = fbhe_vector[3]
+  i = -1
+  for pair_r in app_tables.master_pair.get(league=c_league, gender=c_gender, year=c_year):
+    # items in pair_r: pair_r['pair'], pair_r['player1'], pair_r['player2']
 
-    #print(f"player_df after fbhe calc:{player_df}")
+    print(f"pair: {pair_r['pair']}, Player 1: {pair_r['player1']}, Player 2: {pair_r['player2']}, Team: {pair_r['team']}")
 
-    fbhe_min = 1
-    fbhe_max = 0
-    for j in [1,2,3,4,5]:
-      fbhe_vector = fbhe(ppr_df[ppr_df['att_src_zone_net']==j], p_list[i], 'att', False)
-      field = "fbhe" + str(j)
-      field_n = field + str('_n')
-      #print(f"Field:{field}, fbhe vector:{fbhe_vector}")
-      if fbhe_vector[3] >= min_att:
-        player_df.at[i,field] = fbhe_vector[0] 
-        player_df.at[i,field_n] = fbhe_vector[3]
-        fbhe_min = fbhe_vector[0] if fbhe_vector[0] < fbhe_min else fbhe_min
-        fbhe_max = fbhe_vector[0] if fbhe_vector[0] > fbhe_max else fbhe_max
-    if fbhe_max - fbhe_min != -1:
-      player_df.at[i,'fbhe_range'] = float("{:.3f}".format(fbhe_max - fbhe_min))
-    else:
-      player_df.at[i,'fbhe_range'] = None
+    # now limit the ppdf_df to only our pairs
+    tmp_df = pair_filter( ppr_df, pair_r['pair'])
+    
+    for p in [0,1]:  # loop over players
+      i = i + 1
+      disp_player = pair_r['player1'] if p == 0 else pair_r['player2']
       
-    #------------------- Behind, Option, and Tempo fbhe and %
-    fbhe_vector = fbhe(ppr_df, p_list[i], 'pass', True)
-    total_attempts = fbhe_vector[3] if fbhe_vector[3] != min_att else 1
-    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'option'],p_list[i],'pass', False)
-    player_df.at[i,'fbhe_option'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_option_n'] = fbhe_vector[3]
-    if total_attempts != 0:
-      player_df.at[i,'fbhe_option_per'] = int(fbhe_vector[3])/total_attempts
-    else:
-      player_df.at[i,'fbhe_option_per'] = None 
-    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'behind'],p_list[i],'pass', False)
-    player_df.at[i,'fbhe_behind'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_behind_n'] = fbhe_vector[3]
-    if total_attempts != 0:
-      player_df.at[i,'fbhe_behind_per'] = int(fbhe_vector[3])/total_attempts
-    else:
-      player_df.at[i,'fbhe_behind_per'] = None 
-    fbhe_vector = fbhe(ppr_df[ppr_df['tactic'] == 'tempo'],p_list[i],'pass', False)
-    player_df.at[i,'fbhe_tempo'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-    player_df.at[i,'fbhe_tempo_n'] = fbhe_vector[3]
-    if total_attempts != 0:
-      player_df.at[i,'fbhe_tempo_per'] = int(fbhe_vector[3])/total_attempts
-    else:
-      player_df.at[i,'fbhe_tempo_per'] = None 
+      pair_df.at[i,'pair'] = pair_r['pair']
+      pair_df.at[i,'team'] = pair_r['team']
+      pair_df.at[i,'player'] = pair_r['player1'] if p == 0 else pair['player2']
 
 
+      # ----------- calculate FBHE, 1-5 ------------------
+      fbhe_vector = fbhe(tmp_df, disp_player, 'att', True )
+      if fbhe_vector[3] >= min_att:
+        pair_df.at[i,'fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+        pair_df.at[i,'fbhe_n'] = fbhe_vector[3]
+
+      #print(f"player_df after fbhe calc:{player_df}")
+
+      fbhe_min = 1
+      fbhe_max = 0
+      for j in [1,2,3,4,5]:
+        fbhe_vector = fbhe(ppr_df[tmp_df['att_src_zone_net']==j], disp_player, 'att', False)
+        field = "fbhe" + str(j)
+        field_n = field + str('_n')
+        #print(f"Field:{field}, fbhe vector:{fbhe_vector}")
+        if fbhe_vector[3] >= min_att:
+          pair_df.at[i,field] = fbhe_vector[0] 
+          pair_df.at[i,field_n] = fbhe_vector[3]
+          fbhe_min = fbhe_vector[0] if fbhe_vector[0] < fbhe_min else fbhe_min
+          fbhe_max = fbhe_vector[0] if fbhe_vector[0] > fbhe_max else fbhe_max
+      if fbhe_max - fbhe_min != -1:
+        pair_df.at[i,'fbhe_range'] = float("{:.3f}".format(fbhe_max - fbhe_min))
+      else:
+        pair_df.at[i,'fbhe_range'] = None
+      
+      #------------------- Behind, Option, and Tempo fbhe and %
+      fbhe_vector = fbhe(tmp_df, disp_player, 'pass', True)
+      total_attempts = fbhe_vector[3] if fbhe_vector[3] != min_att else 1
+      fbhe_vector = fbhe(tmp_df[tmp_df['tactic'] == 'option'],disp_player,'pass', False)
+      pair_df.at[i,'fbhe_option'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_option_n'] = fbhe_vector[3]
+      if total_attempts != 0:
+        pair_df.at[i,'fbhe_option_per'] = int(fbhe_vector[3])/total_attempts
+      else:
+        pair_df.at[i,'fbhe_option_per'] = None 
+        
+      fbhe_vector = fbhe(tmp_df[tmp_df['tactic'] == 'behind'],disp_player,'pass', False)
+      pair_df.at[i,'fbhe_behind'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_behind_n'] = fbhe_vector[3]
+      if total_attempts != 0:
+        pair_df.at[i,'fbhe_behind_per'] = int(fbhe_vector[3])/total_attempts
+      else:
+        pair_df.at[i,'fbhe_behind_per'] = None 
+        
+      fbhe_vector = fbhe(tmp_df[tmp_df['tactic'] == 'tempo'],disp_player,'pass', False)
+      pair_df.at[i,'fbhe_tempo'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      pair_df.at[i,'fbhe_tempo_n'] = fbhe_vector[3]
+      if total_attempts != 0:
+        pair_df.at[i,'fbhe_tempo_per'] = int(fbhe_vector[3])/total_attempts
+      else:
+        pair_df.at[i,'fbhe_tempo_per'] = None 
+
+#>>>>>>>>>>>>>>>>>>>>>>>>>>>
     #------------------- Calculate Poke, Shoot, and Bang fbhe and %
     fbhe_vector = fbhe( ppr_df, p_list[i], 'all', False)
     #print(f"player: {p_list[i]}, fbhe_vector: {fbhe_vector}")
