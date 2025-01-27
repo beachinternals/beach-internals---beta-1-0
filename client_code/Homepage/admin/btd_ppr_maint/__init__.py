@@ -54,6 +54,8 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     self.league3_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
     self.league4_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
     self.league4_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
+    self.league5_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
+    self.league5_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
 
     
     # populate drop down for Traingle Scoring
@@ -193,6 +195,19 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
   def build_master_pair_button_click(self, **event_args):
     """This method is called when the button is clicked"""
     task = anvil.server.call('build_pair_data_table')
+    alert(task)
+    pass
+
+  def outlined_button_1_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    league_value = self.league5_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    task = anvil.server.call('calc_pair_data_background',disp_league, disp_gender, disp_year)
     alert(task)
     pass
 
