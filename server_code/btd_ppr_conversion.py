@@ -853,6 +853,10 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
   if (pass_height > 0) & (pass_height < 1.00):
     oos_flag = oos_flag + 100
     #print(f'5 oos flag: {oos_flag}')
+
+  # no pass desitnation, likely a shank off the court
+  if ( dest_zone_net) == 0:
+    oos_flag = oos_flag + 1000
     
   #if ( oos_flag != 0 ):
    # print(f'6 oos flag: {oos_flag}, Dest net, depth, height, src net, angle: {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
