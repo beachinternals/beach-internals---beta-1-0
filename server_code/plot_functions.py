@@ -10,7 +10,8 @@ import anvil.mpl_util
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
+
+import matplotlib.patches as patches
 import math
 #import plotly.graph_objects as go
 
@@ -127,8 +128,9 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
     print(f" el_points {el_points}")
     el_points = el_points.dropna().values
     el_mean, el_width, el_height, el_angle =  calculate_standard_deviation_ellipse(el_points, confidence=1.0)
-    print(f" Ellispe details: mean: {el_mean}, width: {el_width}, height : {el_height}, angle: {el_angle}")
-    ellipse = Ellipse(el_mean, el_width, el_height, el_angle, edgecolor='r', facecolor='none', linewidth=2, label="1 Std Dev Ellipse")
+    print(f" Ellispe details: mean: {el_mean[0]}, {el_mean[1]} width: {el_width}, height : {el_height}, angle: {el_angle}")
+    xy_center = (el_mean[0],el_mean[1])
+    ellipse = patches.Ellipse(xy = xy_center, width = el_width, height = el_height, angle = el_angle, edgecolor='r', facecolor='none', linewidth=2, label="1 Std Dev Ellipse")
     plt.add_patch(ellipse)
     
   plot_court_background()
