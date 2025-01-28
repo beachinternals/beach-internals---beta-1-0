@@ -233,11 +233,11 @@ def scout_srv_strategy(disp_league,
   #serve_diagram_plot_object = ''
 
   # make a plot to chart the pass locations: (dot splatter with half court in background)
-  pass_locations_plot_object = plot_points_on_the_court(new_ppr['pass_dest_x'],new_ppr['pass_dest_y'], 2, new_ppr['video_id'], new_ppr['pass_action_id'])
+  pass_locations_plot_object = plot_points_on_the_court(new_ppr['pass_dest_x'],new_ppr['pass_dest_y'], 2, new_ppr['video_id'], new_ppr['pass_action_id'],True)
   #pass_locations_plot_object = ''
 
   # make a plot to chart the set locations: (dot splatter with half court in background)
-  set_locations_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 3, new_ppr['video_id'], new_ppr['set_action_id'])
+  set_locations_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 3, new_ppr['video_id'], new_ppr['set_action_id'],False)
   #set_locations_plot_object = ''
 
   # Next, build the 6 plots across the page as subplots, zone's 1 - 5 plus Optioon
@@ -547,11 +547,11 @@ def scout_players_serve(disp_league,
   #serve_diagram_plot_object = ''
 
   # make a plot to chart the pass locations: (dot splatter with half court in background)
-  pass_locations_plot_object = plot_points_on_the_court(new_ppr['pass_dest_x'],new_ppr['pass_dest_y'], 2,new_ppr['video_id'], new_ppr['pass_action_id'])
+  pass_locations_plot_object = plot_points_on_the_court(new_ppr['pass_dest_x'],new_ppr['pass_dest_y'], 2,new_ppr['video_id'], new_ppr['pass_action_id'],True)
   #pass_locations_plot_object = ''
 
   # make a plot to chart the set locations: (dot splatter with half court in background)
-  set_locations_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 3,new_ppr['video_id'], new_ppr['set_action_id'])
+  set_locations_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 3,new_ppr['video_id'], new_ppr['set_action_id'],False)
   #set_locations_plot_object = ''
 
   # Next, build the 6 plots across the page as subplots, zone's 1 - 5 plus Optioon

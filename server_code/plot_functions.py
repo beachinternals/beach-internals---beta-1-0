@@ -10,6 +10,7 @@ import anvil.mpl_util
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
 import math
 #import plotly.graph_objects as go
 
@@ -107,7 +108,7 @@ def plot_lines_on_court( ppr_df, action, plt_num):
   return anvil.mpl_util.plot_image()
 
 @anvil.server.callable
-def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num ):
+def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_ellispe ):
   #
   # line drawing of the set location(s) as dot
   #
@@ -118,6 +119,18 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num ):
   point_size = np.full(len(x),75) # numpy array of size len(x), filled with character 2
   #print(f"plot_points_on_the_court: size array: {point_size}")
   plt.scatter( x, y, s = point_size , url = 'http://app.balltime.com/video/'+video_id+'?actionIds='+str(action_num))  
+
+  if plot_ellispe:
+    # calcualte elispe information
+    print(f"Converting x and y: Type: {type(x)}, {type(y)}, Number of Points: {len(x)}, {len(y)}")
+    el_points = pd.concat( [ppr_x, ppr_y], axis = 1)
+    print(f" el_points {el_points}")
+    el_points = el_points.dropna().values
+    el_mean, el_width, el_height, el_angle =  calculate_standard_deviation_ellipse(el_points, confidence=1.0)
+    print(f" Ellispe details: mean: {el_mean}, width: {el_width}, height : {el_height}, angle: {el_angle}")
+    ellipse = Ellipse(el_mean, el_width, el_height, el_angle, edgecolor='r', facecolor='none', linewidth=2, label="1 Std Dev Ellipse")
+    plt.add_patch(ellipse)
+    
   plot_court_background()
   
   # Return this plot as a PNG image in a Media object
@@ -213,9 +226,69 @@ def plot_attack_zones( ppr_df, plt_num):
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()
                          
-    
-  
-  
-  
 
+def calculate_standard_deviation_ellipse(points, confidence=1.0):
+   """
+   Calculate and plot the standard deviation ellipse for a set of 2D points.
+
+   Args:
+       points (numpy.ndarray): A 2D array of shape (n, 2) where each row is a point [x, y].
+       confidence (float): Scaling factor for the ellipse size (1.0 for 1 standard deviation).
+
+   Returns:
+       center (tuple): The center of the ellipse (mean of the points).
+       width (float): The width of the ellipse (major axis length).
+       height (float): The height of the ellipse (minor axis length).
+       angle (float): The rotation angle of the ellipse in degrees.
+   """
+   # Compute the mean of the points
+   mean = np.mean(points, axis=0)
+
+   # Calculate the covariance matrix
+   cov_matrix = np.cov(points, rowvar=False)
+
+   # Eigen decomposition
+   eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
+
+   # Sort eigenvalues and eigenvectors
+   order = eigenvalues.argsort()[::-1]
+   eigenvalues = eigenvalues[order]
+   eigenvectors = eigenvectors[:, order]
+
+   # Compute the ellipse parameters
+   width = 2 * confidence * np.sqrt(eigenvalues[0])  # Major axis
+   height = 2 * confidence * np.sqrt(eigenvalues[1])  # Minor axis
+   angle = np.degrees(np.arctan2(*eigenvectors[:, 0][::-1]))
+
+   return mean, width, height, angle
+
+"""
+# Example usage
+points = np.random.multivariate_normal([0, 0], [[3, 1], [1, 2]], size=500)
+
+mean, width, height, angle = calculate_standard_deviation_ellipse(points)
+
+# Plot the points and the ellipse
+fig, ax = plt.subplots()
+ax.scatter(points[:, 0], points[:, 1], s=5, label="Data Points")
+ellipse = Ellipse(mean, width, height, angle, edgecolor='r', facecolor='none', linewidth=2, label="1 Std Dev Ellipse")
+ax.add_patch(ellipse)
+
+ax.set_aspect('equal', adjustable='datalim')
+ax.legend()
+plt.show()
+"""
   
+def calculate_ellipse_area(width, height):
+   """
+   Calculate the area of an ellipse.
+
+   Args:
+       width (float): The full width (major axis) of the ellipse.
+       height (float): The full height (minor axis) of the ellipse.
+
+   Returns:
+       float: The area of the ellipse.
+   """
+   return math.pi * (width / 2) * (height / 2)
+
