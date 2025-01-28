@@ -10,7 +10,6 @@ import anvil.mpl_util
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
 import matplotlib.patches as patches
 import math
 #import plotly.graph_objects as go
