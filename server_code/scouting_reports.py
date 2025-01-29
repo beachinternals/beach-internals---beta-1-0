@@ -46,15 +46,20 @@ def scout_srv_strategy(disp_league,
   player_label = disp_player
 
   # lets find the serve strategy Text:
-  srv_2_net_txt = ['','Line','Body','Seam','Body','Line']
+  srv_2_net_txt = ['','Line','Body(l)','Seam','Body(r)','Line']
   if (srv_to_1[0]) or (srv_to_1[1]) or (srv_to_1[2]) or (srv_to_5[0]) or (srv_to_5[1]) or (srv_to_5[2]):
     srv_line = True 
   else:
     srv_line = False
-  if (srv_to_2[0]) or (srv_to_2[1]) or (srv_to_2[2]) or (srv_to_4[0]) or (srv_to_4[1]) or (srv_to_4[2]):
-    srv_body = True 
+  if (srv_to_2[0]) or (srv_to_2[1]) or (srv_to_2[2]):
+    srv_body_l = True 
   else:
-    srv_body = False
+    srv_body_l = False
+  if (srv_to_4[0]) or (srv_to_4[1]) or (srv_to_4[2]):
+    srv_body_r = True
+  else:
+    srv_body_r = False
+    
   if (srv_to_3[0]) or (srv_to_3[1]) or (srv_to_3[2]):
     srv_seam = True 
   else:
@@ -69,8 +74,10 @@ def scout_srv_strategy(disp_league,
     srv_to_text = 'Short:'
     if srv_line:
       srv_to_text = srv_to_text + ' Line,'
-    if srv_body:
-      srv_to_text = srv_to_text + ' Body,'
+    if srv_body_l:
+      srv_to_text = srv_to_text + ' Body(l),'
+    if srv_body_r:
+      srv_to_text = srv_to_text + ' Body(r),'
     if srv_seam:
       srv_to_text = srv_to_text + ' Seam,'
       
@@ -78,8 +85,10 @@ def scout_srv_strategy(disp_league,
     srv_to_text = srv_to_text + ' Mid:'
     if srv_line:
       srv_to_text = srv_to_text + ' Line,'
-    if srv_body:
-      srv_to_text = srv_to_text + ' Body,'
+    if srv_body_l:
+      srv_to_text = srv_to_text + ' Body(l),'
+    if srv_body_r:
+      srv_to_text = srv_to_text + ' Body(r),'
     if srv_seam:
       srv_to_text = srv_to_text + ' Seam,'
       
@@ -87,8 +96,10 @@ def scout_srv_strategy(disp_league,
     srv_to_text = srv_to_text + ' Deep:'
     if srv_line:
       srv_to_text = srv_to_text + ' Line,'
-    if srv_body:
-      srv_to_text = srv_to_text + ' Body,'
+    if srv_body_l:
+      srv_to_text = srv_to_text + ' Body(l),'
+    if srv_body_r:
+      srv_to_text = srv_to_text + ' Body(r),'
     if srv_seam:
       srv_to_text = srv_to_text + ' Seam'
       
