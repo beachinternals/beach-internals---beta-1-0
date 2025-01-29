@@ -321,7 +321,10 @@ components_by_slot:
             type: Label
           - layout_properties: {grid_position: 'TLZJMD,XURQYW KNIDMA,LBHLAS'}
             name: z5_att_plot
-            properties: {display_mode: zoom_to_fill, height: 243.19921875}
+            properties:
+              display_mode: zoom_to_fill
+              height: 337.57421875
+              margin: ['0', null, '0', null]
             type: Image
           - layout_properties: {grid_position: 'TLZJMD,XURQYW IMWCKO,NVVKTP'}
             name: z5_table
@@ -337,7 +340,10 @@ components_by_slot:
               type: Label
             - layout_properties: {grid_position: 'SAWWWE,RTVSWQ'}
               name: z4_att_plot
-              properties: {display_mode: zoom_to_fill, height: 235.6640625}
+              properties:
+                display_mode: zoom_to_fill
+                height: 330.37109375
+                margin: ['0', null, '0', null]
               type: Image
             layout_properties: {grid_position: 'TLZJMD,MZXRUD GQDMQV,XWNWNR'}
             name: column_panel_7
@@ -357,7 +363,10 @@ components_by_slot:
               type: Label
             - layout_properties: {grid_position: 'REWWAZ,QSIWCD'}
               name: z3_att_plot
-              properties: {display_mode: zoom_to_fill, height: 231.1953125}
+              properties:
+                display_mode: zoom_to_fill
+                height: 328.3359375
+                margin: ['0', null, '0', null]
               type: Image
             layout_properties: {grid_position: 'TLZJMD,HXYRCZ LIUXBX,ESFWEW'}
             name: column_panel_8
@@ -377,7 +386,10 @@ components_by_slot:
               type: Label
             - layout_properties: {grid_position: 'NAEPRE,LZBMOD'}
               name: z2_att_plot
-              properties: {display_mode: zoom_to_fill, height: 229.54296875}
+              properties:
+                display_mode: zoom_to_fill
+                height: 325.8359375
+                margin: ['0', null, '0', null]
               type: Image
             layout_properties: {grid_position: 'TLZJMD,JPTKOT AYGNFA,HXHYRW'}
             name: column_panel_9
@@ -397,7 +409,10 @@ components_by_slot:
               type: Label
             - layout_properties: {grid_position: 'DAVCFU,JSRMSP'}
               name: z1_att_plot
-              properties: {display_mode: zoom_to_fill, height: 225.765625}
+              properties:
+                display_mode: zoom_to_fill
+                height: 321.74609375
+                margin: ['0', null, '0', null]
               type: Image
             layout_properties: {grid_position: 'TLZJMD,ZNXMEM QBMJFB,XDPDVQ'}
             name: column_panel_10
@@ -417,7 +432,10 @@ components_by_slot:
               type: Label
             - layout_properties: {grid_position: 'ETHJDH,XPGQPL'}
               name: opt_att_plot
-              properties: {display_mode: zoom_to_fill, height: 225.03515625}
+              properties:
+                display_mode: zoom_to_fill
+                height: 318.84375
+                margin: ['0', null, '0', null]
               type: Image
             layout_properties: {grid_position: 'TLZJMD,HFVHJI XYBVOO,IYFWKF'}
             name: column_panel_6

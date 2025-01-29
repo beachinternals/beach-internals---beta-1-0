@@ -120,21 +120,21 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                  'srv1_n':None,'srv1_fbhe':None,'srv1_ace_per':None,'srv1_err_per':None,
                  'srv3_n':None,'srv3_fbhe':None,'srv3_ace_per':None,'srv3_err_per':None,
                  'srv5_n':None,'srv5_fbhe':None,'srv5_ace_per':None,'srv5_err_per':None ,
-                 'fbhe_1_1c':None,'fbhe_1_1c_n':None,'fbhe_1_1d':None,'fbhe_1_1d_n':None,'fbhe_1_1e':None,'fbhe_1_1e_n':None,
-                 'fbhe_1_2c':None,'fbhe_1_2c_n':None,'fbhe_1_2d':None,'fbhe_1_2d_n':None,'fbhe_1_2e':None,'fbhe_1_2e_n':None,
-                 'fbhe_1_3c':None,'fbhe_1_3c_n':None,'fbhe_1_3d':None,'fbhe_1_3d_n':None,'fbhe_1_3e':None,'fbhe_1_3e_n':None,
-                 'fbhe_1_4c':None,'fbhe_1_4c_n':None,'fbhe_1_4d':None,'fbhe_1_4d_n':None,'fbhe_1_4e':None,'fbhe_1_4e_n':None,                 
-                 'fbhe_1_5c':None,'fbhe_1_5c_n':None,'fbhe_1_5d':None,'fbhe_1_5d_n':None,'fbhe_1_5e':None,'fbhe_1_5e_n':None,
-                 'fbhe_3_1c':None,'fbhe_3_1c_n':None,'fbhe_3_1d':None,'fbhe_3_1d_n':None,'fbhe_3_1e':None,'fbhe_3_1e_n':None,
-                 'fbhe_3_2c':None,'fbhe_3_2c_n':None,'fbhe_3_2d':None,'fbhe_3_2d_n':None,'fbhe_3_2e':None,'fbhe_3_2e_n':None,
-                 'fbhe_3_3c':None,'fbhe_3_3c_n':None,'fbhe_3_3d':None,'fbhe_3_3d_n':None,'fbhe_3_3e':None,'fbhe_3_3e_n':None,
-                 'fbhe_3_4c':None,'fbhe_3_4c_n':None,'fbhe_3_4d':None,'fbhe_3_4d_n':None,'fbhe_3_4e':None,'fbhe_3_4e_n':None,                 
-                 'fbhe_3_5c':None,'fbhe_3_5c_n':None,'fbhe_3_5d':None,'fbhe_3_5d_n':None,'fbhe_3_5e':None,'fbhe_3_5e_n':None,
-                 'fbhe_5_1c':None,'fbhe_5_1c_n':None,'fbhe_5_1d':None,'fbhe_5_1d_n':None,'fbhe_5_1e':None,'fbhe_5_1e_n':None,
-                 'fbhe_5_2c':None,'fbhe_5_2c_n':None,'fbhe_5_2d':None,'fbhe_5_2d_n':None,'fbhe_5_2e':None,'fbhe_5_2e_n':None,
-                 'fbhe_5_3c':None,'fbhe_5_3c_n':None,'fbhe_5_3d':None,'fbhe_5_3d_n':None,'fbhe_5_3e':None,'fbhe_5_3e_n':None,
-                 'fbhe_5_4c':None,'fbhe_5_4c_n':None,'fbhe_5_4d':None,'fbhe_5_4d_n':None,'fbhe_5_4e':None,'fbhe_5_4e_n':None,                 
-                 'fbhe_5_5c':None,'fbhe_5_5c_n':None,'fbhe_5_5d':None,'fbhe_5_5d_n':None,'fbhe_5_5e':None,'fbhe_5_5e_n':None               
+                 'fbhe_1_1c':None,'fbhe_1_1c_n':None,'fbhe_1_1c_ea':None,'fbhe_1_1d':None,'fbhe_1_1d_n':None,'fbhe_1_1d_ea':None,'fbhe_1_1e':None,'fbhe_1_1e_n':None,'fbhe_1_1e_ea':None,
+                 'fbhe_1_2c':None,'fbhe_1_2c_n':None,'fbhe_1_2c_ea':None,'fbhe_1_2d':None,'fbhe_1_2d_n':None,'fbhe_1_2d_ea':None,'fbhe_1_2e':None,'fbhe_1_2e_n':None,'fbhe_1_2e_ea':None,
+                 'fbhe_1_3c':None,'fbhe_1_3c_n':None,'fbhe_1_3c_ea':None,'fbhe_1_3d':None,'fbhe_1_3d_n':None,'fbhe_1_3d_ea':None,'fbhe_1_3e':None,'fbhe_1_3e_n':None,'fbhe_1_3e_ea':None,
+                 'fbhe_1_4c':None,'fbhe_1_4c_n':None,'fbhe_1_4c_ea':None,'fbhe_1_4d':None,'fbhe_1_4d_n':None,'fbhe_1_4d_ea':None,'fbhe_1_4e':None,'fbhe_1_4e_n':None,'fbhe_1_4e_ea':None,
+                 'fbhe_1_5c':None,'fbhe_1_5c_n':None,'fbhe_1_5c_ea':None,'fbhe_1_5d':None,'fbhe_1_5d_n':None,'fbhe_1_5d_ea':None,'fbhe_1_5e':None,'fbhe_1_5e_n':None,'fbhe_1_5e_ea':None,
+                 'fbhe_3_1c':None,'fbhe_3_1c_n':None,'fbhe_3_1c_ea':None,'fbhe_3_1d':None,'fbhe_3_1d_n':None,'fbhe_3_1d_ea':None,'fbhe_3_1e':None,'fbhe_3_1e_n':None,'fbhe_3_1e_ea':None,
+                 'fbhe_3_2c':None,'fbhe_3_2c_n':None,'fbhe_3_2c_ea':None,'fbhe_3_2d':None,'fbhe_3_2d_n':None,'fbhe_3_2d_ea':None,'fbhe_3_2e':None,'fbhe_3_2e_n':None,'fbhe_3_2e_ea':None,
+                 'fbhe_3_3c':None,'fbhe_3_3c_n':None,'fbhe_3_3c_ea':None,'fbhe_3_3d':None,'fbhe_3_3d_n':None,'fbhe_3_3d_ea':None,'fbhe_3_3e':None,'fbhe_3_3e_n':None,'fbhe_3_3e_ea':None,
+                 'fbhe_3_4c':None,'fbhe_3_4c_n':None,'fbhe_3_4c_ea':None,'fbhe_3_4d':None,'fbhe_3_4d_n':None,'fbhe_3_4d_ea':None,'fbhe_3_4e':None,'fbhe_3_4e_n':None,'fbhe_3_4e_ea':None,
+                 'fbhe_3_5c':None,'fbhe_3_5c_n':None,'fbhe_3_5c_ea':None,'fbhe_3_5d':None,'fbhe_3_5d_n':None,'fbhe_3_5d_ea':None,'fbhe_3_5e':None,'fbhe_3_5e_n':None,'fbhe_3_5e_ea':None,
+                 'fbhe_5_1c':None,'fbhe_5_1c_n':None,'fbhe_5_1c_ea':None,'fbhe_5_1d':None,'fbhe_5_1d_n':None,'fbhe_5_1d_ea':None,'fbhe_5_1e':None,'fbhe_5_1e_n':None,'fbhe_5_1e_ea':None,
+                 'fbhe_5_2c':None,'fbhe_5_2c_n':None,'fbhe_5_2c_ea':None,'fbhe_5_2d':None,'fbhe_5_2d_n':None,'fbhe_5_2d_ea':None,'fbhe_5_2e':None,'fbhe_5_2e_n':None,'fbhe_5_2e_ea':None,
+                 'fbhe_5_3c':None,'fbhe_5_3c_n':None,'fbhe_5_3c_ea':None,'fbhe_5_3d':None,'fbhe_5_3d_n':None,'fbhe_5_3d_ea':None,'fbhe_5_3e':None,'fbhe_5_3e_n':None,'fbhe_5_3e_ea':None,
+                 'fbhe_5_4c':None,'fbhe_5_4c_n':None,'fbhe_5_4c_ea':None,'fbhe_5_4d':None,'fbhe_5_4d_n':None,'fbhe_5_4d_ea':None,'fbhe_5_4e':None,'fbhe_5_4e_n':None,'fbhe_5_4e_ea':None,
+                 'fbhe_5_5c':None,'fbhe_5_5c_n':None,'fbhe_5_5c_ea':None,'fbhe_5_5d':None,'fbhe_5_5d_n':None,'fbhe_5_5d_ea':None,'fbhe_5_5e':None,'fbhe_5_5e_n':None,'fbhe_5_5e_ea':None
                 }
   #print(f"Player Dict:{player_dict}")
   player_df = pd.DataFrame.from_records(player_dict)
@@ -171,7 +171,12 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                        'fbhe_5_2c_mean':[float()],'fbhe_5_2c_stdev':[float()],'fbhe_5_2d_mean':[float()],'fbhe_5_2d_stdev':[float()],'fbhe_5_2e_mean':[float()],'fbhe_5_2e_stdev':[float()],
                        'fbhe_5_3c_mean':[float()],'fbhe_5_3c_stdev':[float()],'fbhe_5_3d_mean':[float()],'fbhe_5_3d_stdev':[float()],'fbhe_5_3e_mean':[float()],'fbhe_5_3e_stdev':[float()],
                        'fbhe_5_4c_mean':[float()],'fbhe_5_4c_stdev':[float()],'fbhe_5_4d_mean':[float()],'fbhe_5_4d_stdev':[float()],'fbhe_5_4e_mean':[float()],'fbhe_5_4e_stdev':[float()],
-                       'fbhe_5_5c_mean':[float()],'fbhe_5_5c_stdev':[float()],'fbhe_5_5d_mean':[float()],'fbhe_5_5d_stdev':[float()],'fbhe_5_5e_mean':[float()],'fbhe_5_5e_stdev':[float()]                      
+                       'fbhe_5_5c_mean':[float()],'fbhe_5_5c_stdev':[float()],'fbhe_5_5d_mean':[float()],'fbhe_5_5d_stdev':[float()],'fbhe_5_5e_mean':[float()],'fbhe_5_5e_stdev':[float()],
+                       'fbhe_1_1c_ea_mean':[float()],'fbhe_1_1c_ea_stdev':[float()],'fbhe_1_1d_ea_mean':[float()],'fbhe_1_1d_ea_stdev':[float()],'fbhe_1_1e_ea_mean':[float()],'fbhe_1_1e_ea_stdev':[float()],
+                       'fbhe_1_2c_ea_mean':[float()],'fbhe_1_2c_ea_stdev':[float()],'fbhe_1_2d_ea_mean':[float()],'fbhe_1_2d_ea_stdev':[float()],'fbhe_1_2e_ea_mean':[float()],'fbhe_1_2e_ea_stdev':[float()],
+                       'fbhe_1_3c_ea_mean':[float()],'fbhe_1_3c_ea_stdev':[float()],'fbhe_1_3d_ea_mean':[float()],'fbhe_1_3d_ea_stdev':[float()],'fbhe_1_3e_ea_mean':[float()],'fbhe_1_3e_ea_stdev':[float()],
+                       'fbhe_1_4c_ea_mean':[float()],'fbhe_1_4c_ea_stdev':[float()],'fbhe_1_4d_ea_mean':[float()],'fbhe_1_4d_ea_stdev':[float()],'fbhe_1_4e_ea_mean':[float()],'fbhe_1_4e_ea_stdev':[float()],
+                       'fbhe_1_5c_ea_mean':[float()],'fbhe_1_5c_ea_stdev':[float()],'fbhe_1_5d_ea_mean':[float()],'fbhe_1_5d_ea_stdev':[float()],'fbhe_1_5e_ea_mean':[float()],'fbhe_1_5e_ea_stdev':[float()],
                       }
   player_stats_df =  pd.DataFrame.from_records(player_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")

@@ -63,9 +63,10 @@ def plot_lines_on_court( ppr_df, action, plt_num):
     err = 'FBE'
   else:
     print(f"plot_lines_on_court: Invalid action passed : {action}")
-    
+
   # Plot it in the normal Matplotlib way
-  plt.figure(plt_num, figsize=(10,20))
+  fig, ax = plt.subplots(figsize=(10,20)) # cretae a figure
+  #plt.figure(plt_num, figsize=(10,20))
   
   for index, ppr_r in ppr_df.iterrows():
     line_color = 'blue'
@@ -94,16 +95,15 @@ def plot_lines_on_court( ppr_df, action, plt_num):
     else:
       dx = 0
       dy = 0
-    #print(f"plot_lines_on_court: x,y: {ppr_r[x2]}, {ppr_r[y2]}, Distance: {distance}, dx, dy: {dx}, {dy}")
-
-    #print(f"Plotting points: x1,x2:{ppr_r[x1], ppr_r[x2]}, y1,y2:{ppr_r[y1], ppr_r[y2]}, outcome:{ppr_r['point_outcome']}, line color: {line_color}, line style {l_style}, marker = {m_style} ")
-    plt.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, linestyle=l_style, linewidth = l_width, markevery = m_every )
+    print(f"plot_lines_on_court: x,y: {ppr_r[x2]}, {ppr_r[y2]}, Distance: {distance}, dx, dy: {dx}, {dy}")
+    print(f"Plotting points: x1,x2:{ppr_r[x1], ppr_r[x2]}, y1,y2:{ppr_r[y1], ppr_r[y2]}, outcome:{ppr_r['point_outcome']}, line color: {line_color}, line style {l_style}, marker = {m_style} ")
+    ax.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, linestyle=l_style, linewidth = l_width, markevery = m_every )
     if (ppr_r[x1] and ppr_r[y1]):
-      plt.scatter(ppr_r[x1],ppr_r[y1], s = 50, c=line_color) # marker only at first point
+      ax.scatter(ppr_r[x1],ppr_r[y1], s = 50, c=line_color) # marker only at first point
     if (ppr_r[x2] and ppr_r[y2]):
-      plt.arrow(ppr_r[x2], ppr_r[y2], dx, dy, shape='full', lw=2, length_includes_head=True, head_width=.10, head_length = .25, color = line_color)
+      ax.arrow(ppr_r[x2], ppr_r[y2], dx, dy, shape='full', lw=2, length_includes_head=True, head_width=.10, head_length = .25, color = line_color)
 
-  plot_court_background()
+  plot_court_background(fig,ax)
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()
 
@@ -112,13 +112,14 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
   #
   # line drawing of the set location(s) as dot
   #
-  plt.figure(plt_num, figsize=(10,20))
+  fig, ax = plt.subplots(figsize=(10,20))
+  #plt.figure(plt_num, figsize=(10,20))
   x = ppr_x.dropna().values
   y = ppr_y.dropna().values
   #print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
   point_size = np.full(len(x),75) # numpy array of size len(x), filled with character 2
   #print(f"plot_points_on_the_court: size array: {point_size}")
-  plt.scatter( x, y, s = point_size , url = 'http://app.balltime.com/video/'+video_id+'?actionIds='+str(action_num))  
+  ax.scatter( x, y, s = point_size , url = 'http://app.balltime.com/video/'+video_id+'?actionIds='+str(action_num))  
 
   if plot_ellispe:
     # calcualte elispe information
@@ -129,24 +130,24 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
     el_mean, el_width, el_height, el_angle =  calculate_standard_deviation_ellipse(el_points, confidence=1.0)
     print(f" Ellispe details: mean: {el_mean[0]}, {el_mean[1]} width: {el_width}, height : {el_height}, angle: {el_angle}")
     xy_center = (el_mean[0],el_mean[1])
-    ellipse = patches.Ellipse(xy = xy_center, width = el_width, height = el_height, angle = el_angle, edgecolor='r', facecolor='none', linewidth=2, label="1 Std Dev Ellipse")
-    plt.add_patch(ellipse)
+    ellipse = patches.Ellipse(xy = xy_center, width = el_width, height = el_height, angle = el_angle, edgecolor='b', facecolor='blue', linewidth=2, label="1 Std Dev Ellipse", alpha=0.05)
+    ax.add_patch(ellipse)
     
-  plot_court_background()
+  plot_court_background(fig,ax)
   
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()
 
-def plot_court_background():
+def plot_court_background(fig,ax):
   plt.xlim( -1, 9)
   plt.ylim( -9, 9)
   xpts = np.array([0,8,8,0,0,0])
   ypts = np.array([-8,-8,8,8,-8,0])
-  plt.plot( xpts, ypts, c = 'black', linewidth = '3')
+  ax.plot( xpts, ypts, c = 'black', linewidth = '3')
   xpts = np.array([-1,9])
   ypts = np.array([0,0])
-  plt.plot( xpts, ypts, c = 'black', linewidth = '9')
-  plt.grid()
+  ax.plot( xpts, ypts, c = 'black', linewidth = '9')
+  ax.grid()
   return True
 
 def plot_attack_zones( ppr_df, plt_num):

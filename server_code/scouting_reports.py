@@ -47,10 +47,14 @@ def scout_srv_strategy(disp_league,
 
   # lets find the serve strategy Text:
   srv_2_net_txt = ['','Line','Body(l)','Seam','Body(r)','Line']
-  if (srv_to_1[0]) or (srv_to_1[1]) or (srv_to_1[2]) or (srv_to_5[0]) or (srv_to_5[1]) or (srv_to_5[2]):
-    srv_line = True 
+  if (srv_to_1[0]) or (srv_to_1[1]) or (srv_to_1[2]) :
+    srv_line_l = True 
   else:
-    srv_line = False
+    srv_line_l = False
+  if (srv_to_5[0]) or (srv_to_5[1]) or (srv_to_5[2]):
+    srv_line_r = True
+  else:
+    srv_line_r = False
   if (srv_to_2[0]) or (srv_to_2[1]) or (srv_to_2[2]):
     srv_body_l = True 
   else:
@@ -59,7 +63,6 @@ def scout_srv_strategy(disp_league,
     srv_body_r = True
   else:
     srv_body_r = False
-    
   if (srv_to_3[0]) or (srv_to_3[1]) or (srv_to_3[2]):
     srv_seam = True 
   else:
@@ -70,47 +73,55 @@ def scout_srv_strategy(disp_league,
   srv_short = True if (srv_to_1[2]) or (srv_to_2[2]) or (srv_to_3[2]) or (srv_to_4[2]) or (srv_to_5[2]) else False
 
   srv_to_text = ''
-  if srv_short:
-    srv_to_text = 'Short:'
-    if srv_line:
-      srv_to_text = srv_to_text + ' Line,'
-    if srv_body_l:
-      srv_to_text = srv_to_text + ' Body(l),'
-    if srv_body_r:
-      srv_to_text = srv_to_text + ' Body(r),'
-    if srv_seam:
-      srv_to_text = srv_to_text + ' Seam,'
-      
-  if srv_mid:
-    srv_to_text = srv_to_text + ' Mid:'
-    if srv_line:
-      srv_to_text = srv_to_text + ' Line,'
-    if srv_body_l:
-      srv_to_text = srv_to_text + ' Body(l),'
-    if srv_body_r:
-      srv_to_text = srv_to_text + ' Body(r),'
-    if srv_seam:
-      srv_to_text = srv_to_text + ' Seam,'
-      
-  if srv_deep:
-    srv_to_text = srv_to_text + ' Deep:'
-    if srv_line:
-      srv_to_text = srv_to_text + ' Line,'
-    if srv_body_l:
-      srv_to_text = srv_to_text + ' Body(l),'
-    if srv_body_r:
-      srv_to_text = srv_to_text + ' Body(r),'
-    if srv_seam:
-      srv_to_text = srv_to_text + ' Seam'
+  if srv_line_r:
+    srv_to_text = 'Line(r):'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
+  if srv_body_r:
+    srv_to_text = srv_to_text + ' Body(r):'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
+  if srv_seam:
+    srv_to_text = srv_to_text + ' Seam:'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
+  if srv_body_l:
+    srv_to_text = srv_to_text + ' Body(l):'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
+  if srv_line_l:
+    srv_to_text = srv_to_text + ' Line(l):'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
       
   srv_fr_text = ''
   srv_fr_txt = ['Line (left)','Middle','Line (right)'] 
   if srv_fr[0]:
     srv_fr_text = 'Line (Left)'
   if srv_fr[1]:
-    srv_fr_text = srv_fr_text + ' & Middle' if len(srv_fr_text) == 0 else 'Middle'
+    srv_fr_text = srv_fr_text + ' & Middle' if len(srv_fr_text) != 0 else 'Middle'
   if srv_fr[2]:
-    srv_fr_text = srv_fr_text + ' & Line (Right)' if len(srv_fr_text) == 0 else 'Line (Right)'
+    srv_fr_text = srv_fr_text + ' & Line (Right)' if len(srv_fr_text) != 0 else 'Line (Right)'
   #print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
 
   srv_strategy_title = 'Strategy when Serving to '+disp_player+' : Serving from '+srv_fr_text+' to '+srv_to_text
