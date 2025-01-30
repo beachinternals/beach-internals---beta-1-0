@@ -178,7 +178,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
   for pair_r in app_tables.master_pair.search(league=c_league, gender=c_gender, year=c_year):
     # items in pair_r: pair_r['pair'], pair_r['player1'], pair_r['player2']
 
-    print(f"pair: {pair_r['pair']}, Player 1: {pair_r['player1']}, Player 2: {pair_r['player2']}, Team: {pair_r['team']}")
+    #print(f"pair: {pair_r['pair']}, Player 1: {pair_r['player1']}, Player 2: {pair_r['player2']}, Team: {pair_r['team']}")
 
     # now limit the ppdf_df to only our pairs
     tmp_df = pair_filter( ppr_df, pair_r['pair'])
@@ -292,7 +292,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
 
       # ----------------- calculate error density ----------
       ed_vector = calc_error_den( tmp_df, disp_player )
-      print(f"Ed Vector: {ed_vector}")
+      #print(f"Ed Vector: {ed_vector}")
       pair_df.at[i,'err_den'] = float(ed_vector[0][:-1])
 
       #-------------------- Serving Effectiviness, fbhe on all, zone 1, 3, 5
@@ -450,7 +450,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
               ellipse_width = el_width
               ellipse_height = el_height
               # not store the ellipse area
-              print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
+              #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
               pair_df.at[i,fbhe_var_ea] = math.pi*(ellipse_width/2)*(ellipse_height/2)
             
             
