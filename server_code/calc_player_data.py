@@ -14,6 +14,7 @@ import numpy as np
 from tabulate import tabulate
 from server_functions import *
 import datetime
+from plot_functions import *
 
 # ########## Calculate league summaries, stored as player data
 #
@@ -429,15 +430,16 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
         for srv_to_depth in ['c','d','e']:
           fbhe_var = 'fbhe_'+str(int(fr))+'_'+str(srv_to_net)+srv_to_depth
           fbhe_var_n = fbhe_var + '_n'
+          fbhe_var_ea = fbhe_var + '_ea'
           #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
           # calcualte fbhe
-          print(f"Filtering ppr_df: Pass Player ={p_list[i]}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
+          #print(f"Filtering ppr_df: Pass Player ={p_list[i]}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
           tmp_df = ppr_df[ (ppr_df['pass_player'] == p_list[i]) & 
                                       (ppr_df['serve_src_zone_net'] == fr ) & 
                                       (ppr_df['pass_src_zone_net'] == srv_to_net ) & 
                                       (ppr_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ]
           fbhe_vector = fbhe( tmp_df, p_list[i], 'pass',  False)
-          print(f"Attempts = {fbhe_vector[3]}, Min Att: {min_att}")
+          #print(f"Attempts = {fbhe_vector[3]}, Min Att: {min_att}")
           if fbhe_vector[3] >= min_att:
             # save this value(s), fbhe and attempts
             player_df.at[i,fbhe_var] = fbhe_vector[0]
@@ -446,10 +448,20 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
             #player_df.at[i,fbhe_var] = None
             #player_df.at[i,fbhe_var_n] = None
           # now we need to calculate the area of the passes in this serve to/from
-          el_mean, el_ = calculate_standard_deviation_ellipse([tmp_df['pass_dest_x'],tmp_df['pass_dest_y']], confidence=1.0):
-          
-            
-            
+          el_points = pd.concat( [tmp_df['pass_dest_x'],tmp_df['pass_dest_y']], axis = 1)
+          #print(f" el_points {el_points}")
+          el_points = el_points.dropna().values
+          if len(el_points) > min_att:  # must have at least 5 points to calculate the ellipse
+            el_mean, el_width, el_height, el_angle  = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
+            #el_area = calculate_ellipse_area(el_width, el_height)
+            #ellipse_area = math.pi*(el_width/2)*(el_height/2)
+            ellipse_width = el_width
+            ellipse_height = el_height
+            # not store the ellipse area
+            print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
+            player_df.at[i,fbhe_var_ea] = math.pi*(ellipse_width/2)*(ellipse_height/2)
+
+                 
 
   ########## end of loop over players
   #print(f"Player Df when done:{player_df}")
@@ -528,12 +540,17 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     for srv_to_net in [1,2,3,4,5]:
       for srv_to_depth in ['c','d','e']:
         fbhe_var= 'fbhe_'+str(int(fr))+'_'+str(srv_to_net)+srv_to_depth
+        fbhe_var_ea = fbhe_var + '_ea'
         fbhe_var_mean = fbhe_var + '_mean'
+        fbhe_var_ea_mean = fbhe_var_ea + '_mean'
         fbhe_var_sd = fbhe_var+'_stdev'
+        fbhe_var_ea_sd = fbhe_var_ea + '_stdev'
         #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
         # calcualte mean and stdev
         player_stats_df.at[0,fbhe_var_mean] = player_df[fbhe_var].mean(skipna=True)
-        player_stats_df.at[0,fbhe_var_sd] = player_df[fbhe_var].std(skipna=True)   
+        player_stats_df.at[0,fbhe_var_sd] = player_df[fbhe_var].std(skipna=True)  
+        player_stats_df.at[0,fbhe_var_ea_mean] = player_df[fbhe_var_ea].mean(skipna=True)
+        player_stats_df.at[0,fbhe_var_ea_sd] = player_df[fbhe_var_ea].std(skipna=True)   
 
         
   # now lets store our player_data file back as a csv file in the database

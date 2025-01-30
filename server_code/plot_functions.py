@@ -264,23 +264,8 @@ def calculate_standard_deviation_ellipse(points, confidence=1.0):
 
    return mean, width, height, angle
 
-"""
-# Example usage
-points = np.random.multivariate_normal([0, 0], [[3, 1], [1, 2]], size=500)
 
-mean, width, height, angle = calculate_standard_deviation_ellipse(points)
 
-# Plot the points and the ellipse
-fig, ax = plt.subplots()
-ax.scatter(points[:, 0], points[:, 1], s=5, label="Data Points")
-ellipse = Ellipse(mean, width, height, angle, edgecolor='r', facecolor='none', linewidth=2, label="1 Std Dev Ellipse")
-ax.add_patch(ellipse)
-
-ax.set_aspect('equal', adjustable='datalim')
-ax.legend()
-plt.show()
-"""
-  
 def calculate_ellipse_area(width, height):
    """
    Calculate the area of an ellipse.
