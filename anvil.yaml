@@ -381,6 +381,9 @@ db_schema:
     - admin_ui: {order: 13, width: 200}
       name: srv_to
       type: string
+    - admin_ui: {order: 14, width: 200}
+      name: copy_beachinternals
+      type: bool
     server: full
     title: rpt_mgr
   strength_weakness_criteria:

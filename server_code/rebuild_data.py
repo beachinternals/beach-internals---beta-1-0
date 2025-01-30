@@ -458,7 +458,8 @@ def load_pair_data_table():
                                         year = lrow['year'],
                                         player1 = p[2],
                                         player2 = p[3],
-                                        pair = p[1]
+                                        pair = p[1],
+                                        team = pair_team
                                         )
 
     else:

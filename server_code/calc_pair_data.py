@@ -425,38 +425,30 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
             fbhe_var_ea = fbhe_var + '_ea'
             #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
             # calcualte fbhe
-            #print(f"Filtering ppr_df: Pass Player ={disp_player}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
-            tmp1_df = ppr_df[ (ppr_df['pass_player'] == disp_player) & 
-                                      (ppr_df['serve_src_zone_net'] == fr ) & 
-                                      (ppr_df['pass_src_zone_net'] == srv_to_net ) & 
-                                      (ppr_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ]
+            print(f"Filtering ppr_df: Pass Player ={disp_player}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
+            tmp1_df = tmp_df[ (tmp_df['pass_player'] == disp_player) & 
+                                      (tmp_df['serve_src_zone_net'] == fr ) & 
+                                      (tmp_df['pass_src_zone_net'] == srv_to_net ) & 
+                                      (tmp_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ]
             fbhe_vector = fbhe( tmp1_df, disp_player, 'pass',  False) 
             #print(f"Attempts = {fbhe_vector[3]}, Min Att: {min_att}")
             if fbhe_vector[3] >= min_att:
               # save this value(s), fbhe and attempts
               pair_df.at[i,fbhe_var] = fbhe_vector[0]
               pair_df.at[i,fbhe_var_n] = fbhe_vector[3]
-            #else:
-              #pair_df.at[i,fbhe_var] = None
-              #pair_df.at[i,fbhe_var_n] = None
-              # now we need to calculate the area of the passes in this serve to/from
+
+            # now we need to calculate the area of the passes in this serve to/from
             el_points = pd.concat( [tmp1_df['pass_dest_x'],tmp1_df['pass_dest_y']], axis = 1)
-            #print(f" el_points {el_points}")
             el_points = el_points.dropna().values
             if len(el_points) > min_att:  # must have at least 5 points to calculate the ellipse
               el_mean, el_width, el_height, el_angle  = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
-              #el_area = calculate_ellipse_area(el_width, el_height)
-              #ellipse_area = math.pi*(el_width/2)*(el_height/2)
-              ellipse_width = el_width
-              ellipse_height = el_height
-              # not store the ellipse area
               #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
-              pair_df.at[i,fbhe_var_ea] = math.pi*(ellipse_width/2)*(ellipse_height/2)
+              pair_df.at[i,fbhe_var_ea] = math.pi*(el_width/2)*(el_height/2)
             
             
 
   ########## end of loop over players
-  #print(f"Player Df when done:{player_df}")
+  print(f"Player Df when done:{player_df}")
 
   # Now store and calulate the statistical values
   #------------------------------------------------
