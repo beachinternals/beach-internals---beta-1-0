@@ -15,6 +15,7 @@ from tabulate import tabulate
 from server_functions import *
 import datetime
 from pair_functions import *
+from plot_functions import *
 
 # ########## Calculate league summaries, stored as player data
 #
@@ -100,22 +101,22 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
                  'srv_n':None,'srv_fbhe':None,'srv_ace_per':None,'srv_err_per':None,
                  'srv1_n':None,'srv1_fbhe':None,'srv1_ace_per':None,'srv1_err_per':None,
                  'srv3_n':None,'srv3_fbhe':None,'srv3_ace_per':None,'srv3_err_per':None,
-                 'srv5_n':None,'srv5_fbhe':None,'srv5_ace_per':None,'srv5_err_per':None ,
-                 'fbhe_1_1c':None,'fbhe_1_1c_n':None,'fbhe_1_1d':None,'fbhe_1_1d_n':None,'fbhe_1_1e':None,'fbhe_1_1e_n':None,
-                 'fbhe_1_2c':None,'fbhe_1_2c_n':None,'fbhe_1_2d':None,'fbhe_1_2d_n':None,'fbhe_1_2e':None,'fbhe_1_2e_n':None,
-                 'fbhe_1_3c':None,'fbhe_1_3c_n':None,'fbhe_1_3d':None,'fbhe_1_3d_n':None,'fbhe_1_3e':None,'fbhe_1_3e_n':None,
-                 'fbhe_1_4c':None,'fbhe_1_4c_n':None,'fbhe_1_4d':None,'fbhe_1_4d_n':None,'fbhe_1_4e':None,'fbhe_1_4e_n':None,                 
-                 'fbhe_1_5c':None,'fbhe_1_5c_n':None,'fbhe_1_5d':None,'fbhe_1_5d_n':None,'fbhe_1_5e':None,'fbhe_1_5e_n':None,
-                 'fbhe_3_1c':None,'fbhe_3_1c_n':None,'fbhe_3_1d':None,'fbhe_3_1d_n':None,'fbhe_3_1e':None,'fbhe_3_1e_n':None,
-                 'fbhe_3_2c':None,'fbhe_3_2c_n':None,'fbhe_3_2d':None,'fbhe_3_2d_n':None,'fbhe_3_2e':None,'fbhe_3_2e_n':None,
-                 'fbhe_3_3c':None,'fbhe_3_3c_n':None,'fbhe_3_3d':None,'fbhe_3_3d_n':None,'fbhe_3_3e':None,'fbhe_3_3e_n':None,
-                 'fbhe_3_4c':None,'fbhe_3_4c_n':None,'fbhe_3_4d':None,'fbhe_3_4d_n':None,'fbhe_3_4e':None,'fbhe_3_4e_n':None,                 
-                 'fbhe_3_5c':None,'fbhe_3_5c_n':None,'fbhe_3_5d':None,'fbhe_3_5d_n':None,'fbhe_3_5e':None,'fbhe_3_5e_n':None,
-                 'fbhe_5_1c':None,'fbhe_5_1c_n':None,'fbhe_5_1d':None,'fbhe_5_1d_n':None,'fbhe_5_1e':None,'fbhe_5_1e_n':None,
-                 'fbhe_5_2c':None,'fbhe_5_2c_n':None,'fbhe_5_2d':None,'fbhe_5_2d_n':None,'fbhe_5_2e':None,'fbhe_5_2e_n':None,
-                 'fbhe_5_3c':None,'fbhe_5_3c_n':None,'fbhe_5_3d':None,'fbhe_5_3d_n':None,'fbhe_5_3e':None,'fbhe_5_3e_n':None,
-                 'fbhe_5_4c':None,'fbhe_5_4c_n':None,'fbhe_5_4d':None,'fbhe_5_4d_n':None,'fbhe_5_4e':None,'fbhe_5_4e_n':None,                 
-                 'fbhe_5_5c':None,'fbhe_5_5c_n':None,'fbhe_5_5d':None,'fbhe_5_5d_n':None,'fbhe_5_5e':None,'fbhe_5_5e_n':None               
+                 'srv5_n':None,'srv5_fbhe':None,'srv5_ace_per':None,'srv5_err_per':None ,     
+                 'fbhe_1_1c':None,'fbhe_1_1c_n':None,'fbhe_1_1c_ea':None,'fbhe_1_1d':None,'fbhe_1_1d_n':None,'fbhe_1_1d_ea':None,'fbhe_1_1e':None,'fbhe_1_1e_n':None,'fbhe_1_1e_ea':None,
+                 'fbhe_1_2c':None,'fbhe_1_2c_n':None,'fbhe_1_2c_ea':None,'fbhe_1_2d':None,'fbhe_1_2d_n':None,'fbhe_1_2d_ea':None,'fbhe_1_2e':None,'fbhe_1_2e_n':None,'fbhe_1_2e_ea':None,
+                 'fbhe_1_3c':None,'fbhe_1_3c_n':None,'fbhe_1_3c_ea':None,'fbhe_1_3d':None,'fbhe_1_3d_n':None,'fbhe_1_3d_ea':None,'fbhe_1_3e':None,'fbhe_1_3e_n':None,'fbhe_1_3e_ea':None,
+                 'fbhe_1_4c':None,'fbhe_1_4c_n':None,'fbhe_1_4c_ea':None,'fbhe_1_4d':None,'fbhe_1_4d_n':None,'fbhe_1_4d_ea':None,'fbhe_1_4e':None,'fbhe_1_4e_n':None,'fbhe_1_4e_ea':None,
+                 'fbhe_1_5c':None,'fbhe_1_5c_n':None,'fbhe_1_5c_ea':None,'fbhe_1_5d':None,'fbhe_1_5d_n':None,'fbhe_1_5d_ea':None,'fbhe_1_5e':None,'fbhe_1_5e_n':None,'fbhe_1_5e_ea':None,
+                 'fbhe_3_1c':None,'fbhe_3_1c_n':None,'fbhe_3_1c_ea':None,'fbhe_3_1d':None,'fbhe_3_1d_n':None,'fbhe_3_1d_ea':None,'fbhe_3_1e':None,'fbhe_3_1e_n':None,'fbhe_3_1e_ea':None,
+                 'fbhe_3_2c':None,'fbhe_3_2c_n':None,'fbhe_3_2c_ea':None,'fbhe_3_2d':None,'fbhe_3_2d_n':None,'fbhe_3_2d_ea':None,'fbhe_3_2e':None,'fbhe_3_2e_n':None,'fbhe_3_2e_ea':None,
+                 'fbhe_3_3c':None,'fbhe_3_3c_n':None,'fbhe_3_3c_ea':None,'fbhe_3_3d':None,'fbhe_3_3d_n':None,'fbhe_3_3d_ea':None,'fbhe_3_3e':None,'fbhe_3_3e_n':None,'fbhe_3_3e_ea':None,
+                 'fbhe_3_4c':None,'fbhe_3_4c_n':None,'fbhe_3_4c_ea':None,'fbhe_3_4d':None,'fbhe_3_4d_n':None,'fbhe_3_4d_ea':None,'fbhe_3_4e':None,'fbhe_3_4e_n':None,'fbhe_3_4e_ea':None,
+                 'fbhe_3_5c':None,'fbhe_3_5c_n':None,'fbhe_3_5c_ea':None,'fbhe_3_5d':None,'fbhe_3_5d_n':None,'fbhe_3_5d_ea':None,'fbhe_3_5e':None,'fbhe_3_5e_n':None,'fbhe_3_5e_ea':None,
+                 'fbhe_5_1c':None,'fbhe_5_1c_n':None,'fbhe_5_1c_ea':None,'fbhe_5_1d':None,'fbhe_5_1d_n':None,'fbhe_5_1d_ea':None,'fbhe_5_1e':None,'fbhe_5_1e_n':None,'fbhe_5_1e_ea':None,
+                 'fbhe_5_2c':None,'fbhe_5_2c_n':None,'fbhe_5_2c_ea':None,'fbhe_5_2d':None,'fbhe_5_2d_n':None,'fbhe_5_2d_ea':None,'fbhe_5_2e':None,'fbhe_5_2e_n':None,'fbhe_5_2e_ea':None,
+                 'fbhe_5_3c':None,'fbhe_5_3c_n':None,'fbhe_5_3c_ea':None,'fbhe_5_3d':None,'fbhe_5_3d_n':None,'fbhe_5_3d_ea':None,'fbhe_5_3e':None,'fbhe_5_3e_n':None,'fbhe_5_3e_ea':None,
+                 'fbhe_5_4c':None,'fbhe_5_4c_n':None,'fbhe_5_4c_ea':None,'fbhe_5_4d':None,'fbhe_5_4d_n':None,'fbhe_5_4d_ea':None,'fbhe_5_4e':None,'fbhe_5_4e_n':None,'fbhe_5_4e_ea':None,
+                 'fbhe_5_5c':None,'fbhe_5_5c_n':None,'fbhe_5_5c_ea':None,'fbhe_5_5d':None,'fbhe_5_5d_n':None,'fbhe_5_5d_ea':None,'fbhe_5_5e':None,'fbhe_5_5e_n':None,'fbhe_5_5e_ea':None               
                 }
   #print(f"Pair Dict:{pair_dict}")
   pair_df = pd.DataFrame.from_records(pair_dict)
@@ -149,7 +150,22 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
                        'fbhe_5_2c_mean':[float()],'fbhe_5_2c_stdev':[float()],'fbhe_5_2d_mean':[float()],'fbhe_5_2d_stdev':[float()],'fbhe_5_2e_mean':[float()],'fbhe_5_2e_stdev':[float()],
                        'fbhe_5_3c_mean':[float()],'fbhe_5_3c_stdev':[float()],'fbhe_5_3d_mean':[float()],'fbhe_5_3d_stdev':[float()],'fbhe_5_3e_mean':[float()],'fbhe_5_3e_stdev':[float()],
                        'fbhe_5_4c_mean':[float()],'fbhe_5_4c_stdev':[float()],'fbhe_5_4d_mean':[float()],'fbhe_5_4d_stdev':[float()],'fbhe_5_4e_mean':[float()],'fbhe_5_4e_stdev':[float()],
-                       'fbhe_5_5c_mean':[float()],'fbhe_5_5c_stdev':[float()],'fbhe_5_5d_mean':[float()],'fbhe_5_5d_stdev':[float()],'fbhe_5_5e_mean':[float()],'fbhe_5_5e_stdev':[float()]                      
+                       'fbhe_5_5c_mean':[float()],'fbhe_5_5c_stdev':[float()],'fbhe_5_5d_mean':[float()],'fbhe_5_5d_stdev':[float()],'fbhe_5_5e_mean':[float()],'fbhe_5_5e_stdev':[float()],                      
+                       'fbhe_1_1c_ea_mean':[float()],'fbhe_1_1c_ea_stdev':[float()],'fbhe_1_1d_ea_mean':[float()],'fbhe_1_1d_ea_stdev':[float()],'fbhe_1_1e_ea_mean':[float()],'fbhe_1_1e_ea_stdev':[float()],
+                       'fbhe_1_2c_ea_mean':[float()],'fbhe_1_2c_ea_stdev':[float()],'fbhe_1_2d_ea_mean':[float()],'fbhe_1_2d_ea_stdev':[float()],'fbhe_1_2e_ea_mean':[float()],'fbhe_1_2e_ea_stdev':[float()],
+                       'fbhe_1_3c_ea_mean':[float()],'fbhe_1_3c_ea_stdev':[float()],'fbhe_1_3d_ea_mean':[float()],'fbhe_1_3d_ea_stdev':[float()],'fbhe_1_3e_ea_mean':[float()],'fbhe_1_3e_ea_stdev':[float()],
+                       'fbhe_1_4c_ea_mean':[float()],'fbhe_1_4c_ea_stdev':[float()],'fbhe_1_4d_ea_mean':[float()],'fbhe_1_4d_ea_stdev':[float()],'fbhe_1_4e_ea_mean':[float()],'fbhe_1_4e_ea_stdev':[float()],
+                       'fbhe_1_5c_ea_mean':[float()],'fbhe_1_5c_ea_stdev':[float()],'fbhe_1_5d_ea_mean':[float()],'fbhe_1_5d_ea_stdev':[float()],'fbhe_1_5e_ea_mean':[float()],'fbhe_1_5e_ea_stdev':[float()],
+                       'fbhe_3_1c_ea_mean':[float()],'fbhe_3_1c_ea_stdev':[float()],'fbhe_3_1d_ea_mean':[float()],'fbhe_3_1d_ea_stdev':[float()],'fbhe_3_1e_ea_mean':[float()],'fbhe_3_1e_ea_stdev':[float()],
+                       'fbhe_3_2c_ea_mean':[float()],'fbhe_3_2c_ea_stdev':[float()],'fbhe_3_2d_ea_mean':[float()],'fbhe_3_2d_ea_stdev':[float()],'fbhe_3_2e_ea_mean':[float()],'fbhe_3_2e_ea_stdev':[float()],
+                       'fbhe_3_3c_ea_mean':[float()],'fbhe_3_3c_ea_stdev':[float()],'fbhe_3_3d_ea_mean':[float()],'fbhe_3_3d_ea_stdev':[float()],'fbhe_3_3e_ea_mean':[float()],'fbhe_3_3e_ea_stdev':[float()],
+                       'fbhe_3_4c_ea_mean':[float()],'fbhe_3_4c_ea_stdev':[float()],'fbhe_3_4d_ea_mean':[float()],'fbhe_3_4d_ea_stdev':[float()],'fbhe_3_4e_ea_mean':[float()],'fbhe_3_4e_ea_stdev':[float()],
+                       'fbhe_3_5c_ea_mean':[float()],'fbhe_3_5c_ea_stdev':[float()],'fbhe_3_5d_ea_mean':[float()],'fbhe_3_5d_ea_stdev':[float()],'fbhe_3_5e_ea_mean':[float()],'fbhe_3_5e_ea_stdev':[float()],
+                       'fbhe_5_1c_ea_mean':[float()],'fbhe_5_1c_ea_stdev':[float()],'fbhe_5_1d_ea_mean':[float()],'fbhe_5_1d_ea_stdev':[float()],'fbhe_5_1e_ea_mean':[float()],'fbhe_5_1e_ea_stdev':[float()],
+                       'fbhe_5_2c_ea_mean':[float()],'fbhe_5_2c_ea_stdev':[float()],'fbhe_5_2d_ea_mean':[float()],'fbhe_5_2d_ea_stdev':[float()],'fbhe_5_2e_ea_mean':[float()],'fbhe_5_2e_ea_stdev':[float()],
+                       'fbhe_5_3c_ea_mean':[float()],'fbhe_5_3c_ea_stdev':[float()],'fbhe_5_3d_ea_mean':[float()],'fbhe_5_3d_ea_stdev':[float()],'fbhe_5_3e_ea_mean':[float()],'fbhe_5_3e_ea_stdev':[float()],
+                       'fbhe_5_4c_ea_mean':[float()],'fbhe_5_4c_ea_stdev':[float()],'fbhe_5_4d_ea_mean':[float()],'fbhe_5_4d_ea_stdev':[float()],'fbhe_5_4e_ea_mean':[float()],'fbhe_5_4e_ea_stdev':[float()],
+                       'fbhe_5_5c_ea_mean':[float()],'fbhe_5_5c_ea_stdev':[float()],'fbhe_5_5d_ea_mean':[float()],'fbhe_5_5d_ea_stdev':[float()],'fbhe_5_5e_ea_mean':[float()],'fbhe_5_5e_ea_stdev':[float()]
                       }
   pair_stats_df =  pd.DataFrame.from_records(pair_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")
@@ -276,6 +292,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
 
       # ----------------- calculate error density ----------
       ed_vector = calc_error_den( tmp_df, disp_player )
+      print(f"Ed Vector: {ed_vector}")
       pair_df.at[i,'err_den'] = float(ed_vector[0][:-1])
 
       #-------------------- Serving Effectiviness, fbhe on all, zone 1, 3, 5
@@ -405,16 +422,15 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
           for srv_to_depth in ['c','d','e']:
             fbhe_var = 'fbhe_'+str(int(fr))+'_'+str(srv_to_net)+srv_to_depth
             fbhe_var_n = fbhe_var + '_n'
+            fbhe_var_ea = fbhe_var + '_ea'
             #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
             # calcualte fbhe
             #print(f"Filtering ppr_df: Pass Player ={disp_player}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
-            fbhe_vector = fbhe( tmp_df[ (tmp_df['pass_player'] == disp_player) & 
-                                        (tmp_df['serve_src_zone_net'] == fr ) & 
-                                        (tmp_df['pass_src_zone_net'] == srv_to_net ) & 
-                                        (tmp_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ],
-                                disp_player,
-                                'pass', 
-                                False)
+            tmp1_df = ppr_df[ (ppr_df['pass_player'] == disp_player) & 
+                                      (ppr_df['serve_src_zone_net'] == fr ) & 
+                                      (ppr_df['pass_src_zone_net'] == srv_to_net ) & 
+                                      (ppr_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ]
+            fbhe_vector = fbhe( tmp1_df, disp_player, 'pass',  False) 
             #print(f"Attempts = {fbhe_vector[3]}, Min Att: {min_att}")
             if fbhe_vector[3] >= min_att:
               # save this value(s), fbhe and attempts
@@ -423,6 +439,19 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
             #else:
               #pair_df.at[i,fbhe_var] = None
               #pair_df.at[i,fbhe_var_n] = None
+              # now we need to calculate the area of the passes in this serve to/from
+            el_points = pd.concat( [tmp1_df['pass_dest_x'],tmp1_df['pass_dest_y']], axis = 1)
+            #print(f" el_points {el_points}")
+            el_points = el_points.dropna().values
+            if len(el_points) > min_att:  # must have at least 5 points to calculate the ellipse
+              el_mean, el_width, el_height, el_angle  = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
+              #el_area = calculate_ellipse_area(el_width, el_height)
+              #ellipse_area = math.pi*(el_width/2)*(el_height/2)
+              ellipse_width = el_width
+              ellipse_height = el_height
+              # not store the ellipse area
+              print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
+              pair_df.at[i,fbhe_var_ea] = math.pi*(ellipse_width/2)*(ellipse_height/2)
             
             
 
@@ -503,12 +532,17 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
     for srv_to_net in [1,2,3,4,5]:
       for srv_to_depth in ['c','d','e']:
         fbhe_var= 'fbhe_'+str(int(fr))+'_'+str(srv_to_net)+srv_to_depth
+        fbhe_var_ea = fbhe_var + '_ea'
         fbhe_var_mean = fbhe_var + '_mean'
+        fbhe_var_ea_mean = fbhe_var_ea + '_mean'
         fbhe_var_sd = fbhe_var+'_stdev'
+        fbhe_var_ea_sd = fbhe_var_ea + '_stdev'
         #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
         # calcualte mean and stdev
         pair_stats_df.at[0,fbhe_var_mean] = pair_df[fbhe_var].mean(skipna=True)
-        pair_stats_df.at[0,fbhe_var_sd] = pair_df[fbhe_var].std(skipna=True)   
+        pair_stats_df.at[0,fbhe_var_sd] = pair_df[fbhe_var].std(skipna=True)  
+        pair_stats_df.at[0,fbhe_var_ea_mean] = pair_df[fbhe_var_ea].mean(skipna=True)
+        pair_stats_df.at[0,fbhe_var_ea_sd] = pair_df[fbhe_var_ea].std(skipna=True)   
 
         
   # now lets store our player_data file back as a csv file in the database

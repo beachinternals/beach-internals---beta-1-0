@@ -434,11 +434,11 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
           #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
           # calcualte fbhe
           #print(f"Filtering ppr_df: Pass Player ={p_list[i]}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
-          tmp_df = ppr_df[ (ppr_df['pass_player'] == p_list[i]) & 
+          tmp1_df = ppr_df[ (ppr_df['pass_player'] == p_list[i]) & 
                                       (ppr_df['serve_src_zone_net'] == fr ) & 
                                       (ppr_df['pass_src_zone_net'] == srv_to_net ) & 
                                       (ppr_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ]
-          fbhe_vector = fbhe( tmp_df, p_list[i], 'pass',  False)
+          fbhe_vector = fbhe( tmp1_df, p_list[i], 'pass',  False)
           #print(f"Attempts = {fbhe_vector[3]}, Min Att: {min_att}")
           if fbhe_vector[3] >= min_att:
             # save this value(s), fbhe and attempts
@@ -448,7 +448,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
             #player_df.at[i,fbhe_var] = None
             #player_df.at[i,fbhe_var_n] = None
           # now we need to calculate the area of the passes in this serve to/from
-          el_points = pd.concat( [tmp_df['pass_dest_x'],tmp_df['pass_dest_y']], axis = 1)
+          el_points = pd.concat( [tmp1_df['pass_dest_x'],tmp1_df['pass_dest_y']], axis = 1)
           #print(f" el_points {el_points}")
           el_points = el_points.dropna().values
           if len(el_points) > min_att:  # must have at least 5 points to calculate the ellipse
