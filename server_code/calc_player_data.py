@@ -177,6 +177,16 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                        'fbhe_1_3c_ea_mean':[float()],'fbhe_1_3c_ea_stdev':[float()],'fbhe_1_3d_ea_mean':[float()],'fbhe_1_3d_ea_stdev':[float()],'fbhe_1_3e_ea_mean':[float()],'fbhe_1_3e_ea_stdev':[float()],
                        'fbhe_1_4c_ea_mean':[float()],'fbhe_1_4c_ea_stdev':[float()],'fbhe_1_4d_ea_mean':[float()],'fbhe_1_4d_ea_stdev':[float()],'fbhe_1_4e_ea_mean':[float()],'fbhe_1_4e_ea_stdev':[float()],
                        'fbhe_1_5c_ea_mean':[float()],'fbhe_1_5c_ea_stdev':[float()],'fbhe_1_5d_ea_mean':[float()],'fbhe_1_5d_ea_stdev':[float()],'fbhe_1_5e_ea_mean':[float()],'fbhe_1_5e_ea_stdev':[float()],
+                       'fbhe_3_1c_ea_mean':[float()],'fbhe_3_1c_ea_stdev':[float()],'fbhe_3_1d_ea_mean':[float()],'fbhe_3_1d_ea_stdev':[float()],'fbhe_3_1e_ea_mean':[float()],'fbhe_3_1e_ea_stdev':[float()],
+                       'fbhe_3_2c_ea_mean':[float()],'fbhe_3_2c_ea_stdev':[float()],'fbhe_3_2d_ea_mean':[float()],'fbhe_3_2d_ea_stdev':[float()],'fbhe_3_2e_ea_mean':[float()],'fbhe_3_2e_ea_stdev':[float()],
+                       'fbhe_3_3c_ea_mean':[float()],'fbhe_3_3c_ea_stdev':[float()],'fbhe_3_3d_ea_mean':[float()],'fbhe_3_3d_ea_stdev':[float()],'fbhe_3_3e_ea_mean':[float()],'fbhe_3_3e_ea_stdev':[float()],
+                       'fbhe_3_4c_ea_mean':[float()],'fbhe_3_4c_ea_stdev':[float()],'fbhe_3_4d_ea_mean':[float()],'fbhe_3_4d_ea_stdev':[float()],'fbhe_3_4e_ea_mean':[float()],'fbhe_3_4e_ea_stdev':[float()],
+                       'fbhe_3_5c_ea_mean':[float()],'fbhe_3_5c_ea_stdev':[float()],'fbhe_3_5d_ea_mean':[float()],'fbhe_3_5d_ea_stdev':[float()],'fbhe_3_5e_ea_mean':[float()],'fbhe_3_5e_ea_stdev':[float()],
+                       'fbhe_5_1c_ea_mean':[float()],'fbhe_5_1c_ea_stdev':[float()],'fbhe_5_1d_ea_mean':[float()],'fbhe_5_1d_ea_stdev':[float()],'fbhe_5_1e_ea_mean':[float()],'fbhe_5_1e_ea_stdev':[float()],
+                       'fbhe_5_2c_ea_mean':[float()],'fbhe_5_2c_ea_stdev':[float()],'fbhe_5_2d_ea_mean':[float()],'fbhe_5_2d_ea_stdev':[float()],'fbhe_5_2e_ea_mean':[float()],'fbhe_5_2e_ea_stdev':[float()],
+                       'fbhe_5_3c_ea_mean':[float()],'fbhe_5_3c_ea_stdev':[float()],'fbhe_5_3d_ea_mean':[float()],'fbhe_5_3d_ea_stdev':[float()],'fbhe_5_3e_ea_mean':[float()],'fbhe_5_3e_ea_stdev':[float()],
+                       'fbhe_5_4c_ea_mean':[float()],'fbhe_5_4c_ea_stdev':[float()],'fbhe_5_4d_ea_mean':[float()],'fbhe_5_4d_ea_stdev':[float()],'fbhe_5_4e_ea_mean':[float()],'fbhe_5_4e_ea_stdev':[float()],
+                       'fbhe_5_5c_ea_mean':[float()],'fbhe_5_5c_ea_stdev':[float()],'fbhe_5_5d_ea_mean':[float()],'fbhe_5_5d_ea_stdev':[float()],'fbhe_5_5e_ea_mean':[float()],'fbhe_5_5e_ea_stdev':[float()]
                       }
   player_stats_df =  pd.DataFrame.from_records(player_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")
@@ -422,13 +432,11 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
           #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
           # calcualte fbhe
           print(f"Filtering ppr_df: Pass Player ={p_list[i]}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
-          fbhe_vector = fbhe( ppr_df[ (ppr_df['pass_player'] == p_list[i]) & 
+          tmp_df = ppr_df[ (ppr_df['pass_player'] == p_list[i]) & 
                                       (ppr_df['serve_src_zone_net'] == fr ) & 
                                       (ppr_df['pass_src_zone_net'] == srv_to_net ) & 
-                                      (ppr_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ],
-                              p_list[i],
-                              'pass', 
-                              False)
+                                      (ppr_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ]
+          fbhe_vector = fbhe( tmp_df, p_list[i], 'pass',  False)
           print(f"Attempts = {fbhe_vector[3]}, Min Att: {min_att}")
           if fbhe_vector[3] >= min_att:
             # save this value(s), fbhe and attempts
@@ -437,6 +445,9 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
           #else:
             #player_df.at[i,fbhe_var] = None
             #player_df.at[i,fbhe_var_n] = None
+          # now we need to calculate the area of the passes in this serve to/from
+          el_mean, el_ = calculate_standard_deviation_ellipse([tmp_df['pass_dest_x'],tmp_df['pass_dest_y']], confidence=1.0):
+          
             
             
 
