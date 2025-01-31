@@ -915,8 +915,14 @@ def pair_sw_report(c_league, c_gender, c_year, c_pair):
 
   disp_player = []
   disp_player[0] = pair_row['player1']
+  p_att_txt[0] = ''
+  p_fbhe[0] = 0
+  p_fbhe_per[0] = ' '
   sw_p1_df =  pd.read_csv(io.BytesIO( pair_row['s_w_player1'].get_bytes()))
   disp_player[1] = pair_row['player2']
+  p_att_txt[1] = ''
+  p_fbhe[1] = 0
+  p_fbhe_per[1] = ''
   sw_p2_df = pd.read_csv(io.BytesIO( pair_row['s_w_player2'].get_bytes()))
 
   # now open the pair_data file and get the row, and get the row from the pair_stats file
@@ -927,13 +933,21 @@ def pair_sw_report(c_league, c_gender, c_year, c_pair):
   for p in [0,1]:
     r_player = disp_player[p].strip()
     pair_data_row = pair_data_df[pair_data_df['player'] == r_player]
-    
+
+    #------------ Offense ------------------------------
     # create the offense header text including FBHE and percentile of FBHE
-    p1_att_txt = 'Offense, Attacking & Passing : '
-    p1_fbhe = pair_data_row['fbhe']
-    p1_fbhe_per = stats.norm.cde( (p1_fbhe - pair_stats_df['fbhe_mean'])/pair_stats_df['fbhe_stdev'] )
-    p1_att_txt = p1_att_txt + r_player+'`s FBHE='+p1_fbhe+", Percentile="+p1_fbhe_per
-  return
+    p_fbhe[p] = pair_data_row['fbhe']
+    p_fbhe_per[p] = stats.norm.cde( (p1_fbhe - pair_stats_df['fbhe_mean'])/pair_stats_df['fbhe_stdev'] )
+    p_att_txt[p] = 'Offense, Attacking & Passing : ' + r_player+'`s FBHE='+"{:.3f}".format(p1_fbhe)+', Percentile='+str("{:.0%}").format(p1_fbhe_per)
+
+    # now calculate the Offense strength and weakness markdown
+    off_df = sw_p1_df[ sw_p1_df['Section'] == 'Attacking']
+    off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
+    off_df = off_df['Description','Var Description','Var Value']
+    off_mkdn = pd.DataFrame.to_makrdown(off_df)
+
+    
+  return p_att_txt[0, off_mkdn,
   
   
 
