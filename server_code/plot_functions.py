@@ -95,8 +95,8 @@ def plot_lines_on_court( ppr_df, action, plt_num):
     else:
       dx = 0
       dy = 0
-    print(f"plot_lines_on_court: x,y: {ppr_r[x2]}, {ppr_r[y2]}, Distance: {distance}, dx, dy: {dx}, {dy}")
-    print(f"Plotting points: x1,x2:{ppr_r[x1], ppr_r[x2]}, y1,y2:{ppr_r[y1], ppr_r[y2]}, outcome:{ppr_r['point_outcome']}, line color: {line_color}, line style {l_style}, marker = {m_style} ")
+    #print(f"plot_lines_on_court: x,y: {ppr_r[x2]}, {ppr_r[y2]}, Distance: {distance}, dx, dy: {dx}, {dy}")
+    #print(f"Plotting points: x1,x2:{ppr_r[x1], ppr_r[x2]}, y1,y2:{ppr_r[y1], ppr_r[y2]}, outcome:{ppr_r['point_outcome']}, line color: {line_color}, line style {l_style}, marker = {m_style} ")
     ax.plot( [ppr_r[x1], ppr_r[x2]], [ppr_r[y1], ppr_r[y2]], c=line_color, linestyle=l_style, linewidth = l_width, markevery = m_every )
     if (ppr_r[x1] and ppr_r[y1]):
       ax.scatter(ppr_r[x1],ppr_r[y1], s = 50, c=line_color) # marker only at first point

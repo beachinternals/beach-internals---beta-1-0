@@ -121,7 +121,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
     ppr_for_team_found = True
   else:
     m_ppr_df = [" "]
-    #print('No Team Rows Found')
+    print(f'get_ppr_data : No Team Rows Found {disp_league}, {disp_gender}, {disp_year}, {disp_team}')
     ppr_for_team_found = False
 
   #print(f"GET PPR DATA ppr team db: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{m_ppr_df.shape[0]}")
@@ -364,7 +364,7 @@ def get_tri_data( disp_league, disp_gender, disp_year ):
   else:
     tri_df = [" "]
     #print(f"No Tri data Found, {disp_league, disp_gender, disp_year, disp_team}")
-    #print('No Team Rows Found')
+    print(f'get_ppr_data :No Team Rows Found {disp_league}, {disp_gender}, {disp_year}, {disp_team}')
     tri_data_found = False
 
   return tri_df, tri_data_found

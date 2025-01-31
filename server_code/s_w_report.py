@@ -57,12 +57,12 @@ def calc_s_w_player( c_league, c_gender, c_year ):
     else:
       pdata_df = ['']
       pstat_df = ['']
-      print('No Team Rows Found')
+      print(f'calc_s_w_player : No Team Rows Found {c_league}, {c_gender}, {c_year}, {c_team}')
       player_data_found = False
   else:
     pdata_df = ['']
     pstat_df = ['']
-    print('No Team Rows Found')
+    print(f'calc_s_w_player : No Team Rows Found {c_league}, {c_gender}, {c_year}, {c_team}')
     player_data_found = False
 
   if not player_data_found:
@@ -228,12 +228,12 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
     else:
       pdata_df = ['']
       pstat_df = ['']
-      print('No Team Rows Found')
+      print(f'calc_s_w_pair : No Team Rows Found {c_league}, {c_gender}, {c_year}, {c_team}')
       pair_data_found = False
   else:
     pdata_df = ['']
     pstat_df = ['']
-    print('No Team Rows Found')
+    print(f'calc_s_w_pair : No Team Rows Found {c_league}, {c_gender}, {c_year}, {c_team}')
     pair_data_found = False
 
   if not pair_data_found:

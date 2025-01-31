@@ -333,19 +333,19 @@ db_schema:
   rpt_mgr:
     client: none
     columns:
-    - admin_ui: {order: 0, width: 200}
+    - admin_ui: {order: 0, width: 152}
       name: email
       type: string
     - admin_ui: {order: 1, width: 200}
       name: emailto
       type: string
-    - admin_ui: {order: 2, width: 200}
+    - admin_ui: {order: 2, width: 98}
       name: dow
       type: string
-    - admin_ui: {order: 4, width: 200}
+    - admin_ui: {order: 4, width: 103}
       name: rpt_type
       type: string
-    - admin_ui: {order: 5, width: 200}
+    - admin_ui: {order: 5, width: 142}
       name: player_list
       target: master_player
       type: link_multiple
@@ -357,10 +357,10 @@ db_schema:
       name: rpts_inc
       target: report_list
       type: link_multiple
-    - admin_ui: {order: -2, width: 200}
+    - admin_ui: {order: -2, width: 71}
       name: active
       type: string
-    - admin_ui: {order: -1, width: 200}
+    - admin_ui: {order: -1, width: 61}
       name: team
       type: string
     - admin_ui: {order: 8, width: 200}

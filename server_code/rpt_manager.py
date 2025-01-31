@@ -329,14 +329,8 @@ def rpt_mgr_generate_background():
           
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
-                                      cc_address='beachinternals@gmail.com' if rpt_r'copy_beachinternals'[],
+                                      cc_addresses='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
                                       subject='Beach Internals - Scouting Reports ',
-                                      text='Attached please find the summary report(s)',
-                                      attachments=pdf_list)
-        if rpt_r['copy_beachinternals']:
-          email_status = anvil.email.send(to='beachinternals@gmail.com',
-                                      from_address="no-reply",
-                                      subject='CC: Beach Internals - Scouting Reports ',
                                       text='Attached please find the summary report(s)',
                                       attachments=pdf_list)
         if not email_status:
