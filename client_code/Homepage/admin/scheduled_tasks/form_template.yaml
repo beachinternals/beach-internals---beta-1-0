@@ -75,27 +75,37 @@ components:
     name: outlined_button_4
     properties: {role: outlined-button, text: Calc Data}
     type: Button
-  - layout_properties: {grid_position: 'QPMOOA,IVCSSS'}
-    name: label_8
-    properties: {text: Calculate Strengths and Weaknesses}
-    type: Label
-  - event_bindings: {change: league_drop_down_change}
-    layout_properties: {grid_position: 'QPMOOA,EVQDQP'}
-    name: league_drop_down
+  - components:
+    - layout_properties: {grid_position: 'BYVMKG,APSIAL'}
+      name: label_8
+      properties: {text: Calculate Strengths and Weaknesses}
+      type: Label
+    - event_bindings: {change: league_drop_down_change}
+      layout_properties: {grid_position: 'BYVMKG,URECSD'}
+      name: league_drop_down
+      properties: {}
+      type: DropDown
+    - event_bindings: {click: calc_sw_click}
+      layout_properties: {grid_position: 'BYVMKG,DFCJZQ MDLJAH,HGYVAZ'}
+      name: calc_sw
+      properties: {role: outlined-button, text: S & W - Player}
+      type: Button
+    - event_bindings: {click: calc_sw_pair_click}
+      layout_properties: {grid_position: 'BYVMKG,DFCJZQ KYGPJO,HYXJCF'}
+      name: calc_sw_pair
+      properties: {role: outlined-button, text: S & W - Pair}
+      type: Button
+    layout_properties: {grid_position: 'PLQQPS,HZJJGC'}
+    name: column_panel_2
     properties: {}
-    type: DropDown
-  - event_bindings: {click: calc_sw_click}
-    layout_properties: {grid_position: 'QPMOOA,XSIDLQ WTOMIZ,DCNXVP'}
-    name: calc_sw
-    properties: {role: outlined-button, text: Calculate Strengths & Weaknesses}
-    type: Button
+    type: ColumnPanel
   - event_bindings: {click: night_processing_button_click}
-    layout_properties: {grid_position: 'QPMOOA,XSIDLQ HBZHSQ,ENYPTZ'}
+    layout_properties: {grid_position: 'HBZHSQ,ENYPTZ'}
     name: night_processing_button
     properties: {text: Night Processing - Rebuild Selected League}
     type: Button
   - event_bindings: {click: night_proc_all_click}
-    layout_properties: {grid_position: 'QPMOOA,XSIDLQ OZAKRR,BJMUZS'}
+    layout_properties: {grid_position: 'OZAKRR,BJMUZS'}
     name: night_proc_all
     properties: {role: outlined-button, text: Night Processing - All}
     type: Button

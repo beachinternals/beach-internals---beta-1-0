@@ -210,7 +210,7 @@ def rpt_mgr_generate_background():
           
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
-                                          cc_addresses='beachinternals@gmail.com',
+                                          cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
                                           subject='Beach Internals - Player Summary '+disp_player,
                                           text='Attached please find the summary report(s) for '+disp_player,
                                           attachments=pdf_list)
@@ -266,20 +266,20 @@ def rpt_mgr_generate_background():
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           subject='Beach Internals - Pair Summary '+disp_pair,
-                                          cc_addresses='beachinternals@gmail.com',                                        
+                                          cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',                                       
                                           text='Attached please find the summary report(s) for '+disp_pair,
                                           attachments=pdf_list)
       elif rpt_r['rpt_type'] == 'dashboard':
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
-                                          cc_addresses='beachinternals@gmail.com',                                        
+                                          cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',                                        
                                           subject='Beach Internals - Dashboard Summary '+disp_team,
                                           text='Attached please find the summary report(s) for '+disp_team)
                                           #attachments=[full_rpt_pdf])
       elif rpt_r['rpt_type'] == 'internals':
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
-                                          cc_addresses='beachinternals@gmail.com',
+                                          cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
                                           subject='Beach Internals - Administrative Data ',
                                           text='Attached please find the summary report(s) : Internals Reports')
                                           #attachments=[full_rpt_pdf])
@@ -333,7 +333,7 @@ def rpt_mgr_generate_background():
           
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
-                                      cc_addresses='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
+                                      cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
                                       subject='Beach Internals - Scouting Reports ',
                                       text='Attached please find the summary report(s)',
                                       attachments=pdf_list)

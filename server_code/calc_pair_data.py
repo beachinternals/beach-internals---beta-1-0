@@ -425,7 +425,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
             fbhe_var_ea = fbhe_var + '_ea'
             #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
             # calcualte fbhe
-            print(f"Filtering ppr_df: Pass Player ={disp_player}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
+            #print(f"Filtering ppr_df: Pass Player ={disp_player}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
             tmp1_df = tmp_df[ (tmp_df['pass_player'] == disp_player) & 
                                       (tmp_df['serve_src_zone_net'] == fr ) & 
                                       (tmp_df['pass_src_zone_net'] == srv_to_net ) & 
@@ -448,7 +448,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
             
 
   ########## end of loop over players
-  print(f"Player Df when done:{player_df}")
+  print(f"Pair Df when done:{pair_df}")
 
   # Now store and calulate the statistical values
   #------------------------------------------------

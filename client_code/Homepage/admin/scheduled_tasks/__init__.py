@@ -110,3 +110,19 @@ class scheduled_tasks(scheduled_tasksTemplate):
     r_val = anvil.server.call('night_processing_callable',disp_league,disp_gender,disp_year,False,True)
   pass
 
+  def calc_sw_pair_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+
+    return_value = anvil.server.call('calc_sw_pair_clientcallable', disp_league, disp_gender, disp_year )
+
+    return return_value
+    pass
+

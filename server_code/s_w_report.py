@@ -324,7 +324,7 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
         sw_df = pd.concat([sw_df,sw_df_new])
         #print(f"updated sw df:{sw_df}, p:{p}")
     
-  # save the dataframe into s_w in master_player
+    # save the dataframe into s_w in master_player
     for mpair_row in app_tables.master_pair.search(
         q.all_of(
           league = c_league,
@@ -337,9 +337,16 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
       # convert DF to a media object
       #print(f"Saving SW DF for this player: {p_team}, {p_num},{p_sname}")
       sw_csv_file = pd.DataFrame.to_csv(sw_df[['Category','Section','Description','Var Name','Var Desc','Var Value','Var Percentile','Criteria','Criteria Value']])
-      sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw.csv")
-      save_result = mplayer_row.update( s_w = sw_media )
-      #print(f"UPdated row in master player, result is: {save_result}, p:{p}")
+      if p_row['player'] == mpair_row['player1']:
+        sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw_player1.csv")
+        save_result = mpair_row.update( s_w_player1 = sw_media )
+        print(f"calc_s_w_pair : UPdated row in master player, result is: {save_result}, p:{p}")
+      elif p_row['player'] == mpair_row['player2']:
+        sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw_player2.csv")
+        save_result = mpair_row.update( s_w_player2 = sw_media )
+        print(f"calc_s_w_pair : UPdated row in master player, result is: {save_result}, p:{p}")
+      else:
+        print(f"calc_s_w_pair : Could not find the player in the pair: {p_row['pair']}, {p_row['player']}, Master Pair: {mpair_row['pair']}, {mpair_row['player1']}, {mpair_row['player2']}")
   
     # next player
 

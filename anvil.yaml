@@ -178,8 +178,11 @@ db_schema:
     - admin_ui: {order: 6, width: 200}
       name: team
       type: string
-    - admin_ui: {order: 7, width: 200}
-      name: s_w
+    - admin_ui: {order: 8, width: 200}
+      name: s_w_player1
+      type: media
+    - admin_ui: {order: 9, width: 200}
+      name: s_w_player2
       type: media
     server: full
     title: master_pair
