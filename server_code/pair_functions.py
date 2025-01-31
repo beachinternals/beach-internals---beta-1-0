@@ -55,6 +55,58 @@ def pair_players(disp_pair):
     disp_player2 = pair_row['player2']
   return disp_player1, disp_player2
 
+#-----------------------------------------------------------------
+#
+#           Get master pair row
+#                Inputs: league, gender, year, pair
+#                Rturn: Row from master pair db
+#------------------------------------------------------------------
+@anvil.server.callable
+def fetch_pair_row( c_league, c_gender, c_year, c_pair):
+  pair_r = app_tables.master_pair.get(league=c_league,gender=c_gender,year=c_year,pair=c_pair)
+  if pair_r:
+    return pair_r
+  else:
+    return 'Error, Pair Not Found:'+c_league+c_gender+c_year+c_pair+' fetch_pair_row()'
+
+    
+#-------------------------------------------------------------------------------------------------------
+#.    Get Pair Data
+#.    get the pair_data and pair_stats files, return the data fram
+#-------------------------------------------------------------------------------------------------------
+def get_pair_data( disp_league, disp_gender, disp_year):
+  # return the player_data dataframe
+  
+  # find the play_data table
+  # pull out the player_data csv file
+  #print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}")
+  ppr_csv_row = app_tables.ppr_csv_tables.get( 
+    q.all_of(
+      league = disp_league,
+      gender = disp_gender,
+      year = disp_year,
+      team = "League"
+      ) )
+
+  if ppr_csv_row:
+    pair_data_df =  pd.read_csv(io.BytesIO( ppr_csv_row['pair_data'].get_bytes()))
+    pair_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['pair_data_stats'].get_bytes()))
+  else:
+    #print('No Rows Found')
+    return ["No Player Data Found"], ["No Player Stats Found"]
+
+  # somehow, we are getting a column called unamed: 0, so drop taht
+  #print(player_data_df.to_dict())
+  pair_data_df = pair_data_df.drop(['Unnamed: 0'], axis = 1 )
+  pair_stats_df = pair_stats_df.drop(['Unnamed: 0'], axis = 1 )
+  #print(player_data_df.to_dict())
+
+  # need to replace a space with NaN 
+  pair_data_df = pair_data_df.replace( " " , None )
+
+  return pair_data_df, pair_stats_df
+
+
 #------------------------------------------------------------------
 #           Pair Point Totals - return a df with the point totals for the pair 
 #------------------------------------------------------------------  

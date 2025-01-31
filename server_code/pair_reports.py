@@ -9,6 +9,7 @@ import anvil.server
 from pair_functions import *
 from server_functions import *
 import pandas as pd
+import scipy.stats as stats
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -898,4 +899,42 @@ def pair_rpt_stub(disp_league, disp_gender, disp_year,
   p2_markdown = pd.DataFrame.to_markdown(p2_table, index = False )
   
   return pair_markdown, p1_markdown, p2_markdown
+
+#-=-=-=-=-=-=-=-=--==-=-======-=---==----------------------------------
+#
+#          Strengths and Weaknesses for a Pair
+#
+#-------------++---------+_+_+_-----------------------------------------
+@anvil.server.callable
+def pair_sw_report(c_league, c_gender, c_year, c_pair):
+  #
+  # find the pair in the master pair file, get player1, player2, sw_player1, sw_player2
+  pair_row = fetch_pair_row(c_league,c_gender,c_year,c_pair)
+  if type(pair_row) == str():
+    return 'Failed to find Pair'+pair_row
+
+  disp_player = []
+  disp_player[0] = pair_row['player1']
+  sw_p1_df =  pd.read_csv(io.BytesIO( pair_row['s_w_player1'].get_bytes()))
+  disp_player[1] = pair_row['player2']
+  sw_p2_df = pd.read_csv(io.BytesIO( pair_row['s_w_player2'].get_bytes()))
+
+  # now open the pair_data file and get the row, and get the row from the pair_stats file
+  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+  pair_data_df = pair_data_df[ pair_data_df['pair'] == c_pair]
+
+  # now run thru the players, 
+  for p in [0,1]:
+    r_player = disp_player[p].strip()
+    pair_data_row = pair_data_df[pair_data_df['player'] == r_player]
+    
+    # create the offense header text including FBHE and percentile of FBHE
+    p1_att_txt = 'Offense, Attacking & Passing : '
+    p1_fbhe = pair_data_row['fbhe']
+    p1_fbhe_per = stats.norm.cde( (p1_fbhe - pair_stats_df['fbhe_mean'])/pair_stats_df['fbhe_stdev'] )
+    p1_att_txt = p1_att_txt + r_player+'`s FBHE='+p1_fbhe+", Percentile="+p1_fbhe_per
+  return
+  
+  
+
   

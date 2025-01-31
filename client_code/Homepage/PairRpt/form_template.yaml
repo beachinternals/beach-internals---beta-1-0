@@ -152,17 +152,45 @@ components_by_slot:
         name: box3_label
         properties: {align: center, bold: true}
         type: Label
-      - layout_properties: {grid_position: 'NLXWVV,TEBLBO'}
+      - layout_properties: {grid_position: 'BJHPUO,DDLHUC'}
         name: rpt_disp_box3
         properties: {}
         type: RichText
+      - layout_properties: {grid_position: ''}
+        name: box4_label
+        properties: {align: center, bold: true, text: ''}
+        type: Label
+      - layout_properties: {grid_position: 'CSOIBX,VIRDJL'}
+        name: rpt_disp_box3_copy
+        properties: {}
+        type: RichText
+      - layout_properties: {grid_position: 'UBCLYV,KFEAYJ'}
+        name: z5_plot
+        properties: {height: 316.8671875}
+        type: Plot
+      - layout_properties: {grid_position: 'UBCLYV,PSSMNZ'}
+        name: z4_plot
+        properties: {height: 318.21484375}
+        type: Plot
+      - layout_properties: {grid_position: 'UBCLYV,PHBADF'}
+        name: z3_plot
+        properties: {height: 318.38671875}
+        type: Plot
+      - layout_properties: {grid_position: 'UBCLYV,BGTEHP'}
+        name: z2_plot
+        properties: {height: 321.81640625}
+        type: Plot
+      - layout_properties: {grid_position: 'UBCLYV,AFOWVR'}
+        name: z1_plot
+        properties: {height: 319.22265625}
+        type: Plot
       layout_properties: {grid_position: 'KCZYCU,LQEYDV'}
       name: outlined_card_3
       properties: {background: '', role: outlined-card}
       type: ColumnPanel
     - components:
       - layout_properties: {grid_position: 'OULBBH,UTZUNT'}
-        name: rpt_disp_box4
+        name: box_explaing_text
         properties: {}
         type: RichText
       layout_properties: {grid_position: 'TQSRMR,WIJTSC'}
@@ -171,7 +199,7 @@ components_by_slot:
       type: ColumnPanel
     - components:
       - components:
-        - name: rich_text_2
+        - name: filter_text
           properties: {}
           type: RichText
         layout_properties: {grid_position: 'KKHOKZ,EMDNUX'}

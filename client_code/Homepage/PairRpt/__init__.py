@@ -1,5 +1,6 @@
 from ._anvil_designer import PairRptTemplate
 from anvil import *
+import plotly.graph_objects as go
 import anvil.server
 import anvil.google.auth, anvil.google.drive
 from anvil.google.drive import app_files
@@ -284,11 +285,11 @@ class PairRpt(PairRptTemplate):
     """
 
     print(f" disp player 1, 2 {disp_player1}, {disp_player2}")
-    self.rich_text_2.content = filter_text
+    self.filter_text.content = filter_text
     self.rpt_disp_box.content = table_data1
     self.rpt_disp_box2.content = table_data2
     self.rpt_disp_box3.content = table_data3
-    self.rpt_disp_box4.content = explain_text
+    self.box_explaing_text.content = explain_text
     self.box1_label.text = box1_title
     self.box2_label.text = box2_title + ' ' + disp_player1
     self.box3_label.text = box3_title + ' ' + disp_player2
