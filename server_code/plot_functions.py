@@ -108,7 +108,7 @@ def plot_lines_on_court( ppr_df, action, plt_num):
   return anvil.mpl_util.plot_image()
 
 @anvil.server.callable
-def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_ellispe ):
+def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_ellispe, point_outcome ):
   #
   # line drawing of the set location(s) as dot
   #
@@ -116,10 +116,17 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
   #plt.figure(plt_num, figsize=(10,20))
   x = ppr_x.dropna().values
   y = ppr_y.dropna().values
-  #print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
+  print(f"plot_points_on_the_court : point_outcome: {point_outcome}")
+  pt_color = point_outcome.dropna()
+  print(f"plot_points_on_the_court : pt_color: {pt_color}")
+  vectorize_pt_color = np.vectorize(point_colors)
+  print(f"plot_points_on_the_court : vectorize pt color: {vectorize_pt_color}")
+  plot_point_color = vectorize_pt_color(pt_color)
+  print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
+  print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
   point_size = np.full(len(x),75) # numpy array of size len(x), filled with character 2
   #print(f"plot_points_on_the_court: size array: {point_size}")
-  ax.scatter( x, y, s = point_size , url = 'http://app.balltime.com/video/'+video_id+'?actionIds='+str(action_num))  
+  ax.scatter( x, y, s = point_size , c = plot_point_color, url = 'http://app.balltime.com/video/'+video_id+'?actionIds='+str(action_num))  
 
   if plot_ellispe:
     # calcualte elispe information
@@ -138,6 +145,23 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()
 
+#
+# a quick functin to create an array of colors when plotting points
+def point_colors(pt_outcome):
+  match pt_outcome:
+    case 'FBK':
+      color = 'g'
+    case 'TSA':
+      color = 'g'
+    case 'FBE':
+      color = 'r'
+    case 'TSE':
+      color = 'r'
+    case _:
+      color = 'b' 
+  return color
+
+  
 def plot_court_background(fig,ax):
   plt.xlim( -1, 9)
   plt.ylim( -9, 9)
