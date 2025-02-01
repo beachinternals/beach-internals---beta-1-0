@@ -929,6 +929,8 @@ def pair_sw_report(c_league, c_gender, c_year, c_pair):
   pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
   pair_data_df = pair_data_df[ pair_data_df['pair'] == c_pair]
 
+  off_mkdn = []
+  
   # now run thru the players, 
   for p in [0,1]:
     r_player = disp_player[p].strip()
@@ -941,13 +943,13 @@ def pair_sw_report(c_league, c_gender, c_year, c_pair):
     p_att_txt[p] = 'Offense, Attacking & Passing : ' + r_player+'`s FBHE='+"{:.3f}".format(p1_fbhe)+', Percentile='+str("{:.0%}").format(p1_fbhe_per)
 
     # now calculate the Offense strength and weakness markdown
-    off_df = sw_p1_df[ sw_p1_df['Section'] == 'Attacking']
+    off_df = sw_p1_df[ sw_p1_df['Section'] == 'Attacking'] if p == 0 else sw_p2_df[ sw_p1_df['Section'] == 'Attacking']
     off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
     off_df = off_df['Description','Var Description','Var Value']
-    off_mkdn = pd.DataFrame.to_makrdown(off_df)
+    off_mkdn[p] = pd.DataFrame.to_makrdown(off_df)
 
     
-  return p_att_txt[0, off_mkdn,
+  return p_att_txt[0], off_mkdn[0], p_att_txt[1], off_mkdn[1]
   
   
 
