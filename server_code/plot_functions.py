@@ -109,13 +109,14 @@ def plot_lines_on_court( ppr_df, action, plt_num):
 
 @anvil.server.callable
 def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_ellispe, point_outcome ):
+  # this enters with an array of x, y, and outcomes, but some x and y are na, so we need to drop them, but
   #
   # line drawing of the set location(s) as dot
   #
   fig, ax = plt.subplots(figsize=(10,20))
   #plt.figure(plt_num, figsize=(10,20))
-  x = ppr_x.dropna().values
-  y = ppr_y.dropna().values
+  x = ppr_x.values
+  y = ppr_y.values
   print(f"plot_points_on_the_court : point_outcome: {point_outcome}")
   pt_color = point_outcome.dropna()
   print(f"plot_points_on_the_court : pt_color: {pt_color}")

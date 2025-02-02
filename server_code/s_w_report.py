@@ -57,7 +57,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
     else:
       pdata_df = ['']
       pstat_df = ['']
-      print(f'calc_s_w_player : No Team Rows Found {c_league}, {c_gender}, {c_year}, {c_team}')
+      print(f'calc_s_w_player : No Team Rows Found {c_league}, {c_gender}, {c_year}')
       player_data_found = False
   else:
     pdata_df = ['']
