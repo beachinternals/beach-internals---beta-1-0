@@ -505,7 +505,8 @@ def calc_ppr_data(ppr_df):
                                                         ppr_df.at[index,'pass_dest_zone_depth'],
                                                         ppr_df.at[index,'pass_height'],
                                                         ppr_df.at[index,'pass_src_zone_net'],
-                                                        ppr_df.at[index,'pass_angle']
+                                                        ppr_df.at[index,'pass_angle'],
+                                                        ppr_df.at[index,'pass_dest_y']
                                                         )
 
     if ppr_r['set_yn'] == "Y":
@@ -822,7 +823,7 @@ def print_to_string(*args, **kwargs):
   output.close()
   return contents
 
-def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle):
+def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle, dest_y):
   # calcualte the out of system flag
   oos_flag = 0
   #print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
@@ -843,8 +844,9 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
     
   # zone
   if ( dest_zone_depth == 'E'):
-    oos_flag = oos_flag + 10
-    #print(f'3 oos flag: {oos_flag}')
+    if (dest_y < 30):
+      oos_flag = oos_flag + 10
+      #print(f'3 oos flag: {oos_flag}')
   if (dest_zone_depth == 'D') & ( (dest_zone_net == '1' ) | (dest_zone_net == '5') ):
     oos_flag = oos_flag + 10
     #print(f'4 oos flag: {oos_flag}')
@@ -854,8 +856,8 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
     oos_flag = oos_flag + 100
     #print(f'5 oos flag: {oos_flag}')
 
-  # no pass desitnation, likely a shank off the court
-  if ( dest_zone_net) == 0:
+  # no pass desitnation, likely a shank off the court, added pass height since some good passes have no zone, but a reasonable height
+  if ( dest_zone_net == 0) & (pass_height > 15):
     oos_flag = oos_flag + 1000
     
   #if ( oos_flag != 0 ):
