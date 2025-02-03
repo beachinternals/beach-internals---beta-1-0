@@ -57,6 +57,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
     team = user_team,
   )
 
+  print(f"generate_ppr_files_not_background: {user_league}, {user_gender}, {user_year},{user_team},{rebuild}")
   for flist_r in btd_row:
     #print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
     calc_ppr = False

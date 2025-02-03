@@ -273,7 +273,7 @@ def merge_ppr_data():
         for c_team in team_list:
           # now loop and call the merge function
           email_text = email_text + ' Merging PPR Files for' + c_league +" "+ c_gender +" "+ c_year +" "+ c_team + "\n"
-          #print(email_text)
+          print(email_text)
           r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'Private' )
           r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'Scouting' )
           if c_team == 'INTERNALS':
