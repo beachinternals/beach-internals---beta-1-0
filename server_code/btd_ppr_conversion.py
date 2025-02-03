@@ -107,7 +107,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
 
 # ############ server function to convert a btd file to a ppr file
 def btd_to_ppr_file(btd_file_bytes, flist_r):
-  #print(f"btd to ppr process of :{flist_r['filename']}")
+  print(f"btd_to_ppr_file: making ppr file for: {flist_r['filename']}, {flist_r['league']}, {flist_r['gender']}, {flist_r['year']}, {flist_r['date']}, {flist_r['team']} ")
   # convert the btd file to a dataframe
   btd_df = pd.read_csv(btd_file_bytes)
 
