@@ -21,7 +21,7 @@ import scipy.stats as stats
 #--------------------------------------------------------
 @anvil.server.callable
 def pair_fbhe_net(disp_league, disp_gender, disp_year, 
-                  disp_team, disp_pair,
+                  disp_team, disp_pair, disp_player,
                   comp_l1_checked, disp_comp_l1,
                   comp_l2_checked, disp_comp_l2,
                   comp_l3_checked, disp_comp_l3,
@@ -133,7 +133,7 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def pair_fbhe_pass(disp_league, disp_gender, disp_year, 
-                  disp_team, disp_pair,
+                  disp_team, disp_pair, disp_player,
                   comp_l1_checked, disp_comp_l1,
                   comp_l2_checked, disp_comp_l2,
                   comp_l3_checked, disp_comp_l3,
@@ -352,7 +352,7 @@ def pair_fbhe_pass(disp_league, disp_gender, disp_year,
 #--------------------------------------------------------
 @anvil.server.callable
 def pair_summary_rpt(disp_league, disp_gender, disp_year, 
-                  disp_team, disp_pair,
+                  disp_team, disp_pair, disp_player,
                   comp_l1_checked, disp_comp_l1,
                   comp_l2_checked, disp_comp_l2,
                   comp_l3_checked, disp_comp_l3,
@@ -807,59 +807,86 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
 #
 #-------------++---------+_+_+_-----------------------------------------
 @anvil.server.callable
-def pair_sw_report(c_league, c_gender, c_year, c_pair):
+def pair_sw_report(disp_league, disp_gender, disp_year, 
+                  disp_team, disp_pair, disp_player,
+                  comp_l1_checked, disp_comp_l1,
+                  comp_l2_checked, disp_comp_l2,
+                  comp_l3_checked, disp_comp_l3,
+                  date_checked, disp_start_date, disp_end_date,
+                  scout, explain_text
+                ):
   #
+
+  '''
+  ## Currently do not need to load the ppr tables, all this data is coming from the s_w media object(s) in the master pair table
+  
+  disp_player1, disp_player2 = pair_players(disp_pair) # looks iinto master_pairs to get player 1 and 2 for the given pair
+  ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
+  ppr_df = ppr_df_limit( ppr_df, 
+                         comp_l1_checked, disp_comp_l1, 
+                         comp_l2_checked, disp_comp_l2, 
+                         comp_l3_checked, disp_comp_l3, 
+                         date_checked, disp_start_date, disp_end_date
+                         ) # limit all data available to the parameters given for comp level 1,2,3 and dates.
+  ppr_df = pair_filter(ppr_df, disp_pair) # lastly, filter the data to all play that include the pair of interest
+  '''
+  
   # find the pair in the master pair file, get player1, player2, sw_player1, sw_player2
-  pair_row = fetch_pair_row(c_league,c_gender,c_year,c_pair)
+  pair_row = fetch_pair_row(disp_league,disp_gender,disp_year,disp_pair)
   if type(pair_row) == str():
     return 'Failed to find Pair'+pair_row
 
-  disp_player = []
-  disp_player[0] = pair_row['player1']
-  p_att_txt[0] = ''
-  p_fbhe[0] = 0
-  p_fbhe_per[0] = ' '
-  sw_p1_df =  pd.read_csv(io.BytesIO( pair_row['s_w_player1'].get_bytes()))
-  disp_player[1] = pair_row['player2']
-  p_att_txt[1] = ''
-  p_fbhe[1] = 0
-  p_fbhe_per[1] = ''
-  sw_p2_df = pd.read_csv(io.BytesIO( pair_row['s_w_player2'].get_bytes()))
-
+  # which player are we reporting on? 1 or 2?
+  if disp_player.strip() == pair_row['player1'].strip():
+    sw_field = 's_w_player1'
+  elif disp_player.strip() == pair_row['player1'].strip():
+    sw_field = 's_w_player2'
+  else:
+    print(f"pair_sw_repor : Display Player not one of the pairs: {disp_player}, {pair_row['player1']}, {pair_row['player2']}")
+    
+  sw_df = pd.read_csv(io.BytesIO( pair_row[sw_field].get_bytes()))
   # now open the pair_data file and get the row, and get the row from the pair_stats file
   pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
-  pair_data_df = pair_data_df[ pair_data_df['pair'] == c_pair]
+  #print(f"pair_sw_report: Pair Data and Pair stats {pair_data_df}, {pair_stats_df}")
+  #pair_data_df = pair_data_df[(pair_data_df['pair'] == disp_pair) & (pair_data_df['player'] == disp_player) ]
+  pair_data_index = pair_data_df.loc[ (pair_data_df['pair'] == disp_pair) & (pair_data_df['player'] == disp_player) ].index[0]
+  #print(f"pair_sw_report: pair_data_df index : {pair_data_index}")
 
-  off_mkdn = []
-  
-  # now run thru the players, 
-  for p in [0,1]:
-    r_player = disp_player[p].strip()
-    pair_data_row = pair_data_df[pair_data_df['player'] == r_player]
+  #------------ Offense ------------------------------
+  # create the offense header text including FBHE and percentile of FBHE
+  p_fbhe = pair_data_df.loc[pair_data_index,'fbhe']
+  print(f"pair_sw_report: pair_data fbhe : {p_fbhe}, {pair_data_df.loc[pair_data_index,'pair']}, {pair_data_df.loc[pair_data_index,'player']}")
+  p_fbhe_per = stats.norm.cdf( (pair_data_df.loc[pair_data_index,'fbhe'] - pair_stats_df.at[0,'fbhe_mean'])/pair_stats_df.at[0,'fbhe_stdev'] )
+  p_att_txt = "Offense, Attacking & Passing : " + disp_player + "`s FBHE="+ str(pair_data_df.loc[pair_data_index,'fbhe']) + ", Percentile=" + str(p_fbhe_per)
+  print(f"pair_sw_report: player attack text: {p_att_txt}")
 
-    #------------ Offense ------------------------------
-    # create the offense header text including FBHE and percentile of FBHE
-    p_fbhe[p] = pair_data_row['fbhe']
-    p_fbhe_per[p] = stats.norm.cde( (p1_fbhe - pair_stats_df['fbhe_mean'])/pair_stats_df['fbhe_stdev'] )
-    p_att_txt[p] = 'Offense, Attacking & Passing : ' + r_player+'`s FBHE='+"{:.3f}".format(p1_fbhe)+', Percentile='+str("{:.0%}").format(p1_fbhe_per)
+  # now calculate the Offense strength and weakness markdown
+  off_df = sw_df[ sw_df['Section'] == 'Attacking'] 
+  off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
+  print(f"pair_sw_report: off_df: {off_df}")
+  off_df = off_df[['Description','Var Desc','Var Value']]
+  off_mkdn = pd.DataFrame.to_markdown(off_df)
 
-    # now calculate the Offense strength and weakness markdown
-    off_df = sw_p1_df[ sw_p1_df['Section'] == 'Attacking'] if p == 0 else sw_p2_df[ sw_p1_df['Section'] == 'Attacking']
-    off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
-    off_df = off_df['Description','Var Description','Var Value']
-    off_mkdn[p] = pd.DataFrame.to_makrdown(off_df)
+  # now calculate the Deffense strength and weakness markdown
+  def_df = sw_df[ sw_df['Section'] == 'Serving'] 
+  def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
+  def_df = def_df[['Description','Var Desc','Var Value']]
+  def_mkdn = pd.DataFrame.to_markdown(def_df)
+
+  # now calculate the Errors strength and weakness markdown
+  err_df = sw_df[ sw_df['Section'] == 'Error & Transition'] 
+  err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
+  err_df = err_df[['Description','Var Desc','Var Value']]
+  err_mkdn = pd.DataFrame.to_markdown(err_df)
+
+  # now calculate the COnsistency strength and weakness markdown
+  con_df = sw_df[ sw_df['Section'] == 'Consistency'] 
+  con_df = con_df.sort_values(by='Category', ascending=True, na_position='last')
+  con_df = con_df[['Description','Var Desc','Var Value']]
+  con_mkdn = pd.DataFrame.to_markdown(con_df)
 
 
-    # placeholders ...
-    p_def_txt[p] = 'Pair Defense Text '+p
-    def_mkdn[p] = 'Defense Markdown '+p
-    p_err_txt[p] = 'Pair Error Text '+p
-    err_mkdn[p] = 'Error Markdown '+p
-    p_con_txt[p] = 'Pair Consistency Text '+p
-    con_mkdn[p] = 'Consistency Markdown '+p
-
-  return p_att_txt[0],off_mkdn[0],p_att_txt[1],off_mkdn[1],p_def_txt[0],def_mkdn[0],p_def_txt[1],def_mkdn[1], p_err_txt[0], err_mkdn[0], p_err_txt[1], err_mkdn[1],p_con_txt[0],con_mkdn[0],p_con_txt[1],con_mkdn[1]
-  
+  return off_mkdn, def_mkdn, err_mkdn
   
 
 
@@ -871,7 +898,7 @@ def pair_sw_report(c_league, c_gender, c_year, c_pair):
 #--------------------------------------------------------
 @anvil.server.callable
 def pair_rpt_stub(disp_league, disp_gender, disp_year, 
-                  disp_team, disp_pair,
+                  disp_team, disp_pair, disp_player,
                   comp_l1_checked, disp_comp_l1,
                   comp_l2_checked, disp_comp_l2,
                   comp_l3_checked, disp_comp_l3,

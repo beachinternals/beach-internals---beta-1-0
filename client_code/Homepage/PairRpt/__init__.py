@@ -83,7 +83,10 @@ class PairRpt(PairRptTemplate):
         year=disp_year,
       )
     ]
-
+    # now find the players
+    disp_player1, disp_player2 = anvil.server.call('pair_players',self.pair_drop_down.selected_value['pair'])
+    self.player_drop_down.items = [disp_player1,disp_player2]
+    
     # populate the reports drop down
     if anvil.users.get_user()["team"] == "INTERNALS":
       self.report_drop_down.items = [
@@ -188,7 +191,11 @@ class PairRpt(PairRptTemplate):
         year=disp_year,
       )
     ]
-
+    
+    # now find the players
+    disp_player1, disp_player2 = anvil.server.call('pair_players',self.pair_drop_down.selected_value['pair'])
+    self.player_drop_down.items = [disp_player1,disp_player2]
+    
     # set the sstart and end date to beginning and end of the season (needed for function call)
     # self.start_date_picker.date = datetime.date.today()  # temp : need to pull from league DB
     # self.end_date_picker.date = datetime.date.today()
@@ -258,6 +265,7 @@ class PairRpt(PairRptTemplate):
       disp_year,
       disp_team,
       self.pair_drop_down.selected_value['pair'],
+      self.player_drop_down.selected_value,
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
       self.comp_l2_check_box.checked,
@@ -286,7 +294,7 @@ class PairRpt(PairRptTemplate):
 
     print(f" disp player 1, 2 {disp_player1}, {disp_player2}")
     self.filter_text.content = filter_text
-    self.rpt_disp_box.content = table_data1
+    self.rpt_disp_box1.content = table_data1
     self.rpt_disp_box2.content = table_data2
     self.rpt_disp_box3.content = table_data3
     self.box_explaing_text.content = explain_text
@@ -310,6 +318,9 @@ class PairRpt(PairRptTemplate):
 
   def pair_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
+    # now find the players
+    disp_player1, disp_player2 = anvil.server.call('pair_players',self.pair_drop_down.selected_value['pair'])
+    self.player_drop_down.items = [disp_player1,disp_player2]
     pass
 
   def pdf_button_click(self, **event_args):

@@ -72,14 +72,14 @@ class ScoutingRpt(ScoutingRptTemplate):
     disp_gender = league_value[: str_loc - 1].strip()
     disp_year = league_value[str_loc + 1 :].strip()
 
-    # populate the player drop down
+    # populate the pair drop down
     self.pair_drop_down.items = [
       (row["pair"], row)
       for row in app_tables.master_pair.search(
         tables.order_by("pair"),
-        league=disp_league,
-        gender=disp_gender,
-        year=disp_year,
+        league=user_row['def_league'],
+        gender=user_row['def_gender'],
+        year=user_row['def_year'],
       )
     ]
     # now find the players
