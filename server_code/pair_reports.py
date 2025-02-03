@@ -801,6 +801,69 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   return scor_markdown,  rot_markdown, stat_markdown
   
 
+#-=-=-=-=-=-=-=-=--==-=-======-=---==----------------------------------
+#
+#          Strengths and Weaknesses for a Pair
+#
+#-------------++---------+_+_+_-----------------------------------------
+@anvil.server.callable
+def pair_sw_report(c_league, c_gender, c_year, c_pair):
+  #
+  # find the pair in the master pair file, get player1, player2, sw_player1, sw_player2
+  pair_row = fetch_pair_row(c_league,c_gender,c_year,c_pair)
+  if type(pair_row) == str():
+    return 'Failed to find Pair'+pair_row
+
+  disp_player = []
+  disp_player[0] = pair_row['player1']
+  p_att_txt[0] = ''
+  p_fbhe[0] = 0
+  p_fbhe_per[0] = ' '
+  sw_p1_df =  pd.read_csv(io.BytesIO( pair_row['s_w_player1'].get_bytes()))
+  disp_player[1] = pair_row['player2']
+  p_att_txt[1] = ''
+  p_fbhe[1] = 0
+  p_fbhe_per[1] = ''
+  sw_p2_df = pd.read_csv(io.BytesIO( pair_row['s_w_player2'].get_bytes()))
+
+  # now open the pair_data file and get the row, and get the row from the pair_stats file
+  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+  pair_data_df = pair_data_df[ pair_data_df['pair'] == c_pair]
+
+  off_mkdn = []
+  
+  # now run thru the players, 
+  for p in [0,1]:
+    r_player = disp_player[p].strip()
+    pair_data_row = pair_data_df[pair_data_df['player'] == r_player]
+
+    #------------ Offense ------------------------------
+    # create the offense header text including FBHE and percentile of FBHE
+    p_fbhe[p] = pair_data_row['fbhe']
+    p_fbhe_per[p] = stats.norm.cde( (p1_fbhe - pair_stats_df['fbhe_mean'])/pair_stats_df['fbhe_stdev'] )
+    p_att_txt[p] = 'Offense, Attacking & Passing : ' + r_player+'`s FBHE='+"{:.3f}".format(p1_fbhe)+', Percentile='+str("{:.0%}").format(p1_fbhe_per)
+
+    # now calculate the Offense strength and weakness markdown
+    off_df = sw_p1_df[ sw_p1_df['Section'] == 'Attacking'] if p == 0 else sw_p2_df[ sw_p1_df['Section'] == 'Attacking']
+    off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
+    off_df = off_df['Description','Var Description','Var Value']
+    off_mkdn[p] = pd.DataFrame.to_makrdown(off_df)
+
+
+    # placeholders ...
+    p_def_txt[p] = 'Pair Defense Text '+p
+    def_mkdn[p] = 'Defense Markdown '+p
+    p_err_txt[p] = 'Pair Error Text '+p
+    err_mkdn[p] = 'Error Markdown '+p
+    p_con_txt[p] = 'Pair Consistency Text '+p
+    con_mkdn[p] = 'Consistency Markdown '+p
+
+  return p_att_txt[0],off_mkdn[0],p_att_txt[1],off_mkdn[1],p_def_txt[0],def_mkdn[0],p_def_txt[1],def_mkdn[1], p_err_txt[0], err_mkdn[0], p_err_txt[1], err_mkdn[1],p_con_txt[0],con_mkdn[0],p_con_txt[1],con_mkdn[1]
+  
+  
+
+
+  
 #-------------------------------------------------------
 #
 #         Pair Report Stub
@@ -899,58 +962,3 @@ def pair_rpt_stub(disp_league, disp_gender, disp_year,
   p2_markdown = pd.DataFrame.to_markdown(p2_table, index = False )
   
   return pair_markdown, p1_markdown, p2_markdown
-
-#-=-=-=-=-=-=-=-=--==-=-======-=---==----------------------------------
-#
-#          Strengths and Weaknesses for a Pair
-#
-#-------------++---------+_+_+_-----------------------------------------
-@anvil.server.callable
-def pair_sw_report(c_league, c_gender, c_year, c_pair):
-  #
-  # find the pair in the master pair file, get player1, player2, sw_player1, sw_player2
-  pair_row = fetch_pair_row(c_league,c_gender,c_year,c_pair)
-  if type(pair_row) == str():
-    return 'Failed to find Pair'+pair_row
-
-  disp_player = []
-  disp_player[0] = pair_row['player1']
-  p_att_txt[0] = ''
-  p_fbhe[0] = 0
-  p_fbhe_per[0] = ' '
-  sw_p1_df =  pd.read_csv(io.BytesIO( pair_row['s_w_player1'].get_bytes()))
-  disp_player[1] = pair_row['player2']
-  p_att_txt[1] = ''
-  p_fbhe[1] = 0
-  p_fbhe_per[1] = ''
-  sw_p2_df = pd.read_csv(io.BytesIO( pair_row['s_w_player2'].get_bytes()))
-
-  # now open the pair_data file and get the row, and get the row from the pair_stats file
-  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
-  pair_data_df = pair_data_df[ pair_data_df['pair'] == c_pair]
-
-  off_mkdn = []
-  
-  # now run thru the players, 
-  for p in [0,1]:
-    r_player = disp_player[p].strip()
-    pair_data_row = pair_data_df[pair_data_df['player'] == r_player]
-
-    #------------ Offense ------------------------------
-    # create the offense header text including FBHE and percentile of FBHE
-    p_fbhe[p] = pair_data_row['fbhe']
-    p_fbhe_per[p] = stats.norm.cde( (p1_fbhe - pair_stats_df['fbhe_mean'])/pair_stats_df['fbhe_stdev'] )
-    p_att_txt[p] = 'Offense, Attacking & Passing : ' + r_player+'`s FBHE='+"{:.3f}".format(p1_fbhe)+', Percentile='+str("{:.0%}").format(p1_fbhe_per)
-
-    # now calculate the Offense strength and weakness markdown
-    off_df = sw_p1_df[ sw_p1_df['Section'] == 'Attacking'] if p == 0 else sw_p2_df[ sw_p1_df['Section'] == 'Attacking']
-    off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
-    off_df = off_df['Description','Var Description','Var Value']
-    off_mkdn[p] = pd.DataFrame.to_makrdown(off_df)
-
-    
-  return p_att_txt[0], off_mkdn[0], p_att_txt[1], off_mkdn[1]
-  
-  
-
-  
