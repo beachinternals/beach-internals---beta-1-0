@@ -392,7 +392,7 @@ db_schema:
   strength_weakness_criteria:
     client: none
     columns:
-    - admin_ui: {order: 0, width: 258}
+    - admin_ui: {order: 0, width: 303}
       name: description
       type: string
     - admin_ui: {order: 1, width: 133}
