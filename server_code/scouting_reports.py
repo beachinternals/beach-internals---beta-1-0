@@ -712,7 +712,9 @@ def scout_srv_strategy(disp_league,
   # now, get the variables 
   pass_x = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
   pass_y = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
-  pass_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
   
   # now, loop thru the list for serves from zone 1
   index = 0
@@ -722,91 +724,47 @@ def scout_srv_strategy(disp_league,
     y = 2.4
     for j in ['C','D','E']: # k is depth+
       y = y + 1.6
-      fbhe_var = 'fbhe'+k+'_'+i+j
-      pass_val[index] = pair_data_df.loc[pair_data_index,fbhe_var]
+      fbhe1_var = 'fbhe_1_'+i+j
+      fbhe3_var = 'fbhe_3_'+i+j
+      fbhe5_var = 'fbhe_5_'+i+j
+      pass1_val[index] = pair_data_df.loc[pair_data_index,fbhe1_var]
+      pass3_val[index] = pair_data_df.loc[pair_data_index,fbhe3_var]
+      pass5_val[index] = pair_data_df.loc[pair_data_index,fbhe5_var]
       pass_x[index] = x
       pass_y[index] = y
       index = index + 1
         
-      
-  p_fbhe = pair_data_df.loc[pair_data_index,'fbhe']
+  # I should now have the tables required
+  print(f"x,y : {pass_x}, {pass_y}")
+  print(f"pass value 1, 3, 5: {pass1_val}, {pass3_val}, {pass5_val}")
 
+  # make x,y for serve lines:
+  x11 = [0.5,0.5,0.5]
+  x12 = [0,4,8]
+  x31 = [4,4,4]
+  x51 = [7.5,7.5,7.5]
+  y1 = [0,0,0]
+  y2 = [8,8,8]
 
+  # first, set p the three figures
+  fig1, ax1 = plt.subplots(figsize=(10,20)) # cretae a figure
+  fig3, ax3 = plt.subplots(figsize=(10,20)) # cretae a figure  
+  fig5, ax5 = plt.subplots(figsize=(10,20)) # cretae a figure
   
-
-  # now start a loop of the number of desitnation tuples (srv2[])
-  first_zone = True
-  for i in range(0,len(srv_2),1):
-    #print(f" i:{i}, srv_2[i,0] {srv_2[i][0]}, srv_2[i,1] {srv_2[i][1]}")
-    tmp_df = ppr_df[ (ppr_df['serve_dest_zone_net'] == srv_2[i][0]) & (ppr_df['serve_dest_zone_depth'] == srv_2[i][1]) ]
-    #print(f"Number of rows in Filter db by serve dest: {tmp_df.shape[0]}")
-    if not first_zone:
-      new_ppr = pd.concat([new_ppr,tmp_df])
-    else:
-      new_ppr = tmp_df
-      first_zone = False
-     
-  #print(f"Number of final db to analze: {new_ppr.shape[0]}")
+  # then plot the court background
+  ax1 = plot_court_background(fig1,ax1)
+  ax3 = plot_court_background(fig3,ax5)
+  ax5 = plot_court_background(fig3,ax5)
   
-  # calculate a quick table FBHE
-  fbhe_vector = fbhe(new_ppr, disp_player, 'att',True)
-  oos_vector =count_out_of_system(new_ppr, disp_player, 'att')
-  #print(f"fbhe Vector: {fbhe_vector}")
-  srv_strat_dict = {'From':[0],
-                     'To':[0],
-                    'Attempts':[0],
-                    'FBSO':[0],
-                    'FBHE':[0],
-                    'Out of Sys':[0],
-                    'URL':[0]
-                   }
-  srv_strat_df = pd.DataFrame.from_dict(srv_strat_dict)
-  srv_strat_df.at[0,'From'] = 'All'
-  srv_strat_df.at[0,'To'] = 'All'
-  srv_strat_df.at[0,'Attempts'] = fbhe_vector[3]
-  srv_strat_df.at[0,'FBSO'] = fbhe_vector[4]
-  srv_strat_df.at[0,'FBHE'] = fbhe_vector[0]
-  srv_strat_df.at[0,'Out of Sys'] = oos_vector[0] if oos_vector[0] else 0
-  srv_strat_df.at[0,'URL'] = fbhe_vector[5]  
+  # then plot the serve lines
+  ax1.plot( [x11, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
+  ax3.plot( [x31, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
+  ax5.plot( [x51, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
 
-  # now a loop over the different serving options:
-  rows = 1
-  for i in [0,1,2]:
-    srv_src = i*2 + 1
-    if srv_fr[i]:
-      for j in range(0,len(srv_2),1):
-        rows = rows+1
-        fbhe_vector = fbhe( (new_ppr[( new_ppr['serve_src_zone_net'] == srv_src) & 
-                              ( new_ppr['serve_dest_zone_net'] == srv_2[j][0] ) & 
-                              ( new_ppr['serve_dest_zone_depth'] == srv_2[j][1]) ]),
-                              disp_player,
-                              'att',
-                              True 
-                            )
-        oos_vector = count_out_of_system( (new_ppr[( new_ppr['serve_src_zone_net'] == srv_src) & 
-                              ( new_ppr['serve_dest_zone_net'] == srv_2[j][0] ) & 
-                              ( new_ppr['serve_dest_zone_depth'] == srv_2[j][1]) ]),
-                              disp_player,
-                              'att'
-                                       )
-        srv_strat_df.at[rows,'From'] = srv_fr_txt[i]
-        srv_strat_df.at[rows,'To'] = str(srv_2_net_txt[srv_2_txt[j][0]]) + " " + str(srv_2_txt[j][1])
-        srv_strat_df.at[rows,'Attempts'] = fbhe_vector[3]
-        srv_strat_df.at[rows,'FBSO'] = fbhe_vector[4]
-        srv_strat_df.at[rows,'FBHE'] = fbhe_vector[0]
-        srv_strat_df.at[rows,'Out of Sys'] = oos_vector[0]
-        srv_strat_df.at[rows,'URL'] = fbhe_vector[5]  
-                                  
-  #print(f"Srv Strat DF: {srv_strat_df}")
-  srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df, index=False)
+  # then plot hte scatter daigram for the 15 areas of the court.
+  ax1.scatter( pass_x, pass_y, s = np.full(len(pass_x),75) , c = )  
 
-  # now, time to make plots.
-  # want to plot data from new_ppr
-
-  # limit the data to passes by the player
-  new_ppr = new_ppr[ new_ppr['pass_player'] == disp_player]
-
-  # make a plot to chart the serves: (line chart, court in the background)
+  # now, leets start making plots:
   serve_diagram_plot_object = plot_lines_on_court(new_ppr, 'srv', 1)
   #serve_diagram_plot_object = ''
 
