@@ -48,7 +48,7 @@ def player_filter(ppr_df, disp_player):
 @anvil.server.callable
 def pair_players(disp_pair):
   # search the master pair table to find the two players
-  disp_pair = disp_pair.strip()
+  disp_pair = disp_pair
   disp_player1 = 'Not Found'
   disp_player2 = 'Not Found'
   print(f"pair_players: Looking for players in pair: {disp_pair}, length: {len(disp_pair)}")
