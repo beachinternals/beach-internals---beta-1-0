@@ -49,8 +49,9 @@ def player_filter(ppr_df, disp_player):
 def pair_players(disp_pair):
   # search the master pair table to find the two players
   disp_pair = disp_pair.strip()
-  disp_player1 = ''
-  disp_player2 = ''
+  disp_player1 = 'Not Found'
+  disp_player2 = 'Not Found'
+  print(f"pair_players: Looking for players in pair: {disp_pair}, length: {len(disp_pair)}")
   for pair_row in app_tables.master_pair.search(pair=disp_pair):
     disp_player1 = pair_row['player1']
     disp_player2 = pair_row['player2']

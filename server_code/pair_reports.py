@@ -839,7 +839,7 @@ def pair_sw_report(disp_league, disp_gender, disp_year,
   # which player are we reporting on? 1 or 2?
   if disp_player.strip() == pair_row['player1'].strip():
     sw_field = 's_w_player1'
-  elif disp_player.strip() == pair_row['player1'].strip():
+  elif disp_player.strip() == pair_row['player2'].strip():
     sw_field = 's_w_player2'
   else:
     print(f"pair_sw_repor : Display Player not one of the pairs: {disp_player}, {pair_row['player1']}, {pair_row['player2']}")
