@@ -659,3 +659,251 @@ def scout_players_serve(disp_league,
 
   
   return srv_strategy_title, srv_strat_md, serve_diagram_plot_object, pass_locations_plot_object, set_locations_plot_object, attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, attack_opt_plot_object, z1_mkdn, z2_mkdn,z3_mkdn,z4_mkdn,z5_mkdn,opt_mkdn
+
+
+#---------------------------------------------------------------------------------
+# Scouting Report : graph of attacking effectiveness (fbhe) from teh 45 serve strategies
+#----------------------------------------------------------------------------------------
+@anvil.server.callable
+def scout_srv_strategy(disp_league,
+                      disp_gender,
+                      disp_year,
+                      disp_team,
+                      disp_pair,
+                      disp_player,
+                      comp_l1_checked,
+                      disp_comp_l1,
+                      comp_l2_checked,
+                      disp_comp_l2,
+                      comp_l3_checked,
+                      disp_comp_l3,
+                      date_checked,
+                      disp_start_date,
+                      disp_end_date,
+                      scout,
+                      explain_text, title_text,
+                      srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5
+  ):
+
+  # we keep all the parameters, but we are not using many.  (serve to and from, and filters on the data since the data is taken from the pair_stats table
+  
+
+  # get teh pair data
+  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+
+  # get the index of the row we need for the pair/plahyer
+  pair_data_index = pair_data_df.loc[ (pair_data_df['pair'] == disp_pair) & (pair_data_df['player'] == disp_player) ].index[0]
+
+  # the order of the index
+  '''
+  index.  from.   to   
+  0.      1.       1C.  x = 0.8. y = 4.0
+  1.      1.       1D.  x = 0.8. y = 5.6
+  2.       1.      1E.   x = 0.8 y = 7.2
+  3       1.      2C.    x = 2.4. y = 4.0
+  4       1       2D.    x = 2.4  y = 5.6
+  5.      1.      2E.    x = 2.4. y = 7.2
+  6                3C.   x = 3.6. y = 4.0
+  7                3D.    x = 3.6. y = 5.6
+  8                3E.   x = 3.6. y = 7.2
+  9                4C
+  10               4D
+  '''
+  # now, get the variables 
+  pass_x = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass_y = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  
+  # now, loop thru the list for serves from zone 1
+  index = 0
+  x = -0.8
+  for i in [1,2,3,4,5]:  # j is along the net
+    x = x + 1.6
+    y = 2.4
+    for j in ['C','D','E']: # k is depth+
+      y = y + 1.6
+      fbhe_var = 'fbhe'+k+'_'+i+j
+      pass_val[index] = pair_data_df.loc[pair_data_index,fbhe_var]
+      pass_x[index] = x
+      pass_y[index] = y
+      index = index + 1
+        
+      
+  p_fbhe = pair_data_df.loc[pair_data_index,'fbhe']
+
+
+  
+
+  # now start a loop of the number of desitnation tuples (srv2[])
+  first_zone = True
+  for i in range(0,len(srv_2),1):
+    #print(f" i:{i}, srv_2[i,0] {srv_2[i][0]}, srv_2[i,1] {srv_2[i][1]}")
+    tmp_df = ppr_df[ (ppr_df['serve_dest_zone_net'] == srv_2[i][0]) & (ppr_df['serve_dest_zone_depth'] == srv_2[i][1]) ]
+    #print(f"Number of rows in Filter db by serve dest: {tmp_df.shape[0]}")
+    if not first_zone:
+      new_ppr = pd.concat([new_ppr,tmp_df])
+    else:
+      new_ppr = tmp_df
+      first_zone = False
+     
+  #print(f"Number of final db to analze: {new_ppr.shape[0]}")
+  
+  # calculate a quick table FBHE
+  fbhe_vector = fbhe(new_ppr, disp_player, 'att',True)
+  oos_vector =count_out_of_system(new_ppr, disp_player, 'att')
+  #print(f"fbhe Vector: {fbhe_vector}")
+  srv_strat_dict = {'From':[0],
+                     'To':[0],
+                    'Attempts':[0],
+                    'FBSO':[0],
+                    'FBHE':[0],
+                    'Out of Sys':[0],
+                    'URL':[0]
+                   }
+  srv_strat_df = pd.DataFrame.from_dict(srv_strat_dict)
+  srv_strat_df.at[0,'From'] = 'All'
+  srv_strat_df.at[0,'To'] = 'All'
+  srv_strat_df.at[0,'Attempts'] = fbhe_vector[3]
+  srv_strat_df.at[0,'FBSO'] = fbhe_vector[4]
+  srv_strat_df.at[0,'FBHE'] = fbhe_vector[0]
+  srv_strat_df.at[0,'Out of Sys'] = oos_vector[0] if oos_vector[0] else 0
+  srv_strat_df.at[0,'URL'] = fbhe_vector[5]  
+
+  # now a loop over the different serving options:
+  rows = 1
+  for i in [0,1,2]:
+    srv_src = i*2 + 1
+    if srv_fr[i]:
+      for j in range(0,len(srv_2),1):
+        rows = rows+1
+        fbhe_vector = fbhe( (new_ppr[( new_ppr['serve_src_zone_net'] == srv_src) & 
+                              ( new_ppr['serve_dest_zone_net'] == srv_2[j][0] ) & 
+                              ( new_ppr['serve_dest_zone_depth'] == srv_2[j][1]) ]),
+                              disp_player,
+                              'att',
+                              True 
+                            )
+        oos_vector = count_out_of_system( (new_ppr[( new_ppr['serve_src_zone_net'] == srv_src) & 
+                              ( new_ppr['serve_dest_zone_net'] == srv_2[j][0] ) & 
+                              ( new_ppr['serve_dest_zone_depth'] == srv_2[j][1]) ]),
+                              disp_player,
+                              'att'
+                                       )
+        srv_strat_df.at[rows,'From'] = srv_fr_txt[i]
+        srv_strat_df.at[rows,'To'] = str(srv_2_net_txt[srv_2_txt[j][0]]) + " " + str(srv_2_txt[j][1])
+        srv_strat_df.at[rows,'Attempts'] = fbhe_vector[3]
+        srv_strat_df.at[rows,'FBSO'] = fbhe_vector[4]
+        srv_strat_df.at[rows,'FBHE'] = fbhe_vector[0]
+        srv_strat_df.at[rows,'Out of Sys'] = oos_vector[0]
+        srv_strat_df.at[rows,'URL'] = fbhe_vector[5]  
+                                  
+  #print(f"Srv Strat DF: {srv_strat_df}")
+  srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df, index=False)
+
+  # now, time to make plots.
+  # want to plot data from new_ppr
+
+  # limit the data to passes by the player
+  new_ppr = new_ppr[ new_ppr['pass_player'] == disp_player]
+
+  # make a plot to chart the serves: (line chart, court in the background)
+  serve_diagram_plot_object = plot_lines_on_court(new_ppr, 'srv', 1)
+  #serve_diagram_plot_object = ''
+
+  # make a plot to chart the pass locations: (dot splatter with half court in background)
+  pass_locations_plot_object = plot_points_on_the_court(new_ppr['pass_dest_x'],new_ppr['pass_dest_y'], 2, new_ppr['video_id'], new_ppr['pass_action_id'],True,new_ppr['point_outcome'])
+  #pass_locations_plot_object = ''
+
+  # make a plot to chart the set locations: (dot splatter with half court in background)
+  set_locations_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 3, new_ppr['video_id'], new_ppr['set_action_id'],False,new_ppr['point_outcome'])
+  #set_locations_plot_object = ''
+
+  # Next, build the 6 plots across the page as subplots, zone's 1 - 5 plus Optioon
+
+  # set up 6 sub plots
+  #print("scout_srv_strategy, Plotting Zone 1 Attempts")
+  attack_z1_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')],'att',4)  
+  #print("scout_srv_strategy, Plotting Zone 2 Attempts")  
+  attack_z2_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')],'att',5)
+  #print("scout_srv_strategy, Plotting Zone 3 Attempts")
+  attack_z3_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')],'att',6)
+  #print("scout_srv_strategy, Plotting Zone 4 Attempts")
+  attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',7)
+  #print("scout_srv_strategy, Plotting Zone 5 Attempts")
+  attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',8)
+  #print("scout_srv_strategy, Plotting Option Attempts")
+  attack_opt_plot_object = plot_lines_on_court(new_ppr[ new_ppr['tactic'] == 'option'],'att',9)
+
+  # set up 6 small tables below with:
+  #. 0 = FBHE
+  #. 1 = FBSO
+  #  2 = Attempts
+  #. 3 = Out of System
+  #. 4 = URL
+
+  zone_dict = {'1':['FBHE','FBSO','ATT','URL'],'Value':[0,0,0,'']}
+  z1_df = pd.DataFrame.from_dict(zone_dict)
+  z2_df = pd.DataFrame.from_dict(zone_dict)
+  z3_df = pd.DataFrame.from_dict(zone_dict)
+  z4_df = pd.DataFrame.from_dict(zone_dict)
+  z5_df = pd.DataFrame.from_dict(zone_dict)
+  opt_df = pd.DataFrame.from_dict(zone_dict)
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z1_df.at[0,'Value'] = fbhe_vector[0]
+  z1_df.at[1,'Value'] = fbhe_vector[4]
+  z1_df.at[2,'Value'] = fbhe_vector[3]
+  z1_df.at[3,'Value'] = fbhe_vector[5]
+  #z1_df.at[3,'Value'] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z2_df.at[0,'Value'] = fbhe_vector[0]
+  z2_df.at[1,'Value'] = fbhe_vector[4]
+  z2_df.at[2,'Value'] = fbhe_vector[3]
+  z2_df.at[3,'Value'] = fbhe_vector[5]
+  #z2_df.at[3,'Value'] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z3_df.at[0,'Value'] = fbhe_vector[0]
+  z3_df.at[1,'Value'] = fbhe_vector[4]
+  z3_df.at[2,'Value'] = fbhe_vector[3]
+  z3_df.at[3,'Value'] = fbhe_vector[5]
+  #z3_df.at[3,'Value'] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z4_df.at[0,'Value'] = fbhe_vector[0]
+  z4_df.at[1,'Value'] = fbhe_vector[4]
+  z4_df.at[2,'Value'] = fbhe_vector[3]
+  z4_df.at[3,'Value'] = fbhe_vector[5]
+  #z4_df.at[3,'Value'] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z5_df.at[0,'Value'] = fbhe_vector[0]
+  z5_df.at[1,'Value'] = fbhe_vector[4]
+  z5_df.at[2,'Value'] = fbhe_vector[3]
+  z5_df.at[3,'Value'] = fbhe_vector[5]
+  #z5_df.at[3,'Value'] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'pass', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'pass' )
+  opt_df.at[0,'Value'] = fbhe_vector[0]
+  opt_df.at[1,'Value'] = fbhe_vector[4]
+  opt_df.at[2,'Value'] = fbhe_vector[3]
+  opt_df.at[3,'Value'] = fbhe_vector[5]
+  #opt_df.at[3,'Value'] = oos_vector[0]
+
+  z1_mkdn = pd.DataFrame.to_markdown(z1_df, index=False, headers=['',''] )
+  z2_mkdn = pd.DataFrame.to_markdown(z2_df, index=False, headers=['',''])
+  z3_mkdn = pd.DataFrame.to_markdown(z3_df, index=False, headers=['',''])
+  z4_mkdn = pd.DataFrame.to_markdown(z4_df, index=False, headers=['',''])
+  z5_mkdn = pd.DataFrame.to_markdown(z5_df, index=False, headers=['',''])
+  opt_mkdn = pd.DataFrame.to_markdown(opt_df, index=False, headers=['',''])
+  
+
+  
+  return srv_strategy_title, srv_strat_md, serve_diagram_plot_object, pass_locations_plot_object, set_locations_plot_object, attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, attack_opt_plot_object, z1_mkdn, z2_mkdn,z3_mkdn,z4_mkdn,z5_mkdn,opt_mkdn

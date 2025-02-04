@@ -97,7 +97,7 @@ def get_pair_data( disp_league, disp_gender, disp_year):
     #print('No Rows Found')
     return ["No Player Data Found"], ["No Player Stats Found"]
 
-  # somehow, we are getting a column called unamed: 0, so drop taht
+  # somehow, we are getting a column called unamed: 0, so drop that
   #print(player_data_df.to_dict())
   pair_data_df = pair_data_df.drop(['Unnamed: 0'], axis = 1 )
   pair_stats_df = pair_stats_df.drop(['Unnamed: 0'], axis = 1 )
