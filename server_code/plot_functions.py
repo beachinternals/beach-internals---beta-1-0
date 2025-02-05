@@ -65,8 +65,8 @@ def plot_lines_on_court( ppr_df, action, plt_num):
     print(f"plot_lines_on_court: Invalid action passed : {action}")
 
   # Plot it in the normal Matplotlib way
-  fig, ax = plt.subplots(figsize=(10,20)) # cretae a figure
-  #plt.figure(plt_num, figsize=(10,20))
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  #plt.figure(plt_num, figsize=(10,18))
   
   for index, ppr_r in ppr_df.iterrows():
     line_color = 'blue'
@@ -113,8 +113,8 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
   #
   # line drawing of the set location(s) as dot
   #
-  fig, ax = plt.subplots(figsize=(10,20))
-  #plt.figure(plt_num, figsize=(10,20))
+  fig, ax = plt.subplots(figsize=(10,18))
+  #plt.figure(plt_num, figsize=(10,18))
   x = ppr_x.values
   y = ppr_y.values
   #print(f"plot_points_on_the_court : point_outcome: {point_outcome}")

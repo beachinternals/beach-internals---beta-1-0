@@ -10,6 +10,8 @@ from server_functions import *
 from pair_functions import *
 import pandas as pd
 from plot_functions import *
+import numpy as np
+import matplotlib.pyplot as plt
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -665,7 +667,7 @@ def scout_players_serve(disp_league,
 # Scouting Report : graph of attacking effectiveness (fbhe) from teh 45 serve strategies
 #----------------------------------------------------------------------------------------
 @anvil.server.callable
-def scout_srv_strategy(disp_league,
+def scout_attack_pass_zones(disp_league,
                       disp_gender,
                       disp_year,
                       disp_team,
@@ -722,11 +724,11 @@ def scout_srv_strategy(disp_league,
   for i in [1,2,3,4,5]:  # j is along the net
     x = x + 1.6
     y = 2.4
-    for j in ['C','D','E']: # k is depth+
+    for j in ['c','d','e']: # k is depth+
       y = y + 1.6
-      fbhe1_var = 'fbhe_1_'+i+j
-      fbhe3_var = 'fbhe_3_'+i+j
-      fbhe5_var = 'fbhe_5_'+i+j
+      fbhe1_var = 'fbhe_1_'+str(i)+str(j)
+      fbhe3_var = 'fbhe_3_'+str(i)+str(j)
+      fbhe5_var = 'fbhe_5_'+str(i)+str(j)
       pass1_val[index] = pair_data_df.loc[pair_data_index,fbhe1_var]
       pass3_val[index] = pair_data_df.loc[pair_data_index,fbhe3_var]
       pass5_val[index] = pair_data_df.loc[pair_data_index,fbhe5_var]
@@ -746,122 +748,30 @@ def scout_srv_strategy(disp_league,
   y1 = [0,0,0]
   y2 = [8,8,8]
 
-  # first, set p the three figures
-  fig1, ax1 = plt.subplots(figsize=(10,20)) # cretae a figure
-  fig3, ax3 = plt.subplots(figsize=(10,20)) # cretae a figure  
-  fig5, ax5 = plt.subplots(figsize=(10,20)) # cretae a figure
+  # Create the plot for serves from Zone 1 - define the figure, plot the court, plot a few serve lines, plot the dots
+  cm = plt.cm.get_cmap('RdYlBu')
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  ax = plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),75), c=pass1_val, vmin=-1, vmax=1, cmap=cm )  
+  z1_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  ax = plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),75), c=pass3_val, vmin=-1, vmax=1, cmap=cm )  
+  z3_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  ax = plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),75), c=pass5_val, vmin=-1, vmax=1, cmap=cm )  
+  z5_plt = anvil.mpl_util.plot_image()
+
+
+  # now, leets sta
+  srv_strategy_title = 'Attack Effectiveness based on Serve Source & Desitnation'
   
-  # then plot the court background
-  ax1 = plot_court_background(fig1,ax1)
-  ax3 = plot_court_background(fig3,ax5)
-  ax5 = plot_court_background(fig3,ax5)
-  
-  # then plot the serve lines
-  ax1.plot( [x11, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
-  ax3.plot( [x31, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
-  ax5.plot( [x51, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
-
-  # then plot hte scatter daigram for the 15 areas of the court.
-  ax1.scatter( pass_x, pass_y, s = np.full(len(pass_x),75) , c = )  
-
-  # now, leets start making plots:
-  serve_diagram_plot_object = plot_lines_on_court(new_ppr, 'srv', 1)
-  #serve_diagram_plot_object = ''
-
-  # make a plot to chart the pass locations: (dot splatter with half court in background)
-  pass_locations_plot_object = plot_points_on_the_court(new_ppr['pass_dest_x'],new_ppr['pass_dest_y'], 2, new_ppr['video_id'], new_ppr['pass_action_id'],True,new_ppr['point_outcome'])
-  #pass_locations_plot_object = ''
-
-  # make a plot to chart the set locations: (dot splatter with half court in background)
-  set_locations_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 3, new_ppr['video_id'], new_ppr['set_action_id'],False,new_ppr['point_outcome'])
-  #set_locations_plot_object = ''
-
-  # Next, build the 6 plots across the page as subplots, zone's 1 - 5 plus Optioon
-
-  # set up 6 sub plots
-  #print("scout_srv_strategy, Plotting Zone 1 Attempts")
-  attack_z1_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')],'att',4)  
-  #print("scout_srv_strategy, Plotting Zone 2 Attempts")  
-  attack_z2_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')],'att',5)
-  #print("scout_srv_strategy, Plotting Zone 3 Attempts")
-  attack_z3_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')],'att',6)
-  #print("scout_srv_strategy, Plotting Zone 4 Attempts")
-  attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',7)
-  #print("scout_srv_strategy, Plotting Zone 5 Attempts")
-  attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',8)
-  #print("scout_srv_strategy, Plotting Option Attempts")
-  attack_opt_plot_object = plot_lines_on_court(new_ppr[ new_ppr['tactic'] == 'option'],'att',9)
-
-  # set up 6 small tables below with:
-  #. 0 = FBHE
-  #. 1 = FBSO
-  #  2 = Attempts
-  #. 3 = Out of System
-  #. 4 = URL
-
-  zone_dict = {'1':['FBHE','FBSO','ATT','URL'],'Value':[0,0,0,'']}
-  z1_df = pd.DataFrame.from_dict(zone_dict)
-  z2_df = pd.DataFrame.from_dict(zone_dict)
-  z3_df = pd.DataFrame.from_dict(zone_dict)
-  z4_df = pd.DataFrame.from_dict(zone_dict)
-  z5_df = pd.DataFrame.from_dict(zone_dict)
-  opt_df = pd.DataFrame.from_dict(zone_dict)
-
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
-  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z1_df.at[0,'Value'] = fbhe_vector[0]
-  z1_df.at[1,'Value'] = fbhe_vector[4]
-  z1_df.at[2,'Value'] = fbhe_vector[3]
-  z1_df.at[3,'Value'] = fbhe_vector[5]
-  #z1_df.at[3,'Value'] = oos_vector[0]
-
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
-  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z2_df.at[0,'Value'] = fbhe_vector[0]
-  z2_df.at[1,'Value'] = fbhe_vector[4]
-  z2_df.at[2,'Value'] = fbhe_vector[3]
-  z2_df.at[3,'Value'] = fbhe_vector[5]
-  #z2_df.at[3,'Value'] = oos_vector[0]
-
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
-  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z3_df.at[0,'Value'] = fbhe_vector[0]
-  z3_df.at[1,'Value'] = fbhe_vector[4]
-  z3_df.at[2,'Value'] = fbhe_vector[3]
-  z3_df.at[3,'Value'] = fbhe_vector[5]
-  #z3_df.at[3,'Value'] = oos_vector[0]
-
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
-  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z4_df.at[0,'Value'] = fbhe_vector[0]
-  z4_df.at[1,'Value'] = fbhe_vector[4]
-  z4_df.at[2,'Value'] = fbhe_vector[3]
-  z4_df.at[3,'Value'] = fbhe_vector[5]
-  #z4_df.at[3,'Value'] = oos_vector[0]
-
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
-  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z5_df.at[0,'Value'] = fbhe_vector[0]
-  z5_df.at[1,'Value'] = fbhe_vector[4]
-  z5_df.at[2,'Value'] = fbhe_vector[3]
-  z5_df.at[3,'Value'] = fbhe_vector[5]
-  #z5_df.at[3,'Value'] = oos_vector[0]
-
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'pass', 'Yes')
-  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['tactic'] == 'option')], disp_player, 'pass' )
-  opt_df.at[0,'Value'] = fbhe_vector[0]
-  opt_df.at[1,'Value'] = fbhe_vector[4]
-  opt_df.at[2,'Value'] = fbhe_vector[3]
-  opt_df.at[3,'Value'] = fbhe_vector[5]
-  #opt_df.at[3,'Value'] = oos_vector[0]
-
-  z1_mkdn = pd.DataFrame.to_markdown(z1_df, index=False, headers=['',''] )
-  z2_mkdn = pd.DataFrame.to_markdown(z2_df, index=False, headers=['',''])
-  z3_mkdn = pd.DataFrame.to_markdown(z3_df, index=False, headers=['',''])
-  z4_mkdn = pd.DataFrame.to_markdown(z4_df, index=False, headers=['',''])
-  z5_mkdn = pd.DataFrame.to_markdown(z5_df, index=False, headers=['',''])
-  opt_mkdn = pd.DataFrame.to_markdown(opt_df, index=False, headers=['',''])
-  
-
-  
-  return srv_strategy_title, srv_strat_md, serve_diagram_plot_object, pass_locations_plot_object, set_locations_plot_object, attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, attack_opt_plot_object, z1_mkdn, z2_mkdn,z3_mkdn,z4_mkdn,z5_mkdn,opt_mkdn
+  return srv_strategy_title, '', z1_plt, z3_plt, z5_plt, '','','','','','','','','','','',''
