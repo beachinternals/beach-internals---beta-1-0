@@ -244,7 +244,7 @@ def scout_srv_strategy(disp_league,
         srv_strat_df.at[rows,'Out of Sys'] = oos_vector[0]
         srv_strat_df.at[rows,'URL'] = fbhe_vector[5]  
                                   
-  #print(f"Srv Strat DF: {srv_strat_df}")
+  print(f"Srv Strat DF: {srv_strat_df}")
   srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df, index=False)
 
   # now, time to make plots.
@@ -757,21 +757,21 @@ def scout_attack_pass_zones(disp_league,
   
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
-  ax.plot( [x11, x12], [y1, y2], c='g', linestyle='dashed', linewidth =2.5 )
+  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass1_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
   z1_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
-  ax.plot( [x31, x12], [y1, y2], c='b', linestyle='dashed', linewidth =2.5 )
+  ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
   z3_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
-  ax.plot( [x51, x12], [y1, y2], c='b', linestyle='dashed', linewidth =2.5 )
+  ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
   fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
   z5_plt = anvil.mpl_util.plot_image()

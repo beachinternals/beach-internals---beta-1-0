@@ -117,14 +117,14 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
   #plt.figure(plt_num, figsize=(10,18))
   x = ppr_x.values
   y = ppr_y.values
-  #print(f"plot_points_on_the_court : point_outcome: {point_outcome}")
+  print(f"plot_points_on_the_court : point_outcome: {point_outcome}")
   pt_color = point_outcome.dropna()
-  #print(f"plot_points_on_the_court : pt_color: {pt_color}")
+  print(f"plot_points_on_the_court : pt_color: {pt_color}")
   vectorize_pt_color = np.vectorize(point_colors)
-  #print(f"plot_points_on_the_court : vectorize pt color: {vectorize_pt_color}")
+  print(f"plot_points_on_the_court : vectorize pt color: {vectorize_pt_color}")
   plot_point_color = vectorize_pt_color(pt_color)
-  #print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
-  #print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
+  print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
+  print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
   point_size = np.full(len(x),75) # numpy array of size len(x), filled with character 2
   #print(f"plot_points_on_the_court: size array: {point_size}")
   ax.scatter( x, y, s = point_size , c = plot_point_color, url = 'http://app.balltime.com/video/'+video_id+'?actionIds='+str(action_num))  
