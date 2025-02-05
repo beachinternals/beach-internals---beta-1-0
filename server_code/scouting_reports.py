@@ -12,6 +12,7 @@ import pandas as pd
 from plot_functions import *
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -692,7 +693,9 @@ def scout_attack_pass_zones(disp_league,
 
   # get teh pair data
   pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
-
+  cmax = pair_stats_df['fbhe_mean']+pair_stats_df['fbhe_stdev']
+  cmin = pair_stats_df['fbhe_mean']-pair_stats_df['fbhe_stdev']
+  
   # get the index of the row we need for the pair/plahyer
   pair_data_index = pair_data_df.loc[ (pair_data_df['pair'] == disp_pair) & (pair_data_df['player'] == disp_player) ].index[0]
 
@@ -720,9 +723,9 @@ def scout_attack_pass_zones(disp_league,
   
   # now, loop thru the list for serves from zone 1
   index = 0
-  x = -0.8
+  x = 8.8
   for i in [1,2,3,4,5]:  # j is along the net
-    x = x + 1.6
+    x = x - 1.6
     y = 2.4
     for j in ['c','d','e']: # k is depth+
       y = y + 1.6
@@ -745,29 +748,32 @@ def scout_attack_pass_zones(disp_league,
   x12 = [0,4,8]
   x31 = [4,4,4]
   x51 = [7.5,7.5,7.5]
-  y1 = [0,0,0]
+  y1 = [-8,-8,-8]
   y2 = [8,8,8]
 
   # Create the plot for serves from Zone 1 - define the figure, plot the court, plot a few serve lines, plot the dots
-  cm = plt.cm.get_cmap('RdYlBu')
+  #cm = mpl.cm.cool
+  #norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+  
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
-  ax = plot_court_background(fig,ax)
-  ax.plot( [x11, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
-  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),75), c=pass1_val, vmin=-1, vmax=1, cmap=cm )  
+  plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='g', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass1_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
   z1_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
-  ax = plot_court_background(fig,ax)
-  ax.plot( [x11, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
-  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),75), c=pass3_val, vmin=-1, vmax=1, cmap=cm )  
+  plot_court_background(fig,ax)
+  ax.plot( [x31, x12], [y1, y2], c='b', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
   z3_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
-  ax = plot_court_background(fig,ax)
-  ax.plot( [x11, x12], [y1, y2], c='b', linestyle='solid', linewidth =2.5 )
-  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),75), c=pass5_val, vmin=-1, vmax=1, cmap=cm )  
+  plot_court_background(fig,ax)
+  ax.plot( [x51, x12], [y1, y2], c='b', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
   z5_plt = anvil.mpl_util.plot_image()
 
 

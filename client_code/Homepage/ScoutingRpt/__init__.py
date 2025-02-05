@@ -77,14 +77,14 @@ class ScoutingRpt(ScoutingRptTemplate):
       (row["pair"], row)
       for row in app_tables.master_pair.search(
         tables.order_by("pair"),
-        league=user_row['def_league'],
-        gender=user_row['def_gender'],
-        year=user_row['def_year'],
+        league=disp_league,
+        gender=disp_gender,
+        year=disp_year
       )
     ]
     # now find the players
-    disp_player1, disp_player2 = anvil.server.call('pair_players',self.pair_drop_down.selected_value['pair'])
-    self.player_drop_down.items = [disp_player1,disp_player2]
+    #disp_player1, disp_player2 = anvil.server.call('pair_players',self.pair_drop_down.selected_value['pair'])
+    #self.player_drop_down.items = [disp_player1,disp_player2]
 
     # populate the reports drop down
     if anvil.users.get_user()["team"] == "INTERNALS":
@@ -96,24 +96,6 @@ class ScoutingRpt(ScoutingRptTemplate):
         (row["report_name"])
         for row in app_tables.report_list.search(private=False, rpt_type="scouting")
       ]
-
-  def PlayerRpt1_click_click(self, **event_args):
-    """This method is called when the link is clicked"""
-    self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(PlayerRpt1())
-    pass
-
-  def PlayerRpt2_click_click(self, **event_args):
-    """This method is called when the link is clicked"""
-    self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(PlayerRpt2())
-    pass
-
-  def roster_manage_click_click(self, **event_args):
-    """This method is called when the link is clicked"""
-    self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(roster_manage())
-    pass
 
   def comp_l1_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
@@ -192,10 +174,9 @@ class ScoutingRpt(ScoutingRptTemplate):
       )
     ]
 
-    # set the sstart and end date to beginning and end of the season (needed for function call)
-    # self.start_date_picker.date = datetime.date.today()  # temp : need to pull from league DB
-    # self.end_date_picker.date = datetime.date.today()
-
+    disp_player1, disp_player2 = anvil.server.call('pair_players',self.pair_drop_down.selected_value['pair'])
+    self.player_drop_down.items = [disp_player1,disp_player2]
+    
     pass
 
   def generate_report_button_click(self, **event_args):
