@@ -339,6 +339,7 @@ def rpt_mgr_generate_background():
                                       attachments=pdf_list)
         if not email_status:
           print("report:Manager, Scouting Reports, email send failed")
+      elif rpt_r['rpt_type'] == ''
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
