@@ -366,29 +366,32 @@ def rpt_mgr_generate_background():
               #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_r['team']}")
               #print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
 
-              pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
-                                    rpt_print['rpt_form'], 
-                                    pair_r['league'],
-                                    pair_r['gender'],
-                                    pair_r['year'],
-                                    rpt_r['team'],
-                                    disp_pair,
-                                    disp_player[i],
-                    comp_l1_checked, disp_comp_l1,
-                    comp_l2_checked, disp_comp_l2,
-                    comp_l3_checked, disp_comp_l3,
-                    date_checked, disp_start_date, disp_end_date,
-                    scout, rpt_print['explain_text'], rpt_print['box1_title'],    
-                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
-                    )
-              # now, need to merge this report with the next one
-              if full_rpt_pdf:
-                #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-                full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+              if rpt_r['function_name'] == 'full_pair_scouting_report':
+                pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
+                                      rpt_print['rpt_form'], 
+                                      pair_r['league'],
+                                      pair_r['gender'],
+                                      pair_r['year'],
+                                      rpt_r['team'],
+                                      disp_pair,
+                                      disp_player[i],
+                      comp_l1_checked, disp_comp_l1,
+                      comp_l2_checked, disp_comp_l2,
+                      comp_l3_checked, disp_comp_l3,
+                      date_checked, disp_start_date, disp_end_date,
+                      scout, rpt_print['explain_text'], rpt_print['box1_title'],    
+                      srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+                      )
+                # now, need to merge this report with the next one
+                if full_rpt_pdf:
+                  #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+                  full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+                else:
+                  #print('no original pdf file, setting to pdf1')
+                  full_rpt_pdf = pdf1
+                  #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
               else:
-                #print('no original pdf file, setting to pdf1')
-                full_rpt_pdf = pdf1
-                #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+                full_rpt_pdf = 'Invalid Function name/report type'+pt_r['function_name']+' '+rpt_r['rpt_type']
 
             # put this pdf into the pdf list
             pdf_list[pdf_num] = full_rpt_pdf

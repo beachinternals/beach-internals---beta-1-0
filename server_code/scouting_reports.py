@@ -781,3 +781,54 @@ def scout_attack_pass_zones(disp_league,
   srv_strategy_title = 'Attack Effectiveness based on Serve Source & Desitnation'
   
   return srv_strategy_title, '', z1_plt, z3_plt, z5_plt, '','','','','','','','','','','',''
+
+
+@anvil.server.callable
+def full_scouting_report_pair(fnct_name, rpt_form, disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text, title_text,
+                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+                    ):
+  # this merges a hard coded series of reports
+  '''
+  This is typically called in report manager for report type : 'scouting - pdf only'"
+
+  funct_name should be 'full_pair_scouting_report'
+  
+  The reports merged together are (all pair reports):
+  - pair sw report
+  - pair fbhe by attack
+  - pair fbhe by pass
+  - scout attack pass zones
+  - scout srv strategy
+  - scout players serve
+
+  Input parameters include full set of report parameters, calling this creates PDF for the disp_player, 
+  for full pair, call twice, once for each disp_player.
+
+  return is the pdf file
+
+  funct_name here should be 
+  '''
+  
+  pdf_file = '' # temp storage while coding
+
+  # create and store the pair_sw_report
+
+  # create and store the fbhe by attack
+
+  # create and store the dbhe by passer
+
+  # create and store the scout attack pass zones
+
+  # now scout srv strategy
+
+  # scout players sserve
+
+  # return the pdf file!
+  
+  return pdf_file
