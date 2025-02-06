@@ -339,7 +339,70 @@ def rpt_mgr_generate_background():
                                       attachments=pdf_list)
         if not email_status:
           print("report:Manager, Scouting Reports, email send failed")
-      elif rpt_r['rpt_type'] == ''
+      elif rpt_r['rpt_type'] == 'scouting - pdf only':
+        # this category is for reports taht can only be generated as pdf files, not as web pages.
+        #. all of these are pair based reports, first player 1, then player 2.  
+        #  only one report may be speficied here
+        #. Valid report types :
+        #              - 'full scouting report - pair'
+        #
+        
+        pdf_list = ['']*len(rpt_r['pair_list'])*2      # start a list of all pdf files to pass to email send
+        pdf_num = 0
+        for pair_r in rpt_r['pair_list']:
+          # build pair string
+          disp_pair = pair_r['pair']
+          disp_player = ['','']
+          disp_player[0], disp_player[1] = pair_players(disp_pair)
+
+          for i in [0,1]: # loop over two players in the pair
+            #print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
+            # make the report for each player in the pair
+            full_rpt_pdf = None
+            pdf_name = disp_player[i] + ' Full Scouting Report.pdf'
+        
+            # loop over all the reports for this player
+            for rpt_print in rpt_r['rpts_inc']:
+              #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_r['team']}")
+              #print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
+
+              pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
+                                    rpt_print['rpt_form'], 
+                                    pair_r['league'],
+                                    pair_r['gender'],
+                                    pair_r['year'],
+                                    rpt_r['team'],
+                                    disp_pair,
+                                    disp_player[i],
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, rpt_print['explain_text'], rpt_print['box1_title'],    
+                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+                    )
+              # now, need to merge this report with the next one
+              if full_rpt_pdf:
+                #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+                full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+              else:
+                #print('no original pdf file, setting to pdf1')
+                full_rpt_pdf = pdf1
+                #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+
+            # put this pdf into the pdf list
+            pdf_list[pdf_num] = full_rpt_pdf
+            pdf_num = pdf_num + 1
+          
+        email_status = anvil.email.send(to=rpt_r['emailto'],
+                                      from_address="no-reply",
+                                      cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
+                                      subject='Beach Internals - Scouting Reports ',
+                                      text='Attached please find the summary report(s)',
+                                      attachments=pdf_list)
+        if not email_status:
+          print("report:Manager, Scouting Reports, email send failed")
+          
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
