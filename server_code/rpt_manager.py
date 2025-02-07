@@ -350,6 +350,7 @@ def rpt_mgr_generate_background():
         pdf_list = ['']*len(rpt_r['pair_list'])*2      # start a list of all pdf files to pass to email send
         pdf_num = 0
         for pair_r in rpt_r['pair_list']:
+          pdf_num = 0 # new pdf number because 
           # build pair string
           disp_pair = pair_r['pair']
           disp_player = ['','']
@@ -367,7 +368,18 @@ def rpt_mgr_generate_background():
               #print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
 
               if rpt_r['function_name'] == 'full_pair_scouting_report':
-                pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
+                # this full pair scouting report is made of the following merged to gether
+                #. pair_sw_report
+                #. pair_fbhe_net
+                #. pair_fbhe_pass
+                #. scout_attack_pass_zones
+                #. scout_players_serve
+                #. scout_attack_pass_zones
+
+                # let's put these into a list, then loop thru the list
+                report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_players_serve','scout_attack_pass_zones']
+                for report in report_list:  
+                  pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
                                       rpt_print['rpt_form'], 
                                       pair_r['league'],
                                       pair_r['gender'],
@@ -382,29 +394,29 @@ def rpt_mgr_generate_background():
                       scout, rpt_print['explain_text'], rpt_print['box1_title'],    
                       srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                       )
-                # now, need to merge this report with the next one
-                if full_rpt_pdf:
-                  #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-                  full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
-                else:
-                  #print('no original pdf file, setting to pdf1')
-                  full_rpt_pdf = pdf1
+                  # now, need to merge this report with the next one
+                  if full_rpt_pdf:
+                    #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+                    full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+                  else:
+                    #print('no original pdf file, setting to pdf1')
+                    full_rpt_pdf = pdf1
                   #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
               else:
-                full_rpt_pdf = 'Invalid Function name/report type'+pt_r['function_name']+' '+rpt_r['rpt_type']
+                full_rpt_pdf = 'Invalid Function name/report type'+rpt_r['function_name']+' '+rpt_r['rpt_type']
 
             # put this pdf into the pdf list
             pdf_list[pdf_num] = full_rpt_pdf
             pdf_num = pdf_num + 1
           
-        email_status = anvil.email.send(to=rpt_r['emailto'],
+          email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
                                       cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
                                       subject='Beach Internals - Scouting Reports ',
                                       text='Attached please find the summary report(s)',
                                       attachments=pdf_list)
-        if not email_status:
-          print("report:Manager, Scouting Reports, email send failed")
+          if not email_status:
+            print("report:Manager, Scouting Reports, email send failed")
           
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
