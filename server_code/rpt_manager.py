@@ -404,7 +404,32 @@ def rpt_mgr_generate_background():
                     # here, I want to look for the scout_srv_strategy report. 
                     if report == 'scout_srv_strategy' :
                       # for this one, we want to look in the pair data file, find this piar/player, then look for the top 3 and bottom 3 serve receive zones
-                      a=b
+                      sr_matrix = make_sr_matrix(True, disp_league, disp_gender, disp_year, disp_pair, disp_player[i])
+
+                      # sort this matrix
+                      sr_matrix = sr_matrix.sort_values(by=fbhe, ascending=False) # this should be the high fbhe first, low last
+
+                      # create the serve strategy report for each one in the matrix
+                      if sr_matrix.shape[0] < 7 :
+                        sr_index = range[0,sr_matrix.shape[0]]
+                      else:
+                        sr_index = [0,1,2,sr_matrix.shape[0]-2,sr_matrix.shape[0]-1,sr_matrix.shape[0]]
+                      print(f" sr_index range of number ot process: {sr_index}")
+                      #now loop thru these serve strategies (to/fr) to create the reprots
+                      for srv_strat in sr_index:
+                        if sr_matrix.at[srv_strat,'sr_fr'] == 1:
+                          srv_fr[1] = True
+                        elif sr_matrix.at[srv_strat,'sr_fr'] == 3:
+                          srv_fr[3] = True
+                        elif sr_matrix.at[srv_strat,'sr_fr'] == 5:
+                          srv_fr[3] = True
+                        else:
+                          print(f"invalid serve from {sr_matrix.at[srv_strat,'sr_fr']}")
+                        if sr_matrix.at[srv_strat,'sr_to_net'] == 1:
+                          if sr_matrix.at[srv_strat,'sr_to_depth'] == 'c':
+                            srv_to_1[]
+                          
+                          
                       
                     pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
                                       rpt_print['rpt_form'], 
@@ -543,16 +568,18 @@ def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp
   for i in [1,3,5]:
     for j in [1,2,3,4,5]:
       for k in [c,d,e]:
-        att_var = 'fbhe'+str(i)+'_'+str(j)+k+'_n'
+        var_base = 'fbhe_'+str(i)+'_'+str(j)+k
+        att_var = var_base+'_n'
         print(f"make_sr_matrix: attemtps veriable: {att_var}")
         if p_df[att_var] >=5:
           # save this record
           sr_matrix.at[num_saved,'sr_fr'] = i
           sr_matrix.at[num_saved,'sr_to_net'] = j
           sr_matrix.at[num_saved,'sr_to_depth'] = k
-          sr_matrix.at[num_saved,'att'] = p_df[]
-                    sr_matrix.at[num_saved,'sr_fr'] = i
-                    sr_matrix.at[num_saved,'sr_fr'] = i
+          sr_matrix.at[num_saved,'att'] = p_df[att_var]
+          sr_matrix.at[num_saved,'fbhe'] = p_df[var_base]
+          sr_matrix.at[num_saved,'pass_area'] = p_df[var_base+'_ea']
+          num_saved = num_saved + 1
           
   
-  return sr_df
+  return sr_matrix
