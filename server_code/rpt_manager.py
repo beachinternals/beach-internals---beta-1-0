@@ -9,6 +9,8 @@ import anvil.server
 from Generate_PDF import *
 from datetime import datetime, timedelta, date
 from pair_functions import *
+from server_functions import *
+import pandas as pd
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -377,7 +379,7 @@ def rpt_mgr_generate_background():
                 #. scout_attack_pass_zones
 
                 # let's put these into a list, then loop thru the list
-                report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_players_serve','scout_attack_pass_zones']
+                report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy','scout_players_serve']
                 for report in report_list: 
                   # create the report with the standard call:
 
@@ -399,6 +401,11 @@ def rpt_mgr_generate_background():
                                       scout, rpt_print['explain_text'], rpt_print['box1_title']
                                                       )
                   elif ( rpt_row['rpt_type'] == 'scouting'):
+                    # here, I want to look for the scout_srv_strategy report. 
+                    if report == 'scout_srv_strategy' :
+                      # for this one, we want to look in the pair data file, find this piar/player, then look for the top 3 and bottom 3 serve receive zones
+                      a=b
+                      
                     pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
                                       rpt_print['rpt_form'], 
                                       pair_r['league'],
@@ -502,5 +509,50 @@ def rpt_mgr_matchup_rpts(rpt_r):
   # make the pdf of player type reports
   rpt_pdf = 'Matchup Reports'
   return rpt_pdf
-    
-      
+
+
+#--------------------
+#.  Function to read serve receive ingo (45 total) into a matrix
+#-------------------------
+def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp_player):
+  # make a dataframe to store this informationin
+  sr_matrix_dict = {'sr_fr':[0],
+                    'sr_to_net':[0],
+                    'sr_to_depth':[' '],
+                    'att':[0],
+                    'fbhe':[0],
+                    'pass_area':[0]
+                   }
+  sr_matrix = pd.DataFrame.from_dict(sr_matrix_dict)
+  
+  # open and read the row for this  pair
+  if pair_yn:
+    # for pairs
+    p_df, pstat_df = get_pair_data( disp_league, disp_gender, disp_year)
+    p_df = p_df[ (p_df['pair'] == disp_pair) & (p_df['player'] == disp_player ) ]
+  else:
+    # for the player
+    p_df, pstat_df = get_player_data ( disp_league, disp_gender, disp_year )
+    p_df = p_df[ p_df['player'] == disp_player ]
+
+  # p_df should now be 1 row
+  print(f"make_sr_matrix: p_df size = {p_df.shape[0]}")
+
+  #now I need to loop thru the different 
+  num_saved = 0
+  for i in [1,3,5]:
+    for j in [1,2,3,4,5]:
+      for k in [c,d,e]:
+        att_var = 'fbhe'+str(i)+'_'+str(j)+k+'_n'
+        print(f"make_sr_matrix: attemtps veriable: {att_var}")
+        if p_df[att_var] >=5:
+          # save this record
+          sr_matrix.at[num_saved,'sr_fr'] = i
+          sr_matrix.at[num_saved,'sr_to_net'] = j
+          sr_matrix.at[num_saved,'sr_to_depth'] = k
+          sr_matrix.at[num_saved,'att'] = p_df[]
+                    sr_matrix.at[num_saved,'sr_fr'] = i
+                    sr_matrix.at[num_saved,'sr_fr'] = i
+          
+  
+  return sr_df
