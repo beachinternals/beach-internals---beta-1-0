@@ -415,23 +415,70 @@ def rpt_mgr_generate_background():
                       else:
                         sr_index = [0,1,2,sr_matrix.shape[0]-2,sr_matrix.shape[0]-1,sr_matrix.shape[0]]
                       print(f" sr_index range of number ot process: {sr_index}")
+                    
                       #now loop thru these serve strategies (to/fr) to create the reprots
+                      # srv_to is T/F from zones [ 1 , 3, 5 ]
+                      # serve_to_n is T/F from zone [ E, D, C ]
                       for srv_strat in sr_index:
+                        srv_fr = [False, False, False]
                         if sr_matrix.at[srv_strat,'sr_fr'] == 1:
-                          srv_fr[1] = True
+                          srv_fr[0] = True
                         elif sr_matrix.at[srv_strat,'sr_fr'] == 3:
-                          srv_fr[3] = True
+                          srv_fr[1] = True
                         elif sr_matrix.at[srv_strat,'sr_fr'] == 5:
-                          srv_fr[3] = True
+                          srv_fr[2] = True
                         else:
                           print(f"invalid serve from {sr_matrix.at[srv_strat,'sr_fr']}")
+                        srv_to_1 = [False,False,False]
+                        srv_to_2 = [False,False,False]
+                        srv_to_3 = [False,False,False]
+                        srv_to_4 = [False,False,False]
+                        srv_to_5 = [False,False,False]
                         if sr_matrix.at[srv_strat,'sr_to_net'] == 1:
                           if sr_matrix.at[srv_strat,'sr_to_depth'] == 'c':
-                            srv_to_1[]
-                          
-                          
-                      
-                    pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
+                            srv_to_1[2] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'd':
+                            srv_to_1[1] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'e':
+                            srv_to_1[0] = True
+
+                        if sr_matrix.at[srv_strat,'sr_to_net'] == 2:
+                          if sr_matrix.at[srv_strat,'sr_to_depth'] == 'c':
+                            srv_to_2[2] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'd':
+                            srv_to_2[1] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'e':
+                            srv_to_2[0] = True
+
+                        if sr_matrix.at[srv_strat,'sr_to_net'] == 3:
+                          if sr_matrix.at[srv_strat,'sr_to_depth'] == 'c':
+                            srv_to_3[2] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'd':
+                            srv_to_3[1] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'e':
+                            srv_to_3[0] = True
+
+                        if sr_matrix.at[srv_strat,'sr_to_net'] == 4:
+                          if sr_matrix.at[srv_strat,'sr_to_depth'] == 'c':
+                            srv_to_4[2] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'd':
+                            srv_to_4[1] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'e':
+                            srv_to_4[0] = True
+
+                        if sr_matrix.at[srv_strat,'sr_to_net'] == 5:
+                          if sr_matrix.at[srv_strat,'sr_to_depth'] == 'c':
+                            srv_to_5[2] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'd':
+                            srv_to_5[1] = True
+                          elif sr_matrix.at[srv_strat,'sr_to_depth'] == 'e':
+                            srv_to_5[0] = True
+
+                        # print out result real quick to check
+                        print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, sserve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
+
+                        # now call the scouting report for each serve strategy:
+                        pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
                                       rpt_print['rpt_form'], 
                                       pair_r['league'],
                                       pair_r['gender'],
