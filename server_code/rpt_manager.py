@@ -415,7 +415,7 @@ def rpt_mgr_generate_background():
 
                       # create the serve strategy report for each one in the matrix
                       if sr_matrix.shape[0] < 7 :
-                        sr_index = range[0,sr_matrix.shape[0]]
+                        sr_index = range(0,sr_matrix.shape[0])
                       else:
                         sr_index = [0,1,2,sr_matrix.shape[0]-2,sr_matrix.shape[0]-1,sr_matrix.shape[0]]
                       print(f" sr_index range of number ot process: {sr_index}")
