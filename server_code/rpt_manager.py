@@ -381,7 +381,8 @@ def rpt_mgr_generate_background():
                 #. scout_attack_pass_zones
 
                 # let's put these into a list, then loop thru the list
-                report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy','scout_players_serve']
+                #report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy','scout_players_serve']
+                report_list = ['scout_srv_strategy','scout_players_serve']
                 for report in report_list: 
                   # create the report with the standard call:
 
@@ -410,7 +411,7 @@ def rpt_mgr_generate_background():
                       sr_matrix = make_sr_matrix(True, pair_r['league'], pair_r['gender'], pair_r['year'], disp_pair, disp_player[i])
 
                       # sort this matrix
-                      sr_matrix = sr_matrix.sort_values(by=fbhe, ascending=False) # this should be the high fbhe first, low last
+                      sr_matrix = sr_matrix.sort_values(by='fbhe', ascending=False) # this should be the high fbhe first, low last
 
                       # create the serve strategy report for each one in the matrix
                       if sr_matrix.shape[0] < 7 :
@@ -604,14 +605,17 @@ def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp
   if pair_yn:
     # for pairs
     p_df, pstat_df = get_pair_data( disp_league, disp_gender, disp_year)
-    p_df = p_df[ (p_df['pair'] == disp_pair) & (p_df['player'] == disp_player ) ]
+    p_row = p_df.loc[ (p_df['pair'] == disp_pair) & (p_df['player'] == disp_player ) ].iloc[0]
   else:
     # for the player
     p_df, pstat_df = get_player_data ( disp_league, disp_gender, disp_year )
-    p_df = p_df[ p_df['player'] == disp_player ]
+    p_row = p_df.loc[ p_df['player'] == disp_player ].iloc[0]
 
   # p_df should now be 1 row
-  print(f"make_sr_matrix: p_df size = {p_df.shape[0]}")
+  #print(f"make_sr_matrix: p_df size = {p_df.shape[0]}")
+  #print(f"make_sr_matrix: player/pair row: row: {type(p_row)}, {p_row.shape[0]}")
+  #print(f"make)_sr_matrix: p row : {p_row}")
+  #print(f"player : {p_row['player']}")
 
   #now I need to loop thru the different 
   num_saved = 0
@@ -620,15 +624,16 @@ def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp
       for k in ['c','d','e']:
         var_base = 'fbhe_'+str(i)+'_'+str(j)+k
         att_var = var_base+'_n'
-        print(f"make_sr_matrix: attemtps veriable: {att_var}")
-        if (p_df.at[0,att_var] > 4) :
+        #print(f"make_sr_matrix: attemtps veriable: {att_var}")
+        print(f" make_sr_matrix: attempts: {p_row[att_var]}")
+        if (p_row[att_var] > 4) :
           # save this record
           sr_matrix.at[num_saved,'sr_fr'] = i
           sr_matrix.at[num_saved,'sr_to_net'] = j
           sr_matrix.at[num_saved,'sr_to_depth'] = k
-          sr_matrix.at[num_saved,'att'] = p_df.at[0,att_var]
-          sr_matrix.at[num_saved,'fbhe'] = p_df.at[0,var_base]
-          sr_matrix.at[num_saved,'pass_area'] = p_df.at[0,var_base+'_ea']
+          sr_matrix.at[num_saved,'att'] = p_row[att_var]
+          sr_matrix.at[num_saved,'fbhe'] = p_row[var_base]
+          sr_matrix.at[num_saved,'pass_area'] = p_row[var_base+'_ea']
           num_saved = num_saved + 1
           
   print(f"make_sr_matrix : serve receive matrix: {sr_matrix}")
