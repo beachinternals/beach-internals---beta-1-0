@@ -198,11 +198,13 @@ class PlayerRpt(PlayerRptTemplate):
     # check comp_l3, if not, set to str()
     if type(self.comp_l3_drop_down.selected_value['comp_l3']) == type(None):
       self.comp_l3_drop_down.selected_value['comp_l3'] = str()
-
+    
+    disp_pair = '' # this is a dummy for player reports to keep the calling arguments consistent for player and pair reports
+   
     # call the server function
     table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, 
                                    disp_league, disp_gender, disp_year, 
-                                   disp_team, disp_player, 
+                                   disp_team, disp_pair, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
                                    self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
                                    self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
@@ -290,10 +292,11 @@ class PlayerRpt(PlayerRptTemplate):
     if type(self.comp_l3_drop_down.selected_value['comp_l3']) == type(None):
       self.comp_l3_drop_down.selected_value['comp_l3'] = str()
 
+    disp_pair = '' # this is a dummy for player reports to keep the calling arguments consistent for player and pair reports
     # call the server function
     pdf_rpt = anvil.server.call('create_pdf_reports', fnct_name, form,
                                    disp_league, disp_gender, disp_year, 
-                                   disp_team, disp_player, 
+                                   disp_team, disp_pair, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
                                    self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
                                    self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],
@@ -342,10 +345,11 @@ class PlayerRpt(PlayerRptTemplate):
     # check comp_l3, if not, set to str()
     if type(self.comp_l3_drop_down.selected_value['comp_l3']) == type(None):
       self.comp_l3_drop_down.selected_value['comp_l3'] = str()
-    
+
+    disp_pair = '' # this is a dummy for player reports to keep the calling arguments consistent for player and pair reports
     return_value = anvil.server.call('render_all_rpts_pdf_callable',
                                    disp_league, disp_gender, disp_year, 
-                                   disp_team, disp_player, 
+                                   disp_team, disp_pair, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
                                    self.comp_l2_check_box.checked, self.comp_l2_drop_down.selected_value['comp_l2'],
                                    self.comp_l3_check_box.checked, self.comp_l3_drop_down.selected_value['comp_l3'],

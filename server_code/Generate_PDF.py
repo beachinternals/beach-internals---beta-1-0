@@ -11,7 +11,9 @@ from PyPDF2 import PdfMerger
 import io
 import pair_functions
 import pair_reports
+import player_reports
 import datetime
+import scouting_reports
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -42,7 +44,7 @@ def send_pdf_email(email, email_message, pdf ):
 #----------------------------------------------------------------------
 @anvil.server.callable
 def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -53,7 +55,7 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
   # call report function
   print(f'Calling Function:{fnct_name}')
   table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -201,7 +203,7 @@ def send_email(email_subj, email_body, email_attachment, email_to, email_from):
 @anvil.server.callable
 def render_all_rpts_pdf_callable(
                     disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -211,7 +213,7 @@ def render_all_rpts_pdf_callable(
   # just kick off the background task to do this
   return_value = anvil.server.launch_background_task('render_all_rpts_pdf_background',
                     disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -224,7 +226,7 @@ def render_all_rpts_pdf_callable(
 @anvil.server.background_task
 def  render_all_rpts_pdf_background(
                     disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -246,7 +248,7 @@ def  render_all_rpts_pdf_background(
     #print(index,value)
     pdf1 = anvil.server.call('create_pdf_reports', value, form_list[index],
                           disp_league, disp_gender, disp_year, 
-                          disp_team, disp_player,
+                          disp_team, disp_pair, disp_player,
                           comp_l1_checked, disp_comp_l1,
                           comp_l2_checked, disp_comp_l2,
                           comp_l3_checked, disp_comp_l3,

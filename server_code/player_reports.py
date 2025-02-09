@@ -81,7 +81,7 @@ def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player
 
 @anvil.server.callable
 def fbhe_scout_query(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -151,7 +151,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -273,7 +273,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def fbhe_by_srv_src(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -336,7 +336,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def fbhe_by_attack_type(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -423,7 +423,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def srv_eff(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -521,7 +521,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def fbhe_srv_dest(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -589,7 +589,7 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def tri_score(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -665,7 +665,7 @@ def tri_score(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def error_density(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -727,7 +727,7 @@ def error_density(disp_league, disp_gender, disp_year,
 #######################  Transition  ############################
 @anvil.server.callable
 def tcr(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -820,7 +820,7 @@ def tcr(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def expected_value(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -889,7 +889,7 @@ def expected_value(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def out_of_system(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -958,7 +958,7 @@ def out_of_system(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def out_of_system_angle(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -1026,7 +1026,7 @@ def out_of_system_angle(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def out_of_system_location(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -1094,7 +1094,7 @@ def out_of_system_location(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def out_of_system_height(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -1164,7 +1164,7 @@ def out_of_system_height(disp_league, disp_gender, disp_year,
   
 @anvil.server.callable
 def fbhe_in_out_system(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -1256,7 +1256,7 @@ def fbhe_in_out_system(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def player_sum_rpt(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -1356,7 +1356,7 @@ def player_sum_rpt(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def player_sw(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
@@ -1397,7 +1397,7 @@ def player_sw(disp_league, disp_gender, disp_year,
 
 @anvil.server.callable
 def report_stuba(disp_league, disp_gender, disp_year, 
-                    disp_team, disp_player,
+                    disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,

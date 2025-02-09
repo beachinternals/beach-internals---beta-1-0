@@ -371,7 +371,7 @@ def rpt_mgr_generate_background():
               print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_r['team']}")
               print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
 
-              if rpt_print['function_name'] == 'full_pair_scouting_report':
+              if rpt_print['function_name'] == 'full_scouting_report_pair':
                 # this full pair scouting report is made of the following merged to gether
                 #. pair_sw_report
                 #. pair_fbhe_net
@@ -388,8 +388,9 @@ def rpt_mgr_generate_background():
                   # look this up in the report list to find the type of report this is
                   rpt_row = app_tables.report_list.get(function_name = report)
                   if ( (rpt_row['rpt_type'] == 'pair') or (rpt_row['rpt_type'] == 'player') ):
-                    pdf1 = create_pdf_reports(rpt_print['function_name'],
-                                      rpt_print['rpt_form'], 
+                    print(f" calling create pdf reports : rpt_row : type : {rpt_row['rpt_type']}, form: {rpt_row['rpt_form']}")
+                    pdf1 = create_pdf_reports(report,
+                                      rpt_row['rpt_form'], 
                                       pair_r['league'],
                                       pair_r['gender'],
                                       pair_r['year'],
@@ -400,7 +401,7 @@ def rpt_mgr_generate_background():
                                       comp_l2_checked, disp_comp_l2,
                                       comp_l3_checked, disp_comp_l3,
                                       date_checked, disp_start_date, disp_end_date,
-                                      scout, rpt_print['explain_text'], rpt_print['box1_title']
+                                      scout, rpt_print['explain_text']
                                                       )
                   elif ( rpt_row['rpt_type'] == 'scouting'):
                     # here, I want to look for the scout_srv_strategy report. 
@@ -480,8 +481,8 @@ def rpt_mgr_generate_background():
                         print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, sserve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
 
                         # now call the scouting report for each serve strategy:
-                        pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
-                                      rpt_print['rpt_form'], 
+                        pdf1 = create_scouting_pdf_reports(report,
+                                      rpt_row['rpt_form'], 
                                       pair_r['league'],
                                       pair_r['gender'],
                                       pair_r['year'],

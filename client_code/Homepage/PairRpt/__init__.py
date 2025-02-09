@@ -369,6 +369,7 @@ class PairRpt(PairRptTemplate):
     if type(self.comp_l3_drop_down.selected_value["comp_l3"]) == type(None):
       self.comp_l3_drop_down.selected_value["comp_l3"] = str()
 
+    disp_player = ''  # passing this just to be consistent in the calling argumenets
     # call the server function
     pdf_rpt = anvil.server.call(
       "create_pdf_reports",
@@ -379,6 +380,7 @@ class PairRpt(PairRptTemplate):
       disp_year,
       disp_team,
       disp_pair,
+      disp_player,
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
       self.comp_l2_check_box.checked,
@@ -445,6 +447,7 @@ class PairRpt(PairRptTemplate):
     if type(self.comp_l3_drop_down.selected_value["comp_l3"]) == type(None):
       self.comp_l3_drop_down.selected_value["comp_l3"] = str()
 
+    disp_player = ' ' # passing a dummy argument to keep consistency between pair and player reprots
     return_value = anvil.server.call(
       "render_all_rpts_pdf_callable",
       disp_league,
@@ -452,6 +455,7 @@ class PairRpt(PairRptTemplate):
       disp_year,
       disp_team,
       self.pair_drop_down.selected_value['pair'],
+      disp_player,
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
       self.comp_l2_check_box.checked,
