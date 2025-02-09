@@ -363,13 +363,15 @@ def rpt_mgr_generate_background():
             # make the report for each player in the pair
             full_rpt_pdf = None
             pdf_name = disp_player[i] + ' Full Scouting Report.pdf'
-        
+
+            print(f"process report: rpt_r: {rpt_r}")
             # loop over all the reports for this player
             for rpt_print in rpt_r['rpts_inc']:
-              #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_r['team']}")
-              #print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
+              print(f"rpt_print: {rpt_print}")
+              print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_r['team']}")
+              print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
 
-              if rpt_r['function_name'] == 'full_pair_scouting_report':
+              if rpt_print['function_name'] == 'full_pair_scouting_report':
                 # this full pair scouting report is made of the following merged to gether
                 #. pair_sw_report
                 #. pair_fbhe_net
