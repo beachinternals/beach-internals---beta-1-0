@@ -1,0 +1,69 @@
+components:
+- layout_properties: {grid_position: 'MLVCDI,XCNKQP'}
+  name: label_1
+  properties:
+    align: center
+    bold: true
+    font_size: 30
+    spacing:
+      padding: [0, null, 0, null]
+    text: Pair Strength & Weakness Summary
+  type: Label
+- layout_properties: {grid_position: 'MLVCDI,ZFEYET'}
+  name: pair_label
+  properties: {align: center, bold: true}
+  type: Label
+- layout_properties: {grid_position: 'YZCQYS,ZSETUG'}
+  name: box1_label
+  properties: {align: center, bold: true}
+  type: Label
+- layout_properties: {grid_position: 'UCXNPD,YIDEBM'}
+  name: rpt_disp_box1
+  properties: {}
+  type: RichText
+- layout_properties: {grid_position: 'AAKYBC,ZJNCCQ'}
+  name: box2_label
+  properties: {align: center, bold: true}
+  type: Label
+- layout_properties: {grid_position: 'YQZWGB,AJKLXY'}
+  name: rpt_disp_box2
+  properties: {}
+  type: RichText
+- layout_properties: {grid_position: 'JKQSBK,VPLEDU'}
+  name: box3_label
+  properties: {align: center, bold: true}
+  type: Label
+- layout_properties: {grid_position: 'CGVQGT,IYTTFL'}
+  name: rpt_disp_box3
+  properties: {}
+  type: RichText
+- layout_properties: {grid_position: 'NHDLWB,PMABSN'}
+  name: box4_label
+  properties: {align: center, bold: true}
+  type: Label
+- layout_properties: {grid_position: 'WGQRYW,BIHRIM'}
+  name: rpt_disp_box4
+  properties: {}
+  type: RichText
+- components:
+  - components: []
+    layout_properties: {grid_position: 'UJSIMN,AXCVRJ'}
+    name: box_explain_text
+    properties: {}
+    type: RichText
+  - components:
+    - name: filter_text
+      properties: {}
+      type: RichText
+    layout_properties: {grid_position: 'UJSIMN,ZKZAMB'}
+    name: flow_panel_5
+    properties: {}
+    type: FlowPanel
+  layout_properties: {grid_position: 'JTPQHY,MTATBC'}
+  name: column_panel_1
+  properties: {}
+  type: ColumnPanel
+container:
+  properties: {col_widths: '{"KBZTRV":15,"XCNKQP":35,"ZFEYET":25}'}
+  type: ColumnPanel
+is_package: true

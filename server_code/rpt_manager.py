@@ -407,7 +407,7 @@ def rpt_mgr_generate_background():
                     # here, I want to look for the scout_srv_strategy report. 
                     if report == 'scout_srv_strategy' :
                       # for this one, we want to look in the pair data file, find this piar/player, then look for the top 3 and bottom 3 serve receive zones
-                      sr_matrix = make_sr_matrix(True, disp_league, disp_gender, disp_year, disp_pair, disp_player[i])
+                      sr_matrix = make_sr_matrix(True, pair_r['league'], pair_r['gender'], pair_r['year'], disp_pair, disp_player[i])
 
                       # sort this matrix
                       sr_matrix = sr_matrix.sort_values(by=fbhe, ascending=False) # this should be the high fbhe first, low last
@@ -617,19 +617,19 @@ def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp
   num_saved = 0
   for i in [1,3,5]:
     for j in [1,2,3,4,5]:
-      for k in [c,d,e]:
+      for k in ['c','d','e']:
         var_base = 'fbhe_'+str(i)+'_'+str(j)+k
         att_var = var_base+'_n'
         print(f"make_sr_matrix: attemtps veriable: {att_var}")
-        if p_df[att_var] >=5:
+        if (p_df.at[0,att_var] > 4) :
           # save this record
           sr_matrix.at[num_saved,'sr_fr'] = i
           sr_matrix.at[num_saved,'sr_to_net'] = j
           sr_matrix.at[num_saved,'sr_to_depth'] = k
-          sr_matrix.at[num_saved,'att'] = p_df[att_var]
-          sr_matrix.at[num_saved,'fbhe'] = p_df[var_base]
-          sr_matrix.at[num_saved,'pass_area'] = p_df[var_base+'_ea']
+          sr_matrix.at[num_saved,'att'] = p_df.at[0,att_var]
+          sr_matrix.at[num_saved,'fbhe'] = p_df.at[0,var_base]
+          sr_matrix.at[num_saved,'pass_area'] = p_df.at[0,var_base+'_ea']
           num_saved = num_saved + 1
           
-  
+  print(f"make_sr_matrix : serve receive matrix: {sr_matrix}")
   return sr_matrix

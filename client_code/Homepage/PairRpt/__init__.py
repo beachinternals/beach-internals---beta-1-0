@@ -12,6 +12,7 @@ import datetime
 
 
 
+
 class PairRpt(PairRptTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
@@ -369,7 +370,7 @@ class PairRpt(PairRptTemplate):
     if type(self.comp_l3_drop_down.selected_value["comp_l3"]) == type(None):
       self.comp_l3_drop_down.selected_value["comp_l3"] = str()
 
-    disp_player = ''  # passing this just to be consistent in the calling argumenets
+    disp_player1, disp_player2 = anvil.server.call('pair_players',disp_pair)  # passing this just to be consistent in the calling argumenets
     # call the server function
     pdf_rpt = anvil.server.call(
       "create_pdf_reports",
@@ -380,7 +381,7 @@ class PairRpt(PairRptTemplate):
       disp_year,
       disp_team,
       disp_pair,
-      disp_player,
+      disp_player1,
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
       self.comp_l2_check_box.checked,
