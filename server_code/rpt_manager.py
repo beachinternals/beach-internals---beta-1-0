@@ -388,7 +388,7 @@ def rpt_mgr_generate_background():
                   # look this up in the report list to find the type of report this is
                   rpt_row = app_tables.report_list.get(function_name = report)
                   if ( (rpt_row['rpt_type'] == 'pair') or (rpt_row['rpt_type'] == 'player') ):
-                    pdf1 = create_scouting_pdf_reports(rpt_print['function_name'],
+                    pdf1 = create_pdf_reports(rpt_print['function_name'],
                                       rpt_print['rpt_form'], 
                                       pair_r['league'],
                                       pair_r['gender'],
