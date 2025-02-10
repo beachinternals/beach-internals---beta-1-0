@@ -351,7 +351,7 @@ def rpt_mgr_generate_background():
         #              - 'full scouting report - pair'
         #
         
-        pdf_list = ['']   # start a list of all pdf files to pass to email send
+        pdf_list = []   # start a list of all pdf files to pass to email send
         pdf_num = 0
         for pair_r in rpt_r['pair_list']:
           pdf_num = 0 # new pdf number because 
