@@ -384,6 +384,7 @@ def scout_players_serve(disp_league,
   # try to build to scouting report - Serving Strategy
   player_label = disp_player
 
+  # check logical limit, need at least one srv_fr
   # lets find the serve strategy Text:
   srv_2_net_txt = ['','Line','Body','Seam','Body','Line']
   if (srv_to_1[0]) or (srv_to_1[1]) or (srv_to_1[2]) or (srv_to_5[0]) or (srv_to_5[1]) or (srv_to_5[2]):
