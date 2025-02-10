@@ -127,7 +127,7 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
   else:
     plot_point_color = 'c'
   
-  print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
+  #print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
   #print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
   point_size = np.full(len(x),75) # numpy array of size len(x), filled with character 2
   #print(f"plot_points_on_the_court: size array: {point_size}")
@@ -139,11 +139,12 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
     el_points = pd.concat( [ppr_x, ppr_y], axis = 1)
     #print(f" el_points {el_points}")
     el_points = el_points.dropna().values
-    el_mean, el_width, el_height, el_angle =  calculate_standard_deviation_ellipse(el_points, confidence=1.0)
-    #print(f" Ellispe details: mean: {el_mean[0]}, {el_mean[1]} width: {el_width}, height : {el_height}, angle: {el_angle}")
-    xy_center = (el_mean[0],el_mean[1])
-    ellipse = patches.Ellipse(xy = xy_center, width = el_width, height = el_height, angle = el_angle, edgecolor='b', facecolor='blue', linewidth=2, label="1 Std Dev Ellipse", alpha=0.05)
-    ax.add_patch(ellipse)
+    if el_points.shape[0] > 3:
+      el_mean, el_width, el_height, el_angle =  calculate_standard_deviation_ellipse(el_points, confidence=1.0)
+      #print(f" Ellispe details: mean: {el_mean[0]}, {el_mean[1]} width: {el_width}, height : {el_height}, angle: {el_angle}")
+      xy_center = (el_mean[0],el_mean[1])
+      ellipse = patches.Ellipse(xy = xy_center, width = el_width, height = el_height, angle = el_angle, edgecolor='b', facecolor='blue', linewidth=2, label="1 Std Dev Ellipse", alpha=0.05)
+      ax.add_patch(ellipse)
     
   plot_court_background(fig,ax)
   
@@ -272,12 +273,16 @@ def calculate_standard_deviation_ellipse(points, confidence=1.0):
        height (float): The height of the ellipse (minor axis length).
        angle (float): The rotation angle of the ellipse in degrees.
    """
+   #print(f"calculate_standard_deviation_ellipse: points passed: {points}")
+  
    # Compute the mean of the points
    mean = np.mean(points, axis=0)
 
    # Calculate the covariance matrix
    cov_matrix = np.cov(points, rowvar=False)
 
+   #print(f"calculate_standard_devciation_ellipse: covariance matrix: {cov_matrix}")
+  
    # Eigen decomposition
    eigenvalues, eigenvectors = np.linalg.eigh(cov_matrix)
 

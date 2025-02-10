@@ -855,15 +855,15 @@ def pair_sw_report(disp_league, disp_gender, disp_year,
   #------------ Offense ------------------------------
   # create the offense header text including FBHE and percentile of FBHE
   p_fbhe = pair_data_df.loc[pair_data_index,'fbhe']
-  print(f"pair_sw_report: pair_data fbhe : {p_fbhe}, {pair_data_df.loc[pair_data_index,'pair']}, {pair_data_df.loc[pair_data_index,'player']}")
+  #print(f"pair_sw_report: pair_data fbhe : {p_fbhe}, {pair_data_df.loc[pair_data_index,'pair']}, {pair_data_df.loc[pair_data_index,'player']}")
   p_fbhe_per = stats.norm.cdf( (pair_data_df.loc[pair_data_index,'fbhe'] - pair_stats_df.at[0,'fbhe_mean'])/pair_stats_df.at[0,'fbhe_stdev'] )
   p_att_txt = "Offense, Attacking & Passing : " + disp_player + "`s FBHE="+ str(pair_data_df.loc[pair_data_index,'fbhe']) + ", Percentile=" + str(p_fbhe_per)
-  print(f"pair_sw_report: player attack text: {p_att_txt}")
+  #print(f"pair_sw_report: player attack text: {p_att_txt}")
 
   # now calculate the Offense strength and weakness markdown
   off_df = sw_df[ sw_df['Section'] == 'Attacking'] 
   off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
-  print(f"pair_sw_report: off_df: {off_df}")
+  #print(f"pair_sw_report: off_df: {off_df}")
   off_df = off_df[['Description','Var Desc','Var Value']]
   off_mkdn = pd.DataFrame.to_markdown(off_df)
 

@@ -740,8 +740,8 @@ def scout_attack_pass_zones(disp_league,
       index = index + 1
         
   # I should now have the tables required
-  print(f"x,y : {pass_x}, {pass_y}")
-  print(f"pass value 1, 3, 5: {pass1_val}, {pass3_val}, {pass5_val}")
+  #print(f"x,y : {pass_x}, {pass_y}")
+  #print(f"pass value 1, 3, 5: {pass1_val}, {pass3_val}, {pass5_val}")
 
   # make x,y for serve lines:
   x11 = [0.5,0.5,0.5]

@@ -166,7 +166,7 @@ def rpt_mgr_generate_background():
 
         pdf_list = ['']*len(rpt_r['player_list'])     # start a list of all pdf files to pass to email send
         pdf_num = 0
-        print(f"Pdf_list (empty) : {pdf_list}, {len(pdf_list)}")
+        #print(f"Pdf_list (empty) : {pdf_list}, {len(pdf_list)}")
       
         for player_r in rpt_r['player_list']:
           #print("Processing Player Reports")
@@ -208,7 +208,7 @@ def rpt_mgr_generate_background():
           # put this pdf into the pdf list
           pdf_list[pdf_num] = full_rpt_pdf
           pdf_num = pdf_num + 1
-          print(f"Added a pdf to the list: {pdf_num}")
+          #print(f"Added a pdf to the list: {pdf_num}")
           
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
@@ -366,10 +366,10 @@ def rpt_mgr_generate_background():
             full_rpt_pdf = None
             pdf_name = disp_player[i] + ' Full Scouting Report.pdf'
 
-            print(f"process report: rpt_r: {rpt_r}")
+            #print(f"process report: rpt_r: {rpt_r}")
             # loop over all the reports for this player
             for rpt_print in rpt_r['rpts_inc']:
-              print(f"rpt_print: {rpt_print}")
+              #print(f"rpt_print: {rpt_print}")
               #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_r['team']}")
               #print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
 
@@ -421,12 +421,12 @@ def rpt_mgr_generate_background():
                       else:
                         sr_index = sr_matrix.head(3).index.tolist() + sr_matrix.tail(3).index.tolist()
                         
-                      print(f" sr_index range of number ot process: {sr_index}")
+                      #print(f" sr_index range of number ot process: {sr_index}")
                     
                       #now loop thru these serve strategies (to/fr) to create the reprots
                       # srv_to is T/F from zones [ 1 , 3, 5 ]
                       # serve_to_n is T/F from zone [ E, D, C ]
-                      print(f"serve index: {sr_index}, erve Matrix : {sr_matrix}")
+                      #print(f"serve index: {sr_index}, erve Matrix : {sr_matrix}")
                       for srv_strat in sr_index:
                         #print(f"serve strategy: {srv_strat}, service index : {sr_index}")
                         srv_fr = [False, False, False]
@@ -484,7 +484,7 @@ def rpt_mgr_generate_background():
                             srv_to_5[0] = True
 
                         # print out result real quick to check
-                        print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, serve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
+                        #print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, serve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
 
                         # now call the scouting report for each serve strategy:
                         pdf1 = create_scouting_pdf_reports(report,
@@ -532,10 +532,10 @@ def rpt_mgr_generate_background():
                     
                    # now, need to merge this report with the next one
                   if full_rpt_pdf:
-                    #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+                    print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
                     full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
                   else:
-                    #print('no original pdf file, setting to pdf1')
+                    print('no original pdf file, setting to pdf1')
                     full_rpt_pdf = pdf1
                   #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
               else:
@@ -543,8 +543,10 @@ def rpt_mgr_generate_background():
 
             # put this pdf into the pdf list
             pdf_list[pdf_num] = full_rpt_pdf
+            print(f"rpt_manager: Scout Reports: added pdf report to list: list size: {pdf_num}, {len(pdf_list)}")
             pdf_num = pdf_num + 1
           
+          print(f"Preparing to send email.  PDF List Length {len(pdf_list)}, Type: {type(pdf_list)}, pdf_num: {pdf_num}")
           email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
                                       cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
