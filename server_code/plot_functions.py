@@ -122,8 +122,12 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
   #print(f"plot_points_on_the_court : pt_color: {pt_color}")
   vectorize_pt_color = np.vectorize(point_colors)
   #print(f"plot_points_on_the_court : vectorize pt color: {vectorize_pt_color}")
-  plot_point_color = vectorize_pt_color(pt_color)
-  #print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
+  if pt_color.shape[0] != 0 :
+    plot_point_color = vectorize_pt_color(pt_color)
+  else:
+    plot_point_color = 'c'
+  
+  print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
   #print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
   point_size = np.full(len(x),75) # numpy array of size len(x), filled with character 2
   #print(f"plot_points_on_the_court: size array: {point_size}")
