@@ -381,8 +381,8 @@ def rpt_mgr_generate_background():
                 #. scout_attack_pass_zones
 
                 # let's put these into a list, then loop thru the list
-                #report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy','scout_players_serve']
-                report_list = ['scout_srv_strategy','scout_players_serve']
+                report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy','scout_players_serve']
+                #report_list = ['scout_srv_strategy','scout_players_serve']
                 for report in report_list: 
                   # create the report with the standard call:
 
@@ -417,7 +417,7 @@ def rpt_mgr_generate_background():
                       if sr_matrix.shape[0] < 7 :
                         sr_index = sr_matrix.index.tolist()
                       else:
-                        sr_index = sr_matrix.head(3).index.tolist() + sr_matrix.tail(3).tolist()
+                        sr_index = sr_matrix.head(3).index.tolist() + sr_matrix.tail(3).index.tolist()
                         
                       print(f" sr_index range of number ot process: {sr_index}")
                     
@@ -639,5 +639,5 @@ def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp
           sr_matrix.at[num_saved,'pass_area'] = p_row[var_base+'_ea']
           num_saved = num_saved + 1
           
-  print(f"make_sr_matrix : serve receive matrix: {sr_matrix}")
+  #print(f"make_sr_matrix : serve receive matrix: {sr_matrix}")
   return sr_matrix
