@@ -232,6 +232,7 @@ def rpt_mgr_generate_background():
         
           full_rpt_pdf = None
           pdf_name = disp_pair + ' Summary.pdf'
+          disp_player1, disp_player2 = pair_players(disp_pair)
         
           # loop over all the reports for this player
           for rpt_print in rpt_r['rpts_inc']:
@@ -245,6 +246,7 @@ def rpt_mgr_generate_background():
                                     pair_r['year'],
                                     disp_team,
                                     disp_pair,
+                                    disp_player1,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,
