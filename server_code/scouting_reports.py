@@ -385,6 +385,13 @@ def scout_players_serve(disp_league,
   player_label = disp_player
 
   # check logical limit, need at least one srv_fr
+  if not (srv_fr[0] or srv_fr[1] or srv_fr[2]):
+    # so at least one serve zone is true.  now we need atleast one srv_to zone to be true
+    if not ( (srv_to_1[0] or srv_to_1[1] or srv_to_1[2]) or (srv_to_2[0] or srv_to_2[1] or srv_to_2[2]) or (srv_to_3[0] or srv_to_3[1] or srv_to_3[2]) or (srv_to_4[0] or srv_to_4[1] or srv_to_4[2]) or (srv_to_5[0] or srv_to_5[1] or srv_to_5[2]) ):
+      # then we need to exti, no valid serve path
+      return 'No Valid Serve Path Provided'
+
+    
   # lets find the serve strategy Text:
   srv_2_net_txt = ['','Line','Body','Seam','Body','Line']
   if (srv_to_1[0]) or (srv_to_1[1]) or (srv_to_1[2]) or (srv_to_5[0]) or (srv_to_5[1]) or (srv_to_5[2]):
