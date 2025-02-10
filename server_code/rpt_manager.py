@@ -383,8 +383,8 @@ def rpt_mgr_generate_background():
                 #. scout_attack_pass_zones
 
                 # let's put these into a list, then loop thru the list
-                report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy','scout_players_serve']
-                #report_list = ['scout_attack_pass_zones','scout_srv_strategy']
+                #report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy','scout_players_serve']
+                report_list = ['scout_srv_strategy']
                 for report in report_list: 
                   # create the report with the standard call:
 
