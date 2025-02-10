@@ -244,7 +244,7 @@ def scout_srv_strategy(disp_league,
         srv_strat_df.at[rows,'Out of Sys'] = oos_vector[0]
         srv_strat_df.at[rows,'URL'] = fbhe_vector[5]  
                                   
-  print(f"Srv Strat DF: {srv_strat_df}")
+  #print(f"Srv Strat DF: {srv_strat_df}")
   srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df, index=False)
 
   # now, time to make plots.
@@ -827,7 +827,7 @@ def full_scouting_report_pair(fnct_name, rpt_form, disp_league, disp_gender, dis
 
   # now scout srv strategy
 
-  # scout players sserve
+  # scout players serve
 
   # return the pdf file!
   

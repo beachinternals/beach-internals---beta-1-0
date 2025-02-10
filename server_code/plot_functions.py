@@ -117,26 +117,26 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
   #plt.figure(plt_num, figsize=(10,18))
   x = ppr_x.values
   y = ppr_y.values
-  print(f"plot_points_on_the_court : point_outcome: {point_outcome}")
+  #print(f"plot_points_on_the_court : point_outcome: {point_outcome}")
   pt_color = point_outcome.dropna()
-  print(f"plot_points_on_the_court : pt_color: {pt_color}")
+  #print(f"plot_points_on_the_court : pt_color: {pt_color}")
   vectorize_pt_color = np.vectorize(point_colors)
-  print(f"plot_points_on_the_court : vectorize pt color: {vectorize_pt_color}")
+  #print(f"plot_points_on_the_court : vectorize pt color: {vectorize_pt_color}")
   plot_point_color = vectorize_pt_color(pt_color)
-  print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
-  print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
+  #print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
+  #print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
   point_size = np.full(len(x),75) # numpy array of size len(x), filled with character 2
   #print(f"plot_points_on_the_court: size array: {point_size}")
   ax.scatter( x, y, s = point_size , c = plot_point_color, url = 'http://app.balltime.com/video/'+video_id+'?actionIds='+str(action_num))  
 
   if plot_ellispe:
     # calcualte elispe information
-    print(f"Converting x and y: Type: {type(x)}, {type(y)}, Number of Points: {len(x)}, {len(y)}")
+    #print(f"Converting x and y: Type: {type(x)}, {type(y)}, Number of Points: {len(x)}, {len(y)}")
     el_points = pd.concat( [ppr_x, ppr_y], axis = 1)
-    print(f" el_points {el_points}")
+    #print(f" el_points {el_points}")
     el_points = el_points.dropna().values
     el_mean, el_width, el_height, el_angle =  calculate_standard_deviation_ellipse(el_points, confidence=1.0)
-    print(f" Ellispe details: mean: {el_mean[0]}, {el_mean[1]} width: {el_width}, height : {el_height}, angle: {el_angle}")
+    #print(f" Ellispe details: mean: {el_mean[0]}, {el_mean[1]} width: {el_width}, height : {el_height}, angle: {el_angle}")
     xy_center = (el_mean[0],el_mean[1])
     ellipse = patches.Ellipse(xy = xy_center, width = el_width, height = el_height, angle = el_angle, edgecolor='b', facecolor='blue', linewidth=2, label="1 Std Dev Ellipse", alpha=0.05)
     ax.add_patch(ellipse)

@@ -368,8 +368,8 @@ def rpt_mgr_generate_background():
             # loop over all the reports for this player
             for rpt_print in rpt_r['rpts_inc']:
               print(f"rpt_print: {rpt_print}")
-              print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_r['team']}")
-              print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
+              #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}, Team: {rpt_r['team']}")
+              #print(f"Process Scout Report, serve from: {srv_fr}, serve to 3:{srv_to_3}")
 
               if rpt_print['function_name'] == 'full_scouting_report_pair':
                 # this full pair scouting report is made of the following merged to gether
@@ -389,7 +389,7 @@ def rpt_mgr_generate_background():
                   # look this up in the report list to find the type of report this is
                   rpt_row = app_tables.report_list.get(function_name = report)
                   if ( (rpt_row['rpt_type'] == 'pair') or (rpt_row['rpt_type'] == 'player') ):
-                    print(f" calling create pdf reports : rpt_row : type : {rpt_row['rpt_type']}, form: {rpt_row['rpt_form']}")
+                    #print(f" calling create pdf reports : rpt_row : type : {rpt_row['rpt_type']}, form: {rpt_row['rpt_form']}")
                     pdf1 = create_pdf_reports(report,
                                       rpt_row['rpt_form'], 
                                       pair_r['league'],
@@ -415,15 +415,18 @@ def rpt_mgr_generate_background():
 
                       # create the serve strategy report for each one in the matrix
                       if sr_matrix.shape[0] < 7 :
-                        sr_index = range(0,sr_matrix.shape[0])
+                        sr_index = sr_matrix.index.tolist()
                       else:
-                        sr_index = [0,1,2,sr_matrix.shape[0]-2,sr_matrix.shape[0]-1,sr_matrix.shape[0]]
+                        sr_index = sr_matrix.head(3).index.tolist() + sr_matrix.tail(3).tolist()
+                        
                       print(f" sr_index range of number ot process: {sr_index}")
                     
                       #now loop thru these serve strategies (to/fr) to create the reprots
                       # srv_to is T/F from zones [ 1 , 3, 5 ]
                       # serve_to_n is T/F from zone [ E, D, C ]
+                      print(f"serve index: {sr_index}, erve Matrix : {sr_matrix}")
                       for srv_strat in sr_index:
+                        #print(f"serve strategy: {srv_strat}, service index : {sr_index}")
                         srv_fr = [False, False, False]
                         if sr_matrix.at[srv_strat,'sr_fr'] == 1:
                           srv_fr[0] = True
@@ -479,7 +482,7 @@ def rpt_mgr_generate_background():
                             srv_to_5[0] = True
 
                         # print out result real quick to check
-                        print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, sserve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
+                        print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, serve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
 
                         # now call the scouting report for each serve strategy:
                         pdf1 = create_scouting_pdf_reports(report,
@@ -625,7 +628,7 @@ def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp
         var_base = 'fbhe_'+str(i)+'_'+str(j)+k
         att_var = var_base+'_n'
         #print(f"make_sr_matrix: attemtps veriable: {att_var}")
-        print(f" make_sr_matrix: attempts: {p_row[att_var]}")
+        #print(f" make_sr_matrix: attempts: {p_row[att_var]}")
         if (p_row[att_var] > 4) :
           # save this record
           sr_matrix.at[num_saved,'sr_fr'] = i
