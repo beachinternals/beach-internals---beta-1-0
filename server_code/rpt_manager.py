@@ -383,8 +383,8 @@ def rpt_mgr_generate_background():
                 #. scout_attack_pass_zones
 
                 # let's put these into a list, then loop thru the list
-                report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy','scout_players_serve']
-                #report_list = ['scout_srv_strategy','scout_players_serve']
+                #report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy','scout_players_serve']
+                report_list = ['scout_attack_pass_zones','scout_srv_strategy']
                 for report in report_list: 
                   # create the report with the standard call:
 
@@ -488,6 +488,31 @@ def rpt_mgr_generate_background():
 
                         # now call the scouting report for each serve strategy:
                         pdf1 = create_scouting_pdf_reports(report,
+                                      rpt_row['rpt_form'], 
+                                      pair_r['league'],
+                                      pair_r['gender'],
+                                      pair_r['year'],
+                                      rpt_r['team'],
+                                      disp_pair,
+                                      disp_player[i],
+                                      comp_l1_checked, disp_comp_l1,
+                                      comp_l2_checked, disp_comp_l2,
+                                      comp_l3_checked, disp_comp_l3,
+                                      date_checked, disp_start_date, disp_end_date,
+                                      scout, rpt_print['explain_text'], rpt_print['box1_title'],    
+                                      srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+                                      )
+                    else:
+                      # this should be scouting report, that are not the serve strategy report
+
+                      # set dummy srv_fr, to items to complete the call
+                      srv_fr = [False,False,False]
+                      srv_to_1 = [False,False,False]
+                      srv_to_2 = [False,False,False]
+                      srv_to_3 = [False,False,False]
+                      srv_to_4 = [False,False,False]
+                      srv_to_5 = [False,False,False]
+                      pdf1 = create_scouting_pdf_reports(report,
                                       rpt_row['rpt_form'], 
                                       pair_r['league'],
                                       pair_r['gender'],
