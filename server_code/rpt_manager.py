@@ -351,7 +351,7 @@ def rpt_mgr_generate_background():
         #              - 'full scouting report - pair'
         #
         
-        pdf_list = ['']*len(rpt_r['pair_list'])*2      # start a list of all pdf files to pass to email send
+        pdf_list = ['']   # start a list of all pdf files to pass to email send
         pdf_num = 0
         for pair_r in rpt_r['pair_list']:
           pdf_num = 0 # new pdf number because 
@@ -542,17 +542,21 @@ def rpt_mgr_generate_background():
                 full_rpt_pdf = 'Invalid Function name/report type'+rpt_r['function_name']+' '+rpt_r['rpt_type']
 
             # put this pdf into the pdf list
-            pdf_list[pdf_num] = full_rpt_pdf
+            pdf_list.append(full_rpt_pdf)
             print(f"rpt_manager: Scout Reports: added pdf report to list: list size: {pdf_num}, {len(pdf_list)}")
             pdf_num = pdf_num + 1
           
           print(f"Preparing to send email.  PDF List Length {len(pdf_list)}, Type: {type(pdf_list)}, pdf_num: {pdf_num}")
+          for i in range(0,len(pdf_list)):
+            print(f"PDF List to email: item number :{i}, PDF File: {pdf_list[i]}")
+            
           email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
                                       cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
                                       subject='Beach Internals - Scouting Reports ',
                                       text='Attached please find the summary report(s)',
                                       attachments=pdf_list)
+
           if not email_status:
             print("report:Manager, Scouting Reports, email send failed")
           
