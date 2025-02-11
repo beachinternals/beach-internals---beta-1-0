@@ -138,46 +138,95 @@ components_by_slot:
     type: ColumnPanel
   - components:
     - components:
-      - layout_properties: {grid_position: 'DWUWML,WWBIUV'}
+      - layout_properties: {grid_position: 'UUJFXZ,CEOGHO'}
         name: box1_label
         properties: {align: center, bold: true}
         type: Label
-      - layout_properties: {grid_position: 'ICCOFY,JCUYGE'}
+      - layout_properties: {grid_position: 'ZYROXS,WVUNZY'}
         name: rpt_disp_box1
-        properties: {}
+        properties:
+          font_size: 11
+          spacing:
+            padding: ['0', null, '0', null]
         type: RichText
-      - layout_properties: {grid_position: 'YLGCIN,GWDBMK'}
+      - layout_properties: {grid_position: 'IEDQGW,UALMAO'}
         name: box2_label
         properties: {align: center, bold: true}
         type: Label
-      - layout_properties: {grid_position: 'FGLXOA,FHEXVW'}
+      - layout_properties: {grid_position: 'DGBSEA,MOTQTU'}
         name: rpt_disp_box2
-        properties: {}
+        properties:
+          font_size: 11
+          spacing:
+            padding: [-1.04, null, '0', null]
         type: RichText
-      - layout_properties: {grid_position: 'KDQTFW,BUJBQI'}
+      - layout_properties: {grid_position: 'QDTSXW,FPLDZE'}
         name: box3_label
         properties: {align: center, bold: true}
         type: Label
-      - layout_properties: {grid_position: 'XVDNEF,PACOID'}
+      - layout_properties: {grid_position: 'ZMEJYM,TQELOQ'}
         name: rpt_disp_box3
-        properties: {}
+        properties:
+          font_size: 11
+          spacing:
+            padding: ['0', null, '0', null]
         type: RichText
-      - layout_properties: {grid_position: 'YUWSGW,GSTEFH'}
+      - layout_properties: {grid_position: 'ACZYLJ,OCZSZU'}
         name: box4_label
         properties: {align: center, bold: true}
         type: Label
-      - layout_properties: {grid_position: 'WGOFXV,CJKKIQ'}
+      - layout_properties: {grid_position: ''}
         name: rpt_disp_box4
+        properties:
+          font_size: 11
+          spacing:
+            padding: ['0', null, '0', null]
+        type: RichText
+      layout_properties: {grid_position: 'ZMLYII,VRMSMJ'}
+      name: column_panel_3
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'SAIPPX,EENQPM'}
+        name: box5_label
+        properties: {align: center, bold: true, text: ''}
+        type: Label
+      - layout_properties: {grid_position: 'SURNSO,IAMWMT'}
+        name: rpt_disp_box5
         properties: {}
         type: RichText
-      layout_properties: {grid_position: 'ZMLYII,ZORXGH'}
-      name: column_panel_1
+      - layout_properties: {grid_position: 'NGHRNL,CLXSWU'}
+        name: box6_label
+        properties: {align: center, bold: true}
+        type: Label
+      - layout_properties: {grid_position: 'TJGFPQ,IZMHSD'}
+        name: rpt_disp_box6
+        properties: {}
+        type: RichText
+      - layout_properties: {grid_position: 'ZLZKBE,BYNWVX'}
+        name: box7_label
+        properties: {align: center, bold: true}
+        type: Label
+      - layout_properties: {grid_position: 'UCFNER,XQHGEU'}
+        name: rpt_disp_box7
+        properties: {}
+        type: RichText
+      - layout_properties: {grid_position: 'CADVKC,NTUXFS'}
+        name: box8_label
+        properties: {align: center, bold: true}
+        type: Label
+      - layout_properties: {grid_position: 'DKCPIZ,SOLZJE'}
+        name: rpt_disp_box8
+        properties: {}
+        type: RichText
+      layout_properties: {grid_position: 'ZMLYII,RKELOA'}
+      name: column_panel_2
       properties: {}
       type: ColumnPanel
     - components:
       - layout_properties: {grid_position: 'OULBBH,UTZUNT'}
         name: box_explaing_text
-        properties: {}
+        properties: {font_size: 12}
         type: RichText
       layout_properties: {grid_position: 'TQSRMR,WIJTSC'}
       name: outlined_card_6
@@ -185,8 +234,12 @@ components_by_slot:
       type: ColumnPanel
     - components:
       - components:
-        - name: filter_text
-          properties: {}
+        - layout_properties: {}
+          name: filter_text
+          properties:
+            font_size: 11
+            spacing:
+              padding: ['0', null, '0', null]
           type: RichText
         layout_properties: {grid_position: 'KKHOKZ,EMDNUX'}
         name: flow_panel_5
@@ -198,7 +251,7 @@ components_by_slot:
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_2
-    properties: {background: '', col_widths: '{"LQEYDV":50}', role: outlined-card}
+    properties: {background: '', col_widths: '{}', role: outlined-card}
     type: ColumnPanel
 is_package: true
 layout: {type: 'form:Homepage'}

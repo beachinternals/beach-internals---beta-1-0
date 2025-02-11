@@ -32,14 +32,6 @@ components_by_slot:
         properties:
           items: [BRA 01 Ana Patricia]
         type: DropDown
-      - name: label_13
-        properties: {text: 'Report Source:'}
-        type: Label
-      - layout_properties: {}
-        name: team_drop_down
-        properties:
-          items: [Scouting]
-        type: DropDown
       layout_properties: {grid_position: 'TKRLGT,DDSDSX'}
       name: flow_panel_1
       properties: {}

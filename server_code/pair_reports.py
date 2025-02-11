@@ -864,26 +864,34 @@ def pair_sw_report(disp_league, disp_gender, disp_year,
   off_df = sw_df[ sw_df['Section'] == 'Attacking'] 
   off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
   #print(f"pair_sw_report: off_df: {off_df}")
-  off_df = off_df[['Description','Var Desc','Var Value']]
-  off_mkdn = pd.DataFrame.to_markdown(off_df)
+  off_df = off_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+  off_df = off_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+  #off_df['Mean'] = pair_stats_df.at[0,'fbhe_mean']
+  #print(f"offense table for S&W: {off_df}")
+  #off_df = off_df.drop([0], axis = 1 )
+  off_mkdn = pd.DataFrame.to_markdown(off_df, index = False)
 
   # now calculate the Deffense strength and weakness markdown
   def_df = sw_df[ sw_df['Section'] == 'Serving'] 
   def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
-  def_df = def_df[['Description','Var Desc','Var Value']]
-  def_mkdn = pd.DataFrame.to_markdown(def_df)
+  def_df = def_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+  def_df = def_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+  print(f"Def df: {def_df}")
+  def_mkdn = pd.DataFrame.to_markdown(def_df, index = False)
 
   # now calculate the Errors strength and weakness markdown
   err_df = sw_df[ sw_df['Section'] == 'Error & Transition'] 
   err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
-  err_df = err_df[['Description','Var Desc','Var Value']]
-  err_mkdn = pd.DataFrame.to_markdown(err_df)
+  err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+  err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+  err_mkdn = pd.DataFrame.to_markdown(err_df, index = False)
 
   # now calculate the COnsistency strength and weakness markdown
   con_df = sw_df[ sw_df['Section'] == 'Consistency'] 
   con_df = con_df.sort_values(by='Category', ascending=True, na_position='last')
-  con_df = con_df[['Description','Var Desc','Var Value']]
-  con_mkdn = pd.DataFrame.to_markdown(con_df)
+  con_df = con_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+  con_df = con_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+  con_mkdn = pd.DataFrame.to_markdown(con_df, index = False)
 
 
   return off_mkdn, def_mkdn, err_mkdn
