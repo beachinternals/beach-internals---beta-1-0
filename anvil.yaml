@@ -395,22 +395,22 @@ db_schema:
     - admin_ui: {order: 0, width: 303}
       name: description
       type: string
-    - admin_ui: {order: 1, width: 133}
+    - admin_ui: {order: 1, width: 71}
       name: active
       type: bool
-    - admin_ui: {order: 1.375, width: 317}
+    - admin_ui: {order: 1.375, width: 123}
       name: section
       type: string
-    - admin_ui: {order: 3, width: 103}
+    - admin_ui: {order: 3, width: 86}
       name: var
       type: string
     - admin_ui: {order: 4, width: 88}
       name: criteria
       type: number
-    - admin_ui: {order: 1.25, width: 115}
+    - admin_ui: {order: 1.25, width: 93}
       name: category
       type: string
-    - admin_ui: {order: 1.5, width: 170}
+    - admin_ui: {order: 1.5, width: 152}
       name: subreport
       type: string
     - admin_ui: {order: 7, width: 102}
