@@ -836,65 +836,83 @@ def pair_sw_report(disp_league, disp_gender, disp_year,
   if type(pair_row) == str():
     return 'Failed to find Pair'+pair_row
 
-  # which player are we reporting on? 1 or 2?
-  if disp_player.strip() == pair_row['player1'].strip():
-    sw_field = 's_w_player1'
-  elif disp_player.strip() == pair_row['player2'].strip():
-    sw_field = 's_w_player2'
-  else:
-    print(f"pair_sw_repor : Display Player not one of the pairs: {disp_player}, {pair_row['player1']}, {pair_row['player2']}")
+  # now we need to make the markup rtf files for each player
+  for d_player in [ pair_row['player1'],pair_row['player2'] ]:
     
-  sw_df = pd.read_csv(io.BytesIO( pair_row[sw_field].get_bytes()))
-  # now open the pair_data file and get the row, and get the row from the pair_stats file
-  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
-  #print(f"pair_sw_report: Pair Data and Pair stats {pair_data_df}, {pair_stats_df}")
-  #pair_data_df = pair_data_df[(pair_data_df['pair'] == disp_pair) & (pair_data_df['player'] == disp_player) ]
-  pair_data_index = pair_data_df.loc[ (pair_data_df['pair'] == disp_pair) & (pair_data_df['player'] == disp_player) ].index[0]
-  #print(f"pair_sw_report: pair_data_df index : {pair_data_index}")
+    # which player are we reporting on? 1 or 2?
+    if d_player.strip() == pair_row['player1'].strip():
+      sw_field = 's_w_player1'
+      player_num = 1
+    elif d_player.strip() == pair_row['player2'].strip():
+      sw_field = 's_w_player2'
+      player_num = 2
+    else:
+      print(f"pair_sw_report : Display Player not one of the pairs: {disp_pair}, {pair_row['player1']}, {pair_row['player2']}")
+    
+    sw_df = pd.read_csv(io.BytesIO( pair_row[sw_field].get_bytes()))
+    # now open the pair_data file and get the row, and get the row from the pair_stats file
+    pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+    #print(f"pair_sw_report: Pair Data and Pair stats {pair_data_df}, {pair_stats_df}")
+    #pair_data_df = pair_data_df[(pair_data_df['pair'] == disp_pair) & (pair_data_df['player'] == disp_player) ]
+    pair_data_index = pair_data_df.loc[ (pair_data_df['pair'] == disp_pair) & (pair_data_df['player'] == disp_player) ].index[0]
+    #print(f"pair_sw_report: pair_data_df index : {pair_data_index}")
 
-  #------------ Offense ------------------------------
-  # create the offense header text including FBHE and percentile of FBHE
-  p_fbhe = pair_data_df.loc[pair_data_index,'fbhe']
-  #print(f"pair_sw_report: pair_data fbhe : {p_fbhe}, {pair_data_df.loc[pair_data_index,'pair']}, {pair_data_df.loc[pair_data_index,'player']}")
-  p_fbhe_per = stats.norm.cdf( (pair_data_df.loc[pair_data_index,'fbhe'] - pair_stats_df.at[0,'fbhe_mean'])/pair_stats_df.at[0,'fbhe_stdev'] )
-  p_att_txt = "Offense, Attacking & Passing : " + disp_player + "`s FBHE="+ str(pair_data_df.loc[pair_data_index,'fbhe']) + ", Percentile=" + str(p_fbhe_per)
-  #print(f"pair_sw_report: player attack text: {p_att_txt}")
+    #------------ Offense ------------------------------
+    # create the offense header text including FBHE and percentile of FBHE
+    # not currently doing this, displaying the header, using a field in the sw table for this purpose
+    #p_fbhe = pair_data_df.loc[pair_data_index,'fbhe']
+    #print(f"pair_sw_report: pair_data fbhe : {p_fbhe}, {pair_data_df.loc[pair_data_index,'pair']}, {pair_data_df.loc[pair_data_index,'player']}")
+    #p_fbhe_per = stats.norm.cdf( (pair_data_df.loc[pair_data_index,'fbhe'] - pair_stats_df.at[0,'fbhe_mean'])/pair_stats_df.at[0,'fbhe_stdev'] )
+    #p_att_txt = "Offense, Attacking & Passing : " + disp_player + "`s FBHE="+ str(pair_data_df.loc[pair_data_index,'fbhe']) + ", Percentile=" + str(p_fbhe_per)
+    #print(f"pair_sw_report: player attack text: {p_att_txt}")
 
-  # now calculate the Offense strength and weakness markdown
-  off_df = sw_df[ sw_df['Section'] == 'Attacking'] 
-  off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
-  #print(f"pair_sw_report: off_df: {off_df}")
-  off_df = off_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
-  off_df = off_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
-  #off_df['Mean'] = pair_stats_df.at[0,'fbhe_mean']
-  #print(f"offense table for S&W: {off_df}")
-  #off_df = off_df.drop([0], axis = 1 )
-  off_mkdn = pd.DataFrame.to_markdown(off_df, index = False)
+    # now calculate the Offense strength and weakness markdown
+    off_df = sw_df[ sw_df['Section'] == 'Attacking'] 
+    off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
+    #print(f"pair_sw_report: off_df: {off_df}")
+    off_df = off_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+    off_df = off_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+    #off_df['Mean'] = pair_stats_df.at[0,'fbhe_mean']
+    #print(f"offense table for S&W: {off_df}")
+    #off_df = off_df.drop([0], axis = 1 )
+    #off_mkdn = pd.DataFrame.to_markdown(off_df, index = False)
 
-  # now calculate the Deffense strength and weakness markdown
-  def_df = sw_df[ sw_df['Section'] == 'Serving'] 
-  def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
-  def_df = def_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
-  def_df = def_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
-  print(f"Def df: {def_df}")
-  def_mkdn = pd.DataFrame.to_markdown(def_df, index = False)
+    # now calculate the Deffense strength and weakness markdown
+    def_df = sw_df[ sw_df['Section'] == 'Serving'] 
+    def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
+    def_df = def_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+    def_df = def_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+    print(f"Def df: {def_df}")
+    #def_mkdn = pd.DataFrame.to_markdown(def_df, index = False)
 
-  # now calculate the Errors strength and weakness markdown
-  err_df = sw_df[ sw_df['Section'] == 'Error & Transition'] 
-  err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
-  err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
-  err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
-  err_mkdn = pd.DataFrame.to_markdown(err_df, index = False)
+    # now calculate the Errors strength and weakness markdown
+    err_df = sw_df[ sw_df['Section'] == 'Error & Transition'] 
+    err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
+    err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+    err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+    #err_mkdn = pd.DataFrame.to_markdown(err_df, index = False)
 
-  # now calculate the COnsistency strength and weakness markdown
-  con_df = sw_df[ sw_df['Section'] == 'Consistency'] 
-  con_df = con_df.sort_values(by='Category', ascending=True, na_position='last')
-  con_df = con_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
-  con_df = con_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
-  con_mkdn = pd.DataFrame.to_markdown(con_df, index = False)
+    # now calculate the COnsistency strength and weakness markdown
+    con_df = sw_df[ sw_df['Section'] == 'Consistency'] 
+    con_df = con_df.sort_values(by='Category', ascending=True, na_position='last')
+    con_df = con_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+    con_df = con_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+    #con_mkdn = pd.DataFrame.to_markdown(con_df, index = False)
 
+    # last step, convert the DF into mkdn for each player
+    if player_num == 1:
+      off1_mkdn = pd.DataFrame.to_markdown(off_df, index = False)
+      def1_mkdn = pd.DataFrame.to_markdown(def_df, index = False)
+      err1_mkdn = pd.DataFrame.to_markdown(err_df, index = False)
+      con1_mkdn = pd.DataFrame.to_markdown(con_df, index = False)
+    else:
+      off2_mkdn = pd.DataFrame.to_markdown(off_df, index = False)
+      def2_mkdn = pd.DataFrame.to_markdown(def_df, index = False)
+      err2_mkdn = pd.DataFrame.to_markdown(err_df, index = False)
+      con2_mkdn = pd.DataFrame.to_markdown(con_df, index = False)
+    
 
-  return off_mkdn, def_mkdn, err_mkdn
+  return off1_mkdn, def1_mkdn, err1_mkdn, con1_mkdn, off2_mkdn, def2_mkdn, err2_mkdn, con2_mkdn, 
   
 
 

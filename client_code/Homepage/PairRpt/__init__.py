@@ -236,20 +236,46 @@ class PairRpt(PairRptTemplate):
       (f_row["box1_title"])
       for f_row in app_tables.report_list.search(report_name=rpt_name)
     ]
+    box1_title = box1_title_list[0]
     box2_title_list = [
       (f_row["box2_title"])
       for f_row in app_tables.report_list.search(report_name=rpt_name)
     ]
+    box2_title = box2_title_list[0]
     box3_title_list = [
       (f_row["box3_title"])
       for f_row in app_tables.report_list.search(report_name=rpt_name)
     ]
+    box3_title = box3_title_list[0]
+    box4_title_list = [
+      (f_row["box4_title"])
+      for f_row in app_tables.report_list.search(report_name=rpt_name)
+    ]
+    box4_title = box4_title_list[0]
+    box5_title_list = [
+      (f_row["box5_title"])
+      for f_row in app_tables.report_list.search(report_name=rpt_name)
+    ]
+    box5_title = box5_title_list[0]
+    box6_title_list = [
+      (f_row["box6_title"])
+      for f_row in app_tables.report_list.search(report_name=rpt_name)
+    ]
+    box6_title = box6_title_list[0]
+    box7_title_list = [
+      (f_row["box7_title"])
+      for f_row in app_tables.report_list.search(report_name=rpt_name)
+    ]
+    box7_title = box7_title_list[0]
+    box8_title_list = [
+      (f_row["box8_title"])
+      for f_row in app_tables.report_list.search(report_name=rpt_name)
+    ]
+    box8_title = box8_title_list[0]
+    
     # print(function_list)
     fnct_name = function_list[0]
     explain_text = text_list[0]
-    box1_title = box1_title_list[0]
-    box2_title = box2_title_list[0]
-    box3_title = box3_title_list[0]
     scout = True
 
     # now, call the server module.
@@ -259,7 +285,7 @@ class PairRpt(PairRptTemplate):
       self.comp_l3_drop_down.selected_value["comp_l3"] = str()
 
     # call the server function
-    table_data1, table_data2, table_data3 = anvil.server.call(
+    table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8 = anvil.server.call(
       fnct_name,
       disp_league,
       disp_gender,
@@ -293,15 +319,34 @@ class PairRpt(PairRptTemplate):
     - Date Filtered : {str(self.start_date_picker.date)+' to '+str(self.end_date_picker.date) if self.date_check_box.checked else ''}
     """
 
-    print(f" disp player 1, 2 {disp_player1}, {disp_player2}")
+    #print(f" disp player 1, 2 {disp_player1}, {disp_player2}")
+
+    self.player1_label.text = disp_player1
+    self.player2_label.text = disp_player2
+    
     self.filter_text.content = filter_text
+    self.box_explaing_text.content = explain_text
+    
     self.rpt_disp_box1.content = table_data1
     self.rpt_disp_box2.content = table_data2
     self.rpt_disp_box3.content = table_data3
-    self.box_explaing_text.content = explain_text
+    self.rpt_disp_box4.content = table_data4
+    self.rpt_disp_box5.content = table_data5
+    self.rpt_disp_box6.content = table_data6
+    self.rpt_disp_box7.content = table_data7
+    self.rpt_disp_box8.content = table_data8
+
     self.box1_label.text = box1_title
-    self.box2_label.text = box2_title + ' ' + disp_player1
-    self.box3_label.text = box3_title + ' ' + disp_player2
+    self.box2_label.text = box2_title
+    self.box3_label.text = box3_title
+    self.box4_label.text = box4_title
+    self.box5_label.text = box5_title
+    self.box6_label.text = box6_title
+    self.box7_label.text = box7_title
+    self.box8_label.text = box8_title
+
+
+
 
     pass
 

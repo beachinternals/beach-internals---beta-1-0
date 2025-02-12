@@ -245,7 +245,8 @@ def scout_srv_strategy(disp_league,
         srv_strat_df.at[rows,'URL'] = fbhe_vector[5]  
                                   
   #print(f"Srv Strat DF: {srv_strat_df}")
-  srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df, index=False)
+  # fo rnow, I want to drop the 'All' first row (the .iloc)
+  srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df.iloc[1:], index=False)
 
   # now, time to make plots.
   # want to plot data from new_ppr

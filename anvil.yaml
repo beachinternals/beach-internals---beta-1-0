@@ -322,7 +322,7 @@ db_schema:
     - admin_ui: {order: 8, width: 200}
       name: box3_title
       type: string
-    - admin_ui: {order: 9, width: 200}
+    - admin_ui: {order: 9.25, width: 200}
       name: rpt_form
       type: string
     - admin_ui: {order: 10, width: 200}
@@ -331,6 +331,21 @@ db_schema:
     - admin_ui: {order: -1, width: 200}
       name: order
       type: number
+    - admin_ui: {order: 8.5, width: 200}
+      name: box4_title
+      type: string
+    - admin_ui: {order: 8.875, width: 200}
+      name: box5_title
+      type: string
+    - admin_ui: {order: 9.0625, width: 200}
+      name: box6_title
+      type: string
+    - admin_ui: {order: 9.15625, width: 200}
+      name: box7_title
+      type: string
+    - admin_ui: {order: 9.203125, width: 200}
+      name: box8_title
+      type: string
     server: full
     title: report_list
   rpt_mgr:
