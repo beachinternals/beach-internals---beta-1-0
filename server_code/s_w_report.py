@@ -279,8 +279,8 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
       crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
 
       #print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")
-
-      if (((c_row['criteria'] >= 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] <= 0) & (pdata_df.at[p,variable] <= crit_value ))): 
+      # added an 'or' for a 0 criteria, implying that this line should be included. This is used to have the actual value of a variable show up in the s_w table
+      if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
         # then add a row to the sw_df dataframe
         #print("adding a row to new sw df, p:{p}")
         sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']

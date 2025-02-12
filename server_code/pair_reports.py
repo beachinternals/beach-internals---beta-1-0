@@ -19,6 +19,42 @@ import scipy.stats as stats
 #         Pair Reports
 #
 #--------------------------------------------------------
+
+#-------------------------------------------------------
+#
+#         Pair Attacking - All
+#
+#--------------------------------------------------------
+@anvil.server.callable
+def pair_attacking(disp_league, disp_gender, disp_year, 
+                  disp_team, disp_pair, disp_player,
+                  comp_l1_checked, disp_comp_l1,
+                  comp_l2_checked, disp_comp_l2,
+                  comp_l3_checked, disp_comp_l3,
+                  date_checked, disp_start_date, disp_end_date,
+                  scout, explain_text
+                ):
+  # kind of mergin the two below to getone page with all of it
+  pair_attack_mkdn, p1_attack_mkdn, p2_attack_mkdn = pair_fbhe_net(disp_league, disp_gender, disp_year, 
+                  disp_team, disp_pair, disp_player,
+                  comp_l1_checked, disp_comp_l1,
+                  comp_l2_checked, disp_comp_l2,
+                  comp_l3_checked, disp_comp_l3,
+                  date_checked, disp_start_date, disp_end_date,
+                  scout, explain_text
+                )
+
+  pair_pass_mkdn, p1_pass_mkdn, p2_pass_mkdn = pair_fbhe_pass(disp_league, disp_gender, disp_year, 
+                disp_team, disp_pair, disp_player,
+                comp_l1_checked, disp_comp_l1,
+                comp_l2_checked, disp_comp_l2,
+                comp_l3_checked, disp_comp_l3,
+                date_checked, disp_start_date, disp_end_date,
+                scout, explain_text
+              )
+
+  return p1_attack_mkdn, p1_pass_mkdn, ''
+
 @anvil.server.callable
 def pair_fbhe_net(disp_league, disp_gender, disp_year, 
                   disp_team, disp_pair, disp_player,
