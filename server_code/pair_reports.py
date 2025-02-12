@@ -53,7 +53,7 @@ def pair_attacking(disp_league, disp_gender, disp_year,
                 scout, explain_text
               )
 
-  return p1_attack_mkdn, p1_pass_mkdn, ''
+  return p1_attack_mkdn, p1_pass_mkdn, '', '', p2_attack_mkdn, p2_pass_mkdn,'',''
 
 @anvil.server.callable
 def pair_fbhe_net(disp_league, disp_gender, disp_year, 

@@ -15,6 +15,7 @@ import player_reports
 import datetime
 import scouting_reports
 
+
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
@@ -54,7 +55,7 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
 
   # call report function
   print(f'Calling Function:{fnct_name}')
-  table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
+  table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
@@ -87,13 +88,23 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
                                 table_data1, 
                                 table_data2, 
                                 table_data3, 
+                                table_data4,
+                                table_data5,
+                                table_data6,                                
+                                table_data7,
+                                table_data8,
                                 filter_text, 
                                 report_row['explain_text'], 
                                 disp_player, 
                                 report_row['report_name'], 
                                 report_row['box1_title'], 
                                 report_row['box2_title'], 
-                                report_row['box3_title']
+                                report_row['box3_title'],
+                                report_row['box4_title'],
+                                report_row['box5_title'],
+                                report_row['box6_title'],
+                                report_row['box7_title'],
+                                report_row['box8_title']
                                )
   return pdf
 
@@ -302,3 +313,78 @@ def save_to_google_drive(file):
    # Save the file to Google Drive
    google_file = app_files.drive.create_file(file.get_name(), file.get_bytes())
    return f"File '{google_file['name']}' saved to Google Drive!"
+
+
+#---------------------------------------------------------------------
+#
+#          Render Player Reports as PDF Files
+#
+#----------------------------------------------------------------------
+@anvil.server.callable
+def create_pair_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    ):
+
+  # call report function
+  print(f'Calling Function:{fnct_name}')
+  table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    )
+
+  # calculate the query text
+  filter_text = f"""
+    Data Filters:
+    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - League : {disp_league}
+    - Gender : {disp_gender}
+    - Year : {disp_year}
+    - Player : {disp_player}
+    - Competition 1 : {disp_comp_l1 if comp_l1_checked else ''}
+    - Competition 2 : {disp_comp_l2 if comp_l2_checked else ''}
+    - Competition 3 : {disp_comp_l3 if comp_l3_checked else ''}
+    - Date Filtered : {str(disp_start_date)+' to '+str(disp_end_date) if date_checked else ''}
+    """
+
+  # fetch the labels from the report file
+  report_row = app_tables.report_list.get(function_name=fnct_name)
+
+  # get the two players in this pair
+  player1, player2 = pair_players(disp_pair)
+  
+  # call render form
+  #print(f"Rendering Form for {table_data1}")
+  pdf_file =disp_pair + ' ' + report_row['report_name'] 
+  pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form, 
+                                report_row['report_name'],
+                                player1,
+                                player2,
+                                table_data1, 
+                                table_data2, 
+                                table_data3, 
+                                table_data4,
+                                table_data5,
+                                table_data6,                                
+                                table_data7,
+                                table_data8,
+                                report_row['box1_title'], 
+                                report_row['box2_title'], 
+                                report_row['box3_title'],
+                                report_row['box4_title'],
+                                report_row['box5_title'],
+                                report_row['box6_title'],
+                                report_row['box7_title'],
+                                report_row['box8_title'],
+                                filter_text, 
+                                report_row['explain_text']
+                               )
+  return pdf

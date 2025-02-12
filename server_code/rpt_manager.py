@@ -383,16 +383,16 @@ def rpt_mgr_generate_background():
                 #. scout_attack_pass_zones
 
                 # let's put these into a list, then loop thru the list
-                report_list = ['pair_sw_report','pair_fbhe_net','pair_fbhe_pass','scout_attack_pass_zones','scout_srv_strategy']
+                report_list = ['pair_sw_report','pair_attacking','scout_attack_pass_zones','scout_srv_strategy']
                 #report_list = ['scout_srv_strategy']
                 for report in report_list: 
                   # create the report with the standard call:
 
                   # look this up in the report list to find the type of report this is
                   rpt_row = app_tables.report_list.get(function_name = report)
-                  if ( (rpt_row['rpt_type'] == 'pair') or (rpt_row['rpt_type'] == 'player') ):
+                  if ( (rpt_row['rpt_type'] == 'pair')  ):
                     #print(f" calling create pdf reports : rpt_row : type : {rpt_row['rpt_type']}, form: {rpt_row['rpt_form']}")
-                    pdf1 = create_pdf_reports(report,
+                    pdf1 = create_pair_pdf_reports(report,
                                       rpt_row['rpt_form'], 
                                       pair_r['league'],
                                       pair_r['gender'],

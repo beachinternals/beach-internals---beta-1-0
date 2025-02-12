@@ -272,6 +272,7 @@ class PairRpt(PairRptTemplate):
       for f_row in app_tables.report_list.search(report_name=rpt_name)
     ]
     box8_title = box8_title_list[0]
+
     
     # print(function_list)
     fnct_name = function_list[0]
@@ -321,6 +322,7 @@ class PairRpt(PairRptTemplate):
 
     #print(f" disp player 1, 2 {disp_player1}, {disp_player2}")
 
+    self.rpt_title.text = rpt_name
     self.player1_label.text = disp_player1
     self.player2_label.text = disp_player2
     
@@ -418,7 +420,7 @@ class PairRpt(PairRptTemplate):
     disp_player1, disp_player2 = anvil.server.call('pair_players',disp_pair)  # passing this just to be consistent in the calling argumenets
     # call the server function
     pdf_rpt = anvil.server.call(
-      "create_pdf_reports",
+      "create_pair_pdf_reports",
       fnct_name,
       form,
       disp_league,
