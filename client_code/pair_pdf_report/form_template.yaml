@@ -152,7 +152,7 @@ components:
 - components:
   - components: []
     layout_properties: {grid_position: 'UJSIMN,AXCVRJ'}
-    name: box_explain_text
+    name: explain_text
     properties: {font_size: 12}
     type: RichText
   - components:

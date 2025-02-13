@@ -1,0 +1,97 @@
+components:
+- layout_properties: {grid_position: 'SGLOVU,NVIIHO'}
+  name: rpt_title
+  properties: {align: center, bold: true}
+  type: Label
+- layout_properties: {grid_position: 'SGLOVU,IELRDP'}
+  name: label_24
+  properties:
+    align: right
+    bold: true
+    spacing:
+      padding: ['0', null, '0', null]
+    text: 'Pair:'
+  type: Label
+- layout_properties: {grid_position: 'SGLOVU,LWSNRE'}
+  name: pair_label
+  properties:
+    spacing:
+      padding: ['0', null, '0', null]
+  type: Label
+- layout_properties: {grid_position: 'SGLOVU,NRLHPD'}
+  name: label_8
+  properties:
+    align: right
+    bold: true
+    spacing:
+      padding: ['0', null, '0', null]
+    text: 'Player:'
+  type: Label
+- layout_properties: {grid_position: 'SGLOVU,CCRJWB'}
+  name: player_label
+  properties:
+    spacing:
+      padding: ['0', null, '0', null]
+  type: Label
+- components:
+  - layout_properties: {grid_position: 'ARDLWK,RWYCYP FLYEIJ,ZNPLWT'}
+    name: plt1_title
+    properties:
+      align: center
+      spacing:
+        padding: ['0', null, '0', null]
+      text: ''
+    type: Label
+  - layout_properties: {grid_position: 'ARDLWK,RWYCYP SABUNF,PKESWH'}
+    name: plot1
+    properties:
+      display_mode: shrink_to_fit
+      height: 401.35546875
+      margin: ['1', null, '1', null]
+    type: Image
+  - layout_properties: {grid_position: 'ARDLWK,VKJDPO XBFOTO,HNWNDO'}
+    name: plt2_title
+    properties:
+      align: center
+      spacing:
+        padding: ['0', null, '0', null]
+      text: ''
+    type: Label
+  - layout_properties: {grid_position: 'ARDLWK,VKJDPO NNIATD,QHNTOL'}
+    name: plot2
+    properties:
+      display_mode: shrink_to_fit
+      height: 404.00390625
+      margin: ['1', null, '1', null]
+    type: Image
+  - layout_properties: {grid_position: 'ARDLWK,NHSNVT IGZVRB,UBWKKN'}
+    name: plt3_title
+    properties:
+      align: center
+      spacing:
+        padding: ['0', null, '0', null]
+      text: ''
+    type: Label
+  - layout_properties: {grid_position: 'ARDLWK,NHSNVT CZRZAO,QXBBUB'}
+    name: plot3
+    properties:
+      display_mode: shrink_to_fit
+      height: 403.2109375
+      margin: ['1', null, '1', null]
+    type: Image
+  - layout_properties: {grid_position: 'NBMSQR,TVQHLT'}
+    name: explain_text
+    properties: {align: left}
+    type: RichText
+  - layout_properties: {grid_position: 'NBMSQR,WVHBEV'}
+    name: filter_text
+    properties: {align: left}
+    type: RichText
+  layout_properties: {full_width_row: true, grid_position: 'SRADEW,WAXLGY'}
+  name: column_panel_2
+  properties: {col_spacing: tiny}
+  type: ColumnPanel
+container:
+  properties: {col_widths: '{"NVIIHO":25,"IELRDP":5,"LWSNRE":15,"NRLHPD":3,"CCRJWB":12}'}
+  type: ColumnPanel
+is_package: true

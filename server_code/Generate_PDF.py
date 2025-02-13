@@ -191,6 +191,89 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
   
   return pdf
 
+
+#---------------------------------------------
+# Render Scouting Reports to PDF
+#
+#.  Needed a seperate function for each PDF Report form
+#
+#----------------------------------------------
+@anvil.server.callable
+def render_3court_plot_to_pdf(fnct_name, rpt_form, disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text, title_text,
+                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+                    ):
+
+  # call report function
+  print(f'Calling Function:{fnct_name}')
+  serve_strategy_title,table_data,srv_plot,pass_plot,set_plot,z1_att,z2_att,z3_att,z4_att,z5_att,opt_att,z1_tbl,z2_tbl,z3_tbl,z4_tbl,z5_tbl,opt_tbl = anvil.server.call(
+    fnct_name, 
+    disp_league, 
+    disp_gender, 
+    disp_year, 
+    disp_team, 
+    disp_pair,
+    disp_player,
+    comp_l1_checked, disp_comp_l1,
+    comp_l2_checked, disp_comp_l2,
+    comp_l3_checked, disp_comp_l3,
+    date_checked, disp_start_date, disp_end_date,
+    scout, explain_text, title_text,
+    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+  )
+                                                                                                                                                                                  
+
+  # calculate the query text
+  filter_text = f"""
+    Data Filters:
+    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - League : {disp_league}
+    - Gender : {disp_gender}
+    - Year : {disp_year}
+    - Player : {disp_player}
+    - Competition 1 : {disp_comp_l1 if comp_l1_checked else ''}
+    - Competition 2 : {disp_comp_l2 if comp_l2_checked else ''}
+    - Competition 3 : {disp_comp_l3 if comp_l3_checked else ''}
+    - Date Filtered : {str(disp_start_date)+' to '+str(disp_end_date) if date_checked else ''}
+    """
+
+  # fetch the labels from the report file
+  report_row = app_tables.report_list.get(function_name=fnct_name)
+  
+  # call render form
+  #print(f"Rendering Form for {table_data1}")
+  pdf_file =disp_player + ' ' + report_row['report_name'] 
+  pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form, 
+    serve_strategy_title,
+    disp_player,
+    table_data,
+    srv_plot,
+    pass_plot,
+    set_plot,
+    z1_att,
+    z2_att,
+    z3_att,
+    z4_att,
+    z5_att,
+    opt_att,
+    z1_tbl,
+    z2_tbl,
+    z3_tbl,
+    z4_tbl,
+    z5_tbl,
+    opt_tbl,
+    disp_pair,
+    filter_text,
+    explain_text,
+    title_text
+             )
+  
+  return pdf
   
 @anvil.server.callable
 def send_email(email_subj, email_body, email_attachment, email_to, email_from):
