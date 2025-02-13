@@ -9,12 +9,12 @@ import anvil.server
 from anvil.pdf import PDFRenderer
 from PyPDF2 import PdfMerger
 import io
-import pair_functions
-import pair_reports
-import player_reports
 import datetime
-import scouting_reports
-
+from pair_functions import *
+from pair_reports import *
+from server_functions import *
+from scouting_reports import *
+from player_reports import *
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
