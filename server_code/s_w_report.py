@@ -108,9 +108,9 @@ def calc_s_w_player( c_league, c_gender, c_year ):
 
       #print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")
 
-      if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value ))): 
+      if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
         # then add a row to the sw_df dataframe
-        #print("adding a row to new sw df, p:{p}")
+        print("adding a row to new sw df, p:{p}")
         sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
         sw_df_new.at[0,'Category'] = c_row['category']
         sw_df_new.at[0,'Section'] = c_row['section']
@@ -282,7 +282,7 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
       # added an 'or' for a 0 criteria, implying that this line should be included. This is used to have the actual value of a variable show up in the s_w table
       if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
         # then add a row to the sw_df dataframe
-        #print("adding a row to new sw df, p:{p}")
+        print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}")
         sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']
         sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
         sw_df_new.at[0,'Category'] = c_row['category']
@@ -340,11 +340,11 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
       if p_row['player'] == mpair_row['player1']:
         sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw_player1.csv")
         save_result = mpair_row.update( s_w_player1 = sw_media )
-        print(f"calc_s_w_pair : UPdated row in master player, result is: {save_result}, p:{p}")
+        #print(f"calc_s_w_pair : UPdated row in master player, result is: {save_result}, p:{p}")
       elif p_row['player'] == mpair_row['player2']:
         sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw_player2.csv")
         save_result = mpair_row.update( s_w_player2 = sw_media )
-        print(f"calc_s_w_pair : UPdated row in master player, result is: {save_result}, p:{p}")
+        #print(f"calc_s_w_pair : UPdated row in master player, result is: {save_result}, p:{p}")
       else:
         print(f"calc_s_w_pair : Could not find the player in the pair: {p_row['pair']}, {p_row['player']}, Master Pair: {mpair_row['pair']}, {mpair_row['player1']}, {mpair_row['player2']}")
   

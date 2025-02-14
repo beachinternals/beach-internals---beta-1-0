@@ -12,11 +12,28 @@ from anvil.tables import app_tables
 class scout_3court_plot_rpt(scout_3court_plot_rptTemplate):
   def __init__(
     self,
-    disp_player,
-    plot1,
-    plot2,
-    plot3,
     disp_pair,
+    disp_player,
+    srv_strat_title,
+    table_data,  
+    plot1_title,
+    plot1,
+    plot2_title,
+    plot2,
+    plot3_title,
+    plot3,
+    z1_att,
+    z2_att,
+    z3_att,
+    z4_att,
+    z5_att,
+    opt_att,
+    z1_tbl,
+    z2_tbl,
+    z3_tbl,
+    z4_tbl,
+    z5_tbl,
+    opt_tbl,
     filter_text,
     explain_text,
     title_text,
@@ -36,6 +53,6 @@ class scout_3court_plot_rpt(scout_3court_plot_rptTemplate):
     self.plot3.source = plot3
     self.filter_text.content = filter_text
     self.explain_text.content = explain_text
-    self.box1_label.text = title_text
+
 
     # Any code you write here will run before the form opens.

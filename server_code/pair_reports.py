@@ -833,8 +833,9 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   stat_table.at[19,'p2'] = tcr_v2[9] - tcr_v2[6] - tcr_v2[3]
   
   stat_markdown = pd.DataFrame.to_markdown(stat_table, index = False,  headers = 'firstrow' )
-  
-  return scor_markdown,  rot_markdown, stat_markdown
+
+  # for consistency with other pair reports, so we can use the same pdf generation routine, we need to return either field.  This one only uses 3, but we need to pass 8
+  return scor_markdown,  rot_markdown, stat_markdown, '','','','',''
   
 
 #-=-=-=-=-=-=-=-=--==-=-======-=---==----------------------------------
@@ -903,7 +904,7 @@ def pair_sw_report(disp_league, disp_gender, disp_year,
     #print(f"pair_sw_report: player attack text: {p_att_txt}")
 
     # now calculate the Offense strength and weakness markdown
-    off_df = sw_df[ sw_df['Section'] == 'Attacking'] 
+    off_df = sw_df[ sw_df['Section'] == 'Offense'] 
     off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
     #print(f"pair_sw_report: off_df: {off_df}")
     off_df = off_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
@@ -922,7 +923,7 @@ def pair_sw_report(disp_league, disp_gender, disp_year,
     #def_mkdn = pd.DataFrame.to_markdown(def_df, index = False)
 
     # now calculate the Errors strength and weakness markdown
-    err_df = sw_df[ sw_df['Section'] == 'Error & Transition'] 
+    err_df = sw_df[ sw_df['Section'] == 'Error & Transitison'] 
     err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
     err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
     err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})

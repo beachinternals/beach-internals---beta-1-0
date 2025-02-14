@@ -60,7 +60,7 @@ class pair_pdf_report(pair_pdf_reportTemplate):
     self.box7_label.text = box7_title
     self.box8_label.text = box8_title
     
-    self.box_explain_text.content = explain_text
+    self.explain_text.content = explain_text
     self.filter_text.content = filter_text
 
     # Any code you write here will run before the form opens.

@@ -127,7 +127,7 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
 
   # call report function
   print(f'Calling Function:{fnct_name}')
-  serve_strategy_title,table_data,srv_plot,pass_plot,set_plot,z1_att,z2_att,z3_att,z4_att,z5_att,opt_att,z1_tbl,z2_tbl,z3_tbl,z4_tbl,z5_tbl,opt_tbl = anvil.server.call(
+  serve_strategy_title,table_data,plot1,plot2,plot3,z1_att,z2_att,z3_att,z4_att,z5_att,opt_att,z1_tbl,z2_tbl,z3_tbl,z4_tbl,z5_tbl,opt_tbl = anvil.server.call(
     fnct_name, 
     disp_league, 
     disp_gender, 
@@ -160,17 +160,26 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
 
   # fetch the labels from the report file
   report_row = app_tables.report_list.get(function_name=fnct_name)
+
+  # define some variable, for now, for consistency across calls
+  plot1_title = 'Serves'
+  plot2_title = 'Passes'
+  plot3_title = 'Sets'
   
   # call render form
   #print(f"Rendering Form for {table_data1}")
   pdf_file =disp_player + ' ' + report_row['report_name'] 
   pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form, 
-    serve_strategy_title,
+    disp_pair,
     disp_player,
+    serve_strategy_title,
     table_data,
-    srv_plot,
-    pass_plot,
-    set_plot,
+    plot1_title,
+    plot1,
+    plot2_title,
+    plot2,
+    plot3_title,
+    plot3,
     z1_att,
     z2_att,
     z3_att,
@@ -183,7 +192,6 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
     z4_tbl,
     z5_tbl,
     opt_tbl,
-    disp_pair,
     filter_text,
     explain_text,
     title_text
@@ -431,7 +439,7 @@ def create_pair_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
-    - Player : {disp_player}
+    - Pair : {disp_pair}
     - Competition 1 : {disp_comp_l1 if comp_l1_checked else ''}
     - Competition 2 : {disp_comp_l2 if comp_l2_checked else ''}
     - Competition 3 : {disp_comp_l3 if comp_l3_checked else ''}
@@ -471,3 +479,5 @@ def create_pair_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_
                                 report_row['explain_text']
                                )
   return pdf
+
+

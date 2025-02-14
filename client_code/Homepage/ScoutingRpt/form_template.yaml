@@ -10,247 +10,233 @@ components_by_slot:
     properties: {background: 'theme:Secondary Container', role: outlined-card}
     type: ColumnPanel
   - components:
-    - layout_properties: {grid_position: 'YUQQZB,RMWMTF'}
-      name: label_9
-      properties: {align: center, bold: true, role: title, text: Search Criteria}
-      type: Label
     - components:
-      - name: label_6
+      - layout_properties: {grid_position: 'MHTCEI,EJQSNK'}
+        name: label_9
+        properties: {align: center, bold: true, role: title, text: Search Criteria}
+        type: Label
+      - layout_properties: {grid_position: 'XCVZOT,QKSMWZ'}
+        name: label_6
         properties: {align: right, text: 'League:'}
         type: Label
       - event_bindings: {change: league_drop_down_change}
-        layout_properties: {}
+        layout_properties: {grid_position: 'XCVZOT,MPRHVI'}
         name: league_drop_down
         properties:
           items: [NCAA | W | 2025]
         type: DropDown
-      - layout_properties: {}
+      - layout_properties: {grid_position: 'PIIBTB,YSKDAD'}
         name: label_12
         properties: {align: right, text: 'Pair:'}
         type: Label
       - event_bindings: {change: pair_drop_down_change}
+        layout_properties: {grid_position: 'PIIBTB,PFQPKC'}
         name: pair_drop_down
         properties:
           items: [BRA 01 Ana Patricia]
         type: DropDown
-      - name: label_14
-        properties: {text: 'Player:'}
+      - layout_properties: {grid_position: 'KENJZT,AUZHKC'}
+        name: label_14
+        properties: {align: right, text: 'Player:'}
         type: Label
-      - layout_properties: {width: 205.984375}
+      - layout_properties: {grid_position: 'KENJZT,GUCXAE'}
         name: player_drop_down
         properties: {}
         type: DropDown
-      layout_properties: {grid_position: 'TKRLGT,DDSDSX'}
-      name: flow_panel_1
+      layout_properties: {grid_position: 'ELUIFP,NQLXDW'}
+      name: column_panel_11
       properties: {}
-      type: FlowPanel
-    - layout_properties: {grid_position: 'RWRXWM,JBCAMJ'}
-      name: label_3
-      properties: {align: center, text: Optional Filters.  Check to filter one each item}
-      type: Label
+      type: ColumnPanel
     - components:
-      - name: rich_text_1
-        properties: {content: 'Competition:'}
-        type: RichText
-      - name: comp_l1_check_box
-        properties: {text: ''}
+      - layout_properties: {grid_position: 'PANBKQ,RMZMHZ'}
+        name: label_3
+        properties: {align: center, bold: true, text: Optional Filters.  Check to filter one each item}
+        type: Label
+      - layout_properties: {grid_position: 'PHHHII,ZVRCKX'}
+        name: comp_l1_check_box
+        properties: {align: right, text: ''}
         type: CheckBox
       - event_bindings: {change: comp_l1_drop_down_change}
+        layout_properties: {grid_position: 'PHHHII,LUMSTG'}
         name: comp_l1_drop_down
         properties:
           items: [Regular Season]
         type: DropDown
-      - name: comp_l2_check_box
-        properties: {text: ''}
+      - layout_properties: {grid_position: 'LAGJVQ,OTHXCY'}
+        name: comp_l2_check_box
+        properties: {align: right, text: ''}
         type: CheckBox
-      - name: comp_l2_drop_down
+      - layout_properties: {grid_position: 'LAGJVQ,MDDLKE'}
+        name: comp_l2_drop_down
         properties:
           items: [Gaastad, Top 20 - Both, Top 20 - One, Unranked]
         type: DropDown
-      - name: comp_l3_check_box
-        properties: {text: ''}
+      - layout_properties: {grid_position: 'RSZBWA,CDRBRV'}
+        name: comp_l3_check_box
+        properties: {align: right, text: ''}
         type: CheckBox
-      - name: comp_l3_drop_down
+      - layout_properties: {grid_position: 'RSZBWA,OXQWKN'}
+        name: comp_l3_drop_down
         properties:
           items: [Finals, Semis]
         type: DropDown
-      layout_properties: {grid_position: 'RWDBEO,CGZOFW'}
-      name: flow_panel_6
-      properties: {}
-      type: FlowPanel
-    - components:
-      - layout_properties: {}
-        name: label_10
-        properties: {align: right, text: 'Date: Start:'}
-        type: Label
-      - layout_properties: {}
+      - layout_properties: {grid_position: 'ORUQXC,CNAZLE TCJEXY,NBQZJD'}
         name: date_check_box
         properties: {text: ''}
         type: CheckBox
-      - event_bindings: {change: start_date_picker_change}
-        name: start_date_picker
-        properties: {}
-        type: DatePicker
-      - layout_properties: {}
+      - layout_properties: {grid_position: 'ORUQXC,CNAZLE TCJEXY,CMLOEY'}
+        name: label_10
+        properties: {align: right, text: 'Date: Start:'}
+        type: Label
+      - layout_properties: {grid_position: 'ORUQXC,CNAZLE CZCKDV,QEKPFY'}
         name: label_11
         properties: {align: right, text: ' End:'}
         type: Label
+      - event_bindings: {change: start_date_picker_change}
+        layout_properties: {grid_position: 'ORUQXC,DKNXQZ VDLNFF,ZVVHJD'}
+        name: start_date_picker
+        properties: {}
+        type: DatePicker
       - event_bindings: {change: end_date_picker_change}
+        layout_properties: {grid_position: 'ORUQXC,DKNXQZ IMLSTC,DLDCQM'}
         name: end_date_picker
         properties: {}
         type: DatePicker
-      layout_properties: {grid_position: 'PPQFBB,BSVOVJ'}
-      name: flow_panel_2
-      properties: {}
-      type: FlowPanel
+      layout_properties: {grid_position: 'ELUIFP,EBVLHA'}
+      name: column_panel_5
+      properties: {col_widths: '{"ZVRCKX":15,"LUMSTG":45,"OTHXCY":15,"MDDLKE":45,"CDRBRV":15,"OXQWKN":45,"CNAZLE":15,"DKNXQZ":45}'}
+      type: ColumnPanel
     - components:
-      - layout_properties: {}
+      - layout_properties: {grid_position: 'CGZLZG,CCJRRQ'}
         name: label_1
         properties: {align: center, bold: true, text: Serving Strategies}
         type: Label
-      - components:
-        - components:
-          - layout_properties: {col_xs: 0, row: MMYZKM, width_xs: 9}
-            name: label_7
-            properties: {align: right, text: 'Serve To:'}
-            type: Label
-          - layout_properties: {col_xs: 0, row: ZSFBXF, width_xs: 12}
-            name: column_panel_19
-            properties:
-              spacing:
-                margin: [null, null, 29, null]
-            type: ColumnPanel
-          layout_properties: {grid_position: 'HHOWHX,FCHPQA RYAIRW,JKGLHZ'}
-          name: Serve_to_grid_panel
-          properties: {}
-          type: GridPanel
-        - layout_properties: {grid_position: 'HHOWHX,FCHPQA UNJGXI,GSBZGW'}
-          name: label_4
-          properties: {align: right, text: 'Serve From:'}
-          type: Label
-        - components:
-          - event_bindings: {change: srv_to_5E_change}
-            layout_properties: {grid_position: 'IIOOUO,MVXQMW'}
-            name: srv_to_5E
-            properties: {text: Line-Deep}
-            type: CheckBox
-          - layout_properties: {grid_position: 'IIOOUO,IXQWWL'}
-            name: srv_to_4E
-            properties: {text: Body-Deep}
-            type: CheckBox
-          - layout_properties: {grid_position: 'IIOOUO,EXKHGA'}
-            name: srv_to_3E
-            properties: {text: Seam-Deep}
-            type: CheckBox
-          - layout_properties: {grid_position: 'IIOOUO,GIXJAQ'}
-            name: srv_to_2E
-            properties: {text: Body-Deep}
-            type: CheckBox
-          - layout_properties: {grid_position: 'IIOOUO,XSROMI'}
-            name: srv_to_1E
-            properties: {text: Line-Deep}
-            type: CheckBox
-          - layout_properties: {grid_position: 'VFOETL,DPDRZP'}
-            name: srv_to_5D
-            properties: {text: Line-Mid}
-            type: CheckBox
-          - layout_properties: {grid_position: 'VFOETL,HASEUT'}
-            name: srv_to_4D
-            properties: {text: Body-Mid}
-            type: CheckBox
-          - layout_properties: {grid_position: 'VFOETL,QBQBYN'}
-            name: srv_to_3D
-            properties: {text: Seam-Mid}
-            type: CheckBox
-          - layout_properties: {grid_position: 'VFOETL,ZPCVQV'}
-            name: srv_to_2D
-            properties: {text: Body-Mid}
-            type: CheckBox
-          - layout_properties: {grid_position: 'VFOETL,PHKNRA'}
-            name: srv_to_1D
-            properties: {text: Line-Mid}
-            type: CheckBox
-          - layout_properties: {grid_position: 'XRQBSR,GOPBVW'}
-            name: srv_to_5C
-            properties: {text: Line-Short}
-            type: CheckBox
-          - layout_properties: {grid_position: 'XRQBSR,IYWQKO'}
-            name: srv_to_4C
-            properties: {text: Body-Short}
-            type: CheckBox
-          - layout_properties: {grid_position: 'XRQBSR,WHUDIU'}
-            name: srv_to_3C
-            properties: {text: Seam-Short}
-            type: CheckBox
-          - layout_properties: {grid_position: 'XRQBSR,NWOMCI'}
-            name: srv_to_2C
-            properties: {text: Body-Short}
-            type: CheckBox
-          - layout_properties: {grid_position: 'XRQBSR,NUBJOT'}
-            name: srv_to_1C
-            properties: {text: Line-Short}
-            type: CheckBox
-          data_bindings:
-          - {code: '', property: border, writeback: false}
-          layout_properties: {grid_position: 'HHOWHX,AUHKEK EKELIM,UVRSCM'}
-          name: column_panel_2
-          properties: {background: 'theme:Secondary Container'}
-          type: ColumnPanel
-        - components:
-          - layout_properties: {grid_position: 'GSIFPT,RQUNXR'}
-            name: srv_from_1
-            properties: {text: Left - Line}
-            type: CheckBox
-          - layout_properties: {grid_position: 'GSIFPT,QKGXEV'}
-            name: srv_from_3
-            properties: {align: center, text: Middle}
-            type: CheckBox
-          - layout_properties: {grid_position: 'GSIFPT,RVTCCF'}
-            name: srv_from_5
-            properties: {align: right, text: Right - Line}
-            type: CheckBox
-          layout_properties: {grid_position: 'HHOWHX,AUHKEK NIREAB,JCGBVA'}
-          name: column_panel_18
-          properties: {background: 'theme:On Primary'}
-          type: ColumnPanel
-        layout_properties: {}
+      - layout_properties: {grid_position: 'XYRBHG,XOXQXY'}
+        name: label_7
+        properties: {align: right, text: 'Serve To:'}
+        type: Label
+      - layout_properties: {grid_position: 'XYRBHG,RAZSZW YAXBLX,TFGHYS'}
+        name: srv_to_5E
+        properties: {align: center, text: Line-Deep}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,RAZSZW VOELTI,IUSXXE'}
+        name: srv_to_5D
+        properties: {align: center, text: Line-Mid}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,RAZSZW UKSOVF,RAJAEH'}
+        name: srv_to_5C
+        properties: {align: center, text: Line-Short}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,UQFUZY ZEPJWY,CECGET'}
+        name: srv_to_4E
+        properties: {align: center, text: Body-Deep}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,UQFUZY IRKJAS,HSIFSO'}
+        name: srv_to_2D
+        properties: {align: center, text: Body-Mid}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,UQFUZY ZDBIRK,IQYZSH'}
+        name: srv_to_4C
+        properties: {align: center, text: Body-Short}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,MAGEZQ NRMYZJ,BYTJMJ'}
+        name: srv_to_3E
+        properties: {align: center, text: Seam-Deep}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,MAGEZQ PDGCAY,MSMPTZ'}
+        name: srv_to_3D
+        properties: {align: center, text: Seam-Mid}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,MAGEZQ DVVVCE,XVUEIN'}
+        name: srv_to_3C
+        properties: {align: center, text: Seam-Short}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,YQYNZO MBCWCQ,OJYVNJ'}
+        name: srv_to_2E
+        properties: {align: center, text: Body-Deep}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,YQYNZO GDKDNO,TISJVR'}
+        name: srv_to_4D
+        properties: {align: center, text: Body-Mid}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,YQYNZO ELLHRK,CNAHDW'}
+        name: srv_to_2C
+        properties: {align: center, text: Body-Short}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,TQKFVH FDUYNQ,XCQUWJ'}
+        name: srv_to_1E
+        properties: {align: center, text: Line-Deep}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,TQKFVH MVTMUZ,DRVEIT'}
+        name: srv_to_1D
+        properties: {align: center, text: Line-Mid}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,TQKFVH NBINSK,RCFOXD'}
+        name: srv_to_1C
+        properties: {align: center, text: Line-Short}
+        type: CheckBox
+      - layout_properties: {grid_position: 'XYRBHG,JUEQTQ'}
         name: column_panel_1
-        properties: {col_widths: '{"FCHPQA":10,"AUHKEK":50}'}
+        properties: {}
         type: ColumnPanel
-      layout_properties: {grid_position: 'DRALTJ,PYUFCO'}
-      name: serving_panel
-      properties: {}
-      type: DataRowPanel
+      - layout_properties: {grid_position: 'XNMAEM,JUACPX', row_background: 'theme:Secondary Container'}
+        name: spacer_1
+        properties: {height: 12.0703125}
+        type: Spacer
+      - layout_properties: {grid_position: 'WCANED,IJXIRA'}
+        name: label_4
+        properties: {align: left, text: 'Serve From:'}
+        type: Label
+      - layout_properties: {grid_position: 'WCANED,OEKMVD'}
+        name: srv_from_1
+        properties: {align: left, text: Left - Line}
+        type: CheckBox
+      - layout_properties: {grid_position: 'WCANED,XHCICQ'}
+        name: srv_from_3
+        properties: {align: center, italic: false, text: Middle}
+        type: CheckBox
+      - layout_properties: {grid_position: 'WCANED,RFGZDB'}
+        name: srv_from_5
+        properties: {align: right, text: Right - Line}
+        type: CheckBox
+      - layout_properties: {grid_position: 'WCANED,SZDLWS'}
+        name: column_panel_2
+        properties: {}
+        type: ColumnPanel
+      layout_properties: {grid_position: 'FYJULP,UXFGBP'}
+      name: column_panel_13
+      properties: {col_widths: '{"XOXQXY":4,"RAZSZW":11,"UQFUZY":10,"MAGEZQ":15,"YQYNZO":10,"TQKFVH":10,"IJXIRA":5,"OEKMVD":10,"XHCICQ":25,"RFGZDB":15,"JUEQTQ":18,"SZDLWS":17}'}
+      type: ColumnPanel
     - components:
-      - layout_properties: {}
+      - layout_properties: {grid_position: 'SPRSFE,WQKQNZ'}
         name: label_5
         properties: {align: right, text: 'Report:'}
         type: Label
       - event_bindings: {change: report_drop_down_change}
-        layout_properties: {}
+        layout_properties: {grid_position: 'SPRSFE,HGGHYC'}
         name: report_drop_down
         properties:
           items: []
         type: DropDown
       - event_bindings: {click: generate_report_button_click}
-        layout_properties: {}
+        layout_properties: {grid_position: 'SPRSFE,GVWHIT'}
         name: generate_report_button
         properties: {align: right, role: outlined-button, text: Generate Report}
         type: Button
       - event_bindings: {click: pdf_button_click}
-        layout_properties: {}
+        layout_properties: {grid_position: 'SPRSFE,YBPEVU'}
         name: pdf_button
         properties: {role: outlined-button, text: Generate pdf}
         type: Button
-      layout_properties: {grid_position: 'RRUZZU,OYDNHB'}
-      name: flow_panel_4
+      layout_properties: {grid_position: 'TFCWIQ,LGCOBR'}
+      name: column_panel_12
       properties: {}
-      type: FlowPanel
+      type: ColumnPanel
     layout_properties: {}
     name: outlined_card_4
     properties:
       col_spacing: small
-      col_widths: '{"DDSDSX":30}'
+      col_widths: '{}'
       role: outlined-card
       spacing:
         padding: [0, 0, 0, 0]

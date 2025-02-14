@@ -61,7 +61,7 @@ class PlayerRpt(PlayerRptTemplate):
     ]
 
     # set the default for team drop down and l1, l2, l3 
-    self.team_drop_down.selected_value = 'Scouting'
+    #self.team_drop_down.selected_value = 'Scouting'
 
     # populate the reports drop down
     if anvil.users.get_user()['team'] == "INTERNALS":

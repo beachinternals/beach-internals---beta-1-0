@@ -10,128 +10,114 @@ components_by_slot:
     properties: {background: 'theme:Secondary Container', role: outlined-card}
     type: ColumnPanel
   - components:
-    - layout_properties: {grid_position: 'YUQQZB,RMWMTF'}
-      name: label_9
-      properties: {align: center, bold: true, role: title, text: Search Criteria}
-      type: Label
     - components:
-      - name: label_6
+      - layout_properties: {grid_position: 'OXWWPN,SIFWKR'}
+        name: label_9
+        properties: {align: center, bold: true, role: title, text: Search Criteria}
+        type: Label
+      - layout_properties: {grid_position: 'TXMKON,PEJFJX UZUIRS,DVDQNQ'}
+        name: label_6
         properties: {align: right, text: 'League:'}
         type: Label
+      - layout_properties: {grid_position: 'TXMKON,PEJFJX EZXYAU,XYMHJE'}
+        name: label_12
+        properties: {align: right, text: 'Pair:'}
+        type: Label
       - event_bindings: {change: league_drop_down_change}
-        layout_properties: {}
+        layout_properties: {grid_position: 'TXMKON,NIKFRV EVSSGC,LFAAOG'}
         name: league_drop_down
         properties:
           items: [NCAA | W | 2025]
         type: DropDown
-      - layout_properties: {}
-        name: label_12
-        properties: {align: right, text: 'Pair:'}
-        type: Label
       - event_bindings: {change: pair_drop_down_change}
+        layout_properties: {grid_position: 'TXMKON,NIKFRV ROLRRH,VGCXFK'}
         name: pair_drop_down
         properties:
           items: [BRA 01 Ana Patricia]
         type: DropDown
-      - name: label_1
-        properties: {align: right, text: 'Player:'}
-        type: Label
-      - name: player_drop_down
-        properties: {}
-        type: DropDown
-      layout_properties: {grid_position: 'TKRLGT,DDSDSX'}
-      name: flow_panel_1
-      properties: {align: left}
-      type: FlowPanel
-    - layout_properties: {grid_position: 'RWRXWM,JBCAMJ'}
-      name: label_3
-      properties: {align: center, text: Optional Filters.  Check to filter one each item}
-      type: Label
-    - components:
-      - name: rich_text_1
-        properties: {content: 'Competition:'}
-        type: RichText
-      - name: comp_l1_check_box
-        properties: {text: ''}
-        type: CheckBox
-      - event_bindings: {change: comp_l1_drop_down_change}
-        name: comp_l1_drop_down
-        properties:
-          items: [Regular Season]
-        type: DropDown
-      - name: comp_l2_check_box
-        properties: {text: ''}
-        type: CheckBox
-      - name: comp_l2_drop_down
-        properties:
-          items: [Gaastad, Top 20 - Both, Top 20 - One, Unranked]
-        type: DropDown
-      - name: comp_l3_check_box
-        properties: {text: ''}
-        type: CheckBox
-      - name: comp_l3_drop_down
-        properties:
-          items: [Finals, Semis]
-        type: DropDown
-      layout_properties: {grid_position: 'RWDBEO,CGZOFW'}
-      name: flow_panel_6
-      properties: {}
-      type: FlowPanel
-    - components:
-      - layout_properties: {}
-        name: label_10
-        properties: {align: right, text: 'Date: Start:'}
-        type: Label
-      - layout_properties: {}
-        name: date_check_box
-        properties: {text: ''}
-        type: CheckBox
-      - event_bindings: {change: start_date_picker_change}
-        name: start_date_picker
-        properties: {}
-        type: DatePicker
-      - layout_properties: {}
-        name: label_11
-        properties: {align: right, text: ' End:'}
-        type: Label
-      - event_bindings: {change: end_date_picker_change}
-        name: end_date_picker
-        properties: {}
-        type: DatePicker
-      layout_properties: {grid_position: 'PPQFBB,BSVOVJ'}
-      name: flow_panel_2
-      properties: {}
-      type: FlowPanel
-    - components:
-      - layout_properties: {}
+      - layout_properties: {grid_position: 'LGHIQE,BYPIFA HOJIRH,RSGGTH'}
         name: label_5
         properties: {align: right, text: 'Report:'}
         type: Label
+      - event_bindings: {click: generate_report_button_click}
+        layout_properties: {grid_position: 'LGHIQE,BYPIFA MTCYYU,FTTSVG'}
+        name: generate_report_button
+        properties: {align: right, role: outlined-button, text: Generate Report}
+        type: Button
       - event_bindings: {change: report_drop_down_change}
-        layout_properties: {}
+        layout_properties: {grid_position: 'LGHIQE,UDZWIK EJJRDQ,WJKSHB'}
         name: report_drop_down
         properties:
           items: []
         type: DropDown
-      - event_bindings: {click: generate_report_button_click}
-        layout_properties: {}
-        name: generate_report_button
-        properties: {align: right, role: outlined-button, text: Generate Report}
-        type: Button
       - event_bindings: {click: pdf_button_click}
-        layout_properties: {}
+        layout_properties: {grid_position: 'LGHIQE,UDZWIK TLOGIX,GTYEKL'}
         name: pdf_button
         properties: {role: outlined-button, text: Generate pdf}
         type: Button
-      - event_bindings: {click: all_rpt_pdf_click}
-        layout_properties: {}
-        name: all_rpt_pdf
-        properties: {role: outlined-button, text: PDF of All Reports, visible: true}
-        type: Button
-      layout_properties: {grid_position: 'RRUZZU,OYDNHB'}
-      name: flow_panel_4
+      layout_properties: {grid_position: 'JGXBNS,AXQKQZ'}
+      name: column_panel_1
       properties: {}
-      type: FlowPanel
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'LJXRUD,VLSAXJ'}
+        name: label_3
+        properties: {align: center, text: Optional Filters.  Check to filter one each item}
+        type: Label
+      - layout_properties: {grid_position: 'KDDUIB,YXEAOM'}
+        name: comp_l1_check_box
+        properties: {align: right, text: ''}
+        type: CheckBox
+      - event_bindings: {change: comp_l1_drop_down_change}
+        layout_properties: {grid_position: 'KDDUIB,MXUBSZ'}
+        name: comp_l1_drop_down
+        properties:
+          items: [Regular Season]
+        type: DropDown
+      - layout_properties: {grid_position: 'ITYZOV,VJOMTS'}
+        name: comp_l2_check_box
+        properties: {align: right, text: ''}
+        type: CheckBox
+      - layout_properties: {grid_position: 'ITYZOV,CVYEUR'}
+        name: comp_l2_drop_down
+        properties:
+          items: [Gaastad, Top 20 - Both, Top 20 - One, Unranked]
+        type: DropDown
+      - layout_properties: {grid_position: 'DOMWVK,JNOGAT'}
+        name: comp_l3_check_box
+        properties: {align: right, text: ''}
+        type: CheckBox
+      - layout_properties: {grid_position: 'DOMWVK,VZCSFO'}
+        name: comp_l3_drop_down
+        properties:
+          items: [Finals, Semis]
+        type: DropDown
+      - layout_properties: {grid_position: 'FJGSJG,ERKJDT'}
+        name: date_check_box
+        properties: {align: right, text: ''}
+        type: CheckBox
+      - layout_properties: {grid_position: 'FJGSJG,UWYRIN'}
+        name: label_10
+        properties: {align: right, text: 'Start:'}
+        type: Label
+      - event_bindings: {change: start_date_picker_change}
+        layout_properties: {grid_position: 'FJGSJG,FAXIAM'}
+        name: start_date_picker
+        properties: {}
+        type: DatePicker
+      - layout_properties: {grid_position: 'FDVOIT,PYTWVJ'}
+        name: label_11
+        properties: {align: right, text: ' End:'}
+        type: Label
+      - event_bindings: {change: end_date_picker_change}
+        layout_properties: {grid_position: 'FDVOIT,VBCSUK'}
+        name: end_date_picker
+        properties: {}
+        type: DatePicker
+      layout_properties: {grid_position: 'JGXBNS,KBVZLN'}
+      name: column_panel_4
+      properties: {col_widths: '{"YXEAOM":15,"MXUBSZ":31,"ERKJDT":10,"UWYRIN":10,"FAXIAM":40,"VJOMTS":20,"CVYEUR":40,"JNOGAT":20,"VZCSFO":40,"PYTWVJ":20,"VBCSUK":40}'}
+      type: ColumnPanel
     layout_properties: {}
     name: outlined_card_4
     properties: {role: outlined-card}

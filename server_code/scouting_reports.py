@@ -693,7 +693,8 @@ def scout_attack_pass_zones(disp_league,
                       disp_start_date,
                       disp_end_date,
                       scout,
-                      explain_text, title_text
+                      explain_text, title_text,
+                      srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5
   ):
 
   # we keep all the parameters, but we are not using many.  (serve to and from, and filters on the data since the data is taken from the pair_stats table
