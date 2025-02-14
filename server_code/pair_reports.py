@@ -919,7 +919,7 @@ def pair_sw_report(disp_league, disp_gender, disp_year,
     def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
     def_df = def_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
     def_df = def_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
-    print(f"Def df: {def_df}")
+    #print(f"Def df: {def_df}")
     #def_mkdn = pd.DataFrame.to_markdown(def_df, index = False)
 
     # now calculate the Errors strength and weakness markdown
