@@ -239,7 +239,7 @@ def rpt_mgr_generate_background():
             #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
             # call pdf report
-            pdf1 = create_pdf_reports(rpt_print['function_name'],
+            pdf1 = create_pair_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
                                     pair_r['league'],
                                     pair_r['gender'],
