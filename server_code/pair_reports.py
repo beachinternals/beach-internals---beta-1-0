@@ -885,8 +885,14 @@ def pair_sw_report(disp_league, disp_gender, disp_year,
       player_num = 2
     else:
       print(f"pair_sw_report : Display Player not one of the pairs: {disp_pair}, {pair_row['player1']}, {pair_row['player2']}")
-    
-    sw_df = pd.read_csv(io.BytesIO( pair_row[sw_field].get_bytes()))
+
+    print(f"pair_sw_report:  pair in question: {pair_row['pair']}, sw_field = {sw_field} Player_num = {player_num}, d_player : {d_player}")
+    # check if this pair has sw_df's in thesw_field
+    if pair_row[sw_field]:
+      sw_df = pd.read_csv(io.BytesIO( pair_row[sw_field].get_bytes()))
+    else:
+      sw_df = 'No Strenghts and Weakness Data Found'
+      
     # now open the pair_data file and get the row, and get the row from the pair_stats file
     pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
     #print(f"pair_sw_report: Pair Data and Pair stats {pair_data_df}, {pair_stats_df}")
