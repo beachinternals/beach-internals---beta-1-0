@@ -43,10 +43,6 @@ components:
     name: private_button
     properties: {align: center, enabled: true, selected: true, text: Private, visible: true}
     type: RadioButton
-  - layout_properties: {grid_position: 'PVOVSQ,THUYNP WFBAAS,RSBOAH'}
-    name: scouting_button
-    properties: {align: center, selected: false, text: Scouting}
-    type: RadioButton
   - event_bindings: {click: private_help_link_click}
     layout_properties: {grid_position: 'PVOVSQ,THUYNP WFBAAS,LMDSTL'}
     name: private_help_link
@@ -195,6 +191,16 @@ components:
     name: column_panel_10
     properties: {col_widths: '{"EZGMNZ":20,"FXCGZV":40}'}
     type: ColumnPanel
+  - event_bindings: {click: cancel_file_button_click}
+    layout_properties: {grid_position: 'NEIZEH,BGGKRP'}
+    name: cancel_file_button
+    properties: {role: outlined-button, text: CANCEL}
+    type: Button
+  - event_bindings: {click: save_file_button_click}
+    layout_properties: {grid_position: 'NEIZEH,UYIMDY'}
+    name: save_file_button
+    properties: {role: outlined-button, text: SAVE FILE}
+    type: Button
   layout_properties: {grid_position: 'AXTBGF,TVBCNU'}
   name: outlined_card_3
   properties: {role: outlined-card}
@@ -293,20 +299,6 @@ components:
     type: ColumnPanel
   layout_properties: {grid_position: 'JGDDBL,WEFMUF'}
   name: outlined_card_5
-  properties: {role: outlined-card}
-  type: ColumnPanel
-- components:
-  - layout_properties: {grid_position: 'PSOIRZ,SRQZES'}
-    name: cancel_file_button
-    properties: {role: outlined-button, text: CANCEL}
-    type: Button
-  - event_bindings: {click: save_file_button_click}
-    layout_properties: {grid_position: 'PSOIRZ,ARTOLZ'}
-    name: save_file_button
-    properties: {role: outlined-button, text: SAVE FILE}
-    type: Button
-  layout_properties: {grid_position: 'KJQAWI,WGFOOU'}
-  name: outlined_card_4
   properties: {role: outlined-card}
   type: ColumnPanel
 container: {type: ColumnPanel}

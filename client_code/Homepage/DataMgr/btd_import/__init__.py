@@ -299,3 +299,9 @@ class btd_import(btd_importTemplate):
 
     pass
 
+  def cancel_file_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    if confirm("Cancel Data Import?"):
+      open_form('Homepage.DataMgr')
+    pass
+
