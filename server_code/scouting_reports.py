@@ -802,6 +802,7 @@ def full_scouting_report_pair(fnct_name, rpt_form, disp_league, disp_gender, dis
                     scout, explain_text, title_text,
                     srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                     ):
+  
   # this merges a hard coded series of reports
   '''
   This is typically called in report manager for report type : 'scouting - pdf only'"
