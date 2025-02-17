@@ -81,9 +81,13 @@ def calc_s_w_player( c_league, c_gender, c_year ):
              'Criteria Value':[0]
             }
 
-  # loop thru the player file
-  #print(f"Length of pdata df: {pdata_df.shape[0]}")
-  for p,p_row in pdata_df.iterrows():
+  # loop thru the master player file for the league 
+  for mplayer_row in app_tables.master_player.search(league=c_league,gender=c_gender,year=c_year):
+
+    # now find this row in the dataframe
+    p = pdata_df.loc[pdata_df['player'] == mplayer_row['player']]
+    #print(f"Length of pdata df: {pdata_df.shape[0]}")
+    #for p,p_row in pdata_df.iterrows():
     # put the dataframe definition inside the loop overr players to reset the dataframe for each player
     
     sw_df = pd.DataFrame.from_dict(sw_dict)
@@ -161,24 +165,24 @@ def calc_s_w_player( c_league, c_gender, c_year ):
       p_sname = p_player[str_loc+1:].strip()
       #print(f"Updating the sw_df into the master player for: {c_league}, {c_gender}, {c_year}, {p_team}, {p_num}, {p_sname}, p:{p}")
     
-  # save the dataframe into s_w in master_player
-    for mplayer_row in app_tables.master_player.search(
-        q.all_of(
-          league = c_league,
-          gender = c_gender,
-          year = c_year,
-          team = p_team,
-          number = p_num,
-          shortname = p_sname
-        )
-      ):
+    # save the dataframe into s_w in master_player
+    #for mplayer_row in app_tables.master_player.search(
+    #    q.all_of(
+    #      league = c_league,
+    #      gender = c_gender,
+    #      year = c_year,
+    #      team = p_team,
+    #      number = p_num,
+    #      shortname = p_sname
+    #    )
+    #  ):
 
-      # convert DF to a media object
-      #print(f"Saving SW DF for this player: {p_team}, {p_num},{p_sname}")
-      sw_csv_file = pd.DataFrame.to_csv(sw_df[['Category','Section','Description','Var Name','Var Desc','Var Value','Var Percentile','Criteria','Criteria Value']])
-      sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw.csv")
-      save_result = mplayer_row.update( s_w = sw_media )
-      #print(f"UPdated row in master player, result is: {save_result}, p:{p}")
+    # convert DF to a media object
+    #print(f"Saving SW DF for this player: {p_team}, {p_num},{p_sname}")
+    sw_csv_file = pd.DataFrame.to_csv(sw_df[['Category','Section','Description','Var Name','Var Desc','Var Value','Var Percentile','Criteria','Criteria Value']])
+    sw_media = anvil.BlobMedia(content_type="text/plain", content=sw_csv_file.encode(), name="sw.csv")
+    save_result = mplayer_row.update( s_w = sw_media )
+    #print(f"UPdated row in master player, result is: {save_result}, p:{p}")
   
     # next player
 
