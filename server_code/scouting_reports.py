@@ -828,8 +828,7 @@ def full_scouting_report_pair(fnct_name, rpt_form, disp_league, disp_gender, dis
   # create a list of reports to porcess
   report_list = ['pair_sw_report','pair attacking','socut attack pass zones','scout srv strategy','scout players serve']
 
-  for report in report_list:
-    if report = 
+
 
   # create and store the pair_sw_report
 

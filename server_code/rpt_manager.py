@@ -85,6 +85,7 @@ def rpt_mgr_generate_background():
       date_checked = False
       disp_end_date = date.today()
       disp_start_date = disp_end_date - timedelta(days = 365)
+    
     #print(f"rpt_mgr_generate_background: report row, days_history: {rpt_r['days_hist']}, Date Checked: {date_checked}, {disp_start_date}, {disp_end_date}")
     #print(f"rpt_mgr_generate_background: From the rpt_mgr DB - Serve From: {rpt_r['srv_fr']}, Serve to: {rpt_r['srv_to']}")
     # now look for scouting report serve to and from arrays\
@@ -361,7 +362,7 @@ def rpt_mgr_generate_background():
           disp_player[0], disp_player[1] = pair_players(disp_pair)
 
           for i in [0,1]: # loop over two players in the pair
-            #print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
+            print(f"Processing scouting - pdf only report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
             # make the report for each player in the pair
             full_rpt_pdf = None
             pdf_name = disp_player[i] + ' Full Scouting Report.pdf'
