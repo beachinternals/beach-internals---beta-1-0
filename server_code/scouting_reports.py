@@ -183,6 +183,7 @@ def scout_srv_strategy(disp_league,
 
   # now start a loop of the number of desitnation tuples (srv2[])
   first_zone = True
+  new_ppr = ppr_df[ ppr_df['teama'] == '' ] # set this to a default with 0 length
   for i in range(0,len(srv_2),1):
     #print(f" i:{i}, srv_2[i,0] {srv_2[i][0]}, srv_2[i,1] {srv_2[i][1]}")
     tmp_df = ppr_df[ (ppr_df['serve_dest_zone_net'] == srv_2[i][0]) & (ppr_df['serve_dest_zone_depth'] == srv_2[i][1]) ]
