@@ -824,8 +824,12 @@ def full_scouting_report_pair(fnct_name, rpt_form, disp_league, disp_gender, dis
 
   funct_name here should be 
   '''
-  
-  pdf_file = '' # temp storage while coding
+
+  # create a list of reports to porcess
+  report_list = ['pair_sw_report','pair attacking','socut attack pass zones','scout srv strategy','scout players serve']
+
+  for report in report_list:
+    if report = 
 
   # create and store the pair_sw_report
 
