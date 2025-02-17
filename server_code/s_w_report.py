@@ -212,23 +212,24 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
   #
   # then store the dataframe in the master_player file
   # open player data, create a data frame from it
+  c_team = 'League'
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = c_league,
       gender = c_gender,
       year = c_year,
-      team = 'League'
+      team = c_team
       ))
 
   if ppr_csv_row:
-    if ppr_csv_row['player_data']:
+    if ppr_csv_row['pair_data']:
       pdata_df =  pd.read_csv(io.BytesIO( ppr_csv_row['pair_data'].get_bytes()))
       pstat_df =  pd.read_csv(io.BytesIO( ppr_csv_row['pair_data_stats'].get_bytes()))
       pair_data_found= True
     else:
       pdata_df = ['']
       pstat_df = ['']
-      print(f'calc_s_w_pair : No Team Rows Found {c_league}, {c_gender}, {c_year}, {c_team}')
+      print(f'calc_s_w_pair : No Pair Data FOund on Team Row  {c_league}, {c_gender}, {c_year}, {c_team}')
       pair_data_found = False
   else:
     pdata_df = ['']

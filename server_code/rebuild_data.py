@@ -301,7 +301,7 @@ def calculate_data():
   
 @anvil.server.callable
 def calculate_data1():
-  now = datetime.now()
+  now = datetime.datetime.now()
   email_text = "Calculate PPR Data \n Called at:" + str(now) + "\n"
   
   # build data for all new files, for all leagues
