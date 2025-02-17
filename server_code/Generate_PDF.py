@@ -129,6 +129,7 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
   print(f'Calling Function:{fnct_name}')
   serve_strategy_title,table_data,plot1,plot2,plot3,z1_att,z2_att,z3_att,z4_att,z5_att,opt_att,z1_tbl,z2_tbl,z3_tbl,z4_tbl,z5_tbl,opt_tbl = anvil.server.call(
     fnct_name, 
+    rpt_form,
     disp_league, 
     disp_gender, 
     disp_year, 
