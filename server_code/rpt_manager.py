@@ -429,7 +429,7 @@ def rpt_mgr_generate_background():
                       # serve_to_n is T/F from zone [ E, D, C ]
                       #print(f"serve index: {sr_index}, erve Matrix : {sr_matrix}")
                       for srv_strat in sr_index:
-                        print(f"serve strategy: {srv_strat}, service index : {sr_index}")
+                        #print(f"serve strategy: {srv_strat}, service index : {sr_index}")
                         srv_fr = [False, False, False]
                         if sr_matrix.at[srv_strat,'sr_fr'] == 1:
                           srv_fr[0] = True
