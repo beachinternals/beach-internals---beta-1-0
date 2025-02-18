@@ -428,7 +428,7 @@ db_schema:
     - admin_ui: {order: 1.25, width: 93}
       name: category
       type: string
-    - admin_ui: {order: 1.5, width: 152}
+    - admin_ui: {order: 1.5, width: 172}
       name: subreport
       type: string
     - admin_ui: {order: 7, width: 102}
@@ -437,6 +437,9 @@ db_schema:
     - admin_ui: {order: 3.5, width: 611}
       name: var_desc
       type: string
+    - admin_ui: {order: 8, width: 200}
+      name: high_is_good
+      type: bool
     server: full
     title: strength_weakness_criteria
   subscriptions:

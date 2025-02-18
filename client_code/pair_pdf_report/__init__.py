@@ -62,5 +62,6 @@ class pair_pdf_report(pair_pdf_reportTemplate):
     
     self.explain_text.content = explain_text
     self.filter_text.content = filter_text
+    self.filter_text.visible = False if report_title == 'Pair - Strengths & Weaknesses' else True
 
     # Any code you write here will run before the form opens.

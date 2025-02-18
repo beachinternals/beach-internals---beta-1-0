@@ -559,15 +559,15 @@ def rpt_mgr_generate_background():
           for i in range(0,len(pdf_list)):
             print(f"PDF List to email: item number :{i}, PDF File: {pdf_list[i]}")
             
-          email_status = anvil.email.send(to=rpt_r['emailto'],
+        email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
                                       cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
                                       subject='Beach Internals - Scouting Reports ',
                                       text='Attached please find the summary report(s)',
                                       attachments=pdf_list)
 
-          if not email_status:
-            print("report:Manager, Scouting Reports, email send failed")
+        if not email_status:
+          print("report:Manager, Scouting Reports, email send failed")
           
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")

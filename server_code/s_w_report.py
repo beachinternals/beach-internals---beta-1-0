@@ -124,14 +124,10 @@ def calc_s_w_player( c_league, c_gender, c_year ):
         sw_df_new.at[0,'Var Value'] = "{:.2f}".format(pdata_df.at[p,variable])
         #print(f"Calc Percentile: value:{pdata_df.at[p,variable]}, Mean: {pstat_df.at[0,var_mean]}, Stdev {pstat_df.at[0,var_sd]} Percentile:{stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )}")
         sw_df_new.at[0,'Var Percentile'] =  stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )
+        if not c_row['high_is_good']:
+          sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
         sw_df_new.at[0,'Criteria'] = c_row['criteria']
         sw_df_new.at[0,'Criteria Value'] = "{:.2f}".format(crit_value)
-
-        # calibrate percentile to criteria and category
-        if sw_df_new.at[0,'Category'] == 'Strength' and sw_df_new.at[0,'Criteria'] < 0:
-          sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
-        if sw_df_new.at[0,'Category'] == 'Weakness' and sw_df_new.at[0,'Criteria'] > 0:
-          sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
 
         sw_df_new.at[0,'Var Percentile'] = "{:.0%}".format(sw_df_new.at[0,'Var Percentile'])
         #print(sw_df_new)
@@ -298,6 +294,8 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
         sw_df_new.at[0,'Var Value'] = "{:.2f}".format(pdata_df.at[p,variable])
         #print(f"Calc Percentile: value:{pdata_df.at[p,variable]}, Mean: {pstat_df.at[0,var_mean]}, Stdev {pstat_df.at[0,var_sd]} Percentile:{stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )}")
         sw_df_new.at[0,'Var Percentile'] =  stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )
+        if not c_row['high_is_good']:
+          sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
         sw_df_new.at[0,'Criteria'] = c_row['criteria']
         sw_df_new.at[0,'Criteria Value'] = "{:.2f}".format(crit_value)
 
