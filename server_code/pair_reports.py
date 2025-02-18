@@ -140,7 +140,7 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
     # calculate for player 2
     fbhe_vector = fbhe( ppr_df[ppr_df['att_src_zone_net']==i], disp_player2, 'att', True )
     p2_fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-    p2_fbhe_table.at[1,column[i-1]] = fbhe_vector[0]  # fbhe
+    p2_fbhe_table.at[1,column[i-1]] = fbhe_vector[4]  # fbhe
     p2_fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
     p2_fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
     p2_fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
