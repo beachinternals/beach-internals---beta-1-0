@@ -178,7 +178,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
   for pair_r in app_tables.master_pair.search(league=c_league, gender=c_gender, year=c_year):
     # items in pair_r: pair_r['pair'], pair_r['player1'], pair_r['player2']
 
-    #print(f"pair: {pair_r['pair']}, Player 1: {pair_r['player1']}, Player 2: {pair_r['player2']}, Team: {pair_r['team']}")
+    print(f"pair: {pair_r['pair']}, Player 1: {pair_r['player1']}, Player 2: {pair_r['player2']}, Team: {pair_r['team']}")
 
     # now limit the ppdf_df to only our pairs
     tmp_df = pair_filter( ppr_df, pair_r['pair'])
@@ -198,7 +198,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
         pair_df.at[i,'fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
         pair_df.at[i,'fbhe_n'] = fbhe_vector[3]
 
-      #print(f"player_df after fbhe calc:{player_df}")
+      print(f"pair_df after fbhe calc:{pair_df}")
 
       fbhe_min = 1
       fbhe_max = 0
@@ -469,27 +469,27 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
   pair_stats_df.at[0,"fbhe5_stdev"] = pair_df['fbhe5'].std(skipna=True)  
 
   pair_stats_df.at[0,"fbhe_behind_mean"] = pair_df['fbhe_behind'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_behind_stdev"] = pair_df['fbhe_behind'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_behind_stdev"] = pair_df['fbhe_behind'].std(skipna=True)
   pair_stats_df.at[0,"fbhe_option_mean"] = pair_df['fbhe_option'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_option_stdev"] = pair_df['fbhe_option'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_option_stdev"] = pair_df['fbhe_option'].std(skipna=True)
   pair_stats_df.at[0,"fbhe_tempo_mean"] = pair_df['fbhe_tempo'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_tempo_stdev"] = pair_df['fbhe_tempo'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_tempo_stdev"] = pair_df['fbhe_tempo'].std(skipna=True)
 
   pair_stats_df.at[0,"fbhe_poke_mean"] = pair_df['fbhe_poke'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_poke_stdev"] = pair_df['fbhe_poke'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_poke_stdev"] = pair_df['fbhe_poke'].std(skipna=True)
   pair_stats_df.at[0,"fbhe_shoot_mean"] = pair_df['fbhe_shoot'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_shoot_stdev"] = pair_df['fbhe_shoot'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_shoot_stdev"] = pair_df['fbhe_shoot'].std(skipna=True)
   pair_stats_df.at[0,"fbhe_bang_mean"] = pair_df['fbhe_bang'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_bang_stdev"] = pair_df['fbhe_bang'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_bang_stdev"] = pair_df['fbhe_bang'].std(skipna=True)
 
   pair_stats_df.at[0,"fbhe_oos_mean"] = pair_df['fbhe_oos'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_oos_stdev"] = pair_df['fbhe_oos'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_oos_stdev"] = pair_df['fbhe_oos'].std(skipna=True)
   pair_stats_df.at[0,"fbhe_insys_mean"] = pair_df['fbhe_insys'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_insys_stdev"] = pair_df['fbhe_insys'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_insys_stdev"] = pair_df['fbhe_insys'].std(skipna=True)
   pair_stats_df.at[0,"fbhe_oos_per_mean"] = pair_df['fbhe_oos_per'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_oos_per_stdev"] = pair_df['fbhe_oos_per'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_oos_per_stdev"] = pair_df['fbhe_oos_per'].std(skipna=True)
   pair_stats_df.at[0,"fbhe_insys_per_mean"] = pair_df['fbhe_insys_per'].mean(skipna=True)
-  pair_stats_df.at[0,"fbhe1_insys_per_stdev"] = pair_df['fbhe_insys_per'].std(skipna=True)
+  pair_stats_df.at[0,"fbhe_insys_per_stdev"] = pair_df['fbhe_insys_per'].std(skipna=True)
 
   pair_stats_df.at[0,"fbhe_srv1_mean"] = pair_df['fbhe_srv1'].mean(skipna=True)
   pair_stats_df.at[0,"fbhe_srv1_stdev"] = pair_df['fbhe_srv1'].std(skipna=True)

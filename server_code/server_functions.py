@@ -522,3 +522,6 @@ def count_out_of_system(ppr_df,disp_player,action):
   #print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
   return oos_vector
 
+@anvil.server.callable
+def make_player_string( team, number, short_name):
+  return team + ' ' + number + ' ' + short_name
