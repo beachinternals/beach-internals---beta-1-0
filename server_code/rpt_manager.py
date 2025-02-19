@@ -362,7 +362,7 @@ def rpt_mgr_generate_background():
           disp_player[0], disp_player[1] = pair_players(disp_pair)
 
           for i in [0,1]: # loop over two players in the pair
-            print(f"Processing scouting - pdf only report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
+            #print(f"Processing scouting - pdf only report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
             # make the report for each player in the pair
             full_rpt_pdf = None
             pdf_name = disp_player[i] + ' Full Scouting Report.pdf'
@@ -422,7 +422,7 @@ def rpt_mgr_generate_background():
                       else:
                         sr_index = sr_matrix.head(3).index.tolist() + sr_matrix.tail(3).index.tolist()
                         
-                      print(f" sr_index range of number ot process: {sr_index}")
+                      #print(f" sr_index range of number ot process: {sr_index}")
                     
                       #now loop thru these serve strategies (to/fr) to create the reprots
                       # srv_to is T/F from zones [ 1 , 3, 5 ]
@@ -485,7 +485,7 @@ def rpt_mgr_generate_background():
                             srv_to_5[0] = True
 
                         # print out result real quick to check
-                        print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, serve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
+                        #print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, serve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
 
                         # now call the scouting report for each serve strategy:
                         pdf1 = create_scouting_pdf_reports(report,
