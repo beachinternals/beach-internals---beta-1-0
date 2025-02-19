@@ -14,6 +14,7 @@ import numpy as np
 from btd_ppr_conversion import *
 from ppr_master_merge import *
 from calc_player_data import *
+from calc_pair_data import *
 from calc_traingle_scoring import *
 from s_w_report import *
 
@@ -115,6 +116,10 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
           #-----------------------------
           email_message = email_message + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
           r_val = calculate_player_data_not_background(c_league, c_gender, c_year)
+
+          # now calculate player data
+          email_message = email_message + ' Calculating Pair Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
+          r_val = calculate_pair_data_not_background(c_league, c_gender, c_year)
 
           # Calculate Triangle Data
           #------------------------

@@ -448,10 +448,11 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
             
 
   ########## end of loop over players
-  print(f"Pair Df when done:{pair_df}")
+  #print(f"Pair Df when done:{pair_df}")
 
   # Now store and calulate the statistical values
   #------------------------------------------------
+  print("Updating Pair Statistics")
   pair_stats_df.at[0,"fbhe_mean"] = pair_df['fbhe'].mean(skipna=True)
   pair_stats_df.at[0,"fbhe_stdev"] = pair_df['fbhe'].std(skipna=True)  
   pair_stats_df.at[0,"fbhe_range_mean"] = pair_df['fbhe_range'].mean(skipna=True) 
