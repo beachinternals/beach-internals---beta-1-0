@@ -558,7 +558,9 @@ def rpt_mgr_generate_background():
           print(f"Preparing to send email.  PDF List Length {len(pdf_list)}, Type: {type(pdf_list)}, pdf_num: {pdf_num}")
           for i in range(0,len(pdf_list)):
             print(f"PDF List to email: item number :{i}, PDF File: {pdf_list[i]}")
-            
+
+        # before I email this, let's compress the PDF files into a zip, then send that.
+        
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
                                       cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',

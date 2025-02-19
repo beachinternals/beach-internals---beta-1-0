@@ -525,3 +525,4 @@ def count_out_of_system(ppr_df,disp_player,action):
 @anvil.server.callable
 def make_player_string( team, number, short_name):
   return team + ' ' + number + ' ' + short_name
+
