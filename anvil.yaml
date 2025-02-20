@@ -568,7 +568,7 @@ services:
     user_table: users
   source: /runtime/services/anvil/users.yml
 - client_config: {}
-  server_config: {}
+  server_config: {enc_delegation_refresh_token: faSOZ6X4wu0dCgB7oiwyUQVC4UrCkdTKZXu5ldah2Ibc/VhqlSWV40tTIur6+yCK0B6Baw/hr0MNOuNWgrk5IkaLIgkpTqqwv/97zJYG3Gs+KPENxbPx8lnzPmVK8X7wsextJBpo4v03X6JG6PIhKErcn3LhNj97VEJZwyTRQr+CIXQosxhX5LCitCXTYwIETEoIrVAYevFSIiEqLmX9p9srFeGwhYSXatcBu7qESaypYyjk+1VTzlAIgkjEKzjAyc+Ku73L+V7q0ScEOv19t/zjnTiI8BF+6krImAlexqDGcJ2CXwJ7baK+6bGmvQ==}
   source: /runtime/services/google.yml
 - client_config: {}
   server_config: {test_mode: false}
