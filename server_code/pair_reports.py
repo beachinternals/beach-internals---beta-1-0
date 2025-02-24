@@ -412,7 +412,7 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   ppr_df = pair_filter(ppr_df, disp_pair) # lastly, filter the data to all play that include the pair of interest
   #print(f"Initial Call: ppr_df size:{ppr_df.shape[0]}")
   if ppr_df.shape[0] == 0:
-    return 'No Data Available','',''
+    return 'No Data Available','','','','','','',''
     
   scor_dict = {' ':['Pt Diff','Term Srv','Live Rallies',   # 0,1,2
                     'SideOut', 'Opp Sideout', # 3,4
