@@ -156,7 +156,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                        'fbhe_srv1_stdev':[float()],'fbhe_srv3_stdev':[float()],'fbhe_srv5_stdev':[float()],
                        'tcr_mean':[float()],'tcr_stdev':[float()], 'tcr_r_mean':[float()],'tcr_r_stdev':[float()],'tcr_s_mean':[float()],'tcr_s_stdev':[float()], 
                        'expected_mean':[float()],'expected_stdev':[float()],'err_den_mean':[float()],'err_den_stdev':[float()],
-                       'srv_fbhe_mean':[float()],'srv1_fbhe_mean':[float()],'srv_3fbhe_mean':[float()],'srv5_fbhe_mean':[float()],
+                       'srv_fbhe_mean':[float()],'srv1_fbhe_mean':[float()],'srv3_fbhe_mean':[float()],'srv5_fbhe_mean':[float()],
                        'srv_fbhe_stdev':[float()],'srv1_fbhe_stdev':[float()],'srv3_fbhe_stdev':[float()],'srv5_fbhe_stdev':[float()],
                        'fbhe_1_1c_mean':[float()],'fbhe_1_1c_stdev':[float()],'fbhe_1_1d_mean':[float()],'fbhe_1_1d_stdev':[float()],'fbhe_1_1e_mean':[float()],'fbhe_1_1e_stdev':[float()],
                        'fbhe_1_2c_mean':[float()],'fbhe_1_2c_stdev':[float()],'fbhe_1_2d_mean':[float()],'fbhe_1_2d_stdev':[float()],'fbhe_1_2e_mean':[float()],'fbhe_1_2e_stdev':[float()],
@@ -490,6 +490,12 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   player_stats_df.at[0,"fbhe_option_stdev"] = player_df['fbhe_option'].std(skipna=True)
   player_stats_df.at[0,"fbhe_tempo_mean"] = player_df['fbhe_tempo'].mean(skipna=True)
   player_stats_df.at[0,"fbhe_tempo_stdev"] = player_df['fbhe_tempo'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_behind_per_mean"] = player_df['fbhe_behind_per'].mean(skipna=True)
+  player_stats_df.at[0,"fbhe_behind_per_stdev"] = player_df['fbhe_behind_per'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_option_per_mean"] = player_df['fbhe_option_per'].mean(skipna=True)
+  player_stats_df.at[0,"fbhe_option_per_stdev"] = player_df['fbhe_option_per'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_tempo_per_mean"] = player_df['fbhe_tempo_per'].mean(skipna=True)
+  player_stats_df.at[0,"fbhe_tempo_per_stdev"] = player_df['fbhe_tempo_per'].std(skipna=True)
 
   player_stats_df.at[0,"fbhe_poke_mean"] = player_df['fbhe_poke'].mean(skipna=True)
   player_stats_df.at[0,"fbhe_poke_stdev"] = player_df['fbhe_poke'].std(skipna=True)

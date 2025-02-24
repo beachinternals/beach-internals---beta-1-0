@@ -133,7 +133,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
           sw_df_new.at[0,'Var Name'] = c_row['var']
           sw_df_new.at[0,'Var Desc'] = c_row['var_desc']
           sw_df_new.at[0,'Var Value'] = "{:.2f}".format(pdata_df.at[p[0],variable])
-          #print(f"Calc Percentile: value:{pdata_df.at[p,variable]}, Mean: {pstat_df.at[0,var_mean]}, Stdev {pstat_df.at[0,var_sd]} Percentile:{stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )}")
+          print(f"Calc Percentile: variable: {variable}, value:{pdata_df.at[p,variable]}, Mean: {pstat_df.at[0,var_mean]}, Stdev {pstat_df.at[0,var_sd]} Percentile:{stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )}")
           sw_df_new.at[0,'Var Percentile'] =  stats.norm.cdf( (pdata_df.at[p[0],variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )
           if not c_row['high_is_good']:
             sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
