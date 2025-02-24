@@ -51,7 +51,7 @@ db_schema:
     - admin_ui: {width: 200}
       name: include_in_master
       type: bool
-    - admin_ui: {width: 200}
+    - admin_ui: {order: 12.25, width: 353}
       name: csv_data
       type: media
     - admin_ui: {width: 200}
@@ -416,10 +416,10 @@ db_schema:
     - admin_ui: {order: 1, width: 71}
       name: active
       type: bool
-    - admin_ui: {order: 1.375, width: 123}
+    - admin_ui: {order: 1.375, width: 96}
       name: section
       type: string
-    - admin_ui: {order: 3, width: 86}
+    - admin_ui: {order: 3, width: 128}
       name: var
       type: string
     - admin_ui: {order: 4, width: 88}
