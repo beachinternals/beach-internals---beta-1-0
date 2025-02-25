@@ -51,6 +51,7 @@ def update_btd_characteristics( file ):
 
   # Calculate number of actions with a player
   players_df = btd_df[btd_df['player'].notna() ]
+
   per_action_players = int(players_df.shape[0]) / num_actions
 
   # calcaulte the number of serves with players idendified
@@ -78,6 +79,16 @@ def update_btd_characteristics( file ):
   players_unique.sort()
   num_players = players_unique.shape[0]
 
+  # we should check that we have 4 players
+  if num_players != 4:
+    print(f"Number of players found in the ball time data file is incorrect, number found is :{num_players} players are: {players_unique}")
+    if num_players > 4:
+      # maybe we can ignore the 5th plaeyr?
+      players_unique.drop(4)
+    elif num_players <4:
+      # if we are less then 4, then add a row
+      players_unique.loc[len(players_unique)]
+    
   playera1 = players_unique[0]
   playera2 = players_unique[1]
   playerb1 = players_unique[2]
