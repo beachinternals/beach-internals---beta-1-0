@@ -179,7 +179,7 @@ def rpt_mgr_generate_background():
           pdf_name = disp_player + ' Summary.pdf'
         
           # loop over all the reports for this player
-          for rpt_print in rpt_r['rpts_inc'].sort():
+          for rpt_print in rpt_r['rpts_inc']:
             #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
             pdf1 = create_pdf_reports(rpt_print['function_name'],
@@ -421,14 +421,14 @@ def rpt_mgr_generate_background():
                       else:
                         sr_index = sr_matrix.head(3).index.tolist() + sr_matrix.tail(3).index.tolist()
                         
-                      print(f" sr_index range of number ot process: {sr_index}")
+                      #print(f" sr_index range of number ot process: {sr_index}")
                     
                       #now loop thru these serve strategies (to/fr) to create the reprots
                       # srv_to is T/F from zones [ 1 , 3, 5 ]
                       # serve_to_n is T/F from zone [ E, D, C ]
                       #print(f"serve index: {sr_index}, erve Matrix : {sr_matrix}")
                       for srv_strat in sr_index:
-                        print(f"serve strategy: {srv_strat}, service index : {sr_index}")
+                        #print(f"serve strategy: {srv_strat}, service index : {sr_index}")
                         srv_fr = [False, False, False]
                         if sr_matrix.at[srv_strat,'sr_fr'] == 1:
                           srv_fr[0] = True
