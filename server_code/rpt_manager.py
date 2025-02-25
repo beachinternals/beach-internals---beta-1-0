@@ -174,6 +174,7 @@ def rpt_mgr_generate_background():
         
           # build player string
           disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
+          disp_pair = '' ## holdong a dummy argument to remain consistent across report calling functions
         
           full_rpt_pdf = None
           pdf_name = disp_player + ' Summary.pdf'
@@ -188,6 +189,7 @@ def rpt_mgr_generate_background():
                                     player_r['gender'],
                                     player_r['year'],
                                     disp_team,
+                                    disp_pair,
                                     disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
