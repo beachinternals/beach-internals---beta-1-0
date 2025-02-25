@@ -437,6 +437,9 @@ db_schema:
     - admin_ui: {order: 3.5, width: 611}
       name: var_desc
       type: string
+    - admin_ui: {width: 200}
+      name: high_is_good
+      type: bool
     server: full
     title: strength_weakness_criteria
   subscriptions:
