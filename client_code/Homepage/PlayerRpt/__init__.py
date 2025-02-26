@@ -294,7 +294,7 @@ class PlayerRpt(PlayerRptTemplate):
 
     disp_pair = '' # this is a dummy for player reports to keep the calling arguments consistent for player and pair reports
     # call the server function
-    pdf_rpt = anvil.server.call('create_pdf_reports', fnct_name, form,
+    pdf_rpt = anvil.server.call('create_player_pdf_reports', fnct_name, form,
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_pair, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
