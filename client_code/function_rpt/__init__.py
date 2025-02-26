@@ -26,7 +26,7 @@ class function_rpt(function_rptTemplate):
     self.filter_text.content = filter_text
     self.rpt_title.text = report_title
     self.box1_label.text = box1_title
-    self.box2_label.text = box2_title + disp_player1
-    self.box3_label.text = box3_title + disp_player2
+    self.box2_label.text = box2_title 
+    self.box3_label.text = box3_title 
 
     # Any code you write here will run before the form opens.
