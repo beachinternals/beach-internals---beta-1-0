@@ -183,7 +183,7 @@ def rpt_mgr_generate_background():
           for rpt_print in rpt_r['rpts_inc']:
             #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
-            pdf1 = create_pdf_reports(rpt_print['function_name'],
+            pdf1 = create_player_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
                                     player_r['league'],
                                     player_r['gender'],
