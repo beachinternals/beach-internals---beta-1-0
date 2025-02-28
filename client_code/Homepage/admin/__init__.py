@@ -8,6 +8,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 from btd_ppr_maint import *
+from google_drive_maint import *
 from ppr_file_maint import *
 from scheduled_tasks import *
 from pdf_reports import *
@@ -36,7 +37,7 @@ class admin(adminTemplate):
     self.outlined_card_3.add_component(btd_ppr_maint())
     pass
 
-  def ppr_csv_file_maint_click(self, **event_args):
+  def ppr_file_maint_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(ppr_file_maint())
@@ -52,6 +53,12 @@ class admin(adminTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(pdf_reports())
+    pass
+
+  def google_drive_maint_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(google_drive_maint())
     pass
 
 

@@ -1,3 +1,4 @@
 tabulate
 PyPDF2==3.0.1
 scipy==1.15.0rc2
+google-api-python-client==2.162.0

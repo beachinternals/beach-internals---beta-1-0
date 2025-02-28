@@ -529,6 +529,11 @@ def count_out_of_system(ppr_df,disp_player,action):
 #
 #-----------------------------------------------------------------------------------------------
 
+# a simple routine to write. afile to the drive
+@anvil.server.callable
+def create_google_drive_file( folder, filename, file ):
+    return folder.create_file(filename, file)
+  
 #.     Get the report folder, and/or create it
 @anvil.server.callable
 def get_report_folder( root_folder, r_league, r_gender, r_year, r_team, r_date):
@@ -558,35 +563,16 @@ def does_folder_exist(folder_name):
     except AttributeError:
         # Folder doesn't exist under app_files
         return False
-      
-@anvil.server.callable
-def create_folder(folder_name, parent_folder_id=None):
-    # Get the Google Drive service
-    drive_service = build('drive', 'v3', credentials=anvil.google.drive.get_drive_credentials())
-    
-    # Define the folder metadata
-    folder_metadata = {
-        'name': folder_name,
-        'mimeType': 'application/vnd.google-apps.folder'  # Specifies this is a folder
-    }
-    
-    # If a parent folder ID is provided, set it as the parent
-    if parent_folder_id:
-        folder_metadata['parents'] = [parent_folder_id]
-    
-    # Create the folder
-    folder = drive_service.files().create(body=folder_metadata, fields='id, name').execute()
-    
-    # Return the folder ID and name for confirmation
-    return {
-        'id': folder.get('id'),
-        'name': folder.get('name')
-    }
+
 
 # Example usage
 @anvil.server.callable
-def create_and_report_folder():
-    folder_name = "MyNewFolder"  # Replace with your desired folder name
-    parent_id = None  # Optional: Replace with a parent folder ID if needed
+def create_report_folder(folder_name, parent_id):
+    #folder_name = "MyNewFolder"  # Replace with your desired folder name
+    #parent_id = None  # Optional: Replace with a parent folder ID if needed
     result = create_folder(folder_name, parent_id)
     return f"Created folder '{result['name']}' with ID: {result['id']}"
+
+def write_pdf_to_google_drive( folder, filename, pdf_file):
+  new_pdf = folder.create_file(filename, pdf_file)
+  return new_pdf

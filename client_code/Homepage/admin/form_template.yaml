@@ -22,14 +22,15 @@ components_by_slot:
         name: link_1
         properties: {text: Player Data Maintenance}
         type: Link
-      - layout_properties: {grid_position: 'RXCLXD,BHBHKW'}
-        name: link_2
-        properties: {text: Subscription Maintenance}
+      - event_bindings: {click: google_drive_maint_click}
+        layout_properties: {grid_position: 'RXCLXD,BHBHKW'}
+        name: google_drive_maint
+        properties: {text: Google Drive Maintenance}
         type: Link
-      - event_bindings: {click: ppr_csv_file_maint_click}
+      - event_bindings: {click: ppr_file_maint_click}
         layout_properties: {grid_position: 'VDXQOU,AGZZYW'}
-        name: ppr_csv_file_maint
-        properties: {text: Master PPR File Maintenance}
+        name: ppr_file_maint
+        properties: {text: PPR File Maintenace}
         type: Link
       - event_bindings: {click: link_3_click}
         layout_properties: {grid_position: 'NUKMWK,TOPQPN'}

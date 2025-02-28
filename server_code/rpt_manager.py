@@ -160,18 +160,24 @@ def rpt_mgr_generate_background():
     day_of_week = today.strftime("%A")
     #print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
-    
+
+
       if rpt_r['rpt_type'] == 'player':
         # loop over all the players for this report listing
 
         pdf_list = ['']*len(rpt_r['player_list'])     # start a list of all pdf files to pass to email send
         pdf_num = 0
         #print(f"Pdf_list (empty) : {pdf_list}, {len(pdf_list)}")
-      
+
+        
         for player_r in rpt_r['player_list']:
           #print("Processing Player Reports")
           #print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
-        
+          
+          # calculate the folder we will store thiese into
+          pdf_folder = player_r['league'].strip() + player_r['gender'].strip() + player_r['year'].strip() + disp_team.strip() + today.strftime("%Y-%m-%d")
+          
+          
           # build player string
           disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
           disp_pair = '' ## holdong a dummy argument to remain consistent across report calling functions
@@ -208,16 +214,19 @@ def rpt_mgr_generate_background():
               #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
 
           # put this pdf into the pdf list
-          pdf_list[pdf_num] = full_rpt_pdf
-          pdf_num = pdf_num + 1
+          #pdf_list[pdf_num] = full_rpt_pdf
+          #pdf_num = pdf_num + 1
           #print(f"Added a pdf to the list: {pdf_num}")
+
+          # instead of emailing, we are going to write this to the Google Drive
+          pdf_file = write_pdf_to_google_drive( '', pdf_name, pdf1 )
           
-        email_status = anvil.email.send(to=rpt_r['emailto'],
-                                          from_address="no-reply",
-                                          cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
-                                          subject='Beach Internals - Player Summary '+disp_player,
-                                          text='Attached please find the summary report(s) for '+disp_player,
-                                          attachments=pdf_list)
+        #email_status = anvil.email.send(to=rpt_r['emailto'],
+        #                                  from_address="no-reply",
+        #                                  cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
+        #                                  subject='Beach Internals - Player Summary '+disp_player,
+        #                                  text='Attached please find the summary report(s) for '+disp_player,
+        #                                  attachments=pdf_list)
       elif rpt_r['rpt_type'] == 'pair':
         #print("processing pair report")
         #print(f"Pair List: {rpt_r['pair_list']}")
