@@ -1,6 +1,7 @@
 import anvil.email
 import anvil.google.auth, anvil.google.drive, anvil.google.mail
 from anvil.google.drive import app_files
+from googleapiclient.discovery import build
 import anvil.users
 import anvil.tables as tables
 import anvil.tables.query as q
@@ -522,3 +523,70 @@ def count_out_of_system(ppr_df,disp_player,action):
   #print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
   return oos_vector
 
+#-----------------------------------------------------------------------------------------------
+#
+#          Functions for saving files to the server
+#
+#-----------------------------------------------------------------------------------------------
+
+#.     Get the report folder, and/or create it
+@anvil.server.callable
+def get_report_folder( root_folder, r_league, r_gender, r_year, r_team, r_date):
+  #
+  folder_name = r_league.upper() + '/' + r_gender.upper() + '/' + r_year.upper() + '/' + r_team.upper() + '/' + r_date.upper()
+  # does the folder exist?
+  if does_folder_exist( folder_name ):
+    # then get the
+    rpt_folder = getattr(app_files, folder_name)
+  else:
+    # create the folder
+    rpt_folder = root_folder.create_folder( folder_name )
+
+  return rpt_folder
+
+
+@anvil.server.callable
+def does_folder_exist(folder_name):
+    try:
+        # Attempt to access the folder by name under app_files
+        folder = getattr(app_files, folder_name)
+        # Check if it's a folder (not a file)
+        if folder.is_folder():
+            return True
+        else:
+            return False  # Exists but is not a folder
+    except AttributeError:
+        # Folder doesn't exist under app_files
+        return False
+      
+@anvil.server.callable
+def create_folder(folder_name, parent_folder_id=None):
+    # Get the Google Drive service
+    drive_service = build('drive', 'v3', credentials=anvil.google.drive.get_drive_credentials())
+    
+    # Define the folder metadata
+    folder_metadata = {
+        'name': folder_name,
+        'mimeType': 'application/vnd.google-apps.folder'  # Specifies this is a folder
+    }
+    
+    # If a parent folder ID is provided, set it as the parent
+    if parent_folder_id:
+        folder_metadata['parents'] = [parent_folder_id]
+    
+    # Create the folder
+    folder = drive_service.files().create(body=folder_metadata, fields='id, name').execute()
+    
+    # Return the folder ID and name for confirmation
+    return {
+        'id': folder.get('id'),
+        'name': folder.get('name')
+    }
+
+# Example usage
+@anvil.server.callable
+def create_and_report_folder():
+    folder_name = "MyNewFolder"  # Replace with your desired folder name
+    parent_id = None  # Optional: Replace with a parent folder ID if needed
+    result = create_folder(folder_name, parent_id)
+    return f"Created folder '{result['name']}' with ID: {result['id']}"

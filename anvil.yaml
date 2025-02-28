@@ -567,8 +567,197 @@ services:
       reset_password: {subject: Reset your password with Beach Internals}
     user_table: users
   source: /runtime/services/anvil/users.yml
-- client_config: {}
-  server_config: {}
+- client_config:
+    app_files:
+    - alternateLink: https://drive.google.com/file/d/1EQBqJOair0NguL6nR7brK1YPc2gcU-uz/view?usp=drivesdk
+      appDataContents: false
+      capabilities: {canCopy: true, canEdit: true}
+      copyRequiresWriterPermission: false
+      copyable: true
+      createdDate: '2025-02-28T14:34:56.500Z'
+      downloadUrl: https://www.googleapis.com/drive/v2/files/1EQBqJOair0NguL6nR7brK1YPc2gcU-uz?alt=media&source=downloadUrl
+      editable: true
+      embedLink: https://drive.google.com/file/d/1EQBqJOair0NguL6nR7brK1YPc2gcU-uz/preview?usp=drivesdk
+      etag: '"MTc0MDc1MzI5NjUwMA"'
+      explicitlyTrashed: false
+      fileExtension: ''
+      fileSize: '0'
+      headRevisionId: 0B5FfLJIkDJdLYWQxelIrUFM3RDQxNEdPTWJ1MktKY3NOUHBnPQ
+      iconLink: https://drive-thirdparty.googleusercontent.com/16/type/application/octet-stream
+      id: 1EQBqJOair0NguL6nR7brK1YPc2gcU-uz
+      kind: drive#file
+      labels: {hidden: false, restricted: false, starred: false, trashed: false, viewed: false}
+      lastModifyingUser:
+        displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      lastModifyingUserName: Scott White
+      markedViewedByMeDate: '1970-01-01T00:00:00.000Z'
+      md5Checksum: d41d8cd98f00b204e9800998ecf8427e
+      mimeType: application/octet-stream
+      modifiedByMeDate: '2025-02-28T14:34:56.500Z'
+      modifiedDate: '2025-02-28T14:34:56.500Z'
+      originalFilename: ''
+      ownerNames: [Scott White]
+      owners:
+      - displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      parents:
+      - {id: 0AJFfLJIkDJdLUk9PVA, isRoot: true, kind: drive#parentReference, parentLink: 'https://www.googleapis.com/drive/v2/files/0AJFfLJIkDJdLUk9PVA', selfLink: 'https://www.googleapis.com/drive/v2/files/1EQBqJOair0NguL6nR7brK1YPc2gcU-uz/parents/0AJFfLJIkDJdLUk9PVA'}
+      python_name: reports
+      quotaBytesUsed: '0'
+      selfLink: https://www.googleapis.com/drive/v2/files/1EQBqJOair0NguL6nR7brK1YPc2gcU-uz
+      shared: false
+      spaces: [drive]
+      title: reports
+      userPermission: {etag: '"Jlg8lo3SHUPsTdly0Td2sLOOEJM"', id: me, kind: drive#permission, pendingOwner: false, role: owner, selfLink: 'https://www.googleapis.com/drive/v2/files/1EQBqJOair0NguL6nR7brK1YPc2gcU-uz/permissions/me', type: user}
+      version: '1'
+      webContentLink: https://drive.google.com/uc?id=1EQBqJOair0NguL6nR7brK1YPc2gcU-uz&export=download
+      writersCanShare: true
+    - alternateLink: https://drive.google.com/drive/folders/1msihPln42O3I8WxujL8PxmJ_yDim4eja
+      appDataContents: false
+      capabilities: {canCopy: false, canEdit: true}
+      copyRequiresWriterPermission: false
+      copyable: false
+      createdDate: '2025-02-28T14:40:24.686Z'
+      editable: true
+      embedLink: https://drive.google.com/embeddedfolderview?id=1msihPln42O3I8WxujL8PxmJ_yDim4eja
+      etag: '"MTc0MDc1MzYyNDY4Ng"'
+      explicitlyTrashed: false
+      iconLink: https://drive-thirdparty.googleusercontent.com/16/type/application/vnd.google-apps.folder
+      id: 1msihPln42O3I8WxujL8PxmJ_yDim4eja
+      kind: drive#file
+      labels: {hidden: false, restricted: false, starred: false, trashed: false, viewed: false}
+      lastModifyingUser:
+        displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      lastModifyingUserName: Scott White
+      markedViewedByMeDate: '1970-01-01T00:00:00.000Z'
+      mimeType: application/vnd.google-apps.folder
+      modifiedByMeDate: '2025-02-28T14:40:24.686Z'
+      modifiedDate: '2025-02-28T14:40:24.686Z'
+      ownerNames: [Scott White]
+      owners:
+      - displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      parents:
+      - {id: 0AJFfLJIkDJdLUk9PVA, isRoot: true, kind: drive#parentReference, parentLink: 'https://www.googleapis.com/drive/v2/files/0AJFfLJIkDJdLUk9PVA', selfLink: 'https://www.googleapis.com/drive/v2/files/1msihPln42O3I8WxujL8PxmJ_yDim4eja/parents/0AJFfLJIkDJdLUk9PVA'}
+      python_name: ncaa
+      quotaBytesUsed: '0'
+      selfLink: https://www.googleapis.com/drive/v2/files/1msihPln42O3I8WxujL8PxmJ_yDim4eja
+      shared: false
+      spaces: [drive]
+      title: NCAA
+      userPermission: {etag: '"yJTmpVrl8Mz1shYsMXbA8GUi_V8"', id: me, kind: drive#permission, pendingOwner: false, role: owner, selfLink: 'https://www.googleapis.com/drive/v2/files/1msihPln42O3I8WxujL8PxmJ_yDim4eja/permissions/me', type: user}
+      version: '1'
+      writersCanShare: true
+    - alternateLink: https://drive.google.com/drive/folders/1PJZaFZ8vEWWSf6b78WJ3sZ15C7-dBwI8
+      appDataContents: false
+      capabilities: {canCopy: false, canEdit: true}
+      copyRequiresWriterPermission: false
+      copyable: false
+      createdDate: '2025-02-28T14:40:40.367Z'
+      editable: true
+      embedLink: https://drive.google.com/embeddedfolderview?id=1PJZaFZ8vEWWSf6b78WJ3sZ15C7-dBwI8
+      etag: '"MTc0MDc1MzY0MDM2Nw"'
+      explicitlyTrashed: false
+      iconLink: https://drive-thirdparty.googleusercontent.com/16/type/application/vnd.google-apps.folder
+      id: 1PJZaFZ8vEWWSf6b78WJ3sZ15C7-dBwI8
+      kind: drive#file
+      labels: {hidden: false, restricted: false, starred: false, trashed: false, viewed: false}
+      lastModifyingUser:
+        displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      lastModifyingUserName: Scott White
+      markedViewedByMeDate: '1970-01-01T00:00:00.000Z'
+      mimeType: application/vnd.google-apps.folder
+      modifiedByMeDate: '2025-02-28T14:40:40.367Z'
+      modifiedDate: '2025-02-28T14:40:40.367Z'
+      ownerNames: [Scott White]
+      owners:
+      - displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      parents:
+      - {id: 0AJFfLJIkDJdLUk9PVA, isRoot: true, kind: drive#parentReference, parentLink: 'https://www.googleapis.com/drive/v2/files/0AJFfLJIkDJdLUk9PVA', selfLink: 'https://www.googleapis.com/drive/v2/files/1PJZaFZ8vEWWSf6b78WJ3sZ15C7-dBwI8/parents/0AJFfLJIkDJdLUk9PVA'}
+      python_name: fivb
+      quotaBytesUsed: '0'
+      selfLink: https://www.googleapis.com/drive/v2/files/1PJZaFZ8vEWWSf6b78WJ3sZ15C7-dBwI8
+      shared: false
+      spaces: [drive]
+      title: FIVB
+      userPermission: {etag: '"14hPilARa7rBz14Tfh1p6TOO7uY"', id: me, kind: drive#permission, pendingOwner: false, role: owner, selfLink: 'https://www.googleapis.com/drive/v2/files/1PJZaFZ8vEWWSf6b78WJ3sZ15C7-dBwI8/permissions/me', type: user}
+      version: '1'
+      writersCanShare: true
+    - alternateLink: https://drive.google.com/drive/folders/1xtXP3uPLYM6uvr37QSAFD_InjaZsje_l
+      appDataContents: false
+      capabilities: {canCopy: false, canEdit: true}
+      copyRequiresWriterPermission: false
+      copyable: false
+      createdDate: '2025-02-28T14:41:11.783Z'
+      editable: true
+      embedLink: https://drive.google.com/embeddedfolderview?id=1xtXP3uPLYM6uvr37QSAFD_InjaZsje_l
+      etag: '"MTc0MDc1MzY3MTc4Mw"'
+      explicitlyTrashed: false
+      iconLink: https://drive-thirdparty.googleusercontent.com/16/type/application/vnd.google-apps.folder
+      id: 1xtXP3uPLYM6uvr37QSAFD_InjaZsje_l
+      kind: drive#file
+      labels: {hidden: false, restricted: false, starred: false, trashed: false, viewed: false}
+      lastModifyingUser:
+        displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      lastModifyingUserName: Scott White
+      markedViewedByMeDate: '1970-01-01T00:00:00.000Z'
+      mimeType: application/vnd.google-apps.folder
+      modifiedByMeDate: '2025-02-28T14:41:11.783Z'
+      modifiedDate: '2025-02-28T14:41:11.783Z'
+      ownerNames: [Scott White]
+      owners:
+      - displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      parents:
+      - {id: 0AJFfLJIkDJdLUk9PVA, isRoot: true, kind: drive#parentReference, parentLink: 'https://www.googleapis.com/drive/v2/files/0AJFfLJIkDJdLUk9PVA', selfLink: 'https://www.googleapis.com/drive/v2/files/1xtXP3uPLYM6uvr37QSAFD_InjaZsje_l/parents/0AJFfLJIkDJdLUk9PVA'}
+      permission: roclient
+      python_name: ncaa_w_2025
+      quotaBytesUsed: '0'
+      selfLink: https://www.googleapis.com/drive/v2/files/1xtXP3uPLYM6uvr37QSAFD_InjaZsje_l
+      shared: false
+      spaces: [drive]
+      title: NCAA/W/2025
+      userPermission: {etag: '"DWF4YBnt4diecTSzSwRiTkn1oTo"', id: me, kind: drive#permission, pendingOwner: false, role: owner, selfLink: 'https://www.googleapis.com/drive/v2/files/1xtXP3uPLYM6uvr37QSAFD_InjaZsje_l/permissions/me', type: user}
+      version: '1'
+      writersCanShare: true
+  server_config: {enc_delegation_refresh_token: /606+GkLWiiQTuUveG2/TuykzLAvR8xArx4SMOvIJG2eZabGnjxXVf/l8tKN7JMnUPB6l1+Sn3XEHlgNilLR5n3My7HFPmpwuhyxffYRIbz+2YowarI3VSsVKGwDyMEMNZaE3tS59fHjE62hbGaWMtPrOjnb275zIRf+glZPU+U/97ZQdIdI2xtQlA484doL/zyWtEFXllirojLN5emrEPJExlEhnaC+If3pXOJQ6WmcXt5SHdNMX8wLB1O2mZ8szoJAlkgJiNxEqlkZwoGZinmWUVc62435E28e8j0qXmN2Mx8nyBalZMAtSezmDw==}
   source: /runtime/services/google.yml
 - client_config: {}
   server_config: {test_mode: false}
