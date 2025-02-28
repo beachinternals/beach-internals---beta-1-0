@@ -43,6 +43,10 @@ components:
     name: private_button
     properties: {align: center, enabled: true, selected: true, text: Private, visible: true}
     type: RadioButton
+  - layout_properties: {grid_position: 'PVOVSQ,THUYNP WFBAAS,EVOJQM'}
+    name: scouting_button
+    properties: {text: Scouting}
+    type: RadioButton
   - event_bindings: {click: private_help_link_click}
     layout_properties: {grid_position: 'PVOVSQ,THUYNP WFBAAS,LMDSTL'}
     name: private_help_link

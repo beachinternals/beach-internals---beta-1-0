@@ -42,6 +42,20 @@ def update_btd_characteristics( file ):
   file_obj = io.BytesIO( file.get_bytes() )
   btd_df = pd.read_csv(file_obj)
 
+  #----------
+  #
+  #.    Make the updates here because balltime added the Team filed to work with scouted data (where neither team is the home team)
+  #
+  #----------
+
+  # check if the dataframe has a field called team
+  if 'team' in btd_df.columns:
+    # this must be a new actions file,, so we will rename 'player' to 'only_player', then merge team and player and store it in a new 'player' column
+    btd_df = btd_df.rename(columns={'player':'only_player'})
+    btd_df['player'] = btd_df['team'].astype(str)+' ' + btd_df['only_player'].astype(str)
+    # we should be good, let's check
+    print(f"BTD Fields of interest: {btd_df['team']}, {btd_df['only_player']}, {btd_df['player']}")
+    
   # Calculate number of actions
   num_actions = int(btd_df.shape[0])
 
