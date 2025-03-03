@@ -19,6 +19,54 @@ from pair_functions import *
 # rather than in the user's browser.
 
 @anvil.server.callable
+def player_attacking(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    ):
+
+  # put togehter three attacking tables into one report:
+  # fbhe_scout_query
+  # fbhe by fbhe_by attack tactic
+  table1_mkdn = ''
+  table2_mkdn = ''
+  table3_mkdn = ''
+  a = ''
+  b = ''
+  
+  table1_mkdn,a,b = fbhe_scout_query(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    )
+  
+  table2_mkdn,a,b = player_attack_as_passer(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+               )
+
+  table3_mkdn,a,b = fbhe_by_srv_src(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+               )
+
+  return table1_mkdn, table2_mkdn, table3_mkdn
+  
+@anvil.server.callable
 def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player):
   # return a fbe of a given player
   # we will return the text as markdown to be displayed in a rich text box in the client
@@ -89,6 +137,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                     ):
+
   
   # return a fbhe of a given player
   # we will return the text as markdown to be displayed in a rich text box in the client
@@ -97,13 +146,14 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
   # scout should always be true here
 
   # create the output dataframe
-  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
+  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','URL'],
              'All':[0,0,0,0,0,' '],
              'Zone 1':[0,0,0,0,0,' '],
              "Zone 2":[0,0,0,0,0,' '],
              'Zone 3':[0,0,0,0,0,' '],
              'Zone 4':[0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,' ']
+             'Zone 5':[0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
@@ -127,22 +177,114 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'att', True )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[1,'All'] = fbhe_vector[4]  # confidence interval
     fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
 
     # calculate for zones 1 - 5
-    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
-    for i in [1,2,3,4,5]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==i], disp_player, 'att', True )
+    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5','No Zone']
+    for i in [1,2,3,4,5,6]:
+      zone = 0 if i == 6 else i
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==zone], disp_player, 'att', True )
       fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
-      fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
+      fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
+      fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[1,column[i-1]] = fbhe_vector[4]  # confidence interval
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
+  else:
+    fbhe_return = "No Data Found"
+
+  return fbhe_return, ' ', ' '
+
+@anvil.server.callable
+def player_attack_as_passer(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    ):
+
+  
+  # return a fbhe of a given player
+  # we will return the text as markdown to be displayed in a rich text box in the client
+  # the difference here is that we combine the scout file with the team file to query aginst.
+  # double checked that they are logged in
+  # scout should always be true here
+
+  # create the output dataframe
+  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','% Out of System','URL'],
+             'All':[0,0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,0,' '],
+             "Zone 2":[0,0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,0,' '],
+             'Zone 4':[0,0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,0,' '],
+             'Option':[0,0,0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+
+  # get the ppr data
+  #print(f"FBHE_scout_query: League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
+  m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True )
+
+  # now, narrow the data by competition level and dates
+  m_ppr_df = ppr_df_limit( m_ppr_df, 
+                          comp_l1_checked, disp_comp_l1, 
+                          comp_l2_checked, disp_comp_l2, 
+                          comp_l3_checked, disp_comp_l3, 
+                          date_checked, disp_start_date, disp_end_date
+                         )
+
+  ppr_df_option = m_ppr_df[ m_ppr_df['tactic'] == 'option']
+  ppr_df_no_option = m_ppr_df[ m_ppr_df['tactic'] != 'option']
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+
+  # if the eata is not empty, create my df, populate it, and return it
+  if m_ppr_df.shape[0] > 0:
+    # calculate fbhe for all attacks
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'pass', True )
+    oos_vector1 = count_out_of_system(m_ppr_df,disp_player,'pass')
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[1,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'All'] = str("{:.0%}").format(oos_vector1[1])  # percent out of system
+    fbhe_table.at[6,'All'] = fbhe_vector[5]  # URL
+
+    # calculate for zones 1 - 5
+    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5','No Zone']
+    for i in [1,2,3,4,5,6]:
+      zone = 0 if i == 6 else i
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==zone], disp_player, 'pass', True )
+      oos_vector1 = count_out_of_system(ppr_df_no_option[ppr_df_no_option['att_src_zone_net']==i], disp_player, 'pass')
+      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
+      fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
+      fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[1,column[i-1]] = fbhe_vector[4]  # FBSO
+      fbhe_table.at[5,column[i-1]] = str("{:.0%}").format(oos_vector1[1])  # Out of System      
+      fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
+
+    # calculate fbhe for all option
+    fbhe_vector = fbhe( ppr_df_option, disp_player, 'pass', True )
+    oos_vector1 = count_out_of_system(ppr_df_option,disp_player,'pass')
+    fbhe_table.at[0,'Option'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[2,'Option'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[3,'Option'] = fbhe_vector[2]  # errors
+    fbhe_table.at[4,'Option'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[1,'Option'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'Option'] = str("{:.0%}").format(oos_vector1[1])  # percent out of system
+    fbhe_table.at[6,'Option'] = fbhe_vector[5]  # URL
 
     fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
   else:
@@ -297,11 +439,12 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
-  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL'],
+  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','URL'],
              'All':[0,0,0,0,0,' '],
              'Zone 1':[0,0,0,0,0,' '],
              'Zone 3':[0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,' ']
+             'Zone 5':[0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
@@ -311,21 +454,22 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'pass', True )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[1,'All'] = fbhe_vector[4]  # confidence interval
     fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
 
     # calculate for zones 1 - 5
-    column = ['Zone 1','Zone 3','Zone 5']
-    for i in [0,1,2]:
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['serve_src_zone_net']==(i*2)+1], disp_player, 'pass', True )
+    column = ['Zone 1','Zone 3','Zone 5','No Zone']
+    for i in [0,1,2,3]:
+      zone = 0 if i == 3 else (i*2)+1
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', True )
       fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[1,column[i]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[2,column[i]] = fbhe_vector[2]  # errors
-      fbhe_table.at[3,column[i]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[4,column[i]] = fbhe_vector[4]  # confidence interval
+      fbhe_table.at[2,column[i]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[3,column[i]] = fbhe_vector[2]  # errors
+      fbhe_table.at[4,column[i]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[1,column[i]] = fbhe_vector[4]  # confidence interval
       fbhe_table.at[5,column[i]] = fbhe_vector[5]  # URL
 
     # now create the markdown text to return
@@ -447,8 +591,8 @@ def srv_eff(disp_league, disp_gender, disp_year,
                          )
 
   # now, limit to the pair, if needed
-  if len(disp.strip()) > 0:
-    m_ppr_df = pair_filter( disp_pair, m_ppr_df )
+  if len(disp_pair.strip()) > 0:
+    m_ppr_df = pair_filter( m_ppr_df, disp_pair )
     
   #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
@@ -492,7 +636,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
       fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
       fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
       fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[2,column[i-1]] = fbhe_vector[4]  # confidence interval
+      fbhe_table.at[1,column[i-1]] = fbhe_vector[4]  # confidence interval
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
       tmp_df = m_ppr_df[ m_ppr_df['point_outcome'] == "TSA" ]
       tmp_df = tmp_df[tmp_df['serve_player'].str.strip() == disp_player.strip()] 
@@ -514,7 +658,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
     fbhe_table.at[2,'No Zone'] = fbhe_vector[1]  # attacks
     fbhe_table.at[3,'No Zone'] = fbhe_vector[2]  # errors
     fbhe_table.at[4,'No Zone'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[2,'No Zone'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[1,'No Zone'] = fbhe_vector[4]  # confidence interval
     fbhe_table.at[5,'No Zone'] = fbhe_vector[5]  # URL
     
     # now create the markdown text to return
@@ -679,6 +823,7 @@ def error_density(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+
   
   # return a markdown text to display
   # given the parameters
@@ -741,6 +886,7 @@ def tcr(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+  
   # return a markdown text to display
   # given the parameters
 
@@ -834,6 +980,7 @@ def expected_value(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+  
   # return a markdown text to display
   # given the parameters
 
@@ -903,6 +1050,7 @@ def out_of_system(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+  
   # return a markdown text to display
   # given the parameters
 
@@ -972,6 +1120,7 @@ def out_of_system_angle(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+  
   # return a markdown text to display
   # given the parameters
 
@@ -1040,6 +1189,7 @@ def out_of_system_location(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+  
   # return a markdown text to display
   # given the parameters
 
@@ -1108,6 +1258,7 @@ def out_of_system_height(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+  
   # return a markdown text to display
   # given the parameters
 
@@ -1178,6 +1329,7 @@ def fbhe_in_out_system(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+
   # return a markdown text to display
   # given the parameters
 
@@ -1370,6 +1522,7 @@ def player_sw(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+  
   # return a markdown text to display
   # given the parameters
 
