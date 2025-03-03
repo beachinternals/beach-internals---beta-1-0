@@ -344,7 +344,7 @@ def fbhe_attack_type( m_ppr_df, disp_player, att_type, video_yn ):
   return fbhe_vector
 
 
-def get_tri_data( disp_league, disp_gender, disp_year ):  
+def get_tri_data( disp_league, disp_gender, disp_year, date_checked, disp_start_date, disp_end_date ):  
   #
   # fetch the appropriate trianble scroing csv table(s) from the ppr_csv table given the league 
 
@@ -368,6 +368,11 @@ def get_tri_data( disp_league, disp_gender, disp_year ):
     print(f'get_ppr_data :No Team Rows Found {disp_league}, {disp_gender}, {disp_year}, {disp_team}')
     tri_data_found = False
 
+  if date_checked:
+    tri_df['game_date'] = pd.to_datetime(tri_df['game_date'])
+    tri_df['game_date'] = tri_df['game_date'].dt.date
+    tri_df = tri_df.loc[(tri_df['game_date'] >= disp_start_date) & (tri_df['game_date'] <= disp_end_date) ]
+    
   return tri_df, tri_data_found
 
 

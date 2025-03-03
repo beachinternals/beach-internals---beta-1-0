@@ -88,7 +88,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   # build the ppr_dataframe out tpo the proper number of rows, equal total points,
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
 
-  tri_dict = {'video_id':[str()],'set':[int()],'filename':[str()],
+  tri_dict = {'video_id':[str()],'set':[int()],'filename':[str()],'game_date':None,
               'teama':None, 'player_a1':None, 'player_a2':None, 'teamb':None, 'player_b1':None, 'player_b2':None,
               'total_pts':None, 'teama_pts':None, 'teamb_pts':None, 
               'tsa_a':None, 'tse_a':None, 'srv_num_a':None, 'tsa_b':None, 'tse_b':None, 'srv_num_b':None, 
@@ -143,6 +143,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         # save video id and set number
         tri_df.at[tri_row,'video_id'] = m_list[i]
         tri_df.at[tri_row,'set'] = s
+        print(f"tri_df: Saving the date, set_df date : {set_df['game_date']}")
+        tri_df.at[tri_row,'game_date'] = set_df['game_date'].iloc[0]
         tri_df.at[tri_row,'teama'] = teama
         tri_df.at[tri_row,'player_a1'] =  player_a1
         tri_df.at[tri_row,'player_a2'] =  player_a2

@@ -751,7 +751,7 @@ def tri_score(disp_league, disp_gender, disp_year,
   # given the parameters
 
   ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
-  tri_df, tri_data_found = get_tri_data( disp_league, disp_gender, disp_year )
+  tri_df, tri_data_found = get_tri_data( disp_league, disp_gender, disp_year, date_checked, disp_start_date, disp_end_date )
   #print(f" Data Found? {tri_data_found}m=, records={tri_df.shape[0]}, Displayer Player: {disp_player}")
   
   if (tri_df.shape[0] == 0):
