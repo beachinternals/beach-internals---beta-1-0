@@ -33,7 +33,7 @@ def pair_filter(ppr_df, disp_pair):
 #           Player Filter - limit data to only points with disp_pair 
 #------------------------------------------------------------------
 def player_filter(ppr_df, disp_player):
-  # filter a ppr dataframe down to all plays with the pair palyer 1 and 2
+  # filter a ppr dataframe down to all plays with the pair player 1 and 2
   disp_player = disp_player.strip()
   tmp_df = ppr_df[ (ppr_df['player_a1'].str.strip() == disp_player) |
                    (ppr_df['player_a2'].str.strip() == disp_player) |

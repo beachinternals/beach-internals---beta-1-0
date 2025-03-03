@@ -8,6 +8,7 @@ from anvil.tables import app_tables
 import anvil.server
 from pair_functions import *
 from server_functions import *
+from player_reports import *
 import pandas as pd
 import scipy.stats as stats
 
@@ -1058,3 +1059,43 @@ def pair_rpt_stub(disp_league, disp_gender, disp_year,
   p2_markdown = pd.DataFrame.to_markdown(p2_table, index = False )
   
   return pair_markdown, p1_markdown, p2_markdown
+
+#
+#        Opponent's FBHE and FBSO when each player is serving
+#
+#.        Return:
+@anvil.server.callable
+def pair_serving_effectiveness(disp_league, disp_gender, disp_year, 
+                  disp_team, disp_pair, disp_player,
+                  comp_l1_checked, disp_comp_l1,
+                  comp_l2_checked, disp_comp_l2,
+                  comp_l3_checked, disp_comp_l3,
+                  date_checked, disp_start_date, disp_end_date,
+                  scout, explain_text
+                ):
+  # kind of mergin the two below to getone page with all of it
+
+  a = ''
+  b = '' # placeholders for the call to srv_eff
+
+  # make sure we get player 1
+  player1, player2 = pair_players( disp_pair)
+  p1_srv_eff_mkdn, a, b = srv_eff(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, player1,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+               )
+  
+  p2_srv_eff_mkdn, a, b = srv_eff(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, player2,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+               )
+
+  return p1_srv_eff_mkdn, '', '', '', p2_srv_eff_mkdn, '','',''

@@ -12,6 +12,7 @@ import math
 from tabulate import tabulate
 from server_functions import *
 from anvil import pdf
+from pair_functions import *
 
 
 # This is a server module. It runs on the Anvil server,
@@ -430,9 +431,10 @@ def srv_eff(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+  # if the disp_pair is set to ayting (either not null or len > 0), then limit to the pair
   # return a markdown text to display
   # given the parameters
-
+  #
   ########### Serving Effectiveness  #####################
 
   ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
@@ -443,12 +445,16 @@ def srv_eff(disp_league, disp_gender, disp_year,
                           comp_l3_checked, disp_comp_l3, 
                           date_checked, disp_start_date, disp_end_date
                          )
+
+  # now, limit to the pair, if needed
+  if len(disp.strip()) > 0:
+    m_ppr_df = pair_filter( disp_pair, m_ppr_df )
     
   #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
-  df_dict = {' ':['FBHE','Kills','Errors','Attempts', ' ','URL','Aces','Errors'],
+  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts', 'URL','Aces','Errors'],
              'All':[0,0,0,0,0,' ',0,0],
              'Zone 1':[0,0,0,0,0,' ',0,0],
              "Zone 3":[0,0,0,0,0,' ',0,0],
@@ -463,10 +469,10 @@ def srv_eff(disp_league, disp_gender, disp_year,
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( m_ppr_df, disp_player, 'srv', True )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[1,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[3,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[1,'All'] = fbhe_vector[4]  # confidence interval
     fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
     # Aces and Errors
     tmp_df = m_ppr_df[m_ppr_df['point_outcome'] == "TSA"]
@@ -483,10 +489,10 @@ def srv_eff(disp_league, disp_gender, disp_year,
     for i in [1,2,3]:
       fbhe_vector = fbhe( m_ppr_df[m_ppr_df['serve_src_zone_net']==(i-1)*2 +1], disp_player, 'srv', True )  # trying to get to 1, 3, 5
       fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
-      fbhe_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[4,column[i-1]] = fbhe_vector[4]  # confidence interval
+      fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
+      fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[2,column[i-1]] = fbhe_vector[4]  # confidence interval
       fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
       tmp_df = m_ppr_df[ m_ppr_df['point_outcome'] == "TSA" ]
       tmp_df = tmp_df[tmp_df['serve_player'].str.strip() == disp_player.strip()] 
@@ -505,10 +511,10 @@ def srv_eff(disp_league, disp_gender, disp_year,
                        disp_player, 
                        'srv', True )
     fbhe_table.at[0,'No Zone'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[1,'No Zone'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[2,'No Zone'] = fbhe_vector[2]  # errors
-    fbhe_table.at[3,'No Zone'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[4,'No Zone'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[2,'No Zone'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[3,'No Zone'] = fbhe_vector[2]  # errors
+    fbhe_table.at[4,'No Zone'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[2,'No Zone'] = fbhe_vector[4]  # confidence interval
     fbhe_table.at[5,'No Zone'] = fbhe_vector[5]  # URL
     
     # now create the markdown text to return
@@ -596,6 +602,7 @@ def tri_score(disp_league, disp_gender, disp_year,
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                ):
+  
   # return a markdown text to display
   # given the parameters
 

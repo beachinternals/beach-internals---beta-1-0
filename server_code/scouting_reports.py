@@ -675,7 +675,7 @@ def scout_players_serve(disp_league,
 
 
 #---------------------------------------------------------------------------------
-# Scouting Report : graph of attacking effectiveness (fbhe) from teh 45 serve strategies
+# Scouting Report : graph of attacking effectiveness (fbhe) from the 45 serve strategies
 #----------------------------------------------------------------------------------------
 @anvil.server.callable
 def scout_attack_pass_zones(disp_league,
