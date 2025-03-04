@@ -56,7 +56,7 @@ def update_btd_characteristics( file ):
     # this must be a new actions file,, so we will rename 'player' to 'only_player', then merge team and player and store it in a new 'player' column
     btd_df = btd_df.rename(columns={'player':'only_player'})
     btd_df['player'] = btd_df['team'].astype(str)+' ' + btd_df['only_player'].astype(str)
-    btd_df['player'] = np.where( ('NOTEAM' in btd_df['player']) or ('NOPLAYER') in btd_df['plaeyr']
+    #btd_df['player'] = np.where( ('NOTEAM' in btd_df['player']) or ('NOPLAYER' in btd_df['player'] ), '', btd_df['player'] )
     # we should be good, let's check
     print(f"BTD Fields of interest: {btd_df['team']}, {btd_df['only_player']}, {btd_df['player']}")
     
@@ -103,24 +103,16 @@ def update_btd_characteristics( file ):
     print(f"player 0: {players_unique[0]}, player 1: {players_unique[1]}, player 2: {players_unique[2]}, player 3: {players_unique[3]}, player 4: {players_unique[4]}, ")
 
     # loop thru the player list and delete those that look bad
-    for p in (0 , num_players):
-      if p <= players_unique.shape[0]: ## just ot make sure we don't access the deleted number
-        if len(players_unique[p].strip()) == 0:
-          # drop this one
-          print(f"Player list before delete: {players_unique}")
-          players_unique = np.delete(players_unique,p)
-          num_players = num_players - 1
-          print(f"Player list after delete: {players_unique}")
+    tmp_players = players_unique
+    num_deleted = 0
+    for p in range(len(players_unique)):
+      print(f"player : {players_unique[p]}")
+      if ("NOTEAM" in players_unique[p]) or ("NOPLAYER" in players_unique[p]):
+        tmp_players = np.delete(tmp_players,p-num_deleted)
+        num_deleted = num_deleted + 1
+        print(f"Deleting : {players_unique[p]}")
 
-        # second check, looking for a player with no space in the string
-        if ' ' not in players_unique[p].strip():
-          # if there is no space, then this is likely a team with no player, 'Opponent ', and we need to drop it
-          print(f"Player list before delete due ot no space: {players_unique}")
-          players_unique = np.delete(players_unique,p)
-          num_players = num_players - 1
-          print(f"Player list after delete due to no space: {players_unique}")
-
-    players_unique = players_unique[0:4]
+    players_unique = tmp_players
     print(f"Number of players reduced to:{players_unique.shape[0]} players are: {players_unique}")
       
     if num_players <4:
