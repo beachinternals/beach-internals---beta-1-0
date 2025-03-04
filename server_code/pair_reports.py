@@ -1099,3 +1099,80 @@ def pair_serving_effectiveness(disp_league, disp_gender, disp_year,
                )
 
   return p1_srv_eff_mkdn, '', '', '', p2_srv_eff_mkdn, '','',''
+
+
+@anvil.server.callable
+def pair_tri_score(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+               ):
+  
+  # return a markdown text to display
+  # given the parameters
+
+  ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
+  tri_df, tri_data_found = get_tri_data( disp_league, disp_gender, disp_year, date_checked, disp_start_date, disp_end_date )
+  #print(f" Data Found? {tri_data_found}m=, records={tri_df.shape[0]}, Displayer Player: {disp_player}")
+  
+  if (tri_df.shape[0] == 0):
+    return "No Triangle Scoring Data Found"
+
+  disp_pair = disp_pair.strip()
+  tri1_df = tri_df[ tri_df['teama'].str.strip() == disp_pair ]
+  tri2_df = tri_df[ tri_df['teamb'].str.strip() == disp_pair ]
+
+
+  tri_df = pd.concat([ tri1_df, tri2_df ])
+  #print(f"tri_df size:{tri_df.shape[0]}, Tri1 = {tri1_df.shape[0]}, Tri2 = {tri2_df.shape[0]}, Tri3 = {tri3_df.shape[0]}, Tri4 = {tri4_df.shape[0]}")
+
+  ############## Secomd - Create the dataframe that will be displayed as a table, report specific
+  # create the output dataframe - This is speficif to the report
+  tri_dict = {'Team A':[' '],
+             'Team B':[' '],
+              'Winner':[' '],
+              'Set':[0],
+             'TS +/-':[0],
+             'FB +/-':[0],
+             'Tran +/-':[0],
+             'FBHE':[0],
+              'FBHE Diff':[0],
+             'TCR':[0],
+             'Err Den':[0]
+            }
+  tri_table = pd.DataFrame.from_dict( tri_dict )
+
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  num_row = tri_df.shape[0]
+  #print(f"Number of Rows in Tri Data:{num_row}")
+  #print(tri_df)
+  i = 0
+  for index, row in tri_df.iterrows():
+    #print(f"i: {i}, Tri Table:{tri_table}")
+
+    if ( i != 0):
+      # need to add a row to tri_table
+      tri_table.loc[len(tri_table.index)] = tri_dict
+      
+    disp_team = row['teama'] if disp_player.strip() in row['teama'].strip() else row['teamb']
+    tri_table.at[i,'Team A'] = row['teama']
+    tri_table.at[i,'Team B'] = row['teamb']
+    tri_table.at[i,'Winner'] = row['winning_team']
+    tri_table.at[i,'Set'] = row['set']
+    tri_table.at[i,'TS +/-'] = row['tsrv_adv_a'] if disp_team.strip() in row['teama'].strip() else -row['tsrv_adv_a']
+    tri_table.at[i,'FB +/-'] = row['fb_adv_a']if disp_team.strip() in row['teama'].strip()  else -row['fb_adv_a']
+    tri_table.at[i,'Tran +/-'] = '{:.3}'.format(row['tran_adv_a']) if disp_team.strip() in row['teama'].strip()  else '{:.3}'.format(-row['tran_adv_a'])
+    tri_table.at[i,'FBHE'] = '{:.3}'.format(row['fbhe_a_noace']) if disp_team.strip() in row['teama'].strip()  else '{:.3}'.format(-row['fbhe_b_noace'])
+    tri_table.at[i,'FBHE Diff'] = '{:.3}'.format(row['fbhe_diff_noace']) if disp_team.strip() in row['winning_team'].strip() else '{:.3}'.format(-row['fbhe_diff_noace'])
+    tri_table.at[i,'TCR'] = '{:.1%}'.format(row['tcr_a']) if disp_team.strip() in row['teama'].strip()  else '{:.1%}'.format(row['tcr_b'])
+    tri_table.at[i,'Err Den'] = '{:.1%}'.format(row['err_den_a']) if disp_team.strip() in row['teama'].strip()  else '{:.1%}'.format(row['err_den_b'])
+    i = i + 1
+    
+  # now create the markdown text to return
+  tri_return = pd.DataFrame.to_markdown(tri_table, index = False )
+  
+  return tri_return, ' ', ' ',' ', ' ',' ', ' ',' '
