@@ -620,11 +620,11 @@ def srv_eff(disp_league, disp_gender, disp_year,
     fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
     # Aces and Errors
     tmp_df = m_ppr_df[m_ppr_df['point_outcome'] == "TSA"]
-    print(f"Aces {tmp_df.shape[0]}")
+    #print(f"Aces {tmp_df.shape[0]}")
     tmp_df = tmp_df[tmp_df['serve_player'].str.strip() == disp_player.strip() ]
     fbhe_table.at[6,'All'] = tmp_df.shape[0]
     tmp_df = m_ppr_df[ m_ppr_df['point_outcome'] == "TSE" ]
-    print(f"Errors {tmp_df.shape[0]}")
+    #print(f"Errors {tmp_df.shape[0]}")
     tmp_df = tmp_df[tmp_df['serve_player'].str.strip() == disp_player.strip() ]    
     fbhe_table.at[7,'All'] = tmp_df.shape[0]
 

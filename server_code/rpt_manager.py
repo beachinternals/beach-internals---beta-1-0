@@ -495,7 +495,7 @@ def rpt_mgr_generate_background():
                             srv_to_5[0] = True
 
                         # print out result real quick to check
-                        print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, serve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
+                        #print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, serve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
 
                         # now call the scouting report for each serve strategy:
                         pdf1 = create_scouting_pdf_reports(report,
