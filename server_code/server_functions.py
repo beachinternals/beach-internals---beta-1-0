@@ -581,3 +581,24 @@ def create_report_folder(folder_name, parent_id):
 def write_pdf_to_google_drive( folder, filename, pdf_file):
   new_pdf = folder.create_file(filename, pdf_file)
   return new_pdf
+
+
+from anvil.google.drive import app_files
+import anvil.server
+
+@anvil.server.callable
+def write_to_drive(filename, content):
+    # Access the app_files folder (replace 'my_folder' with your folder name from the Google API Service)
+    folder = app_files.my_folder  # e.g., app_files.my_folder if you added a folder named "my_folder"
+    
+    # Check if the file exists, if not create it
+    file = folder.get(filename)
+    if file is None:
+        file = folder.create_file(filename, content)  # Create new file with content
+    else:
+        file.set_bytes(content)  # Update existing file with new content (as bytes)
+    
+    return f"File {filename} written to Google Drive"
+
+# Example usage from client code
+# anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
