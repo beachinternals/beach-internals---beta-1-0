@@ -615,16 +615,16 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
 
   pair_stats_df.at[0,"opp_fbhe_mean"] = pair_df['opp_fbhe'].mean(skipna=True) 
   pair_stats_df.at[0,"opp_fbhe_stdev"] = pair_df['opp_fbhe'].std(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe1_mean"] = pair_df['opp1_fbhe'].mean(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe1_stdev"] = pair_df['opp1_fbhe'].std(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe2_mean"] = pair_df['opp2_fbhe'].mean(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe2_stdev"] = pair_df['opp2_fbhe'].std(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe3_mean"] = pair_df['opp3_fbhe'].mean(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe3_stdev"] = pair_df['opp3_fbhe'].std(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe4_mean"] = pair_df['opp4_fbhe'].mean(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe4_stdev"] = pair_df['opp4_fbhe'].std(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe5_mean"] = pair_df['opp5_fbhe'].mean(skipna=True) 
-  pair_stats_df.at[0,"opp_fbhe5_stdev"] = pair_df['opp5_fbhe'].std(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe1_mean"] = pair_df['opp_fbhe1'].mean(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe1_stdev"] = pair_df['opp_fbhe1'].std(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe2_mean"] = pair_df['opp_fbhe2'].mean(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe2_stdev"] = pair_df['opp_fbhe2'].std(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe3_mean"] = pair_df['opp_fbhe3'].mean(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe3_stdev"] = pair_df['opp_fbhe3'].std(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe4_mean"] = pair_df['opp_fbhe4'].mean(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe4_stdev"] = pair_df['opp_fbhe4'].std(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe5_mean"] = pair_df['opp_fbhe5'].mean(skipna=True) 
+  pair_stats_df.at[0,"opp_fbhe5_stdev"] = pair_df['opp_fbhe5'].std(skipna=True) 
 
   # Time to calcualte stats FBHE for all 45 zones: from 1,3,5 and to 1-5, C,D,E
   for srv_fr in [0,1,2]:

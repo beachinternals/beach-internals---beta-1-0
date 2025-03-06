@@ -176,7 +176,7 @@ def rpt_mgr_generate_background():
           
           # calculate the folder we will store thiese into
           pdf_folder = [ player_r['league'].strip() + player_r['gender'].strip() + player_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
-          print(f"pdf folder: {pdf_folder}")
+          #print(f"pdf folder: {pdf_folder}")
           
           # build player string
           disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
@@ -248,7 +248,7 @@ def rpt_mgr_generate_background():
 
           # calculate the folder we will store thiese into
           pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
-          print(f"pdf folder: {pdf_folder}")
+          #print(f"pdf folder: {pdf_folder}")
         
           full_rpt_pdf = None
           pdf_name = disp_pair + ' Summary.pdf'
@@ -326,7 +326,7 @@ def rpt_mgr_generate_background():
                   
           # calculate the folder we will store thiese into
           pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
-          print(f"pdf folder: {pdf_folder}")
+          #print(f"pdf folder: {pdf_folder}")
 
           for i in [0,1]: # loop over two players in the pair
             #print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
@@ -402,7 +402,7 @@ def rpt_mgr_generate_background():
 
           # calculate the folder we will store thiese into
           pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
-          print(f"pdf folder: {pdf_folder}")
+          #print(f"pdf folder: {pdf_folder}")
 
           for i in [0,1]: # loop over two players in the pair
             #print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
@@ -603,12 +603,12 @@ def rpt_mgr_generate_background():
             
             # put this pdf into the pdf list
             pdf_list.append(full_rpt_pdf)
-            print(f"rpt_manager: Scout Reports: added pdf report to list: list size: {pdf_num}, {len(pdf_list)}")
+            #print(f"rpt_manager: Scout Reports: added pdf report to list: list size: {pdf_num}, {len(pdf_list)}")
             pdf_num = pdf_num + 1
           
-          print(f"Preparing to send email.  PDF List Length {len(pdf_list)}, Type: {type(pdf_list)}, pdf_num: {pdf_num}")
-          for i in range(0,len(pdf_list)):
-            print(f"PDF List to email: item number :{i}, PDF File: {pdf_list[i]}")
+          #print(f"Preparing to send email.  PDF List Length {len(pdf_list)}, Type: {type(pdf_list)}, pdf_num: {pdf_num}")
+          #for i in range(0,len(pdf_list)):
+          #  print(f"PDF List to email: item number :{i}, PDF File: {pdf_list[i]}")
             
           '''
           email_status = anvil.email.send(to=rpt_r['emailto'],
