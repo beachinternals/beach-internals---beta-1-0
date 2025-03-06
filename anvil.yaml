@@ -605,6 +605,7 @@ services:
         picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
       parents:
       - {id: 0AJFfLJIkDJdLUk9PVA, isRoot: true, kind: drive#parentReference, parentLink: 'https://www.googleapis.com/drive/v2/files/0AJFfLJIkDJdLUk9PVA', selfLink: 'https://www.googleapis.com/drive/v2/files/1cU4JKkAqK1gPQIxg7wFSQ0w0FOFhVpUg/parents/0AJFfLJIkDJdLUk9PVA'}
+      permission: roclient
       python_name: reports
       quotaBytesUsed: '0'
       selfLink: https://www.googleapis.com/drive/v2/files/1cU4JKkAqK1gPQIxg7wFSQ0w0FOFhVpUg

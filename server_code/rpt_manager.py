@@ -234,7 +234,7 @@ def rpt_mgr_generate_background():
         #print("processing pair report")
         #print(f"Pair List: {rpt_r['pair_list']}")
         # loop over all the players for this report listing
-
+        
         pdf_list = ['']*len(rpt_r['pair_list'])      # start a list of all pdf files to pass to email send
         pdf_num = 0
       
@@ -243,6 +243,10 @@ def rpt_mgr_generate_background():
         
           # build pair string
           disp_pair = pair_r['pair']
+
+          # calculate the folder we will store thiese into
+          pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+          print(f"pdf folder: {pdf_folder}")
         
           full_rpt_pdf = None
           pdf_name = disp_pair + ' Summary.pdf'
@@ -267,6 +271,9 @@ def rpt_mgr_generate_background():
                     date_checked, disp_start_date, disp_end_date,
                     scout, rpt_print['explain_text'] 
                     )
+
+            # now write this to the google drive
+            file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
             
             # now, need to merge this report with the next one
             if full_rpt_pdf:
@@ -280,13 +287,14 @@ def rpt_mgr_generate_background():
           # put this pdf into the pdf list
           pdf_list[pdf_num] = full_rpt_pdf
           pdf_num = pdf_num + 1
-          
+        '''
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           subject='Beach Internals - Pair Summary '+disp_pair,
                                           cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',                                       
                                           text='Attached please find the summary report(s) for '+disp_pair,
                                           attachments=pdf_list)
+        '''
       elif rpt_r['rpt_type'] == 'dashboard':
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
@@ -304,11 +312,17 @@ def rpt_mgr_generate_background():
       elif rpt_r['rpt_type'] == 'scouting':
         pdf_list = ['']*len(rpt_r['pair_list'])*2      # start a list of all pdf files to pass to email send
         pdf_num = 0
+
+        
         for pair_r in rpt_r['pair_list']:
           # build pair string
           disp_pair = pair_r['pair']
           disp_player = ['','']
           disp_player[0], disp_player[1] = pair_players(disp_pair)
+                  
+          # calculate the folder we will store thiese into
+          pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+          print(f"pdf folder: {pdf_folder}")
 
           for i in [0,1]: # loop over two players in the pair
             #print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
@@ -336,6 +350,10 @@ def rpt_mgr_generate_background():
                     scout, rpt_print['explain_text'], rpt_print['box1_title'],    
                     srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                     )
+
+              # now write this to the google drive
+              file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
+            
               # now, need to merge this report with the next one
               if full_rpt_pdf:
                 #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
@@ -348,7 +366,8 @@ def rpt_mgr_generate_background():
             # put this pdf into the pdf list
             pdf_list[pdf_num] = full_rpt_pdf
             pdf_num = pdf_num + 1
-          
+
+        '''
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
                                       cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
@@ -357,6 +376,7 @@ def rpt_mgr_generate_background():
                                       attachments=pdf_list)
         if not email_status:
           print("report:Manager, Scouting Reports, email send failed")
+        '''
       elif rpt_r['rpt_type'] == 'scouting - pdf only':
         # this category is for reports taht can only be generated as pdf files, not as web pages.
         #. all of these are pair based reports, first player 1, then player 2.  
@@ -373,6 +393,10 @@ def rpt_mgr_generate_background():
           disp_pair = pair_r['pair']
           disp_player = ['','']
           disp_player[0], disp_player[1] = pair_players(disp_pair)
+
+          # calculate the folder we will store thiese into
+          pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+          print(f"pdf folder: {pdf_folder}")
 
           for i in [0,1]: # loop over two players in the pair
             #print(f"Processing scouting report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}, {disp_player[i]}")
@@ -516,7 +540,11 @@ def rpt_mgr_generate_background():
                                       scout, rpt_print['explain_text'], rpt_print['box1_title'],    
                                       srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                                       )
-                                           # now, need to merge this report with the next one
+
+                        # now write this to the google drive
+                        file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
+            
+                        # now, need to merge this report with the next one
                         if full_rpt_pdf:
                           #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
                           full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
@@ -551,8 +579,11 @@ def rpt_mgr_generate_background():
                                       )
                   else:
                     pdf1 = 'Invalid Report Type'+rpt_row['rpt_type']
-                    
-                   # now, need to merge this report with the next one
+
+                  # now write this to the google drive
+                  file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
+        
+                  # now, need to merge this report with the next one
                   if full_rpt_pdf:
                     #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
                     full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
@@ -572,6 +603,7 @@ def rpt_mgr_generate_background():
           for i in range(0,len(pdf_list)):
             print(f"PDF List to email: item number :{i}, PDF File: {pdf_list[i]}")
             
+          '''
           email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
                                       cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
@@ -581,7 +613,7 @@ def rpt_mgr_generate_background():
 
           if not email_status:
             print("report:Manager, Scouting Reports, email send failed")
-          
+          '''
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
