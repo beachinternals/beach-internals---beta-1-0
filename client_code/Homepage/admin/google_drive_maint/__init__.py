@@ -42,8 +42,11 @@ class google_drive_maint(google_drive_maintTemplate):
   def outlined_button_1_click(self, **event_args):
     """This method is called when the button is clicked"""
     # call a server function to create the file
-    file = anvil.server.call('create_google_drive_file','','hello','Hello World!')
-    alert('Server File Created '+file)
+    folder_path = ['NCAAW2025', 'LMU', '03062025']  # Define the subfolder structure
+    filename = 'test.txt'
+    content = 'Hello Nested World!'
+    msg = anvil.server.call('write_to_nested_folder', folder_path, filename, content)
+    alert( msg )
     pass
 
   def gen_all_rpt_pdf_click(self, **event_args):

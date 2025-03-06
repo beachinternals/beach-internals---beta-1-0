@@ -175,8 +175,8 @@ def rpt_mgr_generate_background():
           #print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
           
           # calculate the folder we will store thiese into
-          pdf_folder = player_r['league'].strip() + player_r['gender'].strip() + player_r['year'].strip() + disp_team.strip() + today.strftime("%Y-%m-%d")
-          
+          pdf_folder = [ player_r['league'].strip() + player_r['gender'].strip() + player_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+          print(f"pdf folder: {pdf_folder}")
           
           # build player string
           disp_player = player_r['team']+' '+player_r['number']+' '+player_r['shortname']
@@ -204,6 +204,9 @@ def rpt_mgr_generate_background():
                     scout, rpt_print['explain_text']                                 
                     )
 
+            # now write this to the google drive
+            file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
+
             # now, need to merge this report with the next one
             if full_rpt_pdf:
               #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
@@ -219,7 +222,7 @@ def rpt_mgr_generate_background():
           #print(f"Added a pdf to the list: {pdf_num}")
 
           # instead of emailing, we are going to write this to the Google Drive
-          pdf_file = write_pdf_to_google_drive( '', pdf_name, pdf1 )
+          #pdf_file = write_pdf_to_google_drive( '', pdf_name, pdf1 )
           
         #email_status = anvil.email.send(to=rpt_r['emailto'],
         #                                  from_address="no-reply",

@@ -1,5 +1,5 @@
 import anvil.email
-import anvil.google.auth, anvil.google.drive, anvil.google.mail
+import anvil.google.auth, anvil.google.mail
 from anvil.google.drive import app_files
 from googleapiclient.discovery import build
 import anvil.users
@@ -582,14 +582,10 @@ def write_pdf_to_google_drive( folder, filename, pdf_file):
   new_pdf = folder.create_file(filename, pdf_file)
   return new_pdf
 
-
-from anvil.google.drive import app_files
-import anvil.server
-
 @anvil.server.callable
-def write_to_drive(filename, content):
+def write_to_drive(filename, directory, content):
     # Access the app_files folder (replace 'my_folder' with your folder name from the Google API Service)
-    folder = app_files.my_folder  # e.g., app_files.my_folder if you added a folder named "my_folder"
+    folder = app_files.reports  # e.g., app_files.my_folder if you added a folder named "my_folder"
     
     # Check if the file exists, if not create it
     file = folder.get(filename)
@@ -602,3 +598,30 @@ def write_to_drive(filename, content):
 
 # Example usage from client code
 # anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
+
+@anvil.server.callable
+def write_to_nested_folder(folder_path, filename, content):
+  # Start with the root folder from app_files (replace 'root_folder' with your actual folder name)
+  # root folder is 'reports'
+  # nested folder path looks like ['NCAAW2025','LMU','MMDDYYYY']
+  current_folder = app_files.reports
+  
+  # Navigate or create the subfolder hierarchy
+  for subfolder_name in folder_path:
+    # Try to get the subfolder
+    next_folder = current_folder.get(subfolder_name)
+    if next_folder is None:
+      # If it doesn’t exist, create it
+      next_folder = current_folder.create_folder(subfolder_name)
+    current_folder = next_folder
+
+    content = content.encode()
+    # Write the file to the final subfolder
+    file = current_folder.get(filename)
+    if file is None:
+      file = current_folder.create_file(filename, content )  # Content as bytes
+    else:
+      file.set_bytes(content)
+    
+  return f"File {filename} written to {'/'.join(folder_path)}"
+
