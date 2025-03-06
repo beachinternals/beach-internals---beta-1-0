@@ -7,9 +7,9 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
+import anvil.media
 import pandas as pd
 import io
-import anvil.email
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
@@ -601,27 +601,29 @@ def write_to_drive(filename, directory, content):
 
 @anvil.server.callable
 def write_to_nested_folder(folder_path, filename, content):
-  # Start with the root folder from app_files (replace 'root_folder' with your actual folder name)
-  # root folder is 'reports'
-  # nested folder path looks like ['NCAAW2025','LMU','MMDDYYYY']
-  current_folder = app_files.reports
-  
-  # Navigate or create the subfolder hierarchy
+  from anvil.google.drive import app_files
+  current_folder = app_files.reports  # Replace with your folder name
+    
   for subfolder_name in folder_path:
-    # Try to get the subfolder
     next_folder = current_folder.get(subfolder_name)
     if next_folder is None:
-      # If it doesn’t exist, create it
       next_folder = current_folder.create_folder(subfolder_name)
     current_folder = next_folder
-
-    content = content.encode()
-    # Write the file to the final subfolder
-    file = current_folder.get(filename)
+    
+  file = current_folder.get(filename)
+  if isinstance(content, str):
+    content_bytes = content.encode()
     if file is None:
-      file = current_folder.create_file(filename, content )  # Content as bytes
+      file = current_folder.create_file(filename, content_bytes)
     else:
-      file.set_bytes(content)
+      file.set_bytes(content_bytes)
+  elif hasattr(content, 'get_bytes'):
+    if file is None:
+      file = current_folder.create_file(filename, content)
+    else:
+      file.set_media(content)
+  else:
+    raise Exception(f"Unsupported content type: {type(content)}")
     
   return f"File {filename} written to {'/'.join(folder_path)}"
 
