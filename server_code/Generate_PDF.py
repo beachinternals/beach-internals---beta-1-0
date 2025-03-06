@@ -54,7 +54,7 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
                     ):
 
   # call report function
-  print(f'Calling Function:{fnct_name}')
+  #print(f'Calling Function:{fnct_name}')
   table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
@@ -126,7 +126,7 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
                     ):
 
   # call report function
-  print(f'Calling Function:{fnct_name}')
+  #print(f'Calling Function:{fnct_name}')
   serve_strategy_title,table_data,plot1,plot2,plot3,z1_att,z2_att,z3_att,z4_att,z5_att,opt_att,z1_tbl,z2_tbl,z3_tbl,z4_tbl,z5_tbl,opt_tbl = anvil.server.call(
     fnct_name, 
     disp_league, 
@@ -218,7 +218,7 @@ def render_3court_plot_to_pdf(fnct_name, rpt_form, disp_league, disp_gender, dis
                     ):
 
   # call report function
-  print(f'Calling Function:{fnct_name}')
+  #print(f'Calling Function:{fnct_name}')
   serve_strategy_title,table_data,srv_plot,pass_plot,set_plot,z1_att,z2_att,z3_att,z4_att,z5_att,opt_att,z1_tbl,z2_tbl,z3_tbl,z4_tbl,z5_tbl,opt_tbl = anvil.server.call(
     fnct_name, 
     disp_league, 
@@ -422,7 +422,7 @@ def create_pair_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_
                     ):
 
   # call report function
-  print(f'Calling Function:{fnct_name}')
+  #print(f'Calling Function:{fnct_name}')
   table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
@@ -501,7 +501,7 @@ def create_player_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, dis
                     ):
 
   # call report function
-  print(f'Calling Function:{fnct_name}')
+  #print(f'Calling Function:{fnct_name}')
   table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,

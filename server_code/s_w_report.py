@@ -261,8 +261,10 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
 
   # loop thru the player file
   #print(f"Length of pdata df: {pdata_df.shape[0]}")
+  #
+  # start a loop over each player in the pair datatable
   for p,p_row in pdata_df.iterrows():
-    # put the dataframe definition inside the loop overr players to reset the dataframe for each player
+    # put the dataframe definition inside the loop over players to reset the dataframe for each player
     
     sw_df = pd.DataFrame.from_dict(sw_dict)
     sw_df_new = pd.DataFrame.from_dict(sw_dict)
@@ -275,56 +277,95 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
     
     # loop thru the criteria file
     for c_row in app_tables.strength_weakness_criteria.search( q.all_of(active=True,type='pair')):
-      # start making comparisons
-      variable = c_row['var']
-      var_mean = variable + '_mean'
-      var_sd = variable + '_stdev'
 
-      #print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
+      # now, we are adding two (maybe more) type of criteria: simple, serve strategies
+      #
+      # serve strategy type sof criteria are looking at variables acorss all 45 possbile serves
+      if c_row['criteria_type'] == 's':
+        # these are criteria for each of hte 45 different serve strategies, fbhe_#_&$ where:
+        #.   '#' is the serve from [1,3,5]
+        #.   '&' is the serve destinatiojn net, [1,2,3,4,5]
+        #.   '$' is hte serve destination depth, [C,D,E]
+
+        var_base = c_row['var']
+        for i in [1,3,5]:
+          var1 = var_base.replace('#',str(i))
+          print(f"Variable, in I loop over serve source {var1}")
+          for j in [1,2,3,4,5]:
+            var2 = var1.replace('&',str(j))
+            print(f"Variable, in J loop over serve dest net {var2}")
+            for k in ['c', 'd', 'e']:
+              variable = var2.replace('$',k)
+              print(f"Variable, in K loop over serve dest depth {variable}")
+              var_mean = variable + '_mean'
+              var_sd = variable + '_stdev'
+              #print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
+              crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
+              
+              # now, make the comparison and add the line to the new sw_df
+              if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
+                # then add a row to the sw_df dataframe
+                #print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}")
+                sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']
+                sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
+                sw_df_new.at[0,'Category'] = c_row['category']
+                sw_df_new.at[0,'Section'] = c_row['section']
+                sw_df_new.at[0,'Description'] = c_row['description']
+                sw_df_new.at[0,'Var Name'] = c_row['var']
+                sw_df_new.at[0,'Var Desc'] = c_row['var_desc']
+                sw_df_new.at[0,'Var Value'] = "{:.2f}".format(pdata_df.at[p,variable])
+                #print(f"Calc Percentile: value:{pdata_df.at[p,variable]}, Mean: {pstat_df.at[0,var_mean]}, Stdev {pstat_df.at[0,var_sd]} Percentile:{stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )}")
+                sw_df_new.at[0,'Var Percentile'] =  stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )
+                sw_df_new.at[0,'Criteria'] = c_row['criteria']
+                sw_df_new.at[0,'Criteria Value'] = "{:.2f}".format(crit_value)
+
+                # calibrate percentile to criteria and category
+                if sw_df_new.at[0,'Category'] == 'Strength' and sw_df_new.at[0,'Criteria'] < 0:
+                  sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
+                if sw_df_new.at[0,'Category'] == 'Weakness' and sw_df_new.at[0,'Criteria'] > 0:
+                  sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
+
+                sw_df_new.at[0,'Var Percentile'] = "{:.0%}".format(sw_df_new.at[0,'Var Percentile'])
+        
+        # now add this to the sw dataframe
+        sw_df = pd.concat([sw_df,sw_df_new])
+              
+      else:  # these are the 'normal' variable comparisons
+        # start making comparisons
+        variable = c_row['var']
+        var_mean = variable + '_mean'
+        var_sd = variable + '_stdev'
+
+        #print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
       
-      crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
+        crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
 
-      #print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")
-      # added an 'or' for a 0 criteria, implying that this line should be included. This is used to have the actual value of a variable show up in the s_w table
-      if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
-        # then add a row to the sw_df dataframe
-        #print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}")
-        sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']
-        sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
-        sw_df_new.at[0,'Category'] = c_row['category']
-        sw_df_new.at[0,'Section'] = c_row['section']
-        sw_df_new.at[0,'Description'] = c_row['description']
-        sw_df_new.at[0,'Var Name'] = c_row['var']
-        sw_df_new.at[0,'Var Desc'] = c_row['var_desc']
-        sw_df_new.at[0,'Var Value'] = "{:.2f}".format(pdata_df.at[p,variable])
-        #print(f"Calc Percentile: value:{pdata_df.at[p,variable]}, Mean: {pstat_df.at[0,var_mean]}, Stdev {pstat_df.at[0,var_sd]} Percentile:{stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )}")
-        sw_df_new.at[0,'Var Percentile'] =  stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )
-        sw_df_new.at[0,'Criteria'] = c_row['criteria']
-        sw_df_new.at[0,'Criteria Value'] = "{:.2f}".format(crit_value)
+        #print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")
+        # added an 'or' for a 0 criteria, implying that this line should be included. This is used to have the actual value of a variable show up in the s_w table
+        if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
+          # then add a row to the sw_df dataframe
+          #print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}")
+          sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']
+          sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
+          sw_df_new.at[0,'Category'] = c_row['category']
+          sw_df_new.at[0,'Section'] = c_row['section']
+          sw_df_new.at[0,'Description'] = c_row['description']
+          sw_df_new.at[0,'Var Name'] = c_row['var']
+          sw_df_new.at[0,'Var Desc'] = c_row['var_desc']
+          sw_df_new.at[0,'Var Value'] = "{:.2f}".format(pdata_df.at[p,variable])
+          #print(f"Calc Percentile: value:{pdata_df.at[p,variable]}, Mean: {pstat_df.at[0,var_mean]}, Stdev {pstat_df.at[0,var_sd]} Percentile:{stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )}")
+          sw_df_new.at[0,'Var Percentile'] =  stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )
+          sw_df_new.at[0,'Criteria'] = c_row['criteria']
+          sw_df_new.at[0,'Criteria Value'] = "{:.2f}".format(crit_value)
 
-        # calibrate percentile to criteria and category
-        if sw_df_new.at[0,'Category'] == 'Strength' and sw_df_new.at[0,'Criteria'] < 0:
-          sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
-        if sw_df_new.at[0,'Category'] == 'Weakness' and sw_df_new.at[0,'Criteria'] > 0:
-          sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
+          # calibrate percentile to criteria and category
+          if sw_df_new.at[0,'Category'] == 'Strength' and sw_df_new.at[0,'Criteria'] < 0:
+            sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
+          if sw_df_new.at[0,'Category'] == 'Weakness' and sw_df_new.at[0,'Criteria'] > 0:
+            sw_df_new.at[0,'Var Percentile'] = 1 - sw_df_new.at[0,'Var Percentile']
 
-        sw_df_new.at[0,'Var Percentile'] = "{:.0%}".format(sw_df_new.at[0,'Var Percentile'])
-        #print(sw_df_new)
-
-        # Now append this to the df
-        #print(f"sw_df: {sw_df.shape[0]}, {sw_df}")
-        #print(f"sw_df_new: {sw_df_new.shape[0]},{sw_df_new}")
-        #print(f"sw_df Player:{sw_df.at[0,'Player']}")
-        #print(f"sw_df_new Player: {sw_df_new.at[0,'Player']}")
-        #print(f"sw_df Category:{sw_df.at[0,'Category']}, sw_df_new Category: {sw_df_new.at[0,'Category']}")
-        #print(f"sw_df Section:{sw_df.at[0,'Section']}, sw_df_new Section: {sw_df_new.at[0,'Section']}")
-        #print(f"sw_df Description:{sw_df.at[0,'Description']}, sw_df_new Description: {sw_df_new.at[0,'Description']}")
-        #print(f"sw_df Var Name:{sw_df.at[0,'Var Name']}, sw_df_new Var Name: {sw_df_new.at[0,'Var Name']}")
-        #print(f"sw_df Var Desc:{sw_df.at[0,'Var Desc']}, sw_df_new Var Desc: {sw_df_new.at[0,'Var Desc']}")
-        #print(f"sw_df Var Value:{sw_df.at[0,'Var Value']}, sw_df_new Var Value: {sw_df_new.at[0,'Var Value']}")
-        #print(f"sw_df Var Percentile:{sw_df.at[0,'Var Percentile']}, sw_df_new Var Percentile: {sw_df_new.at[0,'Var Percentile']}")
-        #print(f"sw_df Criteria:{sw_df.at[0,'Criteria']}, sw_df_new Criteria: {sw_df_new.at[0,'Criteria']}")
-        #print(f"sw_df Criteria Value:{sw_df.at[0,'Criteria Value']}, sw_df_new Criteria Value: {sw_df_new.at[0,'Criteria Value']}")
+          sw_df_new.at[0,'Var Percentile'] = "{:.0%}".format(sw_df_new.at[0,'Var Percentile'])
+          #print(sw_df_new)
 
         #print(f"Len of sw_df: {len(sw_df)}")
         sw_df = pd.concat([sw_df,sw_df_new])

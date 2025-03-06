@@ -440,6 +440,9 @@ db_schema:
     - admin_ui: {width: 200}
       name: high_is_good
       type: bool
+    - admin_ui: {order: 9, width: 200}
+      name: criteria_type
+      type: string
     server: full
     title: strength_weakness_criteria
   subscriptions:
