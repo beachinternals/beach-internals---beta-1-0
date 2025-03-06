@@ -204,8 +204,6 @@ def rpt_mgr_generate_background():
                     scout, rpt_print['explain_text']                                 
                     )
 
-            # now write this to the google drive
-            file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
 
             # now, need to merge this report with the next one
             if full_rpt_pdf:
@@ -216,6 +214,10 @@ def rpt_mgr_generate_background():
               full_rpt_pdf = pdf1
               #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
 
+      
+          # now write this to the google drive
+          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+      
           # put this pdf into the pdf list
           #pdf_list[pdf_num] = full_rpt_pdf
           #pdf_num = pdf_num + 1
@@ -272,8 +274,6 @@ def rpt_mgr_generate_background():
                     scout, rpt_print['explain_text'] 
                     )
 
-            # now write this to the google drive
-            file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
             
             # now, need to merge this report with the next one
             if full_rpt_pdf:
@@ -283,6 +283,10 @@ def rpt_mgr_generate_background():
               #print('no original pdf file, setting to pdf1')
               full_rpt_pdf = pdf1
               #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+
+          
+          # now write this to the google drive
+          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
           
           # put this pdf into the pdf list
           pdf_list[pdf_num] = full_rpt_pdf
@@ -351,8 +355,7 @@ def rpt_mgr_generate_background():
                     srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                     )
 
-              # now write this to the google drive
-              file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
+
             
               # now, need to merge this report with the next one
               if full_rpt_pdf:
@@ -362,7 +365,10 @@ def rpt_mgr_generate_background():
                 #print('no original pdf file, setting to pdf1')
                 full_rpt_pdf = pdf1
                 #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-
+                
+            # now write this to the google drive
+            file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
+            
             # put this pdf into the pdf list
             pdf_list[pdf_num] = full_rpt_pdf
             pdf_num = pdf_num + 1
@@ -580,8 +586,6 @@ def rpt_mgr_generate_background():
                   else:
                     pdf1 = 'Invalid Report Type'+rpt_row['rpt_type']
 
-                  # now write this to the google drive
-                  file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
         
                   # now, need to merge this report with the next one
                   if full_rpt_pdf:
@@ -594,6 +598,9 @@ def rpt_mgr_generate_background():
               else:
                 full_rpt_pdf = 'Invalid Function name/report type'+rpt_r['function_name']+' '+rpt_r['rpt_type']
 
+            # now write this to the google drive
+            file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+            
             # put this pdf into the pdf list
             pdf_list.append(full_rpt_pdf)
             print(f"rpt_manager: Scout Reports: added pdf report to list: list size: {pdf_num}, {len(pdf_list)}")
