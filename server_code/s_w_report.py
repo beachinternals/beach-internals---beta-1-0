@@ -313,7 +313,7 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
                 sw_df_new.at[0,'Section'] = c_row['section']
                 sw_df_new.at[0,'Description'] = c_row['description'] + ' Serves from '+str(i)+" to "+str(j)+str(k)
                 sw_df_new.at[0,'Var Name'] = c_row['var']
-                sw_df_new.at[0,'Var Desc'] = c_row['var_desc']
+                sw_df_new.at[0,'Var Desc'] = c_row['var_desc']+ ' Serves from '+str(i)+" to "+str(j)+str(k)
                 sw_df_new.at[0,'Var Value'] = "{:.2f}".format(pdata_df.at[p,variable])
                 #print(f"Calc Percentile: value:{pdata_df.at[p,variable]}, Mean: {pstat_df.at[0,var_mean]}, Stdev {pstat_df.at[0,var_sd]} Percentile:{stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )}")
                 sw_df_new.at[0,'Var Percentile'] =  stats.norm.cdf( (pdata_df.at[p,variable] - pstat_df.at[0,var_mean])/ pstat_df.at[0,var_sd] )
