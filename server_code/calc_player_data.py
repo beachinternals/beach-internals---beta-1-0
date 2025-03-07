@@ -241,7 +241,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   #print(f"player stats df:{player_stats_df}")
   
   for i in range(0,num_players):
-    #print(f"player: {p_list[i]}")
+    print(f"player: {p_list[i]}")
     player_df.at[i,'player'] = p_list[i]
 
     # unpack the player into the team, number, and short name
@@ -585,6 +585,12 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   player_stats_df.at[0,"fbhe_option_stdev"] = player_df['fbhe_option'].std(skipna=True)
   player_stats_df.at[0,"fbhe_tempo_mean"] = player_df['fbhe_tempo'].mean(skipna=True)
   player_stats_df.at[0,"fbhe_tempo_stdev"] = player_df['fbhe_tempo'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_behind_per_mean"] = player_df['fbhe_behind_per'].mean(skipna=True)
+  player_stats_df.at[0,"fbhe_behind_per_stdev"] = player_df['fbhe_behind_per'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_option_per_mean"] = player_df['fbhe_option_per'].mean(skipna=True)
+  player_stats_df.at[0,"fbhe_option_per_stdev"] = player_df['fbhe_option_per'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_tempo_per_mean"] = player_df['fbhe_tempo_per'].mean(skipna=True)
+  player_stats_df.at[0,"fbhe_tempo_per_stdev"] = player_df['fbhe_tempo_per'].std(skipna=True)
 
   player_stats_df.at[0,"fbhe_poke_mean"] = player_df['fbhe_poke'].mean(skipna=True)
   player_stats_df.at[0,"fbhe_poke_stdev"] = player_df['fbhe_poke'].std(skipna=True)
