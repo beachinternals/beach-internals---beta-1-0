@@ -135,8 +135,24 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                  'fbhe_5_2c':None,'fbhe_5_2c_n':None,'fbhe_5_2c_ea':None,'fbhe_5_2d':None,'fbhe_5_2d_n':None,'fbhe_5_2d_ea':None,'fbhe_5_2e':None,'fbhe_5_2e_n':None,'fbhe_5_2e_ea':None,
                  'fbhe_5_3c':None,'fbhe_5_3c_n':None,'fbhe_5_3c_ea':None,'fbhe_5_3d':None,'fbhe_5_3d_n':None,'fbhe_5_3d_ea':None,'fbhe_5_3e':None,'fbhe_5_3e_n':None,'fbhe_5_3e_ea':None,
                  'fbhe_5_4c':None,'fbhe_5_4c_n':None,'fbhe_5_4c_ea':None,'fbhe_5_4d':None,'fbhe_5_4d_n':None,'fbhe_5_4d_ea':None,'fbhe_5_4e':None,'fbhe_5_4e_n':None,'fbhe_5_4e_ea':None,
-                 'fbhe_5_5c':None,'fbhe_5_5c_n':None,'fbhe_5_5c_ea':None,'fbhe_5_5d':None,'fbhe_5_5d_n':None,'fbhe_5_5d_ea':None,'fbhe_5_5e':None,'fbhe_5_5e_n':None,'fbhe_5_5e_ea':None
-                }
+                 'fbhe_5_5c':None,'fbhe_5_5c_n':None,'fbhe_5_5c_ea':None,'fbhe_5_5d':None,'fbhe_5_5d_n':None,'fbhe_5_5d_ea':None,'fbhe_5_5e':None,'fbhe_5_5e_n':None,'fbhe_5_5e_ea':None,
+                 'opp_fbhe':None,'opp_fbhe1':None,'opp_fbhe2':None,'opp_fbhe3':None,'opp_fbhe4':None,'opp_fbhe5':None,
+                 'opp_fbhe_1_1c':None,'opp_fbhe_1_1c_n':None,'opp_fbhe_1_1c_ea':None,'opp_fbhe_1_1d':None,'opp_fbhe_1_1d_n':None,'opp_fbhe_1_1d_ea':None,'opp_fbhe_1_1e':None,'opp_fbhe_1_1e_n':None,'opp_fbhe_1_1e_ea':None,     
+                 'opp_fbhe_1_2c':None,'opp_fbhe_1_2c_n':None,'opp_fbhe_1_2c_ea':None,'opp_fbhe_1_2d':None,'opp_fbhe_1_2d_n':None,'opp_fbhe_1_2d_ea':None,'opp_fbhe_1_2e':None,'opp_fbhe_1_2e_n':None,'opp_fbhe_1_2e_ea':None,     
+                 'opp_fbhe_1_3c':None,'opp_fbhe_1_3c_n':None,'opp_fbhe_1_3c_ea':None,'opp_fbhe_1_3d':None,'opp_fbhe_1_3d_n':None,'opp_fbhe_1_3d_ea':None,'opp_fbhe_1_3e':None,'opp_fbhe_1_3e_n':None,'opp_fbhe_1_3e_ea':None,     
+                 'opp_fbhe_1_4c':None,'opp_fbhe_1_4c_n':None,'opp_fbhe_1_4c_ea':None,'opp_fbhe_1_4d':None,'opp_fbhe_1_4d_n':None,'opp_fbhe_1_4d_ea':None,'opp_fbhe_1_4e':None,'opp_fbhe_1_4e_n':None,'opp_fbhe_1_4e_ea':None,     
+                 'opp_fbhe_1_5c':None,'opp_fbhe_1_5c_n':None,'opp_fbhe_1_5c_ea':None,'opp_fbhe_1_5d':None,'opp_fbhe_1_5d_n':None,'opp_fbhe_1_5d_ea':None,'opp_fbhe_1_5e':None,'opp_fbhe_1_5e_n':None,'opp_fbhe_1_5e_ea':None,     
+                 'opp_fbhe_3_1c':None,'opp_fbhe_3_1c_n':None,'opp_fbhe_3_1c_ea':None,'opp_fbhe_3_1d':None,'opp_fbhe_3_1d_n':None,'opp_fbhe_3_1d_ea':None,'opp_fbhe_3_1e':None,'opp_fbhe_3_1e_n':None,'opp_fbhe_3_1e_ea':None,     
+                 'opp_fbhe_3_2c':None,'opp_fbhe_3_2c_n':None,'opp_fbhe_3_2c_ea':None,'opp_fbhe_3_2d':None,'opp_fbhe_3_2d_n':None,'opp_fbhe_3_2d_ea':None,'opp_fbhe_3_2e':None,'opp_fbhe_3_2e_n':None,'opp_fbhe_3_2e_ea':None,     
+                 'opp_fbhe_3_3c':None,'opp_fbhe_3_3c_n':None,'opp_fbhe_3_3c_ea':None,'opp_fbhe_3_3d':None,'opp_fbhe_3_3d_n':None,'opp_fbhe_3_3d_ea':None,'opp_fbhe_3_3e':None,'opp_fbhe_3_3e_n':None,'opp_fbhe_3_3e_ea':None,     
+                 'opp_fbhe_3_4c':None,'opp_fbhe_3_4c_n':None,'opp_fbhe_3_4c_ea':None,'opp_fbhe_3_4d':None,'opp_fbhe_3_4d_n':None,'opp_fbhe_3_4d_ea':None,'opp_fbhe_3_4e':None,'opp_fbhe_3_4e_n':None,'opp_fbhe_3_4e_ea':None,     
+                 'opp_fbhe_3_5c':None,'opp_fbhe_3_5c_n':None,'opp_fbhe_3_5c_ea':None,'opp_fbhe_3_5d':None,'opp_fbhe_3_5d_n':None,'opp_fbhe_3_5d_ea':None,'opp_fbhe_3_5e':None,'opp_fbhe_3_5e_n':None,'opp_fbhe_3_5e_ea':None,     
+                 'opp_fbhe_5_1c':None,'opp_fbhe_5_1c_n':None,'opp_fbhe_5_1c_ea':None,'opp_fbhe_5_1d':None,'opp_fbhe_5_1d_n':None,'opp_fbhe_5_1d_ea':None,'opp_fbhe_5_1e':None,'opp_fbhe_5_1e_n':None,'opp_fbhe_5_1e_ea':None,     
+                 'opp_fbhe_5_2c':None,'opp_fbhe_5_2c_n':None,'opp_fbhe_5_2c_ea':None,'opp_fbhe_5_2d':None,'opp_fbhe_5_2d_n':None,'opp_fbhe_5_2d_ea':None,'opp_fbhe_5_2e':None,'opp_fbhe_5_2e_n':None,'opp_fbhe_5_2e_ea':None,     
+                 'opp_fbhe_5_3c':None,'opp_fbhe_5_3c_n':None,'opp_fbhe_5_3c_ea':None,'opp_fbhe_5_3d':None,'opp_fbhe_5_3d_n':None,'opp_fbhe_5_3d_ea':None,'opp_fbhe_5_3e':None,'opp_fbhe_5_3e_n':None,'opp_fbhe_5_3e_ea':None,     
+                 'opp_fbhe_5_4c':None,'opp_fbhe_5_4c_n':None,'opp_fbhe_5_4c_ea':None,'opp_fbhe_5_4d':None,'opp_fbhe_5_4d_n':None,'opp_fbhe_5_4d_ea':None,'opp_fbhe_5_4e':None,'opp_fbhe_5_4e_n':None,'opp_fbhe_5_4e_ea':None,     
+                 'opp_fbhe_5_5c':None,'opp_fbhe_5_5c_n':None,'opp_fbhe_5_5c_ea':None,'opp_fbhe_5_5d':None,'opp_fbhe_5_5d_n':None,'opp_fbhe_5_5d_ea':None,'opp_fbhe_5_5e':None,'opp_fbhe_5_5e_n':None,'opp_fbhe_5_5e_ea':None     
+                 }
   #print(f"Player Dict:{player_dict}")
   player_df = pd.DataFrame.from_records(player_dict)
   #player_df = pd.DataFrame(player_dict, columns=['player', 'fbhe', 'fbhe1','fbhe2','fbhe3','fbhe4','fbhe5'])
@@ -187,7 +203,39 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                        'fbhe_5_2c_ea_mean':[float()],'fbhe_5_2c_ea_stdev':[float()],'fbhe_5_2d_ea_mean':[float()],'fbhe_5_2d_ea_stdev':[float()],'fbhe_5_2e_ea_mean':[float()],'fbhe_5_2e_ea_stdev':[float()],
                        'fbhe_5_3c_ea_mean':[float()],'fbhe_5_3c_ea_stdev':[float()],'fbhe_5_3d_ea_mean':[float()],'fbhe_5_3d_ea_stdev':[float()],'fbhe_5_3e_ea_mean':[float()],'fbhe_5_3e_ea_stdev':[float()],
                        'fbhe_5_4c_ea_mean':[float()],'fbhe_5_4c_ea_stdev':[float()],'fbhe_5_4d_ea_mean':[float()],'fbhe_5_4d_ea_stdev':[float()],'fbhe_5_4e_ea_mean':[float()],'fbhe_5_4e_ea_stdev':[float()],
-                       'fbhe_5_5c_ea_mean':[float()],'fbhe_5_5c_ea_stdev':[float()],'fbhe_5_5d_ea_mean':[float()],'fbhe_5_5d_ea_stdev':[float()],'fbhe_5_5e_ea_mean':[float()],'fbhe_5_5e_ea_stdev':[float()]
+                       'fbhe_5_5c_ea_mean':[float()],'fbhe_5_5c_ea_stdev':[float()],'fbhe_5_5d_ea_mean':[float()],'fbhe_5_5d_ea_stdev':[float()],'fbhe_5_5e_ea_mean':[float()],'fbhe_5_5e_ea_stdev':[float()],
+                       'opp_fbhe_mean':None,'opp_fbhe1_mean':None,'opp_fbhe2_mean':None,'opp_fbhe3_mean':None,'opp_fbhe4_mean':None,'opp_fbhe5_mean':None,
+                       'opp_fbhe_stdev':None,'opp_fbhe1_stdev':None,'opp_fbhe2_stdev':None,'opp_fbhe3_stdev':None,'opp_fbhe4_stdev':None,'opp_fbhe5_stdev':None,
+                       'opp_fbhe_1_1c_mean':[float()],'opp_fbhe_1_1c_stdev':[float()],'opp_fbhe_1_1d_mean':[float()],'opp_fbhe_1_1d_stdev':[float()],'opp_fbhe_1_1e_mean':[float()],'opp_fbhe_1_1e_stdev':[float()],
+                       'opp_fbhe_1_2c_mean':[float()],'opp_fbhe_1_2c_stdev':[float()],'opp_fbhe_1_2d_mean':[float()],'opp_fbhe_1_2d_stdev':[float()],'opp_fbhe_1_2e_mean':[float()],'opp_fbhe_1_2e_stdev':[float()],
+                       'opp_fbhe_1_3c_mean':[float()],'opp_fbhe_1_3c_stdev':[float()],'opp_fbhe_1_3d_mean':[float()],'opp_fbhe_1_3d_stdev':[float()],'opp_fbhe_1_3e_mean':[float()],'opp_fbhe_1_3e_stdev':[float()],
+                       'opp_fbhe_1_4c_mean':[float()],'opp_fbhe_1_4c_stdev':[float()],'opp_fbhe_1_4d_mean':[float()],'opp_fbhe_1_4d_stdev':[float()],'opp_fbhe_1_4e_mean':[float()],'opp_fbhe_1_4e_stdev':[float()],
+                       'opp_fbhe_1_5c_mean':[float()],'opp_fbhe_1_5c_stdev':[float()],'opp_fbhe_1_5d_mean':[float()],'opp_fbhe_1_5d_stdev':[float()],'opp_fbhe_1_5e_mean':[float()],'opp_fbhe_1_5e_stdev':[float()],
+                       'opp_fbhe_3_1c_mean':[float()],'opp_fbhe_3_1c_stdev':[float()],'opp_fbhe_3_1d_mean':[float()],'opp_fbhe_3_1d_stdev':[float()],'opp_fbhe_3_1e_mean':[float()],'opp_fbhe_3_1e_stdev':[float()],
+                       'opp_fbhe_3_2c_mean':[float()],'opp_fbhe_3_2c_stdev':[float()],'opp_fbhe_3_2d_mean':[float()],'opp_fbhe_3_2d_stdev':[float()],'opp_fbhe_3_2e_mean':[float()],'opp_fbhe_3_2e_stdev':[float()],
+                       'opp_fbhe_3_3c_mean':[float()],'opp_fbhe_3_3c_stdev':[float()],'opp_fbhe_3_3d_mean':[float()],'opp_fbhe_3_3d_stdev':[float()],'opp_fbhe_3_3e_mean':[float()],'opp_fbhe_3_3e_stdev':[float()],
+                       'opp_fbhe_3_4c_mean':[float()],'opp_fbhe_3_4c_stdev':[float()],'opp_fbhe_3_4d_mean':[float()],'opp_fbhe_3_4d_stdev':[float()],'opp_fbhe_3_4e_mean':[float()],'opp_fbhe_3_4e_stdev':[float()],
+                       'opp_fbhe_3_5c_mean':[float()],'opp_fbhe_3_5c_stdev':[float()],'opp_fbhe_3_5d_mean':[float()],'opp_fbhe_3_5d_stdev':[float()],'opp_fbhe_3_5e_mean':[float()],'opp_fbhe_3_5e_stdev':[float()],
+                       'opp_fbhe_5_1c_mean':[float()],'opp_fbhe_5_1c_stdev':[float()],'opp_fbhe_5_1d_mean':[float()],'opp_fbhe_5_1d_stdev':[float()],'opp_fbhe_5_1e_mean':[float()],'opp_fbhe_5_1e_stdev':[float()],
+                       'opp_fbhe_5_2c_mean':[float()],'opp_fbhe_5_2c_stdev':[float()],'opp_fbhe_5_2d_mean':[float()],'opp_fbhe_5_2d_stdev':[float()],'opp_fbhe_5_2e_mean':[float()],'opp_fbhe_5_2e_stdev':[float()],
+                       'opp_fbhe_5_3c_mean':[float()],'opp_fbhe_5_3c_stdev':[float()],'opp_fbhe_5_3d_mean':[float()],'opp_fbhe_5_3d_stdev':[float()],'opp_fbhe_5_3e_mean':[float()],'opp_fbhe_5_3e_stdev':[float()],
+                       'opp_fbhe_5_4c_mean':[float()],'opp_fbhe_5_4c_stdev':[float()],'opp_fbhe_5_4d_mean':[float()],'opp_fbhe_5_4d_stdev':[float()],'opp_fbhe_5_4e_mean':[float()],'opp_fbhe_5_4e_stdev':[float()],
+                       'opp_fbhe_5_5c_mean':[float()],'opp_fbhe_5_5c_stdev':[float()],'opp_fbhe_5_5d_mean':[float()],'opp_fbhe_5_5d_stdev':[float()],'opp_fbhe_5_5e_mean':[float()],'opp_fbhe_5_5e_stdev':[float()],                      
+                       'opp_fbhe_1_1c_ea_mean':[float()],'opp_fbhe_1_1c_ea_stdev':[float()],'opp_fbhe_1_1d_ea_mean':[float()],'opp_fbhe_1_1d_ea_stdev':[float()],'opp_fbhe_1_1e_ea_mean':[float()],'opp_fbhe_1_1e_ea_stdev':[float()],
+                       'opp_fbhe_1_2c_ea_mean':[float()],'opp_fbhe_1_2c_ea_stdev':[float()],'opp_fbhe_1_2d_ea_mean':[float()],'opp_fbhe_1_2d_ea_stdev':[float()],'opp_fbhe_1_2e_ea_mean':[float()],'opp_fbhe_1_2e_ea_stdev':[float()],
+                       'opp_fbhe_1_3c_ea_mean':[float()],'opp_fbhe_1_3c_ea_stdev':[float()],'opp_fbhe_1_3d_ea_mean':[float()],'opp_fbhe_1_3d_ea_stdev':[float()],'opp_fbhe_1_3e_ea_mean':[float()],'opp_fbhe_1_3e_ea_stdev':[float()],
+                       'opp_fbhe_1_4c_ea_mean':[float()],'opp_fbhe_1_4c_ea_stdev':[float()],'opp_fbhe_1_4d_ea_mean':[float()],'opp_fbhe_1_4d_ea_stdev':[float()],'opp_fbhe_1_4e_ea_mean':[float()],'opp_fbhe_1_4e_ea_stdev':[float()],
+                       'opp_fbhe_1_5c_ea_mean':[float()],'opp_fbhe_1_5c_ea_stdev':[float()],'opp_fbhe_1_5d_ea_mean':[float()],'opp_fbhe_1_5d_ea_stdev':[float()],'opp_fbhe_1_5e_ea_mean':[float()],'opp_fbhe_1_5e_ea_stdev':[float()],
+                       'opp_fbhe_3_1c_ea_mean':[float()],'opp_fbhe_3_1c_ea_stdev':[float()],'opp_fbhe_3_1d_ea_mean':[float()],'opp_fbhe_3_1d_ea_stdev':[float()],'opp_fbhe_3_1e_ea_mean':[float()],'opp_fbhe_3_1e_ea_stdev':[float()],
+                       'opp_fbhe_3_2c_ea_mean':[float()],'opp_fbhe_3_2c_ea_stdev':[float()],'opp_fbhe_3_2d_ea_mean':[float()],'opp_fbhe_3_2d_ea_stdev':[float()],'opp_fbhe_3_2e_ea_mean':[float()],'opp_fbhe_3_2e_ea_stdev':[float()],
+                       'opp_fbhe_3_3c_ea_mean':[float()],'opp_fbhe_3_3c_ea_stdev':[float()],'opp_fbhe_3_3d_ea_mean':[float()],'opp_fbhe_3_3d_ea_stdev':[float()],'opp_fbhe_3_3e_ea_mean':[float()],'opp_fbhe_3_3e_ea_stdev':[float()],
+                       'opp_fbhe_3_4c_ea_mean':[float()],'opp_fbhe_3_4c_ea_stdev':[float()],'opp_fbhe_3_4d_ea_mean':[float()],'opp_fbhe_3_4d_ea_stdev':[float()],'opp_fbhe_3_4e_ea_mean':[float()],'opp_fbhe_3_4e_ea_stdev':[float()],
+                       'opp_fbhe_3_5c_ea_mean':[float()],'opp_fbhe_3_5c_ea_stdev':[float()],'opp_fbhe_3_5d_ea_mean':[float()],'opp_fbhe_3_5d_ea_stdev':[float()],'opp_fbhe_3_5e_ea_mean':[float()],'opp_fbhe_3_5e_ea_stdev':[float()],
+                       'opp_fbhe_5_1c_ea_mean':[float()],'opp_fbhe_5_1c_ea_stdev':[float()],'opp_fbhe_5_1d_ea_mean':[float()],'opp_fbhe_5_1d_ea_stdev':[float()],'opp_fbhe_5_1e_ea_mean':[float()],'opp_fbhe_5_1e_ea_stdev':[float()],
+                       'opp_fbhe_5_2c_ea_mean':[float()],'opp_fbhe_5_2c_ea_stdev':[float()],'opp_fbhe_5_2d_ea_mean':[float()],'opp_fbhe_5_2d_ea_stdev':[float()],'opp_fbhe_5_2e_ea_mean':[float()],'opp_fbhe_5_2e_ea_stdev':[float()],
+                       'opp_fbhe_5_3c_ea_mean':[float()],'opp_fbhe_5_3c_ea_stdev':[float()],'opp_fbhe_5_3d_ea_mean':[float()],'opp_fbhe_5_3d_ea_stdev':[float()],'opp_fbhe_5_3e_ea_mean':[float()],'opp_fbhe_5_3e_ea_stdev':[float()],
+                       'opp_fbhe_5_4c_ea_mean':[float()],'opp_fbhe_5_4c_ea_stdev':[float()],'opp_fbhe_5_4d_ea_mean':[float()],'opp_fbhe_5_4d_ea_stdev':[float()],'opp_fbhe_5_4e_ea_mean':[float()],'opp_fbhe_5_4e_ea_stdev':[float()],
+                       'opp_fbhe_5_5c_ea_mean':[float()],'opp_fbhe_5_5c_ea_stdev':[float()],'opp_fbhe_5_5d_ea_mean':[float()],'opp_fbhe_5_5d_ea_stdev':[float()],'opp_fbhe_5_5e_ea_mean':[float()],'opp_fbhe_5_5e_ea_stdev':[float()]
                       }
   player_stats_df =  pd.DataFrame.from_records(player_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")
@@ -461,6 +509,53 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
             #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
             player_df.at[i,fbhe_var_ea] = math.pi*(ellipse_width/2)*(ellipse_height/2)
 
+    # calculate the opponenet's FBHE, overall and from each aone 1 - 5
+    # first, all attempts
+    field = 'opp_fbhe'
+    fbhe_vector = fbhe( ppr_df, p_list[i], 'srv', False)
+    if fbhe_vector[3] >= min_att:
+      player_df.at[i,field] = fbhe_vector[0] 
+      player_df.at[i,field_n] = fbhe_vector[3]
+    # now zone's 1 - 5
+    for j in [1,2,3,4,5]:
+      fbhe_vector = fbhe( ppr_df[ ppr_df['att_src_zone_net']==j ], p_list[i], 'srv', False)
+      field = "opp_fbhe" + str(j)
+      field_n = field + str('_n')
+      #print(f"Field:{field}, fbhe vector:{fbhe_vector}")
+      if fbhe_vector[3] >= min_att:
+        player_df.at[i,field] = fbhe_vector[0] 
+        player_df.at[i,field_n] = fbhe_vector[3]
+
+    # calculate the opponent's FBHE, number, and ellipse area for all 45 serve possibilities
+    for srv_fr in [0,1,2]:
+      fr = int(srv_fr*2 + 1) # fr will be 1,3,5        
+      for srv_to_net in [1,2,3,4,5]:
+        for srv_to_depth in ['c','d','e']:
+          fbhe_var = 'opp_fbhe_'+str(int(fr))+'_'+str(srv_to_net)+srv_to_depth
+          fbhe_var_n = fbhe_var + '_n'
+          fbhe_var_ea = fbhe_var + '_ea'
+          #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
+          # calcualte fbhe
+          #print(f"Filtering ppr_df: Pass Player ={disp_player}, Srv Src Z:{fr}, Pass zone:{srv_to_net}, {srv_to_depth} ")
+          tmp1_df = ppr_df[ (ppr_df['serve_player'] == p_list[i]) & 
+                                    (ppr_df['serve_src_zone_net'] == fr ) & 
+                                    (ppr_df['pass_src_zone_net'] == srv_to_net ) & 
+                                    (ppr_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ]
+          fbhe_vector = fbhe( tmp1_df, p_list[i], 'srv',  False) 
+          #print(f"Attempts = {fbhe_vector[3]}, Min Att: {min_att}")
+          if fbhe_vector[3] >= min_att:
+            # save this value(s), fbhe and attempts
+            player_df.at[i,fbhe_var] = fbhe_vector[0]
+            player_df.at[i,fbhe_var_n] = fbhe_vector[3]
+
+          # now we need to calculate the area of the passes in this serve to/from
+          el_points = pd.concat( [tmp1_df['pass_dest_x'],tmp1_df['pass_dest_y']], axis = 1)
+          el_points = el_points.dropna().values
+          if len(el_points) > min_att:  # must have at least 5 points to calculate the ellipse
+            el_mean, el_width, el_height, el_angle  = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
+            #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
+            player_df.at[i,fbhe_var_ea] = math.pi*(el_width/2)*(el_height/2)
+
                  
 
   ########## end of loop over players
@@ -485,27 +580,27 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   player_stats_df.at[0,"fbhe5_stdev"] = player_df['fbhe5'].std(skipna=True)  
 
   player_stats_df.at[0,"fbhe_behind_mean"] = player_df['fbhe_behind'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_behind_stdev"] = player_df['fbhe_behind'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_behind_stdev"] = player_df['fbhe_behind'].std(skipna=True)
   player_stats_df.at[0,"fbhe_option_mean"] = player_df['fbhe_option'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_option_stdev"] = player_df['fbhe_option'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_option_stdev"] = player_df['fbhe_option'].std(skipna=True)
   player_stats_df.at[0,"fbhe_tempo_mean"] = player_df['fbhe_tempo'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_tempo_stdev"] = player_df['fbhe_tempo'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_tempo_stdev"] = player_df['fbhe_tempo'].std(skipna=True)
 
   player_stats_df.at[0,"fbhe_poke_mean"] = player_df['fbhe_poke'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_poke_stdev"] = player_df['fbhe_poke'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_poke_stdev"] = player_df['fbhe_poke'].std(skipna=True)
   player_stats_df.at[0,"fbhe_shoot_mean"] = player_df['fbhe_shoot'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_shoot_stdev"] = player_df['fbhe_shoot'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_shoot_stdev"] = player_df['fbhe_shoot'].std(skipna=True)
   player_stats_df.at[0,"fbhe_bang_mean"] = player_df['fbhe_bang'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_bang_stdev"] = player_df['fbhe_bang'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_bang_stdev"] = player_df['fbhe_bang'].std(skipna=True)
 
   player_stats_df.at[0,"fbhe_oos_mean"] = player_df['fbhe_oos'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_oos_stdev"] = player_df['fbhe_oos'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_oos_stdev"] = player_df['fbhe_oos'].std(skipna=True)
   player_stats_df.at[0,"fbhe_insys_mean"] = player_df['fbhe_insys'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_insys_stdev"] = player_df['fbhe_insys'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_insys_stdev"] = player_df['fbhe_insys'].std(skipna=True)
   player_stats_df.at[0,"fbhe_oos_per_mean"] = player_df['fbhe_oos_per'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_oos_per_stdev"] = player_df['fbhe_oos_per'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_oos_per_stdev"] = player_df['fbhe_oos_per'].std(skipna=True)
   player_stats_df.at[0,"fbhe_insys_per_mean"] = player_df['fbhe_insys_per'].mean(skipna=True)
-  player_stats_df.at[0,"fbhe1_insys_per_stdev"] = player_df['fbhe_insys_per'].std(skipna=True)
+  player_stats_df.at[0,"fbhe_insys_per_stdev"] = player_df['fbhe_insys_per'].std(skipna=True)
 
   player_stats_df.at[0,"fbhe_srv1_mean"] = player_df['fbhe_srv1'].mean(skipna=True)
   player_stats_df.at[0,"fbhe_srv1_stdev"] = player_df['fbhe_srv1'].std(skipna=True)
@@ -534,6 +629,19 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   player_stats_df.at[0,"srv5_fbhe_mean"] = player_df['srv5_fbhe'].mean(skipna=True)
   player_stats_df.at[0,"srv5_fbhe_stdev"] = player_df['srv5_fbhe'].std(skipna=True) 
 
+  player_stats_df.at[0,"opp_fbhe_mean"] = player_df['opp_fbhe'].mean(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe_stdev"] = player_df['opp_fbhe'].std(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe1_mean"] = player_df['opp_fbhe1'].mean(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe1_stdev"] = player_df['opp_fbhe1'].std(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe2_mean"] = player_df['opp_fbhe2'].mean(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe2_stdev"] = player_df['opp_fbhe2'].std(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe3_mean"] = player_df['opp_fbhe3'].mean(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe3_stdev"] = player_df['opp_fbhe3'].std(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe4_mean"] = player_df['opp_fbhe4'].mean(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe4_stdev"] = player_df['opp_fbhe4'].std(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe5_mean"] = player_df['opp_fbhe5'].mean(skipna=True) 
+  player_stats_df.at[0,"opp_fbhe5_stdev"] = player_df['opp_fbhe5'].std(skipna=True) 
+
   # Time to calcualte stats FBHE for all 45 zones: from 1,3,5 and to 1-5, C,D,E
   for srv_fr in [0,1,2]:
     fr = int(srv_fr*2 + 1) # fr will be 1,3,5
@@ -551,6 +659,20 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
         player_stats_df.at[0,fbhe_var_sd] = player_df[fbhe_var].std(skipna=True)  
         player_stats_df.at[0,fbhe_var_ea_mean] = player_df[fbhe_var_ea].mean(skipna=True)
         player_stats_df.at[0,fbhe_var_ea_sd] = player_df[fbhe_var_ea].std(skipna=True)   
+
+        # second time thry for the opponent;s stats (stat's when we are serving), opp_fbhe_...
+        fbhe_var= 'opp_fbhe_'+str(int(fr))+'_'+str(srv_to_net)+srv_to_depth
+        fbhe_var_ea = fbhe_var + '_ea'
+        fbhe_var_mean = fbhe_var + '_mean'
+        fbhe_var_ea_mean = fbhe_var_ea + '_mean'
+        fbhe_var_sd = fbhe_var+'_stdev'
+        fbhe_var_ea_sd = fbhe_var_ea + '_stdev'
+        #print(f"calc_player_data: fbhe variable is : {fbhe_var}")
+        # calcualte mean and stdev
+        player_stats_df.at[0,fbhe_var_mean] = player_df[fbhe_var].mean(skipna=True)
+        player_stats_df.at[0,fbhe_var_sd] = player_df[fbhe_var].std(skipna=True)  
+        player_stats_df.at[0,fbhe_var_ea_mean] = player_df[fbhe_var_ea].mean(skipna=True)
+        player_stats_df.at[0,fbhe_var_ea_sd] = player_df[fbhe_var_ea].std(skipna=True) 
 
         
   # now lets store our player_data file back as a csv file in the database
