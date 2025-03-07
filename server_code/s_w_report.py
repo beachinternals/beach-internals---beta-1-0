@@ -290,27 +290,28 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
         var_base = c_row['var']
         for i in [1,3,5]:
           var1 = var_base.replace('#',str(i))
-          print(f"Variable, in I loop over serve source {var1}")
+          #print(f"Variable, in I loop over serve source {var1}")
           for j in [1,2,3,4,5]:
             var2 = var1.replace('&',str(j))
-            print(f"Variable, in J loop over serve dest net {var2}")
+            #print(f"Variable, in J loop over serve dest net {var2}")
             for k in ['c', 'd', 'e']:
               variable = var2.replace('$',k)
-              print(f"Variable, in K loop over serve dest depth {variable}")
+              #print(f"Variable, in K loop over serve dest depth {variable}")
               var_mean = variable + '_mean'
               var_sd = variable + '_stdev'
-              #print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
+
               crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
+              print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}, Critical Value : {crit_value}, player value: {pdata_df.at[p,variable]}")
               
               # now, make the comparison and add the line to the new sw_df
               if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
                 # then add a row to the sw_df dataframe
-                #print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}")
+                print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}, Variable: {variable}")
                 sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']
                 sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
                 sw_df_new.at[0,'Category'] = c_row['category']
                 sw_df_new.at[0,'Section'] = c_row['section']
-                sw_df_new.at[0,'Description'] = c_row['description']
+                sw_df_new.at[0,'Description'] = c_row['description'] + ' Serves from '+str(i)+" to "+str(j)+str(k)
                 sw_df_new.at[0,'Var Name'] = c_row['var']
                 sw_df_new.at[0,'Var Desc'] = c_row['var_desc']
                 sw_df_new.at[0,'Var Value'] = "{:.2f}".format(pdata_df.at[p,variable])
@@ -327,8 +328,8 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
 
                 sw_df_new.at[0,'Var Percentile'] = "{:.0%}".format(sw_df_new.at[0,'Var Percentile'])
         
-        # now add this to the sw dataframe
-        sw_df = pd.concat([sw_df,sw_df_new])
+                # now add this to the sw dataframe
+                sw_df = pd.concat([sw_df,sw_df_new])
               
       else:  # these are the 'normal' variable comparisons
         # start making comparisons
@@ -336,15 +337,14 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
         var_mean = variable + '_mean'
         var_sd = variable + '_stdev'
 
-        #print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
-      
+        print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
         crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
 
         #print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")
         # added an 'or' for a 0 criteria, implying that this line should be included. This is used to have the actual value of a variable show up in the s_w table
         if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
           # then add a row to the sw_df dataframe
-          #print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}")
+          print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}")
           sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']
           sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
           sw_df_new.at[0,'Category'] = c_row['category']
@@ -367,9 +367,9 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
           sw_df_new.at[0,'Var Percentile'] = "{:.0%}".format(sw_df_new.at[0,'Var Percentile'])
           #print(sw_df_new)
 
-        #print(f"Len of sw_df: {len(sw_df)}")
-        sw_df = pd.concat([sw_df,sw_df_new])
-        #print(f"updated sw df:{sw_df}, p:{p}")
+          #print(f"Len of sw_df: {len(sw_df)}")
+          sw_df = pd.concat([sw_df,sw_df_new])
+          #print(f"updated sw df:{sw_df}, p:{p}")
     
     # save the dataframe into s_w in master_player
     for mpair_row in app_tables.master_pair.search(
