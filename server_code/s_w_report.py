@@ -299,7 +299,7 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
               var_sd = variable + '_stdev'
 
               crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
-              print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}, Critical Value : {crit_value}, player value: {pdata_df.at[p,variable]}")
+              #print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}, Critical Value : {crit_value}, player value: {pdata_df.at[p,variable]}")
               
               # now, make the comparison and add the line to the new sw_df
               if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
