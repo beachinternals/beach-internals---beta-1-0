@@ -35,30 +35,42 @@ def pair_filter(ppr_df, disp_pair):
 def pair_team_filter(ppr_df, disp_team):
   # filter a ppr dataframe down to all plays with the pair palyer 1 and 2
   disp_team = disp_team.strip()
-  print(f"Pair Team, disp team: {disp_team}")
-  tmp_df = ppr_df[ ppr_df['teama'].str.contains(disp_team) | ppr_df['teama'].str.contains(disp_team) ]
-  print(f"pair team: {tmp_df}")
-  return tmp_df
+  print(f"Pair Team, disp team: {disp_team}, ppr_df shape: {ppr_df.shape[0]}")
+  tmp_df1 = ppr_df[ ppr_df['teama'].str.contains(disp_team, case=True, na=False) ]
+  #print(f"pair team1: {tmp_df1.shape[0]}")
+  tmp_df2 = ppr_df[ ppr_df['teamb'].str.contains(disp_team, case=True, na=False) ]
+  #print(f"pair team2: {tmp_df2.shape[0]}")
+  return pd.concat([tmp_df1,tmp_df2])
 
 #------------------------------------------------------------------
 #           Pair Team Filter - limit data to only points with disp_team
 #------------------------------------------------------------------
-def pair_team_list(ppr_df):
+def pair_team_list(ppr_df, disp_team):
   # return a df of the pair and player's that are in the passed df
   # format of returned df: [ 'team', 'player1', 'player2' ]
 
-  # first, get a unqiue list of teama pairs 
-  tmp_df_a = ppr_df['teama']
-  tmp_df_a = tmp_df_a.unique()
-  lista = tmp_df_a[['teama','player_a1','player_a2']]
-  lista = lista.rename(columns={'teama':'team', 'player_a1':'player1','player_a2':'player2'}, inplace=True)
-  tmp_df_b = ppr_df['teamb'].unique()
-  listb = tmp_df_b[['teamb','player_b1','player_b2']]
-  listb = listb.rename(columns={'teamb':'team', 'player_b1':'player1','player_b2':'player2'}, inplace=True)
-  pair_list = pd.concat(lista, listb)
-  pair_list = pair_list['team'].unique()
+    # extract team a and team b lists
+  team_list_a = ppr_df[['teama','player_a1','player_a2']]
+  # now limit to just this team
+  team_list_a = team_list_a[ team_list_a['teama'].str.contains(disp_team.strip()+' ', case=True, na=False)]
+  team_list_a = team_list_a.rename( columns={'teama':'team', 'player_a1':'player1', 'player_a2':'player2'} )
+  #print(f"Team List A: {team_list_a}")
   
-  return pair_list
+  team_list_b = ppr_df[['teamb','player_b1','player_b2']]
+  team_list_b = team_list_b[ team_list_b['teamb'].str.contains(disp_team.strip()+' ', case=True, na=False)]
+  team_list_b = team_list_b.rename( columns={'teamb':'team', 'player_b1':'player1','player_b2':'player2'} )
+  #print(f"Team List B: {team_list_b}")
+  
+  team_list = pd.concat([team_list_a,team_list_b])
+  #print(f"Pair List Concat:{team_list}")
+  
+  team_list = team_list.drop_duplicates()
+  #print(f"Pair List Unique:{team_list}")
+  
+  team_list = team_list.sort_values(by=['team'])
+  #print(f"Pair List Sort:{team_list}")
+  
+  return team_list
 
 
 #------------------------------------------------------------------

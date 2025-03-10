@@ -92,7 +92,7 @@ def update_btd_characteristics( file ):
   #print(f"how are we doing?  Actions: {num_actions} Serves: {num_serves}, % Srv Players: {per_srv_players} % Coordiantes {per_coord} % Acion Players {per_action_players} Completion Score: {comp_score}")
   #print("  ")
 
-    # now find the four or more) players in the file
+  # now find the four or more) players in the file
   players_unique = players_df.player.unique()
   players_unique.sort()
   num_players = players_unique.shape[0]
