@@ -598,7 +598,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
-  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts', 'URL','Aces','Errors'],
+  df_dict = {' ':['FBHE','FBSO','Opp Kills','Opp Errors','Attempts', 'URL','Service Aces','Service Errors'],
              'All':[0,0,0,0,0,' ',0,0],
              'Zone 1':[0,0,0,0,0,' ',0,0],
              "Zone 3":[0,0,0,0,0,' ',0,0],

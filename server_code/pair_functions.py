@@ -30,6 +30,36 @@ def pair_filter(ppr_df, disp_pair):
   return tmp_df
 
 #------------------------------------------------------------------
+#           Pair Team Filter - limit data to only points with disp_team
+#------------------------------------------------------------------
+def pair_team_filter(ppr_df, disp_team):
+  # filter a ppr dataframe down to all plays with the pair palyer 1 and 2
+  disp_team = disp_team.strip()
+  tmp_df = ppr_df[ (ppr_df['teama'].str.strip().str[0] == disp_team) |
+                   (ppr_df['teamb'].str.strip().str[0] == disp_team) 
+                  ]
+  return tmp_df
+
+#------------------------------------------------------------------
+#           Pair Team Filter - limit data to only points with disp_team
+#------------------------------------------------------------------
+def pair_team_list(ppr_df):
+  # return a df of the pair and player's that are in the passed df
+
+  # first, get a unqiue list of teama pairs 
+  tmp_df_a = ppr_df['teama'].unique()
+  lista = tmp_df_a[['teama','player_a1','player_a2']]
+  lista = lista.rename(columns={'teama':'team', 'player_a1':'player1','player_a2':'player2'}, inplace=True)
+  tmp_df_b = ppr_df['teamb'].unique()
+  listb = tmp_df_a[['teamb','player_b1','player_b2']]
+  listb = listb.rename(columns={'teamb':'team', 'player_b1':'player1','player_b2':'player2'}, inplace=True)
+  pair_list = pd.concat(lista, listb)
+  pair_list = pair_list['team'].unique()
+  
+  return pair_list
+
+
+#------------------------------------------------------------------
 #           Player Filter - limit data to only points with disp_pair 
 #------------------------------------------------------------------
 def player_filter(ppr_df, disp_player):

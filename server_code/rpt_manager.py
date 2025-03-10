@@ -531,6 +531,7 @@ def rpt_mgr_generate_background():
                         #print(f"rpt_mgr: Serve to / from arrays: Srv_fr:{srv_fr}, serve to 1,2,3,4,5:{srv_to_1},{srv_to_2},{srv_to_3},{srv_to_4},{srv_to_5}")
 
                         # now call the scouting report for each serve strategy:
+                        print(f"reprot manager: Create scouting pdf reports, scout_srv _strategy, explain text: {rpt_print['explain_text']}, title: {rpt_print['box1_title']}")
                         pdf1 = create_scouting_pdf_reports(report,
                                       rpt_row['rpt_form'], 
                                       pair_r['league'],
@@ -548,7 +549,7 @@ def rpt_mgr_generate_background():
                                       )
 
                         # now write this to the google drive
-                        file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
+                        #file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
             
                         # now, need to merge this report with the next one
                         if full_rpt_pdf:
@@ -568,6 +569,7 @@ def rpt_mgr_generate_background():
                       srv_to_3 = [False,False,False]
                       srv_to_4 = [False,False,False]
                       srv_to_5 = [False,False,False]
+                      print(f"report manager: Create scouting pdf reports, explain text: {rpt_print['explain_text']}, title: {rpt_print['box1_title']}")
                       pdf1 = create_scouting_pdf_reports(report,
                                       rpt_row['rpt_form'], 
                                       pair_r['league'],
