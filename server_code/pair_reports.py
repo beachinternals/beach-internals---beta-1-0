@@ -722,9 +722,9 @@ def pair_summary_rpt(disp_league, disp_gender, disp_year,
   stat_table = pd.DataFrame.from_dict( stat_dict )
 
   # serve knock out
-  stat_table.at[1,'p1'] = (pts1s_df.at[0,'p_tsa'] + pts1s_df.at[0,'p_bad_pass'])/(pts1s_df.at[0,'p_serves'])
+  stat_table.at[1,'p1'] = (pts1s_df.at[0,'p_tsa'] + pts1s_df.at[0,'o_bad_pass'])/(pts1s_df.at[0,'p_serves'])
   stat_table.at[1,'p1']  = str('{:0.0%}'.format(stat_table.at[1,'p1']))
-  stat_table.at[1,'p2'] = (pts2s_df.at[0,'p_tsa'] + pts2s_df.at[0,'p_bad_pass'])/(pts2s_df.at[0,'p_serves'])
+  stat_table.at[1,'p2'] = (pts2s_df.at[0,'p_tsa'] + pts2s_df.at[0,'o_bad_pass'])/(pts2s_df.at[0,'p_serves'])
   stat_table.at[1,'p2']  = str('{:0.0%}'.format(stat_table.at[1,'p2']))
 
   # Aces
@@ -1246,6 +1246,9 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
       perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
       perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
       perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
+      perf_table.at[index,'FBHE-All'] = float('{:.3f}'.format(perf_table.at[index,'FBHE-All']))
+      perf_table.at[index,'FBHE-Recent'] = float('{:.3f}'.format(perf_table.at[index,'FBHE-Recent']))
+      perf_table.at[index,'FBHE-Diff'] = float('{:.3f}'.format(perf_table.at[index,'FBHE-Diff']))
 
       # count the points for this player within this pair:
       player_pt_totals_all = player_pt_total(pair_ppr_df_all, player)
@@ -1253,33 +1256,50 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
       
       # calculate the Point Differentials
       # point totals shouldbe (points won - points lost)/total points
-      perf_table.at[index,'Points-All'] = ( (player_pt_totals_filter['p_tsa'] + 
-                                             player_pt_totals_filter['p_fbk'] + 
-                                             player_pt_totals_filter['p_tk_s'] + 
-                                             player_pt_totals_filter['p_tk_r'] + 
-                                             player_pt_totals_filter['o_tse'] + 
-                                             player_pt_totals_filter['o_fbe'] + 
-                                             player_pt_totals_filter['o_te_s'] + 
-                                             player_pt_totals_filter['o_te_r'] +                                             
-                                            ) - 
-                                            (player_pt_totals_filter['o_tsa'] + 
-                                             player_pt_totals_filter['o_fbk'] + 
-                                             player_pt_totals_filter['o_tk_s'] + 
-                                             player_pt_totals_filter['o_tk_r'] + 
-                                             player_pt_totals_filter['p_tse'] + 
-                                             player_pt_totals_filter['p_fbe'] + 
-                                             player_pt_totals_filter['p_te_s'] + 
-                                             player_pt_totals_filter['p_te_r'] ) ) /   
-                                            ( player_pt_totals_filter['points_total']) 
-      perf_table.at[index,'Points-Recent'] = fbhe_vector_filter[0]
-      perf_table.at[index,'Points-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
+      perf_table.at[index,'Points-All'] = ( (player_pt_totals_all.at[0,'p_tsa'] + 
+                                             player_pt_totals_all.at[0,'p_fbk'] + 
+                                             player_pt_totals_all.at[0,'p_tk_s'] + 
+                                             player_pt_totals_all.at[0,'p_tk_r'] + 
+                                             player_pt_totals_all.at[0,'o_tse'] + 
+                                             player_pt_totals_all.at[0,'o_fbe'] + 
+                                             player_pt_totals_all.at[0,'o_te_s'] + 
+                                             player_pt_totals_all.at[0,'o_te_r'] ) - 
+                                            (player_pt_totals_all.at[0,'o_tsa'] + 
+                                             player_pt_totals_all.at[0,'o_fbk'] + 
+                                             player_pt_totals_all.at[0,'o_tk_s'] + 
+                                             player_pt_totals_all.at[0,'o_tk_r'] + 
+                                             player_pt_totals_all.at[0,'p_tse'] + 
+                                             player_pt_totals_all.at[0,'p_fbe'] + 
+                                             player_pt_totals_all.at[0,'p_te_s'] + 
+                                             player_pt_totals_all.at[0,'p_te_r'] ) )  /  ( player_pt_totals_all.at[0,'points_total']) 
+      perf_table.at[index,'Points-Recent'] = ( (player_pt_totals_filter.at[0,'p_tsa'] + 
+                                             player_pt_totals_filter.at[0,'p_fbk'] + 
+                                             player_pt_totals_filter.at[0,'p_tk_s'] + 
+                                             player_pt_totals_filter.at[0,'p_tk_r'] + 
+                                             player_pt_totals_filter.at[0,'o_tse'] + 
+                                             player_pt_totals_filter.at[0,'o_fbe'] + 
+                                             player_pt_totals_filter.at[0,'o_te_s'] + 
+                                             player_pt_totals_filter.at[0,'o_te_r'] ) - 
+                                            (player_pt_totals_filter.at[0,'o_tsa'] + 
+                                             player_pt_totals_filter.at[0,'o_fbk'] + 
+                                             player_pt_totals_filter.at[0,'o_tk_s'] + 
+                                             player_pt_totals_filter.at[0,'o_tk_r'] + 
+                                             player_pt_totals_filter.at[0,'p_tse'] + 
+                                             player_pt_totals_filter.at[0,'p_fbe'] + 
+                                             player_pt_totals_filter.at[0,'p_te_s'] + 
+                                             player_pt_totals_filter.at[0,'p_te_r'] ) )  /  ( player_pt_totals_filter.at[0,'points_total']) 
+      perf_table.at[index,'Points-Diff'] = perf_table.at[index,'Points-Recent']-perf_table.at[index,'Points-All']
+      perf_table.at[index,'Points-All'] = str('{:.1%}'.format(perf_table.at[index,'Points-All']))
+      perf_table.at[index,'Points-Recent'] = str('{:.1%}'.format(perf_table.at[index,'Points-Recent']))
+      perf_table.at[index,'Points-Diff'] = str('{:.2%}'.format(perf_table.at[index,'Points-Diff']))
 
       # calculate knock out numbers
-      fbhe_vector_all = fbhe(pair_ppr_df_all,player,'att', False)
-      fbhe_vector_filter = fbhe(pair_ppr_df_filter,player,'att', False)
-      perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
-      perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
-      perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
+      perf_table.at[index,'KnockOut-All'] = (player_pt_totals_all.at[0,'p_tsa']+player_pt_totals_all.at[0,'o_bad_pass'] )/player_pt_totals_all.at[0,'p_serves']
+      perf_table.at[index,'KnockOut-Recent'] = (player_pt_totals_filter.at[0,'p_tsa']+player_pt_totals_filter.at[0,'o_bad_pass'] )/player_pt_totals_filter.at[0,'p_serves']
+      perf_table.at[index,'KnockOut-Diff'] = perf_table.at[index,'KnockOut-Recent']-perf_table.at[index,'KnockOut-All']
+      perf_table.at[index,'KnockOut-All'] = str('{:.1%}'.format(perf_table.at[index,'KnockOut-All']))
+      perf_table.at[index,'KnockOut-Recent'] = str('{:.1%}'.format(perf_table.at[index,'KnockOut-Recent']))
+      perf_table.at[index,'KnockOut-Diff'] = str('{:.2%}'.format(perf_table.at[index,'KnockOut-Diff']))
 
       # calculate the passing percent
       # percent of insystem passes
@@ -1287,7 +1307,7 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
       oos_vector_filter = count_out_of_system(pair_ppr_df_filter,player,'pass')
       perf_table.at[index,'Passing-All'] = str('{:.1%}'.format(oos_vector_all[1]))
       perf_table.at[index,'Passing-Recent'] = str('{:.1%}'.format(oos_vector_filter[1]))
-      perf_table.at[index,'Passing-Diff'] = str('{:.1%}'.format(oos_vector_filter[1] - fbhe_vector_all[1])
+      perf_table.at[index,'Passing-Diff'] = str('{:.2%}'.format(oos_vector_filter[1] - fbhe_vector_all[1]))
 
       # done with this row, increment the index and go back to the loop over player with the pair
       index = index+1

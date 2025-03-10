@@ -300,12 +300,50 @@ def rpt_mgr_generate_background():
                                           attachments=pdf_list)
         '''
       elif rpt_r['rpt_type'] == 'dashboard':
-        email_status = anvil.email.send(to=rpt_r['emailto'],
-                                          from_address="no-reply",
-                                          cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',                                        
-                                          subject='Beach Internals - Dashboard Summary '+disp_team,
-                                          text='Attached please find the summary report(s) for '+disp_team)
-                                          #attachments=[full_rpt_pdf])
+        # dashboard reports are for a whole team, so we ignore the pair and player entries, ump right o the reports
+
+        # build team string
+        disp_team = rpt_r['team']
+
+        # calculate the folder we will store thiese into
+        pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+        
+        full_rpt_pdf = None
+        pdf_name = disp_pair + ' Summary.pdf'
+        disp_player1, disp_player2 = pair_players(disp_pair)
+        
+        # loop over all the reports for this player
+        for rpt_print in rpt_r['rpts_inc']:
+          #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+          # call pdf report
+          pdf1 = create_dashboard_pdf_reports(rpt_print['function_name'],
+                                    rpt_print['rpt_form'], 
+                                    player_r['league'],
+                                    player_r['gender'],
+                                    player_r['year'],
+                                    disp_team,
+                                    disp_pair,
+                                    disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, rpt_print['explain_text']                                 
+                    )
+            
+          # now, need to merge this report with the next one
+          if full_rpt_pdf:
+            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+            full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+          else:
+            #print('no original pdf file, setting to pdf1')              
+            full_rpt_pdf = pdf1
+            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+
+          
+        # now write this to the google drive
+        file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+
       elif rpt_r['rpt_type'] == 'internals':
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",

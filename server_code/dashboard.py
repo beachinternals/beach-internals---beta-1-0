@@ -15,11 +15,22 @@ from server_functions import *
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
+#-----------------------------------------------
+#
+#       Create the coaches dashboard (and other dashboard) reports
+#
+#-------------------------------------------------
 @anvil.server.callable
-def coaches_dashboard(league_value, disp_team):
+def coaches_dashboard(disp_league, disp_gender, disp_year, 
+                                   disp_team, disp_pair, disp_player, 
+                                   comp_l1_checked, comp_l1,
+                                   comp_l2_check_box, comp_l2,
+                                   comp_l3_check_box, comp_l3,
+                                   date_check_box, start_date, end_date,
+                                   scout, explain_text ):
 
   # unpack the league value
-  disp_league, disp_gender, disp_year = unpack_league(league_value)
+  #disp_league, disp_gender, disp_year = unpack_league(league_value)
 
   # fetch the player data and stats dataframes
   player_data_df, player_stats_df = get_player_data(disp_league, disp_gender, disp_year)
@@ -101,4 +112,4 @@ def coaches_dashboard(league_value, disp_team):
   }
   df_stats_table = pd.DataFrame.to_markdown(player_stats_disp, index=False)
   
-  return df_table1, df_table2, df_table3, df_stats_table
+  return df_table1, df_table2, df_table3

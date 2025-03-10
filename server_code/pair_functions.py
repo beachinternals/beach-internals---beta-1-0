@@ -35,9 +35,9 @@ def pair_filter(ppr_df, disp_pair):
 def pair_team_filter(ppr_df, disp_team):
   # filter a ppr dataframe down to all plays with the pair palyer 1 and 2
   disp_team = disp_team.strip()
-  tmp_df = ppr_df[ (ppr_df['teama'].str.strip().str[0] == disp_team) |
-                   (ppr_df['teamb'].str.strip().str[0] == disp_team) 
-                  ]
+  print(f"Pair Team, disp team: {disp_team}")
+  tmp_df = ppr_df[ ppr_df['teama'].str.contains(disp_team) | ppr_df['teama'].str.contains(disp_team) ]
+  print(f"pair team: {tmp_df}")
   return tmp_df
 
 #------------------------------------------------------------------
@@ -48,7 +48,8 @@ def pair_team_list(ppr_df):
   # format of returned df: [ 'team', 'player1', 'player2' ]
 
   # first, get a unqiue list of teama pairs 
-  tmp_df_a = ppr_df['teama'].unique()
+  tmp_df_a = ppr_df['teama']
+  tmp_df_a = tmp_df_a.unique()
   lista = tmp_df_a[['teama','player_a1','player_a2']]
   lista = lista.rename(columns={'teama':'team', 'player_a1':'player1','player_a2':'player2'}, inplace=True)
   tmp_df_b = ppr_df['teamb'].unique()
