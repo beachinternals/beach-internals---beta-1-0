@@ -1232,71 +1232,48 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
       else:
         player = 'player2'
 
-    # limit the two ppr_df's to just this pair data
-    pair_ppr_df_all = pair_team_filter(ppr_df, pair_row['team'])
-    pair_ppr_df_filter = pair_team_filter(ppr_df_filter, pair_row['team'])
-
-    # calculate the fbhe
-    fbhe_vector_all = fbhe(pair_ppr_df_all,player,'att', False)
-    fbhe_vector_filter = fbhe(pair_ppr_df_filter,player,'att', False)
+      # now store pair and player
+      perf_table.at[index,'pair'] = pair_list['team']
+      perf_table.at[index,'Player'] = pair_list[player]
     
-    
+      # limit the two ppr_df's to just this pair data
+      pair_ppr_df_all = pair_team_filter(ppr_df, pair_row['team'])
+      pair_ppr_df_filter = pair_team_filter(ppr_df_filter, pair_row['team'])
+
+      # calculate the fbhe
+      fbhe_vector_all = fbhe(pair_ppr_df_all,player,'att', False)
+      fbhe_vector_filter = fbhe(pair_ppr_df_filter,player,'att', False)
+      perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
+      perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
+      perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
   
-  # calcualte for player 1 - All attempts
-  fbhe_vector = fbhe(ppr_df,disp_player1,'att',True)
-  p1_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-  p1_table.at[1,'All'] = fbhe_vector[1]  # attacks
-  p1_table.at[2,'All'] = fbhe_vector[2]  # errors
-  p1_table.at[3,'All'] = fbhe_vector[3]  # attempts
-  # ignorinig the confienence interval
-  p1_table.at[4,'All'] = fbhe_vector[5]  # URL
+      # calculate the Point Differentials
+      fbhe_vector_all = fbhe(pair_ppr_df_all,player,'att', False)
+      fbhe_vector_filter = fbhe(pair_ppr_df_filter,player,'att', False)
+      perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
+      perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
+      perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
 
-  # calcualte for player 2 - all attempts
-  fbhe_vector = fbhe(ppr_df,disp_player2,'att',True)
-  p2_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-  p2_table.at[1,'All'] = fbhe_vector[1]  # attacks
-  p2_table.at[2,'All'] = fbhe_vector[2]  # errors
-  p2_table.at[3,'All'] = fbhe_vector[3]  # attempts
-  # ignore confidence internval
-  p2_table.at[4,'All'] = fbhe_vector[5]  # URL
+      # calculate knock out numbers
+      fbhe_vector_all = fbhe(pair_ppr_df_all,player,'att', False)
+      fbhe_vector_filter = fbhe(pair_ppr_df_filter,player,'att', False)
+      perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
+      perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
+      perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
 
-  # calculate the df for the pair
-  pair_table.at[1,'All'] = p1_table.at[1,'All'] + p2_table.at[2,'All']
-  pair_table.at[2,'All'] = p1_table.at[2,'All'] + p2_table.at[2,'All']
-  pair_table.at[3,'All'] = p1_table.at[3,'All'] + p2_table.at[3,'All']
-  pair_table.at[0,'All'] = (pair_table.at[1,'All'] - pair_table.at[2,'All']) / (pair_table.at[3,'All'])
-  pair_table.at[0,'All'] = float("{:.3f}".format(pair_table.at[0,'All']))
+      # calculate the passing percent
+      fbhe_vector_all = fbhe(pair_ppr_df_all,player,'att', False)
+      fbhe_vector_filter = fbhe(pair_ppr_df_filter,player,'att', False)
+      perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
+      perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
+      perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
 
-  # calculate for zones 1 - 5
-  column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5']
-  for i in [1,2,3,4,5]:
-    # calculate for player 1
-    fbhe_vector = fbhe( ppr_df[ppr_df['att_src_zone_net']==i], disp_player1, 'att', True )
-    p1_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-    p1_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
-    p1_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
-    p1_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
-    p1_table.at[4,column[i-1]] = fbhe_vector[5]  # URL
+      # done with this row, increment the index and go back to the loop over player with the pair
+      index = index+1
 
-    # calculate for player 2
-    fbhe_vector = fbhe( ppr_df[ppr_df['att_src_zone_net']==i], disp_player2, 'att', True )
-    p2_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-    p2_table.at[1,column[i-1]] = fbhe_vector[1]  # attacks
-    p2_table.at[2,column[i-1]] = fbhe_vector[2]  # errors
-    p2_table.at[3,column[i-1]] = fbhe_vector[3]  # attempts
-    p2_table.at[4,column[i-1]] = fbhe_vector[5]  # URL
 
-    # calculate for pair
-    pair_table.at[1,column[i-1]] = p1_table.at[1,column[i-1]] + p2_table.at[1,column[i-1]]
-    pair_table.at[2,column[i-1]] = p1_table.at[2,column[i-1]] + p2_table.at[2,column[i-1]]
-    pair_table.at[3,column[i-1]] = p1_table.at[3,column[i-1]] + p2_table.at[3,column[i-1]]
-    pair_table.at[0,column[i-1]] = (pair_table.at[1,column[i-1]] - pair_table.at[2,column[i-1]]) / (pair_table.at[3,column[i-1]])
-    pair_table.at[0,column[i-1]] = float("{:.3f}".format(pair_table.at[0,column[i-1]]))
+  # now, turn it into markdown
+  perf_markdown = pd.DataFrame.to_markdown(perf_table, index = False )
 
-    # So I think we are done:-)
-  # now, turn them all into markup
-  pair_markdown = pd.DataFrame.to_markdown(pair_table, index = False )
-  p1_markdown = pd.DataFrame.to_markdown(p1_table, index = False )
-  p2_markdown = pd.DataFrame.to_markdown(p2_table, index = False )
-  
-  return pair_markdown, p1_markdown, p2_markdown
+  # return 3 markdown's for consistency witht the display format
+  return perf_markdown, '', ''

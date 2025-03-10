@@ -29,6 +29,11 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
   # pass this a query of rows, figures the FBHE for the display player as the attacker
   # initialize the vector
   #
+  # ppr_df - the data frame (ppr format)
+  # disp_player - player striing
+  # play_type: 'att', 'pass', 'srv'
+  # video_yn : True of False is desire the url at item 5.  
+  #
   # 0 = fbhe
   # 1 = kills
   # 2 = errors

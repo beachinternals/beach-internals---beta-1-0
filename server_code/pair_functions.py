@@ -45,13 +45,14 @@ def pair_team_filter(ppr_df, disp_team):
 #------------------------------------------------------------------
 def pair_team_list(ppr_df):
   # return a df of the pair and player's that are in the passed df
+  # format of returned df: [ 'team', 'player1', 'player2' ]
 
   # first, get a unqiue list of teama pairs 
   tmp_df_a = ppr_df['teama'].unique()
   lista = tmp_df_a[['teama','player_a1','player_a2']]
   lista = lista.rename(columns={'teama':'team', 'player_a1':'player1','player_a2':'player2'}, inplace=True)
   tmp_df_b = ppr_df['teamb'].unique()
-  listb = tmp_df_a[['teamb','player_b1','player_b2']]
+  listb = tmp_df_b[['teamb','player_b1','player_b2']]
   listb = listb.rename(columns={'teamb':'team', 'player_b1':'player1','player_b2':'player2'}, inplace=True)
   pair_list = pd.concat(lista, listb)
   pair_list = pair_list['team'].unique()
