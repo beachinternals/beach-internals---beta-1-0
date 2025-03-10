@@ -94,14 +94,14 @@ components_by_slot:
         name: label_11
         properties: {align: right, text: ' End:'}
         type: Label
-      - event_bindings: {change: end_date_picker_change}
-        layout_properties: {grid_position: ''}
-        name: end_date_picker
+      - event_bindings: {change: start_date_picker_change}
+        layout_properties: {grid_position: ',undefined QTEAPP,XXTVKW'}
+        name: start_date_picker
         properties: {}
         type: DatePicker
-      - event_bindings: {change: start_date_picker_change}
-        layout_properties: {grid_position: ''}
-        name: start_date_picker
+      - event_bindings: {change: end_date_picker_change}
+        layout_properties: {grid_position: ',undefined DJFDKL,BITPKX'}
+        name: end_date_picker
         properties: {}
         type: DatePicker
       layout_properties: {grid_position: 'NHPDCD,ZICRJF WEMDGY,FJNIKQ'}

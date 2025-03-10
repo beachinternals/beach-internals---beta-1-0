@@ -1202,6 +1202,7 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
                          date_checked, disp_start_date, disp_end_date
                          ) # limit all data available to the parameters given for comp level 1,2,3 and dates.
   # we should not have all data and filtered data for the disp_team
+  print(f" got ppr data, all: {ppr_df.shape[0]}, filter: {ppr_df_filter.shape[0]}")
 
   # create the output dataframe
   df_dict = {'Pair':str(),
@@ -1224,43 +1225,43 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
   # now start a loop over the pairs in the ppr_df_filter dataframe
   # get a list of pairs in the ppr_df_filter df:
   pair_list = pair_team_list(ppr_df_filter, disp_team)
+  print(f"Pair list size: {pair_list.shape[0]}")
+
   index = 0
   for row in pair_list.itertuples():
     #print(f"Pair List: {pair_list}, Pair Row {row}")
     print(f"pair row in pair list: team: {row.team}, Player 1: {row.player1}, Player 2: {row.player2}")
-    for p_num in [1,2]:
-      if p_num == 1:
-        player = 'player1'
-      else:
-        player = 'player2'
 
-      # now store pair and player
-      perf_table.at[index,'Pair'] = row.team
-      perf_table.at[index,'Player'] = row.player1 if p_num == 1 else row.player2
-      disp_player = row.player1 if p_num == 1 else row.player2
+    # limit the two ppr_df's to just this pair data
+    pair_ppr_df_all = pair_filter(ppr_df, row.team)
+    pair_ppr_df_filter = pair_filter(ppr_df_filter, row.team)
+    print(f" ppr data, filter for: {row.team}, all: {pair_ppr_df_all.shape[0]}, filter: {pair_ppr_df_filter.shape[0]}")
+    if pair_ppr_df_filter.shape[0] > 0:
+      for p_num in [1,2]:
+        # now store pair and player
+        perf_table.at[index,'Pair'] = row.team
+        perf_table.at[index,'Player'] = row.player1 if p_num == 1 else row.player2
+        disp_player = row.player1 if p_num == 1 else row.player2
+
+        # calculate the fbhe
+        fbhe_vector_all = fbhe(pair_ppr_df_all,disp_player,'att', False)
+        fbhe_vector_filter = fbhe(pair_ppr_df_filter,disp_player,'att', False)
+        print(f" FBHE for pair, Pair: {row.team}, for player: {disp_player}, ppr all size: {pair_ppr_df_all.shape[0]}, ppr filter size {pair_ppr_df_filter.shape[0]}, fbhe vector all {fbhe_vector_all}, fbhe vector filter {fbhe_vector_filter} ")
+        print(f"pair_ppr_df_filter pass players: {pair_ppr_df_filter['pass_player']}")
+        perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
+        perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
+        perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
+        perf_table.at[index,'FBHE-All'] = float('{:.3f}'.format(perf_table.at[index,'FBHE-All']))
+        perf_table.at[index,'FBHE-Recent'] = float('{:.3f}'.format(perf_table.at[index,'FBHE-Recent']))
+        perf_table.at[index,'FBHE-Diff'] = float('{:.3f}'.format(perf_table.at[index,'FBHE-Diff']))
+
+        # count the points for this player within this pair:
+        player_pt_totals_all = player_pt_total(pair_ppr_df_all, disp_player)
+        player_pt_totals_filter = player_pt_total(pair_ppr_df_filter, disp_player)
       
-      # limit the two ppr_df's to just this pair data
-      pair_ppr_df_all = pair_filter(ppr_df, row.team)
-      pair_ppr_df_filter = pair_filter(ppr_df_filter, row.team)
-
-      # calculate the fbhe
-      fbhe_vector_all = fbhe(pair_ppr_df_all,disp_player,'att', False)
-      fbhe_vector_filter = fbhe(pair_ppr_df_filter,disp_player,'att', False)
-      print(f" FBHE for pair, Pair: {row.team}, ppr all size: {pair_ppr_df_all.shape[0]}, ppr filter size {pair_ppr_df_filter.shape[0]}, fbhe vector all {fbhe_vector_all}, fbhe vector filter {fbhe_vector_filter} ")
-      perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
-      perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
-      perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
-      perf_table.at[index,'FBHE-All'] = float('{:.3f}'.format(perf_table.at[index,'FBHE-All']))
-      perf_table.at[index,'FBHE-Recent'] = float('{:.3f}'.format(perf_table.at[index,'FBHE-Recent']))
-      perf_table.at[index,'FBHE-Diff'] = float('{:.3f}'.format(perf_table.at[index,'FBHE-Diff']))
-
-      # count the points for this player within this pair:
-      player_pt_totals_all = player_pt_total(pair_ppr_df_all, disp_player)
-      player_pt_totals_filter = player_pt_total(pair_ppr_df_filter, disp_player)
-      
-      # calculate the Point Differentials
-      # point totals shouldbe (points won - points lost)/total points
-      perf_table.at[index,'Points-All'] = ( (player_pt_totals_all.at[0,'p_tsa'] + 
+        # calculate the Point Differentials
+        # point totals shouldbe (points won - points lost)/total points
+        perf_table.at[index,'Points-All'] = ( (player_pt_totals_all.at[0,'p_tsa'] + 
                                              player_pt_totals_all.at[0,'p_fbk'] + 
                                              player_pt_totals_all.at[0,'p_tk_s'] + 
                                              player_pt_totals_all.at[0,'p_tk_r'] + 
@@ -1276,7 +1277,7 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
                                              player_pt_totals_all.at[0,'p_fbe'] + 
                                              player_pt_totals_all.at[0,'p_te_s'] + 
                                              player_pt_totals_all.at[0,'p_te_r'] ) )  /  ( player_pt_totals_all.at[0,'pts_total']) 
-      perf_table.at[index,'Points-Recent'] = ( (player_pt_totals_filter.at[0,'p_tsa'] + 
+        perf_table.at[index,'Points-Recent'] = ( (player_pt_totals_filter.at[0,'p_tsa'] + 
                                              player_pt_totals_filter.at[0,'p_fbk'] + 
                                              player_pt_totals_filter.at[0,'p_tk_s'] + 
                                              player_pt_totals_filter.at[0,'p_tk_r'] + 
@@ -1292,29 +1293,29 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
                                              player_pt_totals_filter.at[0,'p_fbe'] + 
                                              player_pt_totals_filter.at[0,'p_te_s'] + 
                                              player_pt_totals_filter.at[0,'p_te_r'] ) )  /  ( player_pt_totals_filter.at[0,'pts_total']) 
-      perf_table.at[index,'Points-Diff'] = perf_table.at[index,'Points-Recent']-perf_table.at[index,'Points-All']
-      perf_table.at[index,'Points-All'] = str('{:.1%}'.format(perf_table.at[index,'Points-All']))
-      perf_table.at[index,'Points-Recent'] = str('{:.1%}'.format(perf_table.at[index,'Points-Recent']))
-      perf_table.at[index,'Points-Diff'] = str('{:.2%}'.format(perf_table.at[index,'Points-Diff']))
+        perf_table.at[index,'Points-Diff'] = perf_table.at[index,'Points-Recent']-perf_table.at[index,'Points-All']
+        perf_table.at[index,'Points-All'] = str('{:.1%}'.format(perf_table.at[index,'Points-All']))
+        perf_table.at[index,'Points-Recent'] = str('{:.1%}'.format(perf_table.at[index,'Points-Recent']))
+        perf_table.at[index,'Points-Diff'] = str('{:.2%}'.format(perf_table.at[index,'Points-Diff']))
 
-      # calculate knock out numbers
-      perf_table.at[index,'KnockOut-All'] = (player_pt_totals_all.at[0,'p_tsa']+player_pt_totals_all.at[0,'o_bad_pass'] )/player_pt_totals_all.at[0,'p_serves']
-      perf_table.at[index,'KnockOut-Recent'] = (player_pt_totals_filter.at[0,'p_tsa']+player_pt_totals_filter.at[0,'o_bad_pass'] )/player_pt_totals_filter.at[0,'p_serves']
-      perf_table.at[index,'KnockOut-Diff'] = perf_table.at[index,'KnockOut-Recent']-perf_table.at[index,'KnockOut-All']
-      perf_table.at[index,'KnockOut-All'] = str('{:.1%}'.format(perf_table.at[index,'KnockOut-All']))
-      perf_table.at[index,'KnockOut-Recent'] = str('{:.1%}'.format(perf_table.at[index,'KnockOut-Recent']))
-      perf_table.at[index,'KnockOut-Diff'] = str('{:.2%}'.format(perf_table.at[index,'KnockOut-Diff']))
+        # calculate knock out numbers
+        perf_table.at[index,'KnockOut-All'] = (player_pt_totals_all.at[0,'p_tsa']+player_pt_totals_all.at[0,'o_bad_pass'] )/player_pt_totals_all.at[0,'p_serves']
+        perf_table.at[index,'KnockOut-Recent'] = (player_pt_totals_filter.at[0,'p_tsa']+player_pt_totals_filter.at[0,'o_bad_pass'] )/player_pt_totals_filter.at[0,'p_serves']
+        perf_table.at[index,'KnockOut-Diff'] = perf_table.at[index,'KnockOut-Recent']-perf_table.at[index,'KnockOut-All']
+        perf_table.at[index,'KnockOut-All'] = str('{:.1%}'.format(perf_table.at[index,'KnockOut-All']))
+        perf_table.at[index,'KnockOut-Recent'] = str('{:.1%}'.format(perf_table.at[index,'KnockOut-Recent']))
+        perf_table.at[index,'KnockOut-Diff'] = str('{:.2%}'.format(perf_table.at[index,'KnockOut-Diff']))
+  
+        # calculate the passing percent
+        # percent of insystem passes
+        oos_vector_all = count_out_of_system(pair_ppr_df_all,disp_player,'pass')
+        oos_vector_filter = count_out_of_system(pair_ppr_df_filter,disp_player,'pass')
+        perf_table.at[index,'Passing-All'] = str('{:.1%}'.format(oos_vector_all[1]))
+        perf_table.at[index,'Passing-Recent'] = str('{:.1%}'.format(oos_vector_filter[1]))
+        perf_table.at[index,'Passing-Diff'] = str('{:.2%}'.format(oos_vector_filter[1] - fbhe_vector_all[1]))
 
-      # calculate the passing percent
-      # percent of insystem passes
-      oos_vector_all = count_out_of_system(pair_ppr_df_all,disp_player,'pass')
-      oos_vector_filter = count_out_of_system(pair_ppr_df_filter,disp_player,'pass')
-      perf_table.at[index,'Passing-All'] = str('{:.1%}'.format(oos_vector_all[1]))
-      perf_table.at[index,'Passing-Recent'] = str('{:.1%}'.format(oos_vector_filter[1]))
-      perf_table.at[index,'Passing-Diff'] = str('{:.2%}'.format(oos_vector_filter[1] - fbhe_vector_all[1]))
-
-      # done with this row, increment the index and go back to the loop over player with the pair
-      index = index+1
+        # done with this row, increment the index and go back to the loop over player with the pair
+        index = index+1
 
 
   # now, turn it into markdown
