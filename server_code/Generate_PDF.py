@@ -594,7 +594,7 @@ def create_dashboard_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, 
   
   # call render form
   #print(f"Rendering Form for {table_data1}")
-  pdf_file =disp_player + ' ' + report_row['report_name'] 
+  pdf_file =disp_team + ' ' + report_row['report_name'] 
   pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form, 
                                 table_data1, 
                                 table_data2, 

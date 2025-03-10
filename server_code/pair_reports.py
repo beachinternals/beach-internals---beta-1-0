@@ -1310,9 +1310,9 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
         # percent of insystem passes
         oos_vector_all = count_out_of_system(pair_ppr_df_all,disp_player,'pass')
         oos_vector_filter = count_out_of_system(pair_ppr_df_filter,disp_player,'pass')
-        perf_table.at[index,'Passing-All'] = str('{:.1%}'.format(oos_vector_all[1]))
-        perf_table.at[index,'Passing-Recent'] = str('{:.1%}'.format(oos_vector_filter[1]))
-        perf_table.at[index,'Passing-Diff'] = str('{:.2%}'.format(oos_vector_filter[1] - fbhe_vector_all[1]))
+        perf_table.at[index,'Passing-All'] = str('{:.1%}'.format(1 - oos_vector_all[1]))
+        perf_table.at[index,'Passing-Recent'] = str('{:.1%}'.format(1 - oos_vector_filter[1]))
+        perf_table.at[index,'Passing-Diff'] = str('{:.2%}'.format( (1-oos_vector_filter[1]) - (1-oos_vector_all[1]) ))
 
         # done with this row, increment the index and go back to the loop over player with the pair
         index = index+1

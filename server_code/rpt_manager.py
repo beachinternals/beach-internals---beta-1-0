@@ -305,6 +305,7 @@ def rpt_mgr_generate_background():
         # build team string
         disp_team = rpt_r['team']
 
+        for pair_r in rpt_r['pair_list']:
         # calculate the folder we will store thiese into
         pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
         
