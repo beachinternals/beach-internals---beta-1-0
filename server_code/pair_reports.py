@@ -1209,9 +1209,9 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
              'FBHE-All':[0.0],
              'FBHE-Recent':[0.0],
              'FBHE-Diff':[0.0],
-             'Point-All':[0],
-             'Point-Recent':[0],
-             'Point-Diff':[0],
+             'Points-All':[0],
+             'Points-Recent':[0],
+             'Points-Diff':[0],
              'KnockOut-All':[0],
              'KnockOut-Recent':[0],
              'KnockOut-Diff':[0],
@@ -1246,13 +1246,33 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
       perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
       perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
       perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
-  
+
+      # count the points for this player within this pair:
+      player_pt_totals_all = player_pt_total(pair_ppr_df_all, player)
+      player_pt_totals_filter = player_pt_total(pair_ppr_df_filter, player)
+      
       # calculate the Point Differentials
-      fbhe_vector_all = fbhe(pair_ppr_df_all,player,'att', False)
-      fbhe_vector_filter = fbhe(pair_ppr_df_filter,player,'att', False)
-      perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
-      perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
-      perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
+      # point totals shouldbe (points won - points lost)/total points
+      perf_table.at[index,'Points-All'] = ( (player_pt_totals_filter['p_tsa'] + 
+                                             player_pt_totals_filter['p_fbk'] + 
+                                             player_pt_totals_filter['p_tk_s'] + 
+                                             player_pt_totals_filter['p_tk_r'] + 
+                                             player_pt_totals_filter['o_tse'] + 
+                                             player_pt_totals_filter['o_fbe'] + 
+                                             player_pt_totals_filter['o_te_s'] + 
+                                             player_pt_totals_filter['o_te_r'] +                                             
+                                            ) - 
+                                            (player_pt_totals_filter['o_tsa'] + 
+                                             player_pt_totals_filter['o_fbk'] + 
+                                             player_pt_totals_filter['o_tk_s'] + 
+                                             player_pt_totals_filter['o_tk_r'] + 
+                                             player_pt_totals_filter['p_tse'] + 
+                                             player_pt_totals_filter['p_fbe'] + 
+                                             player_pt_totals_filter['p_te_s'] + 
+                                             player_pt_totals_filter['p_te_r'] ) ) /   
+                                            ( player_pt_totals_filter['points_total']) 
+      perf_table.at[index,'Points-Recent'] = fbhe_vector_filter[0]
+      perf_table.at[index,'Points-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
 
       # calculate knock out numbers
       fbhe_vector_all = fbhe(pair_ppr_df_all,player,'att', False)
@@ -1262,11 +1282,12 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
       perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
 
       # calculate the passing percent
-      fbhe_vector_all = fbhe(pair_ppr_df_all,player,'att', False)
-      fbhe_vector_filter = fbhe(pair_ppr_df_filter,player,'att', False)
-      perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
-      perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
-      perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]
+      # percent of insystem passes
+      oos_vector_all = count_out_of_system(pair_ppr_df_all,player,'pass')
+      oos_vector_filter = count_out_of_system(pair_ppr_df_filter,player,'pass')
+      perf_table.at[index,'Passing-All'] = str('{:.1%}'.format(oos_vector_all[1]))
+      perf_table.at[index,'Passing-Recent'] = str('{:.1%}'.format(oos_vector_filter[1]))
+      perf_table.at[index,'Passing-Diff'] = str('{:.1%}'.format(oos_vector_filter[1] - fbhe_vector_all[1])
 
       # done with this row, increment the index and go back to the loop over player with the pair
       index = index+1
