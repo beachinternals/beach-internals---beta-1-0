@@ -128,7 +128,18 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
     #print(f"column size:{len(new_column)}")
     btd_df.insert(1,'video_id',new_column)
     #print(f"dataframe shape:{btd_df.shape}")
-    
+
+  # to be forward compitable, check if the team column is there, if so, append team and playere and put it back into player
+  if 'team' in btd_df.columns:
+    # fill nan with '' in team and player
+    btd_df = btd_df.fillna({'team':str('NOTEAM'),'player':str('NOPLAYER')})
+    # this must be a new actions file,, so we will rename 'player' to 'only_player', then merge team and player and store it in a new 'player' column
+    btd_df = btd_df.rename(columns={'player':'only_player'})
+    btd_df['player'] = btd_df['team'].astype(str)+' ' + btd_df['only_player'].astype(str)
+    #btd_df['player'] = np.where( ('NOTEAM' in btd_df['player']) or ('NOPLAYER' in btd_df['player'] ), '', btd_df['player'] )
+    # we should be good, let's check
+    print(f"BTD Fields of interest: {btd_df['team']}, {btd_df['only_player']}, {btd_df['player']}")
+  
   # call function to make the convesion
   ppr_df = btd_to_ppr_df(btd_df, flist_r)
 
@@ -139,7 +150,7 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
 def btd_to_ppr_df(btd_df, flist_r):
 
   # define the two teams and the four players in this file:
-  # we need to sor the players alphs
+  # we need to sort the players alphabetically
   player_a1 = flist_r['ppr_playera1']
   player_a2 = flist_r['ppr_playera2']
   btd_playera1 = flist_r['player1']
@@ -216,7 +227,7 @@ def btd_to_ppr_df(btd_df, flist_r):
   
   # ################# loop over the rows in the balltime data file
   for index, btd_r in btd_df.iterrows():
-    #print(f"loop over rows, index = {index}, Transition? {in_trans}, Action Type?{btd_r['action_type']}, Player: {btd_r['player']}")
+    print(f"loop over rows, index = {index}, Transition? {in_trans}, Action Type?{btd_r['action_type']}, Player: {btd_r['player']}")
     
     # replace the btd players with the master player reference
     if btd_r['player'] == btd_playera1:
@@ -229,7 +240,7 @@ def btd_to_ppr_df(btd_df, flist_r):
       btd_r['player'] = player_b2
     else:
       # ######## print this to a file to display as this is an error in the data #####################
-      #print(f"Could not find the player!! {btd_r['player']}, Row {index} in these four: {flist_r['player1']}, {flist_r['player2']}, {flist_r['player3']}, {flist_r['player4']}") 
+      print(f"Could not find the player!! {btd_r['player']}, Row {index} in these four: {flist_r['player1']}, {flist_r['player2']}, {flist_r['player3']}, {flist_r['player4']}") 
       btd_r['player'] = " "
     
     # if this is a serve, then start a new point
@@ -292,7 +303,7 @@ def save_serve_info( ppr_df, btd_r, ppr_row ):
   ppr_df.at[ppr_row,'rally_id'] = btd_r['rally_id']
   ppr_df.at[ppr_row,'serve_src_x'] = btd_r['src_x']
   ppr_df.at[ppr_row,'serve_src_y'] = btd_r['src_y']
-  #print(f"Saving Serve INfo ppr_row {ppr_row}, rally number {btd_r['rally_id']}, Server:{ppr_df.at[ppr_row,'serve_player']}")  
+  print(f"Saving Serve INfo ppr_row {ppr_row}, rally number {btd_r['rally_id']}, Server:{ppr_df.at[ppr_row,'serve_player']}")  
   return ppr_df
 
 def save_pass_info( ppr_df, btd_r, ppr_row):
