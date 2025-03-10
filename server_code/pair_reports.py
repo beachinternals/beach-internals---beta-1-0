@@ -1202,7 +1202,7 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
                          date_checked, disp_start_date, disp_end_date
                          ) # limit all data available to the parameters given for comp level 1,2,3 and dates.
   # we should not have all data and filtered data for the disp_team
-  print(f" got ppr data, all: {ppr_df.shape[0]}, filter: {ppr_df_filter.shape[0]}")
+  print(f" got ppr data, all: {ppr_df.shape[0]}, filter: {ppr_df_filter.shape[0]} filtered pass player: {ppr_df_filter['pass_player']}")
 
   # create the output dataframe
   df_dict = {'Pair':str(),
@@ -1235,7 +1235,7 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
     # limit the two ppr_df's to just this pair data
     pair_ppr_df_all = pair_filter(ppr_df, row.team)
     pair_ppr_df_filter = pair_filter(ppr_df_filter, row.team)
-    print(f" ppr data, filter for: {row.team}, all: {pair_ppr_df_all.shape[0]}, filter: {pair_ppr_df_filter.shape[0]}")
+    print(f" ppr data, filter for: {row.team}, all: {pair_ppr_df_all.shape[0]}, filter: {pair_ppr_df_filter.shape[0]}, filtered pass player: {ppr_df_filter['pass_player']}")
     if pair_ppr_df_filter.shape[0] > 0:
       for p_num in [1,2]:
         # now store pair and player
