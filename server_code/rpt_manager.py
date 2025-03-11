@@ -306,11 +306,12 @@ def rpt_mgr_generate_background():
         disp_team = rpt_r['team']
 
         for pair_r in rpt_r['pair_list']:
-        # calculate the folder we will store thiese into
-        pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+          # calculate the folder we will store thiese into
+          pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+          disp_pair = pair_r['pair']
         
         full_rpt_pdf = None
-        pdf_name = disp_pair + ' Summary.pdf'
+        pdf_name = disp_team + ' Team - Recent Comparisons.pdf'
         disp_player1, disp_player2 = pair_players(disp_pair)
         
         # loop over all the reports for this player
@@ -319,12 +320,12 @@ def rpt_mgr_generate_background():
           # call pdf report
           pdf1 = create_dashboard_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
-                                    player_r['league'],
-                                    player_r['gender'],
-                                    player_r['year'],
+                                    pair_r['league'],
+                                    pair_r['gender'],
+                                    pair_r['year'],
                                     disp_team,
                                     disp_pair,
-                                    disp_player,
+                                    disp_player1,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
                     comp_l3_checked, disp_comp_l3,

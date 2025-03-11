@@ -1236,7 +1236,8 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
     pair_ppr_df_all = pair_filter(ppr_df, row.team)
     pair_ppr_df_filter = pair_filter(ppr_df_filter, row.team)
     print(f" ppr data, filter for: {row.team}, all: {pair_ppr_df_all.shape[0]}, filter: {pair_ppr_df_filter.shape[0]}, filtered pass player: {ppr_df_filter['pass_player']}")
-    if pair_ppr_df_filter.shape[0] > 0:
+    if (pair_ppr_df_filter.shape[0] > 0) and (pair_ppr_df_all.shape[0] > 0) and (pair_ppr_df_filter.shape[0] != pair_ppr_df_all.shape[0] ):
+      # both the original data needs points, the new data needs points, and they can't be the same data.
       for p_num in [1,2]:
         # now store pair and player
         perf_table.at[index,'Pair'] = row.team
