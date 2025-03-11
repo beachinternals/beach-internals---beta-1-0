@@ -618,58 +618,6 @@ services:
       userPermission: {etag: '"jf1hYjbPZJZ8ZSH-fdVdI1nVR_k"', id: me, kind: drive#permission, pendingOwner: false, role: owner, selfLink: 'https://www.googleapis.com/drive/v2/files/1cU4JKkAqK1gPQIxg7wFSQ0w0FOFhVpUg/permissions/me', type: user}
       version: '1'
       writersCanShare: true
-    - alternateLink: https://drive.google.com/file/d/1b9WWWrm6AEC0AEIgd3DZ2mhyQ6izz4SE/view?usp=drivesdk
-      appDataContents: false
-      capabilities: {canCopy: true, canEdit: true}
-      copyRequiresWriterPermission: false
-      copyable: true
-      createdDate: '2025-03-06T16:34:27.109Z'
-      downloadUrl: https://www.googleapis.com/drive/v2/files/1b9WWWrm6AEC0AEIgd3DZ2mhyQ6izz4SE?alt=media&source=downloadUrl
-      editable: true
-      embedLink: https://drive.google.com/file/d/1b9WWWrm6AEC0AEIgd3DZ2mhyQ6izz4SE/preview?usp=drivesdk
-      etag: '"MTc0MTI3ODg2NzEwOQ"'
-      explicitlyTrashed: false
-      fileExtension: txt
-      fileSize: '0'
-      headRevisionId: 0B5FfLJIkDJdLU2lrZUxiZW9xZTh0di9IKzg2Z1dFNzVwZVUwPQ
-      iconLink: https://drive-thirdparty.googleusercontent.com/16/type/text/plain
-      id: 1b9WWWrm6AEC0AEIgd3DZ2mhyQ6izz4SE
-      kind: drive#file
-      labels: {hidden: false, restricted: false, starred: false, trashed: false, viewed: false}
-      lastModifyingUser:
-        displayName: Scott White
-        emailAddress: beachinternals@gmail.com
-        isAuthenticatedUser: true
-        kind: drive#user
-        permissionId: '12728020138126228324'
-        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
-      lastModifyingUserName: Scott White
-      markedViewedByMeDate: '1970-01-01T00:00:00.000Z'
-      md5Checksum: d41d8cd98f00b204e9800998ecf8427e
-      mimeType: text/plain
-      modifiedByMeDate: '2025-03-06T16:34:27.109Z'
-      modifiedDate: '2025-03-06T16:34:27.109Z'
-      originalFilename: ''
-      ownerNames: [Scott White]
-      owners:
-      - displayName: Scott White
-        emailAddress: beachinternals@gmail.com
-        isAuthenticatedUser: true
-        kind: drive#user
-        permissionId: '12728020138126228324'
-        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
-      parents:
-      - {id: 0AJFfLJIkDJdLUk9PVA, isRoot: true, kind: drive#parentReference, parentLink: 'https://www.googleapis.com/drive/v2/files/0AJFfLJIkDJdLUk9PVA', selfLink: 'https://www.googleapis.com/drive/v2/files/1b9WWWrm6AEC0AEIgd3DZ2mhyQ6izz4SE/parents/0AJFfLJIkDJdLUk9PVA'}
-      python_name: helloworld_txt
-      quotaBytesUsed: '0'
-      selfLink: https://www.googleapis.com/drive/v2/files/1b9WWWrm6AEC0AEIgd3DZ2mhyQ6izz4SE
-      shared: false
-      spaces: [drive]
-      title: helloworld.txt
-      userPermission: {etag: '"c4mDahgtLamX_JuXqS8LXT5ethQ"', id: me, kind: drive#permission, pendingOwner: false, role: owner, selfLink: 'https://www.googleapis.com/drive/v2/files/1b9WWWrm6AEC0AEIgd3DZ2mhyQ6izz4SE/permissions/me', type: user}
-      version: '1'
-      webContentLink: https://drive.google.com/uc?id=1b9WWWrm6AEC0AEIgd3DZ2mhyQ6izz4SE&export=download
-      writersCanShare: true
   server_config: {enc_delegation_refresh_token: /606+GkLWiiQTuUveG2/TuykzLAvR8xArx4SMOvIJG2eZabGnjxXVf/l8tKN7JMnUPB6l1+Sn3XEHlgNilLR5n3My7HFPmpwuhyxffYRIbz+2YowarI3VSsVKGwDyMEMNZaE3tS59fHjE62hbGaWMtPrOjnb275zIRf+glZPU+U/97ZQdIdI2xtQlA484doL/zyWtEFXllirojLN5emrEPJExlEhnaC+If3pXOJQ6WmcXt5SHdNMX8wLB1O2mZ8szoJAlkgJiNxEqlkZwoGZinmWUVc62435E28e8j0qXmN2Mx8nyBalZMAtSezmDw==}
   source: /runtime/services/google.yml
 - client_config: {}
