@@ -63,6 +63,29 @@ class btd_import(btd_importTemplate):
     comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=disp_league)]
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
 
+    # Set the drop down for the ppr players
+    ppr_list = [
+      {
+        "team":   row["team"],
+        "number":   row["number"],
+        "shortname": row["shortname"],
+      }
+      for row in app_tables.master_player.search(
+        league = disp_league,
+        year = disp_year,
+        gender= disp_gender
+      )
+    ]
+    ppr_player_list = []
+    for i in ppr_list:
+      ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
+
+    ppr_player_list.sort()    
+    self.ppr_playera1_drop_down.items = ppr_player_list
+    self.ppr_playera2_drop_down.items = ppr_player_list
+    self.ppr_playerb1_drop_down.items = ppr_player_list
+    self.ppr_playerb2_drop_down.items = ppr_player_list
+    
     pass
 
   def file_loader_1_change(self, file, **event_args):
@@ -266,6 +289,7 @@ class btd_import(btd_importTemplate):
     for i in ppr_list:
       ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
     
+    ppr_player_list.sort()   
     self.ppr_playera1_drop_down.items = ppr_player_list
     self.ppr_playera2_drop_down.items = ppr_player_list
     self.ppr_playerb1_drop_down.items = ppr_player_list
