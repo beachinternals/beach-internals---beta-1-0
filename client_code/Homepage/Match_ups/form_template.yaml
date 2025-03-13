@@ -1,0 +1,318 @@
+components_by_slot:
+  content_slot:
+  - components:
+    - layout_properties: {grid_position: 'ZGCTFP,UFPWQS'}
+      name: label_2
+      properties: {align: center, bold: true, role: headline, text: Match Up Reports}
+      type: Label
+    layout_properties: {}
+    name: outlined_card_1
+    properties: {background: 'theme:Secondary Container', role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - components:
+      - layout_properties: {grid_position: 'OXWWPN,SIFWKR'}
+        name: label_9
+        properties: {align: center, bold: true, role: title, text: Search Criteria}
+        type: Label
+      - layout_properties: {grid_position: 'TXMKON,PEJFJX UZUIRS,DVDQNQ'}
+        name: label_6
+        properties: {align: right, text: 'League:'}
+        type: Label
+      - layout_properties: {grid_position: 'TXMKON,PEJFJX EZXYAU,XYMHJE'}
+        name: pair_a
+        properties: {align: right, text: 'Pair A:'}
+        type: Label
+      - event_bindings: {change: league_drop_down_change}
+        layout_properties: {grid_position: 'TXMKON,NIKFRV EVSSGC,LFAAOG'}
+        name: league_drop_down
+        properties:
+          items: [NCAA | W | 2025]
+        type: DropDown
+      - event_bindings: {change: pair_a_drop_down_change}
+        layout_properties: {grid_position: 'TXMKON,NIKFRV ROLRRH,VGCXFK'}
+        name: pair_a_drop_down
+        properties:
+          items: [BRA 01 Ana Patricia]
+        type: DropDown
+      - layout_properties: {grid_position: 'YIZIIN,GSMUOP'}
+        name: label_1
+        properties: {align: right, text: 'Pair B:'}
+        type: Label
+      - layout_properties: {grid_position: 'YIZIIN,QPTZWK'}
+        name: pair_b_drop_down
+        properties: {}
+        type: DropDown
+      - layout_properties: {grid_position: 'LGHIQE,BYPIFA HOJIRH,RSGGTH'}
+        name: label_5
+        properties: {align: right, text: 'Report:'}
+        type: Label
+      - event_bindings: {click: generate_report_button_click}
+        layout_properties: {grid_position: 'LGHIQE,BYPIFA MTCYYU,FTTSVG'}
+        name: generate_report_button
+        properties: {align: right, role: outlined-button, text: Generate Report}
+        type: Button
+      - event_bindings: {change: report_drop_down_change}
+        layout_properties: {grid_position: 'LGHIQE,UDZWIK EJJRDQ,WJKSHB'}
+        name: report_drop_down
+        properties:
+          items: []
+        type: DropDown
+      - event_bindings: {click: pdf_button_click}
+        layout_properties: {grid_position: 'LGHIQE,UDZWIK TLOGIX,GTYEKL'}
+        name: pdf_button
+        properties: {role: outlined-button, text: Generate pdf}
+        type: Button
+      layout_properties: {grid_position: 'JGXBNS,AXQKQZ'}
+      name: column_panel_1
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'LJXRUD,VLSAXJ'}
+        name: label_3
+        properties: {align: center, text: Optional Filters.  Check to filter one each item}
+        type: Label
+      - layout_properties: {grid_position: 'KDDUIB,YXEAOM'}
+        name: comp_l1_check_box
+        properties: {align: right, text: ''}
+        type: CheckBox
+      - event_bindings: {change: comp_l1_drop_down_change}
+        layout_properties: {grid_position: 'KDDUIB,MXUBSZ'}
+        name: comp_l1_drop_down
+        properties:
+          items: [Regular Season]
+        type: DropDown
+      - layout_properties: {grid_position: 'ITYZOV,VJOMTS'}
+        name: comp_l2_check_box
+        properties: {align: right, text: ''}
+        type: CheckBox
+      - layout_properties: {grid_position: 'ITYZOV,CVYEUR'}
+        name: comp_l2_drop_down
+        properties:
+          items: [Gaastad, Top 20 - Both, Top 20 - One, Unranked]
+        type: DropDown
+      - layout_properties: {grid_position: 'DOMWVK,JNOGAT'}
+        name: comp_l3_check_box
+        properties: {align: right, text: ''}
+        type: CheckBox
+      - layout_properties: {grid_position: 'DOMWVK,VZCSFO'}
+        name: comp_l3_drop_down
+        properties:
+          items: [Finals, Semis]
+        type: DropDown
+      - layout_properties: {grid_position: 'FJGSJG,ERKJDT'}
+        name: date_check_box
+        properties: {align: right, text: ''}
+        type: CheckBox
+      - layout_properties: {grid_position: 'FJGSJG,UWYRIN'}
+        name: label_10
+        properties: {align: right, text: 'Start:'}
+        type: Label
+      - event_bindings: {change: start_date_picker_change}
+        layout_properties: {grid_position: 'FJGSJG,FAXIAM'}
+        name: start_date_picker
+        properties: {}
+        type: DatePicker
+      - layout_properties: {grid_position: 'FDVOIT,PYTWVJ'}
+        name: label_11
+        properties: {align: right, text: ' End:'}
+        type: Label
+      - event_bindings: {change: end_date_picker_change}
+        layout_properties: {grid_position: 'FDVOIT,VBCSUK'}
+        name: end_date_picker
+        properties: {}
+        type: DatePicker
+      layout_properties: {grid_position: 'JGXBNS,KBVZLN'}
+      name: column_panel_4
+      properties: {col_widths: '{"YXEAOM":15,"MXUBSZ":31,"ERKJDT":10,"UWYRIN":10,"FAXIAM":40,"VJOMTS":20,"CVYEUR":40,"JNOGAT":20,"VZCSFO":40,"PYTWVJ":20,"VBCSUK":40}', visible: false}
+      type: ColumnPanel
+    layout_properties: {}
+    name: outlined_card_4
+    properties: {role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'QZKFUV,SUOLKP'}
+      name: rpt_title
+      properties: {align: center, bold: true, font_size: 18}
+      type: Label
+    - layout_properties: {grid_position: 'BRAHCQ,BKYZLA'}
+      name: box1_label
+      properties:
+        align: center
+        bold: true
+        font_size: 12
+        spacing:
+          padding: [null, null, '0', null]
+      type: Label
+    - layout_properties: {grid_position: 'CJAGDT,JCADWK'}
+      name: player1_label
+      properties: {align: center, bold: true, text: ''}
+      type: Label
+    - layout_properties: {grid_position: 'CJAGDT,WCKPTD'}
+      name: player2_label
+      properties: {align: center, bold: true}
+      type: Label
+    - layout_properties: {grid_position: 'FXAUVG,VXSGJI'}
+      name: rpt_disp_box1
+      properties:
+        font_size: 11
+        spacing:
+          padding: ['0', null, '0', null]
+      type: RichText
+    - components:
+      - layout_properties: {grid_position: 'IEDQGW,UALMAO'}
+        name: box2_label
+        properties:
+          align: center
+          bold: true
+          font_size: 12
+          spacing:
+            padding: [null, null, -2.4899999999999998, null]
+        type: Label
+      - layout_properties: {grid_position: 'DGBSEA,MOTQTU'}
+        name: rpt_disp_box2
+        properties:
+          font_size: 11
+          spacing:
+            padding: [-1.04, null, '0', null]
+        type: RichText
+      - layout_properties: {grid_position: 'QDTSXW,FPLDZE'}
+        name: box3_label
+        properties:
+          align: center
+          bold: true
+          font_size: 12
+          spacing:
+            padding: [null, null, -2.269999999999999, null]
+        type: Label
+      - layout_properties: {grid_position: 'ZMEJYM,TQELOQ'}
+        name: rpt_disp_box3
+        properties:
+          font_size: 11
+          spacing:
+            padding: ['0', null, '0', null]
+        type: RichText
+      - layout_properties: {grid_position: 'ACZYLJ,OCZSZU'}
+        name: box4_label
+        properties:
+          align: center
+          bold: true
+          font_size: 12
+          spacing:
+            padding: [null, null, '0', null]
+        type: Label
+      - layout_properties: {grid_position: ''}
+        name: rpt_disp_box4
+        properties:
+          font_size: 11
+          spacing:
+            padding: ['0', null, '0', null]
+        type: RichText
+      data_bindings:
+      - {code: '', property: border, writeback: false}
+      layout_properties: {grid_position: 'ZMLYII,VRMSMJ'}
+      name: column_panel_3
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'SAIPPX,EENQPM'}
+        name: box5_label
+        properties:
+          align: center
+          bold: true
+          font_size: 12
+          spacing:
+            padding: [null, null, '0', null]
+          text: ''
+        type: Label
+      - layout_properties: {grid_position: 'SURNSO,IAMWMT'}
+        name: rpt_disp_box5
+        properties:
+          font_size: 11
+          spacing:
+            padding: ['0', null, '0', null]
+        type: RichText
+      - layout_properties: {grid_position: 'NGHRNL,CLXSWU'}
+        name: box6_label
+        properties:
+          align: center
+          bold: true
+          font_size: 12
+          spacing:
+            padding: [null, null, -2.829999999999999, null]
+        type: Label
+      - layout_properties: {grid_position: 'TJGFPQ,IZMHSD'}
+        name: rpt_disp_box6
+        properties:
+          font_size: 11
+          spacing:
+            padding: ['0', null, -9.159999999999998, null]
+        type: RichText
+      - layout_properties: {grid_position: 'ZLZKBE,BYNWVX'}
+        name: box7_label
+        properties:
+          align: center
+          bold: true
+          font_size: 12
+          spacing:
+            padding: [null, null, -2.8, null]
+        type: Label
+      - layout_properties: {grid_position: 'UCFNER,XQHGEU'}
+        name: rpt_disp_box7
+        properties:
+          font_size: 11
+          spacing:
+            padding: ['0', null, '0', null]
+        type: RichText
+      - layout_properties: {grid_position: 'CADVKC,NTUXFS'}
+        name: box8_label
+        properties:
+          align: center
+          bold: true
+          font_size: 12
+          spacing:
+            padding: [null, null, '0', null]
+        type: Label
+      - layout_properties: {grid_position: 'DKCPIZ,SOLZJE'}
+        name: rpt_disp_box8
+        properties:
+          font_size: 11
+          spacing:
+            padding: ['0', null, -0.9199999999999999, null]
+        type: RichText
+      layout_properties: {grid_position: 'ZMLYII,RKELOA'}
+      name: column_panel_2
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'OULBBH,UTZUNT'}
+        name: box_explaing_text
+        properties: {font_size: 12}
+        type: RichText
+      layout_properties: {grid_position: 'TQSRMR,WIJTSC'}
+      name: outlined_card_6
+      properties: {role: outlined-card}
+      type: ColumnPanel
+    - components:
+      - components:
+        - layout_properties: {}
+          name: filter_text
+          properties:
+            font_size: 11
+            spacing:
+              padding: ['0', null, '0', null]
+          type: RichText
+        layout_properties: {grid_position: 'KKHOKZ,EMDNUX'}
+        name: flow_panel_5
+        properties: {}
+        type: FlowPanel
+      layout_properties: {grid_position: 'TQSRMR,KGXKWF'}
+      name: outlined_card_5
+      properties: {role: outlined-card}
+      type: ColumnPanel
+    layout_properties: {}
+    name: outlined_card_2
+    properties: {background: '', col_widths: '{}', role: outlined-card}
+    type: ColumnPanel
+is_package: true
+layout: {type: 'form:Homepage'}

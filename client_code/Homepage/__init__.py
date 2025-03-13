@@ -143,3 +143,8 @@ class Homepage(HomepageTemplate):
     open_form('Homepage.Dashboard')
     pass
 
+  def matchup_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    open_form('Homepage.Match_ups')
+    pass
+
