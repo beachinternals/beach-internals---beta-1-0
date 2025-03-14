@@ -17,104 +17,16 @@ import scipy.stats as stats
 # Here is an example - you can replace it with your own:
 #
 @anvil.server.callable
-def matchup_outcome( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+def matchup_outcome_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
   #
   #.  Report to return the predicted outcome of two pairs
   #
   #
+  a1_matchup, a2_matchup, b1_matchup, b2_matchup = matchup_pair_data(disp_league,disp_gender,disp_year,pair_a,pair_b)
 
-  # fetch the pair_data and pair_data_stats files
-  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
-  player_a1, player_a2 = pair_players( pair_a )
-  player_b1, player_b2 = pair_players( pair_b )
-
-  # get the row for pair_a and pair_b
-  pair_a1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a1) ].index[0]
-  pair_a2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a2) ].index[0]
-  pair_b1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b1) ].index[0]
-  pair_b2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b2) ].index[0]
+  player_a1, player_a2 = pair_players(pair_a)
+  player_b1, player_b2 = pair_players(pair_b)
   
-  # create the workign data in a vector
-  #.  0 = pair
-  #.  1 = player
-  #.  2 = ace %
-  #   3 = err %
-  #   4 = expected
-  #.  5 = expected percentile
-  #.  6 = expected percentile difference : this is the difference between A and B's expected value percetaile'
-  #.  7 == expected percentile predicted
-  pair_a1_matchup = [0,0,0,0,0,0]
-  pair_a2_matchup = [0,0,0,0,0,0]
-  pair_b1_matchup = [0,0,0,0,0,0]
-  pair_b2_matchup = [0,0,0,0,0,0]
-
-  # store the basic info into working vectors
-  pair_a1_matchup[0] = pair_a
-  pair_a1_matchup[1] = player_a1
-  pair_a1_matchup[2] = pair_data_df.at[pair_a1_index,'srv_ace_per']
-  pair_a1_matchup[3] = pair_data_df.at[pair_a1_index,'srv_err_per']
-  pair_a1_matchup[4] = pair_data_df.at[pair_a1_index,'expected']/100
-  pair_a1_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_a1_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
-  print(f" pair a1 matchup data: {pair_a1_matchup}")
-  
-  pair_a2_matchup[0] = pair_a
-  pair_a2_matchup[1] = player_a2
-  pair_a2_matchup[2] = pair_data_df.at[pair_a2_index,'srv_ace_per']
-  pair_a2_matchup[3] = pair_data_df.at[pair_a2_index,'srv_err_per']
-  pair_a2_matchup[4] = pair_data_df.at[pair_a2_index,'expected']/100
-  pair_a2_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_a2_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
-  print(f" pair a2 matchup data: {pair_a2_matchup}")
-
-  pair_b1_matchup[0] = pair_b
-  pair_b1_matchup[1] = player_b1
-  pair_b1_matchup[2] = pair_data_df.at[pair_b1_index,'srv_ace_per']
-  pair_b1_matchup[3] = pair_data_df.at[pair_b1_index,'srv_err_per']
-  pair_b1_matchup[4] = pair_data_df.at[pair_b1_index,'expected']/100
-  pair_b1_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_b1_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
-  print(f" pair b1 matchup data: {pair_b1_matchup}")
-  
-  pair_b2_matchup[0] = pair_b
-  pair_b2_matchup[1] = player_b2
-  pair_b2_matchup[2] = pair_data_df.at[pair_b2_index,'srv_ace_per']
-  pair_b2_matchup[3] = pair_data_df.at[pair_b2_index,'srv_err_per']
-  pair_b2_matchup[4] = pair_data_df.at[pair_b2_index,'expected']/100
-  pair_b2_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_b2_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
-  print(f" pair b2 matchup data: {pair_b2_matchup}")
-  
-  # calculate poiints, simple method, just using stats:
-  # points on A serves: a points = a's ace percent + expected value of B * % of serves in play by A
-  # points for A when serving = aces + 1-opponent's expected*serves A puts in play (1-(aces+errors))
-  points_a1_a_srv = pair_a1_matchup[2] + (1 - (pair_b1_matchup[4]+pair_b2_matchup[4])/2 ) * (1 - ( pair_a1_matchup[2]+pair_a1_matchup[3] ))
-  points_a2_a_srv = pair_a2_matchup[2] + (1 - (pair_b1_matchup[4]+pair_b2_matchup[4])/2 ) * (1 - ( pair_a2_matchup[2]+pair_a2_matchup[3] ))
-  # ppints on A serving: b points = err percet + (1-expected)*# of serves in play
-  # b poits = A's sere errors + expected value * A's serves in play
-  points_b1_a_srv = (pair_a1_matchup[3]+pair_a2_matchup[3])/2 + (pair_b1_matchup[4] * (1 - ( pair_a1_matchup[2]+pair_a1_matchup[3] )) )
-  points_b2_a_srv = (pair_a1_matchup[3]+pair_a2_matchup[3])/2 + (pair_b2_matchup[4] * (1 - ( pair_a1_matchup[2]+pair_a1_matchup[3] )) )
-  print(f"A Serving, Points: A1 : {points_a1_a_srv}, A2, {points_a2_a_srv}, B1, {points_b1_a_srv}, B2 {points_b2_a_srv}")
-
-  # points on B serves: a points = a's ace percent + expected value of B * % of serves in play by A
-  # points for A when serving = aces + 1-opponent's expected*serves A puts in play (1-(aces+errors))
-  points_b1_b_srv = pair_b1_matchup[2] + (1 - (pair_a1_matchup[4]+pair_a2_matchup[4])/2 ) * (1 - ( pair_b1_matchup[2]+pair_b1_matchup[3] ))
-  points_b2_b_srv = pair_b2_matchup[2] + (1 - (pair_a1_matchup[4]+pair_a2_matchup[4])/2 ) * (1 - ( pair_b2_matchup[2]+pair_b2_matchup[3] ))
-  points_a1_b_srv = (pair_b1_matchup[3]+pair_b2_matchup[3])/2 + (pair_a1_matchup[4] * (1 - ( pair_b1_matchup[2]+pair_b1_matchup[3] )) )
-  points_a2_b_srv = (pair_b1_matchup[3]+pair_b2_matchup[3])/2 + (pair_a2_matchup[4] * (1 - ( pair_b1_matchup[2]+pair_b1_matchup[3] )) )
-  print(f"A Serving, Points: A1 : {points_a1_b_srv}, A2, {points_a2_b_srv}, B1, {points_b1_b_srv}, B2 {points_b2_b_srv}" )
-
-  # predicted outcome
-  # total A points:
-  total_a_pts = points_a1_a_srv + points_a2_a_srv + points_a1_b_srv + points_a2_b_srv
-  total_b_pts = points_b1_a_srv + points_b2_a_srv + points_b1_b_srv + points_b2_b_srv
-  point_ratio_a = total_a_pts/(total_a_pts+total_b_pts)
-  point_ratio_b = 1 - point_ratio_a
-  print(f"A points = {total_a_pts}, B points = {total_b_pts}, Point Ratio A = {point_ratio_a}, Point ratio B={point_ratio_b}")
-
-  # predicted outcome
-  winner_per = max(point_ratio_a,point_ratio_b)
-  num_pts = 21/winner_per
-  predicted_a_pts = num_pts * point_ratio_a
-  predicted_b_pts = num_pts * point_ratio_b
-  print(f"Number of Points: {num_pts}, A Points: {predicted_a_pts}, B Points: {predicted_b_pts}")
-
   # lastly, make a quick dataframe then convert it to markdown to return to display
   match_up_dict = {
                 ' ':['Ace %','Err %','Expected','Points A Serving','Points B Serving','Point Ratio','Predicted Score'],
@@ -128,32 +40,182 @@ def matchup_outcome( disp_league, disp_gender, disp_year, pair_a, pair_b ):
   match_up_df = pd.DataFrame.from_dict( match_up_dict)
 
   # now populate the dataframe (row, column)
-  match_up_df.iloc[0,2] = float('{:.2}'.format(pair_a1_matchup[2])) # ace
-  match_up_df.iloc[0,3] = float('{:.2}'.format(pair_a2_matchup[2]))
-  match_up_df.iloc[0,5] = float('{:.2}'.format(pair_b1_matchup[2]))
-  match_up_df.iloc[0,6] = float('{:.2}'.format(pair_b2_matchup[2]))
-  match_up_df.iloc[1,2] = float('{:.2}'.format(pair_a1_matchup[3])) # error
-  match_up_df.iloc[1,3] = float('{:.2}'.format(pair_a2_matchup[3]))
-  match_up_df.iloc[1,5] = float('{:.2}'.format(pair_b1_matchup[3]))
-  match_up_df.iloc[1,6] = float('{:.2}'.format(pair_b2_matchup[3]))
-  match_up_df.iloc[2,2] = float('{:.2}'.format(pair_a1_matchup[4])) # expected
-  match_up_df.iloc[2,3] = float('{:.2}'.format(pair_a2_matchup[4]))
-  match_up_df.iloc[2,5] = float('{:.2}'.format(pair_b1_matchup[4]))
-  match_up_df.iloc[2,6] = float('{:.2}'.format(pair_b2_matchup[4]))
-  match_up_df.iloc[3,2] = float('{:.2}'.format(points_a1_a_srv))
-  match_up_df.iloc[3,3] = float('{:.2}'.format(points_a2_a_srv))
-  match_up_df.iloc[3,5] = float('{:.2}'.format(points_b1_a_srv))
-  match_up_df.iloc[3,6] = float('{:.2}'.format(points_b2_a_srv))
-  match_up_df.iloc[4,2] = float('{:.2}'.format(points_a1_b_srv))
-  match_up_df.iloc[4,3] = float('{:.2}'.format(points_a2_b_srv))
-  match_up_df.iloc[4,5] = float('{:.2}'.format(points_b1_b_srv))
-  match_up_df.iloc[4,6] = float('{:.2}'.format(points_b2_b_srv))
-  match_up_df.iloc[5,1] = float('{:.2}'.format(point_ratio_a))
-  match_up_df.iloc[5,4] = float('{:.2}'.format(point_ratio_b))
-  match_up_df.iloc[6,1] = float('{:.2}'.format(predicted_a_pts))
-  match_up_df.iloc[6,4] = float('{:.2}'.format(predicted_b_pts))
+  match_up_df.iloc[0,2] = float('{:.2}'.format(a1_matchup[2])) # ace
+  match_up_df.iloc[0,3] = float('{:.2}'.format(a2_matchup[2]))
+  match_up_df.iloc[0,5] = float('{:.2}'.format(b1_matchup[2]))
+  match_up_df.iloc[0,6] = float('{:.2}'.format(b2_matchup[2]))
+  match_up_df.iloc[1,2] = float('{:.2}'.format(a1_matchup[3])) # error
+  match_up_df.iloc[1,3] = float('{:.2}'.format(a2_matchup[3]))
+  match_up_df.iloc[1,5] = float('{:.2}'.format(b1_matchup[3]))
+  match_up_df.iloc[1,6] = float('{:.2}'.format(b2_matchup[3]))
+  match_up_df.iloc[2,2] = float('{:.2}'.format(a1_matchup[4])) # expected
+  match_up_df.iloc[2,3] = float('{:.2}'.format(a2_matchup[4]))
+  match_up_df.iloc[2,5] = float('{:.2}'.format(b1_matchup[4]))
+  match_up_df.iloc[2,6] = float('{:.2}'.format(b2_matchup[4]))
+  match_up_df.iloc[3,2] = float('{:.2}'.format(a1_matchup[5])) # points on A serve
+  match_up_df.iloc[3,3] = float('{:.2}'.format(a2_matchup[5]))
+  match_up_df.iloc[3,5] = float('{:.2}'.format(b1_matchup[5]))
+  match_up_df.iloc[3,6] = float('{:.2}'.format(b2_matchup[5]))
+  match_up_df.iloc[4,2] = float('{:.2}'.format(a1_matchup[6])) # points on B Serve
+  match_up_df.iloc[4,3] = float('{:.2}'.format(a2_matchup[6]))
+  match_up_df.iloc[4,5] = float('{:.2}'.format(b1_matchup[6]))
+  match_up_df.iloc[4,6] = float('{:.2}'.format(b2_matchup[6]))
+  match_up_df.iloc[5,1] = float('{:.2}'.format(a1_matchup[9])) # point Ratio A
+  match_up_df.iloc[5,4] = float('{:.2}'.format(b1_matchup[9])) # point ratio b
+  match_up_df.iloc[6,1] = float('{:.2}'.format(a1_matchup[9]*(21/max(a1_matchup[9],b1_matchup[9])))) # points for A
+  match_up_df.iloc[6,4] = float('{:.2}'.format(b1_matchup[9]*(21/max(a1_matchup[9],b1_matchup[9])))) # points for B
 
   # coonvert to markdown
   matchup_outcome_mkdn = pd.DataFrame.to_markdown( match_up_df, index=False )
   
   return matchup_outcome_mkdn
+
+@anvil.server.callable
+def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
+  #
+  # pull data from the pair data file for pair a and b
+  # return the matchup vector(s)
+  #
+  # matchup vector:
+  #. 0 - Player
+  #. 1 - pair
+  #. 2 - ace %
+  #. 3 - err %
+  #. 4 - expected
+  #. 5 - % of points on A serve
+  #. 6 - % of points on B Serve
+  #. 7 - % of serves by this player
+  #. 8 - point ratio (this will be the same for both a1 and a2 (or b1 abd b2))
+  
+  # fetch the pair_data and pair_data_stats files
+  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+  player_a1, player_a2 = pair_players( pair_a )
+  player_b1, player_b2 = pair_players( pair_b )
+
+  # get the row for pair_a and pair_b
+  if pair_data_df['pair'].isin([pair_a]).any():
+    pair_a1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a1) ].index[0]
+    pair_a2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_a, '', '', ''
+  if pair_data_df['pair'].isin([pair_b]).any():
+    pair_b1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b1) ].index[0]
+    pair_b2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_b, '', '', ''
+  
+  # create the working data in a vector
+  #. 0 - Player
+  #. 1 - pair
+  #. 2 - ace %
+  #. 3 - err %
+  #. 4 - expected
+  #. 5 - % of points on A serve
+  #. 6 - % of points on B Serve
+  #. 7 - % of serve receives by this player
+  #. 8 - % of serves made by this player
+  #. 9 - point ratio (this will be the same for both a1 and a2 (or b1 abd b2))
+  pair_a1_matchup = [0,0,0,0,0,0,0,0,0,0]
+  pair_a2_matchup = [0,0,0,0,0,0,0,0,0,0]
+  pair_b1_matchup = [0,0,0,0,0,0,0,0,0,0]
+  pair_b2_matchup = [0,0,0,0,0,0,0,0,0,0]
+
+  # store the basic info into working vectors
+  pair_a1_matchup[0] = pair_a
+  pair_a1_matchup[1] = player_a1
+  pair_a1_matchup[2] = pair_data_df.at[pair_a1_index,'srv_ace_per']
+  pair_a1_matchup[3] = pair_data_df.at[pair_a1_index,'srv_err_per']
+  pair_a1_matchup[4] = pair_data_df.at[pair_a1_index,'expected']/100
+  pair_a1_matchup[7] = pair_data_df.at[pair_a1_index,'fbhe_n']/(pair_data_df.at[pair_a1_index,'fbhe_n']+pair_data_df.at[pair_a2_index,'fbhe_n'])
+  pair_a1_matchup[8] = pair_data_df.at[pair_a1_index,'srv_n']/(pair_data_df.at[pair_a1_index,'srv_n']+pair_data_df.at[pair_a2_index,'srv_n'])
+  #pair_a1_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_a1_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
+  print(f" pair a1 matchup data: {pair_a1_matchup}")
+  
+  pair_a2_matchup[0] = pair_a
+  pair_a2_matchup[1] = player_a2
+  pair_a2_matchup[2] = pair_data_df.at[pair_a2_index,'srv_ace_per']
+  pair_a2_matchup[3] = pair_data_df.at[pair_a2_index,'srv_err_per']
+  pair_a2_matchup[4] = pair_data_df.at[pair_a2_index,'expected']/100
+  pair_a2_matchup[7] = pair_data_df.at[pair_a2_index,'fbhe_n']/(pair_data_df.at[pair_a1_index,'fbhe_n']+pair_data_df.at[pair_a2_index,'fbhe_n'])
+  pair_a2_matchup[8] = pair_data_df.at[pair_a2_index,'srv_n']/(pair_data_df.at[pair_a1_index,'srv_n']+pair_data_df.at[pair_a2_index,'srv_n'])
+  #pair_a2_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_a2_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
+  print(f" pair a2 matchup data: {pair_a2_matchup}")
+
+  pair_b1_matchup[0] = pair_b
+  pair_b1_matchup[1] = player_b1
+  pair_b1_matchup[2] = pair_data_df.at[pair_b1_index,'srv_ace_per']
+  pair_b1_matchup[3] = pair_data_df.at[pair_b1_index,'srv_err_per']
+  pair_b1_matchup[4] = pair_data_df.at[pair_b1_index,'expected']/100
+  pair_b1_matchup[7] = pair_data_df.at[pair_b1_index,'fbhe_n']/(pair_data_df.at[pair_b1_index,'fbhe_n']+pair_data_df.at[pair_b2_index,'fbhe_n'])
+  pair_b1_matchup[8] = pair_data_df.at[pair_b1_index,'srv_n']/(pair_data_df.at[pair_b1_index,'srv_n']+pair_data_df.at[pair_b2_index,'srv_n'])
+  #pair_b1_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_b1_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
+  print(f" pair b1 matchup data: {pair_b1_matchup}")
+  
+  pair_b2_matchup[0] = pair_b
+  pair_b2_matchup[1] = player_b2
+  pair_b2_matchup[2] = pair_data_df.at[pair_b2_index,'srv_ace_per']
+  pair_b2_matchup[3] = pair_data_df.at[pair_b2_index,'srv_err_per']
+  pair_b2_matchup[4] = pair_data_df.at[pair_b2_index,'expected']/100
+  pair_b2_matchup[7] = pair_data_df.at[pair_b2_index,'fbhe_n']/(pair_data_df.at[pair_b1_index,'fbhe_n']+pair_data_df.at[pair_b2_index,'fbhe_n'])
+  pair_b2_matchup[8] = pair_data_df.at[pair_b2_index,'srv_n']/(pair_data_df.at[pair_b1_index,'srv_n']+pair_data_df.at[pair_b2_index,'srv_n'])
+  #pair_b2_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_b2_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
+  print(f" pair b2 matchup data: {pair_b2_matchup}")
+  
+  # calculate poiints, simple method, just using stats
+
+  # first calculate a few things:
+  a_ace_per = pair_a1_matchup[2]*pair_a1_matchup[8] + pair_a2_matchup[2]*pair_a2_matchup[8] # aces* pecent of serves for a1 and a2
+  a_err_per = pair_a1_matchup[3]*pair_a1_matchup[8] + pair_a2_matchup[3]*pair_a2_matchup[8] # errors * percent of serves, for a1 and a2
+  a_in_per = 1 - a_ace_per - a_err_per
+  a1_rcv_per = pair_a1_matchup[7]/(pair_a1_matchup[7]+pair_a2_matchup[7])
+  a1_srv_per = pair_a1_matchup[8]/(pair_a1_matchup[8]+pair_a2_matchup[8])
+  a2_rcv_per = pair_a2_matchup[7]/(pair_a1_matchup[7]+pair_a2_matchup[7])
+  a2_srv_per = pair_a2_matchup[8]/(pair_a1_matchup[8]+pair_a2_matchup[8])
+  print(f"Pair A Values: ace per:{a_ace_per}, Err Per:{a_err_per},A in Per:{a_in_per},A1 receive:{a1_rcv_per},A1 Serve:{a1_srv_per},A2 Receive:{a2_rcv_per},A2 Serve:{a2_srv_per}")
+  
+  b_ace_per = pair_b1_matchup[2]*pair_b1_matchup[8] + pair_b2_matchup[2]*pair_b2_matchup[8] # aces* pecent of serves for a1 and a2
+  b_err_per = pair_b1_matchup[3]*pair_b1_matchup[8] + pair_b2_matchup[3]*pair_b2_matchup[8] # errors * percent of serves, for a1 and a2
+  b_in_per = 1 - b_ace_per - b_err_per
+  b1_rcv_per = pair_b1_matchup[7]/(pair_b1_matchup[7]+pair_b2_matchup[7])
+  b1_srv_per = pair_b1_matchup[8]/(pair_b1_matchup[8]+pair_b2_matchup[8])
+  b2_rcv_per = pair_b2_matchup[7]/(pair_b1_matchup[7]+pair_b2_matchup[7])
+  b2_srv_per = pair_b2_matchup[8]/(pair_b1_matchup[8]+pair_b2_matchup[8])
+  print(f"Pair B Values: ace per:{b_ace_per}, Err Per:{b_err_per},B in Per:{b_in_per},B1 receive:{b1_rcv_per},B1 Serve:{b1_srv_per},B2 Receive:{b2_rcv_per},B2 Serve:{b2_srv_per}")
+  
+  # points on A serves: a points = a's ace percent + expected value of B * % of serves in play by A
+  # points when A serves = aces + (1-b's expected value) * (percent of in serves)
+  # points for A  = aces + ( (1-b1 expected)(b1 serve receive percent)+(1-b2 expected)(b2 serve receive percent)) * ( A1 total serves * (1-(aces+errors))
+  pair_a1_matchup[5] = pair_a1_matchup[2] + (1-(pair_b1_matchup[4]*b1_rcv_per+pair_b2_matchup[4]*b2_rcv_per)) * (pair_a1_matchup[8]*1-(pair_a1_matchup[2]+ pair_a1_matchup[3]))
+  pair_a2_matchup[5] = pair_a2_matchup[2] + (1-(pair_b1_matchup[4]*b1_rcv_per+pair_b2_matchup[4]*b2_rcv_per)) * (pair_a2_matchup[8]*1-(pair_a2_matchup[2]+ pair_a2_matchup[3]))
+                                                                                                                
+  # ppints on A serving: b points = err percet + (1-expected)*# of serves in play
+  # points for B when A serves = errors + expected * percent of serves
+  #
+  pair_b1_matchup[5] = a_err_per*b1_rcv_per + pair_b1_matchup[4]*b1_rcv_per*a_in_per
+  pair_b2_matchup[5] = a_err_per*b2_rcv_per + pair_b2_matchup[4]*b2_rcv_per*a_in_per
+
+  # points on B serves: a points = a's ace percent + expected value of B * % of serves in play by A
+  # points for B on B serves = aces + ( (1-b1 expected)(b1 serve receive percent)+(1-b2 expected)(b2 serve receive percent)) * ( A1 total serves * (1-(aces+errors))
+  pair_b1_matchup[6] = pair_b1_matchup[2] + (1-(pair_a1_matchup[4]*a1_rcv_per+pair_a2_matchup[4]*a2_rcv_per)) * (pair_b1_matchup[8]*1-(pair_b1_matchup[2]+ pair_b1_matchup[3]))
+  pair_b2_matchup[6] = pair_b2_matchup[2] + (1-(pair_a1_matchup[4]*a1_rcv_per+pair_a2_matchup[4]*a2_rcv_per)) * (pair_b2_matchup[8]*1-(pair_b2_matchup[2]+ pair_b2_matchup[3]))
+
+  # ppints on B serving: b points = err percet + (1-expected)*# of serves in play
+  # points for B when A serves = errors + expected * percent of serves
+  #
+  pair_a1_matchup[6] = b_err_per*a1_rcv_per + pair_a1_matchup[4]*a1_rcv_per*b_in_per
+  pair_a2_matchup[6] = b_err_per*a2_rcv_per + pair_a2_matchup[4]*a2_rcv_per*b_in_per
+
+  # predicted outcome
+  # total A points:
+  total_a_pts = pair_a1_matchup[5]+pair_a1_matchup[6]+pair_a2_matchup[5]+pair_a2_matchup[6]
+  total_b_pts = pair_b1_matchup[5]+pair_b1_matchup[6]+pair_b2_matchup[5]+pair_b2_matchup[6]
+  point_ratio_a = total_a_pts/(total_a_pts+total_b_pts)
+  pair_a1_matchup[9] = point_ratio_a
+  pair_a2_matchup[9] = point_ratio_a
+  point_ratio_b = 1 - point_ratio_a
+  pair_b1_matchup[9] = point_ratio_b
+  pair_b2_matchup[9] = point_ratio_b
+
+  print(f"Pair Matchups: Pair A1: {pair_a1_matchup}, Pair A2: {pair_a2_matchup}, Pair B1: {pair_b1_matchup}, Pair B2: {pair_b2_matchup}")
+
+  return pair_a1_matchup, pair_a2_matchup, pair_b1_matchup, pair_b2_matchup

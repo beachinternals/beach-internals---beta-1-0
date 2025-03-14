@@ -242,9 +242,10 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
 
       # ----------- calculate FBHE, 1-5 ------------------
       fbhe_vector = fbhe(tmp_df, disp_player, 'att', True )
+      pair_df.at[i,'fbhe_n'] = fbhe_vector[3]
       if fbhe_vector[3] >= min_att:
         pair_df.at[i,'fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-        pair_df.at[i,'fbhe_n'] = fbhe_vector[3]
+
 
       #print(f"player_df after fbhe calc:{player_df}")
 

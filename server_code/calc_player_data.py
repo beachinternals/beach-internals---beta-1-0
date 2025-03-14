@@ -254,9 +254,10 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
 
     # ----------- calculate FBHE, 1-5 ------------------
     fbhe_vector = fbhe(ppr_df, p_list[i], 'att', True )
+    player_df.at[i,'fbhe_n'] = fbhe_vector[3]
     if fbhe_vector[3] >= min_att:
       player_df.at[i,'fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      player_df.at[i,'fbhe_n'] = fbhe_vector[3]
+
 
     #print(f"player_df after fbhe calc:{player_df}")
 
