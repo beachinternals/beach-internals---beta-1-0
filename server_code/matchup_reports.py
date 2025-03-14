@@ -185,25 +185,25 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   # points on A serves: a points = a's ace percent + expected value of B * % of serves in play by A
   # points when A serves = aces + (1-b's expected value) * (percent of in serves)
   # points for A  = aces + ( (1-b1 expected)(b1 serve receive percent)+(1-b2 expected)(b2 serve receive percent)) * ( A1 total serves * (1-(aces+errors))
-  pair_a1_matchup[5] = pair_a1_matchup[2] + (1-(pair_b1_matchup[4]*b1_rcv_per+pair_b2_matchup[4]*b2_rcv_per)) * (pair_a1_matchup[8]*1-(pair_a1_matchup[2]+ pair_a1_matchup[3]))
-  pair_a2_matchup[5] = pair_a2_matchup[2] + (1-(pair_b1_matchup[4]*b1_rcv_per+pair_b2_matchup[4]*b2_rcv_per)) * (pair_a2_matchup[8]*1-(pair_a2_matchup[2]+ pair_a2_matchup[3]))
+  pair_a1_matchup[5] = ( pair_a1_matchup[2] + (1-(pair_b1_matchup[4]*b1_rcv_per+pair_b2_matchup[4]*b2_rcv_per)) * (1-(pair_a1_matchup[2]+ pair_a1_matchup[3])))*pair_a1_matchup[8]
+  pair_a2_matchup[5] = ( pair_a2_matchup[2] + (1-(pair_b1_matchup[4]*b1_rcv_per+pair_b2_matchup[4]*b2_rcv_per)) * (1-(pair_a2_matchup[2]+ pair_a2_matchup[3])))*pair_a2_matchup[8]
                                                                                                                 
   # ppints on A serving: b points = err percet + (1-expected)*# of serves in play
   # points for B when A serves = errors + expected * percent of serves
   #
-  pair_b1_matchup[5] = a_err_per*b1_rcv_per + pair_b1_matchup[4]*b1_rcv_per*a_in_per
-  pair_b2_matchup[5] = a_err_per*b2_rcv_per + pair_b2_matchup[4]*b2_rcv_per*a_in_per
+  pair_b1_matchup[5] = ( a_err_per + pair_b1_matchup[4]*a_in_per ) * b1_rcv_per
+  pair_b2_matchup[5] = ( a_err_per + pair_b2_matchup[4]*a_in_per ) * b2_rcv_per
 
   # points on B serves: a points = a's ace percent + expected value of B * % of serves in play by A
   # points for B on B serves = aces + ( (1-b1 expected)(b1 serve receive percent)+(1-b2 expected)(b2 serve receive percent)) * ( A1 total serves * (1-(aces+errors))
-  pair_b1_matchup[6] = pair_b1_matchup[2] + (1-(pair_a1_matchup[4]*a1_rcv_per+pair_a2_matchup[4]*a2_rcv_per)) * (pair_b1_matchup[8]*1-(pair_b1_matchup[2]+ pair_b1_matchup[3]))
-  pair_b2_matchup[6] = pair_b2_matchup[2] + (1-(pair_a1_matchup[4]*a1_rcv_per+pair_a2_matchup[4]*a2_rcv_per)) * (pair_b2_matchup[8]*1-(pair_b2_matchup[2]+ pair_b2_matchup[3]))
+  pair_b1_matchup[6] = ( pair_b1_matchup[2] + (1-(pair_a1_matchup[4]*a1_rcv_per+pair_a2_matchup[4]*a2_rcv_per)) * (1-(pair_b1_matchup[2]+ pair_b1_matchup[3])))*pair_b1_matchup[8]
+  pair_b2_matchup[6] = ( pair_b2_matchup[2] + (1-(pair_a1_matchup[4]*a1_rcv_per+pair_a2_matchup[4]*a2_rcv_per)) * (1-(pair_b2_matchup[2]+ pair_b2_matchup[3])))*pair_b2_matchup[8]
 
   # ppints on B serving: b points = err percet + (1-expected)*# of serves in play
   # points for B when A serves = errors + expected * percent of serves
   #
-  pair_a1_matchup[6] = b_err_per*a1_rcv_per + pair_a1_matchup[4]*a1_rcv_per*b_in_per
-  pair_a2_matchup[6] = b_err_per*a2_rcv_per + pair_a2_matchup[4]*a2_rcv_per*b_in_per
+  pair_a1_matchup[6] = ( b_err_per + pair_a1_matchup[4]*b_in_per ) * a1_rcv_per
+  pair_a2_matchup[6] = ( b_err_per + pair_a2_matchup[4]*b_in_per ) * a2_rcv_per
 
   # predicted outcome
   # total A points:
