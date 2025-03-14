@@ -127,31 +127,31 @@ def matchup_outcome( disp_league, disp_gender, disp_year, pair_a, pair_b ):
   }
   match_up_df = pd.DataFrame.from_dict( match_up_dict)
 
-  # now populate the dataframe
-  match_up_df.at['Ace %',player_a1] = float('{:.3}'.format(pair_a1_matchup[2]))
-  match_up_df.at['Ace %',player_a2] = pair_a2_matchup[2]
-  match_up_df.at['Ace %',player_b1] = pair_b1_matchup[2]
-  match_up_df.at['Ace %',player_b2] = pair_b2_matchup[2]
-  match_up_df.loc[1,1] = pair_a1_matchup[3]
-  match_up_df.loc[2,1] = pair_a2_matchup[3]
-  match_up_df.loc[4,1] = pair_b1_matchup[3]
-  match_up_df.loc[5,1] = pair_b2_matchup[3]
-  match_up_df.iloc[1,2] = pair_a1_matchup[4]
-  match_up_df.iloc[2,2] = pair_a2_matchup[4]
-  match_up_df.iloc[4,2] = pair_b1_matchup[4]
-  match_up_df.iloc[5,2] = pair_b2_matchup[4]
-  match_up_df.at[1,3] = points_a1_a_srv
-  match_up_df.at[2,3] = points_a2_a_srv
-  match_up_df.at[4,3] = points_b1_a_srv
-  match_up_df.at[5,3] = points_b2_a_srv
-  match_up_df.at[1,4] = points_a1_b_srv
-  match_up_df.at[2,4] = points_a2_b_srv
-  match_up_df.at[4,4] = points_b1_b_srv
-  match_up_df.at[5,4] = points_b2_b_srv
-  match_up_df.at[0,5] = point_ratio_a
-  match_up_df.at[3,5] = point_ratio_b
-  match_up_df.at[0,5] = predicted_a_pts
-  match_up_df.at[3,5] = predicted_b_pts
+  # now populate the dataframe (row, column)
+  match_up_df.iloc[0,2] = float('{:.2}'.format(pair_a1_matchup[2])) # ace
+  match_up_df.iloc[0,3] = float('{:.2}'.format(pair_a2_matchup[2]))
+  match_up_df.iloc[0,5] = float('{:.2}'.format(pair_b1_matchup[2]))
+  match_up_df.iloc[0,6] = float('{:.2}'.format(pair_b2_matchup[2]))
+  match_up_df.iloc[1,2] = float('{:.2}'.format(pair_a1_matchup[3])) # error
+  match_up_df.iloc[1,3] = float('{:.2}'.format(pair_a2_matchup[3]))
+  match_up_df.iloc[1,5] = float('{:.2}'.format(pair_b1_matchup[3]))
+  match_up_df.iloc[1,6] = float('{:.2}'.format(pair_b2_matchup[3]))
+  match_up_df.iloc[2,2] = float('{:.2}'.format(pair_a1_matchup[4])) # expected
+  match_up_df.iloc[2,3] = float('{:.2}'.format(pair_a2_matchup[4]))
+  match_up_df.iloc[2,5] = float('{:.2}'.format(pair_b1_matchup[4]))
+  match_up_df.iloc[2,6] = float('{:.2}'.format(pair_b2_matchup[4]))
+  match_up_df.iloc[3,2] = float('{:.2}'.format(points_a1_a_srv))
+  match_up_df.iloc[3,3] = float('{:.2}'.format(points_a2_a_srv))
+  match_up_df.iloc[3,5] = float('{:.2}'.format(points_b1_a_srv))
+  match_up_df.iloc[3,6] = float('{:.2}'.format(points_b2_a_srv))
+  match_up_df.iloc[4,2] = float('{:.2}'.format(points_a1_b_srv))
+  match_up_df.iloc[4,3] = float('{:.2}'.format(points_a2_b_srv))
+  match_up_df.iloc[4,5] = float('{:.2}'.format(points_b1_b_srv))
+  match_up_df.iloc[4,6] = float('{:.2}'.format(points_b2_b_srv))
+  match_up_df.iloc[5,1] = float('{:.2}'.format(point_ratio_a))
+  match_up_df.iloc[5,4] = float('{:.2}'.format(point_ratio_b))
+  match_up_df.iloc[6,1] = float('{:.2}'.format(predicted_a_pts))
+  match_up_df.iloc[6,4] = float('{:.2}'.format(predicted_b_pts))
 
   # coonvert to markdown
   matchup_outcome_mkdn = pd.DataFrame.to_markdown( match_up_df, index=False )
