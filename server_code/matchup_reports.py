@@ -19,6 +19,29 @@ import pandas as pd
 #
 @anvil.server.callable
 def matchup_outcome_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+
+  matchup_df = matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b)
+  matchup_outcome_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
+  return matchup_outcome_mkdn
+
+@anvil.server.callable
+def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+  #
+  # quick report with match outcome, match along the net and  match up on all 45 werves (times 4!)
+  #
+
+  matchup_df = matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b)
+  matchup_outcome_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
+
+  matchup_df = matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b)
+  matchup_net_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
+
+  matchup_df = matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b)
+  matchup_45_serves_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
+  
+  return matchup_outcome_mkdn, matchup_net_mkdn, matchup_45_serves_mkdn
+
+def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b ):
   #
   #.  Report to return the predicted outcome of two pairs
   #
@@ -65,12 +88,10 @@ def matchup_outcome_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
   match_up_df.iloc[5,4] = float('{:.2}'.format(b1_matchup[9])) # point ratio b
   match_up_df.iloc[6,1] = float('{:.2}'.format(a1_matchup[9]*(21/max(a1_matchup[9],b1_matchup[9])))) # points for A
   match_up_df.iloc[6,4] = float('{:.2}'.format(b1_matchup[9]*(21/max(a1_matchup[9],b1_matchup[9])))) # points for B
-
-  # coonvert to markdown
-  matchup_outcome_mkdn = pd.DataFrame.to_markdown( match_up_df, index=False )
   
-  return matchup_outcome_mkdn
+  return match_up_df
 
+  
 @anvil.server.callable
 def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   #
@@ -240,9 +261,10 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
   #. 6 - Receiving Player, Percentile
   #. 7 - Serve percentile - receive percentile
   matchup_dict = {
-    'srv_player', 'rcv_player','zone','opp_fbhe', 'opp_per','fbhe','fbhe_per','per_diff'
+    '':['srv_player','rcv_player','zone','opp_fbhe', 'opp_per','fbhe','fbhe_per','per_diff']
   }
   matchup_df = pd.DataFrame.from_dict( matchup_dict)
+  print(f'matchup dataframe, 45 serves, empty:{matchup_df}')
   
   # fetch the pair_data and pair_data_stats files
   pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
@@ -265,6 +287,10 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
   for playera in [player_a1, player_a2]:
     for playerb in [player_b1,player_b2]:
       for zone in [1,2,3,4,5]:
+        
+        # append a new row:
+        matchup_df.loc[index]
+        
         # store players and zones:
         matchup_df.iloc[index,0] = playera
         matchup_df.iloc[index,1] = playerb
@@ -275,13 +301,16 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
         pb_data_index = pair_b1_index if playerb == player_b1 else pair_b2_index
         opp_var = 'opp_fbhe'+str(zone)
         fbhe_var = 'fbhe'+str(zone)
-        matchup_df.iloc[index,3] = pair_data_df.iloc[pa_data_index,opp_var]
-        matchup_df.iloc[index,5] = pair_data_df.iloc[pb_data_index,fbhe_var]
+        print(f"opp_var: {opp_var}, fbhe_var : {fbhe_var} match_up dataframe: {matchup_df}")
+        matchup_df.iloc[3,index] = pair_data_df.loc[pa_data_index,'opp_fbhe1']
+        matchup_df.iloc[5,index] = pair_data_df.loc[pb_data_index,fbhe_var]
 
         # calcaulte the percentiles
-        matchup_df[index,4] = stats.norm.cdf( (matchup_df.iloc[index,3]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
-        matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
-        matchup_df[index,7] = matchup_df[index,4] - matchup_df[index,6]
+        matchup_df[4,index] = stats.norm.cdf( (matchup_df.iloc[index,3]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
+        matchup_df[6,index] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
+        matchup_df[7,index] = matchup_df[index,4] - matchup_df[index,6]
+
+        index = index + 1
 
   print(f"match_up dataframe: {matchup_df}")
 
@@ -300,14 +329,16 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
   #. 0 - Serving Player
   #. 1 - Receiving Player
   #. 2 - Serve From Zone ( 1, 3, 5 )
-  #. 3 - Serve to Zone (C,D,E:1,2,3,4,5)
-  #. 4 - Serving Player, Opp FBHE 
-  #. 5 - Opp fbhe percentile
-  #. 6 - Receiving Player, FBHE
-  #. 7 - Receiving Player, Percentile
-  #. 8 - Serve percentile - receive percentile
+  #. 3 - Serve to Zone net ( 1,2,3,4,5)
+  #. 4 - Serve to Zone Depth (c,d,e)
+  #. 5 - Serving Player, Opp FBHE 
+  #. 6 - Opp fbhe percentile
+  #. 7 - Receiving Player, FBHE
+  #. 8 - Receiving Player, Percentile
+  #. 9 - Serve percentile - receive percentile
+  
   matchup_dict = {
-    'srv_player', 'rcv_player','srv_fr','srv_to','opp_fbhe', 'opp_per','fbhe','fbhe_per','per_diff'
+    'srv_player', 'rcv_player','srv_fr','srv_to_net','srv_to_depth','opp_fbhe', 'opp_per','fbhe','fbhe_per','per_diff'
   }
   matchup_df = pd.DataFrame.from_dict( matchup_dict)
   
@@ -331,26 +362,32 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
   index = 0
   for playera in [player_a1, player_a2]:
     for playerb in [player_b1,player_b2]:
-      for srv_fr_zone_depth in ['c','d','e']:
+      # save the player index for player a and b in the pair_data table
+      pa_data_index = pair_a1_index if playera == player_a1 else pair_a2_index
+      pb_data_index = pair_b1_index if playerb == player_b1 else pair_b2_index
+
+      # loop over 45 potential serves, from and to
+      for srv_fr_zone in [1,3,5]:
         for srv_to_zone_net in [1,2,3,4,5]:
-          
-          # store players and zones:
-          matchup_df.iloc[index,0] = playera
-          matchup_df.iloc[index,1] = playerb
-          matchup_df.iloc[index,2] = zone
+          for srv_to_zone_depth in ['c','d','e']:
 
-        # now store FBHE and OPP FBHE
-        pa_data_index = pair_a1_index if playera == player_a1 else pair_a2_index
-        pb_data_index = pair_b1_index if playerb == player_b1 else pair_b2_index
-        opp_var = 'opp_fbhe'+str(zone)
-        fbhe_var = 'fbhe'+str(zone)
-        matchup_df.iloc[index,3] = pair_data_df.iloc[pa_data_index,opp_var]
-        matchup_df.iloc[index,5] = pair_data_df.iloc[pb_data_index,fbhe_var]
+            # store players and zones:
+            matchup_df.iloc[index,0] = playera
+            matchup_df.iloc[index,1] = playerb
+            matchup_df.iloc[index,2] = str(srv_fr_zone)
+            matchup_df.iloc[index,3] = str(srv_to_zone_net)
+            matchup_df.iloc[index,4] = str(srv_to_zone_depth)
+            
+            # now store FBHE and OPP FBHE
+            opp_var = 'opp_fbhe_'+str(srv_fr_zone)+'_'+str(srv_to_zone_net)+str(srv_to_zone_depth)
+            fbhe_var = 'fbhe_'+str(srv_fr_zone)+'_'+str(srv_to_zone_net)+str(srv_to_zone_depth)
+            matchup_df.iloc[index,5] = pair_data_df.iloc[pa_data_index,opp_var]
+            matchup_df.iloc[index,7] = pair_data_df.iloc[pb_data_index,fbhe_var]
 
-        # calcaulte the percentiles
-        matchup_df[index,4] = stats.norm.cdf( (matchup_df.iloc[index,3]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
-        matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
-        matchup_df[index,7] = matchup_df[index,4] - matchup_df[index,6]
+            # calcaulte the percentiles
+            matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
+            matchup_df[index,8] = stats.norm.cdf( (matchup_df.iloc[index,7]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
+            matchup_df[index,9] = matchup_df[index,6] - matchup_df[index,4]
 
   print(f"match_up dataframe: {matchup_df}")
 
