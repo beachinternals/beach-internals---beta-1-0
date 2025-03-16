@@ -299,7 +299,7 @@ class Match_ups(Match_upsTemplate):
 
     # call the server function
     (
-      table_data1
+      table_data1, table_data2, table_data3
     ) = anvil.server.call(
       fnct_name,
       disp_league,
@@ -344,8 +344,8 @@ class Match_ups(Match_upsTemplate):
     self.box_explaing_text.content = explain_text
 
     self.rpt_disp_box1.content = table_data1
-    #self.rpt_disp_box2.content = table_data2
-    #self.rpt_disp_box3.content = table_data3
+    self.rpt_disp_box2.content = table_data2
+    self.rpt_disp_box3.content = table_data3
     #self.rpt_disp_box4.content = table_data4
     #self.rpt_disp_box5.content = table_data5
     #self.rpt_disp_box6.content = table_data6

@@ -22,7 +22,7 @@ def matchup_outcome_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
 
   matchup_df = matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b)
   matchup_outcome_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
-  return matchup_outcome_mkdn
+  return matchup_outcome_mkdn, '', ''
 
 @anvil.server.callable
 def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
@@ -315,6 +315,9 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
         index = index + 1
         
   print(f"match_up dataframe: {matchup_df}")
+  # before we return, sort hte dataframe by the difference, ascending
+  matchup_df = matchup_df.sort_values(by='per_diff', ascending=False)
+  
   return matchup_df
 
 @anvil.server.callable
@@ -385,16 +388,19 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
             # now store FBHE and OPP FBHE
             opp_var = 'opp_fbhe_'+str(srv_fr_zone)+'_'+str(srv_to_zone_net)+str(srv_to_zone_depth)
             fbhe_var = 'fbhe_'+str(srv_fr_zone)+'_'+str(srv_to_zone_net)+str(srv_to_zone_depth)
-            matchup_df.iloc[index,5] = pair_data_df.iloc[pa_data_index,opp_var]
-            matchup_df.iloc[index,7] = pair_data_df.iloc[pb_data_index,fbhe_var]
+            print(f" Indexes: {index}, pa_data_index {pa_data_index}, Opp var: {opp_var} ")
+            matchup_df.iloc[index,5] = pair_data_df.at[pa_data_index,opp_var]
+            matchup_df.iloc[index,7] = pair_data_df.at[pb_data_index,fbhe_var]
 
             # calcaulte the percentiles
-            matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df.at[0,opp_var+'_mean'])/ pair_stats_df.at[0,opp_var+'_stdev'] )
-            matchup_df[index,8] = stats.norm.cdf( (matchup_df.iloc[index,7]-pair_stats_df.at[0,fbhe_var+'_mean'])/ pair_stats_df.at[0,fbhe_var+'_stdev'] )
-            matchup_df[index,9] = matchup_df[index,6] - matchup_df[index,4]
+            matchup_df.iloc[index,6] = 1 - stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df.at[0,opp_var+'_mean'])/ pair_stats_df.at[0,opp_var+'_stdev'] )
+            matchup_df.iloc[index,8] = stats.norm.cdf( (matchup_df.iloc[index,7]-pair_stats_df.at[0,fbhe_var+'_mean'])/ pair_stats_df.at[0,fbhe_var+'_stdev'] )
+            matchup_df.iloc[index,9] = matchup_df.iloc[index,6] - matchup_df.iloc[index,8]
 
             index = index + 1
 
   print(f"match_up dataframe: {matchup_df}")
+  # before we return, sort hte dataframe by the difference, ascending
+  matchup_df = matchup_df.sort_values(by='per_diff', ascending=False)
 
   return matchup_df
