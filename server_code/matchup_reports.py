@@ -8,6 +8,7 @@ from anvil.tables import app_tables
 import anvil.server
 from pair_functions import *
 import scipy.stats as stats
+import pandas as pd
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -129,7 +130,7 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   pair_a1_matchup[7] = pair_data_df.at[pair_a1_index,'fbhe_n']/(pair_data_df.at[pair_a1_index,'fbhe_n']+pair_data_df.at[pair_a2_index,'fbhe_n'])
   pair_a1_matchup[8] = pair_data_df.at[pair_a1_index,'srv_n']/(pair_data_df.at[pair_a1_index,'srv_n']+pair_data_df.at[pair_a2_index,'srv_n'])
   #pair_a1_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_a1_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
-  print(f" pair a1 matchup data: {pair_a1_matchup}")
+  #print(f" pair a1 matchup data: {pair_a1_matchup}")
   
   pair_a2_matchup[0] = pair_a
   pair_a2_matchup[1] = player_a2
@@ -139,7 +140,7 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   pair_a2_matchup[7] = pair_data_df.at[pair_a2_index,'fbhe_n']/(pair_data_df.at[pair_a1_index,'fbhe_n']+pair_data_df.at[pair_a2_index,'fbhe_n'])
   pair_a2_matchup[8] = pair_data_df.at[pair_a2_index,'srv_n']/(pair_data_df.at[pair_a1_index,'srv_n']+pair_data_df.at[pair_a2_index,'srv_n'])
   #pair_a2_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_a2_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
-  print(f" pair a2 matchup data: {pair_a2_matchup}")
+  #print(f" pair a2 matchup data: {pair_a2_matchup}")
 
   pair_b1_matchup[0] = pair_b
   pair_b1_matchup[1] = player_b1
@@ -149,7 +150,7 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   pair_b1_matchup[7] = pair_data_df.at[pair_b1_index,'fbhe_n']/(pair_data_df.at[pair_b1_index,'fbhe_n']+pair_data_df.at[pair_b2_index,'fbhe_n'])
   pair_b1_matchup[8] = pair_data_df.at[pair_b1_index,'srv_n']/(pair_data_df.at[pair_b1_index,'srv_n']+pair_data_df.at[pair_b2_index,'srv_n'])
   #pair_b1_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_b1_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
-  print(f" pair b1 matchup data: {pair_b1_matchup}")
+  #print(f" pair b1 matchup data: {pair_b1_matchup}")
   
   pair_b2_matchup[0] = pair_b
   pair_b2_matchup[1] = player_b2
@@ -159,7 +160,7 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   pair_b2_matchup[7] = pair_data_df.at[pair_b2_index,'fbhe_n']/(pair_data_df.at[pair_b1_index,'fbhe_n']+pair_data_df.at[pair_b2_index,'fbhe_n'])
   pair_b2_matchup[8] = pair_data_df.at[pair_b2_index,'srv_n']/(pair_data_df.at[pair_b1_index,'srv_n']+pair_data_df.at[pair_b2_index,'srv_n'])
   #pair_b2_matchup[5] = stats.norm.cdf( (pair_data_df.at[pair_b2_index,'expected']-pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_mean'] )
-  print(f" pair b2 matchup data: {pair_b2_matchup}")
+  #print(f" pair b2 matchup data: {pair_b2_matchup}")
   
   # calculate poiints, simple method, just using stats
 
@@ -171,7 +172,7 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   a1_srv_per = pair_a1_matchup[8]/(pair_a1_matchup[8]+pair_a2_matchup[8])
   a2_rcv_per = pair_a2_matchup[7]/(pair_a1_matchup[7]+pair_a2_matchup[7])
   a2_srv_per = pair_a2_matchup[8]/(pair_a1_matchup[8]+pair_a2_matchup[8])
-  print(f"Pair A Values: ace per:{a_ace_per}, Err Per:{a_err_per},A in Per:{a_in_per},A1 receive:{a1_rcv_per},A1 Serve:{a1_srv_per},A2 Receive:{a2_rcv_per},A2 Serve:{a2_srv_per}")
+  #print(f"Pair A Values: ace per:{a_ace_per}, Err Per:{a_err_per},A in Per:{a_in_per},A1 receive:{a1_rcv_per},A1 Serve:{a1_srv_per},A2 Receive:{a2_rcv_per},A2 Serve:{a2_srv_per}")
   
   b_ace_per = pair_b1_matchup[2]*pair_b1_matchup[8] + pair_b2_matchup[2]*pair_b2_matchup[8] # aces* pecent of serves for a1 and a2
   b_err_per = pair_b1_matchup[3]*pair_b1_matchup[8] + pair_b2_matchup[3]*pair_b2_matchup[8] # errors * percent of serves, for a1 and a2
@@ -180,7 +181,7 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   b1_srv_per = pair_b1_matchup[8]/(pair_b1_matchup[8]+pair_b2_matchup[8])
   b2_rcv_per = pair_b2_matchup[7]/(pair_b1_matchup[7]+pair_b2_matchup[7])
   b2_srv_per = pair_b2_matchup[8]/(pair_b1_matchup[8]+pair_b2_matchup[8])
-  print(f"Pair B Values: ace per:{b_ace_per}, Err Per:{b_err_per},B in Per:{b_in_per},B1 receive:{b1_rcv_per},B1 Serve:{b1_srv_per},B2 Receive:{b2_rcv_per},B2 Serve:{b2_srv_per}")
+  #print(f"Pair B Values: ace per:{b_ace_per}, Err Per:{b_err_per},B in Per:{b_in_per},B1 receive:{b1_rcv_per},B1 Serve:{b1_srv_per},B2 Receive:{b2_rcv_per},B2 Serve:{b2_srv_per}")
   
   # points on A serves: a points = a's ace percent + expected value of B * % of serves in play by A
   # points when A serves = aces + (1-b's expected value) * (percent of in serves)
@@ -219,3 +220,69 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   print(f"Pair Matchups: Pair A1: {pair_a1_matchup}, Pair A2: {pair_a2_matchup}, Pair B1: {pair_b1_matchup}, Pair B2: {pair_b2_matchup}")
 
   return pair_a1_matchup, pair_a2_matchup, pair_b1_matchup, pair_b2_matchup
+
+@anvil.server.callable
+def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
+  #
+  # we matchup pair a vs pair b along the net
+  #
+  #
+  # pull data from the pair data file for pair a and b
+  # return the matchup vector(s)
+  #
+  # matchup dataframe:
+  #. 0 - Serving Player
+  #. 1 - Receiving Player
+  #. 2 - Zone ( 1 - 5)
+  #. 3 - Serving Player, Opp FBHE 
+  #. 4 - Opp fbhe percentile
+  #. 5 - Receiving Player, FBHE
+  #. 6 - Receiving Player, Percentile
+  #. 7 - Serve percentile - receive percentile
+  matchup_dict = {
+    'srv_player', 'rcv_player','zone','opp_fbhe', 'opp_per','fbhe','fbhe_per','per_diff'
+  }
+  matchup_df = pd.DataFrame.from_dict( matchup_dict)
+  
+  # fetch the pair_data and pair_data_stats files
+  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+  player_a1, player_a2 = pair_players( pair_a )
+  player_b1, player_b2 = pair_players( pair_b )
+
+  # get the row for pair_a and pair_b
+  if pair_data_df['pair'].isin([pair_a]).any():
+    pair_a1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a1) ].index[0]
+    pair_a2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_a
+  if pair_data_df['pair'].isin([pair_b]).any():
+    pair_b1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b1) ].index[0]
+    pair_b2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_b
+
+  index = 0
+  for playera in [player_a1, player_a2]:
+    for playerb in [player_b1,player_b2]:
+      for zone in [1,2,3,4,5]:
+        # store players and zones:
+        matchup_df.iloc[index,0] = playera
+        matchup_df.iloc[index,1] = playerb
+        matchup_df.iloc[index,2] = zone
+
+        # now store FBHE and OPP FBHE
+        pa_data_index = pair_a1_index if playera == player_a1 else pair_a2_index
+        pb_data_index = pair_b1_index if playerb == player_b1 else pair_b2_index
+        opp_var = 'opp_fbhe'+str(zone)
+        fbhe_var = 'fbhe'+str(zone)
+        matchup_df.iloc[index,3] = pair_data_df.iloc[pa_data_index,opp_var]
+        matchup_df.iloc[index,5] = pair_data_df.iloc[pb_data_index,fbhe_var]
+
+        # calcaulte the percentiles
+        matchup_df[index,4] = stats.norm.cdf( (matchup_df.iloc[index,3]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
+        matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
+        matchup_df[index,7] = matchup_df[index,4] - matchup_df[index,6]
+
+  print(f"match_up dataframe: {matchup_df}")
+
+  return matchup_df
