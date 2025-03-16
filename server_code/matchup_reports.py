@@ -286,3 +286,71 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
   print(f"match_up dataframe: {matchup_df}")
 
   return matchup_df
+
+@anvil.server.callable
+def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
+  #
+  # we matchup pair a vs pair b across all 45 serve locations
+  #
+  #
+  # pull data from the pair data file for pair a and b
+  # return the matchup vector(s)
+  #
+  # matchup dataframe:
+  #. 0 - Serving Player
+  #. 1 - Receiving Player
+  #. 2 - Serve From Zone ( 1, 3, 5 )
+  #. 3 - Serve to Zone (C,D,E:1,2,3,4,5)
+  #. 4 - Serving Player, Opp FBHE 
+  #. 5 - Opp fbhe percentile
+  #. 6 - Receiving Player, FBHE
+  #. 7 - Receiving Player, Percentile
+  #. 8 - Serve percentile - receive percentile
+  matchup_dict = {
+    'srv_player', 'rcv_player','srv_fr','srv_to','opp_fbhe', 'opp_per','fbhe','fbhe_per','per_diff'
+  }
+  matchup_df = pd.DataFrame.from_dict( matchup_dict)
+  
+  # fetch the pair_data and pair_data_stats files
+  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+  player_a1, player_a2 = pair_players( pair_a )
+  player_b1, player_b2 = pair_players( pair_b )
+
+  # get the row for pair_a and pair_b
+  if pair_data_df['pair'].isin([pair_a]).any():
+    pair_a1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a1) ].index[0]
+    pair_a2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_a
+  if pair_data_df['pair'].isin([pair_b]).any():
+    pair_b1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b1) ].index[0]
+    pair_b2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_b
+
+  index = 0
+  for playera in [player_a1, player_a2]:
+    for playerb in [player_b1,player_b2]:
+      for srv_fr_zone in [1,2,3,4,5]:
+        for 
+        # store players and zones:
+        matchup_df.iloc[index,0] = playera
+        matchup_df.iloc[index,1] = playerb
+        matchup_df.iloc[index,2] = zone
+
+        # now store FBHE and OPP FBHE
+        pa_data_index = pair_a1_index if playera == player_a1 else pair_a2_index
+        pb_data_index = pair_b1_index if playerb == player_b1 else pair_b2_index
+        opp_var = 'opp_fbhe'+str(zone)
+        fbhe_var = 'fbhe'+str(zone)
+        matchup_df.iloc[index,3] = pair_data_df.iloc[pa_data_index,opp_var]
+        matchup_df.iloc[index,5] = pair_data_df.iloc[pb_data_index,fbhe_var]
+
+        # calcaulte the percentiles
+        matchup_df[index,4] = stats.norm.cdf( (matchup_df.iloc[index,3]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
+        matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
+        matchup_df[index,7] = matchup_df[index,4] - matchup_df[index,6]
+
+  print(f"match_up dataframe: {matchup_df}")
+
+  return matchup_df
