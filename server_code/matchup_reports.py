@@ -270,6 +270,7 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
   pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
   player_a1, player_a2 = pair_players( pair_a )
   player_b1, player_b2 = pair_players( pair_b )
+  print(f"pair stats: {pair_stats_df}")
 
   # get the row for pair_a and pair_b
   if pair_data_df['pair'].isin([pair_a]).any():
@@ -306,9 +307,9 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
         matchup_df.iloc[index,5] = pair_data_df.loc[pb_data_index,fbhe_var]
 
         # calcalute the percentiles
-        print(f" stats file ooppp mean and stdev: {pair_stats_df[0,'opp_fbhe1_mean']}, {pair_stats_df[0,'opp_fbhe1_stdev']} FBHE {pair_stats_df[0,'fbhe1_mean']}, {pair_stats_df[0,'fbhe1_stdev']}" )
-        matchup_df[index,4] = stats.norm.cdf( (matchup_df.iloc[index,3]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
-        matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
+        #print(f" stats file opp mean and stdev: {pair_stats_df.at[0,'opp_fbhe1_mean']}, {pair_stats_df.at[0,'opp_fbhe1_stdev']} FBHE {pair_stats_df[0,'fbhe1_mean']}, {pair_stats_df[0,'fbhe1_stdev']}" )
+        matchup_df[index,4] = stats.norm.cdf( (matchup_df.iloc[index,3]-pair_stats_df.at[0,opp_var+'_mean'])/ pair_stats_df.at[0,opp_var+'_stdev'] )
+        matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df.at[0,fbhe_var+'_mean'])/ pair_stats_df.at[0,fbhe_var+'_stdev'] )
         matchup_df[index,7] = matchup_df[index,4] - matchup_df[index,6]
 
         index = index + 1
@@ -386,8 +387,8 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
             matchup_df.iloc[index,7] = pair_data_df.iloc[pb_data_index,fbhe_var]
 
             # calcaulte the percentiles
-            matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
-            matchup_df[index,8] = stats.norm.cdf( (matchup_df.iloc[index,7]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
+            matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df.at[0,opp_var+'_mean'])/ pair_stats_df.at[0,opp_var+'_stdev'] )
+            matchup_df[index,8] = stats.norm.cdf( (matchup_df.iloc[index,7]-pair_stats_df.at[0,fbhe_var+'_mean'])/ pair_stats_df.at[0,fbhe_var+'_stdev'] )
             matchup_df[index,9] = matchup_df[index,6] - matchup_df[index,4]
 
   print(f"match_up dataframe: {matchup_df}")
