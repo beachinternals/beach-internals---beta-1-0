@@ -238,7 +238,7 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   pair_b1_matchup[9] = point_ratio_b
   pair_b2_matchup[9] = point_ratio_b
 
-  print(f"Pair Matchups: Pair A1: {pair_a1_matchup}, Pair A2: {pair_a2_matchup}, Pair B1: {pair_b1_matchup}, Pair B2: {pair_b2_matchup}")
+  #print(f"Pair Matchups: Pair A1: {pair_a1_matchup}, Pair A2: {pair_a2_matchup}, Pair B1: {pair_b1_matchup}, Pair B2: {pair_b2_matchup}")
 
   return pair_a1_matchup, pair_a2_matchup, pair_b1_matchup, pair_b2_matchup
 
@@ -261,10 +261,10 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
   #. 6 - Receiving Player, Percentile
   #. 7 - Serve percentile - receive percentile
   matchup_dict = {
-    '':['srv_player','rcv_player','zone','opp_fbhe', 'opp_per','fbhe','fbhe_per','per_diff']
+    'srv_player':'','rcv_player':'','zone':0,'opp_fbhe':0, 'opp_per':0,'fbhe':0,'fbhe_per':0,'per_diff':0
   }
-  matchup_df = pd.DataFrame.from_dict( matchup_dict)
-  print(f'matchup dataframe, 45 serves, empty:{matchup_df}')
+  matchup_df = pd.DataFrame( matchup_dict, index=[0])
+  print(f'matchup dataframe, 1-5 along net, empty:{matchup_df}')
   
   # fetch the pair_data and pair_data_stats files
   pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
@@ -302,13 +302,14 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
         opp_var = 'opp_fbhe'+str(zone)
         fbhe_var = 'fbhe'+str(zone)
         print(f"opp_var: {opp_var}, fbhe_var : {fbhe_var} match_up dataframe: {matchup_df}")
-        matchup_df.iloc[3,index] = pair_data_df.loc[pa_data_index,'opp_fbhe1']
-        matchup_df.iloc[5,index] = pair_data_df.loc[pb_data_index,fbhe_var]
+        matchup_df.iloc[index,3] = pair_data_df.loc[pa_data_index,'opp_fbhe1']
+        matchup_df.iloc[index,5] = pair_data_df.loc[pb_data_index,fbhe_var]
 
-        # calcaulte the percentiles
-        matchup_df[4,index] = stats.norm.cdf( (matchup_df.iloc[index,3]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
-        matchup_df[6,index] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
-        matchup_df[7,index] = matchup_df[index,4] - matchup_df[index,6]
+        # calcalute the percentiles
+        print(f" stats file ooppp mean and stdev: {pair_stats_df[0,'opp_fbhe1_mean']}, {pair_stats_df[0,'opp_fbhe1_stdev']} FBHE {pair_stats_df[0,'fbhe1_mean']}, {pair_stats_df[0,'fbhe1_stdev']}" )
+        matchup_df[index,4] = stats.norm.cdf( (matchup_df.iloc[index,3]-pair_stats_df[0,opp_var+'_mean'])/ pair_stats_df[0,opp_var+'_stdev'] )
+        matchup_df[index,6] = stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df[0,fbhe_var+'_mean'])/ pair_stats_df[0,fbhe_var+'_stdev'] )
+        matchup_df[index,7] = matchup_df[index,4] - matchup_df[index,6]
 
         index = index + 1
 
