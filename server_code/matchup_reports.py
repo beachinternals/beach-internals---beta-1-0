@@ -331,12 +331,13 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
   index = 0
   for playera in [player_a1, player_a2]:
     for playerb in [player_b1,player_b2]:
-      for srv_fr_zone in [1,2,3,4,5]:
-        for 
-        # store players and zones:
-        matchup_df.iloc[index,0] = playera
-        matchup_df.iloc[index,1] = playerb
-        matchup_df.iloc[index,2] = zone
+      for srv_fr_zone_depth in ['c','d','e']:
+        for srv_to_zone_net in [1,2,3,4,5]:
+          
+          # store players and zones:
+          matchup_df.iloc[index,0] = playera
+          matchup_df.iloc[index,1] = playerb
+          matchup_df.iloc[index,2] = zone
 
         # now store FBHE and OPP FBHE
         pa_data_index = pair_a1_index if playera == player_a1 else pair_a2_index
