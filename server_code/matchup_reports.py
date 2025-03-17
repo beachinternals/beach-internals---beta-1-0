@@ -22,7 +22,7 @@ def matchup_outcome_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
 
   matchup_df = matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b)
   matchup_outcome_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
-  return matchup_outcome_mkdn, '', ''
+  return matchup_outcome_mkdn, '', '', ''
 
 @anvil.server.callable
 def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
@@ -37,9 +37,12 @@ def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
   matchup_net_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
 
   matchup_df = matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b)
-  matchup_45_serves_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
+  matchup_45_serves_mkdn = pd.DataFrame.to_markdown( matchup_df.head(15), index=False )
+
+  matchup_df_fbhe = matchup_df.sort_values(by='fbhe', ascending=True)
+  matchup_45_serves_fbhe_mkdn = pd.DataFrame.to_markdown( matchup_df_fbhe.head(15), index=False )
   
-  return matchup_outcome_mkdn, matchup_net_mkdn, matchup_45_serves_mkdn
+  return matchup_outcome_mkdn, matchup_net_mkdn, matchup_45_serves_mkdn, matchup_45_serves_fbhe_mkdn
 
 def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b ):
   #
@@ -313,10 +316,12 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
         matchup_df.iloc[index,7] = matchup_df.iloc[index,4] - matchup_df.iloc[index,6]
 
         index = index + 1
-        
+          
+  # drop the last row
+  matchup_df = matchup_df.iloc[:-1]
   print(f"match_up dataframe: {matchup_df}")
   # before we return, sort hte dataframe by the difference, ascending
-  matchup_df = matchup_df.sort_values(by='per_diff', ascending=False)
+  matchup_df = matchup_df.sort_values(by='zone', ascending=False)
   
   return matchup_df
 
@@ -342,7 +347,7 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
   #. 9 - Serve percentile - receive percentile
   
   matchup_dict = {
-    'srv_player':'', 'rcv_player':'','srv_fr':0,'srv_to_net':0,'srv_to_depth':'','opp_fbhe':0, 'opp_per':0,'fbhe':0,'fbhe_per':0,'per_diff':0
+    'srv_player':'', 'rcv_player':'','srv_fr':0,'srv_to_net':0,'srv_to_depth':'','opp_fbhe':0, 'opp_fbhe_n':0,'opp_per':0,'fbhe':0,'fbhe_n':0,'fbhe_per':0,'per_diff':0
   }
   matchup_df = pd.DataFrame( matchup_dict, index=[0])
   
@@ -390,15 +395,19 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
             fbhe_var = 'fbhe_'+str(srv_fr_zone)+'_'+str(srv_to_zone_net)+str(srv_to_zone_depth)
             print(f" Indexes: {index}, pa_data_index {pa_data_index}, Opp var: {opp_var} ")
             matchup_df.iloc[index,5] = pair_data_df.at[pa_data_index,opp_var]
-            matchup_df.iloc[index,7] = pair_data_df.at[pb_data_index,fbhe_var]
+            matchup_df.iloc[index,6] = pair_data_df.at[pa_data_index,opp_var+'_n'] 
+            matchup_df.iloc[index,8] = pair_data_df.at[pb_data_index,fbhe_var]
+            matchup_df.iloc[index,9] = pair_data_df.at[pb_data_index,fbhe_var+'_n']
 
             # calcaulte the percentiles
-            matchup_df.iloc[index,6] = 1 - stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df.at[0,opp_var+'_mean'])/ pair_stats_df.at[0,opp_var+'_stdev'] )
-            matchup_df.iloc[index,8] = stats.norm.cdf( (matchup_df.iloc[index,7]-pair_stats_df.at[0,fbhe_var+'_mean'])/ pair_stats_df.at[0,fbhe_var+'_stdev'] )
-            matchup_df.iloc[index,9] = matchup_df.iloc[index,6] - matchup_df.iloc[index,8]
+            matchup_df.iloc[index,7] = 1 - stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df.at[0,opp_var+'_mean'])/ pair_stats_df.at[0,opp_var+'_stdev'] )
+            matchup_df.iloc[index,10] = stats.norm.cdf( (matchup_df.iloc[index,8]-pair_stats_df.at[0,fbhe_var+'_mean'])/ pair_stats_df.at[0,fbhe_var+'_stdev'] )
+            matchup_df.iloc[index,11] = matchup_df.iloc[index,7] - matchup_df.iloc[index,10]
 
             index = index + 1
 
+  # drop the last row
+  matchup_df = matchup_df.iloc[:-1]
   print(f"match_up dataframe: {matchup_df}")
   # before we return, sort hte dataframe by the difference, ascending
   matchup_df = matchup_df.sort_values(by='per_diff', ascending=False)

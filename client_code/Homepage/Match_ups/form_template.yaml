@@ -191,23 +191,23 @@ components_by_slot:
         spacing:
           padding: ['0', null, '0', null]
       type: RichText
-    - components:
-      - layout_properties: {grid_position: 'ACZYLJ,OCZSZU'}
-        name: box4_label
-        properties:
-          align: center
-          bold: true
-          font_size: 12
-          spacing:
-            padding: [null, null, '0', null]
-        type: Label
-      - layout_properties: {grid_position: ''}
-        name: rpt_disp_box4
-        properties:
-          font_size: 11
-          spacing:
-            padding: ['0', null, '0', null]
-        type: RichText
+    - layout_properties: {grid_position: 'IUIVJZ,ZFHZWD'}
+      name: box4_label
+      properties:
+        align: center
+        bold: true
+        font_size: 12
+        spacing:
+          padding: [null, null, '0', null]
+      type: Label
+    - layout_properties: {grid_position: 'HSHCBV,YVFTMB'}
+      name: rpt_disp_box4
+      properties:
+        font_size: 11
+        spacing:
+          padding: ['0', null, '0', null]
+      type: RichText
+    - components: []
       data_bindings:
       - {code: '', property: border, writeback: false}
       layout_properties: {grid_position: 'ZMLYII,VRMSMJ'}
