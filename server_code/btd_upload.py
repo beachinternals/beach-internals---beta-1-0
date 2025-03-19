@@ -100,14 +100,14 @@ def update_btd_characteristics( file ):
   # we should check that we have 4 players
   if num_players != 4:
     print(f"Number of players found in the ball time data file is incorrect, number found is :{num_players} players are: {players_unique}")
-    print(f"player 0: {players_unique[0]}, player 1: {players_unique[1]}, player 2: {players_unique[2]}, player 3: {players_unique[3]}, player 4: {players_unique[4]}, ")
+    #print(f"player 0: {players_unique[0]}, player 1: {players_unique[1]}, player 2: {players_unique[2]}, player 3: {players_unique[3]}, player 4: {players_unique[4]}, ")
 
     # loop thru the player list and delete those that look bad
     tmp_players = players_unique
     num_deleted = 0
     for p in range(len(players_unique)):
       print(f"player : {players_unique[p]}")
-      if ("NOTEAM" in players_unique[p]) or ("NOPLAYER" in players_unique[p]):
+      if ("NOTEAM" in players_unique[p]) and ("NOPLAYER" in players_unique[p]):
         tmp_players = np.delete(tmp_players,p-num_deleted)
         num_deleted = num_deleted + 1
         print(f"Deleting : {players_unique[p]}")
@@ -115,9 +115,9 @@ def update_btd_characteristics( file ):
     players_unique = tmp_players
     print(f"Number of players reduced to:{players_unique.shape[0]} players are: {players_unique}")
       
-    if num_players <4:
+    while len(players_unique) <4:
       # if we are less then 4, then add a row
-      players_unique.loc[len(players_unique)]
+      players_unique = np.append(players_unique, "Unknown")
     
   playera1 = players_unique[0]
   playera2 = players_unique[1]
