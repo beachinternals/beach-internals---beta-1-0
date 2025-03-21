@@ -54,6 +54,7 @@ unique_ids:
     player_summary_rpt: '1734951727078729205229054.4757'
     scout_3court_6attack_plot_rpt: '1739466639897232615023359.67886'
     scout_3court_plot_rpt: '1739466610822705234409164.9165'
+    scout_matchup_rpt: '1742559161491294271595452.73395'
     scouting_summary_rpt: '1737423435551649753407776.746'
   modules: {}
   scripts: {}
