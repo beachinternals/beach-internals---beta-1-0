@@ -22,7 +22,14 @@ def matchup_outcome_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
 
   matchup_df = matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b)
   matchup_outcome_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
-  return matchup_outcome_mkdn, '', '', ''
+
+  tmp1=[]
+  tmp2=[]
+  tmp3=[]
+  tmp4=[]
+  a_rec_mkdn, b_rec_mkdn, tmp1,tmp2,tmp3,tmp4 = matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_b )
+  
+  return matchup_outcome_mkdn, a_rec_mkdn, b_rec_mkdn, ''
 
 @anvil.server.callable
 def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
@@ -44,10 +51,12 @@ def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
   
   return matchup_outcome_mkdn, matchup_net_mkdn, matchup_45_serves_mkdn, matchup_45_serves_fbhe_mkdn
 
+  
 def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b ):
   #
   #.  Report to return the predicted outcome of two pairs
   #
+  #.  This just formatst he match_pair_data into a df to convert into a markdown object to display
   #
   a1_matchup, a2_matchup, b1_matchup, b2_matchup = matchup_pair_data(disp_league,disp_gender,disp_year,pair_a,pair_b)
 
@@ -413,3 +422,264 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
   matchup_df = matchup_df.sort_values(by='per_diff', ascending=False)
 
   return matchup_df
+
+@anvil.server.callable
+def matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+  #
+  # determine whoto serve and why, and confidence of this decision
+  #
+  '''
+
+  factors in the methodlology
+
+  1) FBHE of each player
+  2) Expected Value of each player
+  #) Historic distribution of serves
+
+  a) call pair_a1_matchup to get this data for pair a vs pair b
+  b) Calculate percentile of FBHE and expected value for each player (4)
+  c) compare these for a1 v a2, b1 v b2, if :
+       - <5% No Decision
+       - >5% and < 15% favor sserving player
+       - >155 Strongly facor player
+  d) then check the historic serve distributiono
+      - does it match the FBHE/Expected?  if not, why?
+      - if no decision, does history favor one player
+
+  '''
+  # open the stats file to get the stdev and mean so we can calculate percentile
+  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+  player_a1, player_a2 = pair_players( pair_a )
+  player_b1, player_b2 = pair_players( pair_b )
+
+  # get the row for pair_a and pair_b
+  if pair_data_df['pair'].isin([pair_a]).any():
+    pair_a1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a1) ].index[0]
+    pair_a2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_a, '', '', ''
+  if pair_data_df['pair'].isin([pair_b]).any():
+    pair_b1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b1) ].index[0]
+    pair_b2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_b, '', '', ''
+
+  '''
+  create a quick list for each player with:
+  0 = fbhe
+  1 = fbhe_per
+  2 =  expected
+  3 = expected_per
+  4 = % of serve reeeive
+  5 = T/F preferred service based on FBHE
+  6 = Preference Text based on FBHE
+  7 = T/F preferred service based on Expected
+  8 = Preference Text based on Expected
+  '''
+  pa1_data = [0,0,0,0,0,0,'',0,'']
+  pa2_data = [0,0,0,0,0,0,'',0,'']
+  pb1_data = [0,0,0,0,0,0,'',0,'']
+  pb2_data = [0,0,0,0,0,0,'',0,'']
+
+  # plaeyr A1
+  pa1_data[0] = pair_data_df.loc[pair_a1_index,'fbhe']
+  pa1_data[1] = stats.norm.cdf( ( pa1_data[0] - pair_stats_df.at[0,'fbhe_mean'])/pair_stats_df.at[0,'fbhe_stdev'] )
+  pa1_data[2] = pair_data_df.loc[pair_a1_index,'expected']
+  pa1_data[3] = stats.norm.cdf( ( pa1_data[2] - pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_stdev'] )
+  pa1_data[4] = pair_data_df.loc[pair_a1_index,'fbhe_n']/(pair_data_df.loc[pair_a1_index,'fbhe_n']+pair_data_df.loc[pair_a2_index,'fbhe_n'])
+
+  pa2_data[0] = pair_data_df.loc[pair_a2_index,'fbhe']
+  pa2_data[1] = stats.norm.cdf( ( pa2_data[0] - pair_stats_df.at[0,'fbhe_mean'])/pair_stats_df.at[0,'fbhe_stdev'] )
+  pa2_data[2] = pair_data_df.loc[pair_a2_index,'expected']
+  pa2_data[3] = stats.norm.cdf( ( pa2_data[2] - pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_stdev'] )
+  pa2_data[4] = pair_data_df.loc[pair_a2_index,'fbhe_n']/(pair_data_df.loc[pair_a1_index,'fbhe_n']+pair_data_df.loc[pair_a2_index,'fbhe_n'])
+
+  pb1_data[0] = pair_data_df.loc[pair_b1_index,'fbhe']
+  pb1_data[1] = stats.norm.cdf( ( pb1_data[0] - pair_stats_df.at[0,'fbhe_mean'])/pair_stats_df.at[0,'fbhe_stdev'] )
+  pb1_data[2] = pair_data_df.loc[pair_b1_index,'expected']
+  pb1_data[3] = stats.norm.cdf( ( pb1_data[2] - pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_stdev'] )
+  pb1_data[4] = pair_data_df.loc[pair_b1_index,'fbhe_n']/(pair_data_df.loc[pair_b1_index,'fbhe_n']+pair_data_df.loc[pair_b2_index,'fbhe_n'])
+
+  pb2_data[0] = pair_data_df.loc[pair_b2_index,'fbhe']
+  pb2_data[1] = stats.norm.cdf( ( pb2_data[0] - pair_stats_df.at[0,'fbhe_mean'])/pair_stats_df.at[0,'fbhe_stdev'] )
+  pb2_data[2] = pair_data_df.loc[pair_b2_index,'expected']
+  pb2_data[3] = stats.norm.cdf( ( pb2_data[2] - pair_stats_df.at[0,'expected_mean'])/pair_stats_df.at[0,'expected_stdev'] )
+  pb2_data[4] = pair_data_df.loc[pair_b2_index,'fbhe_n']/(pair_data_df.loc[pair_b1_index,'fbhe_n']+pair_data_df.loc[pair_b2_index,'fbhe_n'])
+
+  # player to serve based on fbhe percentile
+  serve_a, a_srv_pref = service_preference( pa1_data, pa2_data, 1)
+  if serve_a == 'p1':
+    pa1_data[5] = True if a_srv_pref != 'None' else False
+    pa2_data[5] = False
+    pa1_data[6] = a_srv_pref
+    pa2_data[6] = a_srv_pref
+  else:
+    pa1_data[5] = False
+    pa2_data[5] = True if a_srv_pref != 'None' else False
+    pa1_data[6] = a_srv_pref
+    pa2_data[6] = a_srv_pref
+    
+  serve_b, b_srv_pref = service_preference( pb1_data, pb2_data, 1)
+  if serve_b == 'p1':
+    pb1_data[5] = True if b_srv_pref != 'None' else False
+    pb2_data[5] = False
+    pb1_data[6] = b_srv_pref
+    pb2_data[6] = b_srv_pref
+  else:
+    pb1_data[5] = False
+    pb2_data[5] = True if b_srv_pref != 'None' else False
+    pb1_data[6] = b_srv_pref
+    pb2_data[6] = b_srv_pref
+
+  # player to serve based on expected percentile
+  serve_a, a_srv_pref = service_preference( pa1_data, pa2_data, 3)
+  if serve_a == 'p1':
+    pa1_data[7] = True  if a_srv_pref != 'None' else False
+    pa2_data[7] = False
+    pa1_data[8] = a_srv_pref
+    pa2_data[8] = a_srv_pref
+  else:
+    pa1_data[7] = False
+    pa2_data[7] = True if a_srv_pref != 'None' else False
+    pa1_data[8] = a_srv_pref
+    pa2_data[8] = a_srv_pref
+    
+  serve_b, b_srv_pref = service_preference( pb1_data, pb2_data, 3)
+  if serve_b == 'p1':
+    pb1_data[7] = True if b_srv_pref != 'None' else False
+    pb2_data[7] = False
+    pb1_data[8] = b_srv_pref
+    pb2_data[8] = b_srv_pref
+  else:
+    pb1_data[7] = False
+    pb2_data[7] = True if b_srv_pref != 'None' else False
+    pb1_data[8] = b_srv_pref
+    pb2_data[8] = b_srv_pref
+
+  print(f"player a1 data: {pa1_data}")
+  print(f"player a2 data: {pa2_data}")
+  print(f"player b1 data: {pb1_data}")
+  print(f"player b2 data: {pb2_data}")
+  
+  # now write out recommendation into tow Markdown ovjecys to be returned, also return the four data vectors that may be used elsewhere
+  match pa1_data[6]:
+    case 'None': # so here we will look at expected value
+      match pa1_data[8]:
+        case 'None':  # so no preference on fbhe nor expected, look at historic percent of serves
+          print(f"player a1 percent of serves: {pa1_data[4]}")
+          if pa1_data[4] >= 0.55:
+            rec_player_a = player_a1 
+            rec_strength_a = 'Weak'
+            rec_reason_a = 'Recommended only because other teams serve this player more'
+          if pa1_data[4] < 0.45:
+            rec_player_a = player_a2
+            rec_strength_a = 'Weak'
+            rec_reason_a = 'Recommended only because other teams serve this player more'
+          else:
+            rec_player_a = 'No Recommendation'
+            rec_strength_a = 'No Recomendation'
+            rec_reason_a = 'No significnat differences in FBHE, Expected ,Value or distribution of serves'
+          
+        case 'Favored':
+          rec_player_a = player_a1 if pa1_data[7] else player_a2
+          rec_strength_a = pa1_data[8]
+          rec_reason_a = 'Lower expected value for this player'
+      
+        case 'Strongly Favored':
+          rec_player_a = player_a1 if pa1_data[7] else player_a2
+          rec_strength_a = pa1_data[8]
+          rec_reason_a = 'Significantly lower expected for this player'
+      
+    case 'Favored':
+      rec_player_a = player_a1 if pa1_data[5] else player_a2
+      rec_strength_a= pa1_data[6]
+      rec_reason_a = 'Lower first ball hitting efficiency for this player'
+      
+    case 'Strongly Favored':
+      rec_player_a = player_a1 if pa1_data[5] else player_a2
+      rec_strength_a = pa1_data[6]
+      rec_reason_a = 'Significantly lower first ball hitting efficiency for this player'
+
+  # now write out recommendation into tow Markdown ovjecys to be returned, also return the four data vectors that may be used elsewhere
+  match pb1_data[6]:
+    case 'None': # so here we will look at expected value
+      match pb1_data[8]:
+        case 'None':  # so no preference on fbhe nor expected, look at historic percent of serves
+          if pb1_data[4] > 0.55:
+            rec_player_b = player_b1 
+            rec_strength_b = 'Weak'
+            rec_reason_b = 'Recommended only because other teams serve this player more'
+          if pb1_data[4] < 0.45:
+            rec_player_b = player_b2
+            rec_strength_b = 'Weak'
+            rec_reason_b = 'Recommended only because other teams serve this player more'
+          else:
+            rec_player_b = 'No Recommendation'
+            rec_strength_b = 'No Recomendation'
+            rec_reason_b = 'No significnat differences in FBHE, Expected Value, or distribution of serves'
+          
+        case 'Favored':
+          rec_player_b = player_b1 if pb1_data[7] else player_b2
+          rec_strength_b = pb1_data[8]
+          rec_reason_b = 'Lower expected value for this player'
+      
+        case 'Strongly Favored':
+          rec_player_b = player_b1 if pb1_data[7] else player_b2
+          rec_strength_b = pb1_data[8]
+          rec_reason_b = 'Significantly lower expected for this player'
+      
+    case 'Favored':
+      rec_player_b = player_b1 if pb1_data[5] else player_b2
+      rec_strength_b= pb1_data[6]
+      rec_reason_b = 'Lower first ball hitting efficiency for this player'
+      
+    case 'Strongly Favored':
+      rec_player_b = player_b1 if pb1_data[5] else player_b2
+      rec_strength_b = pb1_data[6]
+      rec_reason_b = 'Significantly lower first ball hitting efficiency for this player'
+
+  
+  pair_a_mkdn = f"""
+    Recommended player to serve: **{rec_player_a}**
+    Strength of recommendation: {rec_strength_a}
+    Reason for recommendation: {rec_reason_a}
+    FBHE Percentile:           {player_a1}:{str("{:.0%}").format(pa1_data[1])}, {player_a2}:{str("{:.0%}").format(pa2_data[1])}
+    Expected Value Percentile: {player_a1}:{str("{:.0%}").format(pa1_data[3])}, {player_a2}:{str("{:.0%}").format(pa2_data[3])}
+    Service Distribution:      {player_a1}:{str("{:.0%}").format(pa1_data[4])}, {player_a2}:{str("{:.0%}").format(pa2_data[4])}
+    """
+
+  pair_b_mkdn = f"""
+    Recommended player to serve: **{rec_player_b}**
+    Strength of recommendation: {rec_strength_b}
+    Reason for recommendation: {rec_reason_b}
+    FBHE Percentile:           {player_b1}:{str("{:.0%}").format(pb1_data[1])}, {player_b2}:{str("{:.0%}").format(pb2_data[1])}
+    Expected Value Percentile: {player_b1}:{str("{:.0%}").format(pb1_data[3])}, {player_b2}:{str("{:.0%}").format(pb2_data[3])}
+    Service Distribution:      {player_b1}:{str("{:.0%}").format(pb1_data[4])}, {player_b2}:{str("{:.0%}").format(pb2_data[4])}
+    """
+
+  
+  return pair_a_mkdn, pair_b_mkdn, pa1_data, pa2_data, pb1_data, pb2_data
+
+@anvil.server.callable
+def service_preference( p1_data, p2_data, index):
+  #
+  #. quick routine to figure which player to serve
+  srv_pref = ''
+  fbhe_per_diff = abs(p1_data[index] - p2_data[index])
+  thresh1 = 0.05
+  thresh2 = 0.15
+    
+  match fbhe_per_diff:
+    case fbhe_per_diff if fbhe_per_diff <= thresh1:
+      # no strong preference
+      srv_pref = 'None'
+
+    case fbhe_per_diff if fbhe_per_diff > thresh1 and fbhe_per_diff <= thresh2 :
+      srv_pref = 'Favored'
+  
+    case fbhe_per_diff if  fbhe_per_diff > thresh2:
+      srv_pref = 'Strongly Favored'
+
+  player = 'p1' if p1_data[index] < p2_data[index] else 'p2'
+  
+  return player, srv_pref
