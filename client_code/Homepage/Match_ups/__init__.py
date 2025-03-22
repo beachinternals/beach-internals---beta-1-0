@@ -393,9 +393,11 @@ class Match_ups(Match_upsTemplate):
     str_loc = league_value.index("|")
     disp_gender = league_value[: str_loc - 1].strip()
     disp_year = league_value[str_loc + 1 :].strip()
+    disp_pair_a = self.pair_a_drop_down.selected_value["pair"]
+    disp_pair_b = self.pair_b_drop_down.selected_value["pair"]
 
     # unpack the player
-    disp_pair = self.pair_drop_down.selected_value["pair"]
+    #disp_pair = self.pair_drop_down.selected_value["pair"]
 
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
@@ -429,7 +431,7 @@ class Match_ups(Match_upsTemplate):
       self.comp_l3_drop_down.selected_value["comp_l3"] = str()
 
     disp_player1, disp_player2 = anvil.server.call(
-      "pair_players", disp_pair
+      "pair_players", disp_pair_a
     )  # passing this just to be consistent in the calling argumenets
     # call the server function
     pdf_rpt = anvil.server.call(
@@ -439,8 +441,9 @@ class Match_ups(Match_upsTemplate):
       disp_league,
       disp_gender,
       disp_year,
-      disp_team,
-      disp_pair,
+      disp_pair_a,
+      disp_pair_b )
+    '''
       disp_player1,
       self.comp_l1_check_box.checked,
       self.comp_l1_drop_down.selected_value["comp_l1"],
@@ -454,9 +457,10 @@ class Match_ups(Match_upsTemplate):
       scout,
       table_data4,
     )
+'''
     result = anvil.server.call(
       "send_email",
-      "Beach Internals Pair Report - PDF Version",
+      "Beach Internals Matchup Report - PDF Version",
       "Attached please find the PDF version of the Pair Report",
       pdf_rpt,
       "",
