@@ -284,7 +284,7 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'BOUNJE,IYGHSX MPNXNS,UINNPL'}
         name: plot_1
-        properties: {height: 451.99609375}
+        properties: {height: 518.9990234375}
         type: Image
       - layout_properties: {grid_position: 'BOUNJE,IYGHSX FGKSWX,XIXQCK'}
         name: label_14
@@ -292,7 +292,7 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'BOUNJE,IYGHSX NELIPU,EWCOTL'}
         name: plot_3
-        properties: {}
+        properties: {height: 409.8388671875}
         type: Image
       - layout_properties: {grid_position: 'BOUNJE,IYGHSX WHMBUG,YYUIDF'}
         name: label_12
@@ -300,7 +300,7 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'BOUNJE,IYGHSX TNBARM,JYAFCU'}
         name: plot_5
-        properties: {}
+        properties: {height: 507.2587890625}
         type: Image
       - layout_properties: {grid_position: 'BOUNJE,EGWDOK IRNBTH,RVVPYC'}
         name: label_7
@@ -308,7 +308,7 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'BOUNJE,EGWDOK ZBELEQ,JXTHAL'}
         name: plot_2
-        properties: {height: 451.1669921875}
+        properties: {height: 514.458984375}
         type: Image
       - layout_properties: {grid_position: 'BOUNJE,EGWDOK HRXDWR,WHDXZK'}
         name: label_13
@@ -316,7 +316,7 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'BOUNJE,EGWDOK SEQBBB,ATILDW'}
         name: plot_4
-        properties: {}
+        properties: {height: 413.3232421875}
         type: Image
       - layout_properties: {grid_position: 'BOUNJE,EGWDOK THEIUX,ZLRGFW'}
         name: label_8
@@ -324,7 +324,7 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'BOUNJE,EGWDOK XHWVUR,LFPAHE'}
         name: plot_6
-        properties: {}
+        properties: {height: 522.4306640625}
         type: Image
       layout_properties: {grid_position: 'LZMBSZ,KAOXWR'}
       name: column_panel_3

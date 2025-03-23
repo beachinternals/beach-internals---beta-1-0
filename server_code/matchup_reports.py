@@ -795,6 +795,7 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b 
         dx = 0
         dy = 0
       print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
+      ax1.plot( [x11[0], y1[0], [ pass_x[zone_index] , pass_y[zone_index]], c='black', linestyle='solid', linewidth = 4 )
       ax1.arrow( [x11, x12], [ pass_x[zone_index], pass_y[zone_index] ], dx, dy, shape='full', lw=4, length_includes_head=True, head_width=.10, head_length = .25, color = 'black')
 
   print(f"creating plot image for {player_b1}")
@@ -830,6 +831,7 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b 
         dx = 0
         dy = 0
       print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
+      ax2.plot( [x11[0], x12[0]], [pass_x[zone_index], pass_y[zone_index]], c='black', linestyle='solid', linewidth = 4 )
       ax2.arrow(  pass_x[zone_index], pass_y[zone_index] , dx, dy, shape='full', lw=4, length_includes_head=True, head_width=.10, head_length = .25, color = 'black')
 
   print(f"creating plot image for {player_b2}")
