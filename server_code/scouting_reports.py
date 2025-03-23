@@ -703,8 +703,8 @@ def scout_attack_pass_zones(disp_league,
 
   # get teh pair data
   pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
-  cmax = pair_stats_df['fbhe_mean']+pair_stats_df['fbhe_stdev']
-  cmin = pair_stats_df['fbhe_mean']-pair_stats_df['fbhe_stdev']
+  cmax = pair_stats_df['fbhe_mean']+2*pair_stats_df['fbhe_stdev']
+  cmin = pair_stats_df['fbhe_mean']-2*pair_stats_df['fbhe_stdev']
   
   # get the index of the row we need for the pair/plahyer
   pair_data_index = pair_data_df.loc[ (pair_data_df['pair'] == disp_pair) & (pair_data_df['player'] == disp_player) ].index[0]

@@ -207,31 +207,24 @@ components_by_slot:
         spacing:
           padding: ['0', null, '0', null]
       type: RichText
-    - components: []
-      data_bindings:
-      - {code: '', property: border, writeback: false}
-      layout_properties: {grid_position: 'ZMLYII,VRMSMJ'}
-      name: column_panel_3
-      properties: {}
-      type: ColumnPanel
+    - layout_properties: {grid_position: 'MJXVGQ,KOHKGG'}
+      name: box5_label
+      properties:
+        align: center
+        bold: true
+        font_size: 12
+        spacing:
+          padding: [null, null, '0', null]
+        text: ''
+      type: Label
+    - layout_properties: {grid_position: 'ZHSKMM,WGKNHH'}
+      name: rpt_disp_box5
+      properties:
+        font_size: 11
+        spacing:
+          padding: ['0', null, '0', null]
+      type: RichText
     - components:
-      - layout_properties: {grid_position: 'SAIPPX,EENQPM'}
-        name: box5_label
-        properties:
-          align: center
-          bold: true
-          font_size: 12
-          spacing:
-            padding: [null, null, '0', null]
-          text: ''
-        type: Label
-      - layout_properties: {grid_position: 'SURNSO,IAMWMT'}
-        name: rpt_disp_box5
-        properties:
-          font_size: 11
-          spacing:
-            padding: ['0', null, '0', null]
-        type: RichText
       - layout_properties: {grid_position: 'NGHRNL,CLXSWU'}
         name: box6_label
         properties:
@@ -282,6 +275,59 @@ components_by_slot:
         type: RichText
       layout_properties: {grid_position: 'ZMLYII,RKELOA'}
       name: column_panel_2
+      properties: {}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'BOUNJE,IYGHSX JHYPAE,ZBHUJV'}
+        name: label_4
+        properties: {align: center}
+        type: Label
+      - layout_properties: {grid_position: 'BOUNJE,IYGHSX MPNXNS,DTRJER'}
+        name: plot_1
+        properties: {}
+        type: Plot
+      - layout_properties: {grid_position: 'BOUNJE,IYGHSX FGKSWX,XIXQCK'}
+        name: label_14
+        properties: {align: center}
+        type: Label
+      - layout_properties: {grid_position: 'BOUNJE,IYGHSX NMWAIY,AFWFNO'}
+        name: plot_3
+        properties: {}
+        type: Plot
+      - layout_properties: {grid_position: 'BOUNJE,IYGHSX WHMBUG,YYUIDF'}
+        name: label_12
+        properties: {align: center}
+        type: Label
+      - layout_properties: {grid_position: 'BOUNJE,IYGHSX UITTCX,MJORFD'}
+        name: plot_5
+        properties: {}
+        type: Plot
+      - layout_properties: {grid_position: 'BOUNJE,EGWDOK IRNBTH,RVVPYC'}
+        name: label_7
+        properties: {align: center}
+        type: Label
+      - layout_properties: {grid_position: 'BOUNJE,EGWDOK CTYMFK,YKQNTZ'}
+        name: plot_2
+        properties: {}
+        type: Plot
+      - layout_properties: {grid_position: 'BOUNJE,EGWDOK HRXDWR,WHDXZK'}
+        name: label_13
+        properties: {align: center}
+        type: Label
+      - layout_properties: {grid_position: 'BOUNJE,EGWDOK LCUXFM,UWABFV'}
+        name: plot_4
+        properties: {}
+        type: Plot
+      - layout_properties: {grid_position: 'BOUNJE,EGWDOK THEIUX,ZLRGFW'}
+        name: label_8
+        properties: {align: center}
+        type: Label
+      - layout_properties: {grid_position: 'BOUNJE,EGWDOK WVOOPV,EDJXUW'}
+        name: plot_6
+        properties: {}
+        type: Plot
+      layout_properties: {grid_position: 'LZMBSZ,KAOXWR'}
+      name: column_panel_3
       properties: {}
       type: ColumnPanel
     - components:

@@ -299,7 +299,7 @@ class Match_ups(Match_upsTemplate):
 
     # call the server function
     (
-      table_data1, table_data2, table_data3, table_data4
+      table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8, plt1, plt2, plt3, plt4, plt5, plt6
     ) = anvil.server.call(
       fnct_name,
       disp_league,
@@ -347,10 +347,10 @@ class Match_ups(Match_upsTemplate):
     self.rpt_disp_box2.content = table_data2
     self.rpt_disp_box3.content = table_data3
     self.rpt_disp_box4.content = table_data4
-    #self.rpt_disp_box5.content = table_data5
-    #self.rpt_disp_box6.content = table_data6
-    #self.rpt_disp_box7.content = table_data7
-    #self.rpt_disp_box8.content = table_data8
+    self.rpt_disp_box5.content = table_data5
+    self.rpt_disp_box6.content = table_data6
+    self.rpt_disp_box7.content = table_data7
+    self.rpt_disp_box8.content = table_data8
 
     self.box1_label.text = box1_title
     self.box2_label.text = box2_title
@@ -360,6 +360,13 @@ class Match_ups(Match_upsTemplate):
     self.box6_label.text = box6_title
     self.box7_label.text = box7_title
     self.box8_label.text = box8_title
+
+    self.plot_1.source = plt1
+    self.plot_2.source = plt2
+    self.plot_3.source = plt3
+    self.plot_4.source = plt4
+    self.plot_5.source = plt5
+    self.plot_6.source = plt6
 
     pass
 

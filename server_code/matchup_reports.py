@@ -9,6 +9,11 @@ import anvil.server
 from pair_functions import *
 import scipy.stats as stats
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import math
+from plot_functions import *
+import numpy as np
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -402,7 +407,7 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
             # now store FBHE and OPP FBHE
             opp_var = 'opp_fbhe_'+str(srv_fr_zone)+'_'+str(srv_to_zone_net)+str(srv_to_zone_depth)
             fbhe_var = 'fbhe_'+str(srv_fr_zone)+'_'+str(srv_to_zone_net)+str(srv_to_zone_depth)
-            print(f" Indexes: {index}, pa_data_index {pa_data_index}, Opp var: {opp_var} ")
+            #print(f" Indexes: {index}, pa_data_index {pa_data_index}, Opp var: {opp_var} ")
             matchup_df.iloc[index,5] = pair_data_df.at[pa_data_index,opp_var]
             matchup_df.iloc[index,6] = pair_data_df.at[pa_data_index,opp_var+'_n'] 
             matchup_df.iloc[index,8] = pair_data_df.at[pb_data_index,fbhe_var]
@@ -668,18 +673,135 @@ def service_preference( p1_data, p2_data, index):
   fbhe_per_diff = abs(p1_data[index] - p2_data[index])
   thresh1 = 0.05
   thresh2 = 0.15
-    
   match fbhe_per_diff:
     case fbhe_per_diff if fbhe_per_diff <= thresh1:
       # no strong preference
       srv_pref = 'None'
-
     case fbhe_per_diff if fbhe_per_diff > thresh1 and fbhe_per_diff <= thresh2 :
       srv_pref = 'Favored'
-  
     case fbhe_per_diff if  fbhe_per_diff > thresh2:
       srv_pref = 'Strongly Favored'
-
   player = 'p1' if p1_data[index] < p2_data[index] else 'p2'
-  
   return player, srv_pref
+
+@anvil.server.callable
+def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+  '''
+
+  Create a report that determines the best serve strategies against pair_b, sered by pair_a
+  list these in a table with URL's, then draw them on a chart
+
+  '''
+
+  # parameters
+  num_srv_strategies = 6
+
+  # open my data sources
+  # fetch the pair_data and pair_data_stats files
+  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+  player_a1, player_a2 = pair_players( pair_a )
+  player_b1, player_b2 = pair_players( pair_b )
+
+  # get the row for pair_a and pair_b
+  if pair_data_df['pair'].isin([pair_a]).any():
+    pair_a1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a1) ].index[0]
+    pair_a2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_a, '', '', '','', '', '','', '', '','', '', '',''
+  if pair_data_df['pair'].isin([pair_b]).any():
+    pair_b1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b1) ].index[0]
+    pair_b2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_b, '', '', '','', '', '','', '', '','', '', '',''
+    
+  # call to get the serve stretegy table
+  matchup_df = matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b)
+
+  # sort by FBHE, take the top num_srv_Strategies
+  matchup_df = matchup_df.sort_values(by='fbhe', ascending=True)
+  matchup_df = matchup_df.head(num_srv_strategies)
+
+  # make the 6 plots:
+  # first, the dotted serve lines
+  # max and min for the color bar to the right
+  cmax = pair_stats_df['fbhe_mean']+2*pair_stats_df['fbhe_stdev']
+  cmin = pair_stats_df['fbhe_mean']-2*pair_stats_df['fbhe_stdev']
+
+  # make x,y for serve lines:
+  x11 = [0.5,0.5,0.5]
+  x12 = [0,4,8]
+  x31 = [4,4,4]
+  x51 = [7.5,7.5,7.5]
+  y1 = [-8,-8,-8]
+  y2 = [8,8,8]
+
+  # create the data to plot, 6 total plots
+  pass_x = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass_y = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass1_b1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass3_b1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass5_b1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass1_b2_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass3_b2_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass5_b2_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+
+  # loop thru the pair_data to populate the pass&&_val data to plot
+  # now, loop thru the list for serves from zone 1
+  index = 0
+  x = 8.8
+  for i in [1,2,3,4,5]:  # j is along the net
+    x = x - 1.6
+    y = 2.4
+    for j in ['c','d','e']: # k is depth+
+      y = y + 1.6
+      fbhe1_var = 'fbhe_1_'+str(i)+str(j)
+      fbhe3_var = 'fbhe_3_'+str(i)+str(j)
+      fbhe5_var = 'fbhe_5_'+str(i)+str(j)
+      pass1_b1_val[index] = pair_data_df.loc[pair_b1_index,fbhe1_var]
+      pass3_b1_val[index] = pair_data_df.loc[pair_b1_index,fbhe3_var]
+      pass5_b1_val[index] = pair_data_df.loc[pair_b1_index,fbhe5_var]
+      pass1_b2_val[index] = pair_data_df.loc[pair_b2_index,fbhe1_var]
+      pass3_b2_val[index] = pair_data_df.loc[pair_b2_index,fbhe3_var]
+      pass5_b2_val[index] = pair_data_df.loc[pair_b2_index,fbhe5_var]
+      pass_x[index] = x
+      pass_y[index] = y
+      index = index + 1
+
+  # create zone 1 plots (b1 and b2), add any serve stretegy lines
+
+  # From Zone 1 to Player B1
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass1_b1_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
+
+  # now limit the matchup_df to this player and zone, then loop thru plotting hte line
+  tmp_srv_strat_df = matchup_df[ (matchup_df['rcv_player'] == player_b1) ]
+  tmp_srv_strat_df = tmp_srv_strat_df[ tmp_srv_strat_df['srv_fr'] == 1 ]
+  if tmp_srv_strat_df.shape[0] > 0:
+    for srv_index, srv in tmp_srv_strat_df.iterrows():
+      # plot hte line, find our 'to' point
+      zone_depth = 0 if (srv['srv_to_depth'] == 'c') else 1 if (srv['srv_to_depth'] == 'd') else 2
+      zone_index = (float(srv['srv_to_net'])-1)*3 + zone_depth
+      # line direction, to calculate dx and dy for the arrow
+      distance = math.dist( [x11, x12], [ pass_x[zone_index], pass_y[zone_index] ])
+      if distance != 0:
+        dx = ((pass_x[zone_index] - x11)/distance)*0.1
+        dy = ((pass_y[zone_index] - x12)/distance)*0.1
+      else:
+        dx = 0
+        dy = 0
+      ax.arrow( [x11, x12], [ pass_x[zone_index], pass_y[zone_index] ], dx, dy, shape='full', lw=4, length_includes_head=True, head_width=.10, head_length = .25, color = 'black')
+
+  print(f"creating plot image for {player_b1}")
+  plot_1_b1 = anvil.mpl_util.plot_image()
+
+  # create zone 3 plots (b1 and b2), add any serve stretegy lines
+
+  # create zone 5 plots (b1 and b2), add any serve stretegy lines
+
+  # convert matchup_df to markdown to display
+  srv_strategies_table = pd.DataFrame.to_markdown( matchup_df, index = False)
+ 
+  # the return here needs to be 8 mkdn's followed by 6 plots
+  return srv_strategies_table, '',  '',  '',  '',  '',  '',  '', plot_1_b1,  plot_1_b1, plot_1_b1, plot_1_b1, plot_1_b1, plot_1_b1
