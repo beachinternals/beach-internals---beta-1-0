@@ -324,6 +324,7 @@ class Match_ups(Match_upsTemplate):
       explain_text,
     )"""
 
+    print(f"plot 1:{plt1}")
     # now put this into the rtf box
     filter_text = f"""
     Data Filters:
