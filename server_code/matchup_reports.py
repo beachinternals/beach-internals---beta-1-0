@@ -695,7 +695,7 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b 
   '''
 
   # parameters
-  num_srv_strategies = 8
+  num_srv_strategies = 10
 
   # open my data sources
   # fetch the pair_data and pair_data_stats files
