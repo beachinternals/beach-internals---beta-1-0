@@ -66,6 +66,19 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
                   scout, explain_text
                 ):
 
+  '''
+
+  Hitting along the net based on attacker, 
+  - Zone 1 - 5, 
+  - All
+  - No Zone ( not data on location)
+
+  - Now adding:
+    - Option - Plaher is attacker on 2
+    - OOS % out of system percentage of the attempts
+  
+  '''
+  
   # First, get the data, and narrow to the filter, now, limit to only pair players
   disp_player1, disp_player2 = pair_players(disp_pair)
   #print(f"Pair: {disp_pair}, P1: {disp_player1}, P2: {disp_player2}")
@@ -79,17 +92,21 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
                          )
   #print(f"ppr_df size after limits: {ppr_df.shape[0]}")
   ppr_df = pair_filter(ppr_df, disp_pair)
+  ppr_df_no_option = ppr_df[ ppr_df['tactic'] != 'option']
+  ppr_df_option = ppr_df[ ppr_df['tactic'] == 'option']
+  
   #print(f"ppr_df size after pair only points: {ppr_df.shape[0]}")
 
   # create the output dataframe
-  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','URL'],
-             'All':[0,0,0,0,0,' '],
-             'Zone 1':[0,0,0,0,0,' '],
-             "Zone 2":[0,0,0,0,0,' '],
-             'Zone 3':[0,0,0,0,0,' '],
-             'Zone 4':[0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,' '],
-             'No Zone':[0,0,0,0,0,' ']
+  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','% Out System','URL'],
+             'All':[0,0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,0,' '],
+             "Zone 2":[0,0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,0,' '],
+             'Zone 4':[0,0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,0,' '],
+             'Option':[0,0,0,0,0,0,' ']
             }
   pair_fbhe_table = pd.DataFrame.from_dict( df_dict )
   p1_fbhe_table = pd.DataFrame.from_dict( df_dict )
@@ -97,23 +114,27 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
   
   # calcualte for player 1
   fbhe_vector = fbhe(ppr_df,disp_player1,'att',True)
+  oos_vector1 = count_out_of_system(ppr_df,disp_player1,'att')
   p1_fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
   p1_fbhe_table.at[1,'All'] = fbhe_vector[4]  # fbso
   p1_fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
   p1_fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
   p1_fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
   #p1_fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
-  p1_fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+  p1_fbhe_table.at[5,'All'] = str("{:.0%}").format(oos_vector1[1])  # percent out of system
+  p1_fbhe_table.at[6,'All'] = fbhe_vector[5]  # URL
 
   # calcualte for player 2
   fbhe_vector = fbhe(ppr_df,disp_player2,'att',True)
+  oos_vector2 = count_out_of_system(ppr_df,disp_player2,'att')
   p2_fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
   p2_fbhe_table.at[1,'All'] = fbhe_vector[4]  # fbso
   p2_fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
   p2_fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
   p2_fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
   #p2_fbhe_table.at[4,'All'] = fbhe_vector[4]  # confidence interval
-  p2_fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+  p2_fbhe_table.at[5,'All'] = str("{:.0%}").format(oos_vector2[1])  # percent out of system
+  p2_fbhe_table.at[6,'All'] = fbhe_vector[5]  # URL
 
   # calculate the df for the pair
   pair_fbhe_table.at[2,'All'] = p1_fbhe_table.at[2,'All'] + p2_fbhe_table.at[2,'All']
@@ -124,28 +145,36 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
     pair_fbhe_table.at[1,'All'] = (pair_fbhe_table.at[2,'All']) / (pair_fbhe_table.at[4,'All'])
   pair_fbhe_table.at[0,'All'] = float("{:.3f}".format(pair_fbhe_table.at[0,'All']))
   pair_fbhe_table.at[1,'All'] = float("{:.3f}".format(pair_fbhe_table.at[1,'All']))
+  oos_oos = oos_vector1[0] + oos_vector2[0]
+  oos_att = oos_vector1[2] + oos_vector2[2]
+  oos_per = oos_oos/oos_att if oos_att != 0 else 0
+  pair_fbhe_table.at[5,'All'] = str("{:.0%}".format(oos_per))
 
   # now, zones 1 thru 5
   # calculate for zones 1 - 5
   column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5','No Zone']
   for i in [1,2,3,4,5,0]:
     # calculate for player 1
-    fbhe_vector = fbhe( ppr_df[ppr_df['att_src_zone_net']==i], disp_player1, 'att', True )
+    fbhe_vector = fbhe( ppr_df_no_option[ppr_df_no_option['att_src_zone_net']==i], disp_player1, 'att', True )
+    oos_vector1 = count_out_of_system(ppr_df_no_option[ppr_df_no_option['att_src_zone_net']==i], disp_player1, 'att')
     p1_fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
     p1_fbhe_table.at[1,column[i-1]] = fbhe_vector[4]  # fbhe
     p1_fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
     p1_fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
     p1_fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
-    p1_fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+    p1_fbhe_table.at[5,column[i-1]] = str('{:.0%}').format(oos_vector1[1])  # attempts
+    p1_fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
 
     # calculate for player 2
-    fbhe_vector = fbhe( ppr_df[ppr_df['att_src_zone_net']==i], disp_player2, 'att', True )
+    fbhe_vector = fbhe( ppr_df_no_option[ppr_df_no_option['att_src_zone_net']==i], disp_player2, 'att', True )
+    oos_vector1 = count_out_of_system(ppr_df_no_option[ppr_df_no_option['att_src_zone_net']==i], disp_player2, 'att')
     p2_fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
     p2_fbhe_table.at[1,column[i-1]] = fbhe_vector[4]  # fbhe
     p2_fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
     p2_fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
     p2_fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
-    p2_fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+    p2_fbhe_table.at[5,column[i-1]] = str('{:.0%}').format(oos_vector1[1])  # attempts
+    p2_fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
 
     # calculate for pair
     pair_fbhe_table.at[2,column[i-1]] = p1_fbhe_table.at[2,column[i-1]] + p2_fbhe_table.at[2,column[i-1]]
@@ -156,6 +185,44 @@ def pair_fbhe_net(disp_league, disp_gender, disp_year,
       pair_fbhe_table.at[1,column[i-1]] = (pair_fbhe_table.at[2,column[i-1]] ) / (pair_fbhe_table.at[4,column[i-1]])
     pair_fbhe_table.at[0,column[i-1]] = float("{:.3f}".format(pair_fbhe_table.at[0,column[i-1]]))
     pair_fbhe_table.at[1,column[i-1]] = float("{:.3f}".format(pair_fbhe_table.at[1,column[i-1]]))
+
+  # now calculate for the options
+  #-----------------------------------------
+  # calculate for player 1
+  fbhe_vector = fbhe(ppr_df_option,disp_player1,'att',True)
+  oos_vector1 = count_out_of_system(ppr_df_option,disp_player1,'att')
+  p1_fbhe_table.at[0,'Option'] = fbhe_vector[0]  # fbhe
+  p1_fbhe_table.at[1,'Option'] = fbhe_vector[4]  # fbso
+  p1_fbhe_table.at[2,'Option'] = fbhe_vector[1]  # attacks
+  p1_fbhe_table.at[3,'Option'] = fbhe_vector[2]  # errors
+  p1_fbhe_table.at[4,'Option'] = fbhe_vector[3]  # attempts
+  p1_fbhe_table.at[5,'Option'] = str('{:.0%}').format(oos_vector1[1])   # confidence interval
+  p1_fbhe_table.at[6,'Option'] = fbhe_vector[5]  # URL
+
+  # calcualte for player 2
+  fbhe_vector = fbhe(ppr_df_option,disp_player2,'att',True)
+  oos_vector2 = count_out_of_system(ppr_df_option,disp_player2,'att')
+  p2_fbhe_table.at[0,'Option'] = fbhe_vector[0]  # fbhe
+  p2_fbhe_table.at[1,'Option'] = fbhe_vector[4]  # fbso
+  p2_fbhe_table.at[2,'Option'] = fbhe_vector[1]  # attacks
+  p2_fbhe_table.at[3,'Option'] = fbhe_vector[2]  # errors
+  p2_fbhe_table.at[4,'Option'] = fbhe_vector[3]  # attempts
+  p2_fbhe_table.at[5,'Option'] = str('{:.0%}').format(oos_vector2[1])  # confidence interval
+  p2_fbhe_table.at[6,'Option'] = fbhe_vector[5]  # URL
+
+  # calculate the df for the pair
+  pair_fbhe_table.at[2,'Option'] = p1_fbhe_table.at[2,'Option'] + p2_fbhe_table.at[2,'Option']
+  pair_fbhe_table.at[3,'Option'] = p1_fbhe_table.at[3,'Option'] + p2_fbhe_table.at[3,'Option']
+  pair_fbhe_table.at[4,'Option'] = p1_fbhe_table.at[4,'Option'] + p2_fbhe_table.at[4,'Option']
+  if pair_fbhe_table.at[4,'Option'] != 0:
+    pair_fbhe_table.at[0,'Option'] = (pair_fbhe_table.at[2,'Option'] - pair_fbhe_table.at[3,'Option']) / (pair_fbhe_table.at[4,'Option'])
+    pair_fbhe_table.at[1,'Option'] = (pair_fbhe_table.at[2,'Option']) / (pair_fbhe_table.at[4,'Option'])
+  pair_fbhe_table.at[0,'Option'] = float("{:.3f}".format(pair_fbhe_table.at[0,'Option']))
+  pair_fbhe_table.at[1,'Option'] = float("{:.3f}".format(pair_fbhe_table.at[1,'Option']))
+  oos_oos = oos_vector1[0] + oos_vector2[0]
+  oos_att = oos_vector1[2] + oos_vector2[2]
+  oos_per = oos_oos/oos_att if oos_att != 0 else 0
+  pair_fbhe_table.at[5,'Option'] = str("{:.0%}".format(oos_per))
 
     # So I think we are done:-)
   # now, turn them all into markup
@@ -177,6 +244,13 @@ def pair_fbhe_pass(disp_league, disp_gender, disp_year,
                   date_checked, disp_start_date, disp_end_date,
                   scout, explain_text
                 ):
+
+  '''
+
+  FFirst Ball Hitting based on player as passer
+  
+  '''
+
 
   # First, get the data, and narrow to the filter, now, limit to only pair players
   disp_player1, disp_player2 = pair_players(disp_pair)
