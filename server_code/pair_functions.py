@@ -21,6 +21,24 @@ import io
 #------------------------------------------------------------------
 #           Pair Filter - limit data to only points with disp_pair 
 #------------------------------------------------------------------
+def get_pair_ppr_data(disp_league, disp_gender, disp_year, disp_team, disp_pair):
+  '''
+  
+  Tell me the league, g, year, your team, and pair, we we reutrn the ppr_df
+  
+  '''
+  # fetch all the PPR Data availabel to the user
+  ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True )
+
+  # now filter to just this pair
+  ppr_df = pair_filter(ppr_df, disp_pair)
+  
+  return ppr_df
+  
+
+#------------------------------------------------------------------
+#           Pair Filter - limit data to only points with disp_pair 
+#------------------------------------------------------------------
 def pair_filter(ppr_df, disp_pair):
   # filter a ppr dataframe down to all plays with the pair palyer 1 and 2
   disp_pair = disp_pair.strip()

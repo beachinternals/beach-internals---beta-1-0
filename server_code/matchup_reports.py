@@ -14,6 +14,7 @@ import matplotlib as mpl
 import math
 from plot_functions import *
 import numpy as np
+from server_functions import *
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -33,8 +34,10 @@ def matchup_outcome_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
   tmp3=[]
   tmp4=[]
   a_rec_mkdn, b_rec_mkdn, tmp1,tmp2,tmp3,tmp4 = matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_b )
-  
-  return matchup_outcome_mkdn, a_rec_mkdn, b_rec_mkdn, ''
+
+
+  # make sure wer trun 8 mkdn files, then 6 plots
+  return matchup_outcome_mkdn, a_rec_mkdn, b_rec_mkdn, '', '', '', '', '', '', '', '', '', '', ''
 
 @anvil.server.callable
 def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
@@ -984,3 +987,167 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b 
  
   # the return here needs to be 8 mkdn's followed by 6 plots
   return srv_strategies_table, '',  '',  '',  '',  '',  '',  '', plot_1_b1,  plot_1_b2, plot_3_b1, plot_3_b2, plot_5_b1, plot_5_b2
+
+@anvil.server.callable
+def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+  '''
+
+  Create a report that displays the attacking profile (all, 1-5, option, and no zone)  for each player in Pair B,
+  and list Pair A's defending percentile also
+  then provide a chart of these attacks
+
+  '''
+
+  # parameters
+  if anvil.users.get_user() is None :
+    disp_team = ''
+  else:
+    disp_team = anvil.users.get_user()['team']
+
+  # open my data sources - statistics
+  # fetch the pair_data and pair_data_stats files
+  pair_data_df, pair_stats_df = get_pair_data( disp_league, disp_gender, disp_year)
+  player_a1, player_a2 = pair_players( pair_a )
+  player_b1, player_b2 = pair_players( pair_b )
+
+  # get the row for pair_a and pair_b
+  if pair_data_df['pair'].isin([pair_a]).any():
+    pair_a1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a1) ].index[0]
+    pair_a2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_a, '', '', '','', '', '','', '', '','', '', '',''
+  if pair_data_df['pair'].isin([pair_b]).any():
+    pair_b1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b1) ].index[0]
+    pair_b2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b2) ].index[0]
+  else:
+    return 'Pair not found in pair data:'+pair_b, '', '', '','', '', '','', '', '','', '', '',''
+
+  # now get he ppr data for this pair
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, disp_team, True)
+  ppr_df_a = pair_filter(ppr_df, pair_a)
+  ppr_df_b = pair_filter(ppr_df, pair_b)
+  
+  # quick loop for each player
+  for d_player in [player_b1, player_b2]:
+    # call function to get player attacking with this data.
+    attack_df = player_attacking_as_passer( ppr_df_b, d_player )
+    #
+    # aNow, add three rows to attack_df for: blank, pair_a opp_fbhe, pair_a opp_bhe_percentile, pair_b fbhe_percentile, then the difference (a-b)
+    new_rows = pd.DataFrame({
+      ' ':['','Bs FBHE Percentile','A Opp FBHE','B Opp FBHE Per','Per Adv'],
+      'FBHE':['',0,0,0,0,],
+      'FBSO':['',0,0,0,0,],
+      'Kills':['',0,0,0,0,],
+      'Errors':['',0,0,0,0,],
+      'Attempts':['',0,0,0,0,],
+      '% Out of System':['',0,0,0,0,],
+      'URL':['',0,0,0,0,]
+    })
+    attack_df =  pd.concat( [attack_df, new_rows], ignore_index=True)
+
+    '''
+    new indexes:, 0=FBHE, 1=FBSO, 2=Kills, 3=Errors, 4=Attempts, 5=% out of system, 6=URL, 7=blank, 8=FBHE Per, 9=OppFBHE, 10=Opp FBHE Per, 11=per diff
+    '''
+
+    # now calculate these new values
+    # fbhe at 1 - 5, and all
+    attack_df.at[8,'All'] = stats.norm.cdf( (attack_df.at[0,'All']-pair_stats_df.at[0,'fbhe_mean'])/pair_stats_df.at[0,'fbhe_stdev'])
+    # calculate FBHE for the pair defending
+    fbhe_vector1 = fbhe( ppr_df_a, player_a1, 'srv', False)
+    fbhe_vector2 = fbhe( ppr_df_a, player_a2, 'srv', False)
+    if (fbhe_vector1[3]+fbhe_vector2[3]) != 0:
+      attack_df.at[9,'All'] = ( ( (fbhe_vector1[1]+fbhe_vector2[1]) - (fbhe_vector1[2]+fbhe_vector2[2]) )/ (fbhe_vector1[3]+fbhe_vector2[3]) )
+    else:
+      attack_df.at[9,'All'] = 0
+    attack_df.at[10,'All'] = stats.norm.cdf( (attack_df.at[9,'All']-pair_stats_df.at[0,'opp_fbhe_mean'])/pair_stats_df.at[0,'opp_fbhe_stdev'])
+    attack_df.at[11,'All'] = attack_df.at[10,'All'] - attack_df.at[8,'All']
+    
+    # now format them all
+    attack_df.at[8,'All'] = str("{:.0%}".format(attack_df.at[8,'All'] ))
+    attack_df.at[9,'All'] = float("{:.3f}".format(attack_df.at[9,'All'] ))
+    attack_df.at[10,'All'] = str("{:.0%}".format(attack_df.at[10,'All'] ))
+    attack_df.at[11,'All'] = str("{:.0%}".format(attack_df.at[11,'All'] ))
+
+    if d_player == player_b1:
+      attack_df1 = attack_df
+    elif d_player == player_b2:
+      attack_df2 = attack_df
+
+  # now convert to markdown
+  attack_mkdn1 = pd.DataFrame.to_markdown( attack_df1, index=False)
+  attack_mkdn2 = pd.DataFrame.to_markdown( attack_df2, index=False)
+
+  return attack_mkdn1, attack_mkdn2, '', '', '','', '', '','', '', '','', '', ''
+
+
+@anvil.server.callable
+def player_attacking_as_passer( m_ppr_df, disp_player ):
+  '''
+  pass me the dataframe to analyze, and the player
+
+  so the m_ppr_df should already be limited to what is desired.  (league, dates,m etc...)
+
+  then we return the dataframe for other pograms to manipulate, or convert to the markdown.
+  
+  '''
+  # create the output dataframe
+  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','% Out of System','URL'],
+             'All':[0,0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,0,' '],
+             "Zone 2":[0,0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,0,' '],
+             'Zone 4':[0,0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,0,' '],
+             'Option':[0,0,0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+
+  ppr_df_option = m_ppr_df[ m_ppr_df['tactic'] == 'option']
+  ppr_df_no_option = m_ppr_df[ m_ppr_df['tactic'] != 'option']
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+
+  # if the eata is not empty, create my df, populate it, and return it
+  if m_ppr_df.shape[0] > 0:
+    # calculate fbhe for all attacks
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    fbhe_vector = fbhe( m_ppr_df, disp_player, 'pass', True )
+    oos_vector1 = count_out_of_system(m_ppr_df,disp_player,'pass')
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[1,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'All'] = str("{:.0%}").format(oos_vector1[1])  # percent out of system
+    fbhe_table.at[6,'All'] = fbhe_vector[5]  # URL
+
+    # calculate for zones 1 - 5
+    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5','No Zone']
+    for i in [1,2,3,4,5,6]:
+      zone = 0 if i == 6 else i
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==zone], disp_player, 'pass', True )
+      oos_vector1 = count_out_of_system(ppr_df_no_option[ppr_df_no_option['att_src_zone_net']==i], disp_player, 'pass')
+      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
+      fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
+      fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[1,column[i-1]] = fbhe_vector[4]  # FBSO
+      fbhe_table.at[5,column[i-1]] = str("{:.0%}").format(oos_vector1[1])  # Out of System      
+      fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
+
+    # calculate fbhe for all options
+    fbhe_vector = fbhe( ppr_df_option, disp_player, 'pass', True )
+    oos_vector1 = count_out_of_system(ppr_df_option,disp_player,'pass')
+    fbhe_table.at[0,'Option'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[2,'Option'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[3,'Option'] = fbhe_vector[2]  # errors
+    fbhe_table.at[4,'Option'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[1,'Option'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'Option'] = str("{:.0%}").format(oos_vector1[1])  # percent out of system
+    fbhe_table.at[6,'Option'] = fbhe_vector[5]  # URL
+
+    fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )
+  else:
+    fbhe_return = "No Data Found"
+
+  return fbhe_table
