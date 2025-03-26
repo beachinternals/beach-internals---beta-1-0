@@ -1032,16 +1032,17 @@ def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pai
     # call function to get player attacking with this data.
     attack_df = player_attacking_as_passer( ppr_df_b, d_player )
     #
-    # aNow, add three rows to attack_df for: blank, pair_a opp_fbhe, pair_a opp_bhe_percentile, pair_b fbhe_percentile, then the difference (a-b)
+    # Now, add three rows to attack_df for: blank, pair_a opp_fbhe, pair_a opp_bhe_percentile, pair_b fbhe_percentile, then the difference (a-b)
     new_rows = pd.DataFrame({
       ' ':['','Bs FBHE Percentile','A Opp FBHE','B Opp FBHE Per','Per Adv'],
-      'FBHE':['',0,0,0,0,],
-      'FBSO':['',0,0,0,0,],
-      'Kills':['',0,0,0,0,],
-      'Errors':['',0,0,0,0,],
-      'Attempts':['',0,0,0,0,],
-      '% Out of System':['',0,0,0,0,],
-      'URL':['',0,0,0,0,]
+      'All':['',0,0,0,0],
+      'Zone 1':['',0,0,0,0],
+      'Zone 2':['',0,0,0,0],
+      'Zone 3':['',0,0,0,0],
+      'Zone 4':['',0,0,0,0],
+      'Zone 5':['',0,0,0,0],
+      'No Zone':['',0,0,0,0],
+      'Option':['',0,0,0,0]
     })
     attack_df =  pd.concat( [attack_df, new_rows], ignore_index=True)
 
@@ -1067,6 +1068,47 @@ def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pai
     attack_df.at[9,'All'] = float("{:.3f}".format(attack_df.at[9,'All'] ))
     attack_df.at[10,'All'] = str("{:.0%}".format(attack_df.at[10,'All'] ))
     attack_df.at[11,'All'] = str("{:.0%}".format(attack_df.at[11,'All'] ))
+
+    # calculate for Zones 1 - 5 adn No ZOne (zone ==0)
+    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5','No Zone']
+    for i in [1,2,3,4,5,6]:
+      zone = 0 if i == 6 else i
+      fbhe_vector1 = fbhe( ppr_df_a[ppr_df_a['att_src_zone_net']==zone], player_a1, 'srv', False )
+      fbhe_vector2 = fbhe( ppr_df_a[ppr_df_a['att_src_zone_net']==zone], player_a2, 'srv', False )
+      var_mean = 'fbhe_mean' if i == 6 else 'fbhe'+str(i)+'_mean'
+      var_stdev = 'fbhe_stdev' if i == 6 else 'fbhe'+str(i)+'_stdev'
+      attack_df.at[8,column[i-1]] = stats.norm.cdf( (attack_df.at[0,column[i-1]]-pair_stats_df.at[0,var_mean])/pair_stats_df.at[0,var_stdev])
+      if (fbhe_vector1[3]+fbhe_vector2[3]) != 0:
+        attack_df.at[9,column[i-1]] = ( ( (fbhe_vector1[1]+fbhe_vector2[1]) - (fbhe_vector1[2]+fbhe_vector2[2]) )/ (fbhe_vector1[3]+fbhe_vector2[3]) )
+      else:
+        attack_df.at[9,column[i-1]] = 0
+      opp_var_mean = 'opp_'+var_mean
+      opp_var_stdev = 'opp_'+var_stdev
+      attack_df.at[10,column[i-1]] = stats.norm.cdf( (attack_df.at[9,column[i-1]]-pair_stats_df.at[0,opp_var_mean])/pair_stats_df.at[0,opp_var_stdev])
+      attack_df.at[11,column[i-1]] = attack_df.at[10,column[i-1]] - attack_df.at[8,column[i-1]]
+    
+      # now format them all
+      attack_df.at[8,column[i-1]] = str("{:.0%}".format(attack_df.at[8,column[i-1]] ))
+      attack_df.at[9,column[i-1]] = float("{:.3f}".format(attack_df.at[9,column[i-1]] ))
+      attack_df.at[10,column[i-1]] = str("{:.0%}".format(attack_df.at[10,column[i-1]] ))
+      attack_df.at[11,column[i-1]] = str("{:.0%}".format(attack_df.at[11,column[i-1]] ))
+    
+    # calculate fbhe for all options
+    fbhe_vector1 = fbhe( ppr_df_a[ppr_df_a['tactic']=='Option'], player_a1, 'srv', False )
+    fbhe_vector2 = fbhe( ppr_df_a[ppr_df_a['tactic']=='Option'], player_a2, 'srv', False )
+    attack_df.at[8,'Option'] = stats.norm.cdf( (attack_df.at[0,'Option']-pair_stats_df.at[0,'fbhe_option_mean'])/pair_stats_df.at[0,'fbhe_option_stdev'])
+    if (fbhe_vector1[3]+fbhe_vector2[3]) != 0:
+      attack_df.at[9,'Option'] = ( ( (fbhe_vector1[1]+fbhe_vector2[1]) - (fbhe_vector1[2]+fbhe_vector2[2]) )/ (fbhe_vector1[3]+fbhe_vector2[3]) )
+    else:
+      attack_df.at[9,'Option'] = 0
+    attack_df.at[10,'Option'] = stats.norm.cdf( (attack_df.at[9,'Option']-pair_stats_df.at[0,'opp_fbhe_mean'])/pair_stats_df.at[0,'opp_fbhe_stdev'])
+    attack_df.at[11,'Option'] = attack_df.at[10,'Option'] - attack_df.at[8,'Option']
+    
+    # now format them all
+    attack_df.at[8,'Option'] = str("{:.0%}".format(attack_df.at[8,'Option'] ))
+    attack_df.at[9,'Option'] = float("{:.3f}".format(attack_df.at[9,'Option'] ))
+    attack_df.at[10,'Option'] = str("{:.0%}".format(attack_df.at[10,'Option'] ))      
+    attack_df.at[11,'Option'] = str("{:.0%}".format(attack_df.at[11,'Option'] ))    
 
     if d_player == player_b1:
       attack_df1 = attack_df
