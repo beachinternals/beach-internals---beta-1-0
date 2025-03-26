@@ -663,6 +663,10 @@ def rpt_mgr_generate_background():
           if not email_status:
             print("report:Manager, Scouting Reports, email send failed")
           '''
+      elif rpt_r['rpt_type'] == 'matchup':
+        ret_val = rpt_mgr_matchup_rpts(rpt_r)
+        if not ret_val:
+          print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
@@ -721,9 +725,48 @@ def rpt_mgr_dashboard_rpts(rpt_r):
 #  Report Manager - Matchup Reports
 #-------------------------------------------------------------------------------------------------------
 def rpt_mgr_matchup_rpts(rpt_r):
-  # make the pdf of player type reports
-  rpt_pdf = 'Matchup Reports'
-  return rpt_pdf
+  # for a matchup report, rpt_r should have just one pair and just one pair_b in the list
+  for pair_r in rpt_r['pair_list']:
+    #print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
+        
+    # build pair string
+    pair_a = pair_r['pair']
+    pair_b = pair_r['pair_b_liat'][0]
+
+    # calculate the folder we will store thiese into
+    pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+    #print(f"pdf folder: {pdf_folder}")
+        
+    full_rpt_pdf = None
+    pdf_name = pair_a + ' v ' + pair_b + 'Matchup Analysis.pdf'
+        
+    # loop over all the reports for this player
+    for rpt_print in rpt_r['rpts_inc']:
+      #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+
+      # call pdf report
+      pdf1 = create_matchup_pdf_reports(rpt_print['function_name'],
+                                    rpt_print['rpt_form'], 
+                                    pair_r['league'],
+                                    pair_r['gender'],
+                                    pair_r['year'],
+                                    pair_a,
+                                    pair_b
+                    )
+    
+      # now, need to merge this report with the next one
+      if full_rpt_pdf:
+        #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+        full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+      else:
+        #print('no original pdf file, setting to pdf1')
+        full_rpt_pdf = pdf1
+        #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+          
+    # now write this to the google drive
+    file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+
+  return True
 
 
 #--------------------

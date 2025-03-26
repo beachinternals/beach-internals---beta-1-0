@@ -95,6 +95,10 @@ a>.anvil-component-icon.right_edge-icon,
   margin-right: 20px;
 }
 
+.anvil-role-no-break {
+    page-break-inside: avoid;
+    break-inside: avoid;  /* For broader browser compatibility */
+}
 
 /* Typography */
 body {
