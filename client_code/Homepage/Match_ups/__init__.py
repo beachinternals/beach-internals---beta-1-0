@@ -306,7 +306,9 @@ class Match_ups(Match_upsTemplate):
       disp_gender,
       disp_year,
       disp_pair_a,
-      disp_pair_b )
+      disp_pair_b,
+      disp_team
+    )
     """
       disp_team,
       self.pair_drop_down.selected_value["pair"],

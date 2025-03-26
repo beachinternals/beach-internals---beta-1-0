@@ -622,12 +622,14 @@ def create_matchup_pdf_reports(
       disp_gender,
       disp_year,
       disp_pair_a,
-      disp_pair_b ):
+      disp_pair_b, 
+      disp_team 
+):
 
 
   # call report function
   #print(f'Calling Function:{fnct_name}')
-  table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8, plt1, plt2, plt3, plt4, plt5, plt6 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, disp_pair_a, disp_pair_b )
+  table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8, plt1, plt2, plt3, plt4, plt5, plt6 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, disp_pair_a, disp_pair_b, disp_team )
 
   # calculate the query text
   filter_text = f"""

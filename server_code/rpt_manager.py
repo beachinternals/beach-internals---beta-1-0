@@ -744,7 +744,8 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
                                     pair_r['gender'],
                                     pair_r['year'],
                                     pair_a,
-                                    pair_b
+                                    pair_b, 
+                                    disp_team
                     )
     
       # now, need to merge this report with the next one

@@ -24,34 +24,34 @@ from server_functions import *
 # Here is an example - you can replace it with your own:
 #
 @anvil.server.callable
-def matchup_outcome_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+def matchup_outcome_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team ):
 
-  matchup_df = matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b)
+  matchup_df = matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team)
   matchup_outcome_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
 
   tmp1=[]
   tmp2=[]
   tmp3=[]
   tmp4=[]
-  a_rec_mkdn, b_rec_mkdn, tmp1,tmp2,tmp3,tmp4 = matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_b )
+  a_rec_mkdn, b_rec_mkdn, tmp1,tmp2,tmp3,tmp4 = matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team )
 
 
   # make sure wer trun 8 mkdn files, then 6 plots
   return matchup_outcome_mkdn, a_rec_mkdn, b_rec_mkdn, '', '', '', '', '', '', '', '', '', '', ''
 
 @anvil.server.callable
-def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team ):
   #
   # quick report with match outcome, match along the net and  match up on all 45 werves (times 4!)
   #
 
-  matchup_df = matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b)
+  matchup_df = matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team)
   matchup_outcome_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
 
-  matchup_df = matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b)
+  matchup_df = matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team)
   matchup_net_mkdn = pd.DataFrame.to_markdown( matchup_df, index=False )
 
-  matchup_df = matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b)
+  matchup_df = matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team)
   matchup_45_serves_mkdn = pd.DataFrame.to_markdown( matchup_df.head(15), index=False )
 
   matchup_df_fbhe = matchup_df.sort_values(by='fbhe', ascending=True)
@@ -60,13 +60,13 @@ def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
   return matchup_outcome_mkdn, matchup_net_mkdn, matchup_45_serves_mkdn, matchup_45_serves_fbhe_mkdn, '','','','','','','','','',''
 
   
-def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b ):
+def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team ):
   #
   #.  Report to return the predicted outcome of two pairs
   #
   #.  This just formatst he match_pair_data into a df to convert into a markdown object to display
   #
-  a1_matchup, a2_matchup, b1_matchup, b2_matchup = matchup_pair_data(disp_league,disp_gender,disp_year,pair_a,pair_b)
+  a1_matchup, a2_matchup, b1_matchup, b2_matchup = matchup_pair_data(disp_league,disp_gender,disp_year,pair_a,pair_b, disp_team)
 
   player_a1, player_a2 = pair_players(pair_a)
   player_b1, player_b2 = pair_players(pair_b)
@@ -113,7 +113,7 @@ def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b ):
 
   
 @anvil.server.callable
-def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
+def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team):
   #
   # pull data from the pair data file for pair a and b
   # return the matchup vector(s)
@@ -263,7 +263,7 @@ def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b):
   return pair_a1_matchup, pair_a2_matchup, pair_b1_matchup, pair_b2_matchup
 
 @anvil.server.callable
-def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
+def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team):
   #
   # we matchup pair a vs pair b along the net
   #
@@ -344,7 +344,7 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b):
 
   
 @anvil.server.callable
-def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
+def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team):
   #
   # we matchup pair a vs pair b across all 45 serve locations
   #
@@ -433,7 +433,7 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b):
   return matchup_df
 
 @anvil.server.callable
-def matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+def matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team ):
   #
   # determine whoto serve and why, and confidence of this decision
   #
@@ -689,7 +689,7 @@ def service_preference( p1_data, p2_data, index):
   return player, srv_pref
 
 @anvil.server.callable
-def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team ):
   '''
 
   Create a report that determines the best serve strategies against pair_b, sered by pair_a
@@ -719,7 +719,7 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b 
     return 'Pair not found in pair data:'+pair_b, '', '', '','', '', '','', '', '','', '', '',''
     
   # call to get the serve stretegy table
-  matchup_df = matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b)
+  matchup_df = matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team)
 
   # sort by FBHE, take the top num_srv_Strategies
   matchup_df = matchup_df.sort_values(by='fbhe', ascending=True)
@@ -989,7 +989,7 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b 
   return srv_strategies_table, '',  '',  '',  '',  '',  '',  '', plot_1_b1,  plot_1_b2, plot_3_b1, plot_3_b2, plot_5_b1, plot_5_b2
 
 @anvil.server.callable
-def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pair_b ):
+def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team ):
   '''
 
   Create a report that displays the attacking profile (all, 1-5, option, and no zone)  for each player in Pair B,
@@ -999,10 +999,10 @@ def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pai
   '''
 
   # parameters
-  if anvil.users.get_user() is None :
-    disp_team = ''
-  else:
-    disp_team = anvil.users.get_user()['team']
+  #if anvil.users.get_user() is None :
+  #  disp_team = ''
+  #else:
+  #  disp_team = anvil.users.get_user()['team']
 
   # open my data sources - statistics
   # fetch the pair_data and pair_data_stats files
