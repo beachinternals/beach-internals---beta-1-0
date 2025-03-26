@@ -608,3 +608,78 @@ def create_dashboard_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, 
                                 report_row['box3_title']
                                )
   return pdf
+
+#---------------------------------------------------------------------
+#
+#          Render Player Reports as PDF Files
+#
+#----------------------------------------------------------------------
+@anvil.server.callable
+def create_matchup_pdf_reports(
+      fnct_name,
+      form,
+      disp_league,
+      disp_gender,
+      disp_year,
+      disp_pair_a,
+      disp_pair_b ):
+
+
+  # call report function
+  #print(f'Calling Function:{fnct_name}')
+  table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8, plt1, plt2, plt3, plt4, plt5, plt6 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, disp_pair_a, disp_pair_b )
+
+  # calculate the query text
+  filter_text = f"""
+    Data Filters:
+    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - League : {disp_league}
+    - Gender : {disp_gender}
+    - Year : {disp_year}
+    - Pair A : {disp_pair_a}
+    - Pair B : {disp_pair_b}
+    #- Competition 1 : {disp_comp_l1 if comp_l1_checked else ''}
+    #- Competition 2 : {disp_comp_l2 if comp_l2_checked else ''}
+    #- Competition 3 : {disp_comp_l3 if comp_l3_checked else ''}
+    #- Date Filtered : {str(disp_start_date)+' to '+str(disp_end_date) if date_checked else ''}
+    """
+
+  # fetch the labels from the report file
+  report_row = app_tables.report_list.get(function_name=fnct_name)
+
+  # get the two players in this pair
+  player1, player2 = pair_players(disp_pair)
+  
+  # call render form
+  #print(f"Rendering Form for {table_data1}")
+  pdf_file =disp_pair + ' ' + report_row['report_name'] 
+  pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form, 
+                                report_row['report_name'],
+                                player1,
+                                player2,
+                                table_data1, 
+                                table_data2, 
+                                table_data3, 
+                                table_data4,
+                                table_data5,
+                                table_data6,                                
+                                table_data7,
+                                table_data8,
+                                plt1,
+                                plt2,
+                                plt3,
+                                plt4,
+                                plt5,
+                                plt6,
+                                report_row['box1_title'], 
+                                report_row['box2_title'], 
+                                report_row['box3_title'],
+                                report_row['box4_title'],
+                                report_row['box5_title'],
+                                report_row['box6_title'],
+                                report_row['box7_title'],
+                                report_row['box8_title'],
+                                filter_text, 
+                                report_row['explain_text']
+                               )
+  return pdf

@@ -1,4 +1,4 @@
-from ._anvil_designer import scout_matchup_rptTemplate
+from ._anvil_designer import matchup_detail_rptTemplate
 from anvil import *
 import anvil.server
 import anvil.google.auth, anvil.google.drive
@@ -9,7 +9,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 
 
-class scout_matchup_rpt(scout_matchup_rptTemplate):
+class matchup_detail_rpt(matchup_detail_rptTemplate):
   def __init__(
     self,
     disp_pair,

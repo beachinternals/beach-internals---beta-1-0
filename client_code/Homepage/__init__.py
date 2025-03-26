@@ -27,7 +27,7 @@ class Homepage(HomepageTemplate):
       else:
         self.admin_link.visible = False
         self.pair_rpt_link.visible = True
-        self.league_rpt_link.visible = False
+        self.league_rpt_link.visible = True
         self.rpt_mgr_link.visible = False
         self.scouting_rpt_link.visible = True
     else:

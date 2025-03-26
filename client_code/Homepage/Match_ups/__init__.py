@@ -441,9 +441,10 @@ class Match_ups(Match_upsTemplate):
     disp_player1, disp_player2 = anvil.server.call(
       "pair_players", disp_pair_a
     )  # passing this just to be consistent in the calling argumenets
-    # call the server function
+    
+    # call the server function    
     pdf_rpt = anvil.server.call(
-      "create_pair_pdf_reports",
+      "create_matchup_pdf_reports",
       fnct_name,
       form,
       disp_league,
@@ -451,6 +452,7 @@ class Match_ups(Match_upsTemplate):
       disp_year,
       disp_pair_a,
       disp_pair_b )
+    
     '''
       disp_player1,
       self.comp_l1_check_box.checked,
