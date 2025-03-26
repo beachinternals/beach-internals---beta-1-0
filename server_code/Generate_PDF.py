@@ -617,7 +617,7 @@ def create_dashboard_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, 
 @anvil.server.callable
 def create_matchup_pdf_reports(
       fnct_name,
-      form,
+      rpt_form,
       disp_league,
       disp_gender,
       disp_year,
@@ -638,25 +638,21 @@ def create_matchup_pdf_reports(
     - Year : {disp_year}
     - Pair A : {disp_pair_a}
     - Pair B : {disp_pair_b}
-    #- Competition 1 : {disp_comp_l1 if comp_l1_checked else ''}
-    #- Competition 2 : {disp_comp_l2 if comp_l2_checked else ''}
-    #- Competition 3 : {disp_comp_l3 if comp_l3_checked else ''}
-    #- Date Filtered : {str(disp_start_date)+' to '+str(disp_end_date) if date_checked else ''}
     """
 
   # fetch the labels from the report file
   report_row = app_tables.report_list.get(function_name=fnct_name)
 
   # get the two players in this pair
-  player1, player2 = pair_players(disp_pair)
+  #player1, player2 = pair_players(disp_pair)
   
   # call render form
   #print(f"Rendering Form for {table_data1}")
-  pdf_file =disp_pair + ' ' + report_row['report_name'] 
+  pdf_file =disp_pair_a+' v ' + disp_pair_b + ' ' + report_row['report_name'] 
   pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form, 
                                 report_row['report_name'],
-                                player1,
-                                player2,
+                                disp_pair_a,
+                                disp_pair_b,
                                 table_data1, 
                                 table_data2, 
                                 table_data3, 

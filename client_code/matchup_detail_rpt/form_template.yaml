@@ -41,11 +41,11 @@ components:
 - components:
   - layout_properties: {grid_position: 'XDYPCE,CZUMKN'}
     name: attack_b1_label
-    properties: {align: center, text: 'Attacking - Player:'}
+    properties: {align: center, bold: true, text: 'Attacking - Player:'}
     type: Label
   - layout_properties: {grid_position: 'JYKXLL,OJMUJP'}
-    name: rich_text_1
-    properties: {}
+    name: attack1_mkdn
+    properties: {font_size: 12}
     type: RichText
   layout_properties: {grid_position: 'CDBNUJ,QRFSNW'}
   name: column_panel_2
@@ -54,11 +54,11 @@ components:
 - components:
   - layout_properties: {grid_position: 'NYWCYW,WDQBHL'}
     name: attack_b2_label
-    properties: {align: center, text: 'Attacking - Player:'}
+    properties: {align: center, bold: true, text: 'Attacking - Player:'}
     type: Label
   - layout_properties: {grid_position: 'MQSFPE,ZZCQRK'}
-    name: rich_text_2
-    properties: {}
+    name: attack2_mkdn
+    properties: {font_size: 12}
     type: RichText
   layout_properties: {grid_position: 'QDOKHV,IBDDAY'}
   name: column_panel_6

@@ -13,56 +13,60 @@ class matchup_serves_rpt(matchup_serves_rptTemplate):
   def __init__(
     self,
     disp_pair,
-    disp_player,
-    serve_strategy_title,
-    table_data,
-    plot1_title,
-    plot1,
-    plot2_title,
-    plot2,
-    plot3_title,
-    plot3,
-    z1_att,
-    z2_att,
-    z3_att,
-    z4_att,
-    z5_att,
-    opt_att,
-    z1_tbl,
-    z2_tbl,
-    z3_tbl,
-    z4_tbl,
-    z5_tbl,
-    opt_tbl,
+    disp_pair_a,
+    disp_pair_b,
+    table_data1, 
+    table_data2, 
+    table_data3, 
+    table_data4, 
+    table_data5, 
+    table_data6, 
+    table_data7, 
+    table_data8, 
+    plt1, 
+    plt2, 
+    plt3, 
+    plt4, 
+    plt5, 
+    plt6,
+    box_title1,
+    box_title2,
+    box_title3,
+    box_title4,
+    box_title5,
+    box_title6,
+    box_title7,
+    box_title8,
     filter_text,
     explain_text,
-    title_text,
     **properties,
   ):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
-    self.srv_strategy_title.content = serve_strategy_title
-    self.player_label.text = disp_player
-    self.rpt_disp_box.content = table_data
-    self.serve_plot.source = plot1
-    self.pass_plot.source = plot2
-    self.set_plot.source = plot3
-    self.z1_att_plot.source = z1_att
-    self.z2_att_plot.source = z2_att
-    self.z3_att_plot.source = z3_att
-    self.z4_att_plot.source = z4_att
-    self.z5_att_plot.source = z5_att
-    self.opt_att_plot.source = opt_att
-    self.z1_table.content = z1_tbl
-    self.z2_table.content = z2_tbl
-    self.z3_table.content = z3_tbl
-    self.z4_table.content = z4_tbl
-    self.z5_table.content = z5_tbl
-    self.opt_table.content = opt_tbl
-    self.pair_label.text = disp_pair
-    self.filter_text.content = filter_text
-    self.explain_text.content = explain_text
+    # find by four players frm teh two pairs
+    player_a1, player_a2 = anvil.server.call( 'pair_players', disp_pair_a )
+    player_b1, player_b2 = anvil.server.call( 'pair_players', disp_pair_b )
+    
+    self.pair_a_label.text = disp_pair_a
+    self.pair_b_label.text = disp_pair_b
+    self.serve_strategies_table.content = table_data1
+    self.plt1.source = plt1
+    self.plt2.source = plt2
+    self.plt3.source = plt3
+    self.plt4.source = plt4
+    self.plt5.source = plt5
+    self.plt6.source = plt6
+    self.plt1_label.text = box_title1 + player_b1
+    self.plt2_label.text = box_title2 + player_b2
+    self.plt3_label.text = box_title3 + player_b1
+    self.plt4_label.text = box_title4 + player_b2
+    self.plt5_label.text = box_title5 + player_b1
+    self.plt6_label.text = box_title6 + player_b2
+
+
+    #self.filter_text.content = filter_text
+    #self.explain_text.content = explain_text
     # self.box1_label.text = title_text
 
     # Any code you write here will run before the form opens.

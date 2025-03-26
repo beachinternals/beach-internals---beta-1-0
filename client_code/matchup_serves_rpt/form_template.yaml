@@ -34,7 +34,7 @@ components:
       spacing:
         padding: ['0', null, '0', null]
     type: Label
-  layout_properties: {grid_position: 'EWJKVJ,RLRUDA'}
+  layout_properties: {grid_position: 'HEBBZH,KQIKXL EWJKVJ,RLRUDA'}
   name: column_panel_1
   properties: {col_widths: '{"MTZPHF":15,"RIUUKC":30,"CJECOL":20,"WNDPFV":15,"APXVXS":30}'}
   type: ColumnPanel
@@ -45,64 +45,89 @@ components:
     type: Label
   - layout_properties: {grid_position: 'JYKXLL,OJMUJP'}
     name: serve_strategies_table
-    properties: {}
+    properties: {font_size: 12}
     type: RichText
-  layout_properties: {grid_position: 'CDBNUJ,QRFSNW'}
+  layout_properties: {grid_position: 'HEBBZH,KQIKXL CDBNUJ,QRFSNW'}
   name: column_panel_2
   properties: {}
   type: ColumnPanel
 - components:
-  - layout_properties: {grid_position: 'XGXAWB,CFEFQJ'}
-    name: plt1_label
-    properties: {align: center}
-    type: Label
-  - layout_properties: {grid_position: 'XGXAWB,WCEKQV'}
-    name: plt2_label
-    properties: {align: center}
-    type: Label
-  - layout_properties: {grid_position: 'VMVEAF,LJGFLB'}
-    name: plt1
+  - components:
+    - layout_properties: {grid_position: 'JITXIZ,SRILCF'}
+      name: plt1_label
+      properties: {align: center}
+      type: Label
+    - layout_properties: {grid_position: 'UUSFLA,NVGQFW'}
+      name: plt1
+      properties: {height: 526.8046875}
+      type: Image
+    layout_properties: {grid_position: 'AKGJXE,ORFTIN'}
+    name: column_panel_3
     properties: {}
-    type: Image
-  - layout_properties: {grid_position: 'VMVEAF,MWIEPA'}
-    name: plt2
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'FYOSUK,KFVEJU'}
+      name: plt2_label
+      properties: {align: center}
+      type: Label
+    - layout_properties: {grid_position: 'VKPURA,GCJEIT'}
+      name: plt2
+      properties: {height: 523.8779296875}
+      type: Image
+    layout_properties: {grid_position: 'AKGJXE,YPEYYU'}
+    name: column_panel_4
     properties: {}
-    type: Image
-  - layout_properties: {grid_position: 'BPLOMV,WCOOKH'}
-    name: plt3_label
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'WHOZZE,LOFCAY'}
+      name: plt3_label
+      properties: {}
+      type: Label
+    - layout_properties: {grid_position: 'ZEKNNR,NLOVVK'}
+      name: plt3
+      properties: {height: 541.419921875}
+      type: Image
+    layout_properties: {grid_position: 'QGIHCV,NQAHDJ'}
+    name: column_panel_5
     properties: {}
-    type: Label
-  - layout_properties: {grid_position: 'BPLOMV,LIGLWK'}
-    name: plt4_label
-    properties: {align: center}
-    type: Label
-  - layout_properties: {grid_position: 'JZFHAO,KEDTOA'}
-    name: plt3
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'FGUUTT,XXNQIK'}
+      name: plt4_label
+      properties: {align: center}
+      type: Label
+    - layout_properties: {grid_position: 'RXUKUY,OZOWXJ'}
+      name: plt4
+      properties: {height: 546.076171875}
+      type: Image
+    layout_properties: {grid_position: 'QGIHCV,GGFPVI'}
+    name: column_panel_7
     properties: {}
-    type: Image
-  - layout_properties: {grid_position: 'JZFHAO,MMFHXI'}
-    name: plt4
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'FMKYSJ,TWWGHL'}
+      name: plt5_label
+      properties: {align: center}
+      type: Label
+    - layout_properties: {grid_position: 'FMKYSJ,BEHGJH'}
+      name: plt6_label
+      properties: {align: center}
+      type: Label
+    - layout_properties: {grid_position: 'VPKYHM,RXCMYI'}
+      name: plt5
+      properties: {height: 677.79296875}
+      type: Image
+    - layout_properties: {grid_position: 'VPKYHM,KFVIDU'}
+      name: plt6
+      properties: {height: 678.0400390625}
+      type: Image
+    layout_properties: {grid_position: 'JOKKTU,LOTMUP'}
+    name: column_panel_8
     properties: {}
-    type: Image
-  - layout_properties: {grid_position: 'QOBLEL,ELHUMX'}
-    name: plt5_label
-    properties: {align: center}
-    type: Label
-  - layout_properties: {grid_position: 'QOBLEL,PYAUGH'}
-    name: plt6_label
-    properties: {align: center}
-    type: Label
-  - layout_properties: {grid_position: 'JLMSOX,LOXCKG'}
-    name: plt5
-    properties: {}
-    type: Image
-  - layout_properties: {grid_position: 'JLMSOX,RRNPHR'}
-    name: plt6
-    properties: {}
-    type: Image
-  layout_properties: {grid_position: 'QDOKHV,IBDDAY'}
+    type: ColumnPanel
+  layout_properties: {grid_position: 'HEBBZH,KQIKXL QDOKHV,IBDDAY'}
   name: column_panel_6
-  properties: {}
+  properties: {col_widths: '{"ORFTIN":30,"YPEYYU":30}'}
   type: ColumnPanel
 container:
   properties: {col_widths: '{}'}
