@@ -161,7 +161,7 @@ def rpt_mgr_generate_background():
     #print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
 
-
+      print(f"processing report type : {rpt_r['rpt_type']}")
       if rpt_r['rpt_type'] == 'player':
         # loop over all the players for this report listing
 
@@ -218,20 +218,7 @@ def rpt_mgr_generate_background():
           # now write this to the google drive
           file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
       
-          # put this pdf into the pdf list
-          #pdf_list[pdf_num] = full_rpt_pdf
-          #pdf_num = pdf_num + 1
-          #print(f"Added a pdf to the list: {pdf_num}")
 
-          # instead of emailing, we are going to write this to the Google Drive
-          #pdf_file = write_pdf_to_google_drive( '', pdf_name, pdf1 )
-          
-        #email_status = anvil.email.send(to=rpt_r['emailto'],
-        #                                  from_address="no-reply",
-        #                                  cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
-        #                                  subject='Beach Internals - Player Summary '+disp_player,
-        #                                  text='Attached please find the summary report(s) for '+disp_player,
-        #                                  attachments=pdf_list)
       elif rpt_r['rpt_type'] == 'pair':
         #print("processing pair report")
         #print(f"Pair List: {rpt_r['pair_list']}")
@@ -665,7 +652,7 @@ def rpt_mgr_generate_background():
           '''
       elif rpt_r['rpt_type'] == 'matchup':
         print(f"Matchup Reports: {rpt_r['rpt_type']}")
-        ret_val = rpt_mgr_matchup_rpts(rpt_r)
+        ret_val = rpt_mgr_matchup_rpts(rpt_r, disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
       else:
@@ -725,14 +712,19 @@ def rpt_mgr_dashboard_rpts(rpt_r):
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Matchup Reports
 #-------------------------------------------------------------------------------------------------------
-def rpt_mgr_matchup_rpts(rpt_r):
+def rpt_mgr_matchup_rpts(rpt_r, disp_team):
   # for a matchup report, rpt_r should have just one pair and just one pair_b in the list
+  today = datetime.now() 
   for pair_r in rpt_r['pair_list']:
     #print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
         
     # build pair string
     pair_a = pair_r['pair']
-    pair_b = pair_r['pair_b_liat'][0]
+    #print(f"opponentn pair, index 5 {rpt_r['pair_b_list'][5]}")
+    #print(f"opponentn pair, index 5, '1' {rpt_r['pair_b_list'][5][1]}")   
+    pair_b = rpt_r['pair_b_list'][5][1]
+    #print(f"Pair _b ; {pair_b}")
+
 
     # calculate the folder we will store thiese into
     pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
@@ -743,7 +735,7 @@ def rpt_mgr_matchup_rpts(rpt_r):
         
     # loop over all the reports for this player
     for rpt_print in rpt_r['rpts_inc']:
-      #print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
+      print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
       # call pdf report
       pdf1 = create_matchup_pdf_reports(rpt_print['function_name'],
