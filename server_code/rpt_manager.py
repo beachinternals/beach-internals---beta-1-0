@@ -664,6 +664,7 @@ def rpt_mgr_generate_background():
             print("report:Manager, Scouting Reports, email send failed")
           '''
       elif rpt_r['rpt_type'] == 'matchup':
+        print(f"Matchup Reports: {rpt_r['rpt_type']}")
         ret_val = rpt_mgr_matchup_rpts(rpt_r)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
