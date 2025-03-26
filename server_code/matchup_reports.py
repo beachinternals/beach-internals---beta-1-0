@@ -57,7 +57,7 @@ def matchup_scouting_rpt( disp_league, disp_gender, disp_year, pair_a, pair_b ):
   matchup_df_fbhe = matchup_df.sort_values(by='fbhe', ascending=True)
   matchup_45_serves_fbhe_mkdn = pd.DataFrame.to_markdown( matchup_df_fbhe.head(15), index=False )
   
-  return matchup_outcome_mkdn, matchup_net_mkdn, matchup_45_serves_mkdn, matchup_45_serves_fbhe_mkdn
+  return matchup_outcome_mkdn, matchup_net_mkdn, matchup_45_serves_mkdn, matchup_45_serves_fbhe_mkdn, '','','','',',','','','','',''
 
   
 def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b ):
