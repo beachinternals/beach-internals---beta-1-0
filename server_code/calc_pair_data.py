@@ -81,6 +81,10 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
   #print(f"shape of ppr_df :{ppr_df.shape}")
   min_att = ppr_csv_row['min_att']
 
+  # here we can limit what we use for the pair data table.  In this case, limit NCAA W 2025 to Regular Season
+  if c_league == "NCAA" and c_gender == 'W' and c_year == 2025 :
+    ppr_df = ppr_df[ ppr_df['comp_l1'] == 'Regular Season' ]
+  
   # build the ppr_dataframe out tpo the proper number of rows, equal total points,
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
 
