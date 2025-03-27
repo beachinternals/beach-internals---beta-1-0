@@ -431,7 +431,10 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_
 
   # drop the last row
   matchup_df = matchup_df.iloc[:-1]
-  #print(f"match_up dataframe: {matchup_df}")
+  print(f"match_up dataframe: {matchup_df}")
+  # now lets drop the fbhe=na rows
+  matchup_df = matchup_df.dropna(subset=['fbhe'])
+  print(f"match_up dataframe: {matchup_df}")
   # before we return, sort hte dataframe by the difference, ascending
   matchup_df = matchup_df.sort_values(by='per_diff', ascending=False)
 
