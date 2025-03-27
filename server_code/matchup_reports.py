@@ -68,6 +68,11 @@ def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp
   #
   a1_matchup, a2_matchup, b1_matchup, b2_matchup = matchup_pair_data(disp_league,disp_gender,disp_year,pair_a,pair_b, disp_team)
 
+  # check if the pair was not found
+  if isinstance(a1_matchup,str):
+    print(f"Matchup_outcome_df, {a1_matchup}")
+    return a1_matchup
+  
   player_a1, player_a2 = pair_players(pair_a)
   player_b1, player_b2 = pair_players(pair_b)
   
