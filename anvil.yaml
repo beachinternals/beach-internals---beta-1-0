@@ -418,6 +418,9 @@ db_schema:
       name: pair_b_list
       target: master_pair
       type: link_single
+    - admin_ui: {order: 1.5, width: 200}
+      name: Report Descirption
+      type: string
     server: full
     title: rpt_mgr
   strength_weakness_criteria:

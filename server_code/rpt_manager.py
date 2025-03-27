@@ -50,7 +50,7 @@ def rpt_mgr_generate_background():
     # for this row, now look at each report:
     #print(f"Report Row: {rpt_r}")
     #print(f" number of rows returned: {len(rpt_r)}")
-    #print(f"Fields:{rpt_r['email']}, {rpt_r['emailto']}, {rpt_r['dow']}, {rpt_r['tod']}, {rpt_r['rpt_type']} \n\n")
+    #print(f"Fields:{rpt_r['email']}, {rpt_r['emailto']}, {rpt_r['dow']}, {rpt_r['rpt_type']} \n\n")
 
     # get and store the team of the user asking for hte report
     disp_team = rpt_r['team']
@@ -158,7 +158,7 @@ def rpt_mgr_generate_background():
     # check if this report should be run today
     today = datetime.now()
     day_of_week = today.strftime("%A")
-    #print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
+    print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
 
       print(f"processing report type : {rpt_r['rpt_type']}")
@@ -732,13 +732,51 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
         
     full_rpt_pdf = None
     pdf_name = pair_a + ' v ' + pair_b + 'Matchup Analysis.pdf'
-        
-    # loop over all the reports for this player
-    for rpt_print in rpt_r['rpts_inc']:
-      print(f"Process report: {rpt_print['report_name']}, {rpt_print['function_name']}")
 
-      # call pdf report
-      pdf1 = create_matchup_pdf_reports(rpt_print['function_name'],
+    '''
+
+    # loop over all the reports for this player
+    print(f" report Row, rpts_inc {rpt_r['rpts_inc']}")
+    #print(f"rpts_inc 0: {rpt_r['rpts_inc'][0]}")
+    print(f"rpts_inc 0:0 {rpt_r['rpts_inc'][0][0]}")
+    print(f"rpts_inc 0:1 {rpt_r['rpts_inc'][0][1]}")
+    print(f"rpts_inc 0:2 {rpt_r['rpts_inc'][0][2]}")
+    print(f"rpts_inc 0:3 {rpt_r['rpts_inc'][0][3]}")
+    print(f"rpts_inc 0:4 {rpt_r['rpts_inc'][0][4]}")
+    print(f"rpts_inc 0:5 {rpt_r['rpts_inc'][0][5]}")
+    print(f"rpts_inc 0:6 {rpt_r['rpts_inc'][0][6]}")
+    print(f"rpts_inc 0:7 {rpt_r['rpts_inc'][0][7]}")
+    print(f"rpts_inc 0:8 {rpt_r['rpts_inc'][0][8]}")
+    print(f"rpts_inc 0:9 {rpt_r['rpts_inc'][0][9]}")
+    print(f"rpts_inc 0:9:0 {rpt_r['rpts_inc'][0][9][0]}")
+    print(f"rpts_inc 0:9:1 {rpt_r['rpts_inc'][0][9][1]}")
+    print(f"rpts_inc 0:10 {rpt_r['rpts_inc'][0][10]}")
+    print(f"rpts_inc 0:11 {rpt_r['rpts_inc'][0][11]}")
+    print(f"rpts_inc 0:12 {rpt_r['rpts_inc'][0][12]}")
+    print(f"rpts_inc 0:13 {rpt_r['rpts_inc'][0][13]}")
+    print(f"rpts_inc 0:14 {rpt_r['rpts_inc'][0][14]}")
+    print(f"rpts_inc 0:15 {rpt_r['rpts_inc'][0][15]}")
+    print(f"rpts_inc 0:16 {rpt_r['rpts_inc'][0][16]}")
+    '''
+    
+    # make a little list of the function name, report name, and index,
+    rpt_list_df = pd.DataFrame({'order':[0],'rpt_form':[''],'function_name':[''] })
+    for r in rpt_r['rpts_inc']:
+      rpt_list_df.loc[len(rpt_list_df)] = { 'order':r[9][1], 'rpt_form':r[4][1], 'function_name':r[14][1] }
+
+    rpt_list_df = rpt_list_df.sort_values('order', ascending=True)
+    rpt_list_df = rpt_list_df.iloc[1:]
+    print(f"report list {rpt_list_df}")
+      
+    for j in [0,1]:
+      if j == 1: # swap the two teams, and run it again
+        tmp = pair_a
+        pair_a = pair_b
+        pair_b = tmp
+      for index, rpt_print in rpt_list_df.iterrows():
+        print(f"Process report: {rpt_print['function_name']}")
+        # call pdf report
+        pdf1 = create_matchup_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
                                     pair_r['league'],
                                     pair_r['gender'],
@@ -747,15 +785,14 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
                                     pair_b, 
                                     disp_team
                     )
-    
-      # now, need to merge this report with the next one
-      if full_rpt_pdf:
-        #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-        full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
-      else:
-        #print('no original pdf file, setting to pdf1')
-        full_rpt_pdf = pdf1
-        #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+        # now, need to merge this report with the next one
+        if full_rpt_pdf:
+          #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+          full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+        else:
+          #print('no original pdf file, setting to pdf1')
+          full_rpt_pdf = pdf1
+          #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
           
     # now write this to the google drive
     file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
