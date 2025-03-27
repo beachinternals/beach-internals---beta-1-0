@@ -419,7 +419,7 @@ db_schema:
       target: master_pair
       type: link_single
     - admin_ui: {order: 1.5, width: 200}
-      name: Report Descirption
+      name: Report Description
       type: string
     server: full
     title: rpt_mgr
@@ -572,7 +572,7 @@ scheduled_tasks:
 - job_id: DKEDORCD
   task_name: rpt_mgr_generate_background
   time_spec:
-    at: {hour: 13, minute: 0}
+    at: {hour: 11, minute: 0}
     every: day
     n: 1
 services:

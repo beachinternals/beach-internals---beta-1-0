@@ -731,10 +731,10 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
     #print(f"pdf folder: {pdf_folder}")
         
     full_rpt_pdf = None
-    pdf_name = pair_a + ' v ' + pair_b + 'Matchup Analysis.pdf'
+    pdf_name = rpt_r['Report Description'] + ' Matchup Analysis.pdf'
 
+    
     '''
-
     # loop over all the reports for this player
     print(f" report Row, rpts_inc {rpt_r['rpts_inc']}")
     #print(f"rpts_inc 0: {rpt_r['rpts_inc'][0]}")
@@ -757,8 +757,12 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
     print(f"rpts_inc 0:14 {rpt_r['rpts_inc'][0][14]}")
     print(f"rpts_inc 0:15 {rpt_r['rpts_inc'][0][15]}")
     print(f"rpts_inc 0:16 {rpt_r['rpts_inc'][0][16]}")
+    print(f"rpts_inc 0:17 {rpt_r['rpts_inc'][0][17]}")
+    print(f"rpts_inc 0:18 {rpt_r['rpts_inc'][0][18]}")
+    print(f"rpts_inc 0:19 {rpt_r['rpts_inc'][0][19]}")
+    print(f"rpts_inc 0:20 {rpt_r['rpts_inc'][0][20]}")
+    print(f"rpts_inc 0:21 {rpt_r['rpts_inc'][0][21]}")
     '''
-    
     # make a little list of the function name, report name, and index,
     rpt_list_df = pd.DataFrame({'order':[0],'rpt_form':[''],'function_name':[''] })
     for r in rpt_r['rpts_inc']:
