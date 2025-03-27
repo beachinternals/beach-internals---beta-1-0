@@ -576,6 +576,15 @@ def matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_
   #print(f"player b2 data: {pb2_data}")
   
   # now write out recommendation into tow Markdown ovjecys to be returned, also return the four data vectors that may be used elsewhere
+
+  # first, set them all to blank strings
+  rec_player_a = str()
+  rec_strength_a = str()
+  rec_reason_a = str()
+  rec_player_b = str()
+  rec_strength_b = str()
+  rec_reason_b = str()
+  
   match pa1_data[6]:
     case 'None': # so here we will look at expected value
       match pa1_data[8]:
