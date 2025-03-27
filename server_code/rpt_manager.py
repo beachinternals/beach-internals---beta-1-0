@@ -158,7 +158,7 @@ def rpt_mgr_generate_background():
     # check if this report should be run today
     today = datetime.now()
     day_of_week = today.strftime("%A")
-    print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
+    #print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
 
       print(f"processing report type : {rpt_r['rpt_type']}")
@@ -770,7 +770,7 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
 
     rpt_list_df = rpt_list_df.sort_values('order', ascending=True)
     rpt_list_df = rpt_list_df.iloc[1:]
-    print(f"report list {rpt_list_df}")
+    #print(f"report list {rpt_list_df}")
       
     for j in [0,1]:
       if j == 1: # swap the two teams, and run it again

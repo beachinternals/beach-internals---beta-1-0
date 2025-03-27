@@ -565,10 +565,10 @@ def matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_
     pb1_data[8] = b_srv_pref
     pb2_data[8] = b_srv_pref
 
-  print(f"player a1 data: {pa1_data}")
-  print(f"player a2 data: {pa2_data}")
-  print(f"player b1 data: {pb1_data}")
-  print(f"player b2 data: {pb2_data}")
+  #print(f"player a1 data: {pa1_data}")
+  #print(f"player a2 data: {pa2_data}")
+  #print(f"player b1 data: {pb1_data}")
+  #print(f"player b2 data: {pb2_data}")
   
   # now write out recommendation into tow Markdown ovjecys to be returned, also return the four data vectors that may be used elsewhere
   match pa1_data[6]:
@@ -781,9 +781,9 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
 
   # now limit the matchup_df to this player and zone, then loop thru plotting hte line
   tmp_srv_strat_df = matchup_df[ (matchup_df['rcv_player'] == player_b1) ]
-  print(f"tmp srv strategy, srv from 1, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 1, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
   tmp_srv_strat_df = tmp_srv_strat_df[ tmp_srv_strat_df['srv_fr'] == '1' ]
-  print(f"tmp srv strategy, srv from 1, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 1, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
   if tmp_srv_strat_df.shape[0] > 0:
     for srv_index, srv in tmp_srv_strat_df.iterrows():
       # plot hte line, find our 'to' point
@@ -797,11 +797,11 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
       else:
         dx = 0
         dy = 0
-      print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} dx, dy {dx},{dy}")
+      #print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} dx, dy {dx},{dy}")
       ax1.plot( [x11[0], pass_x[zone_index] ], [ y1[0] , pass_y[zone_index] ], c='black', linestyle='solid', linewidth = 4 )
       ax1.arrow(  pass_x[zone_index], pass_y[zone_index] , dx, dy, shape='full', lw=4, length_includes_head=True, head_width=.10, head_length = .25, color = 'black')
 
-  print(f"creating plot image for {player_b1}")
+  #print(f"creating plot image for {player_b1}")
   plot_1_b1 = anvil.mpl_util.plot_image()
   plt.close()
 
@@ -813,31 +813,31 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
 
   # now limit the matchup_df to this player and zone, then loop thru plotting hte line
   tmp_srv_strat_df = matchup_df[ (matchup_df['rcv_player'] == player_b2) ]
-  print(f"tmp srv strategy, srv from 1, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 1, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
   tmp_srv_strat_df = tmp_srv_strat_df[ tmp_srv_strat_df['srv_fr'] == '1' ]
-  print(f"tmp srv strategy, srv from 1, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 1, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
   if tmp_srv_strat_df.shape[0] > 0:
     for srv_index, srv in tmp_srv_strat_df.iterrows():
       # plot hte line, find our 'to' point
       zone_depth = 0 if (srv['srv_to_depth'] == 'c') else 1 if (srv['srv_to_depth'] == 'd') else 2
       zone_index = (int(srv['srv_to_net'])-1)*3 + zone_depth
       zone_index = int(zone_index)
-      print(f"x and y pass vectors: {pass_x}, {pass_y}")
-      print(f"Zone Index = {zone_index}, x @ zone index={pass_x[zone_index]} , y @ zone index = {pass_y[zone_index]}")
+      #print(f"x and y pass vectors: {pass_x}, {pass_y}")
+      #print(f"Zone Index = {zone_index}, x @ zone index={pass_x[zone_index]} , y @ zone index = {pass_y[zone_index]}")
       # line direction, to calculate dx and dy for the arrow
       distance = math.dist( [x11[0], y1[0]], [ pass_x[zone_index], pass_y[zone_index] ])
-      print(f"Distance: {distance}")
+      #print(f"Distance: {distance}")
       if distance != 0:
         dx = ((pass_x[zone_index] - x11[0])/distance)*0.1
         dy = ((pass_y[zone_index] - y1[0])/distance)*0.1
       else:
         dx = 0
         dy = 0
-      print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
+      #print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
       ax2.plot( [x11[0], pass_x[zone_index] ], [y1[0], pass_y[zone_index]], c='black', linestyle='solid', linewidth = 4 )
       ax2.arrow(  pass_x[zone_index], pass_y[zone_index] , dx, dy, shape='full', lw=4, length_includes_head=True, head_width=.10, head_length = .25, color = 'black')
 
-  print(f"creating plot image for {player_b2}")
+  #print(f"creating plot image for {player_b2}")
   plot_1_b2 = anvil.mpl_util.plot_image()
   plt.close()
 
@@ -851,9 +851,9 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
 
   # now limit the matchup_df to this player and zone, then loop thru plotting hte line
   tmp_srv_strat_df = matchup_df[ (matchup_df['rcv_player'] == player_b1) ]
-  print(f"tmp srv strategy, srv from 3, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 3, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
   tmp_srv_strat_df = tmp_srv_strat_df[ tmp_srv_strat_df['srv_fr'] == '3' ]
-  print(f"tmp srv strategy, srv from 3, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 3, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
   if tmp_srv_strat_df.shape[0] > 0:
     for srv_index, srv in tmp_srv_strat_df.iterrows():
       # plot hte line, find our 'to' point
@@ -868,11 +868,11 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
       else:
         dx = 0
         dy = 0
-      print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
+      #print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
       ax1.plot( [x31[0], pass_x[zone_index] ], [ y1[0] , pass_y[zone_index] ], c='black', linestyle='solid', linewidth = 4 )
       ax1.arrow( pass_x[zone_index], pass_y[zone_index] , dx, dy, shape='full', lw=4, length_includes_head=True, head_width=.10, head_length = .25, color = 'black')
 
-  print(f"creating plot image for {player_b1}")
+  #print(f"creating plot image for {player_b1}")
   plot_3_b1 = anvil.mpl_util.plot_image()
   plt.close()
 
@@ -884,31 +884,31 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
 
   # now limit the matchup_df to this player and zone, then loop thru plotting hte line
   tmp_srv_strat_df = matchup_df[ (matchup_df['rcv_player'] == player_b2) ]
-  print(f"tmp srv strategy, srv from 3, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 3, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
   tmp_srv_strat_df = tmp_srv_strat_df[ tmp_srv_strat_df['srv_fr'] == '3' ]
-  print(f"tmp srv strategy, srv from 3, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 3, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
   if tmp_srv_strat_df.shape[0] > 0:
     for srv_index, srv in tmp_srv_strat_df.iterrows():
       # plot hte line, find our 'to' point
       zone_depth = 0 if (srv['srv_to_depth'] == 'c') else 1 if (srv['srv_to_depth'] == 'd') else 2
       zone_index = (int(srv['srv_to_net'])-1)*3 + zone_depth
       zone_index = int(zone_index)
-      print(f"x and y pass vectors: {pass_x}, {pass_y}")
-      print(f"Zone Index = {zone_index}, x @ zone index={pass_x[zone_index]} , y @ zone index = {pass_y[zone_index]}")
+      #print(f"x and y pass vectors: {pass_x}, {pass_y}")
+      #print(f"Zone Index = {zone_index}, x @ zone index={pass_x[zone_index]} , y @ zone index = {pass_y[zone_index]}")
       # line direction, to calculate dx and dy for the arrow
       distance = math.dist( [x31[0], y1[0]], [ pass_x[zone_index], pass_y[zone_index] ])
-      print(f"Distance: {distance}")
+      #print(f"Distance: {distance}")
       if distance != 0:
         dx = ((pass_x[zone_index] - x31[0])/distance)*0.1
         dy = ((pass_y[zone_index] - y1[0])/distance)*0.1
       else:
         dx = 0
         dy = 0
-      print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
+      #print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
       ax2.plot( [x31[0], pass_x[zone_index] ], [y1[0], pass_y[zone_index]], c='black', linestyle='solid', linewidth = 4 )
       ax2.arrow(  pass_x[zone_index], pass_y[zone_index] , dx, dy, shape='full', lw=4, length_includes_head=True, head_width=.10, head_length = .25, color = 'black')
 
-  print(f"creating plot image for {player_b2}")
+  #print(f"creating plot image for {player_b2}")
   plot_3_b2 = anvil.mpl_util.plot_image()
   plt.close()
 
@@ -921,9 +921,9 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
 
   # now limit the matchup_df to this player and zone, then loop thru plotting hte line
   tmp_srv_strat_df = matchup_df[ (matchup_df['rcv_player'] == player_b1) ]
-  print(f"tmp srv strategy, srv from 5, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 5, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
   tmp_srv_strat_df = tmp_srv_strat_df[ tmp_srv_strat_df['srv_fr'] == '5' ]
-  print(f"tmp srv strategy, srv from 5, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 5, player {player_b1}, number of serves: {tmp_srv_strat_df.shape[0]}")
   if tmp_srv_strat_df.shape[0] > 0:
     for srv_index, srv in tmp_srv_strat_df.iterrows():
       # plot hte line, find our 'to' point
@@ -938,11 +938,11 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
       else:
         dx = 0
         dy = 0
-      print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
+      #print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
       ax1.plot( [x51[0], pass_x[zone_index] ], [ y1[0] , pass_y[zone_index] ], c='black', linestyle='solid', linewidth = 4 )
       ax1.arrow( pass_x[zone_index], pass_y[zone_index], dx, dy, shape='full', lw=4, length_includes_head=True, head_width=.10, head_length = .25, color = 'black')
 
-  print(f"creating plot image for {player_b1}")
+  #print(f"creating plot image for {player_b1}")
   plot_5_b1 = anvil.mpl_util.plot_image()
   plt.close()
 
@@ -954,17 +954,17 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
 
   # now limit the matchup_df to this player and zone, then loop thru plotting hte line
   tmp_srv_strat_df = matchup_df[ (matchup_df['rcv_player'] == player_b2) ]
-  print(f"tmp srv strategy, srv from 5, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 5, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
   tmp_srv_strat_df = tmp_srv_strat_df[ tmp_srv_strat_df['srv_fr'] == '5' ]
-  print(f"tmp srv strategy, srv from 5, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
+  #print(f"tmp srv strategy, srv from 5, player {player_b2}, number of serves: {tmp_srv_strat_df.shape[0]}")
   if tmp_srv_strat_df.shape[0] > 0:
     for srv_index, srv in tmp_srv_strat_df.iterrows():
       # plot hte line, find our 'to' point
       zone_depth = 0 if (srv['srv_to_depth'] == 'c') else 1 if (srv['srv_to_depth'] == 'd') else 2
       zone_index = (float(srv['srv_to_net'])-1)*3 + zone_depth
       zone_index = int(zone_index)
-      print(f"x and y pass vectors: {pass_x}, {pass_y}")
-      print(f"Zone Index = {zone_index}, x @ zone index={pass_x[zone_index]} , y @ zone index = {pass_y[zone_index]}")
+      #print(f"x and y pass vectors: {pass_x}, {pass_y}")
+      #print(f"Zone Index = {zone_index}, x @ zone index={pass_x[zone_index]} , y @ zone index = {pass_y[zone_index]}")
       # line direction, to calculate dx and dy for the arrow
       distance = math.dist( [x51[0], y1[0]], [ pass_x[zone_index], pass_y[zone_index] ])
       print(f"Distance: {distance}")
@@ -974,11 +974,11 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
       else:
         dx = 0
         dy = 0
-      print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
+      #print(f"Plotting serve strategy player:{player_b1} from:{srv['srv_fr']} to: {srv['srv_to_net']},{srv['srv_to_depth']}, index: {zone_index}, x and y: {pass_x[zone_index]},{pass_y[zone_index]} ")
       ax2.plot( [x51[0], pass_x[zone_index] ], [y1[0], pass_y[zone_index]], c='black', linestyle='solid', linewidth = 4 )
       ax2.arrow(  pass_x[zone_index], pass_y[zone_index] , dx, dy, shape='full', lw=4, length_includes_head=True, head_width=.10, head_length = .25, color = 'black')
 
-  print(f"creating plot image for {player_b2}")
+  #print(f"creating plot image for {player_b2}")
   plot_5_b2 = anvil.mpl_util.plot_image()
   plt.close()
 
