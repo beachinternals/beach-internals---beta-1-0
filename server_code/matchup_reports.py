@@ -471,12 +471,12 @@ def matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_
     pair_a1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a1) ].index[0]
     pair_a2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_a) & (pair_data_df['player'] == player_a2) ].index[0]
   else:
-    return 'Pair not found in pair data:'+pair_a, '', '', ''
+    return 'Pair not found in pair data:'+pair_a, '', '', '','',''
   if pair_data_df['pair'].isin([pair_b]).any():
     pair_b1_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b1) ].index[0]
     pair_b2_index = pair_data_df.loc[ (pair_data_df['pair'] == pair_b) & (pair_data_df['player'] == player_b2) ].index[0]
   else:
-    return 'Pair not found in pair data:'+pair_b, '', '', ''
+    return 'Pair not found in pair data:'+pair_b, '', '', '','',''
 
   '''
   create a quick list for each player with:
