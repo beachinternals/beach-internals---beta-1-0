@@ -789,6 +789,34 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
                                     pair_b, 
                                     disp_team
                     )
+
+        # add the pages with serve, pass, set, and 1-5+Option attack charts for each recommended serve strategy
+        '''
+    
+        # call the server function
+        pdf_rpt = create_scouting_pdf_reports(fnct_name,
+        form,
+        disp_league,
+        disp_gender,
+        disp_year,
+        disp_team,
+        disp_pair,
+        disp_player,
+        self.comp_l1_check_box.checked,
+        self.comp_l1_drop_down.selected_value["comp_l1"],
+        self.comp_l2_check_box.checked,
+        self.comp_l2_drop_down.selected_value["comp_l2"],
+        self.comp_l3_check_box.checked,
+        self.comp_l3_drop_down.selected_value["comp_l3"],
+        self.date_check_box.checked,
+        self.start_date_picker.date,
+        self.end_date_picker.date,
+        scout,
+        table_data4, title_text,
+        srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+          )
+        '''
+        
         # now, need to merge this report with the next one
         if full_rpt_pdf:
           #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
