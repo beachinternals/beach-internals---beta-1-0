@@ -726,7 +726,6 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
     pair_b = rpt_r['pair_b_list'][5][1]
     #print(f"Pair _b ; {pair_b}")
 
-
     # calculate the folder we will store thiese into
     pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
     #print(f"pdf folder: {pdf_folder}")
@@ -734,36 +733,6 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
     full_rpt_pdf = None
     pdf_name = rpt_r['Report Description'] + ' Matchup Analysis.pdf'
 
-    
-    '''
-    # loop over all the reports for this player
-    print(f" report Row, rpts_inc {rpt_r['rpts_inc']}")
-    #print(f"rpts_inc 0: {rpt_r['rpts_inc'][0]}")
-    print(f"rpts_inc 0:0 {rpt_r['rpts_inc'][0][0]}")
-    print(f"rpts_inc 0:1 {rpt_r['rpts_inc'][0][1]}")
-    print(f"rpts_inc 0:2 {rpt_r['rpts_inc'][0][2]}")
-    print(f"rpts_inc 0:3 {rpt_r['rpts_inc'][0][3]}")
-    print(f"rpts_inc 0:4 {rpt_r['rpts_inc'][0][4]}")
-    print(f"rpts_inc 0:5 {rpt_r['rpts_inc'][0][5]}")
-    print(f"rpts_inc 0:6 {rpt_r['rpts_inc'][0][6]}")
-    print(f"rpts_inc 0:7 {rpt_r['rpts_inc'][0][7]}")
-    print(f"rpts_inc 0:8 {rpt_r['rpts_inc'][0][8]}")
-    print(f"rpts_inc 0:9 {rpt_r['rpts_inc'][0][9]}")
-    print(f"rpts_inc 0:9:0 {rpt_r['rpts_inc'][0][9][0]}")
-    print(f"rpts_inc 0:9:1 {rpt_r['rpts_inc'][0][9][1]}")
-    print(f"rpts_inc 0:10 {rpt_r['rpts_inc'][0][10]}")
-    print(f"rpts_inc 0:11 {rpt_r['rpts_inc'][0][11]}")
-    print(f"rpts_inc 0:12 {rpt_r['rpts_inc'][0][12]}")
-    print(f"rpts_inc 0:13 {rpt_r['rpts_inc'][0][13]}")
-    print(f"rpts_inc 0:14 {rpt_r['rpts_inc'][0][14]}")
-    print(f"rpts_inc 0:15 {rpt_r['rpts_inc'][0][15]}")
-    print(f"rpts_inc 0:16 {rpt_r['rpts_inc'][0][16]}")
-    print(f"rpts_inc 0:17 {rpt_r['rpts_inc'][0][17]}")
-    print(f"rpts_inc 0:18 {rpt_r['rpts_inc'][0][18]}")
-    print(f"rpts_inc 0:19 {rpt_r['rpts_inc'][0][19]}")
-    print(f"rpts_inc 0:20 {rpt_r['rpts_inc'][0][20]}")
-    print(f"rpts_inc 0:21 {rpt_r['rpts_inc'][0][21]}")
-    '''
     # make a little list of the function name, report name, and index,
     rpt_list_df = pd.DataFrame({'order':[0],'rpt_form':[''],'function_name':[''] })
     for r in rpt_r['rpts_inc']:
@@ -791,8 +760,15 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
                                     disp_team
                     )
 
+        # now, need to merge this report with the next one
+        if full_rpt_pdf:
+          #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+          full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+        else:
+          #print('no original pdf file, setting to pdf1')
+          full_rpt_pdf = pdf1
+          
         # add the pages with serve, pass, set, and 1-5+Option attack charts for each recommended serve strategy
-
         # get the serve strategy table
         # call to get the serve stretegy table
         matchup_df = matchup_45_serves(pair_r['league'], pair_r['gender'], pair_r['year'], pair_a, pair_b, disp_team)
