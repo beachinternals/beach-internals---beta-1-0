@@ -58,7 +58,7 @@ def calculate_pair_data( c_league, c_gender, c_year):
 
 def calculate_pair_data_not_background(c_league, c_gender, c_year):
   
-  result_string = "Calculate Pair Data server module Called"
+  result_string = "Calculate Pair Data server module Called for "+c_league+c_gender+c_year
 
   c_team = "League"    # only updating the league tables
   #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
