@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, date
 from pair_functions import *
 from server_functions import *
 import pandas as pd
+from matchup_reports import *
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -791,45 +792,119 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
                     )
 
         # add the pages with serve, pass, set, and 1-5+Option attack charts for each recommended serve strategy
-        '''
-    
-        # call the server function
-        pdf_rpt = create_scouting_pdf_reports(fnct_name,
-        form,
-        disp_league,
-        disp_gender,
-        disp_year,
-        disp_team,
-        disp_pair,
-        disp_player,
-        self.comp_l1_check_box.checked,
-        self.comp_l1_drop_down.selected_value["comp_l1"],
-        self.comp_l2_check_box.checked,
-        self.comp_l2_drop_down.selected_value["comp_l2"],
-        self.comp_l3_check_box.checked,
-        self.comp_l3_drop_down.selected_value["comp_l3"],
-        self.date_check_box.checked,
-        self.start_date_picker.date,
-        self.end_date_picker.date,
-        scout,
-        table_data4, title_text,
-        srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+
+        # get the serve strategy table
+        # call to get the serve stretegy table
+        matchup_df = matchup_45_serves(pair_r['league'], pair_r['gender'], pair_r['year'], pair_a, pair_b, disp_team)
+
+        # sort by FBHE, take the top num_srv_Strategies
+        num_srv_strategies = 10
+        matchup_df = matchup_df.sort_values(by='fbhe', ascending=True)
+        matchup_df = matchup_df.head(num_srv_strategies)
+
+        # now we need unnique alues of he matchup_df for srv_fr, srv_to_net, srv_to_depth, rcv_player
+        matchup_df = matchup_df.drop_duplicates(subset=['rcv_player','srv_fr','srv_to_net','srv_to_depth'])
+
+        # loop over serve fromthe df
+        for s_index, serves in matchup_df.iterrows():
+          # get convert the data structures
+          srv_fr, srv_to_1, srv_to_2, srv_to_3, srv_to_4, srv_to_5 = srv_to_fr( serves['srv_fr'], serves['srv_to_net'], serves['srv_to_depth'] )
+
+          # find the report list table row fo rthe report we want
+          report_function_name = 'scout_srv_strategy'
+          r_list_row = app_tables.report_list.get(function_name = report_function_name )
+
+          
+          # now call the generate pdf function
+          pdf1 = create_scouting_pdf_reports(report_function_name ,
+                    r_list_row['rpt_form'] ,pair_r['league'], pair_r['gender'], pair_r['year'],
+                    disp_team,
+                    pair_b,
+                    serves['rcv_player'],
+                    False, #self.comp_l1_check_box.checked,
+                    ' ', # self.comp_l1_drop_down.selected_value["comp_l1"],
+                    False, # self.comp_l2_check_box.checked,
+                      ' ', # self.comp_l2_drop_down.selected_value["comp_l2"],
+                    False, # self.comp_l3_check_box.checked,
+                      ' ', # self.comp_l3_drop_down.selected_value["comp_l3"],
+                    False, # self.date_check_box.checked,
+                      ' ', # self.start_date_picker.date,
+                      ' ', # self.end_date_picker.date,
+                    True, # scout,
+                    r_list_row['explain_text'], r_list_row['box1_title'], # table_data4, title_text,
+                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
           )
-        '''
         
-        # now, need to merge this report with the next one
-        if full_rpt_pdf:
-          #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-          full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
-        else:
-          #print('no original pdf file, setting to pdf1')
-          full_rpt_pdf = pdf1
-          #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+          # now, need to merge this report with the next one
+          if full_rpt_pdf:
+            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+            full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+          else:
+            #print('no original pdf file, setting to pdf1')
+            full_rpt_pdf = pdf1
+            #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
           
     # now write this to the google drive
     file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
 
   return True
+
+
+def srv_to_fr( s_fr, s_to_net, s_to_depth):
+  # quick little function to convert data structures
+  # expecting s_fr in [1,3,5], s_to_net in [1,2,3,4,5], s_to_depth in [c,d,e]
+
+  srv_fr = [False,False,False]
+  srv_to_1 = [False,False,False]
+  srv_to_2 = [False,False,False]
+  srv_to_3 = [False,False,False]
+  srv_to_4 = [False,False,False]
+  srv_to_5 = [False,False,False]
+
+  if int(s_fr) == 1:
+    srv_fr = [True,False,False]
+  elif int(s_fr) == 3:
+    srv_fr = [False,True,False]
+  elif int(s_fr) == 5:
+    srv_fr = [False,False,True]
+
+  if s_to_net == '1':
+    if s_to_depth == 'c':
+      srv_to_1 = [True,False,False]
+    elif s_to_depth == 'd':
+      srv_to_1 = [False,True,False]
+    elif s_to_depth == 'e':
+      srv_to_1 = [False,False,True]
+  elif s_to_net == '2':
+    if s_to_depth == 'c':
+      srv_to_2 = [True,False,False]
+    elif s_to_depth == 'd':
+      srv_to_2 = [False,True,False]
+    elif s_to_depth == 'e':
+      srv_to_2 = [False,False,True]
+  elif s_to_net == '3':
+    if s_to_depth == 'c':
+      srv_to_3 = [True,False,False]
+    elif s_to_depth == 'd':
+      srv_to_3 = [False,True,False]
+    elif s_to_depth == 'e':
+      srv_to_3 = [False,False,True]
+  elif s_to_net == '4':
+    if s_to_depth == 'c':
+      srv_to_4 = [True,False,False]
+    elif s_to_depth == 'd':
+      srv_to_4 = [False,True,False]
+    elif s_to_depth == 'e':
+      srv_to_4 = [False,False,True]
+  elif s_to_net == '5':
+    if s_to_depth == 'c':
+      srv_to_5 = [True,False,False]
+    elif s_to_depth == 'd':
+      srv_to_5 = [False,True,False]
+    elif s_to_depth == 'e':
+      srv_to_5 = [False,False,True]
+
+  return srv_fr, srv_to_1, srv_to_2, srv_to_3, srv_to_4, srv_to_5
 
 
 #--------------------
