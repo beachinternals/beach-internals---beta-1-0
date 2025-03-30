@@ -58,6 +58,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
   )
 
   print(f"generate_ppr_files_not_background: {user_league}, {user_gender}, {user_year},{user_team},{rebuild}")
+  return_string = 'generate_ppr_files_not_background: '+user_league+', '+user_gender+',  '+ user_year+', '+user_team+', '+str(rebuild)
   for flist_r in btd_row:
     #print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
     calc_ppr = False
@@ -103,7 +104,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       True
       #print(f"Not processing file:{flist_r['filename']}")
       
-  return True
+  return return_string
 
 # ############ server function to convert a btd file to a ppr file
 def btd_to_ppr_file(btd_file_bytes, flist_r):
