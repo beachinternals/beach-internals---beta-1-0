@@ -96,7 +96,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
     if current_player in pdata_df.values:
       # search for the value, test 
       p = pdata_df[pdata_df['player'] == current_player ].index[0]
-      print(f"Length of pdata df: {pdata_df.shape[0]}, index of player: {p}")
+      #print(f"Length of pdata df: {pdata_df.shape[0]}, index of player: {p}")
       
       # loop thru the criteria file
       for c_row in app_tables.strength_weakness_criteria.search( q.all_of(active=True,type='player')):
@@ -272,8 +272,8 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
     #print(f"sw df: {sw_df}")
     #print(f"sw df new : {sw_df_new}")
     
-    print(f"in loop over player data, p=:{p}")
-    print(f"player: {pdata_df.at[p,'player']}")
+    #print(f"in loop over player data, p=:{p}")
+    #print(f"player: {pdata_df.at[p,'player']}")
     
     # loop thru the criteria file
     for c_row in app_tables.strength_weakness_criteria.search( q.all_of(active=True,type='pair')):

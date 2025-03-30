@@ -241,7 +241,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   #print(f"player stats df:{player_stats_df}")
   
   for i in range(0,num_players):
-    print(f"player: {p_list[i]}")
+    #print(f"player: {p_list[i]}")
     player_df.at[i,'player'] = p_list[i]
 
     # unpack the player into the team, number, and short name

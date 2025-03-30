@@ -101,7 +101,7 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
             email_message = email_message + 'Generating PPR files for: '+c_league+' '+c_gender+' '+c_year+' '+c_team+'\n'
             print(email_message)
             r_value = generate_ppr_files_not_background(c_league, c_gender, c_year, c_team, rebuild_all  )
-            email_message = email_message + '        '+r_value + "\n"
+            email_message = email_message + '        '+str(r_value) + "\n"
     
             # now merge the data for this league
             #-------------------------------------
@@ -117,34 +117,34 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
           #-----------------------------
           email_message = email_message + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
           r_val = calculate_player_data_not_background(c_league, c_gender, c_year)
-          email_message = email_message + '        '+r_val+"\n"
+          email_message = email_message + '        '+str(r_val)+"\n"
 
           # Calculate Triangle Data
           #------------------------
           email_message = email_message + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
           r_val = calculate_triangle_scoring_not_background( c_league, c_gender, c_year)
-          email_message = email_message + '        '+r_val + "\n"
+          email_message = email_message + '        '+str(r_val) + "\n"
 
           # Calculate Pair Table
           #-----------------------
           email_message = email_message + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
           r_val = calculate_pair_data_not_background( c_league, c_gender, c_year)
-          email_message = email_message + '        '+r_val + "\n"
+          email_message = email_message + '        '+str(r_val) + "\n"
 
           # calculate pair data
           email_message = email_message + ' Building Pair Data & Stats for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
           r_val = calc_s_w_player( c_league, c_gender, c_year )
-          email_message = email_message + '        '+r_val + "\n"
+          email_message = email_message + '        '+str(r_val) + "\n"
           
           # calculate the strength and weaknesses
           email_message = email_message + ' Building Strengths & Weaknesses for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
           r_val = calc_s_w_player( c_league, c_gender, c_year )
-          email_message = email_message + '        '+r_val + "\n"
+          email_message = email_message + '        '+str(r_val) + "\n"
           
   # the very last thing, load the pair's data table
   email_message = email_message + ' Loading Pair data Table ' + "\n"
   r_val = load_pair_data_table()
-  email_message = email_message + '        '+r_val + "\n"
+  email_message = email_message + '        '+str(r_val) + "\n"
   
   #now, send an email with the updates
   internals_email = 'spccoach@gmail.com'
