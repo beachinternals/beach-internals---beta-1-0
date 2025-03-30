@@ -125,7 +125,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
                 # now, make the comparison and add the line to the new sw_df
                 if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
                   # then add a row to the sw_df dataframe
-                  print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}, Variable: {variable}")
+                  #print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}, Variable: {variable}")
                   sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']
                   sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
                   sw_df_new.at[0,'Category'] = c_row['category']
@@ -306,7 +306,7 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
               # now, make the comparison and add the line to the new sw_df
               if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
                 # then add a row to the sw_df dataframe
-                print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}, Variable: {variable}")
+                #print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}, Variable: {variable}")
                 sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']
                 sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
                 sw_df_new.at[0,'Category'] = c_row['category']
@@ -344,7 +344,7 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
         # added an 'or' for a 0 criteria, implying that this line should be included. This is used to have the actual value of a variable show up in the s_w table
         if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
           # then add a row to the sw_df dataframe
-          print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}")
+          #print(f"adding a row to new sw df, p:{p}, {c_row['var']}, {c_row['criteria']}")
           sw_df_new.at[0,'Pair'] = pdata_df.at[p,'pair']
           sw_df_new.at[0,'Player'] = pdata_df.at[p,'player']
           sw_df_new.at[0,'Category'] = c_row['category']
