@@ -548,7 +548,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
             
 
   ########## end of loop over players
-  print(f"Pair Df when done:{pair_df}")
+  #print(f"Pair Df when done:{pair_df}")
 
   # Now store and calulate the statistical values
   #------------------------------------------------

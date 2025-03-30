@@ -92,7 +92,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
 
     # now let's find the row in the pdata (player data) file
     current_player = mplayer_row['team'].strip()+' '+mplayer_row['number'].strip()+' '+mplayer_row['shortname'].strip()
-    print(f"current Player: {current_player}")
+    #print(f"current Player: {current_player}")
     if current_player in pdata_df.values:
       # search for the value, test 
       p = pdata_df[pdata_df['player'] == current_player ].index[0]
@@ -121,7 +121,7 @@ def calc_s_w_player( c_league, c_gender, c_year ):
                 var_mean = variable + '_mean'
                 var_sd = variable + '_stdev'
                 crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
-                print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}, Critical Value : {crit_value}, player value: {pdata_df.at[p,variable]}")          
+                #print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}, Critical Value : {crit_value}, player value: {pdata_df.at[p,variable]}")          
                 # now, make the comparison and add the line to the new sw_df
                 if (((c_row['criteria'] > 0) & (pdata_df.at[p,variable] >= crit_value)) | ((c_row['criteria'] < 0) & (pdata_df.at[p,variable] <= crit_value )) | (c_row['criteria'] == 0)): 
                   # then add a row to the sw_df dataframe
@@ -337,7 +337,7 @@ def calc_s_w_pair( c_league, c_gender, c_year ):
         var_mean = variable + '_mean'
         var_sd = variable + '_stdev'
 
-        print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
+        #print(f"In the loop over Criteria, variable = {variable}, var mean = {var_mean}, var sd = {var_sd}, p:{p}")
         crit_value = pstat_df.at[0,var_mean] + c_row['criteria']*pstat_df.at[0,var_sd]
 
         #print(f"critical value = {crit_value}, mean = {pstat_df.at[0,var_mean]}, StDev = {pstat_df.at[0,var_sd]}, Criteria = {c_row['criteria']}, p:{p}")

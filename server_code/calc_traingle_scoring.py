@@ -143,7 +143,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         # save video id and set number
         tri_df.at[tri_row,'video_id'] = m_list[i]
         tri_df.at[tri_row,'set'] = s
-        print(f"tri_df: Saving the date, set_df date : {set_df['game_date']}")
+        #print(f"tri_df: Saving the date, set_df date : {set_df['game_date']}")
         tri_df.at[tri_row,'game_date'] = set_df['game_date'].iloc[0]
         tri_df.at[tri_row,'teama'] = teama
         tri_df.at[tri_row,'player_a1'] =  player_a1
