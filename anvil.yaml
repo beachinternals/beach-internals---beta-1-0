@@ -566,13 +566,13 @@ scheduled_tasks:
 - job_id: ROSGYFFV
   task_name: night_processing_cron
   time_spec:
-    at: {hour: 9, minute: 0}
+    at: {hour: 13, minute: 0}
     every: day
     n: 1
 - job_id: DKEDORCD
   task_name: rpt_mgr_generate_background
   time_spec:
-    at: {hour: 11, minute: 0}
+    at: {hour: 14, minute: 0}
     every: day
     n: 1
 services:
