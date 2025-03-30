@@ -99,14 +99,14 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
         if ( all_leagues) or ((c_league == d_league) and (c_gender == d_gender) and (c_year == d_year)):
           for c_team in team_list:
             email_message = email_message + 'Generating PPR files for: '+c_league+' '+c_gender+' '+c_year+' '+c_team+'\n'
-            print(email_message)
+            #print(email_message)
             r_value = generate_ppr_files_not_background(c_league, c_gender, c_year, c_team, rebuild_all  )
             email_message = email_message + '        '+str(r_value) + "\n"
     
             # now merge the data for this league
             #-------------------------------------
             email_message = email_message + ' Merging PPR Files for ' + c_league +" "+ c_gender +" "+ c_year +" "+ c_team + "\n"
-            print(email_message)
+            #print(email_message)
             r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Private' )
             r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Scouting' )
             if c_team == 'INTERNALS':                
