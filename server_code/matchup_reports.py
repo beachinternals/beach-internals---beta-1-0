@@ -984,7 +984,7 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
       #print(f"Zone Index = {zone_index}, x @ zone index={pass_x[zone_index]} , y @ zone index = {pass_y[zone_index]}")
       # line direction, to calculate dx and dy for the arrow
       distance = math.dist( [x51[0], y1[0]], [ pass_x[zone_index], pass_y[zone_index] ])
-      print(f"Distance: {distance}")
+      #print(f"Distance: {distance}")
       if distance != 0:
         dx = ((pass_x[zone_index] - x51[0])/distance)*0.1
         dy = ((pass_y[zone_index] - y1[0])/distance)*0.1
