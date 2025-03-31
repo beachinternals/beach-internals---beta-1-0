@@ -740,7 +740,7 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
 
     rpt_list_df = rpt_list_df.sort_values('order', ascending=True)
     rpt_list_df = rpt_list_df.iloc[1:]
-    #print(f"report list {rpt_list_df}")
+    print(f"report list {rpt_list_df}")
       
     for j in [0,1]:
       if j == 1: # swap the two teams, and run it again
