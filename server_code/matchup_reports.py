@@ -713,7 +713,6 @@ def matchup_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b,
   list these in a table with URL's, then draw them on a chart
 
   '''
-
   # parameters
   num_srv_strategies = 10
 
@@ -1051,7 +1050,7 @@ def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pai
   # quick loop for each player
   for d_player in [player_b1, player_b2]:
     # call function to get player attacking with this data.
-    attack_df = player_attacking_as_passer( ppr_df_b, d_player )
+    attack_df = player_attacking_as_passer_or_server( ppr_df_b, d_player, 'att' )
     #
     # Now, add three rows to attack_df for: blank, pair_a opp_fbhe, pair_a opp_bhe_percentile, pair_b fbhe_percentile, then the difference (a-b)
     new_rows = pd.DataFrame({
@@ -1144,7 +1143,7 @@ def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pai
 
 
 @anvil.server.callable
-def player_attacking_as_passer( m_ppr_df, disp_player ):
+def player_attacking_as_passer_or_server( m_ppr_df, disp_player, action ):
   '''
   pass me the dataframe to analyze, and the player
 
@@ -1166,6 +1165,9 @@ def player_attacking_as_passer( m_ppr_df, disp_player ):
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
+  if (action != 'pass') or (action != 'srv' ):
+    print(f"Invalid actions passed to Player attacking as passer or server, {action}")
+
   ppr_df_option = m_ppr_df[ m_ppr_df['tactic'] == 'option']
   ppr_df_no_option = m_ppr_df[ m_ppr_df['tactic'] != 'option']
   #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
@@ -1174,8 +1176,8 @@ def player_attacking_as_passer( m_ppr_df, disp_player ):
   if m_ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( m_ppr_df, disp_player, 'pass', True )
-    oos_vector1 = count_out_of_system(m_ppr_df,disp_player,'pass')
+    fbhe_vector = fbhe( m_ppr_df, disp_player, action, True )
+    oos_vector1 = count_out_of_system(m_ppr_df,disp_player,action)
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
     fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
@@ -1188,8 +1190,8 @@ def player_attacking_as_passer( m_ppr_df, disp_player ):
     column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5','No Zone']
     for i in [1,2,3,4,5,6]:
       zone = 0 if i == 6 else i
-      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==zone], disp_player, 'pass', True )
-      oos_vector1 = count_out_of_system(ppr_df_no_option[ppr_df_no_option['att_src_zone_net']==i], disp_player, 'pass')
+      fbhe_vector = fbhe( m_ppr_df[m_ppr_df['att_src_zone_net']==zone], disp_player, action, True )
+      oos_vector1 = count_out_of_system(ppr_df_no_option[ppr_df_no_option['att_src_zone_net']==i], disp_player, action)
       fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
       fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
       fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
@@ -1199,8 +1201,8 @@ def player_attacking_as_passer( m_ppr_df, disp_player ):
       fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
 
     # calculate fbhe for all options
-    fbhe_vector = fbhe( ppr_df_option, disp_player, 'pass', True )
-    oos_vector1 = count_out_of_system(ppr_df_option,disp_player,'pass')
+    fbhe_vector = fbhe( ppr_df_option, disp_player, action, True )
+    oos_vector1 = count_out_of_system(ppr_df_option,disp_player,action)
     fbhe_table.at[0,'Option'] = fbhe_vector[0]  # fbhe
     fbhe_table.at[2,'Option'] = fbhe_vector[1]  # attacks
     fbhe_table.at[3,'Option'] = fbhe_vector[2]  # errors
@@ -1214,3 +1216,5 @@ def player_attacking_as_passer( m_ppr_df, disp_player ):
     fbhe_return = "No Data Found"
 
   return fbhe_table
+
+

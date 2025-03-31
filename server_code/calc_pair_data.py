@@ -83,6 +83,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
 
   # here we can limit what we use for the pair data table.  In this case, limit NCAA W 2025 to Regular Season
   if c_league == "NCAA" and c_gender == 'W' and c_year == 2025 :
+    print(f" Limitng {c_league}, {c_gender}, {c_year} to Regular Season")
     ppr_df = ppr_df[ ppr_df['comp_l1'] == 'Regular Season' ]
   
   # build the ppr_dataframe out tpo the proper number of rows, equal total points,
@@ -483,7 +484,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
                                       (tmp_df['serve_src_zone_net'] == fr ) & 
                                       (tmp_df['pass_src_zone_net'] == srv_to_net ) & 
                                       (tmp_df['pass_src_zone_depth'] == srv_to_depth.upper() ) ]
-            fbhe_vector = fbhe( tmp1_df, disp_player, 'pass',  False) 
+            fbhe_vector = fbhe( tmp1_df, disp_player, 'att',  False) 
             #print(f"Attempts = {fbhe_vector[3]}, Min Att: {min_att}")
             if fbhe_vector[3] >= min_att:
               # save this value(s), fbhe and attempts

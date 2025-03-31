@@ -133,11 +133,11 @@ def scout_srv_strategy(disp_league,
   # make a list of tuples for the serve to zones
   srv_2 = []
   srv_2_txt = []
-  #print(f"Serve To 1:{srv_to_1}")
-  #print(f"Serve To 2:{srv_to_2}")
-  #print(f"Serve To 3:{srv_to_3}")
-  #print(f"Serve To 4:{srv_to_4}")
-  #print(f"Serve To 5:{srv_to_5}")
+  print(f"Serve To 1:{srv_to_1}")
+  print(f"Serve To 2:{srv_to_2}")
+  print(f"Serve To 3:{srv_to_3}")
+  print(f"Serve To 4:{srv_to_4}")
+  print(f"Serve To 5:{srv_to_5}")
   depth_list = ['E','D','C']
   depth_text = ['Deep','Mid','Short']
   for j in (0,1,2):

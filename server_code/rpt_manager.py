@@ -839,39 +839,39 @@ def srv_to_fr( s_fr, s_to_net, s_to_depth):
 
   if s_to_net == '1':
     if s_to_depth == 'c':
-      srv_to_1 = [True,False,False]
+      srv_to_1 = [False,False,True]
     elif s_to_depth == 'd':
       srv_to_1 = [False,True,False]
     elif s_to_depth == 'e':
-      srv_to_1 = [False,False,True]
+      srv_to_1 = [True,False,False]
   elif s_to_net == '2':
     if s_to_depth == 'c':
-      srv_to_2 = [True,False,False]
+      srv_to_2 = [False,False,True]
     elif s_to_depth == 'd':
       srv_to_2 = [False,True,False]
     elif s_to_depth == 'e':
-      srv_to_2 = [False,False,True]
+      srv_to_2 = [True,False,False]
   elif s_to_net == '3':
     if s_to_depth == 'c':
-      srv_to_3 = [True,False,False]
+      srv_to_3 = [False,False,True]
     elif s_to_depth == 'd':
       srv_to_3 = [False,True,False]
     elif s_to_depth == 'e':
-      srv_to_3 = [False,False,True]
+      srv_to_3 = [True,False,False]
   elif s_to_net == '4':
     if s_to_depth == 'c':
-      srv_to_4 = [True,False,False]
+      srv_to_4 = [False,False,True]
     elif s_to_depth == 'd':
       srv_to_4 = [False,True,False]
     elif s_to_depth == 'e':
-      srv_to_4 = [False,False,True]
+      srv_to_4 = [True,False,False]
   elif s_to_net == '5':
     if s_to_depth == 'c':
-      srv_to_5 = [True,False,False]
+      srv_to_5 = [False,False,True]
     elif s_to_depth == 'd':
       srv_to_5 = [False,True,False]
     elif s_to_depth == 'e':
-      srv_to_5 = [False,False,True]
+      srv_to_5 = [True,False,False]
 
   return srv_fr, srv_to_1, srv_to_2, srv_to_3, srv_to_4, srv_to_5
 
