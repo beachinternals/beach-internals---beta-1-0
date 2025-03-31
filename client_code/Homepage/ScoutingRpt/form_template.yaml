@@ -132,7 +132,7 @@ components_by_slot:
         properties: {align: center, text: Body-Deep}
         type: CheckBox
       - layout_properties: {grid_position: 'XYRBHG,UQFUZY IRKJAS,HSIFSO'}
-        name: srv_to_2D
+        name: srv_to_4D
         properties: {align: center, text: Body-Mid}
         type: CheckBox
       - layout_properties: {grid_position: 'XYRBHG,UQFUZY ZDBIRK,IQYZSH'}
@@ -156,7 +156,7 @@ components_by_slot:
         properties: {align: center, text: Body-Deep}
         type: CheckBox
       - layout_properties: {grid_position: 'XYRBHG,YQYNZO GDKDNO,TISJVR'}
-        name: srv_to_4D
+        name: srv_to_2D
         properties: {align: center, text: Body-Mid}
         type: CheckBox
       - layout_properties: {grid_position: 'XYRBHG,YQYNZO ELLHRK,CNAHDW'}
