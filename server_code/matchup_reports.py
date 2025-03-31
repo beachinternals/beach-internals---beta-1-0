@@ -1054,7 +1054,7 @@ def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pai
     #
     # Now, add three rows to attack_df for: blank, pair_a opp_fbhe, pair_a opp_bhe_percentile, pair_b fbhe_percentile, then the difference (a-b)
     new_rows = pd.DataFrame({
-      ' ':['','Bs FBHE Percentile','A Opp FBHE','B Opp FBHE Per','Per Adv'],
+      ' ':['','Bs FBHE Percentile','A Opp FBHE','A Opp FBHE Per','Per Adv'],
       'All':['',0,0,0,0],
       'Zone 1':['',0,0,0,0],
       'Zone 2':['',0,0,0,0],
