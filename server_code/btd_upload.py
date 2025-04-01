@@ -58,7 +58,7 @@ def update_btd_characteristics( file ):
     btd_df['player'] = btd_df['team'].astype(str)+' ' + btd_df['only_player'].astype(str)
     #btd_df['player'] = np.where( ('NOTEAM' in btd_df['player']) or ('NOPLAYER' in btd_df['player'] ), '', btd_df['player'] )
     # we should be good, let's check
-    print(f"BTD Fields of interest: {btd_df['team']}, {btd_df['only_player']}, {btd_df['player']}")
+    #print(f"BTD Fields of interest: {btd_df['team']}, {btd_df['only_player']}, {btd_df['player']}")
     
   # Calculate number of actions
   num_actions = int(btd_df.shape[0])

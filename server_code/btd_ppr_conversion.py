@@ -139,7 +139,7 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
     btd_df['player'] = btd_df['team'].astype(str)+' ' + btd_df['only_player'].astype(str)
     #btd_df['player'] = np.where( ('NOTEAM' in btd_df['player']) or ('NOPLAYER' in btd_df['player'] ), '', btd_df['player'] )
     # we should be good, let's check
-    print(f"BTD Fields of interest: {btd_df['team']}, {btd_df['only_player']}, {btd_df['player']}")
+    #print(f"BTD Fields of interest: {btd_df['team']}, {btd_df['only_player']}, {btd_df['player']}")
   
   # call function to make the convesion
   ppr_df = btd_to_ppr_df(btd_df, flist_r)
@@ -228,7 +228,7 @@ def btd_to_ppr_df(btd_df, flist_r):
   
   # ################# loop over the rows in the balltime data file
   for index, btd_r in btd_df.iterrows():
-    print(f"loop over rows, index = {index}, Transition? {in_trans}, Action Type?{btd_r['action_type']}, Player: {btd_r['player']}")
+    #print(f"loop over rows, index = {index}, Transition? {in_trans}, Action Type?{btd_r['action_type']}, Player: {btd_r['player']}")
     
     # replace the btd players with the master player reference
     if btd_r['player'] == btd_playera1:
@@ -304,7 +304,7 @@ def save_serve_info( ppr_df, btd_r, ppr_row ):
   ppr_df.at[ppr_row,'rally_id'] = btd_r['rally_id']
   ppr_df.at[ppr_row,'serve_src_x'] = btd_r['src_x']
   ppr_df.at[ppr_row,'serve_src_y'] = btd_r['src_y']
-  print(f"Saving Serve INfo ppr_row {ppr_row}, rally number {btd_r['rally_id']}, Server:{ppr_df.at[ppr_row,'serve_player']}")  
+  #print(f"Saving Serve INfo ppr_row {ppr_row}, rally number {btd_r['rally_id']}, Server:{ppr_df.at[ppr_row,'serve_player']}")  
   return ppr_df
 
 def save_pass_info( ppr_df, btd_r, ppr_row):
