@@ -107,10 +107,11 @@ def update_btd_characteristics( file ):
     num_deleted = 0
     for p in range(len(players_unique)):
       print(f"player : {players_unique[p]}")
-      if ("NOTEAM" in players_unique[p]) and ("NOPLAYER" in players_unique[p]):
+      #if ("NOTEAM" in players_unique[p]) and ("NOPLAYER" in players_unique[p]):
+      if ("NOPLAYER" in players_unique[p]):
         tmp_players = np.delete(tmp_players,p-num_deleted)
         num_deleted = num_deleted + 1
-        print(f"Deleting : {players_unique[p]}")
+        print(f"Deleting : {players_unique[p]}")      
 
     players_unique = tmp_players
     print(f"Number of players reduced to:{players_unique.shape[0]} players are: {players_unique}")
