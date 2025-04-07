@@ -183,6 +183,7 @@ class btd_import(btd_importTemplate):
     per_s_play = float(self.per_srv_player_label.text[:-1])
     per_coord = float(self.per_coord_label.text[:-1])
     score = float(self.comp_score_label.text[:-1])
+    score = '{:.1f}'.format(score)
     if self.private_button.selected:
       is_private = True
     else:

@@ -88,13 +88,14 @@ components:
     name: data_grid_1
     properties:
       columns:
-      - {data_key: date, expand: false, id: HGGFJV, title: Game Date, width: 108.04248046875}
-      - {data_key: points, expand: false, id: IIVUBY, title: Total Points, width: 72.53729248046875}
-      - {data_key: ppr_playera1, expand: false, id: HCPSRB, title: Player A1, width: 134.09893798828125}
-      - {data_key: ppr_playerb1, expand: false, id: SVMQUC, title: Player B1, width: 154.111083984375}
-      - {data_key: completeness_score, expand: false, id: VCGSFQ, title: Data Score, width: 111.173583984375}
-      - {data_key: no_errors, expand: false, id: LIZYID, title: PPR File Errors, width: 91.083251953125}
-      - {data_key: private, expand: false, id: KOKNTX, title: Private / Scouting, width: 136.6571044921875}
+      - {data_key: date, expand: false, id: HGGFJV, title: Game Date, width: 87.0078125}
+      - {data_key: points, expand: false, id: IIVUBY, title: Total Points, width: 55.9296875}
+      - {data_key: ppr_playera1, expand: false, id: HCPSRB, title: Player A1, width: 86.392578125}
+      - {data_key: ppr_playerb1, expand: false, id: SVMQUC, title: Player B1, width: 85.158203125}
+      - {data_key: completeness_score, expand: false, id: VCGSFQ, title: Data Score, width: 81.9609375}
+      - {data_key: no_errors, expand: false, id: LIZYID, title: PPR File Errors, width: 76.9853515625}
+      - {data_key: private, expand: false, id: KOKNTX, title: 'Private?', width: 68.96875}
+      - {data_key: filename, id: TOAARW, title: File Name}
     type: DataGrid
   layout_properties: {grid_position: 'ZGMYNQ,JCDGEZ'}
   name: outlined_card_1
