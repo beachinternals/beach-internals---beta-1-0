@@ -25,6 +25,11 @@ components_by_slot:
         name: btd_manage_click
         properties: {align: center, text: Manage Uploaded Matches}
         type: Link
+      - event_bindings: {click: btd_view_page_click}
+        layout_properties: {grid_position: 'JYCXLB,LWYUUY'}
+        name: btd_view_page
+        properties: {text: View Your BTD Data}
+        type: Link
       - layout_properties: {grid_position: 'IHHGFV,OTPPRT'}
         name: label_3
         properties: {align: center, background: 'theme:Secondary Container', bold: true, text: Player Database}

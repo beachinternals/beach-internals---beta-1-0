@@ -15,6 +15,8 @@ unique_ids:
     Homepage.DataMgr.btd_import: '1726076247774552468021531.6465'
     Homepage.DataMgr.btd_manage: '1726077553957870421279859.9729'
     Homepage.DataMgr.btd_manage.RowTemplate2: '172616556884018683104912.942783'
+    Homepage.DataMgr.btd_view: '1744028812029664749962650.9408'
+    Homepage.DataMgr.btd_view.btd_RowTemplate1: '1744028936775890069158305.123'
     Homepage.DataMgr.roster_manage: '1726077578048572218063548.0481'
     Homepage.HelpPage: '1726079019455104010846680.65952'
     Homepage.HelpPage.running_report_help: '1729512172468145983000399.0432'

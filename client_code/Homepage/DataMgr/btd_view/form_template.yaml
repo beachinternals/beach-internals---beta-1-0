@@ -1,0 +1,66 @@
+components_by_slot:
+  content_slot:
+  - components:
+    - layout_properties: {grid_position: 'ZGCTFP,UFPWQS'}
+      name: label_2
+      properties: {align: center, bold: true, role: title, text: Ball Time Data Files}
+      type: Label
+    layout_properties: {}
+    name: outlined_card_1
+    properties: {background: 'theme:Secondary Container', role: outlined-card}
+    type: ColumnPanel
+  - components:
+    - components:
+      - layout_properties: {grid_position: 'YRKHBX,ZOLVWH'}
+        name: label_1
+        properties: {align: right, bold: true, text: 'User:'}
+        type: Label
+      - layout_properties: {grid_position: 'YRKHBX,JNUGAC'}
+        name: user_label
+        properties: {align: left, bold: true, text: ''}
+        type: Label
+      - layout_properties: {grid_position: 'YRKHBX,QCMKEB'}
+        name: label_4
+        properties: {align: right, bold: true, text: 'Team:'}
+        type: Label
+      - layout_properties: {grid_position: 'YRKHBX,RXMVNO'}
+        name: Label_team
+        properties: {bold: true}
+        type: Label
+      layout_properties: {grid_position: 'KCZYCU,LQEYDV GRNBPF,IBYDCD'}
+      name: outlined_card_3
+      properties: {role: outlined-card}
+      type: ColumnPanel
+    - components:
+      - components:
+        - layout_properties: {}
+          name: repeating_panel_1
+          properties: {item_template: Homepage.DataMgr.btd_view.btd_RowTemplate1}
+          type: RepeatingPanel
+        layout_properties: {grid_position: 'YRTSYT,CNNNKS'}
+        name: btd_data_grid
+        properties:
+          columns:
+          - {data_key: team, expand: false, id: PQHIYU, title: Team, width: 98.37933349609375}
+          - {data_key: admin, expand: false, id: OOOONG, title: Date, width: 191.74993896484375}
+          - {data_key: league, id: IXRGYC, title: League}
+          - {data_key: gender, id: IFMLIW, title: Gender}
+          - {data_key: year, id: ECSOOA, title: Year}
+          - {data_key: start_date, id: IUJFIP, title: Start Date}
+          - {data_key: end_date, id: FMTQHY, title: End Date}
+          - {data_key: column_1, id: GFWXGR, title: Column 1}
+          - {data_key: num_users, id: POFMXQ, title: Users}
+          - {data_key: column_2, id: NAFZMU, title: Column 2}
+          - {data_key: column_3, id: ZMOOFX, title: Column 3}
+          - {data_key: column_4, id: QPZIKW, title: Column 4}
+        type: DataGrid
+      layout_properties: {grid_position: 'KCZYCU,LQEYDV BJWZKF,HYAVKM'}
+      name: outlined_card_4
+      properties: {background: '', role: outlined-card}
+      type: ColumnPanel
+    layout_properties: {}
+    name: outlined_card_2
+    properties: {background: 'theme:Secondary', col_widths: '{"SMAHSC":10,"LQEYDV":50}', role: outlined-card}
+    type: ColumnPanel
+is_package: true
+layout: {type: 'form:Homepage'}

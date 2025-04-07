@@ -10,6 +10,7 @@ from anvil.tables import app_tables
 from btd_import import *
 from btd_manage import *
 from roster_manage import *
+from btd_view import *
 
 
 class DataMgr(DataMgrTemplate):
@@ -43,4 +44,10 @@ class DataMgr(DataMgrTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(roster_manage())
+    pass
+
+  def btd_view_page_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(btd_view())
     pass
