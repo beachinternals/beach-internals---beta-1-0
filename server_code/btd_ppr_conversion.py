@@ -192,10 +192,10 @@ def btd_to_ppr_df(btd_df, flist_r):
     'pass_player':blank,'pass_yn':yn,'pass_src_x':zero,'pass_src_y':zero,'pass_src_t':zero,'pass_src_zone_depth':blank,'pass_src_zone_net':zero,
                   'pass_dest_x':zero,'pass_dest_y':zero,'pass_dest_t':zero,'pass_dest_zone_depth':blank,'pass_dest_zone_net':zero,
                   'pass_dist':zero,'pass_dur':zero,'pass_speed':zero,'pass_angle':zero,'pass_action_id':zero,'pass_height':zero,
-                  'pass_rtg_btd':zero,'pass_oos':zero,
+                  'pass_rtg_btd':zero,'pass_oos':zero,'pass_touch_position':blank, 'pass_touch_type':blank,
     'set_player':blank,'set_yn':yn,'set_src_x':zero,'set_src_y':zero,'set_src_t':zero,'set_src_zone_depth':blank,'set_src_zone_net':zero,
                   'set_dest_x':zero,'set_dest_y':zero,'set_dest_t':zero,'set_dest_zone_depth':blank,'set_dest_zone_net':zero,
-                  'set_dist':zero,'set_dur':zero,'set_speed':zero,'set_angle':zero,'set_action_id':zero,'set_height':zero,
+                  'set_dist':zero,'set_dur':zero,'set_speed':zero,'set_angle':zero,'set_action_id':zero,'set_height':zero,'set_touch_type':blank,
     'att_player':blank,'att_yn':yn,'att_src_x':zero,'att_src_y':zero,'att_src_t':zero,'att_src_zone_depth':blank,'att_src_zone_net':zero,
                   'att_dest_x':zero,'att_dest_y':zero,'att_dest_t':zero,'att_dest_zone_depth':blank,'att_dest_zone_net':zero,
                   'att_dist':zero,'att_dur':zero,'att_speed':zero,'att_angle':zero,'att_action_id':zero,'att_height':zero, 'att_touch_height':zero,
@@ -319,6 +319,11 @@ def save_pass_info( ppr_df, btd_r, ppr_row):
   ppr_df.at[ppr_row,'serve_dest_t'] = ppr_df.at[ppr_row,'pass_src_t']
   ppr_df.at[ppr_row,'pass_rtg_btd'] = btd_r['quality']
   #print(f"Saving pass info Action Id: {ppr_df.at[ppr_row,'pass_action_id']}, ppr_row: {ppr_row}, Pass Player: {ppr_df.at[ppr_row,'pass_player']}")
+  if 'touch_position' in btd_r:
+    ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('pass_touch_position'))] = btd_r['touch_position']
+  if 'touch_type' in btd_r:
+    ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('pass_touch_type'))] = btd_r['touch_type']
+
   return ppr_df
 
 def save_set_info( ppr_df, btd_r, ppr_row):
@@ -332,6 +337,9 @@ def save_set_info( ppr_df, btd_r, ppr_row):
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_yn'))] = "Y"  
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('pass_dest_t'))] = ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_src_t'))]
   #print(f"saving SET info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
+  # now save new information if it is in the btd file
+  if 'touch_type' in btd_r:
+    ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_touch_type'))] = btd_r['touch_type']
 
   return ppr_df
 
@@ -648,7 +656,18 @@ def error_check_ppr(ppr_df):
       error_string = error_string + print_to_string(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       no_errors += 1
       #print(f"Error String in all 3:{error_string}")
-      
+      #
+      # so lets change the setter to the other player
+      if ppr_r['set_player'] == ppr_r['player_a1']:
+        ppr_r['set_player'] = ppr_r['player_a2']
+      elif ppr_r['set_player'] == ppr_r['player_a2']:
+        ppr_r['set_player'] = ppr_r['player_a1']
+      elif ppr_r['set_player'] ==  ppr_r['player_b1']:
+        ppr_r['set_player'] = ppr_r['player_b2']
+      elif ppr_r['set_player'] ==  ppr_r['player_b2']:
+        ppr_r['set_player'] = ppr_r['player_b2']
+      error_string = error_string + "Swapped the set player to "+ppr_r['set_player'] 
+    
     if ppr_r['set_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and not all3:
       #print(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
       error_string = error_string + print_to_string(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
