@@ -1304,7 +1304,7 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
   index = 0
   for row in pair_list.itertuples():
     #print(f"Pair List: {pair_list}, Pair Row {row}")
-    print(f"pair row in pair list: team: {row.team}, Player 1: {row.player1}, Player 2: {row.player2}")
+    #print(f"pair row in pair list: team: {row.team}, Player 1: {row.player1}, Player 2: {row.player2}")
 
     # limit the two ppr_df's to just this pair data
     pair_ppr_df_all = pair_filter(ppr_df, row.team)
