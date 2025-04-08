@@ -1165,7 +1165,7 @@ def player_attacking_as_passer_or_server( m_ppr_df, disp_player, action ):
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
-  if (action != 'pass') or (action != 'srv' ):
+  if (action != 'pass') and (action != 'srv' ) and (action != 'att'):
     print(f"Invalid actions passed to Player attacking as passer or server, {action}")
 
   ppr_df_option = m_ppr_df[ m_ppr_df['tactic'] == 'option']

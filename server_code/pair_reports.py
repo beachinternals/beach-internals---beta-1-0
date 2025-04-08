@@ -1276,7 +1276,7 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
                          date_checked, disp_start_date, disp_end_date
                          ) # limit all data available to the parameters given for comp level 1,2,3 and dates.
   # we should not have all data and filtered data for the disp_team
-  print(f" got ppr data, all: {ppr_df.shape[0]}, filter: {ppr_df_filter.shape[0]} filtered pass player: {ppr_df_filter['pass_player']}")
+  #print(f" got ppr data, all: {ppr_df.shape[0]}, filter: {ppr_df_filter.shape[0]} filtered pass player: {ppr_df_filter['pass_player']}")
 
   # create the output dataframe
   df_dict = {'Pair':str(),
@@ -1299,7 +1299,7 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
   # now start a loop over the pairs in the ppr_df_filter dataframe
   # get a list of pairs in the ppr_df_filter df:
   pair_list = pair_team_list(ppr_df_filter, disp_team)
-  print(f"Pair list size: {pair_list.shape[0]}")
+  #print(f"Pair list size: {pair_list.shape[0]}")
 
   index = 0
   for row in pair_list.itertuples():
@@ -1309,7 +1309,7 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
     # limit the two ppr_df's to just this pair data
     pair_ppr_df_all = pair_filter(ppr_df, row.team)
     pair_ppr_df_filter = pair_filter(ppr_df_filter, row.team)
-    print(f" ppr data, filter for: {row.team}, all: {pair_ppr_df_all.shape[0]}, filter: {pair_ppr_df_filter.shape[0]}, filtered pass player: {ppr_df_filter['pass_player']}")
+    #print(f" ppr data, filter for: {row.team}, all: {pair_ppr_df_all.shape[0]}, filter: {pair_ppr_df_filter.shape[0]}, filtered pass player: {ppr_df_filter['pass_player']}")
     if (pair_ppr_df_filter.shape[0] > 0) and (pair_ppr_df_all.shape[0] > 0) and (pair_ppr_df_filter.shape[0] != pair_ppr_df_all.shape[0] ):
       # both the original data needs points, the new data needs points, and they can't be the same data.
       for p_num in [1,2]:
@@ -1321,8 +1321,8 @@ def pair_team_change_overtime(disp_league, disp_gender, disp_year,
         # calculate the fbhe
         fbhe_vector_all = fbhe(pair_ppr_df_all,disp_player,'att', False)
         fbhe_vector_filter = fbhe(pair_ppr_df_filter,disp_player,'att', False)
-        print(f" FBHE for pair, Pair: {row.team}, for player: {disp_player}, ppr all size: {pair_ppr_df_all.shape[0]}, ppr filter size {pair_ppr_df_filter.shape[0]}, fbhe vector all {fbhe_vector_all}, fbhe vector filter {fbhe_vector_filter} ")
-        print(f"pair_ppr_df_filter pass players: {pair_ppr_df_filter['pass_player']}")
+        #print(f" FBHE for pair, Pair: {row.team}, for player: {disp_player}, ppr all size: {pair_ppr_df_all.shape[0]}, ppr filter size {pair_ppr_df_filter.shape[0]}, fbhe vector all {fbhe_vector_all}, fbhe vector filter {fbhe_vector_filter} ")
+        #print(f"pair_ppr_df_filter pass players: {pair_ppr_df_filter['pass_player']}")
         perf_table.at[index,'FBHE-All'] = fbhe_vector_all[0]
         perf_table.at[index,'FBHE-Recent'] = fbhe_vector_filter[0]
         perf_table.at[index,'FBHE-Diff'] = fbhe_vector_filter[0] - fbhe_vector_all[0]

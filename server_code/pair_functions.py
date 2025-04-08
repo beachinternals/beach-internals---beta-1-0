@@ -53,7 +53,7 @@ def pair_filter(ppr_df, disp_pair):
 def pair_team_filter(ppr_df, disp_team):
   # filter a ppr dataframe down to all plays with the pair palyer 1 and 2
   disp_team = disp_team.strip()
-  print(f"Pair Team, disp team: {disp_team}, ppr_df shape: {ppr_df.shape[0]}")
+  #print(f"Pair Team, disp team: {disp_team}, ppr_df shape: {ppr_df.shape[0]}")
   if ppr_df.shape[0] != 0:
     tmp_df1 = ppr_df[ ppr_df['teama'].str.contains(disp_team, case=True, na=False) ]
     #print(f"pair team1: {tmp_df1.shape[0]}")
