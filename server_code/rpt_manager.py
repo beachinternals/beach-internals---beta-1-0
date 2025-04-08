@@ -162,7 +162,7 @@ def rpt_mgr_generate_background():
     #print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
 
-      print(f"processing report type : {rpt_r['rpt_type']}")
+      #print(f"processing report type : {rpt_r['rpt_type']}")
       if rpt_r['rpt_type'] == 'player':
         # loop over all the players for this report listing
 

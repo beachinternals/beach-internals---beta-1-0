@@ -592,7 +592,7 @@ def matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_
     case 'None': # so here we will look at expected value
       match pa1_data[8]:
         case 'None':  # so no preference on fbhe nor expected, look at historic percent of serves
-          print(f"player a1 percent of serves: {pa1_data[4]}")
+          #print(f"player a1 percent of serves: {pa1_data[4]}")
           if pa1_data[4] >= 0.55:
             rec_player_a = player_a1 
             rec_strength_a = 'Weak'
