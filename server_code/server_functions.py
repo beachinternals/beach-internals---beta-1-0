@@ -55,7 +55,8 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
     elif play_type == "pass":
       ppr_df = ppr_df[ppr_df['pass_player'].str.strip() == disp_player.strip()]
 
-    #print(f"Size of DB in calc_fbhe:{ppr_df.shape[0]}, Disp Player:{disp_player}")
+    if 'STANFORD' in disp_player:
+      print(f"Size of DB in calc_fbhe:{ppr_df.shape[0]}, Disp Player:{disp_player}")
     # to build the video link, need a quick loop over rows:
     video_list = [*range(0,ppr_df.shape[0],1)]
     #print(f"video list: {video_list}")
