@@ -225,16 +225,18 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
 
   # need a pair list, we will step thru the master pair database
   num_pairs = len(app_tables.master_pair.search(league=c_league, gender=c_gender, year=c_year))
+  print(f"calc_pair_data: Number of pairs in master pair db: {num_pairs}, {c_league}, {c_gender}, {c_year}")
   pair_df.loc[(num_pairs+1)*2] = pair_dict
 
   i = -1
-  for pair_r in app_tables.master_pair.search(league=c_league, gender=c_gender, year=c_year):
+  for pair_r in list( app_tables.master_pair.search(league=c_league, gender=c_gender, year=c_year) ):
     # items in pair_r: pair_r['pair'], pair_r['player1'], pair_r['player2']
 
-    #print(f"pair: {pair_r['pair']}, Player 1: {pair_r['player1']}, Player 2: {pair_r['player2']}, Team: {pair_r['team']}")
+    print(f"pair: {pair_r['pair']}, Player 1: {pair_r['player1']}, Player 2: {pair_r['player2']}, Team: {pair_r['team']}")
 
     # now limit the ppdf_df to only our pairs
     tmp_df = pair_filter( ppr_df, pair_r['pair'])
+    print(f"calc_pair_data: Points in pair ppr df: {tmp_df.shape[0]}")
     
     for p in [0,1]:  # loop over players
       i = i + 1
