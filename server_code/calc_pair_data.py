@@ -346,7 +346,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
 
       # ----------------- calculate error density ----------
       ed_vector = calc_error_den( tmp_df, disp_player )
-      #print(f"Ed Vector: {ed_vector}")
+      print(f"Ed Vector: {ed_vector}")
       pair_df.at[i,'err_den'] = float(ed_vector[0][:-1])
 
       #-------------------- Serving Effectiviness, fbhe on all, zone 1, 3, 5
