@@ -377,7 +377,7 @@ def build_pair_df(c_league,c_gender,c_year):
 
   # get the ppr file
   c_team = "League"    # only updating the league tables
-  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+  print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = c_league,
@@ -410,7 +410,7 @@ def build_pair_df(c_league,c_gender,c_year):
   #print(f"Pair List Unique:{team_list}")
   
   team_list = team_list.sort_values(by=['team'])
-  #print(f"Pair List Sort:{team_list}")
+  print(f"Pair List Sort:{team_list}")
 
   # save it back to the ppr_csv table
   # first, I need to cahnge the ppr_file dataframe to a csv file.
