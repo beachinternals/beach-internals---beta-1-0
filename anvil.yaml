@@ -30,7 +30,7 @@ db_schema:
     - admin_ui: {width: 200}
       name: date
       type: date
-    - admin_ui: {order: 8, width: 294}
+    - admin_ui: {order: 8, width: 421}
       name: filename
       type: string
     - admin_ui: {order: 9, width: 87}
