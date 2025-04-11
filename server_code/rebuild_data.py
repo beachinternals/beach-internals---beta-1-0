@@ -128,6 +128,8 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
           # Calculate Pair Table
           #-----------------------
           email_message = email_message + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = build_pair_df( c_league, c_gender, c_year)
+          email_message = email_message + ' Building Pair Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
           r_val = calculate_pair_data_not_background( c_league, c_gender, c_year)
           email_message = email_message + '        '+str(r_val) + "\n"
 
@@ -410,14 +412,14 @@ def build_pair_df(c_league,c_gender,c_year):
   #print(f"Pair List Unique:{team_list}")
   
   team_list = team_list.sort_values(by=['team'])
-  print(f"Pair List Sort:{team_list}")
+  #print(f"Pair List Sort:{team_list}")
 
   # save it back to the ppr_csv table
   # first, I need to cahnge the ppr_file dataframe to a csv file.
   tmp = pd.DataFrame(team_list)
   #print(f"TMP: pair list in a dataframe:{tmp}")
   pair_csv_file = pd.DataFrame.to_csv(tmp)
-  #print(f"Pair lisdt as a csv file :{pair_csv_file}")
+  print(f"Pair list being updated for: {c_league}, {c_gender}, {c_year}")
   pair_media = anvil.BlobMedia(content_type="text/plain", content=pair_csv_file.encode(), name="pair_table.csv")
   ppr_csv_row.update(pair_list = pair_media, pair_list_date=datetime.datetime.now())
 
