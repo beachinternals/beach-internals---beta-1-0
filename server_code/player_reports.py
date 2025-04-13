@@ -1578,6 +1578,143 @@ def player_sw(disp_league, disp_gender, disp_year,
 
 
 @anvil.server.callable
+def player_consistency(disp_league, disp_gender, disp_year, 
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+               ):
+  # return a markdown text to display
+  # given the parameters
+
+  '''
+  This reports display two mkdn tables each that show he folllowing:
+  - FBHE
+  -TCR
+  -ED
+  -Knockout (serving)
+  - Passing
+  - Point Differential
+
+  
+  '''
+
+  ############## First - Get the Data, and limit it by the parameters - Generaic for all reports
+  m_ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout )
+  m_ppr_df = ppr_df_limit( m_ppr_df, 
+                          comp_l1_checked, disp_comp_l1, 
+                          comp_l2_checked, disp_comp_l2, 
+                          comp_l3_checked, disp_comp_l3, 
+                          date_checked, disp_start_date, disp_end_date
+                         )
+    
+  #print(f"master scout data frame (after filter):{m_ppr_df.shape}, display player:{disp_player} m ppr df 0:{m_ppr_df.shape[0]}")
+
+  ############## Secomd - Create the dataframe that will be displayed as a table, report specific
+  # create the output dataframe - This is speficif to the report
+  df_dict = {' ':['All','1a','1b','2a','2b','3a','3b'],
+             'FBHE':[0,0,0,0,0,0,0],
+             'Tran Conv':[0,0,0,0,0,0,0],
+             "Error Den":[0,0,0,0,0,0,0],
+             'Knockout %':[0,0,0,0,0,0,0],
+             'Good Passes':[0,0,0,0,0,0,0],
+             'Point Diff':[0,0,0,0,0,0,0]
+            }
+  cons_table = pd.DataFrame.from_dict( df_dict )
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  '''
+  Loop indexes:
+  0 = All
+  1 = 1a, set 1, 0 - 21 points
+  2 = 1b, set 1, 22+ points
+  3 = 2a, set 2, 0 - 21 points
+  4 = 2b, set 2, >21 points
+  5 = 3a, set 3 <= 15 poitns (if total points > 10)
+  6 = 3b, set 3, > 15 points (if total points in set > 10)
+  
+  '''
+  
+  if m_ppr_df.shape[0] > 0:
+    #
+    # we'll do a loop to calculate all columns
+    for index in [0,1,2,3,4,5,6]:
+      tmp_df = m_ppr_df
+      if index == 0:
+        tmp_df = tmp_df ## looking at all data
+      elif index == 1:
+        tmp_df = tmp_df[ (tmp_df['set'] == 1) & ((tmp_df['a_score'] + tmp_df['b_score'])<=21)]
+      elif index == 2:
+        tmp_df = tmp_df[ (tmp_df['set'] == 1) & ((tmp_df['a_score'] + tmp_df['b_score']) >21)]
+      elif index == 3:
+        tmp_df = tmp_df[ (tmp_df['set'] == 2) & ((tmp_df['a_score'] + tmp_df['b_score']) <=21)]
+      elif index == 4:
+        tmp_df = tmp_df[ (tmp_df['set'] == 2) & ((tmp_df['a_score'] + tmp_df['b_score'])  >21)]
+      elif index == 5:
+        tmp_df = tmp_df[ (tmp_df['set'] == 3) & ((tmp_df['a_score'] + tmp_df['b_score']) <=15) ]
+      elif index == 6:
+        tmp_df = tmp_df[ (tmp_df['set'] == 3) & ((tmp_df['a_score'] + tmp_df['b_score']) >15)] 
+
+      # calculate fbhe 
+      #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
+      fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
+      cons_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
+
+      # calcualte tcr
+      trans_list = calc_trans( tmp_df, disp_player, 'all')
+      cons_table.at[index,'Tran Conv'] = trans_list[0]  # fbhe
+
+      # calculate Error Density
+      error_vector = calc_error_den(tmp_df, disp_player)
+      cons_table.at[index,"Error Den"] = fbhe_vector[0]  # fbhe
+
+      # calcualte Knock Out
+      cons_table.at[index,'Knock Out'] = calc_knock_out(tmp_df,disp_player)
+    
+      # Calculate good passing percent
+      oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
+      cons_table.at[index,'Good Passes'] = 1 - oos_vector[1]
+
+      # calculate point differential (as a percent of total points)
+      pt_diff = calc_point_diff( tmp_df, disp_player)
+      cons_table.at[index,'Good Passes'] = pt_diff
+
+    # now move on to consistency by set
+    '''
+    - Create a list of video'id's for this player
+    - then loop over sets 1, 2,3 for each video id
+    - to create a dataframe for each set with:
+      - FBHE
+      - Tcr
+      - Ed
+      - Knock out
+      - Good Passes
+      - Point differential
+    '''
+
+    # create the dataframe with one row
+    df_dict = {' ':[' '],
+             'FBHE':[0],
+             'Tran Conv':[0],
+             "Error Den":[0],
+             'Knockout %':[0],
+             'Good Passes':[0],
+             'Point Diff':[0]
+            }
+    cons2_table = pd.DataFrame.from_dict( df_dict )
+
+    
+    # now create the markdown text to return
+    cons_return = pd.DataFrame.to_markdown(cons_table, index = False )
+  else:
+    cons_return = "No Data Found"
+
+  return cons_return, ' ', ' '
+
+
+@anvil.server.callable
 def report_stuba(disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,

@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 import math
+from pair_functions import *
 
 
 # This is a server module. It runs on the Anvil server,
@@ -635,3 +636,26 @@ def write_to_nested_folder(folder_path, filename, content):
     
   return f"File {filename} written to {'/'.join(folder_path)}"
 
+
+'''
+
+A qiuck routine to calculate the knock percent given a ppr_df and the serving players
+
+'''
+def calc_knock_out( ppr_df, disp_player):
+  player_point_totals = player_pt_total(ppr_df, disp_player)
+  knock_out = (player_point_totals.at[0,'p_tsa']+player_point_totals.at[0,'o_bad_pass'] )/player_point_totals.at[0,'p_serves']
+  return knock_out
+
+def calc_point_diff( ppr_df, disp_player):
+  player_point_totals = player_pt_total(ppr_df, disp_player)
+  kills = ['FBK','TSA','TK']
+  errors = ['FBE','TSE','TE']
+  pts_earned = ppr_df[ (ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(kills)) ].shape[0]
+  pts_lost = ppr_df[ (ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(errors)) ].shape[0]
+  opp_pts_earned = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(errors)) ].shape[0]
+  opp_pts_lost = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(kills)) ].shape[0]
+  pts_earned_ratio = (pts_earned+ opp_pts_lost)/(pts_earned+pts_lost+opp_pts_earned+opp_pts_lost)
+  return pts_earned_ratio
+  
+  
