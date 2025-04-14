@@ -1617,6 +1617,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
   df_dict = {' ':['All','1a','1b','2a','2b','3a','3b'],
+             'Points':[0,0,0,0,0,0,0],
              'FBHE':[0,0,0,0,0,0,0],
              'Tran Conv':[0,0,0,0,0,0,0],
              "Error Den":[0,0,0,0,0,0,0],
@@ -1663,6 +1664,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
       fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
       cons_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
+      cons_table.at[index,'Points'] = fbhe_vector[3]
 
       # calcualte tcr
       trans_list = calc_trans( tmp_df, disp_player, 'all')
@@ -1697,7 +1699,8 @@ def player_consistency(disp_league, disp_gender, disp_year,
     '''
 
     # create the dataframe with one row
-    df_dict = {' ':[' '],
+    df_dict = {'Set':[' '],
+             'Points':[0],
              'FBHE':[0],
              'Tran Conv':[0],
              "Error Den":[0],
@@ -1721,11 +1724,14 @@ def player_consistency(disp_league, disp_gender, disp_year,
       # we only record tis set if it has over 10 points
       if tmp_df.shape[0] >= 10:
         index = index + 1
-        
+
+        # record the set information
+        cons2_return.at[index,'Set'] = str(tmp_df['game_date']) + ' ' + str(tmp_df['set'])
         # calculate fbhe 
         #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
         fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
         cons2_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
+        cons2_table.at[index,'Points'] = fbhe_vector[3]
 
         # calcualte tcr
         trans_list = calc_trans( tmp_df, disp_player, 'all')
