@@ -1726,7 +1726,8 @@ def player_consistency(disp_league, disp_gender, disp_year,
         index = index + 1
 
         # record the set information
-        cons2_return.at[index,'Set'] = str(tmp_df['game_date']) + ' ' + str(tmp_df['set'])
+        cons2_table.at[index,'Set'] = str(tmp_df['game_date']) + ' ' + str(tmp_df['set'])
+        
         # calculate fbhe 
         #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
         fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )

@@ -649,6 +649,7 @@ def calc_knock_out( ppr_df, disp_player):
 
 def calc_point_diff( ppr_df, disp_player):
   player_point_totals = player_pt_total(ppr_df, disp_player)
+  print(f"calc_point_diff: player: {disp_player}, rows in ppr: {ppr_df.shap}")
   kills = ['FBK','TSA','TK']
   errors = ['FBE','TSE','TE']
   pts_earned = ppr_df[ (ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(kills)) ].shape[0]
