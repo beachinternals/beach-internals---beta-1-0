@@ -649,7 +649,7 @@ def calc_knock_out( ppr_df, disp_player):
 
 def calc_point_diff( ppr_df, disp_player):
   player_point_totals = player_pt_total(ppr_df, disp_player)
-  print(f"calc_point_diff: player: {disp_player}, rows in ppr: {ppr_df.shap}")
+  #print(f"calc_point_diff: player: {disp_player}, rows in ppr: {ppr_df.shape[0]}")
   kills = ['FBK','TSA','TK']
   errors = ['FBE','TSE','TE']
   pts_earned = ppr_df[ (ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(kills)) ].shape[0]
@@ -657,6 +657,7 @@ def calc_point_diff( ppr_df, disp_player):
   opp_pts_earned = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(errors)) ].shape[0]
   opp_pts_lost = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(kills)) ].shape[0]
   pts_earned_ratio = (pts_earned+ opp_pts_lost)/(pts_earned+pts_lost+opp_pts_earned+opp_pts_lost)
+  #print(f"calc_point_diff: pts earned:{pts_earned}, pts_lost: {pts_lost}, opp pts earned:{opp_pts_earned}, opp pts lost {opp_pts_lost}")
   return pts_earned_ratio
   
   

@@ -1619,11 +1619,12 @@ def player_consistency(disp_league, disp_gender, disp_year,
   df_dict = {' ':['All','1a','1b','2a','2b','3a','3b'],
              'Points':[0,0,0,0,0,0,0],
              'FBHE':[0,0,0,0,0,0,0],
+             'Att':[0,0,0,0,0,0,0],
              'Tran Conv':[0,0,0,0,0,0,0],
              "Error Den":[0,0,0,0,0,0,0],
              'Knockout %':[0,0,0,0,0,0,0],
              'Good Passes':[0,0,0,0,0,0,0],
-             'Point Diff':[0,0,0,0,0,0,0]
+             'Points Earned':[0,0,0,0,0,0,0]
             }
   cons_table = pd.DataFrame.from_dict( df_dict )
 
@@ -1664,7 +1665,8 @@ def player_consistency(disp_league, disp_gender, disp_year,
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
       fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
       cons_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
-      cons_table.at[index,'Points'] = fbhe_vector[3]
+      cons2_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
+      cons_table.at[index,'Points'] = tmp_df.shape[0]
 
       # calcualte tcr
       trans_list = calc_trans( tmp_df, disp_player, 'all')
@@ -1675,15 +1677,15 @@ def player_consistency(disp_league, disp_gender, disp_year,
       cons_table.at[index,"Error Den"] = fbhe_vector[0]  # fbhe
 
       # calcualte Knock Out
-      cons_table.at[index,'Knockout %'] = calc_knock_out(tmp_df,disp_player)
+      cons_table.at[index,'Knockout %'] = str('{:.1%}').format(calc_knock_out(tmp_df,disp_player))
     
       # Calculate good passing percent
       oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
-      cons_table.at[index,'Good Passes'] = 1 - oos_vector[1]
+      cons_table.at[index,'Good Passes'] = str('{:.1%}').format(1 - oos_vector[1])
 
       # calculate point differential (as a percent of total points)
       pt_diff = calc_point_diff( tmp_df, disp_player)
-      cons_table.at[index,'Good Passes'] = pt_diff
+      cons_table.at[index,'Points Earned'] = str('{:.1%}').format(pt_diff)
 
     # now move on to consistency by set
     '''
@@ -1702,16 +1704,17 @@ def player_consistency(disp_league, disp_gender, disp_year,
     df_dict = {'Set':[' '],
              'Points':[0],
              'FBHE':[0],
+             'Att':[0],
              'Tran Conv':[0],
              "Error Den":[0],
              'Knockout %':[0],
              'Good Passes':[0],
-             'Point Diff':[0]
+             'Points Earned':[0]
             }
     cons2_table = pd.DataFrame.from_dict( df_dict )
 
     # get alist of unique video_id numbers plus set number
-    set_list = m_ppr_df[ ['video_id','set']]
+    set_list = m_ppr_df[ ['video_id','set','game_date','teama','teamb']]
     set_list['vid_set'] = set_list['video_id'] + str(set_list['set'])
     set_list = set_list.drop_duplicates(subset=['video_id','set'])
 
@@ -1726,13 +1729,15 @@ def player_consistency(disp_league, disp_gender, disp_year,
         index = index + 1
 
         # record the set information
-        cons2_table.at[index,'Set'] = str(tmp_df['game_date']) + ' ' + str(tmp_df['set'])
+        opponent = set_row['teama'] if disp_player in set_row['teamb'] else set_row['teamb']
+        cons2_table.at[index,'Set'] = str(set_row['game_date']) + ' ' + opponent + ' ' + str(set_row['set'])
         
         # calculate fbhe 
         #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
         fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
+        cons2_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
         cons2_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
-        cons2_table.at[index,'Points'] = fbhe_vector[3]
+        cons2_table.at[index,'Points'] = tmp_df.shape[0]
 
         # calcualte tcr
         trans_list = calc_trans( tmp_df, disp_player, 'all')
@@ -1743,15 +1748,15 @@ def player_consistency(disp_league, disp_gender, disp_year,
         cons2_table.at[index,"Error Den"] = fbhe_vector[0]  # fbhe
 
         # calcualte Knock Out
-        cons2_table.at[index,'Knockout %'] = calc_knock_out(tmp_df,disp_player)
+        cons2_table.at[index,'Knockout %'] = str('{:.1%}').format(calc_knock_out(tmp_df,disp_player))
       
         # Calculate good passing percent
         oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
-        cons2_table.at[index,'Good Passes'] = 1 - oos_vector[1]
+        cons2_table.at[index,'Good Passes'] = str('{:.1%}').format(1 - oos_vector[1])
 
         # calculate point differential (as a percent of total points)
         pt_diff = calc_point_diff( tmp_df, disp_player)
-        cons2_table.at[index,'Good Passes'] = pt_diff
+        cons2_table.at[index,'Points Earned'] = str('{:.1%}').format(pt_diff
 
     
     # now create the markdown text to return
