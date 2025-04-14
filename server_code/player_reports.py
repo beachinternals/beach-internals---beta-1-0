@@ -1713,35 +1713,38 @@ def player_consistency(disp_league, disp_gender, disp_year,
     set_list = set_list.unique()
 
     # now loop thru this calculating for each set
+    index = -1
     for set_index,set_row in set_list.iterrows():
       # make a tmp df with the points for tis set
       tmp_df = m_ppr_df[ (m_ppr_df['video_id'] == set_row['video_id'] ) & (m_ppr_df['set'] == set_row['set']) ]
 
-      # we only record tis set if it has ove
+      # we only record tis set if it has over 10 points
+      if tmp_df.shape[0] >= 10:
+        index = index + 1
+        
+        # calculate fbhe 
+        #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
+        fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
+        cons2_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
 
-      # calculate fbhe 
-      #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
-      fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
-      cons_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
+        # calcualte tcr
+        trans_list = calc_trans( tmp_df, disp_player, 'all')
+        cons2_table.at[index,'Tran Conv'] = trans_list[0]  # fbhe
 
-      # calcualte tcr
-      trans_list = calc_trans( tmp_df, disp_player, 'all')
-      cons_table.at[index,'Tran Conv'] = trans_list[0]  # fbhe
+        # calculate Error Density
+        error_vector = calc_error_den(tmp_df, disp_player)
+        cons2_table.at[index,"Error Den"] = fbhe_vector[0]  # fbhe
 
-      # calculate Error Density
-      error_vector = calc_error_den(tmp_df, disp_player)
-      cons_table.at[index,"Error Den"] = fbhe_vector[0]  # fbhe
+        # calcualte Knock Out
+        cons2_table.at[index,'Knock Out'] = calc_knock_out(tmp_df,disp_player)
+      
+        # Calculate good passing percent
+        oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
+        cons2_table.at[index,'Good Passes'] = 1 - oos_vector[1]
 
-      # calcualte Knock Out
-      cons_table.at[index,'Knock Out'] = calc_knock_out(tmp_df,disp_player)
-    
-      # Calculate good passing percent
-      oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
-      cons_table.at[index,'Good Passes'] = 1 - oos_vector[1]
-
-      # calculate point differential (as a percent of total points)
-      pt_diff = calc_point_diff( tmp_df, disp_player)
-      cons_table.at[index,'Good Passes'] = pt_diff
+        # calculate point differential (as a percent of total points)
+        pt_diff = calc_point_diff( tmp_df, disp_player)
+        cons_table.at[index,'Good Passes'] = pt_diff
 
     
     # now create the markdown text to return
