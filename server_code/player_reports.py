@@ -1673,7 +1673,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
       cons_table.at[index,"Error Den"] = fbhe_vector[0]  # fbhe
 
       # calcualte Knock Out
-      cons_table.at[index,'Knock Out'] = calc_knock_out(tmp_df,disp_player)
+      cons_table.at[index,'Knockout %'] = calc_knock_out(tmp_df,disp_player)
     
       # Calculate good passing percent
       oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
@@ -1709,8 +1709,8 @@ def player_consistency(disp_league, disp_gender, disp_year,
 
     # get alist of unique video_id numbers plus set number
     set_list = m_ppr_df[ ['video_id','set']]
-    set_list['vid_set'] = set_list['video_id'] + set_list['set']
-    set_list = set_list.unique()
+    set_list['vid_set'] = set_list['video_id'] + str(set_list['set'])
+    set_list = set_list.drop_duplicates(subset=['video_id','set'])
 
     # now loop thru this calculating for each set
     index = -1
@@ -1736,7 +1736,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
         cons2_table.at[index,"Error Den"] = fbhe_vector[0]  # fbhe
 
         # calcualte Knock Out
-        cons2_table.at[index,'Knock Out'] = calc_knock_out(tmp_df,disp_player)
+        cons2_table.at[index,'Knockout %'] = calc_knock_out(tmp_df,disp_player)
       
         # Calculate good passing percent
         oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
@@ -1744,15 +1744,16 @@ def player_consistency(disp_league, disp_gender, disp_year,
 
         # calculate point differential (as a percent of total points)
         pt_diff = calc_point_diff( tmp_df, disp_player)
-        cons_table.at[index,'Good Passes'] = pt_diff
+        cons2_table.at[index,'Good Passes'] = pt_diff
 
     
     # now create the markdown text to return
     cons_return = pd.DataFrame.to_markdown(cons_table, index = False )
+    cons2_return = pd.DataFrame.to_markdown(cons2_table, index = False )
   else:
     cons_return = "No Data Found"
 
-  return cons_return, ' ', ' '
+  return cons_return, cons2_return, ' '
 
 
 @anvil.server.callable
