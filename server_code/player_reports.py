@@ -1616,18 +1616,24 @@ def player_consistency(disp_league, disp_gender, disp_year,
 
   ############## Secomd - Create the dataframe that will be displayed as a table, report specific
   # create the output dataframe - This is speficif to the report
-  df_dict = {' ':['All','1a','1b','2a','2b','3a','3b'],
-             'Points':[0,0,0,0,0,0,0],
-             'FBHE':[0,0,0,0,0,0,0],
-             'Att':[0,0,0,0,0,0,0],
-             'Tran Conv':[0,0,0,0,0,0,0],
-             "Error Den":[0,0,0,0,0,0,0],
-             'Knockout %':[0,0,0,0,0,0,0],
-             'Good Passes':[0,0,0,0,0,0,0],
-             'Points Earned':[0,0,0,0,0,0,0]
+  df_dict = {' ':['All','1a','1b','2a','2b','3a','3b','Mean','St Dev'],
+             'Points':[0,0,0,0,0,0,0,0,0],
+             'FBHE':[0,0,0,0,0,0,0,0,0],
+             'Att':[0,0,0,0,0,0,0,0,0],
+             'Tran Conv':[0,0,0,0,0,0,0,0,0],
+             "Error Den":[0,0,0,0,0,0,0,0,0],
+             'Knockout %':[0,0,0,0,0,0,0,0,0],
+             'Good Passes':[0,0,0,0,0,0,0,0,0],
+             'Points Earned':[0,0,0,0,0,0,0,0,0]
             }
   cons_table = pd.DataFrame.from_dict( df_dict )
-
+  ko_vector = [0,0,0,0,0,0,0]
+  fb_vector = [0,0,0,0,0,0,0]
+  tcr_vector = [0,0,0,0,0,0,0]
+  ed_vector = [0,0,0,0,0,0,0]
+  pass_vector = [0,0,0,0,0,0,0]
+  pts_vector = [0,0,0,0,0,0,0]
+  
   ############### Third Populate the dataframe, assuming we have data returned
   '''
   Loop indexes:
@@ -1665,28 +1671,55 @@ def player_consistency(disp_league, disp_gender, disp_year,
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
       fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
       cons_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
+      fb_vector[index] = fbhe_vector[0]
       cons_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
       cons_table.at[index,'Points'] = tmp_df.shape[0]
 
       # calcualte tcr
       trans_list = calc_trans( tmp_df, disp_player, 'all')
       cons_table.at[index,'Tran Conv'] = trans_list[0]  # fbhe
+      tcr_vector[index] = float(trans_list[0][:-1])
 
       # calculate Error Density
       error_vector = calc_error_den(tmp_df, disp_player)
-      cons_table.at[index,"Error Den"] = fbhe_vector[0]  # fbhe
+      cons_table.at[index,"Error Den"] = error_vector[0]  # fbhe
+      ed_vector = float(error_vector[0][:-1])
 
       # calcualte Knock Out
-      cons_table.at[index,'Knockout %'] = str('{:.1%}').format(calc_knock_out(tmp_df,disp_player))
+      cons_table.at[index,'Knockout %'] = calc_knock_out(tmp_df,disp_player)
+      ko_vector[index] = cons_table.at[index,'Knockout %']
+      cons_table.at[index,'Knockout %'] = str('{:.1%}').format(cons_table.at[index,'Knockout %'])
+      
     
       # Calculate good passing percent
       oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
       cons_table.at[index,'Good Passes'] = str('{:.1%}').format(1 - oos_vector[1])
+      pass_vector[index] = 1 - oos_vector[1]
 
       # calculate point differential (as a percent of total points)
       pt_diff = calc_point_diff( tmp_df, disp_player)
       cons_table.at[index,'Points Earned'] = str('{:.1%}').format(pt_diff)
+      pts_vector[index] = pt_diff
 
+    # now the last two rows, mean and stdev
+    cons_table.at[index+1,' '] = 'Mean'
+    cons_table.at[index+1,'FBHE'] = "{:.3f}".format(np.mean(fb_vector))
+    cons_table.at[index+1,'Error Den'] = '{:.2f}'.format(np.mean(ed_vector))
+    cons_table.at[index+1,'Tran Conv'] = '{:.2f}'.format(np.mean(tcr_vector))
+    cons_table.at[index+1,'Knockout %'] = '{:.2f}'.format(np.mean(ko_vector))
+    cons_table.at[index+1,'Good Passes'] = '{:.2f}'.format(np.mean(pass_vector))
+    cons_table.at[index+1,'Points Earned'] = '{:.2f}'.format(np.mean(pts_vector))
+
+    index = index + 1
+    cons_table.at[index+1,' '] = 'St Dev'
+    cons_table.at[index+1,'FBHE'] = '{:.3f}'.format(np.std(fb_vector))
+    cons_table.at[index+1,'Error Den'] = '{:.2f}'.format(np.std(ed_vector))
+    cons_table.at[index+1,'Tran Conv'] = '{:.2f}'.format(np.std(tcr_vector))
+    cons_table.at[index+1,'Knockout %'] = '{:.2f}'.format(np.std(ko_vector))
+    cons_table.at[index+1,'Good Passes'] = '{:.2f}'.format(np.std(pass_vector))
+    cons_table.at[index+1,'Points Earned'] = '{:.2f}'.format(np.std(pts_vector))
+    
+    
     # now move on to consistency by set
     '''
     - Create a list of video'id's for this player
@@ -1745,7 +1778,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
 
         # calculate Error Density
         error_vector = calc_error_den(tmp_df, disp_player)
-        cons2_table.at[index,"Error Den"] = fbhe_vector[0]  # fbhe
+        cons2_table.at[index,"Error Den"] = error_vector[0]  # fbhe
 
         # calcualte Knock Out
         cons2_table.at[index,'Knockout %'] = str('{:.1%}').format(calc_knock_out(tmp_df,disp_player))
