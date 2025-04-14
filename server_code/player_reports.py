@@ -1665,7 +1665,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
       fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
       cons_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
-      cons2_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
+      cons_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
       cons_table.at[index,'Points'] = tmp_df.shape[0]
 
       # calcualte tcr
@@ -1756,7 +1756,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
 
         # calculate point differential (as a percent of total points)
         pt_diff = calc_point_diff( tmp_df, disp_player)
-        cons2_table.at[index,'Points Earned'] = str('{:.1%}').format(pt_diff
+        cons2_table.at[index,'Points Earned'] = str('{:.1%}').format(pt_diff)
 
     
     # now create the markdown text to return
@@ -1764,6 +1764,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
     cons2_return = pd.DataFrame.to_markdown(cons2_table, index = False )
   else:
     cons_return = "No Data Found"
+    cons2_return = 'No Data Found'
 
   return cons_return, cons2_return, ' '
 
