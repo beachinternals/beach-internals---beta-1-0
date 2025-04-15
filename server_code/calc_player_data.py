@@ -151,7 +151,9 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                  'opp_fbhe_5_2c':None,'opp_fbhe_5_2c_n':None,'opp_fbhe_5_2c_ea':None,'opp_fbhe_5_2d':None,'opp_fbhe_5_2d_n':None,'opp_fbhe_5_2d_ea':None,'opp_fbhe_5_2e':None,'opp_fbhe_5_2e_n':None,'opp_fbhe_5_2e_ea':None,     
                  'opp_fbhe_5_3c':None,'opp_fbhe_5_3c_n':None,'opp_fbhe_5_3c_ea':None,'opp_fbhe_5_3d':None,'opp_fbhe_5_3d_n':None,'opp_fbhe_5_3d_ea':None,'opp_fbhe_5_3e':None,'opp_fbhe_5_3e_n':None,'opp_fbhe_5_3e_ea':None,     
                  'opp_fbhe_5_4c':None,'opp_fbhe_5_4c_n':None,'opp_fbhe_5_4c_ea':None,'opp_fbhe_5_4d':None,'opp_fbhe_5_4d_n':None,'opp_fbhe_5_4d_ea':None,'opp_fbhe_5_4e':None,'opp_fbhe_5_4e_n':None,'opp_fbhe_5_4e_ea':None,     
-                 'opp_fbhe_5_5c':None,'opp_fbhe_5_5c_n':None,'opp_fbhe_5_5c_ea':None,'opp_fbhe_5_5d':None,'opp_fbhe_5_5d_n':None,'opp_fbhe_5_5d_ea':None,'opp_fbhe_5_5e':None,'opp_fbhe_5_5e_n':None,'opp_fbhe_5_5e_ea':None     
+                 'opp_fbhe_5_5c':None,'opp_fbhe_5_5c_n':None,'opp_fbhe_5_5c_ea':None,'opp_fbhe_5_5d':None,'opp_fbhe_5_5d_n':None,'opp_fbhe_5_5d_ea':None,'opp_fbhe_5_5e':None,'opp_fbhe_5_5e_n':None,'opp_fbhe_5_5e_ea':None,
+                 'cons_fbhe_sd_match':None,'cons_tcr_sd_match':None,'cons_ed_sd_match':None,'cons_ko_sd_match':None,'cons_pass_sd_match':None,'cons_pts_sd_match':None,
+                 'cons_fbhe_sd_s2s':None,'cons_tcr_sd_s2s':None,'cons_ed_sd_s2s':None,'cons_ko_sd_s2s':None,'cons_pass_sd_s2s':None,'cons_pts_sd_s2s':None                
                  }
   #print(f"Player Dict:{player_dict}")
   player_df = pd.DataFrame.from_records(player_dict)
@@ -235,7 +237,11 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                        'opp_fbhe_5_2c_ea_mean':[float()],'opp_fbhe_5_2c_ea_stdev':[float()],'opp_fbhe_5_2d_ea_mean':[float()],'opp_fbhe_5_2d_ea_stdev':[float()],'opp_fbhe_5_2e_ea_mean':[float()],'opp_fbhe_5_2e_ea_stdev':[float()],
                        'opp_fbhe_5_3c_ea_mean':[float()],'opp_fbhe_5_3c_ea_stdev':[float()],'opp_fbhe_5_3d_ea_mean':[float()],'opp_fbhe_5_3d_ea_stdev':[float()],'opp_fbhe_5_3e_ea_mean':[float()],'opp_fbhe_5_3e_ea_stdev':[float()],
                        'opp_fbhe_5_4c_ea_mean':[float()],'opp_fbhe_5_4c_ea_stdev':[float()],'opp_fbhe_5_4d_ea_mean':[float()],'opp_fbhe_5_4d_ea_stdev':[float()],'opp_fbhe_5_4e_ea_mean':[float()],'opp_fbhe_5_4e_ea_stdev':[float()],
-                       'opp_fbhe_5_5c_ea_mean':[float()],'opp_fbhe_5_5c_ea_stdev':[float()],'opp_fbhe_5_5d_ea_mean':[float()],'opp_fbhe_5_5d_ea_stdev':[float()],'opp_fbhe_5_5e_ea_mean':[float()],'opp_fbhe_5_5e_ea_stdev':[float()]
+                       'opp_fbhe_5_5c_ea_mean':[float()],'opp_fbhe_5_5c_ea_stdev':[float()],'opp_fbhe_5_5d_ea_mean':[float()],'opp_fbhe_5_5d_ea_stdev':[float()],'opp_fbhe_5_5e_ea_mean':[float()],'opp_fbhe_5_5e_ea_stdev':[float()],
+                       'cons_fbhe_sd_match_mean':[float()],'cons_tcr_sd_match_mean':[float()],'cons_ed_sd_match_mean':[float()],'cons_ko_sd_match_mean':[float()],'cons_pass_sd_match_mean':[float()],'cons_pts_sd_match_mean':[float()],
+                       'cons_fbhe_sd_s2s_mean':[float()],'cons_tcr_sd_s2s_mean':[float()],'cons_ed_sd_s2s_mean':[float()],'cons_ko_sd_s2s_mean':[float()],'cons_pass_sd_s2s_mean':[float()],'cons_pts_sd_s2s_mean':[float()],
+                        'cons_fbhe_sd_match_stdev':[float()],'cons_tcr_sd_match_stdev':[float()],'cons_ed_sd_match_stdev':[float()],'cons_ko_sd_match_stdev':[float()],'cons_pass_sd_match_stdev':[float()],'cons_pts_sd_match_stdev':[float()],
+                       'cons_fbhe_sd_s2s_stdev':[float()],'cons_tcr_sd_s2s_stdev':[float()],'cons_ed_sd_s2s_stdev':[float()],'cons_ko_sd_s2s_stdev':[float()],'cons_pass_sd_s2s_stdev':[float()],'cons_pts_sd_s2s_stdev':[float()]  
                       }
   player_stats_df =  pd.DataFrame.from_records(player_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")
@@ -557,7 +563,9 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
             #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
             player_df.at[i,fbhe_var_ea] = math.pi*(el_width/2)*(el_height/2)
 
-                 
+
+    # time for player consistency calculations, inside loop over players
+  
 
   ########## end of loop over players
   #print(f"Player Df when done:{player_df}")
