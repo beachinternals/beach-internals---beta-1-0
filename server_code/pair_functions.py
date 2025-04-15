@@ -330,8 +330,8 @@ def player_pt_total(ppr_df, disp_player):
   pts_df.at[0,'o_te_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['pass_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'o_tk_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['serve_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'o_te_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['serve_player'] == disp_player) & ~(ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
-  pts_df.at[0,'o_good_pass'] = ppr_df[ (ppr_df['pass_player'] == disp_player) & (ppr_df['pass_oos'] <= 0) & (ppr_df['point_outcome'] != "TSE")].shape[0]
-  pts_df.at[0,'o_bad_pass'] = ppr_df[ (ppr_df['pass_player'] == disp_player) & (ppr_df['pass_oos'] >= 1) & (ppr_df['point_outcome'] != "TSE")].shape[0]
+  pts_df.at[0,'o_good_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] <= 0) & (ppr_df['point_outcome'] != "TSE")].shape[0]
+  pts_df.at[0,'o_bad_pass'] =  ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] >= 1) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'o_serves'] = pts_df.at[0,'o_good_pass'] + pts_df.at[0,'o_bad_pass'] + pts_df.at[0,'o_tse'] + pts_df.at[0,'o_tsa']
   pts_df.at[0,'pts_total'] = ppr_df.shape[0]
 

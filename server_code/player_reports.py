@@ -1677,7 +1677,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
 
       # calcualte tcr
       trans_list = calc_trans( tmp_df, disp_player, 'all')
-      print(f"Trans List: {trans_list}")
+      #print(f"Trans List: {trans_list}")
       cons_table.at[index,'Tran Conv'] = trans_list[0]  # fbhe
       tcr_vector[index] = float(trans_list[0][:-1])
 
@@ -1703,16 +1703,16 @@ def player_consistency(disp_league, disp_gender, disp_year,
       pts_vector[index] = pt_diff
 
     # now the last two rows, mean and stdev
-    print(f"Error Vector: {ed_vector}")
+    #print(f"Error Vector: {ed_vector}")
     cons_table.at[index+1,'Points'] = ' '
     cons_table.at[index+1,'Att'] = ' '
     cons_table.at[index+1,' '] = 'Mean'
     cons_table.at[index+1,'FBHE'] = "{:.3f}".format(np.mean(fb_vector))
     cons_table.at[index+1,'Error Den'] = '{:.2f}'.format(np.mean(ed_vector))
     cons_table.at[index+1,'Tran Conv'] = '{:.2f}'.format(np.mean(tcr_vector))
-    cons_table.at[index+1,'Knockout %'] = '{:.2f}'.format(np.mean(ko_vector))
-    cons_table.at[index+1,'Good Passes'] = '{:.2f}'.format(np.mean(pass_vector))
-    cons_table.at[index+1,'Points Earned'] = '{:.2f}'.format(np.mean(pts_vector))
+    cons_table.at[index+1,'Knockout %'] = '{:.3f}'.format(np.mean(ko_vector))
+    cons_table.at[index+1,'Good Passes'] = '{:.3f}'.format(np.mean(pass_vector))
+    cons_table.at[index+1,'Points Earned'] = '{:.3f}'.format(np.mean(pts_vector))
 
     index = index + 1
     cons_table.at[index+1,' '] = 'St Dev'
@@ -1721,9 +1721,9 @@ def player_consistency(disp_league, disp_gender, disp_year,
     cons_table.at[index+1,'FBHE'] = '{:.3f}'.format(np.std(fb_vector))
     cons_table.at[index+1,'Error Den'] = '{:.2f}'.format(np.std(ed_vector))
     cons_table.at[index+1,'Tran Conv'] = '{:.2f}'.format(np.std(tcr_vector))
-    cons_table.at[index+1,'Knockout %'] = '{:.2f}'.format(np.std(ko_vector))
-    cons_table.at[index+1,'Good Passes'] = '{:.2f}'.format(np.std(pass_vector))
-    cons_table.at[index+1,'Points Earned'] = '{:.2f}'.format(np.std(pts_vector))
+    cons_table.at[index+1,'Knockout %'] = '{:.3f}'.format(np.std(ko_vector))
+    cons_table.at[index+1,'Good Passes'] = '{:.3f}'.format(np.std(pass_vector))
+    cons_table.at[index+1,'Points Earned'] = '{:.3f}'.format(np.std(pts_vector))
     
     
     # now move on to consistency by set
@@ -1812,9 +1812,9 @@ def player_consistency(disp_league, disp_gender, disp_year,
     cons2_table.at[index,'FBHE'] = '{:.3f}'.format(stat_table['FBHE'].mean(skipna=True))
     cons2_table.at[index,'Tran Conv'] = '{:.2f}'.format(stat_table['Tran Conv'].mean(skipna=True))
     cons2_table.at[index,'Error Den'] = '{:.2f}'.format(stat_table['Error Den'].mean(skipna=True))
-    cons2_table.at[index,'Knockout %'] = '{:.2f}'.format(stat_table['Knockout %'].mean(skipna=True))
-    cons2_table.at[index,'Good Passes'] = '{:.2f}'.format(stat_table['Good Passes'].mean(skipna=True))
-    cons2_table.at[index,'Points Earned'] = '{:.2f}'.format(stat_table['Points Earned'].mean(skipna=True))
+    cons2_table.at[index,'Knockout %'] = '{:.3f}'.format(stat_table['Knockout %'].mean(skipna=True))
+    cons2_table.at[index,'Good Passes'] = '{:.3f}'.format(stat_table['Good Passes'].mean(skipna=True))
+    cons2_table.at[index,'Points Earned'] = '{:.3f}'.format(stat_table['Points Earned'].mean(skipna=True))
     index = index + 1
     cons2_table.at[index,'Set'] = "St Dev"
     cons2_table.at[index,'Points'] = ''
@@ -1822,9 +1822,9 @@ def player_consistency(disp_league, disp_gender, disp_year,
     cons2_table.at[index,'FBHE'] = '{:.3f}'.format(stat_table['FBHE'].std(skipna=True))
     cons2_table.at[index,'Tran Conv'] = '{:.2f}'.format(stat_table['Tran Conv'].std(skipna=True))
     cons2_table.at[index,'Error Den'] = '{:.2f}'.format(stat_table['Error Den'].std(skipna=True))
-    cons2_table.at[index,'Knockout %'] = '{:.2f}'.format(stat_table['Knockout %'].std(skipna=True))
-    cons2_table.at[index,'Good Passes'] = '{:.2f}'.format(stat_table['Good Passes'].std(skipna=True))
-    cons2_table.at[index,'Points Earned'] = '{:.2f}'.format(stat_table['Points Earned'].std(skipna=True))
+    cons2_table.at[index,'Knockout %'] = '{:.3f}'.format(stat_table['Knockout %'].std(skipna=True))
+    cons2_table.at[index,'Good Passes'] = '{:.3f}'.format(stat_table['Good Passes'].std(skipna=True))
+    cons2_table.at[index,'Points Earned'] = '{:.3f}'.format(stat_table['Points Earned'].std(skipna=True))
     
     # now create the markdown text to return
     cons_return = pd.DataFrame.to_markdown(cons_table, index = False )

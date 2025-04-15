@@ -27,14 +27,20 @@ class PlayerRpt(PlayerRptTemplate):
       alert('Please Contact Beach Internals to be Assigned to a Team')
       open_form('Homepage.Contact')
 
+    disp_league = user_row['def_league']
     # First, populate the selected values
     self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
     self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
     
     # populate the drop downs for league, and competition level 1 and 3
-    self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = user_row["def_league"] )]
-    self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( league= user_row['def_league'] )]
-    #self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = user_row['def_league'])]
+    self.comp_l1_drop_down.items = [
+      (row["comp_l1"], row)
+      for row in app_tables.league_comp_l1.search(league=disp_league)
+    ]
+    self.comp_l2_drop_down.items = [
+      (row["comp_l2"], row)
+      for row in app_tables.league_comp_l2.search(league=disp_league)
+    ]
 
     # set comp_l3 data:
     comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=user_row['def_league'])]
@@ -54,6 +60,7 @@ class PlayerRpt(PlayerRptTemplate):
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
       for row in app_tables.master_player.search(
         tables.order_by("team"),
+        tables.order_by("number"),
         league=disp_league,
         gender=disp_gender,
         year=disp_year,
@@ -146,6 +153,7 @@ class PlayerRpt(PlayerRptTemplate):
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
       for row in app_tables.master_player.search(
         tables.order_by("team"),
+        tables.order_by("number"),
         league=disp_league,
         gender=disp_gender,
         year=disp_year,
