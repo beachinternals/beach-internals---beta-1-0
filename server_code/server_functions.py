@@ -656,7 +656,10 @@ def calc_point_diff( ppr_df, disp_player):
   pts_lost = ppr_df[ (ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(errors)) ].shape[0]
   opp_pts_earned = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(errors)) ].shape[0]
   opp_pts_lost = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(kills)) ].shape[0]
-  pts_earned_ratio = (pts_earned+ opp_pts_lost)/(pts_earned+pts_lost+opp_pts_earned+opp_pts_lost)
+  if (pts_earned+pts_lost+opp_pts_earned+opp_pts_lost) == 0:
+    pts_earned_ratio = 0
+  else:
+    pts_earned_ratio = (pts_earned+ opp_pts_lost)/(pts_earned+pts_lost+opp_pts_earned+opp_pts_lost)
   #print(f"calc_point_diff: pts earned:{pts_earned}, pts_lost: {pts_lost}, opp pts earned:{opp_pts_earned}, opp pts lost {opp_pts_lost}")
   return pts_earned_ratio
   

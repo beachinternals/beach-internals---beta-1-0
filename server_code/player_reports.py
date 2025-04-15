@@ -1679,7 +1679,10 @@ def player_consistency(disp_league, disp_gender, disp_year,
       trans_list = calc_trans( tmp_df, disp_player, 'all')
       #print(f"Trans List: {trans_list}")
       cons_table.at[index,'Tran Conv'] = trans_list[0]  # fbhe
-      tcr_vector[index] = float(trans_list[0][:-1])
+      if trans_list[0] is None:
+        tcr_vector[index] = 0
+      else:
+        tcr_vector[index] = float(trans_list[0][:-1])
 
       # calculate Error Density
       error_vector = calc_error_den(tmp_df, disp_player)
