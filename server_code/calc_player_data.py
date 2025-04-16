@@ -570,24 +570,42 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     #  'cons_fbhe_sd_s2s':None,'cons_tcr_sd_s2s':None,'cons_ed_sd_s2s':None,'cons_ko_sd_s2s':None,'cons_pass_sd_s2s':None,'cons_pts_sd_s2s':None    
     # numbers across the match
     cons_table, no_data = calc_consistency_match_table( ppr_df, p_list[i] )
-    if not no_data:
-      player_df.at[i,'cons_fbhe_sd_match'] = cons_table.at[8,'FBHE']
-      player_df.at[i,'cons_tcr_sd_match'] = cons_table.at[8,'Tran Conv']
-      player_df.at[i,'cons_ed_sd_match'] = cons_table.at[8,'Error Den']
-      player_df.at[i,'cons_ko_sd_match'] = cons_table.at[8,'Knockout %']
-      player_df.at[i,'cons_pass_sd_match'] = cons_table.at[8,'Good Passes']
-      player_df.at[i,'cons_pts_sd_match'] = cons_table.at[8,'Points Earned']  
+    #print(cons_table)
+    if no_data:
+      player_df.at[i,'cons_fbhe_sd_match'] = None
+      #print(player_df.at[i,'cons_fbhe_sd_match'])
+      player_df.at[i,'cons_tcr_sd_match'] = None
+      player_df.at[i,'cons_ed_sd_match'] = None
+      player_df.at[i,'cons_ko_sd_match'] = None
+      player_df.at[i,'cons_pass_sd_match'] = None
+      player_df.at[i,'cons_pts_sd_match'] = None
+    else:
+      player_df.at[i,'cons_fbhe_sd_match'] = float(cons_table.at[8,'FBHE'])
+      #print(player_df.at[i,'cons_fbhe_sd_match'])
+      player_df.at[i,'cons_tcr_sd_match'] = float(cons_table.at[8,'Tran Conv'])
+      player_df.at[i,'cons_ed_sd_match'] = float(cons_table.at[8,'Error Den'])
+      player_df.at[i,'cons_ko_sd_match'] = float(cons_table.at[8,'Knockout %'])
+      player_df.at[i,'cons_pass_sd_match'] = float(cons_table.at[8,'Good Passes'])
+      player_df.at[i,'cons_pts_sd_match'] = float(cons_table.at[8,'Points Earned'])  
 
     # number set-2-set
     cons2_table, no_data1 = calc_consistency_s2s_table( ppr_df, p_list[i] )
-    if not no_data1:
+    if no_data1:
       sd_index = cons2_table.shape[0]-1
-      player_df.at[i,'cons_fbhe_sd_s2s'] = cons2_table.at[sd_index,'FBHE']
-      player_df.at[i,'cons_tcr_sd_s2s'] = cons2_table.at[sd_index,'Tran Conv']
-      player_df.at[i,'cons_ed_sd_s2s'] = cons2_table.at[sd_index,'Error Den']
-      player_df.at[i,'cons_ko_sd_s2s'] = cons2_table.at[sd_index,'Knockout %']
-      player_df.at[i,'cons_pass_sd_s2s'] = cons2_table.at[sd_index,'Good Passes']
-      player_df.at[i,'cons_pts_sd_s2s'] = cons2_table.at[sd_index,'Points Earned'] 
+      player_df.at[i,'cons_fbhe_sd_s2s'] = None
+      player_df.at[i,'cons_tcr_sd_s2s'] = None
+      player_df.at[i,'cons_ed_sd_s2s'] = None
+      player_df.at[i,'cons_ko_sd_s2s'] = None
+      player_df.at[i,'cons_pass_sd_s2s'] = None
+      player_df.at[i,'cons_pts_sd_s2s'] = None
+    else:
+      sd_index = cons2_table.shape[0]-1
+      player_df.at[i,'cons_fbhe_sd_s2s'] = float(cons2_table.at[sd_index,'FBHE'])
+      player_df.at[i,'cons_tcr_sd_s2s'] = float(cons2_table.at[sd_index,'Tran Conv'])
+      player_df.at[i,'cons_ed_sd_s2s'] = float(cons2_table.at[sd_index,'Error Den'])
+      player_df.at[i,'cons_ko_sd_s2s'] = float(cons2_table.at[sd_index,'Knockout %'])
+      player_df.at[i,'cons_pass_sd_s2s'] = float(cons2_table.at[sd_index,'Good Passes'])
+      player_df.at[i,'cons_pts_sd_s2s'] = float(cons2_table.at[sd_index,'Points Earned'])
 
 
   ########## end of loop over players
@@ -712,6 +730,8 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
         player_stats_df.at[0,fbhe_var_ea_mean] = player_df[fbhe_var_ea].mean(skipna=True)
         player_stats_df.at[0,fbhe_var_ea_sd] = player_df[fbhe_var_ea].std(skipna=True) 
 
+  #print(f" Player Df cons fbhe sd mastch : {player_df['cons_fbhe_sd_match']}")
+  #print(f"Mean value: {player_df['cons_fbhe_sd_match'].mean(skipna=True)}")
   player_stats_df.at[0,'cons_fbhe_sd_match_mean'] = player_df['cons_fbhe_sd_match'].mean(skipna=True)
   player_stats_df.at[0,'cons_tcr_sd_match_mean'] = player_df['cons_tcr_sd_match'].mean(skipna=True)
   player_stats_df.at[0,'cons_ed_sd_match_mean'] = player_df['cons_ed_sd_match'].mean(skipna=True)
