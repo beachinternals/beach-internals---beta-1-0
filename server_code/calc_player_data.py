@@ -240,7 +240,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                        'opp_fbhe_5_5c_ea_mean':[float()],'opp_fbhe_5_5c_ea_stdev':[float()],'opp_fbhe_5_5d_ea_mean':[float()],'opp_fbhe_5_5d_ea_stdev':[float()],'opp_fbhe_5_5e_ea_mean':[float()],'opp_fbhe_5_5e_ea_stdev':[float()],
                        'cons_fbhe_sd_match_mean':[float()],'cons_tcr_sd_match_mean':[float()],'cons_ed_sd_match_mean':[float()],'cons_ko_sd_match_mean':[float()],'cons_pass_sd_match_mean':[float()],'cons_pts_sd_match_mean':[float()],
                        'cons_fbhe_sd_s2s_mean':[float()],'cons_tcr_sd_s2s_mean':[float()],'cons_ed_sd_s2s_mean':[float()],'cons_ko_sd_s2s_mean':[float()],'cons_pass_sd_s2s_mean':[float()],'cons_pts_sd_s2s_mean':[float()],
-                        'cons_fbhe_sd_match_stdev':[float()],'cons_tcr_sd_match_stdev':[float()],'cons_ed_sd_match_stdev':[float()],'cons_ko_sd_match_stdev':[float()],'cons_pass_sd_match_stdev':[float()],'cons_pts_sd_match_stdev':[float()],
+                       'cons_fbhe_sd_match_stdev':[float()],'cons_tcr_sd_match_stdev':[float()],'cons_ed_sd_match_stdev':[float()],'cons_ko_sd_match_stdev':[float()],'cons_pass_sd_match_stdev':[float()],'cons_pts_sd_match_stdev':[float()],
                        'cons_fbhe_sd_s2s_stdev':[float()],'cons_tcr_sd_s2s_stdev':[float()],'cons_ed_sd_s2s_stdev':[float()],'cons_ko_sd_s2s_stdev':[float()],'cons_pass_sd_s2s_stdev':[float()],'cons_pts_sd_s2s_stdev':[float()]  
                       }
   player_stats_df =  pd.DataFrame.from_records(player_stats_dict)    # shoudl only need one row here
@@ -565,7 +565,29 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
 
 
     # time for player consistency calculations, inside loop over players
-  
+    # player consistency variables are:
+    #  'cons_fbhe_sd_match':None,'cons_tcr_sd_match':None,'cons_ed_sd_match':None,'cons_ko_sd_match':None,'cons_pass_sd_match':None,'cons_pts_sd_match':None,
+    #  'cons_fbhe_sd_s2s':None,'cons_tcr_sd_s2s':None,'cons_ed_sd_s2s':None,'cons_ko_sd_s2s':None,'cons_pass_sd_s2s':None,'cons_pts_sd_s2s':None    
+    # numbers across the match
+    cons_table, no_data = calc_consistency_match_table( ppr_df, p_list[i] )
+    if not no_data:
+      player_df.at[i,'cons_fbhe_sd_match'] = cons_table.at[8,'FBHE']
+      player_df.at[i,'cons_tcr_sd_match'] = cons_table.at[8,'Tran Conv']
+      player_df.at[i,'cons_ed_sd_match'] = cons_table.at[8,'Error Den']
+      player_df.at[i,'cons_ko_sd_match'] = cons_table.at[8,'Knockout %']
+      player_df.at[i,'cons_pass_sd_match'] = cons_table.at[8,'Good Passes']
+      player_df.at[i,'cons_pts_sd_match'] = cons_table.at[8,'Points Earned']  
+
+    # number set-2-set
+    cons2_table, no_data1 = calc_consistency_s2s_table( ppr_df, p_list[i] )
+    if not no_data1:
+      player_df.at[i,'cons_fbhe_sd_s2s'] = cons2_table.at[8,'FBHE']
+      player_df.at[i,'cons_tcr_sd_s2s'] = cons2_table.at[8,'Tran Conv']
+      player_df.at[i,'cons_ed_sd_s2s'] = cons2_table.at[8,'Error Den']
+      player_df.at[i,'cons_ko_sd_s2s'] = cons2_table.at[8,'Knockout %']
+      player_df.at[i,'cons_pass_sd_s2s'] = cons2_table.at[8,'Good Passes']
+      player_df.at[i,'cons_pts_sd_s2s'] = cons2_table.at[8,'Points Earned'] 
+
 
   ########## end of loop over players
   #print(f"Player Df when done:{player_df}")
@@ -689,6 +711,31 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
         player_stats_df.at[0,fbhe_var_ea_mean] = player_df[fbhe_var_ea].mean(skipna=True)
         player_stats_df.at[0,fbhe_var_ea_sd] = player_df[fbhe_var_ea].std(skipna=True) 
 
+  player_stats_df.at[0,'cons_fbhe_sd_match_mean'] = player_df['cons_fbhe_sd'].mean(skipna=True)
+  player_stats_df.at[i,'cons_tcr_sd_match_mean'] = player_df['cons_tcr_sd_match'].mean(skipna=True)
+  player_stats_df.at[i,'cons_ed_sd_match_mean'] = player_df['cons_ed_sd_match'].mean(skipna=True)
+  player_stats_df.at[i,'cons_ko_sd_match_mean'] = player_df['cons_ko_sd_match'].mean(skipna=True)
+  player_stats_df.at[i,'cons_pass_sd_match_mean'] = player_df['cons_pass_sd_match'].mean(skipna=True)
+  player_stats_df.at[i,'cons_pts_sd_match_mean'] = player_df['cons_pts_sd_match'].mean(skipna=True)
+  player_stats_df.at[i,'cons_fbhe_sd_s2s_mean'] = player_df['cons_fbhe_sd_s2s'].mean(skipna=True)
+  player_stats_df.at[i,'cons_tcr_sd_s2s_mean'] = player_df['cons_tcr_sd_s2s'].mean(skipna=True)
+  player_stats_df.at[i,'cons_ed_sd_s2s_mean'] = player_df['cons_ed_sd_s2s'].mean(skipna=True)
+  player_stats_df.at[i,'cons_ko_sd_s2s_mean'] = player_df['cons_ko_sd_s2s'].mean(skipna=True)
+  player_stats_df.at[i,'cons_pass_sd_s2s_mean'] = player_df['cons_pass_sd_s2s'].mean(skipna=True)
+  player_stats_df.at[i,'cons_pts_sd_s2s_mean'] = player_df['cons_pts_sd_s2s'].mean(skipna=True)
+    
+  player_stats_df.at[0,'cons_fbhe_sd_match_stdev'] = player_df['cons_fbhe_sd'].std(skipna=True)
+  player_stats_df.at[i,'cons_tcr_sd_match_stdev'] = player_df['cons_tcr_sd_match'].std(skipna=True)
+  player_stats_df.at[i,'cons_ed_sd_match_stdev'] = player_df['cons_ed_sd_match'].std(skipna=True)
+  player_stats_df.at[i,'cons_ko_sd_match_stdev'] = player_df['cons_ko_sd_match'].std(skipna=True)
+  player_stats_df.at[i,'cons_pass_sd_match_stdev'] = player_df['cons_pass_sd_match'].std(skipna=True)
+  player_stats_df.at[i,'cons_pts_sd_match_stdev'] = player_df['cons_pts_sd_match'].std(skipna=True)
+  player_stats_df.at[i,'cons_fbhe_sd_s2s_stdev'] = player_df['cons_fbhe_sd_s2s'].std(skipna=True)
+  player_stats_df.at[i,'cons_tcr_sd_s2s_stdev'] = player_df['cons_tcr_sd_s2s'].std(skipna=True)
+  player_stats_df.at[i,'cons_ed_sd_s2s_stdev'] = player_df['cons_ed_sd_s2s'].std(skipna=True)
+  player_stats_df.at[i,'cons_ko_sd_s2s_stdev'] = player_df['cons_ko_sd_s2s'].std(skipna=True)
+  player_stats_df.at[i,'cons_pass_sd_s2s_stdev'] = player_df['cons_pass_sd_s2s'].std(skipna=True)
+  player_stats_df.at[i,'cons_pts_sd_s2s_stdev'] = player_df['cons_pts_sd_s2s'].std(skipna=True)
         
   # now lets store our player_data file back as a csv file in the database
   #---------------------------------------------------------------------------
