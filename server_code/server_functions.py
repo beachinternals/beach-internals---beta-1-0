@@ -843,8 +843,12 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
 
       # calcualte tcr
       trans_list = calc_trans( tmp_df, disp_player, 'all')
-      cons2_table.at[index,'Tran Conv'] = trans_list[0]  # tcr
-      stat_table.at[index,'Tran Conv'] = float(trans_list[0][:-1])
+      if trans_list[0] is None:
+        cons2_table.at[index,'Tran Conv'] = 0  # tcr
+        stat_table.at[index,'Tran Conv'] = 0
+      else:
+        cons2_table.at[index,'Tran Conv'] = trans_list[0]  # tcr
+        stat_table.at[index,'Tran Conv'] = float(trans_list[0][:-1])
 
       # calculate Error Density
       error_vector = calc_error_den(tmp_df, disp_player)
