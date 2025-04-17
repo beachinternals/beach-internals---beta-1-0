@@ -731,7 +731,7 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
 
       # calcualte tcr
       trans_list = calc_trans( tmp_df, disp_player, 'all')
-      #print(f"Trans List: {trans_list}")
+      print(f" during match: Trans List: {trans_list}")
       if trans_list[0] is None:
         tcr_vector[index] = None
         cons_table.at[index,'Tran Conv'] = None
@@ -777,6 +777,7 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
     cons_table.at[index+1,' '] = 'Mean'
     cons_table.at[index+1,'FBHE'] = np.nanmean(fb_vector)
     cons_table.at[index+1,'Error Den'] = np.nanmean(ed_vector)
+    print(f"cons table: player: {disp_player}, tcr_vector {tcr_vector}, mean: np.nanmean(tcr_vector)}")
     cons_table.at[index+1,'Tran Conv'] = np.nanmean(tcr_vector)
     cons_table.at[index+1,'Knockout %'] = np.nanmean(ko_vector)
     cons_table.at[index+1,'Good Passes'] = np.nanmean(pass_vector)
@@ -856,7 +857,7 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
 
       # calcualte tcr
       trans_list = calc_trans( tmp_df, disp_player, 'all')
-      print(f"trans list: Player {disp_player}, Trans list {trans_list}")
+      print(f"set 2 set trans list: Player {disp_player}, Trans list {trans_list}")
       if trans_list[0] is None:
         cons2_table.at[index,'Tran Conv'] = None
         stat_table.at[index,'Tran Conv'] = None
@@ -892,6 +893,7 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
   cons2_table.at[index,'Points'] = ''
   cons2_table.at[index,'Att'] = ''
   cons2_table.at[index,'FBHE'] = stat_table['FBHE'].mean(skipna=True)
+  print(f"set 2 set: stat table {stat_table}")
   cons2_table.at[index,'Tran Conv'] = stat_table['Tran Conv'].mean(skipna=True)
   cons2_table.at[index,'Error Den'] = stat_table['Error Den'].mean(skipna=True)
   cons2_table.at[index,'Knockout %'] = stat_table['Knockout %'].mean(skipna=True)

@@ -570,7 +570,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     #  'cons_fbhe_sd_s2s':None,'cons_tcr_sd_s2s':None,'cons_ed_sd_s2s':None,'cons_ko_sd_s2s':None,'cons_pass_sd_s2s':None,'cons_pts_sd_s2s':None    
     # numbers across the match
     cons_table, no_data = calc_consistency_match_table( ppr_df, p_list[i] )
-    print(f" Cons Table {cons_table}")
+    print(f" Cons Table tcr {cons_table['Tran Conv']}")
     #print(cons_table)
     if no_data:
       player_df.at[i,'cons_fbhe_sd_match'] = None
@@ -583,6 +583,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     else:
       player_df.at[i,'cons_fbhe_sd_match'] = float(cons_table.at[8,'FBHE'])
       #print(player_df.at[i,'cons_fbhe_sd_match'])
+      print(f"storing player data: Player {p_list[i]}, cons_tcr_sd_match {float(cons_table.at[8,'Tran Conv'])}")
       player_df.at[i,'cons_tcr_sd_match'] = float(cons_table.at[8,'Tran Conv'])
       player_df.at[i,'cons_ed_sd_match'] = float(cons_table.at[8,'Error Den'])
       player_df.at[i,'cons_ko_sd_match'] = float(cons_table.at[8,'Knockout %'])
@@ -591,7 +592,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
 
     # number set-2-set
     cons2_table, no_data1 = calc_consistency_s2s_table( ppr_df, p_list[i] )
-    print(f" Cons 2 Table {cons2_table}")
+    print(f" Cons 2 Table {cons2_table['Tran Conv']}")
     if no_data1:
       sd_index = cons2_table.shape[0]-1
       player_df.at[i,'cons_fbhe_sd_s2s'] = None
@@ -603,6 +604,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     else:
       sd_index = cons2_table.shape[0]-1
       player_df.at[i,'cons_fbhe_sd_s2s'] = float(cons2_table.at[sd_index,'FBHE'])
+      print(f"storing player data: Player {p_list[i]}, sd_index {sd_index}, cons_tcr_sd_2s2 {float(cons2_table.at[sd_index,'Tran Conv'])}")
       player_df.at[i,'cons_tcr_sd_s2s'] = float(cons2_table.at[sd_index,'Tran Conv'])
       player_df.at[i,'cons_ed_sd_s2s'] = float(cons2_table.at[sd_index,'Error Den'])
       player_df.at[i,'cons_ko_sd_s2s'] = float(cons2_table.at[sd_index,'Knockout %'])
