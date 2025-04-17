@@ -1629,7 +1629,7 @@ def player_consistency(disp_league, disp_gender, disp_year,
   cons_return = pd.DataFrame.to_markdown(cons_table, index = False )
   cons2_return = pd.DataFrame.to_markdown(cons2_table, index = False )
 
-  return cons_return, cons2_return, ' '
+  return cons_return, cons2_return, ' ', ' '
 
 
 @anvil.server.callable

@@ -144,13 +144,21 @@ components_by_slot:
         name: rpt_disp_box3
         properties: {font_size: 12}
         type: RichText
+      - layout_properties: {grid_position: 'MSMDGO,LPFYYL'}
+        name: box4_label
+        properties: {align: center, bold: true}
+        type: Label
+      - layout_properties: {grid_position: 'VYYWKC,QDWWXG'}
+        name: rpt_disp_box4
+        properties: {}
+        type: RichText
       layout_properties: {grid_position: 'KCZYCU,LQEYDV'}
       name: outlined_card_3
       properties: {background: '', role: outlined-card}
       type: ColumnPanel
     - components:
       - layout_properties: {grid_position: 'OULBBH,UTZUNT'}
-        name: rpt_disp_box4
+        name: explain_text_box
         properties: {font_size: 12}
         type: RichText
       layout_properties: {grid_position: 'TQSRMR,WIJTSC'}

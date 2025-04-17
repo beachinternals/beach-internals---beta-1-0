@@ -193,12 +193,14 @@ class PlayerRpt(PlayerRptTemplate):
     box1_title_list = [(f_row['box1_title']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
     box2_title_list = [(f_row['box2_title']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
     box3_title_list = [(f_row['box3_title']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
+    box4_title_list = [(f_row['box4_title']) for f_row in app_tables.report_list.search(report_name=rpt_name)]
     #print(function_list)
     fnct_name = function_list[0]
     explain_text = text_list[0]
     box1_title = box1_title_list[0]
     box2_title = box2_title_list[0]
     box3_title = box3_title_list[0]
+    box4_title = box4_title_list[0]
     scout = True
     
     # now, call the server module.
@@ -210,7 +212,7 @@ class PlayerRpt(PlayerRptTemplate):
     disp_pair = '' # this is a dummy for player reports to keep the calling arguments consistent for player and pair reports
    
     # call the server function
-    table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, 
+    table_data1, table_data2, table_data3, table_data4 = anvil.server.call(fnct_name, 
                                    disp_league, disp_gender, disp_year, 
                                    disp_team, disp_pair, disp_player, 
                                    self.comp_l1_check_box.checked, self.comp_l1_drop_down.selected_value['comp_l1'],
@@ -238,10 +240,12 @@ class PlayerRpt(PlayerRptTemplate):
     self.rpt_disp_box1.content = table_data1
     self.rpt_disp_box2.content = table_data2
     self.rpt_disp_box3.content = table_data3
-    self.rpt_disp_box4.content = explain_text
+    self.rpt_disp_box4.content = table_data4
+    self.explain_text_box.content = explain_text
     self.box1_label.text = box1_title
     self.box2_label.text = box2_title
     self.box3_label.text = box3_title
+    self.box4_label.text = box4_title
     self.rpt_title.text = rpt_name
     self.player_label.text = disp_player
     
