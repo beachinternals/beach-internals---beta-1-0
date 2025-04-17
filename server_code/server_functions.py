@@ -519,19 +519,17 @@ def count_out_of_system(ppr_df,disp_player,action):
 
   # first check, did we get passed a df with no elements
   if ppr_df.shape[0] == 0:
-    oos_vector[0] = 0
-    oos_vector[1] = 0
-    oos_vector[2] = 0
+    oos_vector[0] = None
+    oos_vector[1] = None
+    oos_vector[2] = None
   else:
     # let's count!!
     oos_vector[2] = ppr_df[ ppr_df[action_filter] == disp_player].shape[0]
     oos_vector[0] = ppr_df[ (ppr_df[action_filter] == disp_player) & (ppr_df['pass_oos'] > 0)].shape[0]
-    if not oos_vector[0]:
-      oos_vector[0] = 0
     if oos_vector[2] != 0:
       oos_vector[1] = oos_vector[0]/oos_vector[2]
     else:
-      oos_vector[1] = 0
+      oos_vector[1] = None
       
   #print(f"count_out_of_system: action filter: {action_filter}, Rows in ppr_df: {ppr_df.shape[0]} Display Player: {disp_player}")
   #print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
@@ -644,7 +642,10 @@ A qiuck routine to calculate the knock percent given a ppr_df and the serving pl
 '''
 def calc_knock_out( ppr_df, disp_player):
   player_point_totals = player_pt_total(ppr_df, disp_player)
-  knock_out = (player_point_totals.at[0,'p_tsa']+player_point_totals.at[0,'o_bad_pass'] )/player_point_totals.at[0,'p_serves']
+  if player_point_totals.at[0,'p_serves'] == 0:
+    knock_out = None
+  else:
+   knock_out = (player_point_totals.at[0,'p_tsa']+player_point_totals.at[0,'o_bad_pass'] )/player_point_totals.at[0,'p_serves']
   return knock_out
 
 def calc_point_diff( ppr_df, disp_player):
@@ -657,10 +658,10 @@ def calc_point_diff( ppr_df, disp_player):
   opp_pts_earned = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(errors)) ].shape[0]
   opp_pts_lost = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(kills)) ].shape[0]
   if (pts_earned+pts_lost+opp_pts_earned+opp_pts_lost) == 0:
-    pts_earned_ratio = 0
+    pts_earned_ratio = None
   else:
     pts_earned_ratio = (pts_earned+ opp_pts_lost)/(pts_earned+pts_lost+opp_pts_earned+opp_pts_lost)
-  print(f"calc_point_diff: player: {disp_player}, ratio:{pts_earned_ratio}, pts earned:{pts_earned}, pts_lost: {pts_lost}, opp pts earned:{opp_pts_earned}, opp pts lost {opp_pts_lost}")
+  #print(f"calc_point_diff: player: {disp_player}, ratio:{pts_earned_ratio}, pts earned:{pts_earned}, pts_lost: {pts_lost}, opp pts earned:{opp_pts_earned}, opp pts lost {opp_pts_lost}")
   return pts_earned_ratio
   
 
@@ -723,7 +724,7 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
       # calculate fbhe 
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
       fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
-      cons_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
+      cons_table.at[index,'FBHE'] = fbhe_vector[0] if fbhe_vector[3] != 0 else None  # fbhe
       fb_vector[index] = fbhe_vector[0]
       cons_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
       cons_table.at[index,'Points'] = tmp_df.shape[0]
@@ -740,7 +741,7 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
 
       # calculate Error Density
       error_vector = calc_error_den(tmp_df, disp_player)
-      cons_table.at[index,"Error Den"] = float(error_vector[0][:-1])  # fbhe
+      cons_table.at[index,"Error Den"] = float(error_vector[0][:-1]) if error_vector[6] != 0 else None 
       ed_vector[index] = float(error_vector[0][:-1])
 
       # calcualte Knock Out
@@ -750,8 +751,12 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
     
       # Calculate good passing percent
       oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
-      cons_table.at[index,'Good Passes'] = 1 - oos_vector[1]
-      pass_vector[index] = 1 - oos_vector[1]
+      if oos_vector[1] is not None:
+        cons_table.at[index,'Good Passes'] = 1 - oos_vector[1]
+        pass_vector[index] = 1 - oos_vector[1]
+      else:
+        cons_table.at[index,'Good Passes'] = None
+        pass_vector[index] = None       
 
       # calculate point differential (as a percent of total points)
       pt_diff = calc_point_diff( tmp_df, disp_player)
@@ -760,12 +765,18 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
 
     # now the last two rows, mean and stdev
     #print(f"Error Vector: {ed_vector}")
+    # first, clean the data lists
+    fb_vector = [x for x in fb_vector if x is not None]
+    ed_vector = [x for x in ed_vector if x is not None]
+    tcr_vector = [x for x in tcr_vector if x is not None]
+    ko_vector = [x for x in ko_vector if x is not None]
+    pass_vector = [x for x in pass_vector if x is not None]
+    pts_vector = [x for x in pts_vector if x is not None]
     cons_table.at[index+1,'Points'] = ' '
     cons_table.at[index+1,'Att'] = ' '
     cons_table.at[index+1,' '] = 'Mean'
     cons_table.at[index+1,'FBHE'] = np.nanmean(fb_vector)
     cons_table.at[index+1,'Error Den'] = np.nanmean(ed_vector)
-    print(f"index:{index}, tcr_vector {tcr_vector}")
     cons_table.at[index+1,'Tran Conv'] = np.nanmean(tcr_vector)
     cons_table.at[index+1,'Knockout %'] = np.nanmean(ko_vector)
     cons_table.at[index+1,'Good Passes'] = np.nanmean(pass_vector)
@@ -839,7 +850,7 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
       fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
       cons2_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
-      cons2_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
+      cons2_table.at[index,'FBHE'] = fbhe_vector[0] if fbhe_vector[3] != 0 else None # fbhe
       cons2_table.at[index,'Points'] = tmp_df.shape[0]
       stat_table.at[index,'FBHE'] = cons2_table.at[index,'FBHE']
 
@@ -854,8 +865,8 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
 
       # calculate Error Density
       error_vector = calc_error_den(tmp_df, disp_player)
-      cons2_table.at[index,"Error Den"] = float(cons2_table.at[index,'Error Den'])
-      stat_table.at[index,'Error Den'] = float(cons2_table.at[index,'Error Den'])
+      cons2_table.at[index,"Error Den"] = float(cons2_table.at[index,'Error Den'])  if error_vector[6] != 0 else None 
+      stat_table.at[index,'Error Den'] = float(cons2_table.at[index,'Error Den'])  if error_vector[6] != 0 else None 
 
       # calcualte Knock Out
       cons2_table.at[index,'Knockout %'] = calc_knock_out(tmp_df,disp_player)
