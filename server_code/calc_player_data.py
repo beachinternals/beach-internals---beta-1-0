@@ -570,6 +570,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     #  'cons_fbhe_sd_s2s':None,'cons_tcr_sd_s2s':None,'cons_ed_sd_s2s':None,'cons_ko_sd_s2s':None,'cons_pass_sd_s2s':None,'cons_pts_sd_s2s':None    
     # numbers across the match
     cons_table, no_data = calc_consistency_match_table( ppr_df, p_list[i] )
+    print(f" Cons Table {cons_table}")
     #print(cons_table)
     if no_data:
       player_df.at[i,'cons_fbhe_sd_match'] = None
@@ -590,6 +591,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
 
     # number set-2-set
     cons2_table, no_data1 = calc_consistency_s2s_table( ppr_df, p_list[i] )
+    print(f" Cons 2 Table {cons2_table}")
     if no_data1:
       sd_index = cons2_table.shape[0]-1
       player_df.at[i,'cons_fbhe_sd_s2s'] = None

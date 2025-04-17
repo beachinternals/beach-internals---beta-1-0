@@ -856,6 +856,7 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
 
       # calcualte tcr
       trans_list = calc_trans( tmp_df, disp_player, 'all')
+      print(f"trans list: Player {disp_player}, Trans list {trans_list}")
       if trans_list[0] is None:
         cons2_table.at[index,'Tran Conv'] = None
         stat_table.at[index,'Tran Conv'] = None
@@ -865,8 +866,9 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
 
       # calculate Error Density
       error_vector = calc_error_den(tmp_df, disp_player)
-      cons2_table.at[index,"Error Den"] = float(cons2_table.at[index,'Error Den'])  if error_vector[6] != 0 else None 
-      stat_table.at[index,'Error Den'] = float(cons2_table.at[index,'Error Den'])  if error_vector[6] != 0 else None 
+      #print(f"error vector: Player {disp_player}, Ed Vector {error_vector}")
+      cons2_table.at[index,"Error Den"] = float(error_vector[0][:-1])  if error_vector[6] != 0 else None 
+      stat_table.at[index,'Error Den'] = float(error_vector[0][:-1])  if error_vector[6] != 0 else None 
 
       # calcualte Knock Out
       cons2_table.at[index,'Knockout %'] = calc_knock_out(tmp_df,disp_player)
