@@ -16,7 +16,7 @@ components:
       bold: true
       spacing:
         padding: ['0', null, '0', null]
-      text: 'Pair:'
+      text: Pair/Player
     type: Label
   - layout_properties: {grid_position: 'EUXKJV,CJECOL VKCXAV,RIUUKC'}
     name: pair_player_text
@@ -36,7 +36,7 @@ components:
   properties: {col_widths: '{"MTZPHF":15,"RIUUKC":45,"CJECOL":20,"DNEHQW":40}'}
   type: ColumnPanel
 - components:
-  - layout_properties: {grid_position: 'ARDLWK,RWYCYP FLYEIJ,ZNPLWT'}
+  - layout_properties: {grid_position: 'YCKQGC,BKDDJN REHOUD,SPVWXR'}
     name: label_15
     properties:
       align: center
@@ -44,29 +44,34 @@ components:
         padding: ['0', null, '0', null]
       text: Serves
     type: Label
-  - layout_properties: {grid_position: 'ARDLWK,RWYCYP EBMQXO,IBVEID'}
-    name: serve_plot
-    properties:
-      display_mode: shrink_to_fit
-      height: 273.6953125
-      margin: ['1', null, '1', null]
-    type: Image
-  - layout_properties: {grid_position: 'ARDLWK,RWYCYP VRWJLB,GLFDPU'}
-    name: label_17
-    properties:
-      align: center
-      spacing:
-        padding: ['0', null, '0', null]
-      text: Set Location
-    type: Label
-  - layout_properties: {grid_position: 'ARDLWK,RWYCYP ENBHVP,JEYIDQ'}
-    name: set_plot
-    properties:
-      display_mode: shrink_to_fit
-      height: 325.33984375
-      margin: ['1', null, '1', null]
-    type: Image
-  - layout_properties: {grid_position: 'ARDLWK,VKJDPO XBFOTO,HNWNDO'}
+  - components:
+    - layout_properties: {grid_position: 'PBXSLN,HIWJVT'}
+      name: serve_plot
+      properties:
+        display_mode: shrink_to_fit
+        height: 310.2421875
+        margin: ['1', null, '1', null]
+      type: Image
+    - layout_properties: {grid_position: 'RGAKDX,AGCLAN'}
+      name: label_17
+      properties:
+        align: center
+        spacing:
+          padding: ['0', null, '0', null]
+        text: Set Location
+      type: Label
+    - layout_properties: {grid_position: 'FVTQII,QGRGJA'}
+      name: set_plot
+      properties:
+        display_mode: shrink_to_fit
+        height: 338.125
+        margin: ['1', null, '1', null]
+      type: Image
+    layout_properties: {grid_position: 'YCKQGC,BKDDJN NWWVZA,HMGAJQ'}
+    name: column_panel_5
+    properties: {}
+    type: ColumnPanel
+  - layout_properties: {grid_position: 'YCKQGC,SCROJS WRXSKG,ACMTBC'}
     name: label_16
     properties:
       align: center
@@ -74,24 +79,38 @@ components:
         padding: ['0', null, '0', null]
       text: Pass Location
     type: Label
-  - layout_properties: {grid_position: 'ARDLWK,VKJDPO NNIATD,QHNTOL'}
-    name: pass_plot
-    properties:
-      display_mode: shrink_to_fit
-      height: 618.515625
-      margin: ['1', null, '1', null]
-    type: Image
-  - layout_properties: {grid_position: 'ARDLWK,NHSNVT IWDZTK,CPMUUB'}
+  - components:
+    - layout_properties: {grid_position: 'FKPIEE,ZPWIHA'}
+      name: pass_plot
+      properties:
+        display_mode: shrink_to_fit
+        height: 677.95703125
+        margin: ['1', null, '1', null]
+      type: Image
+    layout_properties: {grid_position: 'YCKQGC,SCROJS TELYQH,NBGOSG'}
+    name: column_panel_6
+    properties: {}
+    type: ColumnPanel
+  - layout_properties: {grid_position: 'YCKQGC,MFXDSZ IMTCRA,TIMAWG'}
     name: label_13
-    properties: {align: center, text: Zone 5 Attacks}
+    properties:
+      align: center
+      spacing:
+        padding: ['0', null, '0', null]
+      text: Zone 5 Attacks
     type: Label
-  - layout_properties: {grid_position: 'ARDLWK,NHSNVT'}
-    name: z5_att_plot
-    properties: {display_mode: zoom_to_fill, height: 595.2578125}
-    type: Image
+  - components:
+    - layout_properties: {grid_position: 'RLDZXK,DITJXU'}
+      name: z5_att_plot
+      properties: {display_mode: zoom_to_fill, height: 672.59765625}
+      type: Image
+    layout_properties: {grid_position: 'YCKQGC,MFXDSZ GURYSI,MZHPSX'}
+    name: column_panel_7
+    properties: {}
+    type: ColumnPanel
   layout_properties: {grid_position: 'VUASGI,AZVCKN'}
   name: column_panel_2
-  properties: {col_spacing: tiny, col_widths: '{"RWYCYP":15,"VKJDPO":20,"NHSNVT":25}'}
+  properties: {col_spacing: tiny, col_widths: '{"BKDDJN":15,"SCROJS":15,"MFXDSZ":30}'}
   type: ColumnPanel
 - components:
   - components:
