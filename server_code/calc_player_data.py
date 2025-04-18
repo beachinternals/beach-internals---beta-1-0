@@ -604,7 +604,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     else:
       sd_index = cons2_table.shape[0]-1
       player_df.at[i,'cons_fbhe_sd_s2s'] = float(cons2_table.at[sd_index,'FBHE'])
-      #print(f"storing player data: Player {p_list[i]}, sd_index {sd_index}, cons_pts_sd_2s2 {float(cons2_table.at[sd_index,'Points Earned'])}")
+      print(f"storing player data: Player {p_list[i]}, sd_index {sd_index}, cons_pts_sd_2s2 {float(cons2_table.at[sd_index,'Points Earned'])}")
       player_df.at[i,'cons_tcr_sd_s2s'] = float(cons2_table.at[sd_index,'Tran Conv'])
       player_df.at[i,'cons_ed_sd_s2s'] = float(cons2_table.at[sd_index,'Error Den'])
       player_df.at[i,'cons_ko_sd_s2s'] = float(cons2_table.at[sd_index,'Knockout %'])
