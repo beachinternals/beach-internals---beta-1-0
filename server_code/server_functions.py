@@ -653,10 +653,16 @@ def calc_point_diff( ppr_df, disp_player):
   #print(f"calc_point_diff: player: {disp_player}, rows in ppr: {ppr_df.shape[0]}")
   kills = ['FBK','TSA','TK']
   errors = ['FBE','TSE','TE']
-  pts_earned = ppr_df[ (ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(kills)) ].shape[0]
-  pts_lost = ppr_df[ (ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(errors)) ].shape[0]
-  opp_pts_earned = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(errors)) ].shape[0]
-  opp_pts_lost = ppr_df[ ~(ppr_df['point_outcome_team'].str.contains(disp_player)) & (ppr_df['point_outcome'].isin(kills)) ].shape[0]
+  # Lets make sure disp_player is in the data somewhere (involved in these points)
+  tmp_df = ppr_df[  (ppr_df['player_a1'] == disp_player) | 
+                    (ppr_df['player_a2'] == disp_player) |
+                    (ppr_df['player_b1'] == disp_player) |
+                    (ppr_df['player_b2'] == disp_player) 
+                     ]
+  pts_earned = tmp_df[ (tmp_df['point_outcome_team'].str.contains(disp_player)) & (tmp_df['point_outcome'].isin(kills)) ].shape[0]
+  pts_lost = tmp_df[ (tmp_df['point_outcome_team'].str.contains(disp_player)) & (tmp_df['point_outcome'].isin(errors)) ].shape[0]
+  opp_pts_earned = tmp_df[ ~(tmp_df['point_outcome_team'].str.contains(disp_player)) & (tmp_df['point_outcome'].isin(errors)) ].shape[0]
+  opp_pts_lost = tmp_df[ ~(tmp_df['point_outcome_team'].str.contains(disp_player)) & (tmp_df['point_outcome'].isin(kills)) ].shape[0]
   if (pts_earned+pts_lost+opp_pts_earned+opp_pts_lost) == 0:
     pts_earned_ratio = None
   else:
