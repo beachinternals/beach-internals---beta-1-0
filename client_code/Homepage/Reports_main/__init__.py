@@ -1,5 +1,6 @@
 from ._anvil_designer import Reports_mainTemplate
-import anvil
+from anvil.js import window
+import anvil.js
 import anvil.server
 import anvil.google.auth, anvil.google.drive
 from anvil.google.drive import app_files
@@ -13,6 +14,7 @@ from anvil.js import window
 
 class Reports_main(Reports_mainTemplate):
   def __init__(self, **properties):
+    print(f"properties: {properties}")
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
     # self.all_rpt_pdf.visible = True if anvil.users.get_user()['team'] == "INTERNALS" else False
@@ -185,6 +187,7 @@ class Reports_main(Reports_mainTemplate):
     # unpack the league data:
     # extract league, gender, year from league selected value
 
+    print(f"Self arguments: {self.__init__() }")
     # Define parameters to pass
     params = {
         'name': 'Alice',
@@ -258,9 +261,13 @@ class Reports_main(Reports_mainTemplate):
     disp_pair = ""  # this is a dummy for player reports to keep the calling arguments consistent for player and pair reports
 
     # Generate the form URL with query parameters
-    form_url = anvil.server.call('get_form_url', 'plot_one_zone_attacks', params)
+    #form_url = anvil.server.call('get_form_url', 'plot_one_zone_attacks', params)
     # Open the form in a new window/tab
-    window.open(form_url, '_blank')
+    #window.open(form_url, '_blank')
+    print(f"event args: {event_args}")
+    #print(f"event args: {event_args['item']}")
+    #url = event_args['item']['url']
+    anvil.js.window.open("http://www.google.com/", '_blank')
     
     '''
     # Working on a new call function to pop a window and also use the **kwargs parameters
