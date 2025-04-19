@@ -13,7 +13,8 @@ from tabulate import tabulate
 from server_functions import *
 from anvil import pdf
 from pair_functions import *
-
+from matchup_reports import player_45_serves
+from plot_functions import *
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -1718,7 +1719,7 @@ def player_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b, 
 
   # get the row for disp_player
   if player_data_df['player'].isin([disp_player]).any():
-    player_index = player_data_df.loc[ (player_data_df['pair'] == disp_player)].index[0]
+    player_index = player_data_df.loc[ (player_data_df['player'] == disp_player)].index[0]
   else:
     return 'Player not found in player data:'+disp_player, '', '', '','', '', '','', '', '','', '', '',''
     
