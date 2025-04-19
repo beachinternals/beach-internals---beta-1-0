@@ -440,6 +440,92 @@ def matchup_45_serves(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_
 
   return matchup_df
 
+
+
+@anvil.server.callable
+def player_45_serves(disp_league, disp_gender, disp_year, disp_player, disp_team):
+  '''
+
+  get the matrix for the 45 potential serves for this player, using all data
+
+  '''
+  #
+  # matchup dataframe:
+  #. 0 - Serving Player - None
+  #. 1 - Receiving Player
+  #. 2 - Serve From Zone ( 1, 3, 5 )
+  #. 3 - Serve to Zone net ( 1,2,3,4,5)
+  #. 4 - Serve to Zone Depth (c,d,e)
+  #. 5 - Serving Player, Opp FBHE - None
+  #  6 - Serving Player, Opp FBHE - N - None
+  #. 7- Opp fbhe percentile - None
+  #. 8 - Receiving Player, FBHE
+  #  9 - Receiving Player, FBHE - N
+  #. 10 - Receiving Player, Percentile
+  #. 11 - Serve percentile - receive percentile - None
+  
+  matchup_dict = {
+    'srv_player':'', 'rcv_player':'','srv_fr':0,'srv_to_net':0,'srv_to_depth':'','opp_fbhe':0, 'opp_fbhe_n':0,'opp_per':0,'fbhe':0,'fbhe_n':0,'fbhe_per':0,'per_diff':0
+  }
+  matchup_df = pd.DataFrame( matchup_dict, index=[0])
+  
+  # fetch the pair_data and pair_data_stats files
+  player_data_df, player_stats_df = get_player_data( disp_league, disp_gender, disp_year)
+
+  # get the row for pair_a and pair_b
+  if player_data_df['player'].isin([disp_player]).any():
+    player_index = player_data_df.loc[ (player_data_df['player'] == disp_player) ].index[0]
+  else:
+    return 'Player not found in player data:'+disp_player
+
+  index = 0
+  # loop over 45 potential serves, from and to
+  for srv_fr_zone in [1,3,5]:      
+    for srv_to_zone_net in [1,2,3,4,5]:
+      for srv_to_zone_depth in ['c','d','e']:
+
+        # append a new row:
+        matchup_df.loc[len(matchup_df)] = matchup_dict
+        
+        # store players and zones:
+        matchup_df.iloc[index,0] = None
+        matchup_df.iloc[index,1] = disp_player
+        matchup_df.iloc[index,2] = str(srv_fr_zone)
+        matchup_df.iloc[index,3] = str(srv_to_zone_net)
+        matchup_df.iloc[index,4] = str(srv_to_zone_depth)
+            
+        # now store FBHE and OPP FBHE
+        #opp_var = 'opp_fbhe_'+str(srv_fr_zone)+'_'+str(srv_to_zone_net)+str(srv_to_zone_depth)
+        fbhe_var = 'fbhe_'+str(srv_fr_zone)+'_'+str(srv_to_zone_net)+str(srv_to_zone_depth)
+        #print(f" Indexes: {index}, pa_data_index {pa_data_index}, Opp var: {opp_var} ")
+        #matchup_df.iloc[index,5] = pair_data_df.at[pa_data_index,opp_var]
+        matchup_df.iloc[index,5] = None
+        #matchup_df.iloc[index,6] = pair_data_df.at[pa_data_index,opp_var+'_n'] 
+        matchup_df.iloc[index,6] = None
+        matchup_df.iloc[index,8] = player_data_df.at[player_index,fbhe_var]
+        matchup_df.iloc[index,9] = player_data_df.at[player_index,fbhe_var+'_n']
+
+        # calcaulte the percentiles
+        #matchup_df.iloc[index,7] = 1 - stats.norm.cdf( (matchup_df.iloc[index,5]-pair_stats_df.at[0,opp_var+'_mean'])/ pair_stats_df.at[0,opp_var+'_stdev'] )
+        matchup_df.iloc[index,7] = None
+        matchup_df.iloc[index,10] = stats.norm.cdf( (matchup_df.iloc[index,8]-player_stats_df.at[0,fbhe_var+'_mean'])/ player_stats_df.at[0,fbhe_var+'_stdev'] )
+        #matchup_df.iloc[index,11] = matchup_df.iloc[index,7] - matchup_df.iloc[index,10]
+        matchup_df.iloc[index,11] = None
+
+        index = index + 1
+
+  # drop the last row
+  matchup_df = matchup_df.iloc[:-1]
+  #print(f"match_up dataframe: {matchup_df}")
+  # now lets drop the fbhe=na rows
+  matchup_df = matchup_df.dropna(subset=['fbhe'])
+  #print(f"match_up dataframe: {matchup_df}")
+  # before we return, sort hte dataframe by the difference, ascending
+  matchup_df = matchup_df.sort_values(by='fbhe', ascending=True)
+
+  return matchup_df
+
+  
 @anvil.server.callable
 def matchup_serve_prediction( disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team ):
   #

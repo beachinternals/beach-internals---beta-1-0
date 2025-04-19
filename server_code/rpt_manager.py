@@ -771,10 +771,11 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
       # add the pages with serve, pass, set, and 1-5+Option attack charts for each recommended serve strategy
       serve_rpt = 'scout_srv_strategy'
       r_list_row = app_tables.report_list.get(function_name=serve_rpt)
-      
+
+      # loop over the two players in pair_a, so we can do the 
       # get the serve strategy table
       # call to get the serve stretegy table
-      matchup_df = matchup_45_serves(pair_r['league'], pair_r['gender'], pair_r['year'], pair_a, pair_b, disp_team)
+      matchup_df = mplayer_45_serves(pair_r['league'], pair_r['gender'], pair_r['year'], disp_player, disp_team)
 
       # sort by FBHE, take the top num_srv_Strategies
       num_srv_strategies = 3
