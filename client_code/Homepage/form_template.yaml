@@ -110,6 +110,11 @@ components:
     name: league_rpt_link
     properties: {align: left, text: League Reports}
     type: Link
+  - event_bindings: {click: reports_main_click}
+    layout_properties: {grid_position: 'SZGHWC,HMYTZR'}
+    name: reports_main
+    properties: {text: Reports}
+    type: Link
   - layout_properties: {grid_position: 'WCVOTN,YUJLNY'}
     name: label_2
     properties: {align: center, background: 'theme:Secondary Container', bold: true, spacing_above: none, spacing_below: none, text: Data Management}
