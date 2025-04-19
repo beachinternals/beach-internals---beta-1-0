@@ -152,6 +152,6 @@ class Homepage(HomepageTemplate):
 
   def reports_main_click(self, **event_args):
     """This method is called when the link is clicked"""
-    open_form('Homepage.Report_main')
+    open_form('Homepage.Reports_main')
     pass
 

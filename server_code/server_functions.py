@@ -1,3 +1,4 @@
+import anvil
 import anvil.email
 import anvil.google.auth, anvil.google.mail
 from anvil.google.drive import app_files
@@ -922,3 +923,14 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
   cons2_table.at[index,'Points Earned'] = stat_table['Points Earned'].std(skipna=True)
 
   return cons2_table, no_data
+
+
+# Server-side code
+@anvil.server.callable
+def get_form_url(form_name, params):
+  # Server-side alternative (if needed)
+  print(f" get form url, form name {form_name}")
+  target_url  = anvil.get_url(form_name, query=params)
+  print(f"Target URL: {target_url}")
+  
+  return target_url  # Note: This may still require client-side context

@@ -1,5 +1,5 @@
 from ._anvil_designer import Reports_mainTemplate
-from anvil import *
+import anvil
 import anvil.server
 import anvil.google.auth, anvil.google.drive
 from anvil.google.drive import app_files
@@ -7,9 +7,8 @@ import anvil.users
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
-from PlayerRpt1 import *
-from PlayerRpt2 import *
 import datetime
+from anvil.js import window
 
 
 class Reports_main(Reports_mainTemplate):
@@ -96,24 +95,6 @@ class Reports_main(Reports_mainTemplate):
         (row["report_name"])
         for row in app_tables.report_list.search(private=False, rpt_type="player")
       ]
-
-  def PlayerRpt1_click_click(self, **event_args):
-    """This method is called when the link is clicked"""
-    self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(PlayerRpt1())
-    pass
-
-  def PlayerRpt2_click_click(self, **event_args):
-    """This method is called when the link is clicked"""
-    self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(PlayerRpt2())
-    pass
-
-  def roster_manage_click_click(self, **event_args):
-    """This method is called when the link is clicked"""
-    self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(roster_manage())
-    pass
 
   def comp_l1_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
@@ -203,6 +184,14 @@ class Reports_main(Reports_mainTemplate):
     """This method is called when the button is clicked"""
     # unpack the league data:
     # extract league, gender, year from league selected value
+
+    # Define parameters to pass
+    params = {
+        'name': 'Alice',
+        'age': 25,
+         'city': 'New York'      
+    }
+    
     league_value = self.league_drop_down.selected_value
     str_loc = league_value.index("|")
     disp_league = league_value[: str_loc - 1].strip()
@@ -268,6 +257,11 @@ class Reports_main(Reports_mainTemplate):
 
     disp_pair = ""  # this is a dummy for player reports to keep the calling arguments consistent for player and pair reports
 
+    # Generate the form URL with query parameters
+    form_url = anvil.server.call('get_form_url', 'plot_one_zone_attacks', params)
+    # Open the form in a new window/tab
+    window.open(form_url, '_blank')
+    
     '''
     # Working on a new call function to pop a window and also use the **kwargs parameters
     # call the server function
@@ -291,7 +285,7 @@ class Reports_main(Reports_mainTemplate):
       scout,
       explain_text,
     )
-        '''
+
 
     # now put this into the rtf box
     filter_text = f"""
@@ -319,7 +313,8 @@ class Reports_main(Reports_mainTemplate):
     self.box4_label.text = box4_title
     self.rpt_title.text = rpt_name
     self.player_label.text = disp_player
-
+    '''
+    
     pass
 
   def end_date_picker_change(self, **event_args):
