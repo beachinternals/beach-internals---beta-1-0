@@ -27,6 +27,8 @@ def rpt_mgr_generate():
   # client callable functiom to call the background function to generate reports
   return anvil.server.launch_background_task('rpt_mgr_generate_background')
 
+
+  
 @anvil.server.background_task
 def rpt_mgr_generate_background():
   # generate reports from the report mgt data file
@@ -679,6 +681,7 @@ def rpt_mgr_player_rpts(rptlist_r,p_list):
   rpt_pdf = 'Player Reports Stub'
   return rpt_pdf
 
+  
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Pair Reports
 #-------------------------------------------------------------------------------------------------------
@@ -694,6 +697,7 @@ def rpt_mgr_pair_rpts(rptlist,pair_list):
   rpt_pdf = 'Pair Reprots Stub'
   return rpt_pdf
 
+
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Scout Reports
 #-------------------------------------------------------------------------------------------------------
@@ -702,6 +706,8 @@ def rpt_mgr_scout_rpts(rpt_r):
   rpt_pdf = 'Scout Reports Stub'
   return rpt_pdf
 
+
+  
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Dashboard Reports
 #-------------------------------------------------------------------------------------------------------
@@ -710,6 +716,10 @@ def rpt_mgr_dashboard_rpts(rpt_r):
   rpt_pdf = 'Dashboard Reports'
   return rpt_pdf
 
+
+  
+
+  
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Matchup Reports
 #-------------------------------------------------------------------------------------------------------
@@ -717,14 +727,14 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
   # for a matchup report, rpt_r should have just one pair and just one pair_b in the list
   today = datetime.now() 
   for pair_r in rpt_r['pair_list']:
-    #print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
+    print(f"Processing report for : {pair_r['league']}, {pair_r['gender']}, {pair_r['year']}, {pair_r['pair']}")
         
     # build pair string
     pair_a = pair_r['pair']
     #print(f"opponentn pair, index 5 {rpt_r['pair_b_list'][5]}")
     #print(f"opponentn pair, index 5, '1' {rpt_r['pair_b_list'][5][1]}")   
     pair_b = rpt_r['pair_b_list'][5][1]
-    #print(f"Pair _b ; {pair_b}")
+    print(f"Pair_A: {pair_a}, Pair _b ; {pair_b}")
 
     # calculate the folder we will store thiese into
     pdf_folder = [ pair_r['league'].strip() + pair_r['gender'].strip() + pair_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
@@ -750,11 +760,13 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
 
       # really need to now do a loop over the two players on this pair.
       disp_player1, disp_player2 = pair_players( pair_b)
+      print(f" pair b and players: {pair_b}, {disp_player1}, { disp_player2} Pair A : {pair_a}")
 
 
         
       for index, rpt_print in rpt_list_df.iterrows():
         print(f"Process report: {rpt_print['function_name']}")
+        print(f" pair b and players: {pair_b}, {disp_player1}, { disp_player2} Pair A : {pair_a}")
         # call pdf report
         pdf1 = create_matchup_pdf_reports(rpt_print['function_name'],
                                     rpt_print['rpt_form'], 
