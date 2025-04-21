@@ -989,24 +989,24 @@ def player_1_zone_att(disp_league,
   rows = 1
   for i in [0,1,2]:
     srv_src = i*2 + 1
-    for srv_to_d in ['c', 'd', 'e']:
+    for srv_to_d in ['C', 'D', 'E']:
       for srv_to_n in [1,2,3,4,5]:
         rows = rows+1
         fbhe_vector = fbhe( new_ppr[(( new_ppr['serve_src_zone_net'] == srv_src) & 
-                                     ( new_ppr['serve_dest_zone_net'] == srv_to_n) & 
-                                     ( new_ppr['serve_dest_zone_depth'] == srv_to_d ) ) ],
+                                     ( new_ppr['serve_dest_zone_net'] == srv_to_n ) &
+                                     ( new_ppr['serve_dest_zone_depth'] == srv_to_d)  ) ],
                               disp_player,
                               'att',
                               True 
                             )
         oos_vector = count_out_of_system( new_ppr[(( new_ppr['serve_src_zone_net'] == srv_src) & 
-                                                   ( new_ppr['serve_dest_zone_net'] == srv_to_n) & 
-                                                   ( new_ppr['serve_dest_zone_depth'] == srv_to_d ) ) ],
+                                                   ( new_ppr['serve_dest_zone_depth'] == srv_to_d) &
+                                                   ( new_ppr['serve_dest_zone_net'] == srv_to_n)) ],
                               disp_player,
                               'att'
                                        )
-        srv_strat_df.at[rows,'From'] = str(i)
-        srv_strat_df.at[rows,'To'] = str(srv_2_net_txt[srv_2_txt[j][0]]) + " " + str(srv_2_txt[j][1])
+        srv_strat_df.at[rows,'From'] = str(srv_src )
+        srv_strat_df.at[rows,'To'] = str(srv_to_n) + " " + str(srv_to_d)
         srv_strat_df.at[rows,'Attempts'] = fbhe_vector[3]
         srv_strat_df.at[rows,'FBSO'] = fbhe_vector[4]
         srv_strat_df.at[rows,'FBHE'] = fbhe_vector[0]
@@ -1015,6 +1015,8 @@ def player_1_zone_att(disp_league,
                                   
   print(f"Srv Strat DF: {srv_strat_df}")
   # fo rnow, I want to drop the 'All' first row (the .iloc)
+  # now, delete all rows where attemtps = 0
+  srv_strat_df = srv_strat_df[srv_strat_df['Attempts'] != 0] 
   srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df, index=False)
 
   # now, time to make plots.
