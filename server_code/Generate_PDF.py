@@ -651,6 +651,7 @@ def create_matchup_pdf_reports(
   # call render form
   #print(f"Rendering Form for {table_data1}")
   pdf_file =disp_pair_a+' v ' + disp_pair_b + ' ' + report_row['report_name'] 
+  print(f"pdf file name: {pdf_file}")
   pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form, 
                                 report_row['report_name'],
                                 disp_pair_a,

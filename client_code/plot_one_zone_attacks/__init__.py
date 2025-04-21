@@ -42,25 +42,26 @@ class plot_one_zone_attacks(plot_one_zone_attacksTemplate):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
-    self.srv_strategy_title.content = serve_strategy_title
-    self.player_label.text = disp_player
+    #self.srv_strategy_title.content = serve_strategy_title
+    self.pair_player_label.text = 'Player:'
+    self.pair_player_text.text = disp_player
     self.rpt_disp_box.content = table_data
     self.serve_plot.source = plot1
     self.pass_plot.source = plot2
     self.set_plot.source = plot3
     self.z1_att_plot.source = z1_att
-    self.z2_att_plot.source = z2_att
-    self.z3_att_plot.source = z3_att
-    self.z4_att_plot.source = z4_att
-    self.z5_att_plot.source = z5_att
-    self.opt_att_plot.source = opt_att
+    #self.z2_att_plot.source = z2_att
+    #self.z3_att_plot.source = z3_att
+    #self.z4_att_plot.source = z4_att
+    #self.z5_att_plot.source = z5_att
+    #self.opt_att_plot.source = opt_att
     self.z1_table.content = z1_tbl
-    self.z2_table.content = z2_tbl
-    self.z3_table.content = z3_tbl
-    self.z4_table.content = z4_tbl
-    self.z5_table.content = z5_tbl
-    self.opt_table.content = opt_tbl
-    self.pair_label.text = disp_pair
+    #self.z2_table.content = z2_tbl
+    #self.z3_table.content = z3_tbl
+    #self.z4_table.content = z4_tbl
+    #self.z5_table.content = z5_tbl
+    #self.opt_table.content = opt_tbl
+    #self.pair_label.text = disp_pair
     self.filter_text.content = filter_text
     self.explain_text.content = explain_text
     # self.box1_label.text = title_text

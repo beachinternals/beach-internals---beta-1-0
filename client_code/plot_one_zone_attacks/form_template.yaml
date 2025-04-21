@@ -49,22 +49,7 @@ components:
       name: serve_plot
       properties:
         display_mode: shrink_to_fit
-        height: 310.2421875
-        margin: ['1', null, '1', null]
-      type: Image
-    - layout_properties: {grid_position: 'RGAKDX,AGCLAN'}
-      name: label_17
-      properties:
-        align: center
-        spacing:
-          padding: ['0', null, '0', null]
-        text: Set Location
-      type: Label
-    - layout_properties: {grid_position: 'FVTQII,QGRGJA'}
-      name: set_plot
-      properties:
-        display_mode: shrink_to_fit
-        height: 338.125
+        height: 532.4643859863281
         margin: ['1', null, '1', null]
       type: Image
     layout_properties: {grid_position: 'YCKQGC,BKDDJN NWWVZA,HMGAJQ'}
@@ -79,30 +64,28 @@ components:
         padding: ['0', null, '0', null]
       text: Pass Location
     type: Label
-  - components:
-    - layout_properties: {grid_position: 'FKPIEE,ZPWIHA'}
-      name: pass_plot
-      properties:
-        display_mode: shrink_to_fit
-        height: 677.95703125
-        margin: ['1', null, '1', null]
-      type: Image
-    layout_properties: {grid_position: 'YCKQGC,SCROJS TELYQH,NBGOSG'}
-    name: column_panel_6
-    properties: {}
-    type: ColumnPanel
-  - layout_properties: {grid_position: 'YCKQGC,MFXDSZ IMTCRA,TIMAWG'}
-    name: label_13
+  - layout_properties: {grid_position: 'YCKQGC,SCROJS IQYSUA,CIUEVX'}
+    name: pass_plot
+    properties:
+      display_mode: shrink_to_fit
+      height: 536.4418334960938
+      margin: ['1', null, '1', null]
+    type: Image
+  - layout_properties: {grid_position: 'YCKQGC,MFXDSZ NDMVIL,JMPPNT'}
+    name: label_17
     properties:
       align: center
       spacing:
         padding: ['0', null, '0', null]
-      text: Zone 5 Attacks
+      text: Set Location
     type: Label
   - components:
-    - layout_properties: {grid_position: 'RLDZXK,DITJXU'}
-      name: z5_att_plot
-      properties: {display_mode: zoom_to_fill, height: 672.59765625}
+    - layout_properties: {grid_position: 'KKHLMN,MUDEFF'}
+      name: set_plot
+      properties:
+        display_mode: shrink_to_fit
+        height: 530.6545104980469
+        margin: ['1', null, '1', null]
       type: Image
     layout_properties: {grid_position: 'YCKQGC,MFXDSZ GURYSI,MZHPSX'}
     name: column_panel_7
@@ -110,7 +93,28 @@ components:
     type: ColumnPanel
   layout_properties: {grid_position: 'VUASGI,AZVCKN'}
   name: column_panel_2
-  properties: {col_spacing: tiny, col_widths: '{"BKDDJN":15,"SCROJS":15,"MFXDSZ":30}'}
+  properties: {col_spacing: tiny, col_widths: '{"BKDDJN":20,"SCROJS":20,"MFXDSZ":20}'}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'AOFIAT,KMZIPW'}
+    name: label_13
+    properties:
+      align: center
+      spacing:
+        padding: ['0', null, '0', null]
+      text: Attacks
+    type: Label
+  - layout_properties: {grid_position: 'DBPJFG,EGDWRU'}
+    name: z1_att_plot
+    properties: {display_mode: zoom_to_fill, height: 747.1380004882812}
+    type: Image
+  - layout_properties: {grid_position: 'DBPJFG,HUHNDV'}
+    name: z1_table
+    properties: {}
+    type: RichText
+  layout_properties: {grid_position: 'OEMGWD,WNTRPL'}
+  name: column_panel_8
+  properties: {col_widths: '{"EGDWRU":40,"HUHNDV":20}'}
   type: ColumnPanel
 - components:
   - components:

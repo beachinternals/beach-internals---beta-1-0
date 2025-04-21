@@ -793,3 +793,287 @@ def scout_attack_pass_zones(disp_league,
   
   return srv_strategy_title, '', z1_plt, z3_plt, z5_plt, '','','','','','','','','','','',''
 
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#
+#        for one given player (disp_player), plot all attacks from a zone along the net (1-5), att_zone
+#             att_zone derived as which of the following is true:
+#                srv_to_1[0], srv_to_2[0], srv_to_3[0], srv_to_4[0], srv_to_5[0]
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+@anvil.server.callable
+def player_1_zone_att(disp_league,
+                      disp_gender,
+                      disp_year,
+                      disp_team,
+                      disp_pair,
+                      disp_player,
+                      comp_l1_checked,
+                      disp_comp_l1,
+                      comp_l2_checked,
+                      disp_comp_l2,
+                      comp_l3_checked,
+                      disp_comp_l3,
+                      date_checked,
+                      disp_start_date,
+                      disp_end_date,
+                      scout,
+                      explain_text, title_text,
+                      srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5
+  ):
+
+  # try to build to scouting report - Serving Strategy
+  att_zone = 1
+  if srv_to_2[0]:
+    att_zone = 2
+  elif srv_to_3[0]:
+    att_zone = 3
+  elif srv_to_4[0]:
+    att_zone = 4
+  elif srv_to_5[0]:
+    att_zone = 5
+  print(f" attack zone:{att_zone}")
+
+  # lets find the serve strategy Text:
+  srv_2_net_txt = ['','Line','Body(l)','Seam','Body(r)','Line']
+  if (srv_to_1[0]) or (srv_to_1[1]) or (srv_to_1[2]) :
+    srv_line_l = True 
+  else:
+    srv_line_l = False
+  if (srv_to_5[0]) or (srv_to_5[1]) or (srv_to_5[2]):
+    srv_line_r = True
+  else:
+    srv_line_r = False
+  if (srv_to_2[0]) or (srv_to_2[1]) or (srv_to_2[2]):
+    srv_body_l = True 
+  else:
+    srv_body_l = False
+  if (srv_to_4[0]) or (srv_to_4[1]) or (srv_to_4[2]):
+    srv_body_r = True
+  else:
+    srv_body_r = False
+  if (srv_to_3[0]) or (srv_to_3[1]) or (srv_to_3[2]):
+    srv_seam = True 
+  else:
+    srv_seam = False
+
+  srv_deep =  True if (srv_to_1[0]) or (srv_to_2[0]) or (srv_to_3[0]) or (srv_to_4[0]) or (srv_to_5[0]) else False
+  srv_mid =   True if (srv_to_1[1]) or (srv_to_2[1]) or (srv_to_3[1]) or (srv_to_4[1]) or (srv_to_5[1]) else False
+  srv_short = True if (srv_to_1[2]) or (srv_to_2[2]) or (srv_to_3[2]) or (srv_to_4[2]) or (srv_to_5[2]) else False
+
+  srv_to_text = ''
+  if srv_line_r:
+    srv_to_text = 'Line(r):'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
+  if srv_body_r:
+    srv_to_text = srv_to_text + ' Body(r):'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
+  if srv_seam:
+    srv_to_text = srv_to_text + ' Seam:'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
+  if srv_body_l:
+    srv_to_text = srv_to_text + ' Body(l):'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
+  if srv_line_l:
+    srv_to_text = srv_to_text + ' Line(l):'
+    if srv_short:
+      srv_to_text = srv_to_text + 'Short,'
+    if srv_mid:
+      srv_to_text = srv_to_text + 'Mid,'
+    if srv_deep:
+      srv_to_text = srv_to_text + 'Deep,'
+      
+  srv_fr_text = ''
+  srv_fr_txt = ['Line (left)','Middle','Line (right)'] 
+  if srv_fr[0]:
+    srv_fr_text = 'Line (Left)'
+  if srv_fr[1]:
+    srv_fr_text = srv_fr_text + ' & Middle' if len(srv_fr_text) != 0 else 'Middle'
+  if srv_fr[2]:
+    srv_fr_text = srv_fr_text + ' & Line (Right)' if len(srv_fr_text) != 0 else 'Line (Right)'
+  #print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
+
+  srv_strategy_title = 'Attacks for '+disp_player+' , attacking form zone:'+str(att_zone)
+  #print(f"Serving Strategy: {srv_strategy_title}")
+  
+  # make a list of tuples for the serve to zones
+  srv_2 = []
+  srv_2_txt = []
+  #print(f"Serve To 1:{srv_to_1}")
+  #print(f"Serve To 2:{srv_to_2}")
+  #print(f"Serve To 3:{srv_to_3}")
+  #print(f"Serve To 4:{srv_to_4}")
+  #print(f"Serve To 5:{srv_to_5}")
+  depth_list = ['E','D','C']
+  depth_text = ['Deep','Mid','Short']
+  for j in (0,1,2):
+    if srv_to_1[j]:
+      srv_2.append([1,depth_list[j]])
+      srv_2_txt.append([1,depth_text[j]])
+    if srv_to_2[j]:
+      srv_2.append([2,depth_list[j]])
+      srv_2_txt.append([2,depth_text[j]])
+    if srv_to_3[j]:
+      srv_2.append([3,depth_list[j]])
+      srv_2_txt.append([3,depth_text[j]])
+    if srv_to_4[j]:
+      srv_2.append([4,depth_list[j]])
+      srv_2_txt.append([4,depth_text[j]])
+    if srv_to_5[j]:
+      srv_2.append([5,depth_list[j]])
+      srv_2_txt.append([5,depth_text[j]])
+  # let's see what we have
+  #print(f"scout_srv_strategy: svr to list of tuples {srv_2}")
+  #print(f"scout_srv_strategy: svr to list in text: {srv_2}")
+  # this list should now have as many tuples as points selected.  First number is 1 - 5 for net zones, second number is depth: 0=E, 1=D, 2+A,B,C
+  
+  # get the ppr data
+  #print(f"scout_srv_strategy: league: {disp_league}, gender: {disp_gender}, year: {disp_year}, team: {disp_team}")
+  ppr_df = get_ppr_data( disp_league, disp_gender, disp_year, disp_team, True ) # gets the ppr data, this should be all the data available to report on
+  #print(f"ppr_df all:{ppr_df.shape[0]}")
+  ppr_df = ppr_df_limit( ppr_df, 
+                         comp_l1_checked, disp_comp_l1, 
+                         comp_l2_checked, disp_comp_l2, 
+                         comp_l3_checked, disp_comp_l3, 
+                         date_checked, disp_start_date, disp_end_date
+                         ) # limit all data available to the parameters given for comp level 1,2,3 and dates.
+  #print(f"scout_srv_strategy: ppr_df date and comp lmited:{ppr_df.shape[0]}")
+
+  # lastly, lmit this by the attacker and attack zone
+  new_ppr = ppr_df[ ((ppr_df['att_player'] == disp_player) & (ppr_df['att_src_zone_net'] == att_zone)) ]
+  #print(f"scout_srv_strategy: ppr_df lmited srv from zones:{ppr_df.shape[0]}")
+     
+  #print(f"Number of final db to analze: {new_ppr.shape[0]}")
+  
+  # calculate a quick table FBHE
+  fbhe_vector = fbhe(new_ppr, disp_player, 'att',True)
+  oos_vector =count_out_of_system(new_ppr, disp_player, 'att')
+  #print(f"fbhe Vector: {fbhe_vector}")
+  srv_strat_dict = {'From':[0],
+                     'To':[0],
+                    'Attempts':[0],
+                    'FBSO':[0],
+                    'FBHE':[0],
+                    'Out of Sys':[0],
+                    'URL':[0]
+                   }
+  srv_strat_df = pd.DataFrame.from_dict(srv_strat_dict)
+  srv_strat_df.at[0,'From'] = 'All'
+  srv_strat_df.at[0,'To'] = 'All'
+  srv_strat_df.at[0,'Attempts'] = fbhe_vector[3]
+  srv_strat_df.at[0,'FBSO'] = fbhe_vector[4]
+  srv_strat_df.at[0,'FBHE'] = fbhe_vector[0]
+  srv_strat_df.at[0,'Out of Sys'] = oos_vector[0] if oos_vector[0] else 0
+  srv_strat_df.at[0,'URL'] = fbhe_vector[5]  
+
+  # now a loop over the different serving options:
+  rows = 1
+  for i in [0,1,2]:
+    srv_src = i*2 + 1
+    for srv_to_d in ['c', 'd', 'e']:
+      for srv_to_n in [1,2,3,4,5]:
+        rows = rows+1
+        fbhe_vector = fbhe( new_ppr[(( new_ppr['serve_src_zone_net'] == srv_src) & 
+                                     ( new_ppr['serve_dest_zone_net'] == srv_to_n) & 
+                                     ( new_ppr['serve_dest_zone_depth'] == srv_to_d ) ) ],
+                              disp_player,
+                              'att',
+                              True 
+                            )
+        oos_vector = count_out_of_system( new_ppr[(( new_ppr['serve_src_zone_net'] == srv_src) & 
+                                                   ( new_ppr['serve_dest_zone_net'] == srv_to_n) & 
+                                                   ( new_ppr['serve_dest_zone_depth'] == srv_to_d ) ) ],
+                              disp_player,
+                              'att'
+                                       )
+        srv_strat_df.at[rows,'From'] = str(i)
+        srv_strat_df.at[rows,'To'] = str(srv_2_net_txt[srv_2_txt[j][0]]) + " " + str(srv_2_txt[j][1])
+        srv_strat_df.at[rows,'Attempts'] = fbhe_vector[3]
+        srv_strat_df.at[rows,'FBSO'] = fbhe_vector[4]
+        srv_strat_df.at[rows,'FBHE'] = fbhe_vector[0]
+        srv_strat_df.at[rows,'Out of Sys'] = oos_vector[0]
+        srv_strat_df.at[rows,'URL'] = fbhe_vector[5]  
+                                  
+  print(f"Srv Strat DF: {srv_strat_df}")
+  # fo rnow, I want to drop the 'All' first row (the .iloc)
+  srv_strat_md = pd.DataFrame.to_markdown(srv_strat_df, index=False)
+
+  # now, time to make plots.
+  # want to plot data from new_ppr
+
+  # limit the data to passes by the player
+  #new_ppr = new_ppr[ new_ppr['pass_player'] == disp_player]
+
+  # make a plot to chart the serves: (line chart, court in the background)
+  serve_diagram_plot_object = plot_lines_on_court(new_ppr, 'srv', 1)
+  #serve_diagram_plot_object = ''
+
+  # make a plot to chart the pass locations: (dot splatter with half court in background)
+  pass_locations_plot_object = plot_points_on_the_court(new_ppr['pass_dest_x'],new_ppr['pass_dest_y'], 2, new_ppr['video_id'], new_ppr['pass_action_id'],True,new_ppr['point_outcome'])
+  #pass_locations_plot_object = ''
+
+  # make a plot to chart the set locations: (dot splatter with half court in background)
+  set_locations_plot_object = plot_points_on_the_court(new_ppr['set_dest_x'],new_ppr['set_dest_y'], 3, new_ppr['video_id'], new_ppr['set_action_id'],False,new_ppr['point_outcome'])
+  #set_locations_plot_object = ''
+
+  # Next, build the 6 plots across the page as subplots, zone's 1 - 5 plus Optioon
+
+  # set up 6 sub plots
+  #print("scout_srv_strategy, Plotting Zone 1 Attempts")
+  attack_z1_plot_object = plot_lines_on_court( new_ppr[(new_ppr['tactic'] != 'option')],'att',4)  
+  #print("scout_srv_strategy, Plotting Zone 2 Attempts")  
+  #attack_z2_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')],'att',5)
+  #print("scout_srv_strategy, Plotting Zone 3 Attempts")
+  #attack_z3_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')],'att',6)
+  #print("scout_srv_strategy, Plotting Zone 4 Attempts")
+  #attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',7)
+  #print("scout_srv_strategy, Plotting Zone 5 Attempts")
+  #attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',8)
+  #print("scout_srv_strategy, Plotting Option Attempts")
+  #attack_opt_plot_object = plot_lines_on_court(new_ppr[ new_ppr['tactic'] == 'option'],'att',9)
+
+  # set up 6 small tables below with:
+  #. 0 = FBHE
+  #. 1 = FBSO
+  #  2 = Attempts
+  #. 3 = Out of System
+  #. 4 = URL
+
+  zone_dict = {'1':['FBHE','FBSO','ATT','URL'],'Value':[0,0,0,'']}
+  z1_df = pd.DataFrame.from_dict(zone_dict)
+  #z2_df = pd.DataFrame.from_dict(zone_dict)
+  #z3_df = pd.DataFrame.from_dict(zone_dict)
+  #z4_df = pd.DataFrame.from_dict(zone_dict)
+  #z5_df = pd.DataFrame.from_dict(zone_dict)
+  #opt_df = pd.DataFrame.from_dict(zone_dict)
+
+  fbhe_vector = fbhe(new_ppr[  (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z1_df.at[0,'Value'] = fbhe_vector[0]
+  z1_df.at[1,'Value'] = fbhe_vector[4]
+  z1_df.at[2,'Value'] = fbhe_vector[3]
+  z1_df.at[3,'Value'] = fbhe_vector[5]
+  #z1_df.at[3,'Value'] = oos_vector[0]
+
+  z1_mkdn = pd.DataFrame.to_markdown(z1_df, index=False, headers=['',''] )
+  
+  return srv_strategy_title, srv_strat_md, serve_diagram_plot_object, pass_locations_plot_object, set_locations_plot_object, attack_z1_plot_object, " ", " ", " ", " ", ' ', z1_mkdn, ' ', " ", " ", " ", " "
