@@ -88,6 +88,12 @@ def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp
   }
   match_up_df = pd.DataFrame.from_dict( match_up_dict)
 
+  print(f"Match up df: {match_up_df}")
+  print(f"a1_matchup: {a1_matchup}")
+  print(f"a2_matchup: {a1_matchup}")
+  print(f"b1_matchup: {a1_matchup}")
+  print(f"b2_matchup: {a1_matchup}")
+  
   # now populate the dataframe (row, column)
   match_up_df.iloc[0,2] = float('{:.2}'.format(a1_matchup[2])) # ace
   match_up_df.iloc[0,3] = float('{:.2}'.format(a2_matchup[2]))
@@ -116,7 +122,8 @@ def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp
   
   return match_up_df
 
-  
+
+
 @anvil.server.callable
 def matchup_pair_data(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team):
   #
@@ -1283,7 +1290,7 @@ def player_attacking_as_passer_or_server( m_ppr_df, disp_player, action ):
       fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
       fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
       fbhe_table.at[1,column[i-1]] = fbhe_vector[4]  # FBSO
-      fbhe_table.at[5,column[i-1]] = str("{:.0%}").format(oos_vector1[1])  # Out of System      
+      fbhe_table.at[5,column[i-1]] = oos_vector1[1]  # Out of System      
       fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
 
     # calculate fbhe for all options
@@ -1294,7 +1301,7 @@ def player_attacking_as_passer_or_server( m_ppr_df, disp_player, action ):
     fbhe_table.at[3,'Option'] = fbhe_vector[2]  # errors
     fbhe_table.at[4,'Option'] = fbhe_vector[3]  # attempts
     fbhe_table.at[1,'Option'] = fbhe_vector[4]  # confidence interval
-    fbhe_table.at[5,'Option'] = str("{:.0%}").format(oos_vector1[1])  # percent out of system
+    fbhe_table.at[5,'Option'] = oos_vector1[1]  # percent out of system
     fbhe_table.at[6,'Option'] = fbhe_vector[5]  # URL
 
     fbhe_return = pd.DataFrame.to_markdown(fbhe_table, index = False )

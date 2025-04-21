@@ -747,6 +747,12 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
         tmp = pair_a
         pair_a = pair_b
         pair_b = tmp
+
+      # really need to now do a loop over the two players on this pair.
+      disp_player1, disp_player2 = pair_players( pair_a)
+
+      disp_p
+        
       for index, rpt_print in rpt_list_df.iterrows():
         print(f"Process report: {rpt_print['function_name']}")
         # call pdf report
@@ -775,7 +781,7 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
       # loop over the two players in pair_a, so we can do the 
       # get the serve strategy table
       # call to get the serve stretegy table
-      matchup_df = mplayer_45_serves(pair_r['league'], pair_r['gender'], pair_r['year'], disp_player, disp_team)
+      matchup_df = player_45_serves(pair_r['league'], pair_r['gender'], pair_r['year'], disp_player, disp_team)
 
       # sort by FBHE, take the top num_srv_Strategies
       num_srv_strategies = 3
