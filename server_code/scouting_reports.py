@@ -831,7 +831,7 @@ def player_1_zone_att(disp_league,
     att_zone = 4
   elif srv_to_5[0]:
     att_zone = 5
-  print(f" attack zone:{att_zone}")
+  #print(f" attack zone:{att_zone}")
 
   # lets find the serve strategy Text:
   srv_2_net_txt = ['','Line','Body(l)','Seam','Body(r)','Line']
@@ -1013,7 +1013,7 @@ def player_1_zone_att(disp_league,
         srv_strat_df.at[rows,'Out of Sys'] = oos_vector[0]
         srv_strat_df.at[rows,'URL'] = fbhe_vector[5]  
                                   
-  print(f"Srv Strat DF: {srv_strat_df}")
+  #print(f"Srv Strat DF: {srv_strat_df}")
   # fo rnow, I want to drop the 'All' first row (the .iloc)
   # now, delete all rows where attemtps = 0
   srv_strat_df = srv_strat_df[srv_strat_df['Attempts'] != 0] 

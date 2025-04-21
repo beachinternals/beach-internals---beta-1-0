@@ -833,7 +833,53 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
         
             # now, need to merge this report with the next one
             full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
-          
+
+          # now, make charts for all attacks, zone 1 thru 5
+          for att_zone in [1,2,3,4,5]:
+            report_function_name = 'player_1_zone_att'
+            report_form = 'plot_one_zone_attacks'
+
+            # set the sereve to parameters to get the zone
+            srv_to_1[0] = False
+            srv_to_2[0] = False
+            srv_to_3[0] = False
+            srv_to_4[0] = False
+            srv_to_5[0] = False
+            
+            if att_zone == 1:
+              srv_to_1[0] = True
+            elif att_zone == 2:
+              srv_to_2[0] = True
+            elif att_zone == 3:
+              srv_to_3[0] = True
+            elif att_zone == 4:
+              srv_to_4[0] = True;
+            else:
+              srv_to_5[0] = True
+              
+            # now call the generate pdf function
+            pdf1 = create_scouting_pdf_reports(report_function_name ,
+                    report_form ,pair_r['league'], pair_r['gender'], pair_r['year'],
+                    disp_team,
+                    pair_b,
+                    disp_player,
+                    False, #self.comp_l1_check_box.checked,
+                    ' ', # self.comp_l1_drop_down.selected_value["comp_l1"],
+                    False, # self.comp_l2_check_box.checked,
+                      ' ', # self.comp_l2_drop_down.selected_value["comp_l2"],
+                    False, # self.comp_l3_check_box.checked,
+                      ' ', # self.comp_l3_drop_down.selected_value["comp_l3"],
+                    False, # self.date_check_box.checked,
+                      ' ', # self.start_date_picker.date,
+                      ' ', # self.end_date_picker.date,
+                    True, # scout,
+                    ' ', ' ', # r_list_row['explain_text'], r_list_row['box1_title'], # table_data4, title_text,
+                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+            )
+            # now, need to merge this report with the next one
+            full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+            
+            
     # now write this to the google drive
     file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
 
