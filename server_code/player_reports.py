@@ -1700,19 +1700,24 @@ def report_stuba(disp_league, disp_gender, disp_year,
   return fbhe_return, ' ', ' '
 
 @anvil.server.callable
-def player_srv_strategies( disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team ):
+def player_srv_strategies( disp_league, disp_gender, disp_year, pair_a, disp_player, disp_team ):
   '''
 
   Create a report that determines the best serve strategies against pair_b, sered by pair_a
   list these in a table with URL's, then draw them on a chart
 
   But this is set for hte matchup reports for hte format.
+
+  Modified this ... shows serving strategies for only one player using all data.  player12 should be  the number 1 or 2. to determine whcih of hte two players in the pair to display
   
   '''
   # parameters
   num_srv_strategies = 10
 
-  disp_player, disp_player2 = pair_players(pair_a)
+  disp_player1, disp_player2 = pair_players(pair_a)
+  if (disp_player != disp_player1) or (disp_player != disp_player2):
+    print(f"player_srv_stratgeis: disp player ot found: {disp_player}, {pair_a}")
+    
   # open my data sources
   # fetch the pair_data and pair_data_stats files
   player_data_df, player_stats_df = get_player_data( disp_league, disp_gender, disp_year)

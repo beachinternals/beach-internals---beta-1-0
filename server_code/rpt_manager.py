@@ -811,7 +811,7 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
         pdf1 = create_matchup_pdf_reports(serve_rpt ,
                     r_list_row['rpt_form'] ,pair_r['league'], pair_r['gender'], pair_r['year'],
                     pair_b,
-                    pair_a,
+                    disp_player,
                     disp_team
           )
         
@@ -830,11 +830,12 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
           srv_fr, srv_to_1, srv_to_2, srv_to_3, srv_to_4, srv_to_5 = srv_to_fr( serves['srv_fr'], serves['srv_to_net'], serves['srv_to_depth'] )
           # find the report list table row fo rthe report we want
           report_function_name = 'player_srv_strategy'
+          report_form = 'scout_3court_6attack_plot_rpt'
           print(f"process report (2): {report_function_name} for {serves['rcv_player']}")
           
           # now call the generate pdf function
           pdf1 = create_scouting_pdf_reports(report_function_name ,
-                    r_list_row['rpt_form'] ,pair_r['league'], pair_r['gender'], pair_r['year'],
+                    report_form ,pair_r['league'], pair_r['gender'], pair_r['year'],
                     disp_team,
                     pair_b,
                     serves['rcv_player'],
@@ -848,7 +849,7 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
                       ' ', # self.start_date_picker.date,
                       ' ', # self.end_date_picker.date,
                     True, # scout,
-                    ' ', ' ', # r_list_row['explain_text'], r_list_row['box1_title'], # table_data4, title_text,
+                    ' Explain Text', ' Title Text ', # r_list_row['explain_text'], r_list_row['box1_title'], # table_data4, title_text,
                     srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
           )
         

@@ -12,7 +12,7 @@ components:
       spacing_below: medium
       text: Player Attacks from a Single Zone
     type: Label
-  - layout_properties: {grid_position: 'EUXKJV,CJECOL VKCXAV,MTZPHF'}
+  - layout_properties: {grid_position: 'CIKHQV,KEEHPF'}
     name: pair_player_label
     properties:
       align: right
@@ -21,7 +21,7 @@ components:
         padding: ['0', null, '0', null]
       text: Pair/Player
     type: Label
-  - layout_properties: {grid_position: 'EUXKJV,CJECOL VKCXAV,RIUUKC'}
+  - layout_properties: {grid_position: 'CIKHQV,JXJBOO'}
     name: pair_player_text
     properties:
       spacing:
@@ -36,27 +36,9 @@ components:
     type: RichText
   layout_properties: {grid_position: 'EWJKVJ,RLRUDA'}
   name: column_panel_1
-  properties: {col_widths: '{"MTZPHF":15,"RIUUKC":45,"CJECOL":20,"DNEHQW":40}'}
-  type: ColumnPanel
-- layout_properties: {grid_position: 'XOZNWD,YOODLQ'}
-  name: column_panel_6
-  properties:
-    spacing:
-      margin: [null, null, 52, null]
-      padding: ['10', null, '10', null]
-    spacing_above: large
-    spacing_below: large
+  properties: {col_widths: '{"DNEHQW":40,"JCEPYZ":40,"KEEHPF":5,"JXJBOO":15}'}
   type: ColumnPanel
 - components:
-  - layout_properties: {grid_position: 'YCKQGC,BKDDJN REHOUD,SPVWXR'}
-    name: label_15
-    properties:
-      align: center
-      bold: true
-      spacing:
-        padding: ['0', null, '0', null]
-      text: Serves
-    type: Label
   - components:
     - layout_properties: {grid_position: 'PBXSLN,HIWJVT'}
       name: serve_plot
@@ -65,19 +47,19 @@ components:
         height: 600.8619384765625
         margin: ['1', null, '1', null]
       type: Image
-    layout_properties: {grid_position: 'YCKQGC,BKDDJN NWWVZA,HMGAJQ'}
+    - layout_properties: {grid_position: 'ICIWKW,MRXLBL'}
+      name: label_15
+      properties:
+        align: center
+        bold: true
+        spacing:
+          padding: ['0', null, '0', null]
+        text: Serves
+      type: Label
+    layout_properties: {grid_position: 'YCKQGC,BKDDJN'}
     name: column_panel_5
     properties: {}
     type: ColumnPanel
-  - layout_properties: {grid_position: 'YCKQGC,SCROJS WRXSKG,ACMTBC'}
-    name: label_16
-    properties:
-      align: center
-      bold: true
-      spacing:
-        padding: ['0', null, '0', null]
-      text: Pass Location
-    type: Label
   - layout_properties: {grid_position: 'YCKQGC,SCROJS IQYSUA,CIUEVX'}
     name: pass_plot
     properties:
@@ -85,14 +67,14 @@ components:
       height: 607.6076049804688
       margin: ['1', null, '1', null]
     type: Image
-  - layout_properties: {grid_position: 'YCKQGC,MFXDSZ NDMVIL,JMPPNT'}
-    name: label_17
+  - layout_properties: {grid_position: 'YCKQGC,SCROJS FXSTKX,RXIIMV'}
+    name: label_16
     properties:
       align: center
       bold: true
       spacing:
         padding: ['0', null, '0', null]
-      text: Set Location
+      text: Pass Location
     type: Label
   - components:
     - layout_properties: {grid_position: 'KKHLMN,MUDEFF'}
@@ -102,7 +84,16 @@ components:
         height: 602.2621459960938
         margin: ['1', null, '1', null]
       type: Image
-    layout_properties: {grid_position: 'YCKQGC,MFXDSZ GURYSI,MZHPSX'}
+    - layout_properties: {grid_position: 'BZGXFG,BYKXKI'}
+      name: label_17
+      properties:
+        align: center
+        bold: true
+        spacing:
+          padding: ['0', null, '0', null]
+        text: Set Location
+      type: Label
+    layout_properties: {grid_position: 'YCKQGC,MFXDSZ'}
     name: column_panel_7
     properties: {}
     type: ColumnPanel
@@ -110,16 +101,12 @@ components:
   name: column_panel_2
   properties: {col_spacing: tiny, col_widths: '{"BKDDJN":20,"SCROJS":20,"MFXDSZ":20}'}
   type: ColumnPanel
-- layout_properties: {grid_position: 'BEAZSC,RVJQKV'}
-  name: column_panel_9
-  properties:
-    spacing:
-      margin: [null, null, 49, null]
-    spacing_above: large
-    spacing_below: large
-  type: ColumnPanel
 - components:
-  - layout_properties: {grid_position: 'AOFIAT,KMZIPW'}
+  - layout_properties: {grid_position: 'DBPJFG,EGDWRU ABHREY,PAUWRW'}
+    name: z1_att_plot
+    properties: {display_mode: shrink_to_fit, height: 677.8584594726562, vertical_align: top}
+    type: Image
+  - layout_properties: {grid_position: 'DBPJFG,EGDWRU AFUMQJ,BFTQUZ'}
     name: label_13
     properties:
       align: center
@@ -128,39 +115,27 @@ components:
         padding: ['0', null, '0', null]
       text: Attacks
     type: Label
-  - layout_properties: {grid_position: 'AOFIAT,OWUJYT'}
+  - layout_properties: {grid_position: 'DBPJFG,HUHNDV BTMDFZ,KYFZXB'}
     name: label_1
     properties: {align: center, bold: true, text: Attack Table}
     type: Label
-  - layout_properties: {grid_position: 'DBPJFG,EGDWRU'}
-    name: z1_att_plot
-    properties: {display_mode: shrink_to_fit, height: 677.8584594726562, vertical_align: top}
-    type: Image
-  - layout_properties: {grid_position: 'DBPJFG,HUHNDV'}
+  - layout_properties: {grid_position: 'DBPJFG,HUHNDV RUCYMH,JYGARW'}
     name: z1_table
     properties: {}
     type: RichText
   layout_properties: {grid_position: 'OEMGWD,WNTRPL'}
   name: column_panel_8
-  properties: {col_widths: '{"EGDWRU":40,"HUHNDV":20,"KMZIPW":40,"OWUJYT":20}'}
-  type: ColumnPanel
-- layout_properties: {grid_position: 'ADQUKZ,NALFDB'}
-  name: column_panel_10
-  properties:
-    spacing:
-      margin: [null, null, 42, null]
-    spacing_above: large
-    spacing_below: large
+  properties: {col_widths: '{"EGDWRU":40,"HUHNDV":20}'}
   type: ColumnPanel
 - components:
   - components:
     - layout_properties: {grid_position: 'KRVUOV,RSEYIO'}
       name: explain_text
-      properties: {}
+      properties: {visible: false}
       type: RichText
     - layout_properties: {grid_position: 'KRVUOV,QWOKQJ'}
       name: filter_text
-      properties: {}
+      properties: {visible: false}
       type: RichText
     layout_properties: {grid_position: 'MJEXCD,AGRWBX'}
     name: column_panel_4

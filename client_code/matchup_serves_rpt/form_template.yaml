@@ -52,59 +52,35 @@ components:
   properties: {}
   type: ColumnPanel
 - components:
-  - layout_properties: {grid_position: 'OZUNBC,RIQYLF KDQOXA,TIWDII'}
-    name: plt1_label
-    properties: {align: center}
-    type: Label
   - layout_properties: {grid_position: 'OZUNBC,RIQYLF EKOQYO,IFSQMO'}
     name: plt1
-    properties: {height: 609.142578125}
+    properties: {height: 561.7725219726562}
     type: Image
-  - layout_properties: {grid_position: 'OZUNBC,SKZUXH JMCNWA,UJWCSQ'}
-    name: plt3_label
+  - layout_properties: {grid_position: 'OZUNBC,RIQYLF RWJGSG,ULQGYW'}
+    name: plt1_label
     properties: {align: center}
     type: Label
   - layout_properties: {grid_position: 'OZUNBC,SKZUXH PTXINH,DGNQQF'}
     name: plt3
-    properties: {height: 616.751953125}
+    properties: {height: 566.6058349609375}
     type: Image
-  - layout_properties: {grid_position: 'OZUNBC,HENVES CBNALR,TBYNVW'}
-    name: plt5_label
+  - layout_properties: {grid_position: 'OZUNBC,SKZUXH TWSALB,EMOAGU'}
+    name: plt3_label
     properties: {align: center}
     type: Label
   - layout_properties: {grid_position: 'OZUNBC,HENVES FEMGLN,ZLKZHQ'}
     name: plt5
-    properties: {height: 620.4716796875}
+    properties: {height: 566.5225219726562}
     type: Image
+  - layout_properties: {grid_position: 'OZUNBC,HENVES JNYORI,ZZNHJP'}
+    name: plt5_label
+    properties: {align: center}
+    type: Label
   layout_properties: {grid_position: 'VKNXSB,VHPIMD'}
   name: column_panel_9
   properties: {}
   type: ColumnPanel
-- components:
-  - layout_properties: {grid_position: 'TKGOOH,GRJYUP'}
-    name: plt2_label
-    properties: {align: center}
-    type: Label
-  - layout_properties: {grid_position: 'TKGOOH,YYNWXF'}
-    name: plt4_label
-    properties: {align: center}
-    type: Label
-  - layout_properties: {grid_position: 'TKGOOH,OIMCUH'}
-    name: plt6_label
-    properties: {align: center}
-    type: Label
-  - layout_properties: {grid_position: 'LLJQOD,NUUKTJ'}
-    name: plt2
-    properties: {height: 623.1123046875}
-    type: Image
-  - layout_properties: {grid_position: 'LLJQOD,ILTQTB'}
-    name: plt4
-    properties: {height: 619.02734375}
-    type: Image
-  - layout_properties: {grid_position: 'LLJQOD,RUBNKR'}
-    name: plt6
-    properties: {height: 625.1240234375}
-    type: Image
+- components: []
   layout_properties: {grid_position: 'MPOYGH,WFRUHB'}
   name: column_panel_10
   properties: {}

@@ -169,6 +169,7 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
   # call render form
   #print(f"Rendering Form for {table_data1}")
   pdf_file =disp_player + ' ' + report_row['report_name'] 
+  print(f"filter text : {filter_text}, explain text : {explain_text} report form: {rpt_form}")
   pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form, 
     disp_pair,
     disp_player,

@@ -37,6 +37,9 @@ def plot_lines_on_court( ppr_df, action, plt_num):
 
   err = ''
   kill = ''
+  line_style = ['solid','dashed','dashdot'] # set a line style of solid for hard driven, or fast, dashed for off spped or slow.
+  l_style = line_style[0] # default is a solid line, mainly for serves.
+  
   if action == 'srv':
     x1 = 'serve_src_x'
     x2 = 'serve_dest_x'
@@ -70,19 +73,19 @@ def plot_lines_on_court( ppr_df, action, plt_num):
   
   for index, ppr_r in ppr_df.iterrows():
     line_color = 'blue'
-    l_style = 'solid'
+    l_style = line_style[1] if (action == 'att' and ppr_r['att_speed'] < 5.5 ) else line_style[0] # if off speed shot, set the line style to dotted, else solid
     m_style = '>'
     l_width = 2.5
     m_every = [-1] # to mark only the end point
     if ppr_r['point_outcome'] == err:
       line_color = 'red'
-      l_style='solid'
+      #l_style='solid'
       m_style ='X'
       l_width = 2.5
       m_every = [-1] # to mark only the end point
     if ppr_r['point_outcome'] == kill:
       line_color = 'green'
-      l_style='solid'
+      #l_style='solid'
       m_style ='o'
       l_width = 2.5
       m_every = [-1] # to mark only the end point
