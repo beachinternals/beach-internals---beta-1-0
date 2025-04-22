@@ -808,23 +808,11 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
 
         # now, call the report to plot hte srecommended service lines one the court.
         print(f"process report (1.5): {serve_rpt} for {disp_player}")
-        pdf1 = create_scouting_pdf_reports(serve_rpt ,
+        pdf1 = create_matchup_pdf_reports(serve_rpt ,
                     r_list_row['rpt_form'] ,pair_r['league'], pair_r['gender'], pair_r['year'],
-                    disp_team,
                     pair_b,
-                    disp_player,
-                    False, #self.comp_l1_check_box.checked,
-                    ' ', # self.comp_l1_drop_down.selected_value["comp_l1"],
-                    False, # self.comp_l2_check_box.checked,
-                      ' ', # self.comp_l2_drop_down.selected_value["comp_l2"],
-                    False, # self.comp_l3_check_box.checked,
-                      ' ', # self.comp_l3_drop_down.selected_value["comp_l3"],
-                    False, # self.date_check_box.checked,
-                      ' ', # self.start_date_picker.date,
-                      ' ', # self.end_date_picker.date,
-                    True, # scout,
-                    ' ', ' ', # r_list_row['explain_text'], r_list_row['box1_title'], # table_data4, title_text,
-                    srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
+                    pair_a,
+                    disp_team
           )
         
         # now, need to merge this report with the next one
