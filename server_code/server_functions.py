@@ -121,7 +121,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
   if disp_team == 'INTERNALS':
     disp_team = 'League'
     scout = False
-    print(f"Fetching Data for INTERNALS: {disp_team}")
+    #print(f"Fetching Data for INTERNALS: {disp_team}")
     
   #print(f"Searching Team Rows: L:{disp_league}, G:{disp_gender},Y:{disp_year},T:{disp_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
@@ -134,7 +134,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
 
   if ppr_csv_row:
     m_ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
-    print(f"Fectched the ppr file for : {disp_league}, {disp_gender}, {disp_year}, {disp_team}, number of rows = {m_ppr_df.shape[0]}")
+    #print(f"Fectched the ppr file for : {disp_league}, {disp_gender}, {disp_year}, {disp_team}, number of rows = {m_ppr_df.shape[0]}")
     ppr_for_team_found = True
   else:
     m_ppr_df = [" "]
