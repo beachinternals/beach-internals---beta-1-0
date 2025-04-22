@@ -81,11 +81,11 @@ components:
     type: Image
   - layout_properties: {grid_position: 'NBMSQR,TVQHLT'}
     name: explain_text
-    properties: {align: left}
+    properties: {align: left, visible: false}
     type: RichText
   - layout_properties: {grid_position: 'NBMSQR,WVHBEV'}
     name: filter_text
-    properties: {align: left}
+    properties: {align: left, visible: false}
     type: RichText
   layout_properties: {full_width_row: true, grid_position: 'SRADEW,WAXLGY'}
   name: column_panel_2
