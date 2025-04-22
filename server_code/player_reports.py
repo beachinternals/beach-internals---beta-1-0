@@ -1715,8 +1715,8 @@ def player_srv_strategies( disp_league, disp_gender, disp_year, pair_a, disp_pla
   num_srv_strategies = 10
 
   disp_player1, disp_player2 = pair_players(pair_a)
-  if (disp_player != disp_player1) or (disp_player != disp_player2):
-    print(f"player_srv_stratgeis: disp player ot found: {disp_player}, {pair_a}")
+  if (disp_player != disp_player1) and (disp_player != disp_player2):
+    print(f"player_srv_stratgeis: disp player not found: {disp_player}, {pair_a}")
     
   # open my data sources
   # fetch the pair_data and pair_data_stats files

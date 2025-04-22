@@ -58,7 +58,7 @@ class matchup_serves_rpt(matchup_serves_rptTemplate):
     self.plt5.source = plt5
     #self.plt6.source = plt6
     self.plt1_label.text = box_title1 + player_b1
-    print(f"box 2 title {box_title2}, player_b2 {player_b2}")
+    #print(f"box 2 title {box_title2}, player_b2 {player_b2}")
     #self.plt2_label.text = box_title2 + player_b2
     self.plt3_label.text = box_title3 + player_b1
     #self.plt4_label.text = box_title4 + player_b2
