@@ -73,7 +73,7 @@ def plot_lines_on_court( ppr_df, action, plt_num):
   
   for index, ppr_r in ppr_df.iterrows():
     line_color = 'blue'
-    l_style = line_style[1] if (action == 'att' and ppr_r['att_speed'] < 4.5 ) else line_style[0] # if off speed shot, set the line style to dotted, else solid
+    l_style = line_style[1] if (action == 'att' and ppr_r['att_speed'] < 6 ) else line_style[0] # if off speed shot, set the line style to dotted, else solid
     m_style = '>'
     l_width = 2.5
     m_every = [-1] # to mark only the end point

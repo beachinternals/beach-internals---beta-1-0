@@ -912,7 +912,7 @@ def player_1_zone_att(disp_league,
     srv_fr_text = srv_fr_text + ' & Line (Right)' if len(srv_fr_text) != 0 else 'Line (Right)'
   #print(f"scout_srv_strategy:  srv_fr : {srv_fr}")
 
-  srv_strategy_title = 'Attacks for '+disp_player+' , attacking form zone:'+str(att_zone)
+  srv_strategy_title = 'Attacks for '+disp_player+' , Attacking from Zone:'+str(att_zone)
   #print(f"Serving Strategy: {srv_strategy_title}")
   
   # make a list of tuples for the serve to zones
