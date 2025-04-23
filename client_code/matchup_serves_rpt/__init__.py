@@ -44,9 +44,15 @@ class matchup_serves_rpt(matchup_serves_rptTemplate):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
-    # find by four players frm teh two pairs
-    player_a1, player_a2 = anvil.server.call( 'pair_players', disp_pair_a )
-    player_b1, player_b2 = anvil.server.call( 'pair_players', disp_pair_b )
+    if disp_pair_b in disp_pair_a:
+      # then this is the player strategy so ..
+      player_b1 = disp_pair_b
+      self.label_1.visible = False
+      self.pair_b_label.visible = False
+    else:
+      # find by four players frm teh two pairs
+      player_a1, player_a2 = anvil.server.call( 'pair_players', disp_pair_a )
+      player_b1, player_b2 = anvil.server.call( 'pair_players', disp_pair_b )
     
     self.pair_a_label.text = disp_pair_a
     self.pair_b_label.text = disp_pair_b
@@ -64,6 +70,8 @@ class matchup_serves_rpt(matchup_serves_rptTemplate):
     #self.plt4_label.text = box_title4 + player_b2
     self.plt5_label.text = box_title5 + player_b1
     #self.plt6_label.text = box_title6 + player_b2
+
+    self.serve_table_table.text = 'Serve Strategies for :'+player_b1
 
 
     #self.filter_text.content = filter_text

@@ -43,6 +43,7 @@ class scout_3court_6attack_plot_rpt(scout_3court_6attack_plot_rptTemplate):
     self.init_components(**properties)
 
     self.srv_strategy_title.content = serve_strategy_title
+    self.srv_strategy_title2.content = serve_strategy_title
     self.player_label.text = disp_player
     self.rpt_disp_box.content = table_data
     self.serve_plot.source = plot1

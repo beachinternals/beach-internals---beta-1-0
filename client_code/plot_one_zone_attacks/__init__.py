@@ -65,5 +65,9 @@ class plot_one_zone_attacks(plot_one_zone_attacksTemplate):
     self.filter_text.content = filter_text
     self.explain_text.content = explain_text
     # self.box1_label.text = title_text
+    self.rpt_title.text = serve_strategy_title
+    self.title2.text = serve_strategy_title
+    self.player_label2.text = disp_player
+    
 
     # Any code you write here will run before the form opens.
