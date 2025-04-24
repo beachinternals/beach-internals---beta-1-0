@@ -379,7 +379,7 @@ db_schema:
       name: player_list
       target: master_player
       type: link_multiple
-    - admin_ui: {order: 6, width: 435}
+    - admin_ui: {order: 6, width: 162}
       name: pair_list
       target: master_pair
       type: link_multiple
