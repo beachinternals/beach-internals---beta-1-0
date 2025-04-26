@@ -200,7 +200,7 @@ def fbhe_scout_query(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
 
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def player_attack_as_passer(disp_league, disp_gender, disp_year, 
@@ -291,7 +291,7 @@ def player_attack_as_passer(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
 
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year, 
@@ -413,7 +413,7 @@ def fbhe_by_attack_tactic(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def fbhe_by_srv_src(disp_league, disp_gender, disp_year, 
@@ -478,7 +478,7 @@ def fbhe_by_srv_src(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def fbhe_by_attack_type(disp_league, disp_gender, disp_year, 
@@ -565,7 +565,7 @@ def fbhe_by_attack_type(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ',' '
 
 @anvil.server.callable
 def srv_eff(disp_league, disp_gender, disp_year, 
@@ -667,7 +667,7 @@ def srv_eff(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 
 @anvil.server.callable
@@ -736,7 +736,7 @@ def fbhe_srv_dest(disp_league, disp_gender, disp_year,
     fbhe_return2 = ''
     fbhe_return3 = ''
   
-  return fbhe_return, fbhe_return2, fbhe_return3
+  return fbhe_return, fbhe_return2, fbhe_return3, ' '
 
 @anvil.server.callable
 def tri_score(disp_league, disp_gender, disp_year, 
@@ -813,7 +813,7 @@ def tri_score(disp_league, disp_gender, disp_year,
   # now create the markdown text to return
   tri_return = pd.DataFrame.to_markdown(tri_table, index = False )
   
-  return tri_return, ' ', ' '
+  return tri_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def error_density(disp_league, disp_gender, disp_year, 
@@ -875,7 +875,7 @@ def error_density(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
 
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 #######################  Transition  ############################
 @anvil.server.callable
@@ -970,7 +970,7 @@ def tcr(disp_league, disp_gender, disp_year,
   else:
     trans_return = "No Data Found"
 
-  return trans_return, ' ', ' '
+  return trans_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def expected_value(disp_league, disp_gender, disp_year, 
@@ -1040,7 +1040,7 @@ def expected_value(disp_league, disp_gender, disp_year,
   else:
      ev_return = "No Data Found"
   
-  return ev_return, ' ', ' '
+  return ev_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def out_of_system(disp_league, disp_gender, disp_year, 
@@ -1110,7 +1110,7 @@ def out_of_system(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def out_of_system_angle(disp_league, disp_gender, disp_year, 
@@ -1179,7 +1179,7 @@ def out_of_system_angle(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def out_of_system_location(disp_league, disp_gender, disp_year, 
@@ -1248,7 +1248,7 @@ def out_of_system_location(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 @anvil.server.callable
 def out_of_system_height(disp_league, disp_gender, disp_year, 
@@ -1317,7 +1317,7 @@ def out_of_system_height(disp_league, disp_gender, disp_year,
   else:
     fbhe_return = "No Data Found"
   
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ', ' '
 
 
   
@@ -1411,7 +1411,7 @@ def fbhe_in_out_system(disp_league, disp_gender, disp_year,
     fbhe_return = "No Data Found"
 
   
-  return fbhe_return, ' ', ' '
+  return fbhe_return, ' ', ' ',  ' '
 
 
 @anvil.server.callable
@@ -1511,7 +1511,7 @@ def player_sum_rpt(disp_league, disp_gender, disp_year,
   else:
     scor_return = "No Data Found"
     
-  return scor_return, ' ', ' '
+  return scor_return, ' ', ' ', ' '
 
 
 @anvil.server.callable
