@@ -503,7 +503,7 @@ def create_player_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, dis
 
   # call report function
   #print(f'Calling Function:{fnct_name}')
-  table_data1, table_data2, table_data3 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
+  table_data1, table_data2, table_data3, table_data4 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,

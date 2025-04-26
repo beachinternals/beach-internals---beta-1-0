@@ -65,7 +65,7 @@ def player_attacking(disp_league, disp_gender, disp_year,
                     scout, explain_text
                )
 
-  return table1_mkdn, table2_mkdn, table3_mkdn
+  return table1_mkdn, table2_mkdn, table3_mkdn, ' '
   
 @anvil.server.callable
 def fbhe_table_query(disp_league, disp_gender, disp_year, disp_team, disp_player):
