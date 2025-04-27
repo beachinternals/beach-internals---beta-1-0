@@ -1135,8 +1135,8 @@ def matchup_attacking_off_pass( disp_league, disp_gender, disp_year, pair_a, pai
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, disp_team, True)
 
   # for this report, we will limit NCAA to regular season, top 20 both
-  if disp_league.strip() == "NCAA":
-    ppr_df = ppr_df[ ( ppr_df['comp_l1'] == 'Regular Season') & ( ppr_df['comp_l2'] == 'Top 20 - Both') ]
+  #if disp_league.strip() == "NCAA":
+  #  ppr_df = ppr_df[ ( ppr_df['comp_l1'] == 'Regular Season') & ( ppr_df['comp_l2'] == 'Top 20 - Both') ]
   ppr_df_a = pair_filter(ppr_df, pair_a)
   ppr_df_b = pair_filter(ppr_df, pair_b)
   
