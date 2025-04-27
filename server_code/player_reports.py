@@ -37,8 +37,9 @@ def player_attacking(disp_league, disp_gender, disp_year,
   table3_mkdn = ''
   a = ''
   b = ''
+  c = ''
   
-  table1_mkdn,a,b = fbhe_scout_query(disp_league, disp_gender, disp_year, 
+  table1_mkdn,a,b,c = fbhe_scout_query(disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
