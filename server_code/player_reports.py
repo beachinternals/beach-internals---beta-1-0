@@ -1541,42 +1541,48 @@ def player_sw(disp_league, disp_gender, disp_year,
   
   sw_list = [(f_row['s_w']) for f_row in app_tables.master_player.search(league=disp_league,gender=disp_gender,year=disp_year,team=p_team,number=p_num,shortname=p_sname)]
 
-  if sw_list[0]:
-    # sw_list is now a media object, need to turn it back into a dataframe
-    sw_df =  pd.read_csv(io.BytesIO( sw_list[0].get_bytes()))
+  print(f"sw_list: {sw_list}")
+  if sw_list:
+    if sw_list[0]:
+      # sw_list is now a media object, need to turn it back into a dataframe
+      sw_df =  pd.read_csv(io.BytesIO( sw_list[0].get_bytes()))
 
-    # now we are going split s & w into 3 
-    # now calculate the Offense strength and weakness markdown
-    off_df = sw_df[ sw_df['Section'] == 'Offense'] 
-    off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
-    #print(f"pair_sw_report: off_df: {off_df}")
-    off_df = off_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
-    off_df = off_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      # now we are going split s & w into 3 
+      # now calculate the Offense strength and weakness markdown
+      off_df = sw_df[ sw_df['Section'] == 'Offense'] 
+      off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
+      #print(f"pair_sw_report: off_df: {off_df}")
+      off_df = off_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+      off_df = off_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
 
-    # now calculate the Deffense strength and weakness markdown
-    def_df = sw_df[ sw_df['Section'] == 'Serving'] 
-    def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
-    def_df = def_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
-    def_df = def_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      # now calculate the Deffense strength and weakness markdown
+      def_df = sw_df[ sw_df['Section'] == 'Serving'] 
+      def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
+      def_df = def_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+      def_df = def_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
 
-    # now calculate the Errors strength and weakness markdown
-    err_df = sw_df[ sw_df['Section'] == 'Error & Transitison'] 
-    err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
-    err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
-    err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      # now calculate the Errors strength and weakness markdown
+      err_df = sw_df[ sw_df['Section'] == 'Error & Transitison'] 
+      err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
+      err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+      err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
 
-    # now calculate the Errors strength and weakness markdown
-    cons_df = sw_df[ sw_df['Section'] == 'Consistency'] 
-    cons_df = cons_df.sort_values(by='Category', ascending=True, na_position='last')
-    cons_df = cons_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
-    cons_df = cons_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      # now calculate the Errors strength and weakness markdown
+      cons_df = sw_df[ sw_df['Section'] == 'Consistency'] 
+      cons_df = cons_df.sort_values(by='Category', ascending=True, na_position='last')
+      cons_df = cons_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+      cons_df = cons_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
     
-    # now make the markdowns
-    off_mkdn = pd.DataFrame.to_markdown(off_df, index = False)
-    def_mkdn = pd.DataFrame.to_markdown(def_df, index = False)
-    err_mkdn = pd.DataFrame.to_markdown(err_df, index = False)
-    cons_mkdn = pd.DataFrame.to_markdown(cons_df, index = False)
-    
+      # now make the markdowns
+      off_mkdn = pd.DataFrame.to_markdown(off_df, index = False)
+      def_mkdn = pd.DataFrame.to_markdown(def_df, index = False)
+      err_mkdn = pd.DataFrame.to_markdown(err_df, index = False)
+      cons_mkdn = pd.DataFrame.to_markdown(cons_df, index = False)
+    else:
+      off_mkdn = 'No Data Found'
+      def_mkdn = 'No Data Found'
+      err_mkdn = 'No Data Found'
+      cons_mkdn = 'No Data Found'
   else:
     off_mkdn = 'No Data Found'
     def_mkdn = 'No Data Found'

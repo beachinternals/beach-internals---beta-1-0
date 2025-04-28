@@ -175,7 +175,7 @@ def rpt_mgr_generate_background():
         
         for player_r in rpt_r['player_list']:
           #print("Processing Player Reports")
-          #print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
+          print(f"Processing report for : {player_r['league']}, {player_r['gender']}, {player_r['year']}, {player_r['team']}, {player_r['number']}, {player_r['shortname']}")
           
           # calculate the folder we will store thiese into
           pdf_folder = [ player_r['league'].strip() + player_r['gender'].strip() + player_r['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
