@@ -713,7 +713,9 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
   6 = 3b, set 3, > 15 points (if total points in set > 10)
   
   '''
-  
+  # first, make sure we limit the df to plays with the display player involved.
+  m_ppr_df = m_ppr_df[ (m_ppr_df['player_a1'] == disp_player) | (m_ppr_df['player_a2'] == disp_player) | (m_ppr_df['player_b1'] == disp_player) | (m_ppr_df['player_b2'] == disp_player) ]
+
   if m_ppr_df.shape[0] > 0:
     no_data = False
     #
@@ -842,6 +844,9 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
             }
   cons2_table = pd.DataFrame.from_dict( df_dict )
   stat_table = pd.DataFrame.from_dict( df_dict)
+
+  # make sure the dataframe only has points with this display player
+  m_ppr_df = m_ppr_df[ (m_ppr_df['player_a1'] == disp_player) | (m_ppr_df['player_a2'] == disp_player) | (m_ppr_df['player_b1'] == disp_player) | (m_ppr_df['player_b2'] == disp_player) ]
 
   # get alist of unique video_id numbers plus set number
   set_list = m_ppr_df[ ['video_id','set','game_date','teama','teamb']]
