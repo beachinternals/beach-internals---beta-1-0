@@ -49,7 +49,8 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild 
 
 @anvil.server.callable
 def generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild  ): 
-  # select rows from the btd_files database and limit it to league, gender, and year
+  # select rows from the btd_files database and limit it to league, gender, and year and team
+  # this routine calculates ppr files for all btd files for this l,g,y,t
   btd_row = app_tables.btd_files.search(
     league = user_league,
     gender = user_gender,
@@ -59,6 +60,8 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
 
   print(f"generate_ppr_files_not_background: {user_league}, {user_gender}, {user_year},{user_team},{rebuild}")
   return_string = 'generate_ppr_files_not_background: '+user_league+', '+user_gender+',  '+ user_year+', '+user_team+', '+str(rebuild)
+  new_data = False # flag to indicate that new data was found to help night processing do the rest of the tasts
+  
   for flist_r in btd_row:
     #print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
     calc_ppr = False
@@ -67,13 +70,16 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       # call the function to return the ppr file given the btd file
       ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
       calc_ppr = True
+      new_data = True
     else:
       if not flist_r['ppr_file_date']: # no date for the ppr file
         ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )         
         calc_ppr = True
+        new_data = True
       elif flist_r['btd_file_date'] > flist_r['ppr_file_date']: # btd file is newer then the ppr file
         ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
         calc_ppr = True
+        new_data = True
 
     if calc_ppr:
       # clean up the ppr_df databale, just in case.
@@ -104,7 +110,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       True
       #print(f"Not processing file:{flist_r['filename']}")
       
-  return return_string
+  return return_string, new_data
 
 # ############ server function to convert a btd file to a ppr file
 def btd_to_ppr_file(btd_file_bytes, flist_r):
