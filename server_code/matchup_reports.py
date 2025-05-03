@@ -88,12 +88,12 @@ def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp
   }
   match_up_df = pd.DataFrame.from_dict( match_up_dict)
 
-  print(f"Match up df: {match_up_df}")
-  print(f"a1_matchup: {a1_matchup}")
-  print(f"a2_matchup: {a1_matchup}")
-  print(f"b1_matchup: {a1_matchup}")
-  print(f"b2_matchup: {a1_matchup}")
-  print(f"match up df: {match_up_df}")
+  #print(f"Match up df: {match_up_df}")
+  #print(f"a1_matchup: {a1_matchup}")
+  #print(f"a2_matchup: {a1_matchup}")
+  #print(f"b1_matchup: {a1_matchup}")
+  #print(f"b2_matchup: {a1_matchup}")
+  #print(f"match up df: {match_up_df}")
   
   # now populate the dataframe (row, column)
   match_up_df.iloc[0,2] = float('{:.2}'.format(a1_matchup[2])) # ace
