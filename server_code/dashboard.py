@@ -8,6 +8,7 @@ from anvil.tables import app_tables
 import anvil.server
 import pandas as pd
 import io
+import math
 from tabulate import tabulate
 from server_functions import *
 
@@ -113,3 +114,85 @@ def coaches_dashboard(disp_league, disp_gender, disp_year,
   df_stats_table = pd.DataFrame.to_markdown(player_stats_disp, index=False)
   
   return df_table1, df_table2, df_table3
+
+'''
+Season Timeline report
+
+Identify key metrics for you whole team broken down by week
+
+'''
+@anvil.server.callable
+def coaches_dashboard_season_summary(disp_league, disp_gender, disp_year, 
+                        disp_team, disp_pair, disp_player, 
+                        comp_l1_checked, comp_l1,
+                        comp_l2_check_box, comp_l2,
+                        comp_l3_check_box, comp_l3,
+                        date_check_box, start_date, end_date,
+                        scout, explain_text ):
+
+  # date range passed as start data and end data, then we report on start date +7 until we reach end data
+  # reporting on all players in disp_team
+
+  # get the ppr data
+  ppr_df = get_ppr_data(disp_league,disp_gender,disp_year, disp_team)
+  
+  # filter it by the filters given
+  ppr_df = ppr_df_limit( comp_l1_checked, comp_l1,
+                         comp_l2_check_box, comp_l2,
+                         comp_l3_check_box, comp_l3,
+                         date_check_box, start_date, end_date
+                       )
+
+  # filter it to just this team
+  disp_team = disp_team.strip()
+  ppr_df = ppr_df[ ( ppr_df['player_a1'][:len(disp_team)].strip() == disp_team | ppr_df['player_b1'][:len(disp_team)].strip() == disp_team ) ]
+
+  # define data frame to be returned (as a mkdn file)
+  # we want the variables in rows, the weeks time) in columns
+
+  # calculate the time
+  no_days = end_date - start_date
+  no_weeks = math.ciel(no_days/7)
+  if no_weeks < 1:
+    print(f"Error: no weeks between end date and start date, end date: {end_date}, Start Date: {start_date}")
+    return 'Error in Dates', '', ''
+    
+  '''
+  Variables to be calculated in columns
+
+  FBHE
+  % in system passing
+  Knock Out serving
+  points percentage
+  erro den
+  tcr
+  rows in data
+  
+  '''
+  dash_dict = {
+    'Week':['1'],
+    'FBHE':[0],
+    '% in Sys':[0],
+    '% Knock Out':[0],
+    '% Pts Earned':[0],
+    'Error Density':[0],
+    'Transiton Conversion':[0],
+    'Points in Data':[0]
+  }
+  dash_df = pd.DataFrame.from_dict( dash_dict )
+  
+  # loop over weeks
+  for wk in range[1,no_weeks]:
+    begin_date = start_date + 7*(wk-1)
+    stop_date = begin_date + 7
+    tmp_df = ppr_df[ ( ppr_df['date'] >= begin_date & ppr_df['date'] <= stop_date ) ]
+
+    # ow assign the variables:
+    dash_df.at[wk-1,'Points in Data'] = tmp_df.shape[0]
+    
+    
+
+  # convert dataframe to markdown
+
+  # return
+  return
