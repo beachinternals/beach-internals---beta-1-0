@@ -9,7 +9,9 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import datetime
-from anvil.js import window
+from anvil import open_form
+import anvil.js
+
 
 
 class Reports_main(Reports_mainTemplate):
@@ -267,7 +269,15 @@ class Reports_main(Reports_mainTemplate):
     print(f"event args: {event_args}")
     #print(f"event args: {event_args['item']}")
     #url = event_args['item']['url']
-    anvil.js.window.open("http://www.google.com/", '_blank')
+    #anvil.js.window.open("http://www.google.com/", '_blank')
+    #open_form('popupform', display_data='Testing 123', new_window=True)
+    data_to_display = "Testing 123 123 123 "
+    base_url = anvil.js.window.location.origin + anvil.js.window.location.pathname
+    # Construct the URL for the PopupForm
+    form_url = f"{base_url}#popupform"
+    # Open a new window with custom size
+    anvil.js.window.open(form_url, "_blank", "width=600,height=400")
+
     
     '''
     # Working on a new call function to pop a window and also use the **kwargs parameters
