@@ -276,6 +276,7 @@ class Reports_main(Reports_mainTemplate):
     # Construct the URL for the PopupForm
     form_url = f"{base_url}#popupform"
     # Open a new window with custom size
+    print(form_url)
     anvil.js.window.open(form_url, "_blank", "width=600,height=400")
 
     
