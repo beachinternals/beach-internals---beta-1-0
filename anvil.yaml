@@ -301,6 +301,29 @@ db_schema:
       type: datetime
     server: full
     title: ppr_csv_tables
+  report_data:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: report_id
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: images
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: dataframes
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: labels
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      name: created_at
+      type: datetime
+    - admin_ui: {order: 5, width: 200}
+      name: more_images
+      type: string
+    server: full
+    title: report_data
   report_list:
     client: search
     columns:

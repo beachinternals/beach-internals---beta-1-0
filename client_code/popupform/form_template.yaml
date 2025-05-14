@@ -1,7 +1,51 @@
 components:
-- layout_properties: {grid_position: 'FOTJMH,HBHMDJ'}
-  name: label_1
-  properties: {}
+- layout_properties: {grid_position: 'WQVLAA,ABGYLC'}
+  name: label_images_1
+  properties: {align: center, bold: true, font_size: 18, text: Images}
   type: Label
+- layout_properties: {grid_position: 'WQVLAA,XOYYZS'}
+  name: first_images_flow_panel
+  properties: {}
+  type: FlowPanel
+- layout_properties: {grid_position: 'OJHMTR,UWZVGG'}
+  name: label_df_1
+  properties: {align: center, bold: true, font_size: 18, text: 'DataFrame clipboard://1'}
+  type: Label
+- components:
+  - name: repeating_panel_1
+    properties: {item_template: popupform.RowTemplate4}
+    type: RepeatingPanel
+  layout_properties: {grid_position: 'OJHMTR,PCFOGS'}
+  name: data_grid_1
+  properties:
+    columns:
+    - {data_key: column_1, id: JKSDUP, title: Name}
+    - {data_key: column_2, id: VJQQOR, title: Age}
+    - {data_key: column_3, id: OJLQEN, title: City}
+  type: DataGrid
+- layout_properties: {grid_position: 'NDOLHM,BKEDZQ'}
+  name: label_df_2
+  properties: {align: center, bold: true, font_size: 18, text: DataFrame 2}
+  type: Label
+- components:
+  - name: repeating_panel_2
+    properties: {item_template: popupform.RowTemplate5}
+    type: RepeatingPanel
+  layout_properties: {grid_position: 'NDOLHM,CFQROZ'}
+  name: data_grid_2
+  properties:
+    columns:
+    - {data_key: column_1, id: JKSDUP, title: Product}
+    - {data_key: column_2, id: VJQQOR, title: Price}
+    - {data_key: column_3, id: OJLQEN, title: Stock}
+  type: DataGrid
+- layout_properties: {grid_position: 'AXWGYZ,ZTXLAF'}
+  name: label_images_2
+  properties: {align: center, bold: true, font_size: 18, text: More Images}
+  type: Label
+- layout_properties: {grid_position: 'AXWGYZ,DEZBPN'}
+  name: second_images_flow_panel
+  properties: {}
+  type: FlowPanel
 container: {type: ColumnPanel}
 is_package: true

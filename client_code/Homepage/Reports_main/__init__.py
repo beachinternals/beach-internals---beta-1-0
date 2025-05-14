@@ -188,14 +188,6 @@ class Reports_main(Reports_mainTemplate):
     """This method is called when the button is clicked"""
     # unpack the league data:
     # extract league, gender, year from league selected value
-
-    print(f"Self arguments: {self.__init__() }")
-    # Define parameters to pass
-    params = {
-        'name': 'Alice',
-        'age': 25,
-         'city': 'New York'      
-    }
     
     league_value = self.league_drop_down.selected_value
     str_loc = league_value.index("|")
@@ -257,28 +249,49 @@ class Reports_main(Reports_mainTemplate):
     # now, call the server module.
     # now including limits on competition (1,2,3) and dates
     # check comp_l3, if not, set to str()
-    if type(self.comp_l3_drop_down.selected_value["comp_l3"]) == type(None):
+    if not isinstance(self.comp_l3_drop_down.selected_value["comp_l3"],str):
       self.comp_l3_drop_down.selected_value["comp_l3"] = str()
 
     disp_pair = ""  # this is a dummy for player reports to keep the calling arguments consistent for player and pair reports
 
-    # Generate the form URL with query parameters
-    #form_url = anvil.server.call('get_form_url', 'plot_one_zone_attacks', params)
-    # Open the form in a new window/tab
-    #window.open(form_url, '_blank')
-    print(f"event args: {event_args}")
-    #print(f"event args: {event_args['item']}")
-    #url = event_args['item']['url']
-    #anvil.js.window.open("http://www.google.com/", '_blank')
-    #open_form('popupform', display_data='Testing 123', new_window=True)
-    data_to_display = "Testing 123 123 123 "
-    base_url = anvil.js.window.location.origin + anvil.js.window.location.pathname
-    # Construct the URL for the PopupForm
-    form_url = f"{base_url}#popupform"
-    # Open a new window with custom size
-    print(form_url)
-    anvil.js.window.open(form_url, "_blank", "width=600,height=400")
+    # Generate report and get report ID
+    report_id = anvil.server.call('generate_and_store_report')
 
+    # ---------------------------------------------------------------------------------
+    # Open new window
+    new_window = anvil.js.window.open('/_/theme/loading.html', '_blank')
+
+    # Store report_id in sessionStorage
+    session_id = str(anvil.js.window.sessionStorage.length + 1)
+    anvil.js.window.sessionStorage.setItem(
+      f'report_id_{session_id}',
+      report_id
+    )
+
+    # JavaScript to load DisplayForm in new window
+    script = """
+        window.anvilAppReady = function() {
+            var report_id = sessionStorage.getItem('report_id_%s');
+            anvil.call(null, 'openForm', 'DisplayForm', {report_id: report_id});
+            sessionStorage.removeItem('report_id_%s');
+        };
+        """ % (session_id, session_id)
+
+    # Inject script into new window
+    new_window.document.write("""
+        <html>
+        <head>
+            <script src="/_/theme/anvil-runtime.js"></script>
+            <script>%s</script>
+        </head>
+        <body>
+            <div id="anvil-app"></div>
+        </body>
+        </html>
+        """ % script)
+    new_window.document.close()
+
+    #--------------------------------------------------------------------
     
     '''
     # Working on a new call function to pop a window and also use the **kwargs parameters
@@ -603,4 +616,9 @@ class Reports_main(Reports_mainTemplate):
     )
     alert(("PDF report emailed" + str(result)))
     anvil.media.download(pdf_rpt)
+    pass
+
+  def button_1_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    print(anvil.server.call('test_now'))
     pass

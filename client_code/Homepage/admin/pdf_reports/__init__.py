@@ -8,6 +8,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.media
+import anvil.js
 
 
 class pdf_reports(pdf_reportsTemplate):
@@ -126,6 +127,11 @@ class pdf_reports(pdf_reportsTemplate):
 
   def player_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
+    pass
+
+  def test_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    print(anvil.server.call('test_now'))
     pass
 
 
