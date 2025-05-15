@@ -665,5 +665,5 @@ services:
 - client_config: {}
   server_config: {test_mode: false}
   source: /runtime/services/anvil/email.yml
-startup: {module: Homepage, type: form}
+startup: {module: StartupForm, type: form}
 startup_form: null

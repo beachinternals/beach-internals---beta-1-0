@@ -19,6 +19,17 @@ class Reports_main(Reports_mainTemplate):
     print(f"properties: {properties}")
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
+
+    # Check query parameters on load (optional, if not using StartupForm)
+    url_params = anvil.js.window.location.search
+    params = anvil.js.window.URLSearchParams(url_params)  # Corrected from .new
+    form_name = params.get('Reports_main')
+    report_id = params.get('report_id')
+
+    if form_name == 'popupform' and report_id:
+      open_form('popupform', report_id=report_id)
+      
+    
     # self.all_rpt_pdf.visible = True if anvil.users.get_user()['team'] == "INTERNALS" else False
 
     # Any code you write here will run before the form opens.
@@ -258,39 +269,10 @@ class Reports_main(Reports_mainTemplate):
     report_id = anvil.server.call('generate_and_store_report')
 
     # ---------------------------------------------------------------------------------
-    # Open new window
-    new_window = anvil.js.window.open('/_/theme/loading.html', '_blank')
-
-    # Store report_id in sessionStorage
-    session_id = str(anvil.js.window.sessionStorage.length + 1)
-    anvil.js.window.sessionStorage.setItem(
-      f'report_id_{session_id}',
-      report_id
-    )
-
-    # JavaScript to load DisplayForm in new window
-    script = """
-        window.anvilAppReady = function() {
-            var report_id = sessionStorage.getItem('report_id_%s');
-            anvil.call(null, 'openForm', 'DisplayForm', {report_id: report_id});
-            sessionStorage.removeItem('report_id_%s');
-        };
-        """ % (session_id, session_id)
-
-    # Inject script into new window
-    new_window.document.write("""
-        <html>
-        <head>
-            <script src="/_/theme/anvil-runtime.js"></script>
-            <script>%s</script>
-        </head>
-        <body>
-            <div id="anvil-app"></div>
-        </body>
-        </html>
-        """ % script)
-    new_window.document.close()
-
+    # Generate report and get report ID
+    report_id = anvil.server.call('generate_and_store_report')
+    app_url = 'https://beachinternals.anvil.app/'  # Replace with your app URL
+    new_window = anvil.js.window.open(f'{app_url}?form=popupform&report_id={report_id}', '_blank')
     #--------------------------------------------------------------------
     
     '''

@@ -10,12 +10,12 @@ from anvil.tables import app_tables
 
 
 class popupform(popupformTemplate):
-  def __init__(self, display_data=None, **properties):
+  def __init__(self, report_id=None, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
     # Any code you write here will run before the form opens.
-    self.label_1.text = display_data or "No data provided"
+    #self.label_1.text = display_data or "No data provided"
 
     #------------------------------
     if report_id:
@@ -41,10 +41,10 @@ class popupform(popupformTemplate):
             if len(data['dataframes']) > 1:
               self.data_grid_2.repeating_panel_1.items = data['dataframes'][1].to_dict('records')
 
-              # Set second set of images
-              for img_data in data['more_images']:
-                img = Image(source=img_data)
-                img.align = 'center'
-                self.second_images_flow_panel.add_component(img)
+            # Set second set of images
+            for img_data in data['more_images']:
+              img = Image(source=img_data)
+              img.align = 'center'
+              self.second_images_flow_panel.add_component(img)
         #--------------------------------------------------
 
