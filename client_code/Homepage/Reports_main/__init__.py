@@ -261,12 +261,10 @@ class Reports_main(Reports_mainTemplate):
     # Open new window
     new_window = anvil.js.window.open('/_/theme/loading.html', '_blank')
 
-    # Store report_id in sessionStorage
-    session_id = str(anvil.js.window.sessionStorage.length + 1)
-    anvil.js.window.sessionStorage.setItem(
-      f'report_id_{session_id}',
-      report_id
-    )
+    # Open new window with query parameter
+    app_url = 'https://svrrfkwwhpm3fmvf.anvil.app/'
+    new_window = anvil.js.window.open(f'{app_url}?form=popupform&report_id={report_id}', '_blank')
+
 
     # JavaScript to load DisplayForm in new window
     script = """
