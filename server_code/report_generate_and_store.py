@@ -59,8 +59,8 @@ def generate_and_store_report():
     img_str = base64.b64encode(buffered.getvalue()).decode()
     more_images.append(f"data:image/png;base64,{img_str}")
 
-    # Generate unique report ID
-    report_id = str(uuid.uuid4())
+  # Generate unique report ID
+  report_id = str(uuid.uuid4())
 
   # Store in temporary Data Table row
   app_tables.report_data.add_row(
