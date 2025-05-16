@@ -22,12 +22,9 @@ class popupform(popupformTemplate):
       # Fetch report data from server
       label_list, image_list, df_list = anvil.server.call('get_report_data', report_id)
 
-      #print(f"Label List: {label_list}")
       self.title.text = 'Test Report'
-      '''
 
-      for i in 0,len(label_list)-1:
-        print(f" i = {i}")
+      for i in range(0,len(label_list)):
         if label_list[i]:
           if i == 0:
             self.label_1.text = label_list[i]
@@ -38,6 +35,5 @@ class popupform(popupformTemplate):
           elif i == 3:
             self.label_4.text = label_list[i]
             
-            '''
     else:
       self.label_1.text = 'No Report Data Found'

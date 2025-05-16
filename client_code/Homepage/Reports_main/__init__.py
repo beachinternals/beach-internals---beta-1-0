@@ -572,3 +572,52 @@ class Reports_main(Reports_mainTemplate):
     """This method is called when the button is clicked"""
     print(anvil.server.call('test_now'))
     pass
+
+  def outlined_button_1_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # unpack the league data:
+    # extract league, gender, year from league selected value
+
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index("|")
+    disp_league = league_value[: str_loc - 1].strip()
+    league_value = league_value[str_loc + 1 :]
+    str_loc = league_value.index("|")
+    disp_gender = league_value[: str_loc - 1].strip()
+    disp_year = league_value[str_loc + 1 :].strip()
+
+    # unpack the player
+    disp_player = (
+      self.player_drop_down.selected_value["team"]
+      + " "
+      + self.player_drop_down.selected_value["number"]
+      + " "
+      + self.player_drop_down.selected_value["shortname"]
+    )
+
+    # unpack the source data:
+    user_row = anvil.users.get_user(allow_remembered=True)
+    disp_team = user_row["team"]
+
+    # unpack the report to process
+    # replace this with a data driven approach
+    rpt_name = self.report_drop_down.selected_value
+    function_list = [
+      (f_row["function_name"])
+      for f_row in app_tables.report_list.search(report_name=rpt_name)
+    ]
+    form_list = [
+      (f_row["rpt_form"])
+      for f_row in app_tables.report_list.search(report_name=rpt_name)
+    ]
+    fnct_name = function_list[0]
+    rpt_form = form_list[0]
+
+    # ---------------------------------------------------------------------------------
+    # Generate report and get report ID
+    # call the server function to run the report function and store the data in the table.
+    report_id = anvil.server.call('generate_and_store_report', fnct_name)
+    label_list, image_list, df_list = anvil.server.call('get_report_data', report_id)
+
+    print(f" In Reports-Main: Label List: {label_list}, Image list {image_list}, df list {df_list}")
+    pass
