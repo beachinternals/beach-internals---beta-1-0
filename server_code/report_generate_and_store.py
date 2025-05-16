@@ -16,79 +16,91 @@ import json
 import datetime
 
 @anvil.server.callable
-def generate_and_store_report():
-  # Generate images
-  images = []
-  for color in ['red', 'green', 'blue']:
-    img = Image.new('RGB', (100, 100), color=color)
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    img_str = base64.b64encode(buffered.getvalue()).decode()
-    images.append(f"data:image/png;base64,{img_str}")
+def generate_and_store_report( fnct_name ):
+  #
+  # this routine runs the given report (fnct_name) using the parameters in *(**kwargs) and 
+  # stores the data in the report_data table, returngin the index to that table
+  #
 
-    # Generate dataframes
-    dataframes = [
-      pd.DataFrame({
-        'Name': ['Alice', 'Bob', 'Charlie'],
-        'Age': [25, 30, 35],
-        'City': ['New York', 'London', 'Paris']
-      }),
-      pd.DataFrame({
-        'Product': ['Apple', 'Banana', 'Orange'],
-        'Price': [1.0, 0.5, 0.75],
-        'Stock': [100, 150, 200]
-      })
-    ]
-  # Convert dataframes to JSON for storage
-  df_json = [df.to_json() for df in dataframes]
+  #
+  # Call the report function storing the results in three lists:
+  #      label_list[ ] - list of text tables
+  #.     image_list[] - list of images, mainly plots
+  #.     df_list[] - a list of dataframes (to be converted to mkdn), but kep as a df for now
+  #
+  #.     Th emax we can store are 10 items in each list, that is the max in the report_data tables, and the hmtl forms are configured for a max of 10 in each
+  label_list = []
+  image_list = []
+  df_list = []
 
-  # Generate labels
-  labels = [
-    "First Image Set",
-    "Personnel Data",
-    "Inventory Data",
-    "Second Image Set"
-  ]
+  label_list, image_list, df_list = anvil.server.call( fnct_name )
 
-  # Generate second set of images
-  more_images = []
-  for color in ['yellow', 'purple', 'orange']:
-    img = Image.new('RGB', (100, 100), color=color)
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    img_str = base64.b64encode(buffered.getvalue()).decode()
-    more_images.append(f"data:image/png;base64,{img_str}")
-
+  print(f"Label List returned, Length: {len(label_list)}, list: {label_list}")
+  # now store the returned data in the report_data table
   # Generate unique report ID
   report_id = str(uuid.uuid4())
 
   # Store in temporary Data Table row
   app_tables.report_data.add_row(
     report_id=report_id,
-    images=json.dumps(images),
-    dataframes=json.dumps(df_json),
-    labels=json.dumps(labels),
-    more_images=json.dumps(more_images),
     created_at=datetime.datetime.now()
   )
+
+  # get this record and store the labels , images, and dfs
+  rpt_data_row = app_tables.report_data.get(report_id = report_id)
+  if len(label_list) > 0:
+    for i in range(0,len(label_list)):
+      var = 'label_'+str(i+1)
+      print(f" label to be stored: {var}, label: {label_list[i]}")
+      rpt_data_row[var] = label_list[i]
+  if len(image_list) > 0:
+    for i in range(0,len(image_list)):
+      var = 'image_'+str(i+1)
+      rpt_data_row[var] = image_list[i]
+  if len(df_list) > 0:
+    for i in range(0,len(df_list)):
+      var = 'df_'+str(i+1)
+      csv_file = pd.DataFrame.to_csv(df_list[i])
+      rpt_data_row[var] = anvil.BlobMedia(content_type="text/plain", content=csv_file.encode(), name=var+'.csv')
 
   return report_id
 
 @anvil.server.callable
 def get_report_data(report_id):
+  label_list = []
+  image_list = []
+  df_list = []
   row = app_tables.report_data.get(report_id=report_id)
   if not row:
     return None
-    return {
-      'images': json.loads(row['images']),
-      'dataframes': [pd.read_json(df) for df in json.loads(row['dataframes'])],
-      'labels': json.loads(row['labels']),
-      'more_images': json.loads(row['more_images'])
-    }
-
-
-    import anvil.server
+  else:
+    for i in [0,1,2,3,4,5,6,7,8,9]:
+      label_var = 'label_'+str(i+1)
+      image_var = 'image_'+str(i+1)
+      df_var = 'df_'+str(i+1)
+      if row[label_var]:
+        label_list[i] = row[label_var]
+      if row[image_var]:
+        image_list[i] = row[image_var]
+      if row[df_var]:
+        df_list[i] = row[df_var]
+        
+  return label_list, image_list, df_list
 
 @anvil.server.callable
-def test_now():
-  return datetime.datetime.now()
+def report_test( ):
+  # a test/dummy stub for reports
+  label_list = []
+  image_list = []
+  df_list = []
+
+  label_list.append('Label 0')
+  print(f"Label list: {label_list}, length : {len(label_list)}") 
+  label_list.append('Label 1')
+  print(f"Label list: {label_list}, length : {len(label_list)}") 
+  label_list.append('Label 2')
+  print(f"Label list: {label_list}, length : {len(label_list)}") 
+  label_list.append('Label 3')
+  print(f"Label list: {label_list}, length : {len(label_list)}") 
+  
+  return label_list, image_list, df_list

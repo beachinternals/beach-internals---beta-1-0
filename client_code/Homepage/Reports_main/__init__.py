@@ -228,51 +228,19 @@ class Reports_main(Reports_mainTemplate):
       (f_row["function_name"])
       for f_row in app_tables.report_list.search(report_name=rpt_name)
     ]
-    text_list = [
-      (f_row["explain_text"])
+    form_list = [
+      (f_row["rpt_form"])
       for f_row in app_tables.report_list.search(report_name=rpt_name)
     ]
-    box1_title_list = [
-      (f_row["box1_title"])
-      for f_row in app_tables.report_list.search(report_name=rpt_name)
-    ]
-    box2_title_list = [
-      (f_row["box2_title"])
-      for f_row in app_tables.report_list.search(report_name=rpt_name)
-    ]
-    box3_title_list = [
-      (f_row["box3_title"])
-      for f_row in app_tables.report_list.search(report_name=rpt_name)
-    ]
-    box4_title_list = [
-      (f_row["box4_title"])
-      for f_row in app_tables.report_list.search(report_name=rpt_name)
-    ]
-    # print(function_list)
     fnct_name = function_list[0]
-    explain_text = text_list[0]
-    box1_title = box1_title_list[0]
-    box2_title = box2_title_list[0]
-    box3_title = box3_title_list[0]
-    box4_title = box4_title_list[0]
-    scout = True
-
-    # now, call the server module.
-    # now including limits on competition (1,2,3) and dates
-    # check comp_l3, if not, set to str()
-    if not isinstance(self.comp_l3_drop_down.selected_value["comp_l3"],str):
-      self.comp_l3_drop_down.selected_value["comp_l3"] = str()
-
-    disp_pair = ""  # this is a dummy for player reports to keep the calling arguments consistent for player and pair reports
-
-    # Generate report and get report ID
-    report_id = anvil.server.call('generate_and_store_report')
+    rpt_form = form_list[0]
 
     # ---------------------------------------------------------------------------------
     # Generate report and get report ID
-    report_id = anvil.server.call('generate_and_store_report')
+    # call the server function to run the report function and store the data in the table.
+    report_id = anvil.server.call('generate_and_store_report', fnct_name)
     app_url = 'https://beachinternals.anvil.app/'  # Replace with your app URL
-    new_window = anvil.js.window.open(f'{app_url}?form=popupform&report_id={report_id}', '_blank')
+    new_window = anvil.js.window.open(f'{app_url}?form={rpt_form}&report_id={report_id}', '_blank')
     #--------------------------------------------------------------------
     
     '''

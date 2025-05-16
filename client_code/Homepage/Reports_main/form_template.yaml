@@ -63,11 +63,6 @@ components_by_slot:
         name: pdf_button
         properties: {role: outlined-button, text: Generate pdf}
         type: Button
-      - event_bindings: {click: button_1_click}
-        layout_properties: {grid_position: 'EKFALY,FAYHVL'}
-        name: button_1
-        properties: {text: Test now()}
-        type: Button
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
       properties: {col_widths: '{"IQKDEX":10,"UXDSOJ":50,"GAEVDY":10,"GLQPYX":50,"UVHKJK":10,"VQXXHV":50,"YEPJIN":10,"HSKEKD":50}', role: outlined-card}
@@ -119,6 +114,14 @@ components_by_slot:
         name: end_date_picker
         properties: {}
         type: DatePicker
+      - layout_properties: {grid_position: 'TBOBRC,KASZOQ'}
+        name: label_17
+        properties: {text: Opponent Pair (for Matchup)}
+        type: Label
+      - layout_properties: {grid_position: 'TBOBRC,YAJCSJ'}
+        name: drop_down_2
+        properties: {}
+        type: DropDown
       - layout_properties: {grid_position: 'SPJYBH,ALUUVG'}
         name: label_3
         properties: {align: right, text: 'Set:'}
@@ -277,6 +280,27 @@ components_by_slot:
         properties: {}
         type: ColumnPanel
       - components:
+        - layout_properties: {grid_position: 'WSYJOB,JVXFJT'}
+          name: label_13
+          properties: {text: Set Type}
+          type: Label
+        - layout_properties: {grid_position: 'WSYJOB,SAPTKB'}
+          name: check_box_19
+          properties: {text: Bump}
+          type: CheckBox
+        - layout_properties: {grid_position: 'WSYJOB,XKPYBA'}
+          name: check_box_20
+          properties: {text: Hand}
+          type: CheckBox
+        - layout_properties: {grid_position: 'WSYJOB,XKAQOE'}
+          name: check_box_21
+          properties: {text: Unknown}
+          type: CheckBox
+        layout_properties: {grid_position: 'IPFRPS,AWQJJP'}
+        name: column_panel_5
+        properties: {}
+        type: ColumnPanel
+      - components:
         - layout_properties: {grid_position: 'GSTJOC,CWTQNP'}
           name: label_14
           properties: {text: Attack Height}
@@ -308,27 +332,6 @@ components_by_slot:
           type: TextBox
         layout_properties: {grid_position: 'OWKIUB,SQLZAR'}
         name: column_panel_4
-        properties: {}
-        type: ColumnPanel
-      - components:
-        - layout_properties: {grid_position: 'WSYJOB,JVXFJT'}
-          name: label_13
-          properties: {text: Set Type}
-          type: Label
-        - layout_properties: {grid_position: 'WSYJOB,SAPTKB'}
-          name: check_box_19
-          properties: {text: Bump}
-          type: CheckBox
-        - layout_properties: {grid_position: 'WSYJOB,XKPYBA'}
-          name: check_box_20
-          properties: {text: Hand}
-          type: CheckBox
-        - layout_properties: {grid_position: 'WSYJOB,XKAQOE'}
-          name: check_box_21
-          properties: {text: Unknown}
-          type: CheckBox
-        layout_properties: {grid_position: 'IWKASE,NBFFLP'}
-        name: column_panel_5
         properties: {}
         type: ColumnPanel
       layout_properties: {grid_position: 'HRVTBW,LLFEGL'}

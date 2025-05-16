@@ -344,11 +344,38 @@ db_schema:
       name: label_1
       type: string
     - admin_ui: {order: 0.99609375, width: 200}
-      name: plot_1
+      name: image_1
       type: media
     - admin_ui: {order: 0.998046875, width: 200}
       name: df_1
       type: media
+    - admin_ui: {order: 0.994140625, width: 200}
+      name: label_2
+      type: string
+    - admin_ui: {order: 0.9951171875, width: 200}
+      name: label_3
+      type: string
+    - admin_ui: {order: 0.99560546875, width: 200}
+      name: label_4
+      type: string
+    - admin_ui: {order: 0.995849609375, width: 200}
+      name: label_5
+      type: string
+    - admin_ui: {order: 0.9959716796875, width: 200}
+      name: label_6
+      type: string
+    - admin_ui: {order: 0.99603271484375, width: 200}
+      name: label_7
+      type: string
+    - admin_ui: {order: 0.996063232421875, width: 200}
+      name: label_8
+      type: string
+    - admin_ui: {order: 0.9960784912109375, width: 200}
+      name: label_9
+      type: string
+    - admin_ui: {order: 0.9960861206054688, width: 200}
+      name: label_10
+      type: string
     server: full
     title: report_data
   report_list:

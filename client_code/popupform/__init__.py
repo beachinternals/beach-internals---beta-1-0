@@ -20,31 +20,24 @@ class popupform(popupformTemplate):
     #------------------------------
     if report_id:
       # Fetch report data from server
-      data = anvil.server.call('get_report_data', report_id)
+      label_list, image_list, df_list = anvil.server.call('get_report_data', report_id)
 
-      if data:
-        # Set labels
-        self.label_images_1.text = data['labels'][0]
-        self.label_df_1.text = data['labels'][1]
-        self.label_df_2.text = data['labels'][2]
-        self.label_images_2.text = data['labels'][3]
+      #print(f"Label List: {label_list}")
+      self.title.text = 'Test Report'
+      '''
 
-        # Set first set of images
-        for img_data in data['images']:
-          img = Image(source=img_data)
-          img.align = 'center'
-          self.first_images_flow_panel.add_component(img)
-
-          # Set dataframes in data grids
-          if len(data['dataframes']) > 0:
-            self.data_grid_1.repeating_panel_1.items = data['dataframes'][0].to_dict('records')
-            if len(data['dataframes']) > 1:
-              self.data_grid_2.repeating_panel_1.items = data['dataframes'][1].to_dict('records')
-
-            # Set second set of images
-            for img_data in data['more_images']:
-              img = Image(source=img_data)
-              img.align = 'center'
-              self.second_images_flow_panel.add_component(img)
-        #--------------------------------------------------
-
+      for i in 0,len(label_list)-1:
+        print(f" i = {i}")
+        if label_list[i]:
+          if i == 0:
+            self.label_1.text = label_list[i]
+          elif i == 1:
+            self.label_2.text = label_list[i]
+          elif i == 2:
+            self.label_3.text = label_list[i]
+          elif i == 3:
+            self.label_4.text = label_list[i]
+            
+            '''
+    else:
+      self.label_1.text = 'No Report Data Found'

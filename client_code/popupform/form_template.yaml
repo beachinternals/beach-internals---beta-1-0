@@ -1,51 +1,44 @@
 components:
-- layout_properties: {grid_position: 'WQVLAA,ABGYLC'}
-  name: label_images_1
-  properties: {align: center, bold: true, font_size: 18, text: Images}
-  type: Label
-- layout_properties: {grid_position: 'WQVLAA,XOYYZS'}
-  name: first_images_flow_panel
-  properties: {}
-  type: FlowPanel
-- layout_properties: {grid_position: 'OJHMTR,UWZVGG'}
-  name: label_df_1
-  properties: {align: center, bold: true, font_size: 18, text: 'DataFrame clipboard://1'}
+- layout_properties: {grid_position: 'QFGGKL,FRINJA'}
+  name: title
+  properties: {align: center, bold: true}
   type: Label
 - components:
-  - name: repeating_panel_1
-    properties: {item_template: popupform.RowTemplate4}
-    type: RepeatingPanel
-  layout_properties: {grid_position: 'OJHMTR,PCFOGS'}
-  name: data_grid_1
-  properties:
-    columns:
-    - {data_key: column_1, id: JKSDUP, title: Name}
-    - {data_key: column_2, id: VJQQOR, title: Age}
-    - {data_key: column_3, id: OJLQEN, title: City}
-  type: DataGrid
-- layout_properties: {grid_position: 'NDOLHM,BKEDZQ'}
-  name: label_df_2
-  properties: {align: center, bold: true, font_size: 18, text: DataFrame 2}
-  type: Label
-- components:
-  - name: repeating_panel_2
-    properties: {item_template: popupform.RowTemplate5}
-    type: RepeatingPanel
-  layout_properties: {grid_position: 'NDOLHM,CFQROZ'}
-  name: data_grid_2
-  properties:
-    columns:
-    - {data_key: column_1, id: JKSDUP, title: Product}
-    - {data_key: column_2, id: VJQQOR, title: Price}
-    - {data_key: column_3, id: OJLQEN, title: Stock}
-  type: DataGrid
-- layout_properties: {grid_position: 'AXWGYZ,ZTXLAF'}
-  name: label_images_2
-  properties: {align: center, bold: true, font_size: 18, text: More Images}
-  type: Label
-- layout_properties: {grid_position: 'AXWGYZ,DEZBPN'}
-  name: second_images_flow_panel
+  - layout_properties: {grid_position: 'PZPQUC,NYNNVH'}
+    name: label_a
+    properties: {align: right, text: 'Label 1:'}
+    type: Label
+  - layout_properties: {grid_position: 'PZPQUC,IJVDVU'}
+    name: label_1
+    properties: {}
+    type: Label
+  - layout_properties: {grid_position: 'HFSPRL,QZUZGN'}
+    name: label_b
+    properties: {align: right, text: 'Label 2:'}
+    type: Label
+  - layout_properties: {grid_position: 'HFSPRL,HDJOFU'}
+    name: label_2
+    properties: {}
+    type: Label
+  - layout_properties: {grid_position: 'MBYDOU,SUTJYZ'}
+    name: label_5
+    properties: {align: right, text: 'Label 3:'}
+    type: Label
+  - layout_properties: {grid_position: 'MBYDOU,KEGTUN'}
+    name: label_3
+    properties: {}
+    type: Label
+  - layout_properties: {grid_position: 'NCCTUU,ECDVPE'}
+    name: label_6
+    properties: {align: right, text: 'Label 4:'}
+    type: Label
+  - layout_properties: {grid_position: 'NCCTUU,YZPPJQ'}
+    name: label_4
+    properties: {}
+    type: Label
+  layout_properties: {grid_position: 'EMKENZ,GQWXPE'}
+  name: column_panel_1
   properties: {}
-  type: FlowPanel
+  type: ColumnPanel
 container: {type: ColumnPanel}
 is_package: true
