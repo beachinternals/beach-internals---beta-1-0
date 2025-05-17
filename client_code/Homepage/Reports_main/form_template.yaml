@@ -30,7 +30,7 @@ components_by_slot:
         properties: {align: right, text: 'Pair:'}
         type: Label
       - layout_properties: {grid_position: 'KOFDUI,UXDSOJ'}
-        name: drop_down_1
+        name: pair_drop_down
         properties: {}
         type: DropDown
       - layout_properties: {grid_position: 'GMDOZZ,UVHKJK'}
@@ -124,7 +124,7 @@ components_by_slot:
         properties: {text: Opponent Pair (for Matchup)}
         type: Label
       - layout_properties: {grid_position: 'TBOBRC,YAJCSJ'}
-        name: drop_down_2
+        name: opp_pair_drop_down
         properties: {}
         type: DropDown
       - layout_properties: {grid_position: 'SPJYBH,ALUUVG'}
@@ -149,63 +149,63 @@ components_by_slot:
         type: Label
       - components:
         - layout_properties: {grid_position: 'QSXICV,VATWVP'}
-          name: check_box_4
+          name: check_box_5e
           properties: {font_size: 12, text: 5E}
           type: CheckBox
         - layout_properties: {grid_position: 'QSXICV,XMFCGB'}
-          name: check_box_8
+          name: check_box_4e
           properties: {font_size: 12, text: 4E}
           type: CheckBox
         - layout_properties: {grid_position: 'QSXICV,JZUEUN'}
-          name: check_box_5
+          name: check_box_3e
           properties: {font_size: 12, text: 3E}
           type: CheckBox
         - layout_properties: {grid_position: 'QSXICV,GYALMZ'}
-          name: check_box_7
+          name: check_box_2e
           properties: {font_size: 12, text: 2E}
           type: CheckBox
         - layout_properties: {grid_position: 'QSXICV,OJUVGV'}
-          name: check_box_6
+          name: check_box_1e
           properties: {font_size: 12, text: 1E}
           type: CheckBox
         - layout_properties: {grid_position: 'ZDVZHZ,WUEUAU'}
-          name: check_box_9
+          name: check_box_5d
           properties: {font_size: 12, text: 5D}
           type: CheckBox
         - layout_properties: {grid_position: 'ZDVZHZ,BZQRKP'}
-          name: check_box_13
+          name: check_box_4d
           properties: {font_size: 12, text: 4D}
           type: CheckBox
         - layout_properties: {grid_position: 'ZDVZHZ,NLRAQK'}
-          name: check_box_12
+          name: check_box_3d
           properties: {font_size: 12, text: 3D}
           type: CheckBox
         - layout_properties: {grid_position: 'ZDVZHZ,UEHCFE'}
-          name: check_box_11
+          name: check_box_2d
           properties: {font_size: 12, text: 2D}
           type: CheckBox
         - layout_properties: {grid_position: 'ZDVZHZ,XYEVWF'}
-          name: check_box_10
+          name: check_box_1d
           properties: {font_size: 12, text: 1D}
           type: CheckBox
         - layout_properties: {grid_position: 'BRKGDG,KKQXKB'}
-          name: check_box_15
+          name: check_box_5c
           properties: {font_size: 12, text: 5C}
           type: CheckBox
         - layout_properties: {grid_position: 'BRKGDG,DGELEY'}
-          name: check_box_18
+          name: check_box_4c
           properties: {font_size: 12, text: 4C}
           type: CheckBox
         - layout_properties: {grid_position: 'BRKGDG,QIYLNQ'}
-          name: check_box_17
+          name: check_box_3c
           properties: {font_size: 12, text: 3C}
           type: CheckBox
         - layout_properties: {grid_position: 'BRKGDG,OLGSZZ'}
-          name: check_box_16
+          name: check_box_2c
           properties: {font_size: 12, text: 2C}
           type: CheckBox
         - layout_properties: {grid_position: 'BRKGDG,IHJMXX'}
-          name: check_box_14
+          name: check_box_1c
           properties: {font_size: 12, text: 1C}
           type: CheckBox
         layout_properties: {grid_position: 'NMSBIQ,TYDSQG'}
@@ -218,15 +218,15 @@ components_by_slot:
           properties: {text: 'Serving From:'}
           type: Label
         - layout_properties: {grid_position: 'NOKXRV,SHGSZU'}
-          name: check_box_1
+          name: srv_fr_1
           properties: {font_size: 12, text: 1 - Left}
           type: CheckBox
         - layout_properties: {grid_position: 'NOKXRV,GFUQWS'}
-          name: check_box_2
+          name: srv_fr_3
           properties: {font_size: 12, text: 3 - Middle}
           type: CheckBox
         - layout_properties: {grid_position: 'NOKXRV,PUICTP'}
-          name: check_box_3
+          name: srv_fr_5
           properties: {font_size: 12, text: 5 - Right}
           type: CheckBox
         layout_properties: {grid_position: 'IBTGPW,BCSQCK'}
@@ -239,11 +239,11 @@ components_by_slot:
           properties: {text: Serving Speed}
           type: Label
         - layout_properties: {grid_position: 'TPRAAZ,GOUMZK'}
-          name: text_box_1
+          name: srv_speed_low
           properties: {}
           type: TextBox
         - layout_properties: {grid_position: 'TPRAAZ,GPWRJL'}
-          name: text_box_2
+          name: srv_speed_high
           properties: {}
           type: TextBox
         layout_properties: {grid_position: 'WNTFCZ,TSWPHQ'}
@@ -256,11 +256,11 @@ components_by_slot:
           properties: {text: 'Pass Height:'}
           type: Label
         - layout_properties: {grid_position: 'WFUYEC,WEMQGK'}
-          name: text_box_8
+          name: pass_ht_low
           properties: {}
           type: TextBox
         - layout_properties: {grid_position: 'WFUYEC,JCBQRI'}
-          name: text_box_7
+          name: pass_ht_high
           properties: {}
           type: TextBox
         layout_properties: {grid_position: 'GDDWQP,MVCTKK'}
@@ -273,11 +273,11 @@ components_by_slot:
           properties: {text: 'Set Height:'}
           type: Label
         - layout_properties: {grid_position: 'WKXNBE,KLPDWO'}
-          name: text_box_9
+          name: set_ht_low
           properties: {}
           type: TextBox
         - layout_properties: {grid_position: 'WKXNBE,IXJEHL'}
-          name: text_box_10
+          name: set_ht_high
           properties: {}
           type: TextBox
         layout_properties: {grid_position: 'OXCSUN,IVBOPP'}
@@ -290,15 +290,15 @@ components_by_slot:
           properties: {text: Set Type}
           type: Label
         - layout_properties: {grid_position: 'WSYJOB,SAPTKB'}
-          name: check_box_19
+          name: set_bump
           properties: {text: Bump}
           type: CheckBox
         - layout_properties: {grid_position: 'WSYJOB,XKPYBA'}
-          name: check_box_20
+          name: set_hand
           properties: {text: Hand}
           type: CheckBox
         - layout_properties: {grid_position: 'WSYJOB,XKAQOE'}
-          name: check_box_21
+          name: set_unknown
           properties: {text: Unknown}
           type: CheckBox
         layout_properties: {grid_position: 'IPFRPS,AWQJJP'}
@@ -311,11 +311,11 @@ components_by_slot:
           properties: {text: Attack Height}
           type: Label
         - layout_properties: {grid_position: 'GSTJOC,WADMHO'}
-          name: text_box_3
+          name: att_ht_low
           properties: {}
           type: TextBox
         - layout_properties: {grid_position: 'GSTJOC,TFKVCC'}
-          name: text_box_4
+          name: att_ht_high
           properties: {}
           type: TextBox
         layout_properties: {grid_position: 'JVKQRP,CGFPWR'}
@@ -328,11 +328,11 @@ components_by_slot:
           properties: {text: Attack Speed}
           type: Label
         - layout_properties: {grid_position: 'RHLWWI,GDTPKA'}
-          name: text_box_5
+          name: att_speed_low
           properties: {}
           type: TextBox
         - layout_properties: {grid_position: 'RHLWWI,QRRMJP'}
-          name: text_box_6
+          name: att_speed_high
           properties: {}
           type: TextBox
         layout_properties: {grid_position: 'OWKIUB,SQLZAR'}

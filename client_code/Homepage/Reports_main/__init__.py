@@ -197,25 +197,6 @@ class Reports_main(Reports_mainTemplate):
 
   def generate_report_button_click(self, **event_args):
     """This method is called when the button is clicked"""
-    # unpack the league data:
-    # extract league, gender, year from league selected value
-    
-    league_value = self.league_drop_down.selected_value
-    str_loc = league_value.index("|")
-    disp_league = league_value[: str_loc - 1].strip()
-    league_value = league_value[str_loc + 1 :]
-    str_loc = league_value.index("|")
-    disp_gender = league_value[: str_loc - 1].strip()
-    disp_year = league_value[str_loc + 1 :].strip()
-
-    # unpack the player
-    disp_player = (
-      self.player_drop_down.selected_value["team"]
-      + " "
-      + self.player_drop_down.selected_value["number"]
-      + " "
-      + self.player_drop_down.selected_value["shortname"]
-    )
 
     # unpack the source data:
     user_row = anvil.users.get_user(allow_remembered=True)
@@ -235,10 +216,42 @@ class Reports_main(Reports_mainTemplate):
     fnct_name = function_list[0]
     rpt_form = form_list[0]
 
+    # builld the rpt_filter 
+    rpt_filters = {}
+
+    #pair, player, opp pair
+    rpt_filters['pair'] = self.pair_drop_down.selected_value
+    rpt_filters['player'] = self.player_drop_down.selected_value
+    
+    if self.comp_l1_check_box.checked:
+      rpt_filters['comp_l1'] = self.comp_l1_drop_down.selected_value['comp_l1']
+    if self.comp_l2_check_box.checked:
+      rpt_filters['comp_l2'] = self.comp_l1_drop_down.selected_value['comp_l2']
+    if self.comp_l3_check_box.checked:
+      rpt_filters['comp_l3'] = self.comp_l1_drop_down.selected_value['comp_l3']
+    if self.date_check_box.checked:
+      rpt_filter['start_date'] = self.start_date_picker.value
+      
+    
+    start end date
+set 1 2 3
+serve to
+serve from
+serve speed
+pass height
+set heifght
+set type bump hand unknown
+attack height
+attack speed
+
+
+
+    print(f"Report Filters: {rpt_filters}")
+    
     # ---------------------------------------------------------------------------------
     # Generate report and get report ID
     # call the server function to run the report function and store the data in the table.
-    report_id = anvil.server.call('generate_and_store_report', fnct_name)
+    report_id = anvil.server.call('generate_and_store_report', fnct_name, self.league_drop_down.selected_value, disp_team, **rpt_filters)
     app_url = 'https://beachinternals.anvil.app/'  # Replace with your app URL
     new_window = anvil.js.window.open(f'{app_url}?form={rpt_form}&report_id={report_id}', '_blank')
     #--------------------------------------------------------------------

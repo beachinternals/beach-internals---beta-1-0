@@ -438,7 +438,7 @@ db_schema:
     - admin_ui: {order: 9.15625, width: 200}
       name: box7_title
       type: string
-    - admin_ui: {order: 9.203125, width: 200}
+    - admin_ui: {order: 9.16796875, width: 200}
       name: box8_title
       type: string
     - admin_ui: {order: 1.75, width: 200}
@@ -446,6 +446,12 @@ db_schema:
       type: string
     - admin_ui: {order: 2.75, width: 200}
       name: comment
+      type: string
+    - admin_ui: {order: 9.1796875, width: 200}
+      name: box9_title
+      type: string
+    - admin_ui: {order: 9.19140625, width: 200}
+      name: box10_title
       type: string
     server: full
     title: report_list

@@ -16,7 +16,7 @@ import json
 import datetime
 
 @anvil.server.callable
-def generate_and_store_report( fnct_name ):
+def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   #
   # this routine runs the given report (fnct_name) using the parameters in *(**kwargs) and 
   # stores the data in the report_data table, returngin the index to that table
@@ -33,7 +33,7 @@ def generate_and_store_report( fnct_name ):
   image_list = []
   df_list = []
 
-  label_list, image_list, df_list = anvil.server.call( fnct_name, d_league='NCAA', d_gender='W', d_year='2025' )
+  label_list, image_list, df_list = anvil.server.call( fnct_name, lgy, team, **rpt_filters )
 
   print(f"Label List returned, Length: {len(label_list)}, list: {label_list}")
   # now store the returned data in the report_data table
@@ -96,22 +96,66 @@ def get_report_data(report_id):
   return label_list, image_list, df_list
 
 @anvil.server.callable
-def report_test( **kwargs):
-  for key, value in kwargs.items():
-    print(f"{key} = {value}")
+def report_test( lgy, team, **rpt_filters):
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe
+  ppr_df - get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  
+  # now filter the ppr dataframe
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
     
-  # a test/dummy stub for reports
-  label_list = []
+  # initiate return lists
+  label_list = ['','','','','','','','','','']
   image_list = []
   df_list = []
 
-  label_list.append('Label 0')
-  #print(f"Label list: {label_list}, length : {len(label_list)}") 
-  label_list.append('Label 1')
-  #print(f"Label list: {label_list}, length : {len(label_list)}") 
-  label_list.append('Label 2')
-  #print(f"Label list: {label_list}, length : {len(label_list)}") 
-  label_list.append('Label 3')
-  #print(f"Label list: {label_list}, length : {len(label_list)}") 
+  # fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name='report_test')
+  label_list[0] = rpt_row['box1_title']
+  label_list[1] = rpt_row['box2_title']
+  label_list[2] = rpt_row['box3_title']
+  label_list[3] = rpt_row['box4_title']
+  label_list[4] = rpt_row['box5_title']
+  label_list[5] = rpt_row['box6_title']
+  label_list[6] = rpt_row['box7_title']
+  label_list[7] = rpt_row['box8_title']
+  label_list[8] = rpt_row['box9_title']
+  label_list[9] = rpt_row['box10_title']
+  
   
   return label_list, image_list, df_list
+
+@anvil.server.callable
+def filter_ppr_df( dataframe, **kwargs):
+  # given the dataframe, filter it by rpt_filters
+  """
+    Generate a report by filtering the DataFrame based on kwargs.
+    Args:
+        dataframe: pandas DataFrame to filter
+        **kwargs: Keyword arguments where key=column_name, value=filter_value
+    Returns:
+        Filtered DataFrame
+    """
+  result = dataframe.copy()  # Avoid modifying the original DataFrame
+  for column, value in kwargs.items():
+    if column in dataframe.columns:
+      result = result[result[column] == value]
+    else:
+      print(f"Warning: Column '{column}' not found in DataFrame")
+  return result
+
+@anvil.server.callable
+def unpack_lgy(lgy):
+  # unpacks the league/year/gender string into three
+  # extract league, gender, year from league selected value
+  str_loc = lgy.index("|")
+  disp_league = lgy[: str_loc - 1].strip()
+  lgy = lgy[str_loc + 1 :]
+  str_loc = lgy.index("|")
+  disp_gender = lgy[: str_loc - 1].strip()
+  disp_year = lgy[str_loc + 1 :].strip()
+
+  return disp_league, disp_gender, disp_year
