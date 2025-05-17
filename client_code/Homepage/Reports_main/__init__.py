@@ -221,33 +221,42 @@ class Reports_main(Reports_mainTemplate):
 
     #pair, player, opp pair
     rpt_filters['pair'] = self.pair_drop_down.selected_value
-    rpt_filters['player'] = self.player_drop_down.selected_value
+    #rpt_filters['player'] = self.player_drop_down.selected_value['player']
     
     if self.comp_l1_check_box.checked:
       rpt_filters['comp_l1'] = self.comp_l1_drop_down.selected_value['comp_l1']
     if self.comp_l2_check_box.checked:
-      rpt_filters['comp_l2'] = self.comp_l1_drop_down.selected_value['comp_l2']
+      rpt_filters['comp_l2'] = self.comp_l2_drop_down.selected_value['comp_l2']
     if self.comp_l3_check_box.checked:
-      rpt_filters['comp_l3'] = self.comp_l1_drop_down.selected_value['comp_l3']
+      rpt_filters['comp_l3'] = self.comp_l3_drop_down.selected_value['comp_l3']
     if self.date_check_box.checked:
-      rpt_filter['start_date'] = self.start_date_picker.value
-      
-    
-    start end date
-set 1 2 3
-serve to
-serve from
-serve speed
-pass height
-set heifght
-set type bump hand unknown
-attack height
-attack speed
-
-
+      rpt_filters['start_date'] = self.start_date_picker.date
+      rpt_filters['end_date'] = self.end_date_picker.date
+    if self.set_box_1.checked:
+      rpt_filters['set_1'] = self.set_box_1.checked
+    if self.set_box_2.checked:
+      rpt_filters['set_2'] = self.set_box_2.checked
+    if self.set_box_3.checked:
+      rpt_filters['set_2'] = self.set_box_3.checked
+    if self.att_ht_low.text:
+      rpt_filters['att_ht_low'] = self.att_ht_low.text
+    if self.att_ht_high.text:
+      rpt_filters['att_ht_high'] = self.att_ht_high.text
+    if self.set_ht_low.text:
+      rpt_filters['set_ht_low'] = self.set_ht_low.text
+    if self.set_ht_high.text:
+      rpt_filters['set_ht_high'] = self.set_ht_high.text
+    if self.att_speed_low.text:
+        rpt_filters['att_speed_low'] = self.att_speed_low.text
+    if self.att_speed_high.text:
+      rpt_filters['att_speed_high'] = self.att_speed_high.text
+    if self.pass_ht_low.text:
+      rpt_filters['pass_ht_low'] = self.pass_ht_low.text
+    if self.pass_ht_high.text:
+      rpt_filters['pass_ht_high'] = self.pass_ht_high.text
 
     print(f"Report Filters: {rpt_filters}")
-    
+
     # ---------------------------------------------------------------------------------
     # Generate report and get report ID
     # call the server function to run the report function and store the data in the table.
