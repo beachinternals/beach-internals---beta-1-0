@@ -144,6 +144,7 @@ def filter_ppr_df( dataframe, **kwargs):
   for column, value in kwargs.items():
     if column in dataframe.columns:
       result = result[result[column] == value]
+      print(f"Number of Rows: {result.shape[0]}")
     else:
       print(f"Warning: Column '{column}' not found in DataFrame")
   return result
