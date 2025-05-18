@@ -56,6 +56,8 @@ class Reports_main(Reports_mainTemplate):
       )
     )
 
+
+    
     # populate the drop downs for league, and competition level 1 and 3
     self.comp_l1_drop_down.items = [
       (row["comp_l1"], row)
@@ -141,6 +143,17 @@ class Reports_main(Reports_mainTemplate):
       for row in app_tables.league_comp_l3.search(comp_l3_label=comp3lbl[0][0])
     ]
 
+    # populate the player drop down
+    self.pair_drop_down.items = [
+      (row["pair"], row)
+      for row in app_tables.master_pair.search(
+        tables.order_by("pair"),
+        league=disp_league,
+        gender=disp_gender,
+        year=disp_year,
+      )
+    ]
+    
     pass
 
   def league_drop_down_change(self, **event_args):
@@ -188,7 +201,16 @@ class Reports_main(Reports_mainTemplate):
         year=disp_year,
       )
     ]
-
+    # populate the player drop down
+    self.pair_drop_down.items = [
+      (row["pair"], row)
+      for row in app_tables.master_pair.search(
+        tables.order_by("pair"),
+        league=disp_league,
+        gender=disp_gender,
+        year=disp_year,
+      )
+    ]
     # set the sstart and end date to beginning and end of the season (needed for function call)
     # self.start_date_picker.date = datetime.date.today()  # temp : need to pull from league DB
     # self.end_date_picker.date = datetime.date.today()
@@ -220,7 +242,7 @@ class Reports_main(Reports_mainTemplate):
     rpt_filters = {}
 
     #pair, player, opp pair
-    rpt_filters['pair'] = self.pair_drop_down.selected_value
+    rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     #rpt_filters['player'] = self.player_drop_down.selected_value['player']
     
     if self.comp_l1_check_box.checked:

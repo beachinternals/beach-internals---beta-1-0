@@ -14,6 +14,7 @@ import pandas as pd
 import uuid
 import json
 import datetime
+from server_functions import *
 
 @anvil.server.callable
 def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
@@ -102,7 +103,7 @@ def report_test( lgy, team, **rpt_filters):
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
   # fetch the ppr dataframe
-  ppr_df - get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   
   # now filter the ppr dataframe
   ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
