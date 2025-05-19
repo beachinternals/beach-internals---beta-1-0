@@ -30,11 +30,12 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   #.     df_list[] - a list of dataframes (to be converted to mkdn), but kep as a df for now
   #
   #.     Th emax we can store are 10 items in each list, that is the max in the report_data tables, and the hmtl forms are configured for a max of 10 in each
+  title_list = []
   label_list = []
   image_list = []
   df_list = []
 
-  label_list, image_list, df_list = anvil.server.call( fnct_name, lgy, team, **rpt_filters )
+  title_list, label_list, image_list, df_list = anvil.server.call( fnct_name, lgy, team, **rpt_filters )
 
   print(f"Label List returned, Length: {len(label_list)}, list: {label_list}")
   # now store the returned data in the report_data table
@@ -49,23 +50,39 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
 
   # get this record and store the labels , images, and dfs
   rpt_data_row = app_tables.report_data.get(report_id = report_id)
+
+  rpt_data_row['no_title'] = len(title_list)  
+  if len(title_list) > 0:
+    for i in range(0,len(title_list)):
+      var = 'title_'+str(i+1)
+      print(f" label to be stored: {var}, title: {title_list[i]}")
+      rpt_data_row[var] = title_list[i]
+      
   rpt_data_row['no_label'] = len(label_list)
   if len(label_list) > 0:
     for i in range(0,len(label_list)):
       var = 'label_'+str(i+1)
       print(f" label to be stored: {var}, label: {label_list[i]}")
       rpt_data_row[var] = label_list[i]
-  rpt_data_row['no_image'] = len(image_list)
+      
+  no_images = 0
   if len(image_list) > 0:
     for i in range(0,len(image_list)):
       var = 'image_'+str(i+1)
-      rpt_data_row[var] = image_list[i]
-  rpt_data_row['no_df'] = len(df_list)
+      if len(image_list[i]) != 0:
+        rpt_data_row[var] = image_list[i]
+        no_images = no_images + 1
+  rpt_data_row['no_image'] = no_images 
+      
+  no_dfs = 0
   if len(df_list) > 0:
     for i in range(0,len(df_list)):
       var = 'df_'+str(i+1)
-      csv_file = pd.DataFrame.to_csv(df_list[i])
-      rpt_data_row[var] = anvil.BlobMedia(content_type="text/plain", content=csv_file.encode(), name=var+'.csv')
+      if len(df_list[i]) != 0:
+        csv_file = pd.DataFrame.to_csv(df_list[i])
+        rpt_data_row[var] = anvil.BlobMedia(content_type="text/plain", content=csv_file.encode(), name=var+'.csv')
+        no_dfs = no_dfs + 1
+  rpt_data_row['no_df'] = no_dfs
 
   return report_id
 
@@ -74,6 +91,7 @@ def get_report_data(report_id):
 
   row = app_tables.report_data.get(report_id=report_id)
 
+  title_list = []
   label_list = []
   image_list = []
   df_list = []
@@ -81,6 +99,10 @@ def get_report_data(report_id):
   if not row:
     return None
   else:
+    for i in range(0,row['no_title']):
+      title_var = 'title_'+str(i+1)
+      title_list.append(row[title_var])
+      
     for i in range(0,row['no_label']):
       label_var = 'label_'+str(i+1)
       label_list.append(row[label_var])
@@ -94,7 +116,7 @@ def get_report_data(report_id):
       df_list.append(row[df_var])
 
         
-  return label_list, image_list, df_list
+  return title_list, label_list, image_list, df_list
 
 @anvil.server.callable
 def report_test( lgy, team, **rpt_filters):
@@ -118,6 +140,13 @@ def report_test( lgy, team, **rpt_filters):
   rpt_row = app_tables.report_list.get(function_name='report_test')
   title_list[0] = rpt_row['rpt_title']
   title_list[1] = rpt_row['rpt_sub_title']
+  title_list[2] = rpt_row['rpt_section_title1']
+  title_list[3] = rpt_row['rpt_section_title2']
+  title_list[4] = rpt_row['team_name']
+  title_list[5] = rpt_row['company_name']
+  title_list[6] = rpt_row['filter_text']
+  title_list[7] = rpt_row['explain_text']
+  
   label_list[0] = rpt_row['box1_title']
   label_list[1] = rpt_row['box2_title']
   label_list[2] = rpt_row['box3_title']
@@ -130,8 +159,10 @@ def report_test( lgy, team, **rpt_filters):
   label_list[9] = rpt_row['box10_title']
   
   
-  return label_list, image_list, df_list
+  return title_list, label_list, image_list, df_list
 
+
+  
 @anvil.server.callable
 def filter_ppr_df( dataframe, **kwargs):
   # given the dataframe, filter it by rpt_filters
