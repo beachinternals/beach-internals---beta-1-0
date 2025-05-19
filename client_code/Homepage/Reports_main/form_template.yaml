@@ -131,18 +131,18 @@ components_by_slot:
         name: label_3
         properties: {align: right, text: 'Set:'}
         type: Label
-      - layout_properties: {grid_position: 'SPJYBH,RCMEZJ'}
-        name: set_box_1
-        properties: {align: center, text: '1'}
-        type: CheckBox
-      - layout_properties: {grid_position: 'SPJYBH,HRGCTK'}
-        name: set_box_2
-        properties: {align: center, text: '2'}
-        type: CheckBox
-      - layout_properties: {grid_position: 'SPJYBH,ERQHCZ'}
-        name: set_box_3
-        properties: {align: center, text: '3'}
-        type: CheckBox
+      - layout_properties: {grid_position: 'SPJYBH,WFBKGE'}
+        name: set_1
+        properties: {text: '1'}
+        type: RadioButton
+      - layout_properties: {grid_position: 'SPJYBH,AOFRAW'}
+        name: set_2
+        properties: {text: '2'}
+        type: RadioButton
+      - layout_properties: {grid_position: 'SPJYBH,JEDLXF'}
+        name: set_3
+        properties: {text: '3'}
+        type: RadioButton
       - layout_properties: {grid_position: 'NMSBIQ,BQOQYW'}
         name: label_7
         properties: {text: 'Serving To:'}
@@ -240,14 +240,31 @@ components_by_slot:
           type: Label
         - layout_properties: {grid_position: 'TPRAAZ,GOUMZK'}
           name: srv_speed_low
-          properties: {}
+          properties: {type: number}
           type: TextBox
         - layout_properties: {grid_position: 'TPRAAZ,GPWRJL'}
           name: srv_speed_high
-          properties: {}
+          properties: {type: number}
           type: TextBox
         layout_properties: {grid_position: 'WNTFCZ,TSWPHQ'}
         name: column_panel_3
+        properties: {}
+        type: ColumnPanel
+      - components:
+        - layout_properties: {grid_position: 'MBRQZW,JHYJUW'}
+          name: label_18
+          properties: {text: Pass In/Out System}
+          type: Label
+        - layout_properties: {grid_position: 'MBRQZW,DJGXCT'}
+          name: pass_insys
+          properties: {text: in system}
+          type: RadioButton
+        - layout_properties: {grid_position: 'MBRQZW,WTZOWT'}
+          name: pass_oos
+          properties: {text: out of system}
+          type: RadioButton
+        layout_properties: {grid_position: 'YDYZER,ZUBESP'}
+        name: column_panel_9
         properties: {}
         type: ColumnPanel
       - components:
@@ -257,11 +274,11 @@ components_by_slot:
           type: Label
         - layout_properties: {grid_position: 'WFUYEC,WEMQGK'}
           name: pass_ht_low
-          properties: {}
+          properties: {type: number}
           type: TextBox
         - layout_properties: {grid_position: 'WFUYEC,JCBQRI'}
           name: pass_ht_high
-          properties: {}
+          properties: {type: number}
           type: TextBox
         layout_properties: {grid_position: 'GDDWQP,MVCTKK'}
         name: column_panel_7
@@ -274,11 +291,11 @@ components_by_slot:
           type: Label
         - layout_properties: {grid_position: 'WKXNBE,KLPDWO'}
           name: set_ht_low
-          properties: {}
+          properties: {type: number}
           type: TextBox
         - layout_properties: {grid_position: 'WKXNBE,IXJEHL'}
           name: set_ht_high
-          properties: {}
+          properties: {type: number}
           type: TextBox
         layout_properties: {grid_position: 'OXCSUN,IVBOPP'}
         name: column_panel_8
@@ -289,18 +306,18 @@ components_by_slot:
           name: label_13
           properties: {text: Set Type}
           type: Label
-        - layout_properties: {grid_position: 'WSYJOB,SAPTKB'}
+        - layout_properties: {grid_position: 'WSYJOB,SVAMRT'}
           name: set_bump
           properties: {text: Bump}
-          type: CheckBox
-        - layout_properties: {grid_position: 'WSYJOB,XKPYBA'}
+          type: RadioButton
+        - layout_properties: {grid_position: 'WSYJOB,DBERUF'}
           name: set_hand
           properties: {text: Hand}
-          type: CheckBox
-        - layout_properties: {grid_position: 'WSYJOB,XKAQOE'}
+          type: RadioButton
+        - layout_properties: {grid_position: 'WSYJOB,LNDBXF'}
           name: set_unknown
           properties: {text: Unknown}
-          type: CheckBox
+          type: RadioButton
         layout_properties: {grid_position: 'IPFRPS,AWQJJP'}
         name: column_panel_5
         properties: {}
@@ -312,11 +329,11 @@ components_by_slot:
           type: Label
         - layout_properties: {grid_position: 'GSTJOC,WADMHO'}
           name: att_ht_low
-          properties: {}
+          properties: {type: number}
           type: TextBox
         - layout_properties: {grid_position: 'GSTJOC,TFKVCC'}
           name: att_ht_high
-          properties: {}
+          properties: {type: number}
           type: TextBox
         layout_properties: {grid_position: 'JVKQRP,CGFPWR'}
         name: column_panel_6
@@ -329,11 +346,11 @@ components_by_slot:
           type: Label
         - layout_properties: {grid_position: 'RHLWWI,GDTPKA'}
           name: att_speed_low
-          properties: {}
+          properties: {type: number}
           type: TextBox
         - layout_properties: {grid_position: 'RHLWWI,QRRMJP'}
           name: att_speed_high
-          properties: {}
+          properties: {type: number}
           type: TextBox
         layout_properties: {grid_position: 'OWKIUB,SQLZAR'}
         name: column_panel_4
@@ -341,7 +358,7 @@ components_by_slot:
         type: ColumnPanel
       layout_properties: {grid_position: 'HRVTBW,LLFEGL'}
       name: outlined_card_8
-      properties: {col_widths: '{"BQOQYW":15,"TYDSQG":45,"PCHWNT":10,"NZJTEF":20,"MGXOLR":15,"CYRGMT":15,"ALUUVG":30,"RCMEZJ":10,"HRGCTK":10,"ERQHCZ":10}', role: outlined-card}
+      properties: {col_widths: '{"BQOQYW":15,"TYDSQG":45,"PCHWNT":10,"NZJTEF":20,"MGXOLR":15,"CYRGMT":15,"ALUUVG":33,"WFBKGE":9,"AOFRAW":9,"JEDLXF":9}', role: outlined-card}
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_4

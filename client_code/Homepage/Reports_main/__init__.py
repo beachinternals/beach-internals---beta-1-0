@@ -244,6 +244,11 @@ class Reports_main(Reports_mainTemplate):
     #pair, player, opp pair
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     #rpt_filters['player'] = self.player_drop_down.selected_value['player']
+
+    if self.opp_pair_drop_down.selected_value:
+      rpt_filters['opp_pair'] == self.opp_pair_drop_down.selected_value
+      
+    rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     
     if self.comp_l1_check_box.checked:
       rpt_filters['comp_l1'] = self.comp_l1_drop_down.selected_value['comp_l1']
@@ -254,12 +259,26 @@ class Reports_main(Reports_mainTemplate):
     if self.date_check_box.checked:
       rpt_filters['start_date'] = self.start_date_picker.date
       rpt_filters['end_date'] = self.end_date_picker.date
-    if self.set_box_1.checked:
-      rpt_filters['set_1'] = self.set_box_1.checked
-    if self.set_box_2.checked:
-      rpt_filters['set_2'] = self.set_box_2.checked
-    if self.set_box_3.checked:
-      rpt_filters['set_2'] = self.set_box_3.checked
+      
+    if self.set_1.selected:
+      rpt_filters['set'] = 1
+    if self.set_2.selected:
+      rpt_filters['set'] = 2
+    if self.set_3.selected:
+      rpt_filters['set'] = 3
+
+    if self.set_bump.selected:
+      rpt_filters['set_touch_type'] = 'bump'
+    if self.set_bump.selected:
+      rpt_filters['set_touch_type'] = 'hand'
+    if self.set_bump.selected:
+      rpt_filters['set_touch_type'] = 'unknown'
+
+    if self.pass_insys.selected:
+      rpt_filters['pass_oos'] = 0
+    if self.pass_oos.selected:
+      rpt_filters['pass_oos'] = 1
+    
     if self.att_ht_low.text:
       rpt_filters['att_ht_low'] = self.att_ht_low.text
     if self.att_ht_high.text:
@@ -277,6 +296,53 @@ class Reports_main(Reports_mainTemplate):
     if self.pass_ht_high.text:
       rpt_filters['pass_ht_high'] = self.pass_ht_high.text
 
+    # now, time for srv_fr and srv_to
+    srv_fr = []
+    if self.srv_fr_1.checked:
+      srv_fr.append('1')
+    if self.srv_fr_3.checked:
+      srv_fr.append('3')
+    if self.srv_fr_5.checked:
+      srv_fr.append('5')
+    if len(srv_fr) != 0:
+      rpt_filters['srv_fr'] = srv_fr
+      
+    srv_to = []
+    if self.check_box_1c.checked:
+      srv_to.append('1C')
+    if self.check_box_1d.checked:
+      srv_to.append('1D')
+    if self.check_box_1e.checked:
+      srv_to.append('1E')
+    if self.check_box_2c.checked:
+      srv_to.append('2C')
+    if self.check_box_2d.checked:
+      srv_to.append('2D')
+    if self.check_box_2e.checked:
+      srv_to.append('2E')
+    if self.check_box_3c.checked:
+      srv_to.append('3C')
+    if self.check_box_3d.checked:
+      srv_to.append('3D')
+    if self.check_box_3e.checked:
+      srv_to.append('3E')
+    if self.check_box_4c.checked:
+      srv_to.append('4C')
+    if self.check_box_4d.checked:
+      srv_to.append('4D')
+    if self.check_box_4e.checked:
+      srv_to.append('4E')
+    if self.check_box_5c.checked:
+      srv_to.append('5C')
+    if self.check_box_5d.checked:
+      srv_to.append('5D')
+    if self.check_box_5e.checked:
+      srv_to.append('5E')
+    if len(srv_to) != 0:
+      rpt_filters['srv_to'] = srv_to
+
+
+      
     print(f"Report Filters: {rpt_filters}")
 
     # ---------------------------------------------------------------------------------

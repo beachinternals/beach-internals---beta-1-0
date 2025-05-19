@@ -142,11 +142,92 @@ def filter_ppr_df( dataframe, **kwargs):
     """
   result = dataframe.copy()  # Avoid modifying the original DataFrame
   for column, value in kwargs.items():
-    if column in dataframe.columns:
-      result = result[result[column] == value]
-      print(f"Number of Rows: {result.shape[0]}")
-    else:
-      print(f"Warning: Column '{column}' not found in DataFrame")
+    #if column in dataframe.columns:
+     # we'll check for ones not set up as equal to
+    # this includes: Date Range, srv_to, srv_fr, srv speed, pass height, set height, att speed, att height
+      
+    if column == 'comp_l1':
+      result = result[ result['comp_l1'] == value ]
+    if column == 'comp_l2':
+      result = result[ result['comp_l2'] == value ]
+    if column == 'comp_l3':
+      result = result[ result['comp_l3'] == value ]
+      
+    if column == 'start_date':
+      result = result[ result['date'] >= value ]
+    if column == 'end_date':
+      result = result[ result['date'] <= value ]
+
+    # opponent pair for matchu0ps
+    if column == 'opp_pair':
+      result = result[ result['paira'] == value ) | result['pairb'] == value ]
+
+    # set, these are setup as a radio button, so only one can be chceked.  We pass the 'set' as either 1,2,3, or it is not in the list
+    if column == 'set':
+      result = result[ result[column] == value ]
+
+    # serving to, this is a list of up to 15 zones
+    if column == 'srv_fr':
+      result = result[ result['serve_src_zone_net'].isin(value) ]
+      
+    # serving from, this is a list of 3 zones
+    if column == 'srv_to':
+      result['srv_to'] = str(result['serve_dest_zone_net'])+result['serve_dest_zone_depth']
+      result = result[ result['srv_to'].isin(value) ]
+
+        
+    # serve speed
+    if column == 'srv_speed_low':
+      result = result[ result['srv_speed'] >= value ]
+    if column == 'srv_speed_high':
+      result = result[ result['srv_speed'] <= value ]
+
+    # pass out of system
+    if column == 'pass_oos':
+      if value == 0:
+        result = result[ result['pass_height'] == value ]
+      else:
+        result = result[ result['pass_height'] >= 1 ]
+
+    # pass height
+    if column == 'pass_ht_low':
+      result = result[ result['pass_height'] >= value ]
+    if column == 'pass_ht_high':
+      result = result[ result['pass_height'] <= value ]
+        
+    # set height
+    if column == 'set_ht_low':
+      result = result[ result['set_height'] >= value ]
+    if column == 'set_ht_high':
+      result = result[ result['set_height'] <= value ]
+        
+    # set type : bump, hand, unknownn, where only one can be selected
+    if column == 'set_touch_type':
+      if value == ' unkown':
+        result = result[ ( result[column] == value | result[column] == 'empty' ) ]
+      else:
+        result = result[ result[column] == value ]
+        
+        
+    # att height
+    if column == 'att_ht_low':
+      result = result[ result['att_height'] >= value ]
+    if column == 'att_ht_high':
+      result = result[ result['att_height'] <= value ]
+        
+    # att speed
+    if column == 'att_speed_low':
+      result = result[ result['att_speed'] >= value ]
+    if column == 'att_speed_high':
+      result = result[ result['att_speed'] <= value ]
+        
+        
+    #result = result[result[column] == value]
+    print(f"Number of Rows: {result.shape[0]}")
+    
+    #else:
+      #print(f"Warning: Column '{column}' not found in DataFrame")
+    
   return result
 
 @anvil.server.callable
