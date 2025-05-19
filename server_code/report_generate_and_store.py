@@ -109,12 +109,15 @@ def report_test( lgy, team, **rpt_filters):
   ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
     
   # initiate return lists
+  title_list = ['','','','','','','','','','']
   label_list = ['','','','','','','','','','']
-  image_list = []
-  df_list = []
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
 
   # fetch the labels from the database
   rpt_row = app_tables.report_list.get(function_name='report_test')
+  title_list[0] = rpt_row['rpt_title']
+  title_list[1] = rpt_row['rpt_sub_title']
   label_list[0] = rpt_row['box1_title']
   label_list[1] = rpt_row['box2_title']
   label_list[2] = rpt_row['box3_title']
@@ -139,6 +142,25 @@ def filter_ppr_df( dataframe, **kwargs):
         **kwargs: Keyword arguments where key=column_name, value=filter_value
     Returns:
         Filtered DataFrame
+
+    This function DOES NOT filter on a given pair or player.  This needs to be done by the report function
+
+    This function filters on:
+      comp_l1
+      comp_l2
+      comp_l3
+      opp_pair
+      start_date, end_date
+      set 1,2,3
+      srv_fr [1,3,5]
+      srv_to [1e ... 5c]
+      serve speed low & high
+      pass out of system
+      pass height low & high
+      set height low & high
+      set touch type (bump, hand, unknown)
+      att_height low & high
+      att_speed low & high
     """
   result = dataframe.copy()  # Avoid modifying the original DataFrame
   for column, value in kwargs.items():
@@ -160,7 +182,7 @@ def filter_ppr_df( dataframe, **kwargs):
 
     # opponent pair for matchu0ps
     if column == 'opp_pair':
-      result = result[ result['paira'] == value ) | result['pairb'] == value ]
+      result = result[ ( result['teama'] == value | result['teamb'] == value ) ]
 
     # set, these are setup as a radio button, so only one can be chceked.  We pass the 'set' as either 1,2,3, or it is not in the list
     if column == 'set':
@@ -174,8 +196,7 @@ def filter_ppr_df( dataframe, **kwargs):
     if column == 'srv_to':
       result['srv_to'] = str(result['serve_dest_zone_net'])+result['serve_dest_zone_depth']
       result = result[ result['srv_to'].isin(value) ]
-
-        
+  
     # serve speed
     if column == 'srv_speed_low':
       result = result[ result['srv_speed'] >= value ]
@@ -194,7 +215,7 @@ def filter_ppr_df( dataframe, **kwargs):
       result = result[ result['pass_height'] >= value ]
     if column == 'pass_ht_high':
       result = result[ result['pass_height'] <= value ]
-        
+         
     # set height
     if column == 'set_ht_low':
       result = result[ result['set_height'] >= value ]
@@ -207,8 +228,7 @@ def filter_ppr_df( dataframe, **kwargs):
         result = result[ ( result[column] == value | result[column] == 'empty' ) ]
       else:
         result = result[ result[column] == value ]
-        
-        
+         
     # att height
     if column == 'att_ht_low':
       result = result[ result['att_height'] >= value ]
