@@ -388,6 +388,7 @@ def report_player_attacking( lgy, team, **rpt_filters):
   df_list[0] = att_table.to_dict('records')
 
   # get the grpahs of attacks, zone 1 - 5, all as one graph
+  plot1, plot2, plot3, plot4, plot5, df1, df2, df3, df4, df5 = get_player_attack_plots(ppr_df, disp_player)
   
   
   return title_list, label_list, image_list, df_list
