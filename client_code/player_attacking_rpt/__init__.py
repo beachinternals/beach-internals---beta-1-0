@@ -20,7 +20,7 @@ class player_attacking_rpt(player_attacking_rptTemplate):
     # Create a header panel
     header_panel = LinearPanel()
     header_panel.background = '#004aad'
-    header_label = Label(text='My Data Dashboard', foreground='#ffffff', font_size=20)
+    header_label = Label(text='Beach Internals, beachinternals@gmail.com', foreground='#ffffff', font_size=20)
     header_panel.add_component(header_label)
     self.add_component(header_panel)
     
@@ -54,18 +54,19 @@ class player_attacking_rpt(player_attacking_rptTemplate):
         label_list[9] = rpt_row['box10_title']
       """
 
-      self.title.text = title_list[0]
+      # populate the titles
+      self.rpt_title.text = title_list[0]
+      self.rpt_subtitle.text = title_list[1]
+      self.explain_text.content = title_list[7]
+      self.filter_text.content = title_list[6]
 
-      for i in range(0, len(label_list)):
-        if label_list[i]:
-          if i == 0:
-            self.label_1.text = label_list[i]
-          elif i == 1:
-            self.label_2.text = label_list[i]
-          elif i == 2:
-            self.label_3.text = label_list[i]
-          elif i == 3:
-            self.label_4.text = label_list[i]
+      # populate the attack Table
+      self.box1_title.text = label_list[0]
+      self.att_table.content = pd.DataFrame.to_mkdn(df_list[0],index=False)
+      
+      # populate he
+      self.box2_title.text = label_list[1]
+
 
     else:
       self.label_1.text = "No Report Data Found"

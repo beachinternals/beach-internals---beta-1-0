@@ -249,6 +249,7 @@ class Reports_main(Reports_mainTemplate):
       rpt_filters['opp_pair'] == self.opp_pair_drop_down.selected_value
       
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
+    rpt_filters['player'] = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
     
     if self.comp_l1_check_box.checked:
       rpt_filters['comp_l1'] = self.comp_l1_drop_down.selected_value['comp_l1']
