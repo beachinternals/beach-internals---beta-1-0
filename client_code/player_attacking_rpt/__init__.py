@@ -62,7 +62,7 @@ class player_attacking_rpt(player_attacking_rptTemplate):
 
       # populate the attack Table
       self.box1_title.text = label_list[0]
-      self.att_table.content = pd.DataFrame.to_mkdn(df_list[0],index=False)
+      self.att_table.content = df_list[0]
       
       # populate he
       self.box2_title.text = label_list[1]

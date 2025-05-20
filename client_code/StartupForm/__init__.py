@@ -19,8 +19,11 @@ class StartupForm(StartupFormTemplate):
     params = anvil.js.window.URLSearchParams(url_params)
     form_name = params.get('form')
     report_id = params.get('report_id')
-    if form_name == 'popupform' and report_id:
-      open_form('popupform', report_id=report_id)
+    
+    # expand this to any form in the list in the report_list
+    form_list = [row['rpt_form'] for row in app_tables.report_list.search()]
+    if form_name in form_list and report_id:
+      open_form(form_name, report_id=report_id)
     else:
       open_form('Homepage')
       

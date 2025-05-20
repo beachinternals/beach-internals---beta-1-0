@@ -15,6 +15,7 @@ import uuid
 import json
 import datetime
 from server_functions import *
+import inspect
 
 @anvil.server.callable
 def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
@@ -37,10 +38,10 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
 
   title_list, label_list, image_list, df_list = anvil.server.call( fnct_name, lgy, team, **rpt_filters )
 
-  print(f"Title List returned, Length: {len(title_list)}, list: {title_list}")
-  print(f"Label List returned, Length: {len(label_list)}, list: {label_list}")
-  print(f"Image List returned, Length: {len(image_list)}, list: {image_list}")
-  print(f"DF List returned, Length: {len(df_list)}, list: {df_list}")
+  #print(f"Title List returned, Length: {len(title_list)}, list: {title_list}")
+  #print(f"Label List returned, Length: {len(label_list)}, list: {label_list}")
+  #print(f"Image List returned, Length: {len(image_list)}, list: {image_list}")
+  #print(f"DF List returned, Length: {len(df_list)}, list: {df_list}")
   
   # now store the returned data in the report_data table
   # Generate unique report ID
@@ -79,14 +80,24 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   rpt_data_row['no_image'] = no_images 
       
   no_dfs = 0
-  print(f"store report data, df_list, lenght {len(df_list)} df list : {df_list}")
+  #print(f"store report data, df_list, length {len(df_list)} df list : {df_list}")
   if len(df_list) > 0:
     for i in range(0,len(df_list)):
-      print(f"df list # :{i}, df : {df_list[i]}")
+      print(f"df list # :{i}, df : {type(df_list[i])}")
       var = 'df_'+str(i+1)
       if len(df_list[i]) != 0:
-        csv_file = pd.DataFrame.to_csv(df_list[i])
-        rpt_data_row[var] = anvil.BlobMedia(content_type="text/plain", content=csv_file.encode(), name=var+'.csv')
+
+        # Validate and recover DataFrame
+        if not isinstance(df_list[i], list) or not all(isinstance(row, dict) for row in df_list[i]):
+          raise ValueError(f"Expected list of dictionaries, got {type(df_list[i])}")
+        try:
+          df_tmp = pd.DataFrame(df_list[i])
+        except Exception as e:
+          raise ValueError(f"Failed to recover DataFrame: {str(e)}")
+
+        # need to store the data as a markdown, not datafarme (no pandas in the client)
+        mkdn_file = pd.DataFrame.to_markdown(df_tmp, index = False ) # now convert it to mkdn formate
+        rpt_data_row[var] = anvil.BlobMedia(content_type="text/plain", content=mkdn_file.encode(), name=var+'.mkdn')
         no_dfs = no_dfs + 1
   rpt_data_row['no_df'] = no_dfs
 
@@ -119,7 +130,8 @@ def get_report_data(report_id):
 
     for i in range(0,row['no_df']):
       df_var = 'df_'+str(i+1)
-      df_list.append(row[df_var])
+      mkdn_file = row[df_var].get_bytes().decode('utf-8')
+      df_list.append(mkdn_file)
 
         
   return title_list, label_list, image_list, df_list
@@ -336,7 +348,7 @@ def report_player_attacking( lgy, team, **rpt_filters):
   df_list = ['','','','','','','','','','']
 
   # fetch the labels from the database
-  rpt_row = app_tables.report_list.get(function_name='report_test')
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
   title_list[0] = rpt_row['rpt_title']
   title_list[1] = rpt_row['rpt_sub_title']
   title_list[2] = rpt_row['rpt_section_title1']
@@ -373,7 +385,7 @@ def report_player_attacking( lgy, team, **rpt_filters):
   
   # set up dataframe 1 to display the attack table for this player
   att_table = get_player_attack_table(ppr_df, disp_player)
-  df_list[0] = att_table
+  df_list[0] = att_table.to_dict('records')
 
   # get the grpahs of attacks, zone 1 - 5, all as one graph
   
