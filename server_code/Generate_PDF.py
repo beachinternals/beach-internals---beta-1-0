@@ -20,6 +20,14 @@ from player_reports import *
 # rather than in the user's browser.
 
 @anvil.server.callable
+def generate_pdf_report( rpt_form, report_id):
+  pdf_file = report_id+'.pdf'
+  rpt_pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form,report_id)
+  return rpt_pdf 
+
+
+
+@anvil.server.callable
 def create_pdf(email, text1):
   pdf = PDFRenderer.render_form('Homepage.PDF_Rpt', email, text1)
   return pdf
