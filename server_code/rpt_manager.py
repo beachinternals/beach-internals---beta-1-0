@@ -658,11 +658,33 @@ def rpt_mgr_generate_background():
         ret_val = rpt_mgr_matchup_rpts(rpt_r, disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
+      elif rpt_r['rpt_type'] == 'new':
+        ret_val = rpt_mgr_new_rpts(rpt_r, disp_team)
+        if not ret_val:
+          print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
   return True
-  
+
+  #-------------------------------------------------------------------------------------------------------
+#  Report Manager - Player Reports
+#-------------------------------------------------------------------------------------------------------
+def rpt_mgr_player_rpts(rptlist_r,p_list):
+  # make the pdf of player type reports
+
+  #print(f"In rpt_mgr_player_rpts {rptlist_r}")
+  #print(f"Row: {rptlist_r['report_name']},{rptlist_r['function_name']}")
+  #print(f"Player List : {p_list}")
+
+  for p in p_list:
+    print(f"player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")
+    for rptname in rptlist_r:
+      print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
+
+  rpt_pdf = 'Player Reports Stub'
+  return rpt_pdf
+
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Player Reports
 #-------------------------------------------------------------------------------------------------------
