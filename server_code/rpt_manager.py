@@ -658,8 +658,8 @@ def rpt_mgr_generate_background():
         ret_val = rpt_mgr_matchup_rpts(rpt_r, disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
-      elif rpt_r['rpt_type'] == 'new':
-        ret_val = rpt_mgr_new_rpts(rpt_r, disp_team)
+      elif rpt_r['rpt_type'] == 'new player':
+        ret_val = rpt_mgr_new_player_rpts(rpt_r, disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
       else:
@@ -667,23 +667,56 @@ def rpt_mgr_generate_background():
 
   return True
 
-  #-------------------------------------------------------------------------------------------------------
-#  Report Manager - Player Reports
 #-------------------------------------------------------------------------------------------------------
-def rpt_mgr_player_rpts(rptlist_r,p_list):
-  # make the pdf of player type reports
+#  Report Manager - New Reports
+#-------------------------------------------------------------------------------------------------------
+def rpt_mgr_new_player_rpts( rptlist_r, disp_team):
+  '''
+  
+  Using the new format, where we store filters in **rpt_filters and then store the data in a file, then call the pdf window to get data from the file
+  
+  '''
+  # build the rpt_filers to pass
+  rpt_filters = []
 
-  #print(f"In rpt_mgr_player_rpts {rptlist_r}")
-  #print(f"Row: {rptlist_r['report_name']},{rptlist_r['function_name']}")
-  #print(f"Player List : {p_list}")
 
-  for p in p_list:
-    print(f"player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")
+  for p in rptlist_r['player_list']:
+    full_rpt_pdf = None
+
+    rpt_filters['player'] = p['team'] + " "+p['number']+' '+p['shortname']
+
+    # calculate the folder we will store thiese into
+    pdf_folder = [ p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+    #print(f"pdf folder: {pdf_folder}")
+    full_rpt_pdf = None
+    pdf_name = rpt_r['Report Description'] + ' Player Attacking NEW.pdf'
+    
+    #print(f"new player reports: player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")
+    lgy = p['league']+'|'+p['gender']+'|'+p['year']
     for rptname in rptlist_r:
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
+      
+      # get the form for this report
+      rpt_list_r = app_tables.report.list.get( function_name = rpt_name['function_name'])
+      
+      # call the report function and save the report id
+      report_id = generate_and_store_report( rptname['function_name'], lgy, disp_team, **rpt_filters )
 
-  rpt_pdf = 'Player Reports Stub'
-  return rpt_pdf
+      # generate the PDF file
+      pdf1 = generate_pdf_report( rpt_list_r['rpt_form'], report_id)
+
+      # now, need to merge this report with the next one
+      if full_rpt_pdf:
+        #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+        full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+      else:
+        #print('no original pdf file, setting to pdf1')
+        full_rpt_pdf = pdf1
+
+    # now write this to the google drive
+    file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+      
+  return True
 
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Player Reports
