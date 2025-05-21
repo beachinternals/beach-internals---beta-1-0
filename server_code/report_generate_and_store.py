@@ -16,6 +16,12 @@ import json
 import datetime
 from server_functions import *
 import inspect
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import math
+from plot_functions import *
+import numpy as np
+from server_functions import *
 
 @anvil.server.callable
 def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
@@ -73,8 +79,8 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   no_images = 0
   if len(image_list) > 0:
     for i in range(0,len(image_list)):
-      var = 'image_'+str(i+1)
-      if len(image_list[i]) != 0:
+      if type(image_list[i]) is not str:
+        var = 'image_'+str(i+1)
         rpt_data_row[var] = image_list[i]
         no_images = no_images + 1
   rpt_data_row['no_image'] = no_images 
@@ -388,7 +394,21 @@ def report_player_attacking( lgy, team, **rpt_filters):
   df_list[0] = att_table.to_dict('records')
 
   # get the grpahs of attacks, zone 1 - 5, all as one graph
-  plot1, plot2, plot3, plot4, plot5, df1, df2, df3, df4, df5 = get_player_attack_plots(ppr_df, disp_player)
+  z1_plt, z2_plt, z3_plt, z4_plt, z5_plt, z1_df, z2_df, z3_df, z4_df, z5_df = get_player_attack_plots(ppr_df, disp_player)
+
+  # put the plots in the image list
+  image_list[0] = z1_plt
+  image_list[1] = z2_plt
+  image_list[2] = z3_plt
+  image_list[3] = z4_plt
+  image_list[4] = z5_plt
+  
+  # put the DF's in the df_list
+  df_list[1] = z1_df.to_dict('records')
+  df_list[2] = z2_df.to_dict('records')
+  df_list[3] = z3_df.to_dict('records')
+  df_list[4] = z4_df.to_dict('records')
+  df_list[5] = z5_df.to_dict('records')
   
   
   return title_list, label_list, image_list, df_list
@@ -446,3 +466,72 @@ def get_player_attack_table(ppr_df, disp_player):
     return fbhe_table
   else:
     return "No Data Found"
+
+
+@anvil.server.callable
+def get_player_attack_plots( ppr_df, disp_player):
+  
+  # limit the data to passes by the player
+  new_ppr = ppr_df[ ppr_df['att_player'] == disp_player]
+  
+  # set up 5 sub plots
+  attack_z1_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')],'att',1)  
+  attack_z2_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')],'att',2)
+  attack_z3_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')],'att',3)
+  attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',4)
+  attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',5)
+
+  zone_dict = {'1':['FBHE','FBSO','ATT','URL'],'Value':[0,0,0,'']}
+  z1_df = pd.DataFrame.from_dict(zone_dict)
+  z2_df = pd.DataFrame.from_dict(zone_dict)
+  z3_df = pd.DataFrame.from_dict(zone_dict)
+  z4_df = pd.DataFrame.from_dict(zone_dict)
+  z5_df = pd.DataFrame.from_dict(zone_dict)
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z1_df.at[0,'Value'] = fbhe_vector[0]
+  z1_df.at[1,'Value'] = fbhe_vector[4]
+  z1_df.at[2,'Value'] = fbhe_vector[3]
+  z1_df.at[3,'Value'] = fbhe_vector[5]
+  #z1_df.at[3,'Value'] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z2_df.at[0,'Value'] = fbhe_vector[0]
+  z2_df.at[1,'Value'] = fbhe_vector[4]
+  z2_df.at[2,'Value'] = fbhe_vector[3]
+  z2_df.at[3,'Value'] = fbhe_vector[5]
+  #z2_df.at[3,'Value'] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z3_df.at[0,'Value'] = fbhe_vector[0]
+  z3_df.at[1,'Value'] = fbhe_vector[4]
+  z3_df.at[2,'Value'] = fbhe_vector[3]
+  z3_df.at[3,'Value'] = fbhe_vector[5]
+  #z3_df.at[3,'Value'] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z4_df.at[0,'Value'] = fbhe_vector[0]
+  z4_df.at[1,'Value'] = fbhe_vector[4]
+  z4_df.at[2,'Value'] = fbhe_vector[3]
+  z4_df.at[3,'Value'] = fbhe_vector[5]
+  #z4_df.at[3,'Value'] = oos_vector[0]
+
+  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
+  z5_df.at[0,'Value'] = fbhe_vector[0]
+  z5_df.at[1,'Value'] = fbhe_vector[4]
+  z5_df.at[2,'Value'] = fbhe_vector[3]
+  z5_df.at[3,'Value'] = fbhe_vector[5]
+  #z5_df.at[3,'Value'] = oos_vector[0]
+
+  #z1_mkdn = pd.DataFrame.to_markdown(z1_df, index=False, headers=['',''] )
+  #z2_mkdn = pd.DataFrame.to_markdown(z2_df, index=False, headers=['',''])
+  #z3_mkdn = pd.DataFrame.to_markdown(z3_df, index=False, headers=['',''])
+  #z4_mkdn = pd.DataFrame.to_markdown(z4_df, index=False, headers=['',''])
+  #z5_mkdn = pd.DataFrame.to_markdown(z5_df, index=False, headers=['',''])
+
+  return attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, z1_df, z2_df, z3_df, z4_df, z5_df

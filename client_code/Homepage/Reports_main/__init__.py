@@ -27,11 +27,11 @@ class Reports_main(Reports_mainTemplate):
     report_id = params.get('report_id')
 
     # expand this to any form in the list in the report_list
-    form_list = [row['rpt_form'] for row in app_tables.report_list.search()]
-    print(f"report main, form name: {form_name}")
-    print(f'report main, form list: {form_list}')
-    if form_name in form_list and report_id:
-      open_form(form_name, report_id=report_id)
+    #form_list = [row['rpt_form'] for row in app_tables.report_list.search()]
+    #print(f"report main, form name: {form_name}")
+    #print(f'report main, form list: {form_list}')
+    #if form_name in form_list and report_id:
+    #  open_form(form_name, report_id=report_id)
       
     
     # self.all_rpt_pdf.visible = True if anvil.users.get_user()['team'] == "INTERNALS" else False

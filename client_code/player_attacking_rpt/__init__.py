@@ -67,6 +67,17 @@ class player_attacking_rpt(player_attacking_rptTemplate):
       # populate he
       self.box2_title.text = label_list[1]
 
+      # Populate teh zone attack charts
+      self.z1_plt.source = image_list[0]
+      self.z2_plt.source = image_list[1]
+      self.z3_plt.source = image_list[2]
+      self.z4_plt.source = image_list[3]
+      self.z5_plt.source = image_list[4]
+      self.z1_mkdn.content = df_list[1]
+      self.z2_mkdn.content = df_list[2]
+      self.z3_mkdn.content = df_list[3]
+      self.z4_mkdn.content = df_list[4]
+      self.z5_mkdn.content = df_list[5]
 
     else:
       self.label_1.text = "No Report Data Found"
