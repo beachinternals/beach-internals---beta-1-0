@@ -281,7 +281,7 @@ def rpt_mgr_generate_background():
 
           
           # now write this to the google drive
-          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf, email_text)
+          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
           
           # put this pdf into the pdf list
           pdf_list[pdf_num] = full_rpt_pdf
