@@ -224,7 +224,7 @@ def rpt_mgr_generate_background():
 
       
           # now write this to the google drive
-          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf, email_text)
+          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
       
 
       elif rpt_r['rpt_type'] == 'pair':
@@ -339,7 +339,7 @@ def rpt_mgr_generate_background():
 
           
         # now write this to the google drive
-        file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf, email_text)
+        file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf )
 
       elif rpt_r['rpt_type'] == 'internals':
         email_status = anvil.email.send(to=rpt_r['emailto'],
@@ -402,7 +402,7 @@ def rpt_mgr_generate_background():
                 #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
                 
             # now write this to the google drive
-            file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1, email_text)
+            file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1 )
             
             # put this pdf into the pdf list
             pdf_list[pdf_num] = full_rpt_pdf
@@ -584,7 +584,7 @@ def rpt_mgr_generate_background():
                                       )
 
                         # now write this to the google drive
-                        #file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1, email_text)
+                        #file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1 )
             
                         # now, need to merge this report with the next one
                         if full_rpt_pdf:
