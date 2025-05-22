@@ -172,7 +172,7 @@ def rpt_mgr_generate_background():
       if rpt_r['rpt_type'] == 'player':
         # loop over all the players for this report listing
 
-        email_text = email_text + 'Processing Player Reports \n\n'
+        email_text = email_text + '\n Processing Player Reports \n'
         pdf_list = ['']*len(rpt_r['player_list'])     # start a list of all pdf files to pass to email send
         pdf_num = 0
         #print(f"Pdf_list (empty) : {pdf_list}, {len(pdf_list)}")
@@ -225,13 +225,14 @@ def rpt_mgr_generate_background():
       
           # now write this to the google drive
           file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+          email_text = email_text + file_msg + '\n'
       
 
       elif rpt_r['rpt_type'] == 'pair':
         #print("processing pair report")
         #print(f"Pair List: {rpt_r['pair_list']}")
         # loop over all the players for this report listing
-        email_text = email_text + 'Processing Pair Reports \n\n'
+        email_text = email_text + '\n Processing Pair Reports \n'
         pdf_list = ['']*len(rpt_r['pair_list'])      # start a list of all pdf files to pass to email send
         pdf_num = 0
       
@@ -282,6 +283,7 @@ def rpt_mgr_generate_background():
           
           # now write this to the google drive
           file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+          email_text = email_text + file_msg + '/n'
           
           # put this pdf into the pdf list
           pdf_list[pdf_num] = full_rpt_pdf
@@ -296,7 +298,7 @@ def rpt_mgr_generate_background():
         '''
       elif rpt_r['rpt_type'] == 'dashboard':
         # dashboard reports are for a whole team, so we ignore the pair and player entries, ump right o the reports
-        email_text = email_text + 'Processing Dashboard Reports \n\n'
+        email_text = email_text + '\n Processing Dashboard Reports \n'
         # build team string
         disp_team = rpt_r['team']
 
@@ -340,8 +342,10 @@ def rpt_mgr_generate_background():
           
         # now write this to the google drive
         file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf )
+        email_text = email_text + file_msg + '\n'
 
       elif rpt_r['rpt_type'] == 'internals':
+        email_text = email_text + '\n Processing Internals Reports \n'
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
@@ -351,7 +355,7 @@ def rpt_mgr_generate_background():
       elif rpt_r['rpt_type'] == 'scouting':
         pdf_list = ['']*len(rpt_r['pair_list'])*2      # start a list of all pdf files to pass to email send
         pdf_num = 0
-        email_text = email_text + 'Processing Scouting Reports \n\n'
+        email_text = email_text + '\n Processing Scouting Reports \n'
         
         for pair_r in rpt_r['pair_list']:
           # build pair string
@@ -403,6 +407,7 @@ def rpt_mgr_generate_background():
                 
             # now write this to the google drive
             file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1 )
+            email_text = email_text + file_msg + '\n'
             
             # put this pdf into the pdf list
             pdf_list[pdf_num] = full_rpt_pdf
@@ -425,7 +430,7 @@ def rpt_mgr_generate_background():
         #. Valid report types :
         #              - 'full scouting report - pair'
         #
-        email_text = email_text + 'Processing Scouting - PDF Only Reports \n\n'
+        email_text = email_text + '\n Processing Scouting - PDF Only Reports \n\n'
         pdf_list = []   # start a list of all pdf files to pass to email send
         pdf_num = 0
         for pair_r in rpt_r['pair_list']:
@@ -637,6 +642,7 @@ def rpt_mgr_generate_background():
 
             # now write this to the google drive
             file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf )
+            email_text = email_text + file_msg + '\n'
             
             # put this pdf into the pdf list
             pdf_list.append(full_rpt_pdf)
@@ -660,19 +666,19 @@ def rpt_mgr_generate_background():
           '''
       elif rpt_r['rpt_type'] == 'matchup':
         #print(f"Matchup Reports: {rpt_r['rpt_type']}")
-        email_text = email_text + '\n Processing Matchup Reports \n\n'
+        email_text = email_text + '\n Processing Matchup Reports \n'
         ret_val = rpt_mgr_matchup_rpts(rpt_r, disp_team )
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
         else:
-          email_text = email_text + ' - '+ ret_val + " \n"
+          email_text = email_text + ret_val + " \n"
       elif rpt_r['rpt_type'] == 'new player':
-        email_text = email_text + '\n Processing New Player Reports \n\n'
+        email_text = email_text + '\n Processing New Player Reports \n'
         ret_val = rpt_mgr_new_player_rpts(rpt_r, disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
         else:
-          email_text = email_text + ' - ' + ret_val + '\n'
+          email_text = email_text + ret_val + '\n'
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
