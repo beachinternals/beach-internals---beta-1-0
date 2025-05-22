@@ -664,18 +664,22 @@ def rpt_mgr_generate_background():
         ret_val = rpt_mgr_matchup_rpts(rpt_r, disp_team, email_text)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
+        else:
+          email_text = email_text + ret_val + " /n"
       elif rpt_r['rpt_type'] == 'new player':
         email_text = email_text + 'Processing New Player Reports \n\n'
-        ret_val = rpt_mgr_new_player_rpts(rpt_r, disp_team, email_text)
+        ret_val = rpt_mgr_new_player_rpts(rpt_r, disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
+        else:
+          email_text = email_text + ret_val + '\n'
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
   #now, send an email with the updates
   internals_email = 'spccoach@gmail.com'
   now1 = datetime.now()
-  email_message = email_text + "Report Manager Completed at:" + str(now1) + ' Compute time: '+str(now1-now)+ "\n"
+  email_message = email_text + "Report Manager Completed at:" + str(now1) + '/n Compute time: '+str(now1-now)+ "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Report Manager',text=email_message)
   
   return True

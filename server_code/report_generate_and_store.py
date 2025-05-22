@@ -89,7 +89,7 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   #print(f"store report data, df_list, length {len(df_list)} df list : {df_list}")
   if len(df_list) > 0:
     for i in range(0,len(df_list)):
-      print(f"df list # :{i}, df : {type(df_list[i])}")
+      #print(f"df list # :{i}, df : {type(df_list[i])}")
       var = 'df_'+str(i+1)
       if len(df_list[i]) != 0:
 
