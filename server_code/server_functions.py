@@ -639,7 +639,8 @@ def write_to_nested_folder(folder_path, filename, content):
       file.set_media(content)
   else:
     raise Exception(f"Unsupported content type: {type(content)}")
-    
+
+
   return f"File {filename} written to {'/'.join(folder_path)}"
 
 

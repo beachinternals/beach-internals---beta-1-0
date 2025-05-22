@@ -34,6 +34,9 @@ def rpt_mgr_generate():
 def rpt_mgr_generate_background():
   # generate reports from the report mgt data file
 
+  now = datetime.now()
+  email_text = 'Report Manager Started at' + str(now) + ' \n \n'
+  
   # items needed to limit/compatible with report function calls
   comp_l1_checked = False
   disp_comp_l1 = ''
@@ -169,6 +172,7 @@ def rpt_mgr_generate_background():
       if rpt_r['rpt_type'] == 'player':
         # loop over all the players for this report listing
 
+        email_text = email_text + 'Processing Player Reports \n\n'
         pdf_list = ['']*len(rpt_r['player_list'])     # start a list of all pdf files to pass to email send
         pdf_num = 0
         #print(f"Pdf_list (empty) : {pdf_list}, {len(pdf_list)}")
@@ -220,14 +224,14 @@ def rpt_mgr_generate_background():
 
       
           # now write this to the google drive
-          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf, email_text)
       
 
       elif rpt_r['rpt_type'] == 'pair':
         #print("processing pair report")
         #print(f"Pair List: {rpt_r['pair_list']}")
         # loop over all the players for this report listing
-        
+        email_text = email_text + 'Processing Pair Reports \n\n'
         pdf_list = ['']*len(rpt_r['pair_list'])      # start a list of all pdf files to pass to email send
         pdf_num = 0
       
@@ -277,7 +281,7 @@ def rpt_mgr_generate_background():
 
           
           # now write this to the google drive
-          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+          file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf, email_text)
           
           # put this pdf into the pdf list
           pdf_list[pdf_num] = full_rpt_pdf
@@ -292,7 +296,7 @@ def rpt_mgr_generate_background():
         '''
       elif rpt_r['rpt_type'] == 'dashboard':
         # dashboard reports are for a whole team, so we ignore the pair and player entries, ump right o the reports
-
+        email_text = email_text + 'Processing Dashboard Reports \n\n'
         # build team string
         disp_team = rpt_r['team']
 
@@ -335,7 +339,7 @@ def rpt_mgr_generate_background():
 
           
         # now write this to the google drive
-        file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+        file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf, email_text)
 
       elif rpt_r['rpt_type'] == 'internals':
         email_status = anvil.email.send(to=rpt_r['emailto'],
@@ -347,7 +351,7 @@ def rpt_mgr_generate_background():
       elif rpt_r['rpt_type'] == 'scouting':
         pdf_list = ['']*len(rpt_r['pair_list'])*2      # start a list of all pdf files to pass to email send
         pdf_num = 0
-
+        email_text = email_text + 'Processing Scouting Reports \n\n'
         
         for pair_r in rpt_r['pair_list']:
           # build pair string
@@ -398,7 +402,7 @@ def rpt_mgr_generate_background():
                 #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
                 
             # now write this to the google drive
-            file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
+            file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1, email_text)
             
             # put this pdf into the pdf list
             pdf_list[pdf_num] = full_rpt_pdf
@@ -421,7 +425,7 @@ def rpt_mgr_generate_background():
         #. Valid report types :
         #              - 'full scouting report - pair'
         #
-        
+        email_text = email_text + 'Processing Scouting - PDF Only Reports \n\n'
         pdf_list = []   # start a list of all pdf files to pass to email send
         pdf_num = 0
         for pair_r in rpt_r['pair_list']:
@@ -580,7 +584,7 @@ def rpt_mgr_generate_background():
                                       )
 
                         # now write this to the google drive
-                        #file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1)
+                        #file_msg = write_to_nested_folder( pdf_folder, pdf_name, pdf1, email_text)
             
                         # now, need to merge this report with the next one
                         if full_rpt_pdf:
@@ -632,7 +636,7 @@ def rpt_mgr_generate_background():
                 full_rpt_pdf = 'Invalid Function name/report type'+rpt_r['function_name']+' '+rpt_r['rpt_type']
 
             # now write this to the google drive
-            file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+            file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf, email_text)
             
             # put this pdf into the pdf list
             pdf_list.append(full_rpt_pdf)
@@ -656,28 +660,37 @@ def rpt_mgr_generate_background():
           '''
       elif rpt_r['rpt_type'] == 'matchup':
         #print(f"Matchup Reports: {rpt_r['rpt_type']}")
-        ret_val = rpt_mgr_matchup_rpts(rpt_r, disp_team)
+        email_text = email_text + 'Processing Matchup Reports \n\n'
+        ret_val = rpt_mgr_matchup_rpts(rpt_r, disp_team, email_text)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
       elif rpt_r['rpt_type'] == 'new player':
-        ret_val = rpt_mgr_new_player_rpts(rpt_r, disp_team)
+        email_text = email_text + 'Processing New Player Reports \n\n'
+        ret_val = rpt_mgr_new_player_rpts(rpt_r, disp_team, email_text)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
+  #now, send an email with the updates
+  internals_email = 'spccoach@gmail.com'
+  now1 = datetime.now()
+  email_message = email_text + "Report Manager Completed at:" + str(now1) + ' Compute time: '+str(now1-now)+ "\n"
+  email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Report Manager',text=email_message)
+  
   return True
 
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - New Reports
 #-------------------------------------------------------------------------------------------------------
-def rpt_mgr_new_player_rpts( rpt_r, disp_team):
+def rpt_mgr_new_player_rpts( rpt_r, disp_team ):
   '''
   
   Using the new format, where we store filters in **rpt_filters and then store the data in a file, then call the pdf window to get data from the file
   
   '''
   today = datetime.now() 
+
 
   for p in rpt_r['player_list']:
     full_rpt_pdf = None
@@ -690,14 +703,15 @@ def rpt_mgr_new_player_rpts( rpt_r, disp_team):
     pdf_folder = [ p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
     #print(f"pdf folder: {pdf_folder}")
     full_rpt_pdf = None
-    pdf_name = rpt_r['Report Description'] + ' Player Attacking NEW.pdf'
+    pdf_name = rpt_r['Report Description'] + rpt_filters['player']+' Player Attacking NEW.pdf'
     
     #print(f"new player reports: player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")
-    lgy = p['league']+'|'+p['gender']+'|'+p['year']
+    lgy = p['league']+' | '+p['gender']+' | '+p['year']
     for rptname in rpt_r['rpts_inc']:
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
       
       # call the report function and save the report id
+      print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
       report_id = generate_and_store_report( rptname['function_name'], lgy, disp_team, **rpt_filters )
 
       # generate the PDF file
@@ -712,9 +726,9 @@ def rpt_mgr_new_player_rpts( rpt_r, disp_team):
         full_rpt_pdf = pdf1
 
     # now write this to the google drive
-    file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
+    file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf )
       
-  return True
+  return file_msg
 
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Player Reports
@@ -776,7 +790,7 @@ def rpt_mgr_dashboard_rpts(rpt_r):
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Matchup Reports
 #-------------------------------------------------------------------------------------------------------
-def rpt_mgr_matchup_rpts(rpt_r, disp_team):
+def rpt_mgr_matchup_rpts(rpt_r, disp_teamb ):
   # for a matchup report, rpt_r should have just one pair and just one pair_b in the list
   today = datetime.now() 
 
@@ -959,7 +973,7 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team):
     # now write this to the google drive
     file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
 
-  return True
+  return file_msg
 
 
 def srv_to_fr( s_fr, s_to_net, s_to_depth):
@@ -1090,11 +1104,11 @@ def populate_filters_from_rpt_mgr_table( rpt_r, player_r, pair_r, opp_pair_r ):
   if opp_pair_r:
     rpt_filters['opp_pair'] = opp_pair_r['pair']
 
-  if rpt_r['comp1'] != 'None':
-    rpt_filters['comp_l1'] == rpt_r['comp1']
-  if rpt_r['comp2'] != 'None':
-    rpt_filters['comp_l2'] == rpt_r['comp2']
-  if rpt_r['comp3'] == 'None':
+  if rpt_r['comp1'] is not None:
+    rpt_filters['comp_l1'] = rpt_r['comp1']
+  if rpt_r['comp2'] is not None:
+    rpt_filters['comp_l2'] = rpt_r['comp2']
+  if rpt_r['comp3'] is not None:
     rpt_filters['comp_l3'] = rpt_r['comp3']
 
     '''
