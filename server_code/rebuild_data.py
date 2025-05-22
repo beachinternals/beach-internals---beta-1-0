@@ -158,7 +158,7 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
   email_message = email_message + '        '+str(r_val) + "\n"
   
   #now, send an email with the updates
-  internals_email = 'spccoach@gmail.com'
+  internals_email = 'beachinternals@gmail.com'
   now1 = datetime.datetime.now()
   email_message = email_message + "Night Processing Completed at:" + str(now1) + ' Compute time: '+str(now1-now)+ "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Night Processing',text=email_message)
@@ -241,7 +241,7 @@ def calculate_ppr_data(rebuild):
           r_val = anvil.server.launch_background_task('generate_ppr_files', c_league, c_gender, c_year, c_team, rebuild )
 
     #now, send an email with the updates
-  internals_email = 'spccoach@gmail.com'
+  internals_email = 'beachinternals@gmail.com'
   email_text = email_text + "Completed at:" + str(now) + "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Rebuild Data',text=email_text)
   
@@ -305,7 +305,7 @@ def merge_ppr_data():
             r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'League' )
 
   #now, send an email with the updates
-  internals_email = 'spccoach@gmail.com'
+  internals_email = 'beachinternals@gmail.com'
   email_text = email_text + "Completed at:" + str(now) + "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Merge PPR Data',text=email_text)
   
@@ -362,7 +362,7 @@ def calculate_data1():
         r_val = anvil.server.launch_background_task('build_pair_table_background', c_league, c_gender, c_year)
 
   #now, send an email with the updates
-  internals_email = 'spccoach@gmail.com'
+  internals_email = 'beachinternals@gmail.com'
   email_text = email_text + "Completed at:" + str(now) + "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Calculate player and Triangle Data',text=email_text)
   

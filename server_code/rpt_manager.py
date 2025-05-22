@@ -660,24 +660,24 @@ def rpt_mgr_generate_background():
           '''
       elif rpt_r['rpt_type'] == 'matchup':
         #print(f"Matchup Reports: {rpt_r['rpt_type']}")
-        email_text = email_text + 'Processing Matchup Reports \n\n'
+        email_text = email_text + '\n Processing Matchup Reports \n\n'
         ret_val = rpt_mgr_matchup_rpts(rpt_r, disp_team )
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
         else:
           email_text = email_text + ' - '+ ret_val + " \n"
       elif rpt_r['rpt_type'] == 'new player':
-        email_text = email_text + 'Processing New Player Reports \n\n'
+        email_text = email_text + '\n Processing New Player Reports \n\n'
         ret_val = rpt_mgr_new_player_rpts(rpt_r, disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
         else:
-          email_text = email_text + ' - '+ ret_val + '\n'
+          email_text = email_text + ' - ' + ret_val + '\n'
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
   #now, send an email with the updates
-  internals_email = 'spccoach@gmail.com'
+  internals_email = 'beachinternals@gmail.com'
   now1 = datetime.now()
   email_message = email_text + "Report Manager Completed at:" + str(now1) + ' \n' + ' Compute time: '+str(now1-now)+ "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Report Manager',text=email_message)
@@ -827,15 +827,15 @@ def rpt_mgr_matchup_rpts(rpt_r, disp_team ):
     rpt_list_df = pd.DataFrame({'order':[0],'rpt_form':[''],'function_name':[''] })
     for r in rpt_r['rpts_inc']:
       rpt_list_df.loc[len(rpt_list_df)] = { 'order':r['order'], 'rpt_form':r['rpt_form'], 'function_name':r['function_name'] }
-      print(f" r order {r['order']}")
-      print(f" r form {r['rpt_form']}")
-      print(f" r funct {r['function_name']}")
+      #print(f" r order {r['order']}")
+      #print(f" r form {r['rpt_form']}")
+      #print(f" r funct {r['function_name']}")
 
     #print(f" rpt list df :{rpt_list_df}")
     rpt_list_df['order'] = rpt_list_df['order'].astype(str)
     rpt_list_df = rpt_list_df.sort_values('order', ascending=True)
     rpt_list_df = rpt_list_df.iloc[1:]
-    print(f"report list {rpt_list_df}")
+    #print(f"report list {rpt_list_df}")
       
     for j in [0]:  # set to [0,1] to run it back the other way (B v A), set to [0] to only run the one matchup (A v B)
       if j == 1: # swap the two teams, and run it again

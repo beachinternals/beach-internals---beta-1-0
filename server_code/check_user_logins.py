@@ -46,7 +46,7 @@ def chk_user_logins():
     mess_text = mess_text + "User :"+user_r['email'] + " logged in at :"+str(user_r['last_login'])+"\n"
 
   # no send this in a email to Internals
-  internals_email = 'spccoach@gmail.com'
+  internals_email = 'beachinternals@gmail.com'
   print(mess_text)
 
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - User Login History',text=mess_text)
