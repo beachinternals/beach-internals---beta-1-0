@@ -68,11 +68,6 @@ components:
     name: rpt_mgr_button
     properties: {role: outlined-button, text: Report Manager}
     type: Button
-  - event_bindings: {click: test_button_click}
-    layout_properties: {grid_position: 'ZNKRMX,FNIWNK TWCQMX,HHRCFO'}
-    name: test_button
-    properties: {role: outlined-button, text: Test now()}
-    type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5
   properties: {col_widths: '{"VYNCIF":15,"STEGGX":12,"BOPASV":12,"NBKPXK":10,"UYUCGW":11}', role: outlined-card}

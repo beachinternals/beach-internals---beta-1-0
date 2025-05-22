@@ -12,6 +12,7 @@ from pair_functions import *
 from server_functions import *
 import pandas as pd
 from matchup_reports import *
+from report_generate_and_store import *
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -670,22 +671,23 @@ def rpt_mgr_generate_background():
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - New Reports
 #-------------------------------------------------------------------------------------------------------
-def rpt_mgr_new_player_rpts( rptlist_r, disp_team):
+def rpt_mgr_new_player_rpts( rpt_r, disp_team):
   '''
   
   Using the new format, where we store filters in **rpt_filters and then store the data in a file, then call the pdf window to get data from the file
   
   '''
-  # build the rpt_filers to pass
-  rpt_filters = []
+  today = datetime.now() 
 
 
-  for p in rptlist_r['player_list']:
+  for p in rpt_r['player_list']:
     full_rpt_pdf = None
-
-    rpt_filters['player'] = p['team'] + " "+p['number']+' '+p['shortname']
+    
+    # build the rpt_filers to pass
+    rpt_filters = populate_filters_from_rpt_mgr_table( rpt_r, p, False, False )
 
     # calculate the folder we will store thiese into
+
     pdf_folder = [ p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
     #print(f"pdf folder: {pdf_folder}")
     full_rpt_pdf = None
@@ -693,17 +695,14 @@ def rpt_mgr_new_player_rpts( rptlist_r, disp_team):
     
     #print(f"new player reports: player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")
     lgy = p['league']+'|'+p['gender']+'|'+p['year']
-    for rptname in rptlist_r:
+    for rptname in rpt_r['rpts_inc']:
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
-      
-      # get the form for this report
-      rpt_list_r = app_tables.report.list.get( function_name = rpt_name['function_name'])
       
       # call the report function and save the report id
       report_id = generate_and_store_report( rptname['function_name'], lgy, disp_team, **rpt_filters )
 
       # generate the PDF file
-      pdf1 = generate_pdf_report( rpt_list_r['rpt_form'], report_id)
+      pdf1 = generate_pdf_report( rptname['rpt_form'], report_id)
 
       # now, need to merge this report with the next one
       if full_rpt_pdf:
@@ -1072,3 +1071,123 @@ def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp
           
   #print(f"make_sr_matrix : serve receive matrix: {sr_matrix}")
   return sr_matrix
+
+
+def populate_filters_from_rpt_mgr_table( rpt_r, player_r, pair_r, opp_pair_r ):
+  '''
+  
+  use the data in the report row, a row from rpt_mgr data table, to make the rpt_filters list that is used to filter the data
+
+  for playe, pair, opp_pair, only set if the row is passed, otherwise passed as False
+  '''
+
+  rpt_filters = {}
+
+  #pair, player, opp pair: 
+  if player_r:
+    rpt_filters['player'] = player_r['team'] + " "+player_r['number']+' '+player_r['shortname']
+  if pair_r:
+    rpt_filters['pair'] = pair_r['pair']
+  if opp_pair_r:
+    rpt_filters['opp_pair'] = opp_pair_r['pair']
+
+  if not rpt_r['comp1']:
+    rpt_filters['comp_l1'] = rpt_r['comp1']
+  if not rpt_r['comp2']:
+    rpt_filters['comp_l2'] = rpt_r['comp2']
+  if not rpt_r['comp3']:
+    rpt_filters['comp_l3'] = rpt_r['comp3']
+
+    '''
+  if not rpt_r['start_date']:
+    rpt_filters['start_date'] = rpt_r['start_date']
+  if not rpt_r['start_date']:
+    rpt_filters['start_date'] = rpt_r['start_date']
+
+
+  if self.set_1.selected:
+    rpt_filters['set'] = 1
+    if self.set_2.selected:
+      rpt_filters['set'] = 2
+if self.set_3.selected:
+  rpt_filters['set'] = 3
+
+  if self.set_bump.selected:
+    rpt_filters['set_touch_type'] = 'bump'
+    if self.set_bump.selected:
+      rpt_filters['set_touch_type'] = 'hand'
+if self.set_bump.selected:
+  rpt_filters['set_touch_type'] = 'unknown'
+
+  if self.pass_insys.selected:
+    rpt_filters['pass_oos'] = 0
+    if self.pass_oos.selected:
+      rpt_filters['pass_oos'] = 1
+
+if self.att_ht_low.text:
+  rpt_filters['att_ht_low'] = self.att_ht_low.text
+  if self.att_ht_high.text:
+    rpt_filters['att_ht_high'] = self.att_ht_high.text
+    if self.set_ht_low.text:
+      rpt_filters['set_ht_low'] = self.set_ht_low.text
+if self.set_ht_high.text:
+  rpt_filters['set_ht_high'] = self.set_ht_high.text
+  if self.att_speed_low.text:
+    rpt_filters['att_speed_low'] = self.att_speed_low.text
+    if self.att_speed_high.text:
+      rpt_filters['att_speed_high'] = self.att_speed_high.text
+if self.pass_ht_low.text:
+  rpt_filters['pass_ht_low'] = self.pass_ht_low.text
+  if self.pass_ht_high.text:
+    rpt_filters['pass_ht_high'] = self.pass_ht_high.text
+
+    # now, time for srv_fr and srv_to
+    srv_fr = []
+if self.srv_fr_1.checked:
+  srv_fr.append('1')
+  if self.srv_fr_3.checked:
+    srv_fr.append('3')
+    if self.srv_fr_5.checked:
+      srv_fr.append('5')
+if len(srv_fr) != 0:
+  rpt_filters['srv_fr'] = srv_fr
+
+  srv_to = []
+if self.check_box_1c.checked:
+  srv_to.append('1C')
+  if self.check_box_1d.checked:
+    srv_to.append('1D')
+    if self.check_box_1e.checked:
+      srv_to.append('1E')
+if self.check_box_2c.checked:
+  srv_to.append('2C')
+  if self.check_box_2d.checked:
+    srv_to.append('2D')
+    if self.check_box_2e.checked:
+      srv_to.append('2E')
+if self.check_box_3c.checked:
+  srv_to.append('3C')
+  if self.check_box_3d.checked:
+    srv_to.append('3D')
+    if self.check_box_3e.checked:
+      srv_to.append('3E')
+if self.check_box_4c.checked:
+      srv_to.append('4C')
+    if self.check_box_4d.checked:
+      srv_to.append('4D')
+    if self.check_box_4e.checked:
+      srv_to.append('4E')
+    if self.check_box_5c.checked:
+      srv_to.append('5C')
+    if self.check_box_5d.checked:
+      srv_to.append('5D')
+    if self.check_box_5e.checked:
+      srv_to.append('5E')
+    if len(srv_to) != 0:
+      rpt_filters['srv_to'] = srv_to
+
+  '''
+  
+  print(f"Report Filters: {rpt_filters}")
+
+  return rpt_filters
