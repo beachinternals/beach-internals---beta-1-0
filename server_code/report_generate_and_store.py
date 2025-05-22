@@ -363,6 +363,8 @@ def report_player_attacking( lgy, team, **rpt_filters):
   title_list[5] = rpt_row['company_name']
   title_list[6] = rpt_row['filter_text']
   title_list[7] = rpt_row['explain_text']
+  title_list[8] = rpt_filters.get('player')
+  title_list[9]= rpt_filters.get('pair')
 
   label_list[0] = rpt_row['box1_title']
   label_list[1] = rpt_row['box2_title']

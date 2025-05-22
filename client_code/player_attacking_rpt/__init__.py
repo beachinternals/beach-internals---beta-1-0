@@ -41,6 +41,8 @@ class player_attacking_rpt(player_attacking_rptTemplate):
         title_list[5] = rpt_row['company_name']
         title_list[6] = rpt_row['filter_text']
         title_list[7] = rpt_row['explain_text']
+        title_list[8] = rpt_row['player']
+        title_list[9] = rpt_row['pair']
   
         label_list[0] = rpt_row['box1_title']
         label_list[1] = rpt_row['box2_title']
@@ -56,7 +58,7 @@ class player_attacking_rpt(player_attacking_rptTemplate):
 
       # populate the titles
       self.rpt_title.text = title_list[0]
-      self.rpt_subtitle.text = title_list[1]
+      self.rpt_subtitle.text = title_list[1] + title_list[8]
       self.explain_text.content = title_list[7]
       self.filter_text.content = title_list[6]
 
