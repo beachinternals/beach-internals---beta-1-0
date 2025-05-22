@@ -283,7 +283,7 @@ def rpt_mgr_generate_background():
           
           # now write this to the google drive
           file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
-          email_text = email_text + file_msg + '/n'
+          email_text = email_text + file_msg + '\n'
           
           # put this pdf into the pdf list
           pdf_list[pdf_num] = full_rpt_pdf
@@ -430,7 +430,7 @@ def rpt_mgr_generate_background():
         #. Valid report types :
         #              - 'full scouting report - pair'
         #
-        email_text = email_text + '\n Processing Scouting - PDF Only Reports \n\n'
+        email_text = email_text + '\n Processing Scouting - PDF Only Reports \n'
         pdf_list = []   # start a list of all pdf files to pass to email send
         pdf_num = 0
         for pair_r in rpt_r['pair_list']:
