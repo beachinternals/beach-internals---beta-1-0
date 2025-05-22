@@ -636,7 +636,7 @@ def rpt_mgr_generate_background():
                 full_rpt_pdf = 'Invalid Function name/report type'+rpt_r['function_name']+' '+rpt_r['rpt_type']
 
             # now write this to the google drive
-            file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf, email_text)
+            file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf )
             
             # put this pdf into the pdf list
             pdf_list.append(full_rpt_pdf)

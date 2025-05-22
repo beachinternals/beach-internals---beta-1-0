@@ -1164,7 +1164,7 @@ def pair_serving_effectiveness(disp_league, disp_gender, disp_year,
                     scout, explain_text
                )
   
-  p2_srv_eff_mkdn, a, b = srv_eff(disp_league, disp_gender, disp_year, 
+  p2_srv_eff_mkdn, a, b, c = srv_eff(disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, player2,
                     comp_l1_checked, disp_comp_l1,
                     comp_l2_checked, disp_comp_l2,
