@@ -296,7 +296,7 @@ def filter_ppr_df( dataframe, **kwargs):
         
         
     #result = result[result[column] == value]
-    print(f"Number of Rows: {result.shape[0]}")
+    #print(f"Number of Rows: {result.shape[0]}")
     
     #else:
       #print(f"Warning: Column '{column}' not found in DataFrame")

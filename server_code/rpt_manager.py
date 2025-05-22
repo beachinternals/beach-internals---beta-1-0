@@ -7,12 +7,12 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
 from Generate_PDF import *
-from datetime import datetime, timedelta, date
 from pair_functions import *
 from server_functions import *
 import pandas as pd
 from matchup_reports import *
 from report_generate_and_store import *
+from datetime import datetime, timedelta, date
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -679,7 +679,6 @@ def rpt_mgr_new_player_rpts( rpt_r, disp_team):
   '''
   today = datetime.now() 
 
-
   for p in rpt_r['player_list']:
     full_rpt_pdf = None
     
@@ -1091,11 +1090,11 @@ def populate_filters_from_rpt_mgr_table( rpt_r, player_r, pair_r, opp_pair_r ):
   if opp_pair_r:
     rpt_filters['opp_pair'] = opp_pair_r['pair']
 
-  if not rpt_r['comp1']:
-    rpt_filters['comp_l1'] = rpt_r['comp1']
-  if not rpt_r['comp2']:
-    rpt_filters['comp_l2'] = rpt_r['comp2']
-  if not rpt_r['comp3']:
+  if rpt_r['comp1'] != 'None':
+    rpt_filters['comp_l1'] == rpt_r['comp1']
+  if rpt_r['comp2'] != 'None':
+    rpt_filters['comp_l2'] == rpt_r['comp2']
+  if rpt_r['comp3'] == 'None':
     rpt_filters['comp_l3'] = rpt_r['comp3']
 
     '''
