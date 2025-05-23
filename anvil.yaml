@@ -715,9 +715,9 @@ db_schema:
     title: Users
 dependencies: []
 metadata: {title: Beach Internals}
-name: Beach Internals - Beta 1.0
+name: Beach Internals
 native_deps: null
-package_name: Beach_Internals___Beta_1_0
+package_name: Beach_Internals
 renamed: true
 runtime_options:
   client_version: '3'
