@@ -714,10 +714,10 @@ db_schema:
     server: full
     title: Users
 dependencies: []
-metadata: {title: Beach Internals}
-name: Beach Internals
+metadata: {title: Beach Internals Application}
+name: Beach Internals Application
 native_deps: null
-package_name: Beach_Internals
+package_name: Beach_Internals_Application
 renamed: true
 runtime_options:
   client_version: '3'
