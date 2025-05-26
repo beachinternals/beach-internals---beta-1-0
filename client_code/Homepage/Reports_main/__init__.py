@@ -246,8 +246,11 @@ class Reports_main(Reports_mainTemplate):
     rpt_filters = {}
 
     #pair, player, opp pair
-    rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
-    #rpt_filters['player'] = self.player_drop_down.selected_value['player']
+    if self.rpt_detail.selected:
+      rpt_filters['rpt_detail'] = 'detail'
+    if self.rpt_summary.selected:
+      rpt_filters['rpt_detail'] = 'summary'
+
 
     if self.opp_pair_drop_down.selected_value:
       rpt_filters['opp_pair'] == self.opp_pair_drop_down.selected_value
