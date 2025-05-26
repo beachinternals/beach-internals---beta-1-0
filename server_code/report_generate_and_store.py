@@ -114,31 +114,30 @@ def get_report_data(report_id):
 
   row = app_tables.report_data.get(report_id=report_id)
 
-  title_list = []
-  label_list = []
-  image_list = []
-  df_list = []
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
   
   if not row:
     return None
   else:
     for i in range(0,row['no_title']):
       title_var = 'title_'+str(i+1)
-      title_list.append(row[title_var])
+      title_list[i] = row[title_var]
       
     for i in range(0,row['no_label']):
       label_var = 'label_'+str(i+1)
-      label_list.append(row[label_var])
+      label_list[i] = row[label_var]
       
     for i in range(0,row['no_image']):
       image_var = 'image_'+str(i+1)
-      image_list.append(row[image_var])
+      image_list[i] = row[image_var]
 
     for i in range(0,row['no_df']):
       df_var = 'df_'+str(i+1)
       mkdn_file = row[df_var].get_bytes().decode('utf-8')
-      df_list.append(mkdn_file)
-
+      df_list[i] = mkdn_file
         
   return title_list, label_list, image_list, df_list
 

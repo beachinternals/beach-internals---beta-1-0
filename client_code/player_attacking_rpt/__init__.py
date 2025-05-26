@@ -57,19 +57,29 @@ class player_attacking_rpt(player_attacking_rptTemplate):
       """
 
       # populate the titles
-      self.rpt_title.text = title_list[0]
-      self.rpt_subtitle.text = title_list[1] + title_list[8]
-      self.explain_text.content = title_list[7]
-      self.filter_text.content = title_list[6]
+      if isinstance(title_list[0], str):
+        self.rpt_title.text = title_list[0]
+      if isinstance(title_list[1],str) and isinstance(title_list[8], str):
+        self.rpt_subtitle.text = title_list[1] + title_list[8]
+      if isinstance(title_list[7], str):
+        self.explain_text.content = title_list[7]
+      if isinstance(title_list[8], str):
+        self.filter_text.content = title_list[6]
 
       # populate the attack Table
-      self.box1_title.text = label_list[0]
-      if df_list[0] is not None:
-        self.att_table.content = df_list[0]
+      if isinstance(label_list[0], str):      
+        self.box1_title.text = label_list[0]
+      if isinstance(df_list[3], str):
+        if len(df_list[0]) != 0:
+          self.att_table.content = df_list[0]
+      elif isinstance(df_list[0], anvil.Media):
+        if (len(df_list.get_bytes()) != 0):
+          self.att_table.content = df_list[0]
       
-      # populate he
-      self.box2_title.text = label_list[1]
-
+      # populate the
+      if isinstance(label_list[1],str):
+        self.box2_title.text = label_list[1]
+      
       # Populate The zone attack charts
       if isinstance(image_list[0], str):
         if len(image_list[0]) != 0:
@@ -77,7 +87,7 @@ class player_attacking_rpt(player_attacking_rptTemplate):
       elif isinstance(image_list[0], anvil.Media):
         if len(image_list[0].get_bytes()) != 0:
           self.z1_plt.source = image_list[0]
-          
+            
       if isinstance(image_list[1], str):
         if len(image_list[1]) != 0:
            self.z2_plt.source = image_list[1]
@@ -102,11 +112,11 @@ class player_attacking_rpt(player_attacking_rptTemplate):
       if isinstance(image_list[4], str):
         if len(image_list[4]) != 0:
           self.z5_plt.source = image_list[4]
-      elif isinstance(image_list[0], anvil.Media):
+      elif isinstance(image_list[4], anvil.Media):
         if len(image_list[4].get_bytes()) != 0:
           self.z5_plt.source = image_list[4]
+      
 
-          
       if isinstance(df_list[1], str):
         if len(df_list[1]) != 0:
           self.z1_mkdn.content = df_list[1]
@@ -141,6 +151,6 @@ class player_attacking_rpt(player_attacking_rptTemplate):
       elif isinstance(df_list[5], anvil.Media):
         if len(df_list[5].get_bytes()) != 0:
           self.z5_mkdn.content = df_list[5]
-          
+
     else:
       self.label_1.text = "No Report Data Found"
