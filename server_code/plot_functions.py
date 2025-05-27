@@ -316,3 +316,43 @@ def calculate_ellipse_area(width, height):
    """
    return math.pi * (width / 2) * (height / 2)
 
+
+def plot_histogram( bars, labels, title, ylabel ):
+
+  # Calculate average value
+  average_count = sum(bars) / len(bars) if counts else 0
+
+  # Create histogram with Matplotlib
+  plt.figure(figsize=(10, 6))
+  labels = [wc['week_label'] for wc in weekly_counts]
+  counts = [wc['count'] for wc in weekly_counts]
+
+  # Plot bars
+  bars = plt.bar(labels, counts, color='skyblue', edgecolor='navy')
+
+  # Label each bar with count
+  for bar in bars:
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width() / 2, height, f'{int(height)}', 
+             ha='center', va='bottom')
+
+    # Add average line
+  plt.axhline(y=average_count, color='red', linestyle='--', linewidth=2, 
+              label=f'Average: {average_count:.2f}')
+
+  # Customize plot
+  plt.xlabel('Week')
+  plt.ylabel('Count of Records')
+  plt.title('Weekly HVAC Data Points')
+  plt.xticks(rotation=45, ha='right')
+  plt.legend()
+  plt.tight_layout()
+
+  # Save plot to BytesIO
+  buffer = io.BytesIO()
+  plt.savefig(buffer, format='png')
+  buffer.seek(0)
+  plot_image = anvil.BlobMedia('image/png', buffer.getvalue(), name='histogram.png')
+  plt.close()
+
+  return plot_image

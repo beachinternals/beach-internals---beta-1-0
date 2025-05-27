@@ -287,6 +287,7 @@ def player_pt_total(ppr_df, disp_player):
               'p_te_s':[0], # this pair, transition error when serving
               'p_tk_r':[0], # this pair, transition kills when receiving
               'p_te_r':[0], # this pair, transition error when receiving
+              'p_att_total':[0], # total number of attacks for this player
               'p_good_pass':[0], # when pair is serving, result is a good pass by oppewnent (not out of system)
               'p_bad_pass':[0], # when pair is serving, result is a bad pass, out of system (by opponent)
               'p_serves':[0], # this pair, total number of serves
@@ -298,6 +299,7 @@ def player_pt_total(ppr_df, disp_player):
               'o_te_s':[0], # this pair, transition error when serving
               'o_tk_r':[0], # this pair, transition kills when receiving
               'o_te_r':[0], # this pair, transition error when receiving
+              'o_att_total':[0], # total number of attacks for this opponent
               'o_good_pass':[0], # when opponent is serving, result is good pass (no out of system)
               'o_bad_pass':[0], # when opponent is serving, result in bad pass (out of system)
               'o_serves':[0], # opponent - total number of serves
@@ -318,6 +320,7 @@ def player_pt_total(ppr_df, disp_player):
   pts_df.at[0,'p_te_s']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['serve_player'] == disp_player) & (ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'p_tk_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['pass_player'] == disp_player) & (ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
   pts_df.at[0,'p_te_r']  = ppr_df[ (ppr_df['point_outcome'] == 'TE') & (ppr_df['pass_player'] == disp_player)& (ppr_df['point_outcome_team'].str.contains(disp_player))].shape[0]
+  pts_df.at[0,'p_att_total'] = ppr_df[ (ppr_df['att_player'] == disp_player )].shape[0]
   pts_df.at[0,'p_good_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] <= 0) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'p_bad_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] >= 1) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'p_serves'] = ppr_df[ ppr_df['serve_player'] == disp_player  ].shape[0]
@@ -333,6 +336,7 @@ def player_pt_total(ppr_df, disp_player):
   pts_df.at[0,'o_good_pass'] = ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] <= 0) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'o_bad_pass'] =  ppr_df[ (ppr_df['serve_player'] == disp_player) & (ppr_df['pass_oos'] >= 1) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'o_serves'] = pts_df.at[0,'o_good_pass'] + pts_df.at[0,'o_bad_pass'] + pts_df.at[0,'o_tse'] + pts_df.at[0,'o_tsa']
+  pts_df.at[0,'o_att_total'] = pts_df.at[0,'o_good_pass'] + pts_df.at[0,'o_bad_pass']
   pts_df.at[0,'pts_total'] = ppr_df.shape[0]
 
   if False:  # make true if you want to check the numers

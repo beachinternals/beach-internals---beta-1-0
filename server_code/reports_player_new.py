@@ -16,6 +16,7 @@ from anvil import pdf
 from pair_functions import *
 from matchup_reports import player_45_serves
 from plot_functions import *
+from datetime import datetime, timedelta
 
 '''
 
@@ -270,7 +271,65 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
   #------------------------------------------------------------------------------------------------------
   #            Create and store images
   #------------------------------------------------------------------------------------------------------
-  # z1_plt = get_player_attack_plots(ppr_df, disp_player)
-  # image_list[0] = z1_plt
 
+  # create a list with the dates in question
+  num_weeks = 11
+  if 'start_date' in rpt_filters:
+    start_date = rpt_filters.get('start_date')
+  else:
+    start_date = datetime(2025, 2, 15)
+    
+  if 'end_date' in rpt_filters:
+    end_date = rpt_filters.get('end_date')
+    num_weeks = (end_date - start_date)/7
+  else:
+    end_date = start_date + 7*num_weeks
+    
+  # create a list with the start and end date for each week
+  weekly_dates = []
+  for i in range(num_weeks):
+    week_start = start_date + timedelta(days=7 * i)
+    week_end = week_start + timedelta(days=6)
+    weekly_dates.append({
+      'start_date': week_start,
+      'end_date': week_end
+    })
+
+  # set up the pandas dataframe
+  df_dict = {'Variable':['FBHE','Errors','Transition','Knockout','Good Pass','Points'],
+               'Week 1':[0,0,0,0,0,0],
+               'Week 2':[0,0,0,0,0,0],
+               'Week 3':[0,0,0,0,0,0],
+               'Week 4':[0,0,0,0,0,0],
+               'Week 5':[0,0,0,0,0,0],
+               'Week 6':[0,0,0,0,0,0],
+               'Week 7':[0,0,0,0,0,0],
+               'Week 8':[0,0,0,0,0,0],
+               'Week 9':[0,0,0,0,0,0],
+               'Week 10':[0,0,0,0,0,0],
+               'Week 11':[0,0,0,0,0,0]
+    }
+  sum_df = pd.DataFrame.from_dict(df_dict)
+    
+  # start a loop over the weeks
+  for i in range(1,num_weeks):
+    # filter ppr_df to tmp_df for this week
+    tmp_df = ppr_df[ (ppr_df['date'] >= weekly_dates[i]['start_date']) & (ppr_df['date'] < weekly_date[i]['end_date']) ]
+    pt_totals_df = player_pt_total( tmp_df, disp_player )
+    sum_df.at['week1','FBHE'] = (pt_totals_df.at[0,'p_fbk']-pt_totals_df.at[0,'p_fbe'])/( pt_totals_df.at[0,'p_att_total'])
+    sum_df.at['week1','Errors'] = (pt_totals_df.at[0,'p_fbe']+pt_totals_df.at[0,'p_tse']+pt_totals_df.at[0,'p_te_r']+pt_totals_df.at[0,'p_te_s'])/( pt_totals_df.at[0,'pts_total'])
+    sum_df.at['week1','Transition'] = (pt_totals_df.at[0,'p_tk_s']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'o_te_r']+pt_totals_df.at[0,'o_te_s'])/( pt_totals_df.at[0,'pts_total'])
+    sum_df.at['week1','Knockout'] = (pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'o_bad_pass'])/( pt_totals_df.at[0,'pts_total'])
+    sum_df.at['week1','Good Pass'] = (pt_totals_df.at[0,'p_good_pass'])/( pt_totals_df.at[0,'p_good_pass']+pt_totals_df.at[0,'p_bad_pass'])
+    sum_df.at['week1','Points'] = ( (pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'p_fbk']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'p_tk_s']) +
+                                      (pt_totals_df.at[0,'0_tse']+pt_totals_df.at[0,'o_fbe']+pt_totals_df.at[0,'o_te_r']+pt_totals_df.at[0,'o_te_s']) ) / ( pt_totals_df.at[0,'pts_total']
+                                      )
+
+  print(f" Summary dataframe: {sum_df}")
+  
+  # now create histograms for each one
+  plt1 = create_histogram( sum_df['FBHE'], sum_df['Variable'], 'FBHE', 'FBHE' )
+    
+  
+  
   return title_list, label_list, image_list, df_list
