@@ -200,3 +200,77 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
   # image_list[0] = z1_plt
 
   return title_list, label_list, image_list, df_list
+
+#---------------------------------------------------------------------------------------------------
+#
+#.  Player COnsistency Report
+#
+#-------------------------------------------------------------------------------------------------
+@anvil.server.callable
+def  player_season_summary_new(lgy, team, **rpt_filters):
+  '''
+
+  Custom, per report code:
+  - set the True/False for pair or player
+  - create and store dataframes
+  - create and store images
+  
+  Report Functions:
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe and filter by all the report filters
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  title_list, label_list, image_list, df_list = initialize_report_lists(inspect.currentframe().f_code.co_name, **rpt_filters)
+
+  #------------------------------------------------------------------------------------------------------
+  #            Set ot a Player or Pair Report
+  #------------------------------------------------------------------------------------------------------
+  disp_player = rpt_filters.get('player')
+  disp_pair = rpt_filters.get('pair')
+  # for a player report:
+  if True:  # set only one of these to True
+    ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+      (ppr_df['player_a2'] == disp_player) |
+      (ppr_df['player_b1'] == disp_player) |
+      (ppr_df['player_b2'] == disp_player) 
+      ]
+  # for a pair report:
+  if False:  # set only one of these to True
+    ppr_df = ppr_df[ (ppr_df['teama'] == disp_pair) | (ppr_df['teamb'] == disp_pair) ]
+
+  # for a team report
+  if False:
+    ppr_df = ppr_df[ ppr_df['teama'] == disp_pair ]
+
+  #------------------------------------------------------------------------------------------------------
+  #            Create and store DataFrames
+  #------------------------------------------------------------------------------------------------------
+  # no dataframes in this report
+
+  #------------------------------------------------------------------------------------------------------
+  #            Create and store images
+  #------------------------------------------------------------------------------------------------------
+  # z1_plt = get_player_attack_plots(ppr_df, disp_player)
+  # image_list[0] = z1_plt
+
+  return title_list, label_list, image_list, df_list
