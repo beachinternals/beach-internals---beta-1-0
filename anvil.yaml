@@ -3,60 +3,75 @@ db_schema:
   btd_files:
     client: full
     columns:
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 78}
       name: league
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 73}
       name: gender
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 72}
       name: year
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 119}
       name: comp_l1
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 105}
       name: comp_l2
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 105}
       name: comp_l3
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 101}
       name: team
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 84}
       name: owner
       type: string
     - admin_ui: {width: 200}
       name: date
       type: date
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 421}
       name: filename
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 87}
       name: points
       type: number
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 77}
       name: per_srv_players
       type: number
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 81}
       name: per_xy
       type: number
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 105}
       name: per_players
       type: number
-    - admin_ui: {width: 200}
+    - admin_ui: {width: 168}
       name: completeness_score
       type: number
     - admin_ui: {width: 200}
-      name: include_in_master
+      name: private
       type: bool
     - admin_ui: {width: 200}
+      name: include_in_master
+      type: bool
+    - admin_ui: {width: 353}
       name: csv_data
       type: media
     - admin_ui: {width: 200}
+      name: btd_file_date
+      type: datetime
+    - admin_ui: {width: 200}
+      name: no_errors
+      type: number
+    - admin_ui: {width: 200}
+      name: error_str
+      type: string
+    - admin_ui: {width: 200}
       name: ppr_data
       type: media
+    - admin_ui: {width: 200}
+      name: ppr_file_date
+      type: datetime
     - admin_ui: {width: 200}
       name: player1
       type: string
@@ -81,15 +96,6 @@ db_schema:
     - admin_ui: {width: 200}
       name: ppr_playerb2
       type: string
-    - admin_ui: {order: 11.6875, width: 200}
-      name: private
-      type: bool
-    - admin_ui: {order: 12.625, width: 200}
-      name: error_str
-      type: string
-    - admin_ui: {order: 12.4375, width: 200}
-      name: no_errors
-      type: number
     server: full
     title: btd_files
   league_comp_l1:
@@ -106,13 +112,13 @@ db_schema:
   league_comp_l2:
     client: search
     columns:
-    - admin_ui: {order: 0, width: 200}
+    - admin_ui: {width: 200}
       name: league
       type: string
-    - admin_ui: {order: 1, width: 200}
+    - admin_ui: {width: 200}
       name: comp_l2
       type: string
-    - admin_ui: {order: 2, width: 200}
+    - admin_ui: {width: 200}
       name: comp_l1
       type: string
     server: full
@@ -148,6 +154,44 @@ db_schema:
       type: string
     server: full
     title: league_list
+  master_pair:
+    client: search
+    columns:
+    - admin_ui: {width: 200}
+      name: league
+      type: string
+    - admin_ui: {width: 200}
+      name: gender
+      type: string
+    - admin_ui: {width: 200}
+      name: year
+      type: string
+    - admin_ui: {width: 200}
+      name: player1
+      type: string
+    - admin_ui: {width: 200}
+      name: player2
+      type: string
+    - admin_ui: {width: 200}
+      name: pair
+      type: string
+    - admin_ui: {width: 200}
+      name: team
+      type: string
+    - admin_ui: {width: 200}
+      name: s_w_player1
+      type: media
+    - admin_ui: {width: 200}
+      name: sw_player1_date
+      type: datetime
+    - admin_ui: {width: 200}
+      name: s_w_player2
+      type: media
+    - admin_ui: {width: 200}
+      name: sw_player2_date
+      type: datetime
+    server: full
+    title: master_pair
   master_player:
     client: full
     columns:
@@ -184,6 +228,12 @@ db_schema:
     - admin_ui: {width: 108}
       name: alias3
       type: string
+    - admin_ui: {width: 200}
+      name: s_w
+      type: media
+    - admin_ui: {width: 200}
+      name: sw_date
+      type: datetime
     server: full
     title: master_player
   ppr_csv_tables:
@@ -210,17 +260,374 @@ db_schema:
     - admin_ui: {width: 122}
       name: num_points
       type: number
-    - admin_ui: {order: 7, width: 200}
+    - admin_ui: {width: 200}
       name: player_data
       type: media
-    - admin_ui: {order: 9, width: 200}
+    - admin_ui: {width: 200}
+      name: player_data_date
+      type: datetime
+    - admin_ui: {width: 200}
       name: player_data_stats
       type: media
-    - admin_ui: {order: 10, width: 200}
+    - admin_ui: {width: 200}
+      name: player_data_stats_date
+      type: datetime
+    - admin_ui: {width: 200}
       name: min_att
       type: number
+    - admin_ui: {width: 200}
+      name: tri_data
+      type: media
+    - admin_ui: {width: 200}
+      name: tri_data_date
+      type: datetime
+    - admin_ui: {width: 200}
+      name: pair_list_date
+      type: datetime
+    - admin_ui: {width: 200}
+      name: pair_list
+      type: media
+    - admin_ui: {width: 200}
+      name: pair_data_date
+      type: datetime
+    - admin_ui: {width: 200}
+      name: pair_data
+      type: media
+    - admin_ui: {width: 200}
+      name: pair_data_stats_date
+      type: datetime
+    - admin_ui: {width: 200}
+      name: pair_data_stats
+      type: media
     server: full
     title: ppr_csv_tables
+  report_data:
+    client: none
+    columns:
+    - admin_ui: {width: 200}
+      name: report_id
+      type: string
+    - admin_ui: {width: 200}
+      name: created_at
+      type: datetime
+    - admin_ui: {width: 200}
+      name: no_title
+      type: number
+    - admin_ui: {width: 200}
+      name: title_1
+      type: string
+    - admin_ui: {width: 200}
+      name: title_2
+      type: string
+    - admin_ui: {width: 200}
+      name: title_3
+      type: string
+    - admin_ui: {width: 200}
+      name: title_4
+      type: string
+    - admin_ui: {width: 200}
+      name: title_5
+      type: string
+    - admin_ui: {width: 200}
+      name: title_6
+      type: string
+    - admin_ui: {width: 200}
+      name: title_7
+      type: string
+    - admin_ui: {width: 200}
+      name: title_8
+      type: string
+    - admin_ui: {width: 200}
+      name: title_9
+      type: string
+    - admin_ui: {width: 200}
+      name: title_10
+      type: string
+    - admin_ui: {width: 200}
+      name: no_label
+      type: number
+    - admin_ui: {width: 200}
+      name: label_1
+      type: string
+    - admin_ui: {width: 200}
+      name: label_2
+      type: string
+    - admin_ui: {width: 200}
+      name: label_3
+      type: string
+    - admin_ui: {width: 200}
+      name: label_4
+      type: string
+    - admin_ui: {width: 200}
+      name: label_5
+      type: string
+    - admin_ui: {width: 200}
+      name: label_6
+      type: string
+    - admin_ui: {width: 200}
+      name: label_7
+      type: string
+    - admin_ui: {width: 200}
+      name: label_8
+      type: string
+    - admin_ui: {width: 200}
+      name: label_9
+      type: string
+    - admin_ui: {width: 200}
+      name: label_10
+      type: string
+    - admin_ui: {width: 200}
+      name: no_image
+      type: number
+    - admin_ui: {width: 200}
+      name: image_1
+      type: media
+    - admin_ui: {width: 200}
+      name: image_2
+      type: media
+    - admin_ui: {width: 200}
+      name: image_3
+      type: media
+    - admin_ui: {width: 200}
+      name: image_4
+      type: media
+    - admin_ui: {width: 200}
+      name: image_5
+      type: media
+    - admin_ui: {width: 200}
+      name: image_6
+      type: media
+    - admin_ui: {width: 200}
+      name: image_7
+      type: media
+    - admin_ui: {width: 200}
+      name: image_8
+      type: media
+    - admin_ui: {width: 200}
+      name: image_9
+      type: media
+    - admin_ui: {width: 200}
+      name: image_10
+      type: media
+    - admin_ui: {width: 200}
+      name: no_df
+      type: number
+    - admin_ui: {width: 200}
+      name: df_1
+      type: media
+    - admin_ui: {width: 200}
+      name: df_2
+      type: media
+    - admin_ui: {width: 200}
+      name: df_3
+      type: media
+    - admin_ui: {width: 200}
+      name: df_4
+      type: media
+    - admin_ui: {width: 200}
+      name: df_5
+      type: media
+    - admin_ui: {width: 200}
+      name: df_6
+      type: media
+    - admin_ui: {width: 200}
+      name: df_7
+      type: media
+    - admin_ui: {width: 200}
+      name: df_8
+      type: media
+    - admin_ui: {width: 200}
+      name: df_9
+      type: media
+    - admin_ui: {width: 200}
+      name: df_10
+      type: media
+    server: full
+    title: report_data
+  report_list:
+    client: search
+    columns:
+    - admin_ui: {width: 138}
+      name: rpt_type
+      type: string
+    - admin_ui: {width: 65}
+      name: order
+      type: number
+    - admin_ui: {width: 258}
+      name: report_name
+      type: string
+    - admin_ui: {width: 200}
+      name: function_name
+      type: string
+    - admin_ui: {width: 200}
+      name: rpt_form
+      type: string
+    - admin_ui: {width: 200}
+      name: comment
+      type: string
+    - admin_ui: {width: 200}
+      name: team
+      type: string
+    - admin_ui: {width: 200}
+      name: private
+      type: bool
+    - admin_ui: {width: 200}
+      name: rpt_title
+      type: string
+    - admin_ui: {width: 200}
+      name: rpt_sub_title
+      type: string
+    - admin_ui: {width: 200}
+      name: company_name
+      type: string
+    - admin_ui: {width: 200}
+      name: team_name
+      type: string
+    - admin_ui: {width: 200}
+      name: rpt_section_title1
+      type: string
+    - admin_ui: {width: 200}
+      name: rpt_section_title2
+      type: string
+    - admin_ui: {width: 200}
+      name: explain_text
+      type: string
+    - admin_ui: {width: 200}
+      name: filter_text
+      type: string
+    - admin_ui: {width: 200}
+      name: box1_title
+      type: string
+    - admin_ui: {width: 200}
+      name: box2_title
+      type: string
+    - admin_ui: {width: 200}
+      name: box3_title
+      type: string
+    - admin_ui: {width: 200}
+      name: box4_title
+      type: string
+    - admin_ui: {width: 200}
+      name: box5_title
+      type: string
+    - admin_ui: {width: 200}
+      name: box6_title
+      type: string
+    - admin_ui: {width: 200}
+      name: box7_title
+      type: string
+    - admin_ui: {width: 200}
+      name: box8_title
+      type: string
+    - admin_ui: {width: 200}
+      name: box9_title
+      type: string
+    - admin_ui: {width: 200}
+      name: box10_title
+      type: string
+    server: full
+    title: report_list
+  rpt_mgr:
+    client: none
+    columns:
+    - admin_ui: {width: 71}
+      name: active
+      type: string
+    - admin_ui: {width: 94}
+      name: team
+      type: string
+    - admin_ui: {width: 152}
+      name: email
+      type: string
+    - admin_ui: {width: 156}
+      name: emailto
+      type: string
+    - admin_ui: {width: 200}
+      name: Report Description
+      type: string
+    - admin_ui: {width: 98}
+      name: dow
+      type: string
+    - admin_ui: {width: 174}
+      name: rpt_type
+      type: string
+    - admin_ui: {width: 142}
+      name: player_list
+      target: master_player
+      type: link_multiple
+    - admin_ui: {width: 162}
+      name: pair_list
+      target: master_pair
+      type: link_multiple
+    - admin_ui: {width: 200}
+      name: pair_b_list
+      target: master_pair
+      type: link_single
+    - admin_ui: {width: 200}
+      name: rpts_inc
+      target: report_list
+      type: link_multiple
+    - admin_ui: {width: 200}
+      name: comp1
+      type: string
+    - admin_ui: {width: 200}
+      name: comp2
+      type: string
+    - admin_ui: {width: 200}
+      name: comp3
+      type: string
+    - admin_ui: {width: 200}
+      name: days_hist
+      type: number
+    - admin_ui: {width: 200}
+      name: srv_fr
+      type: string
+    - admin_ui: {width: 200}
+      name: srv_to
+      type: string
+    - admin_ui: {width: 200}
+      name: copy_beachinternals
+      type: bool
+    server: full
+    title: rpt_mgr
+  strength_weakness_criteria:
+    client: none
+    columns:
+    - admin_ui: {width: 303}
+      name: description
+      type: string
+    - admin_ui: {width: 71}
+      name: active
+      type: bool
+    - admin_ui: {width: 93}
+      name: category
+      type: string
+    - admin_ui: {width: 151}
+      name: section
+      type: string
+    - admin_ui: {width: 172}
+      name: subreport
+      type: string
+    - admin_ui: {width: 158}
+      name: var
+      type: string
+    - admin_ui: {width: 611}
+      name: var_desc
+      type: string
+    - admin_ui: {width: 88}
+      name: criteria
+      type: number
+    - admin_ui: {width: 102}
+      name: type
+      type: string
+    - admin_ui: {width: 200}
+      name: high_is_good
+      type: bool
+    - admin_ui: {width: 200}
+      name: criteria_type
+      type: string
+    server: full
+    title: strength_weakness_criteria
   subscriptions:
     client: search
     columns:
@@ -298,7 +705,7 @@ db_schema:
     - admin_ui: {width: 200}
       name: def_year
       type: string
-    - admin_ui: {order: 14, width: 200}
+    - admin_ui: {width: 200}
       name: remembered_logins
       type: simpleObject
     server: full
