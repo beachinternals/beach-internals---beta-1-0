@@ -317,36 +317,28 @@ def calculate_ellipse_area(width, height):
    return math.pi * (width / 2) * (height / 2)
 
 
-def plot_histogram( bars, labels, title, ylabel ):
+def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
 
   # Calculate average value
-  average_count = sum(bars) / len(bars) if counts else 0
+  average_count = sum(y_values) / len(y_values) if len(y_values) != 0 else 0
 
   # Create histogram with Matplotlib
-  plt.figure(figsize=(10, 6))
+  plt.figure(figsize=(size[0], size[1]))
   labels = [wc['week_label'] for wc in weekly_counts]
   counts = [wc['count'] for wc in weekly_counts]
 
   # Plot bars
-  bars = plt.bar(labels, counts, color='skyblue', edgecolor='navy')
+  plt.bar(x_categories, y_values, color='skyblue', edgecolor='navy', width = 0.5, align='center' )
+  plt.title(title)
+  plt.xlabel(xlabel)
+  plt.ylabel(ylabel)
 
-  # Label each bar with count
-  for bar in bars:
-    height = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width() / 2, height, f'{int(height)}', 
-             ha='center', va='bottom')
-
-    # Add average line
+  # now a horizontal line for the average value
   plt.axhline(y=average_count, color='red', linestyle='--', linewidth=2, 
               label=f'Average: {average_count:.2f}')
-
-  # Customize plot
-  plt.xlabel('Week')
-  plt.ylabel('Count of Records')
-  plt.title('Weekly HVAC Data Points')
-  plt.xticks(rotation=45, ha='right')
-  plt.legend()
+  
   plt.tight_layout()
+  plt.show()
 
   # Save plot to BytesIO
   buffer = io.BytesIO()

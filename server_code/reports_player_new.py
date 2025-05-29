@@ -328,8 +328,19 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
   print(f" Summary dataframe: {sum_df}")
   
   # now create histograms for each one
-  plt1 = create_histogram( sum_df['FBHE'], sum_df['Variable'], 'FBHE', 'FBHE' )
-    
-  
+  plt1 = create_bar_graph( sum_df['Variable'], sum_df['FBHE'], 'Weeks', 'FBHE', [5,10] )
+  plt2 = create_bar_graph( sum_df['Variable'], sum_df['Errors'], 'Weeks', 'Error Denisty', [5,10] )
+  plt3 = create_bar_graph( sum_df['Variable'], sum_df['Transition'], 'Weeks', 'Transition Conversion', [5,10] )
+  plt4 = create_bar_graph( sum_df['Variable'], sum_df['Knockout'], 'Weeks', 'Serving - Knockout Percent', [5,10] )
+  plt5 = create_bar_graph( sum_df['Variable'], sum_df['Good Pass'], 'Weeks', 'Percent Good Passes', [5,10] )
+  plt6 = create_bar_graph( sum_df['Variable'], sum_df['Points'], 'Weeks', 'Percent of Points Earned', [5,10] )
+
+  # store the images in the list
+  image_list[0] = plt1
+  image_list[1] = plt2
+  image_list[2] = plt3
+  image_list[3] = plt4
+  image_list[4] = plt5
+  image_list[5] = plt6
   
   return title_list, label_list, image_list, df_list
