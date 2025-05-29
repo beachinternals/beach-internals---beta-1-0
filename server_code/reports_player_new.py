@@ -283,7 +283,7 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
     end_date = rpt_filters.get('end_date')
     num_weeks = (end_date - start_date)/7
   else:
-    end_date = start_date + 7*num_weeks
+    end_date = start_date + timedelta(days=7*num_weeks)
     
   # create a list with the start and end date for each week
   weekly_dates = []
@@ -314,7 +314,11 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
   # start a loop over the weeks
   for i in range(1,num_weeks):
     # filter ppr_df to tmp_df for this week
-    tmp_df = ppr_df[ (ppr_df['date'] >= weekly_dates[i]['start_date']) & (ppr_df['date'] < weekly_date[i]['end_date']) ]
+    print(f"type of ppr_df game_date: {type(ppr_df['game_date'])}")
+    print(f"weekly dates : {type(weekly_dates)}, [i] {type(weekly_dates[i])}, [i][start_date] {type(weekly_dates[i]['start_date'])}")
+    print(f"weekly dates : {weekly_dates}, [i] {weekly_dates[i]}, [i][start_date] {weekly_dates[i]['start_date']}")
+    
+    tmp_df = ppr_df[ (ppr_df['game_date'] >= weekly_dates[i]['start_date']) & (ppr_df['date'] < weekly_date[i]['end_date']) ]
     pt_totals_df = player_pt_total( tmp_df, disp_player )
     sum_df.at['week1','FBHE'] = (pt_totals_df.at[0,'p_fbk']-pt_totals_df.at[0,'p_fbe'])/( pt_totals_df.at[0,'p_att_total'])
     sum_df.at['week1','Errors'] = (pt_totals_df.at[0,'p_fbe']+pt_totals_df.at[0,'p_tse']+pt_totals_df.at[0,'p_te_r']+pt_totals_df.at[0,'p_te_s'])/( pt_totals_df.at[0,'pts_total'])

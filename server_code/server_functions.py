@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 import math
 from pair_functions import *
+from datetime import datetime, timedelta, date
 
 
 # This is a server module. It runs on the Anvil server,
@@ -1042,9 +1043,9 @@ def filter_ppr_df( dataframe, **kwargs):
       result = result[ result['comp_l3'] == value ]
 
     if column == 'start_date':
-      result = result[ result['date'] >= value ]
+      result = result[ result['game_date'] >= datetime(value) ]
     if column == 'end_date':
-      result = result[ result['date'] <= value ]
+      result = result[ result['game_date'] <= datetime(value) ]
 
     # opponent pair for matchu0ps
     if column == 'opp_pair':
