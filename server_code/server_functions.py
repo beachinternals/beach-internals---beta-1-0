@@ -1043,8 +1043,14 @@ def filter_ppr_df( dataframe, **kwargs):
       result = result[ result['comp_l3'] == value ]
 
     if column == 'start_date':
+      if isinstance(result['game_date'], str):
+        result['game_date'] = pd.to_datetime(result['game_date'])
+        result['game_date'] = result['game_date'].dt.date
       result = result[ result['game_date'] >= datetime(value) ]
     if column == 'end_date':
+      if isinstance(result['game_date'], str):
+        result['game_date'] = pd.to_datetime(result['game_date'])
+        result['game_date'] = result['game_date'].dt.date
       result = result[ result['game_date'] <= datetime(value) ]
 
     # opponent pair for matchu0ps

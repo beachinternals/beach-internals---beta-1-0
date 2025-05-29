@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import math
+import io
 #import plotly.graph_objects as go
 
 # This is a server module. It runs on the Anvil server,
@@ -324,10 +325,9 @@ def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
 
   # Create histogram with Matplotlib
   plt.figure(figsize=(size[0], size[1]))
-  labels = [wc['week_label'] for wc in weekly_counts]
-  counts = [wc['count'] for wc in weekly_counts]
 
   # Plot bars
+  print(f" x categories: {x_categories}, y_values : {y_values}")
   plt.bar(x_categories, y_values, color='skyblue', edgecolor='navy', width = 0.5, align='center' )
   plt.title(title)
   plt.xlabel(xlabel)
