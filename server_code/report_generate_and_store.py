@@ -13,7 +13,7 @@ import base64
 import pandas as pd
 import uuid
 import json
-import datetime
+from datetime import datetime, timedelta, date
 from server_functions import *
 import inspect
 import matplotlib.pyplot as plt
@@ -56,7 +56,7 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   # Store in temporary Data Table row
   app_tables.report_data.add_row(
     report_id=report_id,
-    created_at=datetime.datetime.now()
+    created_at=datetime.now()
   )
 
   # get this record and store the labels , images, and dfs

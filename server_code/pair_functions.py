@@ -303,6 +303,7 @@ def player_pt_total(ppr_df, disp_player):
               'o_good_pass':[0], # when opponent is serving, result is good pass (no out of system)
               'o_bad_pass':[0], # when opponent is serving, result in bad pass (out of system)
               'o_serves':[0], # opponent - total number of serves
+              'trans_total':[0], # total number of transition points
               'pts_total':[0] # total number of points played
              }
 
@@ -338,6 +339,7 @@ def player_pt_total(ppr_df, disp_player):
   pts_df.at[0,'o_serves'] = pts_df.at[0,'o_good_pass'] + pts_df.at[0,'o_bad_pass'] + pts_df.at[0,'o_tse'] + pts_df.at[0,'o_tsa']
   pts_df.at[0,'o_att_total'] = pts_df.at[0,'o_good_pass'] + pts_df.at[0,'o_bad_pass']
   pts_df.at[0,'pts_total'] = ppr_df.shape[0]
+  pts_df.at[0,'trans_total'] = pts_df.at[0,'o_tk_s'] + pts_df.at[0,'o_te_s'] + pts_df.at[0,'o_tk_r'] + pts_df.at[0,'o_te_r'] + pts_df.at[0,'p_tk_s'] + pts_df.at[0,'p_te_s'] + pts_df.at[0,'p_tk_r'] + pts_df.at[0,'p_te_r']
 
   if False:  # make true if you want to check the numers
     print(f"Points Data Frame for Player  {disp_player}")

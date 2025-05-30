@@ -9,7 +9,7 @@ import anvil.server
 from anvil.pdf import PDFRenderer
 from PyPDF2 import PdfMerger
 import io
-import datetime
+from datetime import datetime, timedelta, date
 from pair_functions import *
 from pair_reports import *
 from server_functions import *

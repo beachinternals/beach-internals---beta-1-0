@@ -24,7 +24,7 @@ components:
 - components:
   - layout_properties: {grid_position: 'ECJDNH,PUXZON'}
     name: box1_title
-    properties: {align: center, bold: true}
+    properties: {align: center, bold: true, visible: false}
     type: Label
   - layout_properties: {grid_position: 'ECJDNH,IAVHSY'}
     name: image_1
@@ -32,12 +32,12 @@ components:
     type: Image
   layout_properties: {grid_position: 'CMNTXU,GNLTRL'}
   name: column_panel_6
-  properties: {col_widths: '{"PUXZON":5,"IAVHSY":55}'}
+  properties: {col_widths: '{"PUXZON":5,"IAVHSY":55}', visible: true}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'RIMCSF,LTMNZL'}
     name: box2_title
-    properties: {align: center, bold: true}
+    properties: {align: center, bold: true, visible: false}
     type: Label
   - layout_properties: {grid_position: 'RIMCSF,HXHQRB'}
     name: image_2
@@ -45,12 +45,12 @@ components:
     type: Image
   layout_properties: {grid_position: 'BGXTTM,IGUYGG'}
   name: column_panel_2
-  properties: {col_widths: '{"LTMNZL":5,"HXHQRB":55}'}
+  properties: {col_widths: '{"LTMNZL":5,"HXHQRB":55}', visible: true}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'GVKRYW,KUDFUW'}
     name: box3_title
-    properties: {}
+    properties: {visible: false}
     type: Label
   - layout_properties: {grid_position: 'GVKRYW,PPJSAQ'}
     name: image_3
@@ -63,7 +63,7 @@ components:
 - components:
   - layout_properties: {grid_position: 'VMHBDU,AOAJOF'}
     name: box4_title
-    properties: {}
+    properties: {visible: false}
     type: Label
   - layout_properties: {grid_position: 'VMHBDU,MGSBBJ'}
     name: image_4
@@ -76,7 +76,7 @@ components:
 - components:
   - layout_properties: {grid_position: 'ALBRYE,NHQFDF'}
     name: box5_title
-    properties: {}
+    properties: {visible: false}
     type: Label
   - layout_properties: {grid_position: 'ALBRYE,LAPBNQ'}
     name: image_5
@@ -89,7 +89,7 @@ components:
 - components:
   - layout_properties: {grid_position: 'BHQJBZ,NVTNSY'}
     name: box6_title
-    properties: {}
+    properties: {visible: false}
     type: Label
   - layout_properties: {grid_position: 'BHQJBZ,EBGPGL'}
     name: image_6

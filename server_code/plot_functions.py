@@ -320,6 +320,7 @@ def calculate_ellipse_area(width, height):
 
 def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
 
+  #print(f"plot_bar_graph : x: {x_categories}, y: {y_values}")
   # Calculate average value
   average_count = sum(y_values) / len(y_values) if len(y_values) != 0 else 0
 
@@ -334,9 +335,17 @@ def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
   plt.ylabel(ylabel)
 
   # now a horizontal line for the average value
+  print(f"plot_bar, average count = {average_count}")
   plt.axhline(y=average_count, color='red', linestyle='--', linewidth=2, 
               label=f'Average: {average_count:.2f}')
-  
+
+  # Create table data
+  table_data = [y_values]
+  table = plt.table(cellText=table_data, rowLabels=['Values'],
+                  colLabels=x_categories, loc='bottom')
+
+  plt.subplots_adjust(bottom=1) # Adjust to make space for the table
+
   plt.tight_layout()
   plt.show()
 

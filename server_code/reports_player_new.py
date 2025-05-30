@@ -306,7 +306,7 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
     }
   sum_df = pd.DataFrame.from_dict(df_dict)
 
-  print(sum_df)
+  #print(sum_df)
   # start a loop over the weeks
   for i in range(0,num_weeks):
     week_var = 'Week '+str(i+1)
@@ -323,27 +323,28 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
     
     tmp_df = tmp_df[ (tmp_df['game_date'] >= weekly_dates[i]['start_date'].date()) & (tmp_df['game_date'] < weekly_dates[i]['end_date'].date()) ]
 
-    print(f"week : {i}, week var: {week_var}, start date: {weekly_dates[i]['start_date'].date()}, end date: {weekly_dates[i]['end_date'].date()}, number of points: {tmp_df.shape[0]}")
+    #print(f"week : {i}, week var: {week_var}, start date: {weekly_dates[i]['start_date'].date()}, end date: {weekly_dates[i]['end_date'].date()}, number of points: {tmp_df.shape[0]}")
     
     pt_totals_df = player_pt_total( tmp_df, disp_player )
-    sum_df.loc[i-1,'FBHE'] = (pt_totals_df.at[0,'p_fbk']-pt_totals_df.at[0,'p_fbe'])/( pt_totals_df.at[0,'p_att_total'])
-    sum_df.loc[i-1,'Errors' ] = (pt_totals_df.at[0,'p_fbe']+pt_totals_df.at[0,'p_tse']+pt_totals_df.at[0,'p_te_r']+pt_totals_df.at[0,'p_te_s'])/( pt_totals_df.at[0,'pts_total'])
-    sum_df.loc[i-1,'Transiton' ] = (pt_totals_df.at[0,'p_tk_s']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'o_te_r']+pt_totals_df.at[0,'o_te_s'])/( pt_totals_df.at[0,'pts_total'])
-    sum_df.loc[i-1,'Knockout'] = (pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'o_bad_pass'])/( pt_totals_df.at[0,'pts_total'])
-    sum_df.loc[i-1,'Good Pass'] = (pt_totals_df.at[0,'p_good_pass'])/( pt_totals_df.at[0,'p_good_pass']+pt_totals_df.at[0,'p_bad_pass'])
-    sum_df.loc[i-1,'Points' ] = ( (pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'p_fbk']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'p_tk_s']) +
+    sum_df.loc[i,'FBHE'] = (pt_totals_df.at[0,'p_fbk']-pt_totals_df.at[0,'p_fbe'])/( pt_totals_df.at[0,'p_att_total'])
+    sum_df.loc[i,'Errors' ] = (pt_totals_df.at[0,'p_fbe']+pt_totals_df.at[0,'p_tse']+pt_totals_df.at[0,'p_te_r']+pt_totals_df.at[0,'p_te_s'])/( pt_totals_df.at[0,'pts_total'])
+    sum_df.loc[i,'Transiton' ] = (pt_totals_df.at[0,'p_tk_s']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'o_te_r']+pt_totals_df.at[0,'o_te_s'])/( pt_totals_df.at[0,'trans_total'])
+    sum_df.loc[i,'Knockout'] = (pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'o_bad_pass'])/( pt_totals_df.at[0,'pts_total'])
+    sum_df.loc[i,'Good Pass'] = (pt_totals_df.at[0,'p_good_pass'])/( pt_totals_df.at[0,'p_good_pass']+pt_totals_df.at[0,'p_bad_pass'])
+    sum_df.loc[i,'Points' ] = ( (pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'p_fbk']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'p_tk_s']) +
                                     (pt_totals_df.at[0,'o_tse']+pt_totals_df.at[0,'o_fbe']+pt_totals_df.at[0,'o_te_r']+pt_totals_df.at[0,'o_te_s']) ) / ( pt_totals_df.at[0,'pts_total']
                                       )
 
   print(f" Summary dataframe: \n {sum_df}")
   
   # now create histograms for each one
-  plt1 = plot_bar_graph( sum_df['Variable'], sum_df['FBHE'], 'First Ball Hitting Efficiency over Time', 'Weeks', 'FBHE', [5,10] )
-  plt2 = plot_bar_graph( sum_df['Variable'], sum_df['Errors'], 'Error Denisty over Time''Weeks', 'Weeks', 'Error Denisty', [5,10] )
-  plt3 = plot_bar_graph( sum_df['Variable'], sum_df['Transition'], 'Transition COnversion over Time', 'Weeks', 'Transition Conversion', [5,10] )
-  plt4 = plot_bar_graph( sum_df['Variable'], sum_df['Knockout'], 'Serving Aggressiveness over Time', 'Weeks', 'Serving - Knockout Percent', [5,10] )
-  plt5 = plot_bar_graph( sum_df['Variable'], sum_df['Good Pass'], 'Passing Quality over Time', 'Weeks', 'Percent Good Passes', [5,10] )
-  plt6 = plot_bar_graph( sum_df['Variable'], sum_df['Points'], 'Percent of Points Won over Time', 'Weeks', 'Percent of Points Earned', [5,10] )
+  size = [11,4]
+  plt1 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', size )
+  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', size )
+  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', size )
+  plt4 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', size )
+  plt5 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', size )
+  plt6 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', size )
 
   # store the images in the list
   image_list[0] = plt1
