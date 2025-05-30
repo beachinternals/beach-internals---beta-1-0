@@ -28,7 +28,7 @@ components:
     type: Label
   - layout_properties: {grid_position: 'ECJDNH,IAVHSY'}
     name: image_1
-    properties: {}
+    properties: {height: '230'}
     type: Image
   layout_properties: {grid_position: 'CMNTXU,GNLTRL'}
   name: column_panel_6
@@ -41,7 +41,7 @@ components:
     type: Label
   - layout_properties: {grid_position: 'RIMCSF,HXHQRB'}
     name: image_2
-    properties: {}
+    properties: {height: '230'}
     type: Image
   layout_properties: {grid_position: 'BGXTTM,IGUYGG'}
   name: column_panel_2
@@ -54,7 +54,7 @@ components:
     type: Label
   - layout_properties: {grid_position: 'GVKRYW,PPJSAQ'}
     name: image_3
-    properties: {}
+    properties: {height: '230'}
     type: Image
   layout_properties: {grid_position: 'DACOAC,AQCLMX'}
   name: column_panel_3
@@ -67,7 +67,7 @@ components:
     type: Label
   - layout_properties: {grid_position: 'VMHBDU,MGSBBJ'}
     name: image_4
-    properties: {}
+    properties: {height: '230'}
     type: Image
   layout_properties: {grid_position: 'HOTUTF,QKFAQI'}
   name: column_panel_7
@@ -80,7 +80,7 @@ components:
     type: Label
   - layout_properties: {grid_position: 'ALBRYE,LAPBNQ'}
     name: image_5
-    properties: {}
+    properties: {height: '230'}
     type: Image
   layout_properties: {grid_position: 'OILLVT,FLMAFZ'}
   name: column_panel_8
@@ -93,7 +93,7 @@ components:
     type: Label
   - layout_properties: {grid_position: 'BHQJBZ,EBGPGL'}
     name: image_6
-    properties: {}
+    properties: {height: '230'}
     type: Image
   layout_properties: {grid_position: 'BULZXG,YJWQLI'}
   name: column_panel_9

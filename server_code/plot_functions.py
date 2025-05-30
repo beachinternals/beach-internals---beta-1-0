@@ -317,7 +317,7 @@ def calculate_ellipse_area(width, height):
    """
    return math.pi * (width / 2) * (height / 2)
 
-
+'''
 def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
 
   #print(f"plot_bar_graph : x: {x_categories}, y: {y_values}")
@@ -344,10 +344,7 @@ def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
   table = plt.table(cellText=table_data, rowLabels=['Values'],
                   colLabels=x_categories, loc='bottom')
 
-  plt.subplots_adjust(bottom=1) # Adjust to make space for the table
-
-  plt.tight_layout()
-  plt.show()
+  plt.subplots_adjust(bottom=0.3) # Adjust to make space for the table
 
   # Save plot to BytesIO
   buffer = io.BytesIO()
@@ -357,3 +354,81 @@ def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
   plt.close()
 
   return plot_image
+'''
+
+# Grok generated version of this routine
+def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, bar_width=0.5):
+  """
+    Create a bar graph with labeled bars, average line, and table, handling NaN values.
+    
+    Args:
+        x_categories (list): Labels for x-axis (e.g., week names)
+        y_values (list): Values for y-axis (e.g., counts, may contain NaN)
+        title (str): Plot title
+        xlabel (str): X-axis label
+        ylabel (str): Y-axis label
+        size (tuple): Figure size (width, height)
+        bar_width (float): Width of bars (default: 0.5)
+    
+    Returns:
+        anvil.BlobMedia: PNG image of the plot
+    """
+  # Validate inputs
+  if not x_categories or not y_values or len(x_categories) != len(y_values):
+    raise ValueError("x_categories and y_values must be non-empty and of equal length")
+
+    # Convert y_values to numpy array and replace NaN with 0
+  y_values = np.array(y_values, dtype=float)
+  y_values = np.where(np.isnan(y_values), 0, y_values).tolist()
+
+  # Calculate average value (excluding NaN, which are now 0)
+  valid_values = [y for y in y_values if y != 0]  # Exclude zeros if needed
+  average_count = sum(valid_values) / len(valid_values) if valid_values else 0
+
+  # Create figure
+  plt.figure(figsize=(size[0], size[1]))
+
+  try:
+    # Plot bars
+    bars = plt.bar(x_categories, y_values, color='skyblue', edgecolor='navy', 
+                   width=bar_width, align='center')
+
+    # Label bars with values
+    for bar in bars:
+      height = bar.get_height()
+      plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.3f}', 
+               ha='center', va='bottom')
+
+    # Add average line
+    plt.axhline(y=average_count, color='red', linestyle='--', linewidth=2, 
+                label=f'Average: {average_count:.3f}')
+
+    # Set labels and title
+    plt.title(title)
+    #plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.xticks([])
+    plt.legend()
+
+    # Create table
+    table_data = [[f'{y:.3f}' if y != 0 else '0' for y in y_values]]  # Format NaN as 0
+    table = plt.table(cellText=table_data, rowLabels=['Values'],
+                      colLabels=x_categories, loc='bottom', cellLoc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.5)  # Adjust table height
+
+    # Adjust layout for table
+    plt.subplots_adjust(bottom=0.3)
+
+    # Save plot to BytesIO
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', bbox_inches='tight')
+    buffer.seek(0)
+    plot_image = anvil.BlobMedia('image/png', buffer.getvalue(), name='histogram.png')
+
+    return plot_image
+
+  finally:
+    plt.close()
+    
