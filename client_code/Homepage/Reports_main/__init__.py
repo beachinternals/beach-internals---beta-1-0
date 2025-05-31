@@ -103,13 +103,20 @@ class Reports_main(Reports_mainTemplate):
       )
     ]
 
-    # set the default for team drop down and l1, l2, l3
-    # self.team_drop_down.selected_value = 'Scouting'
+    # populate the report type drop down
+    if anvil.users.get_user()["team"] == "INTERNALS":
+      self.rpt_type_drop_down.items = sorted(
+        list(set(row['rpt_type'] for row in app_tables.report_list.search() if row['rpt_type'] is not None))
+      )
+    else:
+      self.rpt_type_drop_down.items = sorted(
+        list(set(row['rpt_type'] for row in app_tables.report_list.search(private=False) if row['rpt_type'] is not None))
+      )
 
     # populate the reports drop down
     if anvil.users.get_user()["team"] == "INTERNALS":
       self.report_drop_down.items = [
-        (row["report_name"]) for row in app_tables.report_list.search(rpt_type="pair")
+        (row["report_name"]) for row in app_tables.report_list.search(rpt_type="player")
       ]
     else:
       self.report_drop_down.items = [
@@ -364,6 +371,7 @@ class Reports_main(Reports_mainTemplate):
 
     pass
 
+  
   def end_date_picker_change(self, **event_args):
     """This method is called when the selected date changes"""
     pass
@@ -749,4 +757,18 @@ class Reports_main(Reports_mainTemplate):
     label_list, image_list, df_list = anvil.server.call('get_report_data', report_id)
 
     print(f" In Reports-Main: Label List: {label_list}, Image list {image_list}, df list {df_list}")
+    pass
+
+  def rpt_type_drop_down_change(self, **event_args):
+    """This method is called when an item is selected"""
+    # populate the reports drop down
+    if anvil.users.get_user()["team"] == "INTERNALS":
+      self.report_drop_down.items = [
+        (row["report_name"]) for row in app_tables.report_list.search(rpt_type=self.rpt_type_drop_down.selected_value)
+      ]
+    else:
+      self.report_drop_down.items = [
+        (row["report_name"])
+        for row in app_tables.report_list.search(private=False, rpt_type=self.rpt_type_drop_down.selected_value)
+      ]
     pass

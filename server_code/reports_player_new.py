@@ -73,7 +73,7 @@ def report_player_stub_new(lgy, team, **rpt_filters):
   title_list[2] = rpt_row['rpt_section_title1']
   title_list[3] = rpt_row['rpt_section_title2']
   title_list[4] = rpt_row['team_name']
-  title_list[5] = rpt_row['company_name']
+  title_list[5] = rpt_row['rpt_type']
   title_list[6] = rpt_row['filter_text']
   title_list[7] = rpt_row['explain_text']
   title_list[8] = rpt_filters.get('player')
@@ -242,6 +242,7 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
   title_list, label_list, image_list, df_list = initialize_report_lists(inspect.currentframe().f_code.co_name, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
 
   #------------------------------------------------------------------------------------------------------
   #            Set ot a Player or Pair Report
@@ -346,12 +347,13 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
   
   # now create histograms for each one
   size = [11,5]
-  plt1 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', size )
-  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', size )
-  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', size )
-  plt4 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', size )
-  plt5 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', size )
-  plt6 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', size )
+  avg_title = disp_league + " Average : "
+  plt1 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', size, avg_title, player_data_stats_df.at[0,'fbhe_mean']   )
+  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', size, avg_title, player_data_stats_df.at[0,'err_den_mean']/100 )
+  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', size, avg_title, player_data_stats_df.at[0,'tcr_mean']/100 )
+  plt4 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', size, '', 0 )
+  plt5 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', size, '', 0 )
+  plt6 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', size, '', 0 )
 
   # store the images in the list
   image_list[0] = plt1
@@ -511,11 +513,13 @@ def  pair_season_summary_new(lgy, team, **rpt_filters):
   size = [11,5]
   avg_title = disp_league + " Average"
   plt1 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', size, avg_title, pair_data_stats_df.at[0,'fbhe_mean']  )
-  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', size, avg_title, pair_data_stats_df.at[0,'err_den_mean'] )
-  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', size, avg_title, pair_data_stats_df.at[0,'tcr_mean'])
+  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', size, avg_title, pair_data_stats_df.at[0,'err_den_mean']/50 )
+  # error density that is stored is a percentage for the player, so time 100 to get to a deciimal, then tiimes two to match for a pair.
+  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', size, avg_title, pair_data_stats_df.at[0,'tcr_mean']/100 )
+  # tcr is stored as a percent, so divide by 100 to match the calculations here
   plt4 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', size, '', 0 )
-  plt5 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', '', 0 )
-  plt6 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', '', 0 )
+  plt5 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', size, '', 0 )
+  plt6 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', size, '', 0 )
 
   # store the images in the list
   image_list[0] = plt1

@@ -17,7 +17,7 @@ components_by_slot:
     - components:
       - layout_properties: {grid_position: 'SEFAUZ,GAEVDY'}
         name: label_6
-        properties: {align: right, text: 'League:'}
+        properties: {align: left, bold: true, text: 'League:'}
         type: Label
       - event_bindings: {change: league_drop_down_change}
         layout_properties: {grid_position: 'SEFAUZ,GLQPYX'}
@@ -25,27 +25,18 @@ components_by_slot:
         properties:
           items: [NCAA | W | 2025]
         type: DropDown
-      - layout_properties: {grid_position: 'KOFDUI,IQKDEX'}
-        name: label_1
-        properties: {align: right, text: 'Pair:'}
+      - layout_properties: {grid_position: 'PLKWHD,BRHHZT'}
+        name: label_19
+        properties: {bold: true, text: 'Report Type:'}
         type: Label
-      - layout_properties: {grid_position: 'KOFDUI,UXDSOJ'}
-        name: pair_drop_down
+      - event_bindings: {change: rpt_type_drop_down_change}
+        layout_properties: {grid_position: 'PLKWHD,FDUXDY'}
+        name: rpt_type_drop_down
         properties: {}
-        type: DropDown
-      - layout_properties: {grid_position: 'GMDOZZ,UVHKJK'}
-        name: label_12
-        properties: {align: right, text: 'Player:'}
-        type: Label
-      - event_bindings: {change: player_drop_down_change}
-        layout_properties: {grid_position: 'GMDOZZ,VQXXHV'}
-        name: player_drop_down
-        properties:
-          items: [BRA 01 Ana Patricia]
         type: DropDown
       - layout_properties: {grid_position: 'LFVHTF,YEPJIN'}
         name: label_5
-        properties: {align: right, text: 'Report:'}
+        properties: {align: left, bold: true, text: 'Report:'}
         type: Label
       - event_bindings: {change: report_drop_down_change}
         layout_properties: {grid_position: 'LFVHTF,HSKEKD DYUGJA,VBAJYU'}
@@ -73,12 +64,30 @@ components_by_slot:
         type: Button
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
-      properties: {col_widths: '{"IQKDEX":10,"UXDSOJ":50,"GAEVDY":10,"GLQPYX":50,"UVHKJK":10,"VQXXHV":50,"YEPJIN":10,"HSKEKD":50}', role: outlined-card}
+      properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40,"YEPJIN":10,"HSKEKD":50,"BRHHZT":20,"FDUXDY":40}', role: outlined-card}
       type: ColumnPanel
     - components:
+      - layout_properties: {grid_position: 'QMLNQC,HADUKF'}
+        name: label_12
+        properties: {align: right, text: 'Player:'}
+        type: Label
+      - event_bindings: {change: player_drop_down_change}
+        layout_properties: {grid_position: 'QMLNQC,QDCVBF'}
+        name: player_drop_down
+        properties:
+          items: [BRA 01 Ana Patricia]
+        type: DropDown
+      - layout_properties: {grid_position: 'BYTDIV,KMIEVM'}
+        name: label_1
+        properties: {align: right, text: 'Pair:'}
+        type: Label
+      - layout_properties: {grid_position: 'BYTDIV,SVXHHL'}
+        name: pair_drop_down
+        properties: {}
+        type: DropDown
       - layout_properties: {grid_position: 'JRANJF,EFUXIA'}
         name: comp_l1_check_box
-        properties: {text: ''}
+        properties: {align: right, text: ''}
         type: CheckBox
       - event_bindings: {change: comp_l1_drop_down_change}
         layout_properties: {grid_position: 'JRANJF,XNPVWN'}
@@ -88,7 +97,7 @@ components_by_slot:
         type: DropDown
       - layout_properties: {grid_position: 'PENLDM,TGLJLP'}
         name: comp_l2_check_box
-        properties: {text: ''}
+        properties: {align: right, text: ''}
         type: CheckBox
       - layout_properties: {grid_position: 'PENLDM,MAPOSE'}
         name: comp_l2_drop_down
@@ -97,7 +106,7 @@ components_by_slot:
         type: DropDown
       - layout_properties: {grid_position: 'IWLQLO,THEWVC'}
         name: comp_l3_check_box
-        properties: {text: ''}
+        properties: {align: right, text: ''}
         type: CheckBox
       - layout_properties: {grid_position: 'IWLQLO,SQCWIU'}
         name: comp_l3_drop_down
@@ -106,7 +115,7 @@ components_by_slot:
         type: DropDown
       - layout_properties: {grid_position: 'HMVGHB,PCHWNT'}
         name: date_check_box
-        properties: {text: ''}
+        properties: {align: right, text: ''}
         type: CheckBox
       - layout_properties: {grid_position: 'HMVGHB,NZJTEF'}
         name: label_8
@@ -361,7 +370,7 @@ components_by_slot:
         type: ColumnPanel
       layout_properties: {grid_position: 'HRVTBW,LLFEGL'}
       name: outlined_card_8
-      properties: {col_widths: '{"BQOQYW":15,"TYDSQG":45,"PCHWNT":10,"NZJTEF":20,"MGXOLR":15,"CYRGMT":15,"ALUUVG":33,"WFBKGE":9,"AOFRAW":9,"JEDLXF":9}', role: outlined-card}
+      properties: {col_widths: '{"BQOQYW":15,"TYDSQG":45,"PCHWNT":15,"NZJTEF":15,"MGXOLR":15,"CYRGMT":15,"ALUUVG":33,"WFBKGE":9,"AOFRAW":9,"JEDLXF":9}', role: outlined-card}
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_4

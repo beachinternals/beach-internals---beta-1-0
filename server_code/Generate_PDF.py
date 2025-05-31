@@ -21,7 +21,14 @@ from player_reports import *
 
 @anvil.server.callable
 def generate_pdf_report( rpt_form, report_id):
-  pdf_file = report_id+'.pdf'
+  # need to look into report data file to make a useful pdf file name
+  rpt_data_row = app_tables.report_data.get(report_id=report_id)
+  if rpt_data_row['title_6'] == 'pair':
+    pdf_file = rpt_data_row['title_10']+' '+rpt_data_row['title_1']+'.pdf'
+  elif rpt_data_row['title_6'] == 'player':
+    pdf_file = rpt_data_row['title_9']+' '+rpt_data_row['title_1']+'.pdf'
+  else:
+    pdf_file = report_id+'.pdf'
   rpt_pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form,report_id)
   return rpt_pdf 
 

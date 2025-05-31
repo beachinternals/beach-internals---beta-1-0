@@ -21,9 +21,9 @@ class Homepage(HomepageTemplate):
       self.user_name_label.text = user_row['team'] 
       if user_row['team'] == "INTERNALS":
         self.admin_link.visible = True
-        self.pair_rpt_link.visible = True
-        self.league_rpt_link.visible = True
-        self.rpt_mgr_link.visible = True
+        #self.pair_rpt_link.visible = True
+        #self.league_rpt_link.visible = True
+        #self.rpt_mgr_link.visible = True
         self.reports_main.visible = True
       else:
         self.admin_link.visible = False

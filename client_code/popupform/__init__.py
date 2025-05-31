@@ -29,7 +29,7 @@ class popupform(popupformTemplate):
         title_list[2] = rpt_row['rpt_section_title1']
         title_list[3] = rpt_row['rpt_section_title2']
         title_list[4] = rpt_row['team_name']
-        title_list[5] = rpt_row['company_name']
+        title_list[5] = rpt_row['rpt_type']
         title_list[6] = rpt_row['filter_text']
         title_list[7] = rpt_row['explain_text']
   

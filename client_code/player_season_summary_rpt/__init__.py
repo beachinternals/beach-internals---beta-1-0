@@ -19,8 +19,8 @@ class player_season_summary_rpt(player_season_summary_rptTemplate):
 
     # Create a header panel
     header_panel = LinearPanel()
-    header_panel.background = '#004aad'
-    header_label = Label(text='Beach Internals, beachinternals@gmail.com', foreground='#ffffff', font_size=20)
+    header_panel.background = 'gray'
+    header_label = Label(text='Beach Internals, info@beachinternals.com', foreground='black', font_size=14)
     header_panel.add_component(header_label)
     self.add_component(header_panel)
 
@@ -38,7 +38,7 @@ class player_season_summary_rpt(player_season_summary_rptTemplate):
         title_list[2] = rpt_row['rpt_section_title1']
         title_list[3] = rpt_row['rpt_section_title2']
         title_list[4] = rpt_row['team_name']
-        title_list[5] = rpt_row['company_name']
+        title_list[5] = rpt_row['report_type'] # pair, player, matchup, dashboard, scouting, internals
         title_list[6] = rpt_row['filter_text']
         title_list[7] = rpt_row['explain_text']
         title_list[8] = rpt_row['player']
@@ -62,12 +62,18 @@ class player_season_summary_rpt(player_season_summary_rptTemplate):
       #----------------------------------------
       # populate the title
       # Report Title
-      # Report Sub-title + player
+      # Report Sub-title + player or pair
       if isinstance(title_list[0], str):
         self.rpt_title.text = title_list[0]
       if isinstance(title_list[1],str) and isinstance(title_list[8], str):
-        self.rpt_subtitle.text = title_list[1] + title_list[8] # for a player report
-        #self.rpt_subtitle.text = title_list[1] + title_list[9] # for a pair report    
+        if isinstance(title_list[5],str):
+          if title_list[5] == 'pair':
+            self.rpt_subtitle.text = title_list[1] + title_list[9] # for a pair report   
+          elif title_list[5] == 'player':
+            self.rpt_subtitle.text = title_list[1] + title_list[8] # for a player report
+          else:
+            self.rpt_subtitle.text = title_list[1]
+ 
       if isinstance(title_list[7], str):
         self.explain_text.content = title_list[7]
       if isinstance(title_list[8], str):
@@ -78,18 +84,18 @@ class player_season_summary_rpt(player_season_summary_rptTemplate):
       # Populate The box titles
       #
       #----------------------------------------
-      if isinstance(label_list[0], str):
-        self.box1_title.text = label_list[0]
-      if isinstance(label_list[1], str):
-        self.box2_title.text = label_list[1]
-      if isinstance(label_list[2], str):
-        self.box3_title.text = label_list[2]
-      if isinstance(label_list[3], str):
-        self.box4_title.text = label_list[3]
-      if isinstance(label_list[4], str):
-        self.box5_title.text = label_list[4]
-      if isinstance(label_list[5], str):
-        self.box6_title.text = label_list[5]
+      #if isinstance(label_list[0], str):
+      #  self.box1_title.text = label_list[0]
+      #if isinstance(label_list[1], str):
+      #  self.box2_title.text = label_list[1]
+      #if isinstance(label_list[2], str):
+      #  self.box3_title.text = label_list[2]
+      #if isinstance(label_list[3], str):
+      #  self.box4_title.text = label_list[3]
+      #if isinstance(label_list[4], str):
+      #  self.box5_title.text = label_list[4]
+      #if isinstance(label_list[5], str):
+      #  self.box6_title.text = label_list[5]
       '''
       if isinstance(label_list[6], str):
         self.box7_title.text = label_list[6]

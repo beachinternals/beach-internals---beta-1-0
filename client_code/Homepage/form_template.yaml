@@ -84,36 +84,42 @@ components:
       spacing:
         padding: ['4', null, null, null]
       text: Dashboard
+      visible: false
     type: Link
   - event_bindings: {click: playerRpt_link_click}
     layout_properties: {grid_position: 'LITXTA,FHEEDA'}
     name: playerRpt_link
-    properties: {align: left, text: Player Reports}
+    properties: {align: left, text: Player Reports, visible: false}
     type: Link
   - event_bindings: {click: pair_rpt_link_click}
     layout_properties: {grid_position: 'YZUPKD,QRTDHS'}
     name: pair_rpt_link
-    properties: {align: left, text: Pair Reports}
+    properties: {align: left, text: Pair Reports, visible: false}
     type: Link
   - event_bindings: {click: scouting_rpt_link_click}
     layout_properties: {grid_position: 'BAGGML,CBZHAU'}
     name: scouting_rpt_link
-    properties: {align: left, text: Scouting Reports, visible: true}
+    properties: {align: left, text: Scouting Reports, visible: false}
     type: Link
   - event_bindings: {click: matchup_click}
     layout_properties: {grid_position: 'OOUIGW,NCRRAH'}
     name: matchup
-    properties: {text: Match Ups}
+    properties: {text: Match Ups, visible: false}
     type: Link
   - event_bindings: {click: league_rpt_link_click}
     layout_properties: {grid_position: 'WYEEDF,SZTYHO'}
     name: league_rpt_link
-    properties: {align: left, text: League Reports}
+    properties: {align: left, text: League Reports, visible: false}
     type: Link
   - event_bindings: {click: reports_main_click}
     layout_properties: {grid_position: 'SZGHWC,HMYTZR'}
     name: reports_main
     properties: {text: Reports}
+    type: Link
+  - event_bindings: {click: rpt_mgr_link_click}
+    layout_properties: {grid_position: 'QCIEYA,BBCCRW'}
+    name: rpt_mgr_link
+    properties: {text: Report Manager}
     type: Link
   - layout_properties: {grid_position: 'WCVOTN,YUJLNY'}
     name: label_2
@@ -123,11 +129,6 @@ components:
     layout_properties: {grid_position: 'FRMYAQ,YAIFDB'}
     name: datamgr_link
     properties: {text: Data}
-    type: Link
-  - event_bindings: {click: rpt_mgr_link_click}
-    layout_properties: {grid_position: 'FHBHGD,ZXXVCJ'}
-    name: rpt_mgr_link
-    properties: {text: Report Manager}
     type: Link
   - event_bindings: {click: subscription_mgr_link_click}
     layout_properties: {grid_position: 'JGJYAA,VOZFJF'}
