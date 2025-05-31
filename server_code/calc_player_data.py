@@ -153,7 +153,8 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                  'opp_fbhe_5_4c':None,'opp_fbhe_5_4c_n':None,'opp_fbhe_5_4c_ea':None,'opp_fbhe_5_4d':None,'opp_fbhe_5_4d_n':None,'opp_fbhe_5_4d_ea':None,'opp_fbhe_5_4e':None,'opp_fbhe_5_4e_n':None,'opp_fbhe_5_4e_ea':None,     
                  'opp_fbhe_5_5c':None,'opp_fbhe_5_5c_n':None,'opp_fbhe_5_5c_ea':None,'opp_fbhe_5_5d':None,'opp_fbhe_5_5d_n':None,'opp_fbhe_5_5d_ea':None,'opp_fbhe_5_5e':None,'opp_fbhe_5_5e_n':None,'opp_fbhe_5_5e_ea':None,
                  'cons_fbhe_sd_match':None,'cons_tcr_sd_match':None,'cons_ed_sd_match':None,'cons_ko_sd_match':None,'cons_pass_sd_match':None,'cons_pts_sd_match':None,
-                 'cons_fbhe_sd_s2s':None,'cons_tcr_sd_s2s':None,'cons_ed_sd_s2s':None,'cons_ko_sd_s2s':None,'cons_pass_sd_s2s':None,'cons_pts_sd_s2s':None                
+                 'cons_fbhe_sd_s2s':None,'cons_tcr_sd_s2s':None,'cons_ed_sd_s2s':None,'cons_ko_sd_s2s':None,'cons_pass_sd_s2s':None,'cons_pts_sd_s2s':None ,
+                 'knockout':None, 'goodpass':None
                  }
   #print(f"Player Dict:{player_dict}")
   player_df = pd.DataFrame.from_records(player_dict)
@@ -241,7 +242,8 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                        'cons_fbhe_sd_match_mean':[float()],'cons_tcr_sd_match_mean':[float()],'cons_ed_sd_match_mean':[float()],'cons_ko_sd_match_mean':[float()],'cons_pass_sd_match_mean':[float()],'cons_pts_sd_match_mean':[float()],
                        'cons_fbhe_sd_s2s_mean':[float()],'cons_tcr_sd_s2s_mean':[float()],'cons_ed_sd_s2s_mean':[float()],'cons_ko_sd_s2s_mean':[float()],'cons_pass_sd_s2s_mean':[float()],'cons_pts_sd_s2s_mean':[float()],
                        'cons_fbhe_sd_match_stdev':[float()],'cons_tcr_sd_match_stdev':[float()],'cons_ed_sd_match_stdev':[float()],'cons_ko_sd_match_stdev':[float()],'cons_pass_sd_match_stdev':[float()],'cons_pts_sd_match_stdev':[float()],
-                       'cons_fbhe_sd_s2s_stdev':[float()],'cons_tcr_sd_s2s_stdev':[float()],'cons_ed_sd_s2s_stdev':[float()],'cons_ko_sd_s2s_stdev':[float()],'cons_pass_sd_s2s_stdev':[float()],'cons_pts_sd_s2s_stdev':[float()]  
+                       'cons_fbhe_sd_s2s_stdev':[float()],'cons_tcr_sd_s2s_stdev':[float()],'cons_ed_sd_s2s_stdev':[float()],'cons_ko_sd_s2s_stdev':[float()],'cons_pass_sd_s2s_stdev':[float()],'cons_pts_sd_s2s_stdev':[float()],
+                       'knockout_mean':[float()],'knockout_stdev':[float()], 'goodpass_mean':[float()], 'goodpass_stdev':[float()]
                       }
   player_stats_df =  pd.DataFrame.from_records(player_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")
@@ -611,6 +613,10 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
       player_df.at[i,'cons_pass_sd_s2s'] = float(cons2_table.at[sd_index,'Good Passes'])
       player_df.at[i,'cons_pts_sd_s2s'] = float(cons2_table.at[sd_index,'Points Earned'])
 
+    # calculate knockout rates and good pass rates
+    player_df.at[i,'knockout'] = calc_knock_out(ppr_df,p_list[i])
+    player_df.at[i,'goodpass'] = calc_good_pass(ppr_df,p_list[i])
+
 
   ########## end of loop over players
   #print(f"Player Df when done:{player_df}")
@@ -761,6 +767,11 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   player_stats_df.at[0,'cons_ko_sd_s2s_stdev'] = player_df['cons_ko_sd_s2s'].std(skipna=True)
   player_stats_df.at[0,'cons_pass_sd_s2s_stdev'] = player_df['cons_pass_sd_s2s'].std(skipna=True)
   player_stats_df.at[0,'cons_pts_sd_s2s_stdev'] = player_df['cons_pts_sd_s2s'].std(skipna=True)
+
+  player_stats_df.at[0,'knockout_mean'] = player_df['knockout'].mean(skipna=True)
+  player_stats_df.at[0,'knockout_stdev'] = player_df['knockout'].std(skipna=True)
+  player_stats_df.at[0,'goodpass_mean'] = player_df['goodpass'].mean(skipna=True)
+  player_stats_df.at[0,'goodpass_stdev'] = player_df['goodpass'].std(skipna=True)
         
   # now lets store our player_data file back as a csv file in the database
   #---------------------------------------------------------------------------
@@ -771,6 +782,6 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   player_stats_csv = pd.DataFrame.to_csv(player_stats_df)
   player_stats_media = anvil.BlobMedia(content_type="text/plain", content=player_stats_csv.encode(), name="player_sats.csv")
   
-  ppr_csv_row.update( player_data = player_media, player_data_date = datetime.datetime.now(), player_data_stats=player_stats_media, player_data_stats_date = datetime.datetime.now(), )
+  ppr_csv_row.update( player_data = player_media, player_data_date = datetime.now(), player_data_stats=player_stats_media, player_data_stats_date = datetime.now(), )
   
   return result_string

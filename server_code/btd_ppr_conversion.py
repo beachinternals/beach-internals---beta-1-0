@@ -105,7 +105,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
     
       # now I can store it in the btd files database
-      flist_r.update( ppr_data = ppr_media, error_str = error_string, no_errors = no_errors, ppr_file_date=datetime.datetime.now() )
+      flist_r.update( ppr_data = ppr_media, error_str = error_string, no_errors = no_errors, ppr_file_date=datetime.now() )
     else:
       True
       #print(f"Not processing file:{flist_r['filename']}")

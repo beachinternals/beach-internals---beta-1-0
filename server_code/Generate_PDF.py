@@ -82,7 +82,7 @@ def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year,
   # calculate the query text
   filter_text = f"""
     Data Filters:
-    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - PDF Created : {datetime.today().strftime('%Y-%m-%d')}
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
@@ -162,7 +162,7 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
   # calculate the query text
   filter_text = f"""
     Data Filters:
-    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - PDF Created : {datetime.today().strftime('%Y-%m-%d')}
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
@@ -255,7 +255,7 @@ def render_3court_plot_to_pdf(fnct_name, rpt_form, disp_league, disp_gender, dis
   # calculate the query text
   filter_text = f"""
     Data Filters:
-    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - PDF Created : {datetime.today().strftime('%Y-%m-%d')}
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
@@ -451,7 +451,7 @@ def create_pair_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_
   # calculate the query text
   filter_text = f"""
     Data Filters:
-    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - PDF Created : {datetime.today().strftime('%Y-%m-%d')}
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
@@ -530,7 +530,7 @@ def create_player_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, dis
   # calculate the query text
   filter_text = f"""
     Data Filters:
-    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - PDF Created : {datetime.today().strftime('%Y-%m-%d')}
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
@@ -594,7 +594,7 @@ def create_dashboard_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, 
   # calculate the query text
   filter_text = f"""
     Data Filters:
-    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - PDF Created : {datetime.today().strftime('%Y-%m-%d')}
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}
@@ -650,7 +650,7 @@ def create_matchup_pdf_reports(
   # calculate the query text
   filter_text = f"""
     Data Filters:
-    - PDF Created : {datetime.datetime.today().strftime('%Y-%m-%d')}
+    - PDF Created : {datetime.today().strftime('%Y-%m-%d')}
     - League : {disp_league}
     - Gender : {disp_gender}
     - Year : {disp_year}

@@ -373,6 +373,6 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   tri_csv_file = pd.DataFrame.to_csv(tri_df)
   tri_media = anvil.BlobMedia(content_type="text/plain", content=tri_csv_file.encode(), name="triangle_data.csv")
 
-  ppr_csv_row.update( tri_data = tri_media, tri_data_date=datetime.datetime.now() )
+  ppr_csv_row.update( tri_data = tri_media, tri_data_date=datetime.now() )
   
   return result_string

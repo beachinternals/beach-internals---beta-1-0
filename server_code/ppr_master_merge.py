@@ -267,7 +267,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
       year = user_year,
       team = user_team,
       ppr_csv = ppr_media,
-      date = datetime.datetime.now()
+      date = datetime.now()
     )
   else:
     #print("adding a row to the csv table")
@@ -277,7 +277,7 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
       year = user_year,
       team = user_team,
       ppr_csv = ppr_media,
-      date = datetime.datetime.now(),
+      date = datetime.now(),
       min_att= 5  # curently set at this number, can be changed in the table
     )
 

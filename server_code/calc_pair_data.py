@@ -683,6 +683,6 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
   pair_stats_csv = pd.DataFrame.to_csv(pair_stats_df)
   pair_stats_media = anvil.BlobMedia(content_type="text/plain", content=pair_stats_csv.encode(), name="pair_sats.csv")
   
-  ppr_csv_row.update( pair_data = pair_media, pair_data_date = datetime.datetime.now(), pair_data_stats=pair_stats_media, pair_data_stats_date = datetime.datetime.now(), )
+  ppr_csv_row.update( pair_data = pair_media, pair_data_date = datetime.now(), pair_data_stats=pair_stats_media, pair_data_stats_date = datetime.now(), )
   
   return result_string

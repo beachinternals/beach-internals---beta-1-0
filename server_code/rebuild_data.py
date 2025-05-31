@@ -58,7 +58,7 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
   # call all the different night processing tasks in sequence, league by leaguye
 
   # set up email text
-  now = datetime.datetime.now()
+  now = datetime.now()
   email_message = 'Night Processing Started at :' + str( now ) + "\n"
   email_message = email_message +'All Leagues:'+str(all_leagues)+'.  Rebuild All:'+str(rebuild_all)+'   League:'+d_league+'   Gender:'+d_gender+'.  Year:'+d_year+'\n'
 
@@ -159,7 +159,7 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
   
   #now, send an email with the updates
   internals_email = 'beachinternals@gmail.com'
-  now1 = datetime.datetime.now()
+  now1 = datetime.now()
   email_message = email_message + "Night Processing Completed at:" + str(now1) + ' Compute time: '+str(now1-now)+ "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Night Processing',text=email_message)
 
@@ -324,7 +324,7 @@ def calculate_data():
   
 @anvil.server.callable
 def calculate_data1():
-  now = datetime.datetime.now()
+  now = datetime.now()
   email_text = "Calculate PPR Data \n Called at:" + str(now) + "\n"
   
   # build data for all new files, for all leagues
@@ -430,7 +430,7 @@ def build_pair_df(c_league,c_gender,c_year):
   pair_csv_file = pd.DataFrame.to_csv(tmp)
   print(f"Pair list being updated for: {c_league}, {c_gender}, {c_year}")
   pair_media = anvil.BlobMedia(content_type="text/plain", content=pair_csv_file.encode(), name="pair_table.csv")
-  ppr_csv_row.update(pair_list = pair_media, pair_list_date=datetime.datetime.now())
+  ppr_csv_row.update(pair_list = pair_media, pair_list_date=datetime.now())
 
   return True
 
