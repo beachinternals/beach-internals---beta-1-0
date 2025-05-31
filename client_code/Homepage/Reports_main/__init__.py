@@ -109,7 +109,7 @@ class Reports_main(Reports_mainTemplate):
     # populate the reports drop down
     if anvil.users.get_user()["team"] == "INTERNALS":
       self.report_drop_down.items = [
-        (row["report_name"]) for row in app_tables.report_list.search(rpt_type="player")
+        (row["report_name"]) for row in app_tables.report_list.search(rpt_type="pair")
       ]
     else:
       self.report_drop_down.items = [

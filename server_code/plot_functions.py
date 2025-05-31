@@ -357,7 +357,7 @@ def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
 '''
 
 # Grok generated version of this routine
-def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, bar_width=0.5):
+def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_label, line_value, bar_width=0.5):
   """
     Create a bar graph with labeled bars, average line, and table, handling NaN values.
     
@@ -367,6 +367,8 @@ def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, bar_widt
         title (str): Plot title
         xlabel (str): X-axis label
         ylabel (str): Y-axis label
+        line_label (str) : Label for an additional line (league Average)
+        line_value (float) : Y value for the line (League Average)
         size (tuple): Figure size (width, height)
         bar_width (float): Width of bars (default: 0.5)
     
@@ -402,6 +404,11 @@ def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, bar_widt
     # Add average line
     plt.axhline(y=average_count, color='red', linestyle='--', linewidth=2, 
                 label=f'Average: {average_count:.3f}')
+
+    # Add additional line (League Average)
+    if line_label and line_value:
+      plt.axhline(y=line_value, color = 'blue', linestyle='-', linewidth=1,
+               label=f'{line_label} : {line_value:.3f}')
 
     # Set labels and title
     plt.title(title)

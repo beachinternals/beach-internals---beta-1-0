@@ -204,7 +204,7 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
 
 #---------------------------------------------------------------------------------------------------
 #
-#.  Player COnsistency Report
+#.  Player Season Summary
 #
 #-------------------------------------------------------------------------------------------------
 @anvil.server.callable
@@ -361,4 +361,168 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
   image_list[4] = plt5
   image_list[5] = plt6
   
+  return title_list, label_list, image_list, df_list
+
+#---------------------------------------------------------------------------------------------------
+#
+#.  Player Season Summary
+#
+#-------------------------------------------------------------------------------------------------
+@anvil.server.callable
+def  pair_season_summary_new(lgy, team, **rpt_filters):
+  '''
+
+  Custom, per report code:
+  - set the True/False for pair or player
+  - create and store dataframes
+  - create and store images
+  
+  Report Functions:
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe and filter by all the report filters
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  title_list, label_list, image_list, df_list = initialize_report_lists(inspect.currentframe().f_code.co_name, **rpt_filters)
+  piar_data, pair_data_stats = get_pair_data(disp_league, disp_gender, disp_year)
+
+  #------------------------------------------------------------------------------------------------------
+  #            Set ot a Player or Pair Report
+  #------------------------------------------------------------------------------------------------------
+  disp_player = rpt_filters.get('player')
+  disp_pair = rpt_filters.get('pair')
+  # for a player report:
+  if False:  # set only one of these to True
+    ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+      (ppr_df['player_a2'] == disp_player) |
+      (ppr_df['player_b1'] == disp_player) |
+      (ppr_df['player_b2'] == disp_player) 
+      ]
+  # for a pair report:
+  if True:  # set only one of these to True
+    ppr_df = ppr_df[ (ppr_df['teama'] == disp_pair) | (ppr_df['teamb'] == disp_pair) ]
+
+  # for a team report
+  if False:
+    ppr_df = ppr_df[ ppr_df['teama'] == disp_pair ]
+
+  #------------------------------------------------------------------------------------------------------
+  #            Create and store DataFrames
+  #------------------------------------------------------------------------------------------------------
+  # no dataframes in this report
+
+  #------------------------------------------------------------------------------------------------------
+  #            Create and store images
+  #------------------------------------------------------------------------------------------------------
+
+  # create a list with the dates in question
+  num_weeks = 11
+  if 'start_date' in rpt_filters:
+    start_date = rpt_filters.get('start_date')
+  else:
+    start_date = datetime(2025, 2, 19)
+
+  if 'end_date' in rpt_filters:
+    end_date = rpt_filters.get('end_date')
+    num_weeks = (end_date - start_date)/7
+  else:
+    end_date = start_date + timedelta(days=7*num_weeks)
+
+  # create a list with the start and end date for each week
+  weekly_dates = []
+  for i in range(num_weeks):
+    week_start = start_date + timedelta(days=7 * i)
+    week_end = week_start + timedelta(days=6)
+    weekly_dates.append({
+      'start_date': week_start,
+      'end_date': week_end
+    })
+
+  # set up the pandas dataframe
+  df_dict = {'Variable':['Week 1','Week 2','Week 3','Week 4','Week 5','Week 6','Week 7','Week 8','Week 9','Week 10', 'Week 11'],
+             'FBHE':[0,0,0,0,0,0,0,0,0,0,0],
+             'Errors':[0,0,0,0,0,0,0,0,0,0,0],
+             'Transition':[0,0,0,0,0,0,0,0,0,0,0],
+             'Knockout':[0,0,0,0,0,0,0,0,0,0,0],
+             'Good Pass':[0,0,0,0,0,0,0,0,0,0,0],
+             'Points':[0,0,0,0,0,0,0,0,0,0,0]
+            }
+  sum_df = pd.DataFrame.from_dict(df_dict)
+
+  #print(sum_df)
+  # start a loop over the weeks
+  for i in range(0,num_weeks):
+    week_var = 'Week '+str(i+1)
+    # filter ppr_df to tmp_df for this week
+    #print(f"type of ppr_df game_date: {type(ppr_df['game_date'])}")
+    #print(f"weekly dates : {type(weekly_dates)}, [i] {type(weekly_dates[i])}, [i][start_date] {type(weekly_dates[i]['start_date'])}")
+    #print(f"weekly dates : {weekly_dates}, [i] {weekly_dates[i]}, [i][start_date] {weekly_dates[i]['start_date']}")
+
+    tmp_df = ppr_df
+    tmp_df['game_date'] = pd.to_datetime(tmp_df['game_date'])
+    tmp_df['game_date'] = tmp_df['game_date'].dt.date
+    #m_ppr_df = m_ppr_df.loc[(m_ppr_df['game_date'] >= disp_start_date) & (m_ppr_df['game_date'] <= disp_end_date) ]
+    #print(f"Limitiing by Dates:{disp_start_date},{disp_end_date}")
+
+    tmp_df = tmp_df[ (tmp_df['game_date'] >= weekly_dates[i]['start_date'].date()) & (tmp_df['game_date'] < weekly_dates[i]['end_date'].date()) ]
+
+    #print(f"week : {i}, week var: {week_var}, start date: {weekly_dates[i]['start_date'].date()}, end date: {weekly_dates[i]['end_date'].date()}, number of points: {tmp_df.shape[0]}")
+
+    pt_totals_df = pair_pt_total( tmp_df, disp_pair )
+    sum_df.loc[i,'FBHE'] = (pt_totals_df.at[0,'p_fbk']-pt_totals_df.at[0,'p_fbe'])/( pt_totals_df.at[0,'p_att_total'])
+    sum_df.loc[i,'Errors' ] = (pt_totals_df.at[0,'p_fbe']+pt_totals_df.at[0,'p_tse']+pt_totals_df.at[0,'p_te_r']+pt_totals_df.at[0,'p_te_s'])/( pt_totals_df.at[0,'pts_total'])
+    sum_df.loc[i,'Transition' ] = (pt_totals_df.at[0,'p_tk_s']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'o_te_r']+pt_totals_df.at[0,'o_te_s'])/( pt_totals_df.at[0,'trans_total'])
+    sum_df.loc[i,'Knockout'] = (pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'o_bad_pass'])/( pt_totals_df.at[0,'pts_total'])
+    sum_df.loc[i,'Good Pass'] = (pt_totals_df.at[0,'p_good_pass'])/( pt_totals_df.at[0,'p_good_pass']+pt_totals_df.at[0,'p_bad_pass'])
+    sum_df.loc[i,'Points' ] = ( (pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'p_fbk']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'p_tk_s']) +
+                                (pt_totals_df.at[0,'o_tse']+pt_totals_df.at[0,'o_fbe']+pt_totals_df.at[0,'o_te_r']+pt_totals_df.at[0,'o_te_s']) ) / ( pt_totals_df.at[0,'pts_total']
+                                                                                                                                                    )
+    # format the entries
+    sum_df.loc[i,'FBHE'] = "{:.3f}".format(sum_df.loc[i,'FBHE'])
+    sum_df.loc[i,'Errors'] = "{:.3f}".format(sum_df.loc[i,'Errors'])
+    sum_df.loc[i,'Transition'] = "{:.3f}".format(sum_df.loc[i,'Transition'])
+    sum_df.loc[i,'Knockout'] = "{:.3f}".format(sum_df.loc[i,'Knockout'])
+    sum_df.loc[i,'Good Pass'] = "{:.3f}".format(sum_df.loc[i,'Good Pass'])
+    sum_df.loc[i,'Points'] = "{:.3f}".format(sum_df.loc[i,'Points'])
+
+  print(f" Summary dataframe: \n {sum_df}")
+
+  
+  # now create histograms for each one
+  size = [11,5]
+  avg_title = disp_league + " Average"
+  plt1 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', avg_title, pair_data_stats[0,'fbhe_mean'], size )
+  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', avg_title, pair_data_stats[0,'err_den_mean'], size )
+  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', avg_title, pair_data_stats[0,'tcr_mean'], size )
+  plt4 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', '', 0, size )
+  plt5 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', '', 0, size )
+  plt6 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', '', 0, size )
+
+  # store the images in the list
+  image_list[0] = plt1
+  image_list[1] = plt2
+  image_list[2] = plt3
+  image_list[3] = plt4
+  image_list[4] = plt5
+  image_list[5] = plt6
+
   return title_list, label_list, image_list, df_list
