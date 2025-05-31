@@ -403,7 +403,7 @@ def  pair_season_summary_new(lgy, team, **rpt_filters):
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
   title_list, label_list, image_list, df_list = initialize_report_lists(inspect.currentframe().f_code.co_name, **rpt_filters)
-  piar_data, pair_data_stats = get_pair_data(disp_league, disp_gender, disp_year)
+  pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
 
   #------------------------------------------------------------------------------------------------------
   #            Set ot a Player or Pair Report
@@ -510,9 +510,9 @@ def  pair_season_summary_new(lgy, team, **rpt_filters):
   # now create histograms for each one
   size = [11,5]
   avg_title = disp_league + " Average"
-  plt1 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', avg_title, pair_data_stats[0,'fbhe_mean'], size )
-  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', avg_title, pair_data_stats[0,'err_den_mean'], size )
-  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', avg_title, pair_data_stats[0,'tcr_mean'], size )
+  plt1 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', avg_title, pair_data_stats_df.at[0,'fbhe_mean'], size )
+  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', avg_title, pair_data_stats_df.at[0,'err_den_mean'], size )
+  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', avg_title, pair_data_stats_df.at[0,'tcr_mean'], size )
   plt4 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', '', 0, size )
   plt5 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', '', 0, size )
   plt6 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', '', 0, size )
