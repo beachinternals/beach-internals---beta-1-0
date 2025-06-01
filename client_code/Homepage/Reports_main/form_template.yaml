@@ -145,15 +145,15 @@ components_by_slot:
         type: Label
       - layout_properties: {grid_position: 'SPJYBH,WFBKGE'}
         name: set_1
-        properties: {text: '1'}
+        properties: {group_name: radioGroup2, text: '1'}
         type: RadioButton
       - layout_properties: {grid_position: 'SPJYBH,AOFRAW'}
         name: set_2
-        properties: {text: '2'}
+        properties: {group_name: radioGroup2, text: '2'}
         type: RadioButton
       - layout_properties: {grid_position: 'SPJYBH,JEDLXF'}
         name: set_3
-        properties: {text: '3'}
+        properties: {group_name: radioGroup2, text: '3'}
         type: RadioButton
       - layout_properties: {grid_position: 'NMSBIQ,BQOQYW'}
         name: label_7
@@ -269,11 +269,11 @@ components_by_slot:
           type: Label
         - layout_properties: {grid_position: 'MBRQZW,DJGXCT'}
           name: pass_insys
-          properties: {text: in system}
+          properties: {group_name: radioGroup3, text: in system}
           type: RadioButton
         - layout_properties: {grid_position: 'MBRQZW,WTZOWT'}
           name: pass_oos
-          properties: {text: out of system}
+          properties: {group_name: radioGroup3, text: out of system}
           type: RadioButton
         layout_properties: {grid_position: 'YDYZER,ZUBESP'}
         name: column_panel_9
@@ -320,15 +320,15 @@ components_by_slot:
           type: Label
         - layout_properties: {grid_position: 'WSYJOB,SVAMRT'}
           name: set_bump
-          properties: {text: Bump}
+          properties: {group_name: radioGroup4, text: Bump}
           type: RadioButton
         - layout_properties: {grid_position: 'WSYJOB,DBERUF'}
           name: set_hand
-          properties: {text: Hand}
+          properties: {group_name: radioGroup4, text: Hand}
           type: RadioButton
         - layout_properties: {grid_position: 'WSYJOB,LNDBXF'}
           name: set_unknown
-          properties: {text: Unknown}
+          properties: {group_name: radioGroup4, text: Unknown}
           type: RadioButton
         layout_properties: {grid_position: 'IPFRPS,AWQJJP'}
         name: column_panel_5
@@ -370,7 +370,7 @@ components_by_slot:
         type: ColumnPanel
       layout_properties: {grid_position: 'HRVTBW,LLFEGL'}
       name: outlined_card_8
-      properties: {col_widths: '{"BQOQYW":15,"TYDSQG":45,"PCHWNT":15,"NZJTEF":15,"MGXOLR":15,"CYRGMT":15,"ALUUVG":33,"WFBKGE":9,"AOFRAW":9,"JEDLXF":9}', role: outlined-card}
+      properties: {col_widths: '{"BQOQYW":15,"TYDSQG":45,"PCHWNT":10,"NZJTEF":10,"MGXOLR":20,"CYRGMT":20,"ALUUVG":33,"WFBKGE":9,"AOFRAW":9,"JEDLXF":9}', role: outlined-card}
       type: ColumnPanel
     layout_properties: {}
     name: outlined_card_4

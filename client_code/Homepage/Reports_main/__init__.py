@@ -284,9 +284,9 @@ class Reports_main(Reports_mainTemplate):
 
     if self.set_bump.selected:
       rpt_filters['set_touch_type'] = 'bump'
-    if self.set_bump.selected:
+    if self.set_hand.selected:
       rpt_filters['set_touch_type'] = 'hand'
-    if self.set_bump.selected:
+    if self.set_unknown.selected:
       rpt_filters['set_touch_type'] = 'unknown'
 
     if self.pass_insys.selected:
@@ -441,9 +441,9 @@ class Reports_main(Reports_mainTemplate):
 
     if self.set_bump.selected:
       rpt_filters['set_touch_type'] = 'bump'
-    if self.set_bump.selected:
+    if self.set_hand.selected:
       rpt_filters['set_touch_type'] = 'hand'
-    if self.set_bump.selected:
+    if self.set_unknown.selected:
       rpt_filters['set_touch_type'] = 'unknown'
 
     if self.pass_insys.selected:

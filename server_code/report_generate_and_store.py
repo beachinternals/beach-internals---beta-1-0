@@ -262,10 +262,22 @@ def report_player_attacking( lgy, team, **rpt_filters):
                    (ppr_df['player_b1'] == disp_player) |
                    (ppr_df['player_b2'] == disp_player) 
                   ]
-  
+
   # set up dataframe 1 to display the attack table for this player
   att_table = get_player_attack_table(ppr_df, disp_player)
-  df_list[0] = att_table.to_dict('records')
+  if att_table is None:
+    df_list[0] = []  # Empty list for DataGrid
+  else:
+    # Convert problematic types
+    for col in att_table.columns:
+      if att_table[col].dtype == 'datetime64[ns]':
+        att_table[col] = att_table[col].dt.strftime('%Y-%m-%d')  # Convert datetime to string
+      elif att_table[col].dtype == object:
+        att_table[col] = att_table[col].astype(str).replace('nan', None)  # Handle NaN, None
+      elif att_table[col].dtype in ['int64', 'float64']:
+        att_table[col] = att_table[col].astype(object).where(att_table[col].notna(), None)  # Numpy to Python
+    df_list[0] = att_table.to_dict('records')
+
 
   # get the grpahs of attacks, zone 1 - 5, all as one graph
   z1_plt, z2_plt, z3_plt, z4_plt, z5_plt, z1_df, z2_df, z3_df, z4_df, z5_df = get_player_attack_plots(ppr_df, disp_player)
@@ -339,7 +351,8 @@ def get_player_attack_table(ppr_df, disp_player):
 
     return fbhe_table
   else:
-    return "No Data Found"
+    fbhe_table.at[0,'Zone 1'] = 'No Data Found'
+    return fbhe_table
 
 
 @anvil.server.callable
@@ -440,7 +453,7 @@ Data Filters:
   if rpt_filters.get("set_touch_type") is not None and rpt_filters.get("set_touch_type") != "":
     filter_text += f"- Set Touch Type = {str(rpt_filters['set_touch_type'])}\n"
   if rpt_filters.get("pass_oos") is not None and rpt_filters.get("pass_oos") != "":
-    filter_text += f"- Pass, Out of System = {str(rpt_filters['pass_oos'])}\n"
+    filter_text += f"- Pass = {' Out System Only' if rpt_filters['pass_oos'] == 1 else ' In of System Only' }\n"
   if rpt_filters.get("att_ht_low") is not None and rpt_filters.get("att_ht_low") != "":
     filter_text += f"- Attack Height, Low  = {str(rpt_filters['att_ht_low'])}\n"
   if rpt_filters.get("att_ht_high") is not None and rpt_filters.get("att_ht_high") != "":

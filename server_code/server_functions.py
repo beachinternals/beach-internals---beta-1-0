@@ -1053,15 +1053,9 @@ def filter_ppr_df( dataframe, **kwargs):
       result = result[ result['comp_l3'] == value ]
 
     if column == 'start_date':
-      if isinstance(result['game_date'], str):
-        result['game_date'] = pd.to_datetime(result['game_date'])
-        result['game_date'] = result['game_date'].dt.date
-      result = result[ result['game_date'] >= datetime(value) ]
+      result = apply_date_filters(result, column, value )
     if column == 'end_date':
-      if isinstance(result['game_date'], str):
-        result['game_date'] = pd.to_datetime(result['game_date'])
-        result['game_date'] = result['game_date'].dt.date
-      result = result[ result['game_date'] <= datetime(value) ]
+      result = apply_date_filters(result, column, value )
 
     # opponent pair for matchu0ps
     if column == 'opp_pair':
@@ -1089,9 +1083,9 @@ def filter_ppr_df( dataframe, **kwargs):
     # pass out of system
     if column == 'pass_oos':
       if value == 0:
-        result = result[ result['pass_height'] == value ]
-      else:
-        result = result[ result['pass_height'] >= 1 ]
+        result = result[ result['pass_oos'] == 0 ]
+      elif value == 1:
+        result = result[ result['pass_oos'] > 0 ]
 
     # pass height
     if column == 'pass_ht_low':
@@ -1107,7 +1101,7 @@ def filter_ppr_df( dataframe, **kwargs):
 
     # set type : bump, hand, unknownn, where only one can be selected
     if column == 'set_touch_type':
-      if value == ' unkown':
+      if value == 'unkown':
         result = result[ ( result[column] == value | result[column] == 'empty' ) ]
       else:
         result = result[ result[column] == value ]
@@ -1132,3 +1126,28 @@ def filter_ppr_df( dataframe, **kwargs):
       #print(f"Warning: Column '{column}' not found in DataFrame")
 
   return result
+
+
+def apply_date_filters(df, column, value ):
+  date_column = 'game_date'
+  if date_column not in df.columns:
+    raise KeyError(f"Column '{date_column}' not found")
+  if isinstance(value, str):
+    parsed_value = pd.to_datetime(value, errors='coerce').date()
+    if pd.isna(parsed_value):
+      raise ValueError(f"Invalid date format: {value}")
+  elif isinstance(value, (datetime, date)):
+    parsed_value = value if isinstance(value, date) else value.date()
+  else:
+    raise ValueError(f"Invalid date value: {value}")
+  if df[date_column].dtype == object or isinstance(df[date_column].iloc[0], str):
+    df[date_column] = pd.to_datetime(df[date_column], errors='coerce').dt.date
+    if df[date_column].isna().any():
+      raise ValueError("Some dates could not be parsed")
+  if column == 'start_date':
+    df = df[df[date_column] >= parsed_value]
+  elif column == 'end_date':
+    df = df[df[date_column] <= parsed_value]
+  if df.empty:
+    raise ValueError(f"No data after applying {column} filter")
+  return df
