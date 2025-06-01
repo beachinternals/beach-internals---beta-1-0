@@ -70,7 +70,7 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
       rpt_data_row[var] = title_list[i]
 
   # we now overfide what might be int eh report_list table with the acutal filter text for this report
-  rpt_data_row['title_7'] = make_filter_text( **rpt_filters)
+  rpt_data_row['title_7'] = make_filter_text( lgy, **rpt_filters)
   
   rpt_data_row['no_label'] = len(label_list)
   if len(label_list) > 0:
@@ -411,48 +411,46 @@ def get_player_attack_plots( ppr_df, disp_player):
   return attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, z1_df, z2_df, z3_df, z4_df, z5_df
 
 
-def make_filter_text( **rpt_filters):
+def make_filter_text( lgy, **rpt_filters):
   
   filter_text = f"""
-    Data Filters:
-    - Date Created : {datetime.today().strftime('%Y-%m-%d')}
-    - League : {rpt_filters.get('league')}
-    - Gender : {rpt_filters.get('league')}
-    - Year : {rpt_filters.get('league')}
+Data Filters:
+- Date Created : {datetime.today().strftime('%Y-%m-%d')}
+- League / Gender / Year : {lgy}
     """
   filter_text = filter_text + '\n'
 
   filter_text = filter_text if 'filter_text' in locals() else ""
   if rpt_filters.get("pair") is not None and rpt_filters.get("pair") != "":
-    filter_text += f"Pair = {str(rpt_filters['pair'])}\n"
+    filter_text += f"- Pair = {str(rpt_filters['pair'])}\n"
   if rpt_filters.get("player") is not None and rpt_filters.get("player") != "":
-    filter_text += f"Player = {str(rpt_filters['player'])}\n"
+    filter_text += f"- Player = {str(rpt_filters['player'])}\n"
   if rpt_filters.get("comp_l1") is not None and rpt_filters.get("comp_l1") != "":
-    filter_text += f"Competition Level 1 = {str(rpt_filters['comp_l1'])}\n"
+    filter_text += f"- Competition Level 1 = {str(rpt_filters['comp_l1'])}\n"
   if rpt_filters.get("comp_l2") is not None and rpt_filters.get("comp_l2") != "":
-    filter_text += f"Competition Level 2 = {str(rpt_filters['comp_l2'])}\n"
+    filter_text += f"- Competition Level 2 = {str(rpt_filters['comp_l2'])}\n"
   if rpt_filters.get("comp_l3") is not None and rpt_filters.get("comp_l3") != "":
-    filter_text += f"Competition Level 3 = {str(rpt_filters['comp_l3'])}\n"
+    filter_text += f"- Competition Level 3 = {str(rpt_filters['comp_l3'])}\n"
   if rpt_filters.get("start_date") is not None and rpt_filters.get("start_date") != "":
-    filter_text += f"Start Date = {str(rpt_filters['start_date'])}\n"
+    filter_text += f"- Start Date = {str(rpt_filters['start_date'])}\n"
   if rpt_filters.get("end_date") is not None and rpt_filters.get("end_date") != "":
-    filter_text += f"End Date = {str(rpt_filters['end_date'])}\n"
+    filter_text += f"- End Date = {str(rpt_filters['end_date'])}\n"
   if rpt_filters.get("set") is not None and rpt_filters.get("set") != "":
-    filter_text += f"Set = {str(rpt_filters['set'])}\n"
+    filter_text += f"- Set = {str(rpt_filters['set'])}\n"
   if rpt_filters.get("set_touch_type") is not None and rpt_filters.get("set_touch_type") != "":
-    filter_text += f"Set Touch Type = {str(rpt_filters['set_touch_type'])}\n"
+    filter_text += f"- Set Touch Type = {str(rpt_filters['set_touch_type'])}\n"
   if rpt_filters.get("pass_oos") is not None and rpt_filters.get("pass_oos") != "":
-    filter_text += f"Pass, Out of System = {str(rpt_filters['pass_oos'])}\n"
+    filter_text += f"- Pass, Out of System = {str(rpt_filters['pass_oos'])}\n"
   if rpt_filters.get("att_ht_low") is not None and rpt_filters.get("att_ht_low") != "":
-    filter_text += f"Attack Height, Low  = {str(rpt_filters['att_ht_low'])}\n"
+    filter_text += f"- Attack Height, Low  = {str(rpt_filters['att_ht_low'])}\n"
   if rpt_filters.get("att_ht_high") is not None and rpt_filters.get("att_ht_high") != "":
-    filter_text += f"Attack Height, High = {str(rpt_filters['att_ht_high'])}\n"
+    filter_text += f"- Attack Height, High = {str(rpt_filters['att_ht_high'])}\n"
   if rpt_filters.get("att_speed_low") is not None and rpt_filters.get("att_speed_low") != "":
-    filter_text += f"Attack Speed, Low = {str(rpt_filters['att_speed_low'])}\n"
+    filter_text += f"- Attack Speed, Low = {str(rpt_filters['att_speed_low'])}\n"
   if rpt_filters.get("att_speed_high") is not None and rpt_filters.get("att_speed_high") != "":
-    filter_text += f"Attack Speed, High = {str(rpt_filters['att_speed_high'])}\n"
+    filter_text += f"- Attack Speed, High = {str(rpt_filters['att_speed_high'])}\n"
   if rpt_filters.get("pass_ht_low") is not None and rpt_filters.get("pass_ht_low") != "":
-    filter_text += f"Pass Height, Low = {str(rpt_filters['pass_ht_low'])}\n"
+    filter_text += f"- Pass Height, Low = {str(rpt_filters['pass_ht_low'])}\n"
   if rpt_filters.get("pass_ht_high") is not None and rpt_filters.get("pass_ht_high") != "":
     filter_text += f"- Pass Height, High = {str(rpt_filters['pass_ht_high'])}\n"
   if rpt_filters.get("srv_fr") is not None and rpt_filters.get("srv_fr") != "":
