@@ -76,7 +76,7 @@ class player_season_summary_rpt(player_season_summary_rptTemplate):
  
       if isinstance(title_list[7], str):
         self.explain_text.content = title_list[7]
-      if isinstance(title_list[8], str):
+      if isinstance(title_list[6], str):
         self.filter_text.content = title_list[6]
 
       #---------------------------------------
