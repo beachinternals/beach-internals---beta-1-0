@@ -19,8 +19,8 @@ class player_attacking_rpt(player_attacking_rptTemplate):
 
     # Create a header panel
     header_panel = LinearPanel()
-    header_panel.background = '#004aad'
-    header_label = Label(text='Beach Internals, beachinternals@gmail.com', foreground='#ffffff', font_size=20)
+    header_panel.background = 'gray'
+    header_label = Label(text='Beach Internals, scott@beachinternals.com', foreground='black', font_size=16)
     header_panel.add_component(header_label)
     self.add_component(header_panel)
     

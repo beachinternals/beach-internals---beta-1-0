@@ -67,9 +67,9 @@ class player_season_summary_rpt(player_season_summary_rptTemplate):
         self.rpt_title.text = title_list[0]
       if isinstance(title_list[1],str) and isinstance(title_list[8], str):
         if isinstance(title_list[5],str):
-          if title_list[5] == 'pair':
+          if title_list[5] == 'new pair':
             self.rpt_subtitle.text = title_list[1] + title_list[9] # for a pair report   
-          elif title_list[5] == 'player':
+          elif title_list[5] == 'new player':
             self.rpt_subtitle.text = title_list[1] + title_list[8] # for a player report
           else:
             self.rpt_subtitle.text = title_list[1]
