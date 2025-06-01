@@ -137,7 +137,8 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
                  'opp_fbhe_5_2c':None,'opp_fbhe_5_2c_n':None,'opp_fbhe_5_2c_ea':None,'opp_fbhe_5_2d':None,'opp_fbhe_5_2d_n':None,'opp_fbhe_5_2d_ea':None,'opp_fbhe_5_2e':None,'opp_fbhe_5_2e_n':None,'opp_fbhe_5_2e_ea':None,     
                  'opp_fbhe_5_3c':None,'opp_fbhe_5_3c_n':None,'opp_fbhe_5_3c_ea':None,'opp_fbhe_5_3d':None,'opp_fbhe_5_3d_n':None,'opp_fbhe_5_3d_ea':None,'opp_fbhe_5_3e':None,'opp_fbhe_5_3e_n':None,'opp_fbhe_5_3e_ea':None,     
                  'opp_fbhe_5_4c':None,'opp_fbhe_5_4c_n':None,'opp_fbhe_5_4c_ea':None,'opp_fbhe_5_4d':None,'opp_fbhe_5_4d_n':None,'opp_fbhe_5_4d_ea':None,'opp_fbhe_5_4e':None,'opp_fbhe_5_4e_n':None,'opp_fbhe_5_4e_ea':None,     
-                 'opp_fbhe_5_5c':None,'opp_fbhe_5_5c_n':None,'opp_fbhe_5_5c_ea':None,'opp_fbhe_5_5d':None,'opp_fbhe_5_5d_n':None,'opp_fbhe_5_5d_ea':None,'opp_fbhe_5_5e':None,'opp_fbhe_5_5e_n':None,'opp_fbhe_5_5e_ea':None     
+                 'opp_fbhe_5_5c':None,'opp_fbhe_5_5c_n':None,'opp_fbhe_5_5c_ea':None,'opp_fbhe_5_5d':None,'opp_fbhe_5_5d_n':None,'opp_fbhe_5_5d_ea':None,'opp_fbhe_5_5e':None,'opp_fbhe_5_5e_n':None,'opp_fbhe_5_5e_ea':None,
+                 'knockout':None,'goodpass':None
               }
   #print(f"Pair Dict:{pair_dict}")
   pair_df = pd.DataFrame.from_records(pair_dict)
@@ -218,7 +219,8 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
                        'opp_fbhe_5_2c_ea_mean':[float()],'opp_fbhe_5_2c_ea_stdev':[float()],'opp_fbhe_5_2d_ea_mean':[float()],'opp_fbhe_5_2d_ea_stdev':[float()],'opp_fbhe_5_2e_ea_mean':[float()],'opp_fbhe_5_2e_ea_stdev':[float()],
                        'opp_fbhe_5_3c_ea_mean':[float()],'opp_fbhe_5_3c_ea_stdev':[float()],'opp_fbhe_5_3d_ea_mean':[float()],'opp_fbhe_5_3d_ea_stdev':[float()],'opp_fbhe_5_3e_ea_mean':[float()],'opp_fbhe_5_3e_ea_stdev':[float()],
                        'opp_fbhe_5_4c_ea_mean':[float()],'opp_fbhe_5_4c_ea_stdev':[float()],'opp_fbhe_5_4d_ea_mean':[float()],'opp_fbhe_5_4d_ea_stdev':[float()],'opp_fbhe_5_4e_ea_mean':[float()],'opp_fbhe_5_4e_ea_stdev':[float()],
-                       'opp_fbhe_5_5c_ea_mean':[float()],'opp_fbhe_5_5c_ea_stdev':[float()],'opp_fbhe_5_5d_ea_mean':[float()],'opp_fbhe_5_5d_ea_stdev':[float()],'opp_fbhe_5_5e_ea_mean':[float()],'opp_fbhe_5_5e_ea_stdev':[float()]
+                       'opp_fbhe_5_5c_ea_mean':[float()],'opp_fbhe_5_5c_ea_stdev':[float()],'opp_fbhe_5_5d_ea_mean':[float()],'opp_fbhe_5_5d_ea_stdev':[float()],'opp_fbhe_5_5e_ea_mean':[float()],'opp_fbhe_5_5e_ea_stdev':[float()],
+                       'knockout_mean':[float()],'knockout_stdev':[float()],'goodpass_mean':[float()],'goodpass_stdev':[float()]
                       }
   pair_stats_df =  pd.DataFrame.from_records(pair_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")
@@ -554,6 +556,9 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
               #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
               pair_df.at[i,fbhe_var_ea] = math.pi*(el_width/2)*(el_height/2)
 
+    # calculate knockout rates and good pass rates
+    pair_df.at[i,'knockout'] = calc_knock_out(tmp_df,disp_player)
+    pair_df.at[i,'goodpass'] = calc_good_pass(tmp_df,disp_player)
             
 
   ########## end of loop over players
@@ -673,6 +678,10 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
         pair_stats_df.at[0,fbhe_var_ea_mean] = pair_df[fbhe_var_ea].mean(skipna=True)
         pair_stats_df.at[0,fbhe_var_ea_sd] = pair_df[fbhe_var_ea].std(skipna=True) 
 
+  pair_stats_df.at[0,"knockout_mean"] = pair_df['knockout'].mean(skipna=True) 
+  pair_stats_df.at[0,"knockout_stdev"] = pair_df['knockout'].std(skipna=True) 
+  pair_stats_df.at[0,"goodpass_mean"] = pair_df['goodpass'].mean(skipna=True) 
+  pair_stats_df.at[0,"goodpass_stdev"] = pair_df['goodpass'].std(skipna=True) 
         
   # now lets store our player_data file back as a csv file in the database
   #---------------------------------------------------------------------------
