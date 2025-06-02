@@ -227,7 +227,6 @@ def rpt_mgr_generate_background():
           file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
           email_text = email_text + file_msg + '\n'
       
-
       elif rpt_r['rpt_type'] == 'pair':
         #print("processing pair report")
         #print(f"Pair List: {rpt_r['pair_list']}")
@@ -296,6 +295,7 @@ def rpt_mgr_generate_background():
                                           text='Attached please find the summary report(s) for '+disp_pair,
                                           attachments=pdf_list)
         '''
+      
       elif rpt_r['rpt_type'] == 'dashboard':
         # dashboard reports are for a whole team, so we ignore the pair and player entries, ump right o the reports
         email_text = email_text + '\n Processing Dashboard Reports \n'
@@ -351,7 +351,7 @@ def rpt_mgr_generate_background():
                                           cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
                                           subject='Beach Internals - Administrative Data ',
                                           text='Attached please find the summary report(s) : Internals Reports')
-                                          #attachments=[full_rpt_pdf])
+      
       elif rpt_r['rpt_type'] == 'scouting':
         pdf_list = ['']*len(rpt_r['pair_list'])*2      # start a list of all pdf files to pass to email send
         pdf_num = 0
@@ -423,6 +423,7 @@ def rpt_mgr_generate_background():
         if not email_status:
           print("report:Manager, Scouting Reports, email send failed")
         '''
+      
       elif rpt_r['rpt_type'] == 'scouting - pdf only':
         # this category is for reports taht can only be generated as pdf files, not as web pages.
         #. all of these are pair based reports, first player 1, then player 2.  
@@ -664,6 +665,7 @@ def rpt_mgr_generate_background():
           if not email_status:
             print("report:Manager, Scouting Reports, email send failed")
           '''
+      
       elif rpt_r['rpt_type'] == 'matchup':
         #print(f"Matchup Reports: {rpt_r['rpt_type']}")
         email_text = email_text + '\n Processing Matchup Reports \n'
@@ -672,15 +674,27 @@ def rpt_mgr_generate_background():
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
         else:
           email_text = email_text + ret_val + " \n"
+      
       elif rpt_r['rpt_type'] == 'new player':
-        email_text = email_text + '\n Processing New Player Reports \n'
+        email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
         ret_val = rpt_mgr_new_player_rpts(rpt_r, disp_team)
         if not ret_val:
-          print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
+          print(f"Report Manager : rpt_mgr_new_player_rpts Failed, {rpt_r['rpt_type']}")
         else:
           email_text = email_text + ret_val + '\n'
+      
+      elif rpt_r['rpt_type'] == 'new pair':
+        email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
+        ret_val = rpt_mgr_new_pair_rpts(rpt_r, disp_team)
+        if not ret_val:
+          print(f"Report Manager : rpt_mgr_new_pair_rpts Failed, {rpt_r['rpt_type']}")
+        else:
+          email_text = email_text + ret_val + '\n'
+     
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
+    else:
+      print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
   #now, send an email with the updates
   internals_email = 'beachinternals@gmail.com'
@@ -739,6 +753,56 @@ def rpt_mgr_new_player_rpts( rpt_r, disp_team ):
     return_text = return_text + '\n' + write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf )
       
   return return_text
+
+def rpt_mgr_new_pair_rpts( rpt_r, disp_team ):
+  '''
+  
+  Using the new format, where we store filters in **rpt_filters and then store the data in a file, then call the pdf window to get data from the file
+  
+  '''
+  today = datetime.now() 
+  return_text = ''
+
+  for p in rpt_r['pair_list']:
+    full_rpt_pdf = None
+
+    # build the rpt_filers to pass
+    #             populate_filters_from_rpt_mgr_table( rpt_r, player_r, pair_r, opp_pair_r )
+    rpt_filters = populate_filters_from_rpt_mgr_table( rpt_r, False, p, False )
+
+    # calculate the folder we will store thiese into
+
+    pdf_folder = [ p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+    #print(f"pdf folder: {pdf_folder}")
+    full_rpt_pdf = None
+    pdf_name = rpt_r['Report Description'] + rpt_filters['pair']+' Player Attacking NEW.pdf'
+
+    #print(f"new player reports: player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")
+    lgy = p['league']+' | '+p['gender']+' | '+p['year']
+    for rptname in rpt_r['rpts_inc']:
+      print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
+
+      # call the report function and save the report id
+      print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
+      report_id = generate_and_store_report( rptname['function_name'], lgy, disp_team, **rpt_filters )
+
+      # generate the PDF file
+      pdf1 = generate_pdf_report( rptname['rpt_form'], report_id)
+
+      # now, need to merge this report with the next one
+      if full_rpt_pdf:
+        #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+        full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+      else:
+        #print('no original pdf file, setting to pdf1')
+        full_rpt_pdf = pdf1
+
+    # now write this to the google drive
+    return_text = return_text + '\n' + write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf )
+
+  return return_text
+
+
 
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Player Reports
@@ -1219,3 +1283,4 @@ if self.check_box_4c.checked:
   print(f"Report Filters: {rpt_filters}")
 
   return rpt_filters
+
