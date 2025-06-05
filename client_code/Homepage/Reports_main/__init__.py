@@ -102,7 +102,17 @@ class Reports_main(Reports_mainTemplate):
         year=disp_year,
       )
     ]
-
+    # populate the pair drop down
+    self.pair_drop_down.items = [
+      (row["pair"], row)
+      for row in app_tables.master_pair.search(
+        tables.order_by("pair"),
+        league=disp_league,
+        gender=disp_gender,
+        year=disp_year,
+      )
+    ]
+    
     # populate the report type drop down
     if anvil.users.get_user()["team"] == "INTERNALS":
       self.rpt_type_drop_down.items = sorted(
