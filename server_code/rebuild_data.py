@@ -452,7 +452,7 @@ def load_pair_data_table():
     if lrow['pair_list']:
       pair_df =  pd.read_csv(io.BytesIO( lrow['pair_list'].get_bytes()))
       if pair_df.shape[0] == 0:
-        #print(f"load_pair_data_table: Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
+        print(f"load_pair_data_table: Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
         return ["No Pair List Found"]
       
       # loop thru the rows in in teh pair-list
@@ -462,10 +462,10 @@ def load_pair_data_table():
         #print(f"Row; {p}")
         team_delim = p[1].find(' ')
         if team_delim == -1:
-          #print(f"Load Pair Table, no space found looking ofr Team: {p[1]}")
+          print(f"Load Pair Table, no space found looking ofr Team: {p[1]}")
           a=b
         pair_team = p[1][:team_delim].strip()
-        #print(f"load_pair_data_table: Looking for:{lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}, Team: {pair_team}")
+        print(f"load_pair_data_table: Looking for:{lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}, Team: {pair_team}")
         #print(f"Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
         if not app_tables.master_pair.get( league = lrow['league'],
                                         gender = lrow['gender'],
@@ -476,7 +476,7 @@ def load_pair_data_table():
                                         team = pair_team
                                         ):
           # add a row for this pair
-          #print(f"load_pair_data_table: Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
+          print(f"load_pair_data_table: Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
           app_tables.master_pair.add_row( league = lrow['league'],
                                         gender = lrow['gender'],
                                         year = lrow['year'],
