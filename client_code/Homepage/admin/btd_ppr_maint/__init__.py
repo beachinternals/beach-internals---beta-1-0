@@ -211,3 +211,16 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     alert(task)
     pass
 
+  def outlined_button_2_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    league_value = self.league5_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    task = anvil.server.call('load_pair_data_table_not_background')
+    alert(task)
+    pass
+

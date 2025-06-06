@@ -435,6 +435,10 @@ def build_pair_df(c_league,c_gender,c_year):
   return True
 
 #----------------------------------------------------------------------------------
+@anvil.server.callable
+def load_pair_data_table_not_background():
+  return anvil.server.launch_background_task('build_pair_data_background')
+  
 @anvil.server.background_task
 def build_pair_data_background():
   return load_pair_data_table()
@@ -448,11 +452,16 @@ def load_pair_data_table():
   # get a set of rows from ppr_ccv table for team = league, loop thru the rows
 
   for lrow in app_tables.ppr_csv_tables.search( team=q.like("League") ):
-    #print(f"League Row:,{lrow['league']}, {lrow['gender']},{lrow['year']}")
+    show_print = True if (lrow['league'] == 'AVP') else False
+    print(f"Processing : {lrow['league']}, {lrow['gender']},{lrow['year']}")
+    if show_print:
+      print(f"pair list : {type(lrow['pair_list'])}")
+      print(f"pair list : {lrow['pair_list']}")
     if lrow['pair_list']:
       pair_df =  pd.read_csv(io.BytesIO( lrow['pair_list'].get_bytes()))
       if pair_df.shape[0] == 0:
-        print(f"load_pair_data_table: Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
+        if show_print:
+          print(f"load_pair_data_table: Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
         return ["No Pair List Found"]
       
       # loop thru the rows in in teh pair-list
@@ -462,10 +471,12 @@ def load_pair_data_table():
         #print(f"Row; {p}")
         team_delim = p[1].find(' ')
         if team_delim == -1:
-          print(f"Load Pair Table, no space found looking ofr Team: {p[1]}")
+          if show_print:
+            print(f"Load Pair Table, no space found looking for Team: {p[1]}")
           a=b
         pair_team = p[1][:team_delim].strip()
-        print(f"load_pair_data_table: Looking for:{lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}, Team: {pair_team}")
+        if show_print:
+          print(f"load_pair_data_table: Looking for:{lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}, Team: {pair_team}")
         #print(f"Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
         if not app_tables.master_pair.get( league = lrow['league'],
                                         gender = lrow['gender'],
@@ -476,7 +487,8 @@ def load_pair_data_table():
                                         team = pair_team
                                         ):
           # add a row for this pair
-          print(f"load_pair_data_table: Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
+          if show_print:
+            print(f"load_pair_data_table: Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
           app_tables.master_pair.add_row( league = lrow['league'],
                                         gender = lrow['gender'],
                                         year = lrow['year'],
@@ -488,6 +500,6 @@ def load_pair_data_table():
 
     else:
       print(f"No Pair List Data Frame Found : {lrow['league']}, {lrow['gender']},{lrow['year']}")
-      return False
+      #return False
 
   return True

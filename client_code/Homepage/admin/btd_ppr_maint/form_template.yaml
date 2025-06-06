@@ -265,6 +265,11 @@ components:
     name: build_master_pair_button
     properties: {role: outlined-button, text: build_pair_data_table}
     type: Button
+  - event_bindings: {click: outlined_button_2_click}
+    layout_properties: {grid_position: 'WEKJSE,BFKIAM BAHQXX,GRDWKX'}
+    name: outlined_button_2
+    properties: {role: outlined-button, text: Build master pair file}
+    type: Button
   layout_properties: {grid_position: 'APTLEV,LMLBTY'}
   name: outlined_card_6
   properties: {role: outlined-card}
