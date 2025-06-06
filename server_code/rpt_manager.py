@@ -169,7 +169,7 @@ def rpt_mgr_generate_background():
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
 
       #print(f"processing report type : {rpt_r['rpt_type']}")
-      if rpt_r['rpt_type'] == 'player':
+      if rpt_r['rpt_type'] == 'player-old':
         # loop over all the players for this report listing
 
         email_text = email_text + '\n Processing Player Reports \n'
@@ -227,7 +227,7 @@ def rpt_mgr_generate_background():
           file_msg = write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf)
           email_text = email_text + file_msg + '\n'
       
-      elif rpt_r['rpt_type'] == 'pair':
+      elif rpt_r['rpt_type'] == 'pair-old':
         #print("processing pair report")
         #print(f"Pair List: {rpt_r['pair_list']}")
         # loop over all the players for this report listing
@@ -296,7 +296,7 @@ def rpt_mgr_generate_background():
                                           attachments=pdf_list)
         '''
       
-      elif rpt_r['rpt_type'] == 'dashboard':
+      elif rpt_r['rpt_type'] == 'dashboard-old':
         # dashboard reports are for a whole team, so we ignore the pair and player entries, ump right o the reports
         email_text = email_text + '\n Processing Dashboard Reports \n'
         # build team string
@@ -352,7 +352,7 @@ def rpt_mgr_generate_background():
                                           subject='Beach Internals - Administrative Data ',
                                           text='Attached please find the summary report(s) : Internals Reports')
       
-      elif rpt_r['rpt_type'] == 'scouting':
+      elif rpt_r['rpt_type'] == 'scouting-old':
         pdf_list = ['']*len(rpt_r['pair_list'])*2      # start a list of all pdf files to pass to email send
         pdf_num = 0
         email_text = email_text + '\n Processing Scouting Reports \n'
@@ -666,7 +666,7 @@ def rpt_mgr_generate_background():
             print("report:Manager, Scouting Reports, email send failed")
           '''
       
-      elif rpt_r['rpt_type'] == 'matchup':
+      elif rpt_r['rpt_type'] == 'matchup-old':
         #print(f"Matchup Reports: {rpt_r['rpt_type']}")
         email_text = email_text + '\n Processing Matchup Reports \n'
         ret_val = rpt_mgr_matchup_rpts(rpt_r, disp_team )
@@ -677,27 +677,35 @@ def rpt_mgr_generate_background():
       
       elif rpt_r['rpt_type'] == 'new player':
         email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
-        ret_val = rpt_mgr_new_player_rpts(rpt_r, disp_team)
+        ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['player'], disp_team)
         if not ret_val:
-          print(f"Report Manager : rpt_mgr_new_player_rpts Failed, {rpt_r['rpt_type']}")
+          print(f"Report Manager : rpt_mgr_new__rpts Failed, {rpt_r['rpt_type']}")
         else:
           email_text = email_text + ret_val + '\n'
       
       elif rpt_r['rpt_type'] == 'new pair':
         email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
-        ret_val = rpt_mgr_new_pair_rpts(rpt_r, disp_team)
+        ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['pair'], disp_team)
         if not ret_val:
-          print(f"Report Manager : rpt_mgr_new_pair_rpts Failed, {rpt_r['rpt_type']}")
+          print(f"Report Manager : rpt_mgr_new_rpts Failed, {rpt_r['rpt_type']}")
         else:
           email_text = email_text + ret_val + '\n'
      
+      elif rpt_r['rpt_type'] == 'league':
+        email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
+        ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['player'], disp_team)
+        if not ret_val:
+          print(f"Report Manager : rpt_mgr_new_rpts Failed, {rpt_r['rpt_type']}")
+        else:
+          email_text = email_text + ret_val + '\n'
+        
       else:
         print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
     else:
       print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
   #now, send an email with the updates
-  internals_email = 'beachinternals@gmail.com'
+  internals_email = 'info@beachinternals.com'
   now1 = datetime.now()
   email_message = email_text + "Report Manager Completed at:" + str(now1) + ' \n' + ' Compute time: '+str(now1-now)+ "\n"
   email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Report Manager',text=email_message)
@@ -754,7 +762,9 @@ def rpt_mgr_new_player_rpts( rpt_r, disp_team ):
       
   return return_text
 
+  
 def rpt_mgr_new_pair_rpts( rpt_r, disp_team ):
+  
   '''
   
   Using the new format, where we store filters in **rpt_filters and then store the data in a file, then call the pdf window to get data from the file
@@ -802,6 +812,60 @@ def rpt_mgr_new_pair_rpts( rpt_r, disp_team ):
 
   return return_text
 
+#-------------------------------------------------------------------------------------------------------
+#  Report Manager - League Reports
+#-------------------------------------------------------------------------------------------------------
+def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
+
+  '''
+  
+  Using the new format, where we store filters in **rpt_filters and then store the data in a file, then call the pdf window to get data from the file
+
+  Only COostraint is that the report function needs parameters of 
+  '''
+  
+  today = datetime.now() 
+  return_text = ''
+
+  for p in p_list:
+    full_rpt_pdf = None
+
+    # build the rpt_filers to pass
+    #             populate_filters_from_rpt_mgr_table( rpt_r, player_r, pair_r, opp_pair_r )
+    rpt_filters = populate_filters_from_rpt_mgr_table( rpt_r, False, p, False )
+
+    # calculate the folder we will store thiese into
+
+    pdf_folder = [ p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
+    #print(f"pdf folder: {pdf_folder}")
+    full_rpt_pdf = None
+    pdf_name = rpt_r['Report Description'] + rpt_filters['pair']+' Player Attacking NEW.pdf'
+
+    #print(f"new player reports: player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")
+    lgy = p['league']+' | '+p['gender']+' | '+p['year']
+    for rptname in rpt_r['rpts_inc']:
+      print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
+
+      # call the report function and save the report id
+      print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
+      report_id = generate_and_store_report( rptname['function_name'], lgy, disp_team, **rpt_filters )
+
+      # generate the PDF file
+      pdf1 = generate_pdf_report( rptname['rpt_form'], report_id)
+
+      # now, need to merge this report with the next one
+      if full_rpt_pdf:
+        #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
+        full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+      else:
+        #print('no original pdf file, setting to pdf1')
+        full_rpt_pdf = pdf1
+
+    # now write this to the google drive
+    return_text = return_text + '\n' + write_to_nested_folder( pdf_folder, pdf_name, full_rpt_pdf )
+
+  return return_text
+  
 
 
 #-------------------------------------------------------------------------------------------------------
