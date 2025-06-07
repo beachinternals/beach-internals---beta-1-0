@@ -530,3 +530,147 @@ def  pair_season_summary_new(lgy, team, **rpt_filters):
   image_list[5] = plt6
 
   return title_list, label_list, image_list, df_list
+
+#---------------------------------------------------------------------------------------------------
+#
+#.  Leagye Report(s)
+#
+#-------------------------------------------------------------------------------------------------
+@anvil.server.callable
+def report_league_new(lgy, team, **rpt_filters):
+  '''
+  Report Functions:
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe and filter by all the report filters
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  title_list, label_list, image_list, df_list = initialize_report_lists(inspect.currentframe().f_code.co_name, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
+  tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  #------------------------------------------------------------------------------------------------------
+  #            Set to a Player, Pair, or Team Report
+  #------------------------------------------------------------------------------------------------------
+  disp_player = rpt_filters.get('player')
+  disp_pair = rpt_filters.get('pair')
+  # for a player report:
+  if False:  # set only one of these to True
+    ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+      (ppr_df['player_a2'] == disp_player) |
+      (ppr_df['player_b1'] == disp_player) |
+      (ppr_df['player_b2'] == disp_player) 
+      ]
+  # for a pair report:
+  if False:  # set only one of these to True
+    ppr_df = ppr_df[ (ppr_df['teama'] == disp_pair) | (ppr_df['teamb'] == disp_pair) ]
+
+  # for a team report
+  if False:
+    ppr_df = ppr_df[ ppr_df['teama'] == disp_pair ]
+
+  #------------------------------------------------------------------------------------------------------
+  #           Define the suymmary / correlation dataframe
+  #------------------------------------------------------------------------------------------------------
+
+  # create the output dataframe
+  df_dict = {' ':['League','Points','Sets','Players','Pairs','Win w/ Hgher FBHE', 'Win w/ Higher Transtiion','Win w/ Lower Errors', 'Win w/Higher FBHE & Average Error & Trans'],
+             'Number':['',0,0,0,0,0,0,0,0],
+             'Percent':['','','','','',0,0,0,0]
+            }
+  df_table = pd.DataFrame.from_dict( df_dict )
+
+  # count points as the number of rows in ppr:
+  df_table.at[1,'League'] = lgy
+  df_table.at[1,'Points'] = ppr_df.shape[0]
+  df_table.at[1,'Sets'] = tri_df.shape[0]
+  df_table.at[1,'Players'] = player_data_df.shape[0]
+  df_table.at[1,'Pairs'] = pair_data_df.shape[0]
+  df_table.at[1,'Win w/ Hgher FBHE'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
+  df_table.at[2,'Win w/ Hgher FBHE'] = df_table.at[1,'Win w/ Hgher FBHE']/df_table.at[1,'Sets']
+  df_table.at[1,'Win w/ Lower Errors'] = tri_df[ (tri_df['win_err_den'] - tri_df['loser_err_den']) <= 0 ].shape[0]
+  df_table.at[1,'Win w/ Higher Transtiion'] = tri_df[ (tri_df['win_tcr'] - tri_df['loser_tcr']) >= 0 ].shape[0]
+  df_table.at[1,'Win w/Higher FBHE & Average Error & Trans'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
+
+  # put the DF's in the df_list
+  df_list[1] = df_table.to_dict('records')
+
+  #------------------------------------------------------------------------------------------------------
+  #          Define Images and dataframes for 5 plots
+  #------------------------------------------------------------------------------------------------------
+
+  # Image for the Historgram of FBHE
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'fbhe','First Ball Hitting Efficiency')
+  image_list[0] = hist_plot
+  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df_list[1] = df.to_dict('records')
+  
+  # Image for the Historgram of Error Density
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'err_den','Error Density')
+  image_list[1] = hist_plot
+  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df_list[2] = df.to_dict('records')
+  
+  # Image for the Historgram of Transition Conversion
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'tcr','Transition Conversion')
+  image_list[2] = hist_plot
+  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df_list[3] = df.to_dict('records')
+  
+  # Image for the Historgram of Knock Out
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'knockout','Serving Aggressivness, Knock Out')
+  image_list[3] = hist_plot
+  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df_list[4] = df.to_dict('records')
+  
+  # Image for the Historgram of Good Pass Percent
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'good_pass','Percent Good Passes')
+  image_list[4] = hist_plot
+  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df_list[5] = df.to_dict('records')
+
+  # Image for the Historgram of Winning Percent vs FBHE
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'good_pass','Percent Good Passes')
+  image_list[5] = hist_plot
+  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df_list[6] = df.to_dict('records')
+
+  # Image for the Historgram of winnging Percent vs Error Den
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'good_pass','Percent Good Passes')
+  image_list[6] = hist_plot
+  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df_list[7] = df.to_dict('records')
+
+  # Image for the Historgram of Winning Percent vs Transition
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'good_pass','Percent Good Passes')
+  image_list[7] = hist_plot
+  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df_list[8] = df.to_dict('records')
+
+  # Image for the Historgram of Winning PErcent vs Kncokout
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'good_pass','Percent Good Passes')
+  image_list[8] = hist_plot
+  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df_list[9] = df.to_dict('records')
+
+  
+  return title_list, label_list, image_list, df_list
