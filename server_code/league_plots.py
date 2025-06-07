@@ -22,7 +22,7 @@ def plot_histogram(league_value, plot_var, var_name ):
   # given all this, look into the player_data csv stored in the csv_list datafile, then graph the FBHE Histogram
 
   # unpack the league data, and fetch player data
-  disp_league, disp_gender, disp_year = unpack_league( league_value)
+  disp_league, disp_gender, disp_year = unpack_lgy( league_value)
   player_data_df, player_stats_df = get_player_data( disp_league, disp_gender, disp_year)
 
   # calculate percentiles
