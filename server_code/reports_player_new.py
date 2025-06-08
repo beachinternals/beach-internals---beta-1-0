@@ -613,8 +613,10 @@ def report_league_new(lgy, team, **rpt_filters):
   df_table.at[1,'Win w/ Higher Transtiion'] = tri_df[ (tri_df['win_tcr'] - tri_df['loser_tcr']) >= 0 ].shape[0]
   df_table.at[1,'Win w/Higher FBHE & Average Error & Trans'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
 
+  print(f'reports league: df_table {df_table}')
   # put the DF's in the df_list
   df_list[0] = df_table.to_dict('records')
+
 
   #------------------------------------------------------------------------------------------------------
   #          Define Images and dataframes for 5 plots
@@ -623,35 +625,42 @@ def report_league_new(lgy, team, **rpt_filters):
   # Image for the Historgram of FBHE
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'fbhe','First Ball Hitting Efficiency')
   image_list[0] = hist_plot
+  print(f" stat_text: {stat_text}")
   df = pd.DataFrame({"Plot Description": [stat_text]})
   df_list[1] = df.to_dict('records')
   
   # Image for the Historgram of Error Density
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'err_den','Error Density')
   image_list[2] = hist_plot
+  print(f" stat_text: {stat_text}")
   df = pd.DataFrame({"Plot Description": [stat_text]})
   df_list[2] = df.to_dict('records')
   
   # Image for the Historgram of Transition Conversion
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'tcr','Transition Conversion')
   image_list[4] = hist_plot
+  print(f" stat_text: {stat_text}")
   df = pd.DataFrame({"Plot Description": [stat_text]})
   df_list[3] = df.to_dict('records')
   
   # Image for the Historgram of Knock Out
   stat_text, hist_plot = plot_histogram( lgy,'knockout','Serving Aggressivness, Knock Out')
   image_list[6] = hist_plot
+  print(f" stat_text: {stat_text}")
   df = pd.DataFrame({"Plot Description": [stat_text]})
   df_list[4] = df.to_dict('records')
   
   # Image for the Historgram of Good Pass Percent
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
   image_list[8] = hist_plot
+  print(f" stat_text: {stat_text}")
   df = pd.DataFrame({"Plot Description": [stat_text]})
   df_list[5] = df.to_dict('records')
+  '''
 
   # Image for the Bar Graph of FBHE vs winning %
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
+  print(f" stat_text: {stat_text}")
   image_list[1] = hist_plot
 
   # Image for the Bar Graph of Error Denisty vs winning %
@@ -669,7 +678,7 @@ def report_league_new(lgy, team, **rpt_filters):
   # Image for the Bar Graph of Good Pass % vs winning %
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
   image_list[9] = hist_plot
-
+  '''
 
   
   return title_list, label_list, image_list, df_list
