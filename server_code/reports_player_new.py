@@ -626,28 +626,28 @@ def report_league_new(lgy, team, **rpt_filters):
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'fbhe','First Ball Hitting Efficiency')
   image_list[0] = hist_plot
   print(f" stat_text: {stat_text}")
-  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df = pd.DataFrame({'':[stat_text]})
   df_list[1] = df.to_dict('records')
   
   # Image for the Historgram of Error Density
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'err_den','Error Density')
   image_list[2] = hist_plot
   print(f" stat_text: {stat_text}")
-  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df = pd.DataFrame({'':[stat_text]})
   df_list[2] = df.to_dict('records')
   
   # Image for the Historgram of Transition Conversion
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'tcr','Transition Conversion')
   image_list[4] = hist_plot
   print(f" stat_text: {stat_text}")
-  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df = pd.DataFrame({'':[stat_text]})
   df_list[3] = df.to_dict('records')
   
   # Image for the Historgram of Knock Out
-  stat_text, hist_plot = plot_histogram( lgy,'knockout','Serving Aggressivness, Knock Out')
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'knockout','Serving Aggressiveness - Knock Out')
   image_list[6] = hist_plot
   print(f" stat_text: {stat_text}")
-  df = pd.DataFrame({"Plot Description": [stat_text]})
+  df = pd.DataFrame({'':[stat_text]})
   df_list[4] = df.to_dict('records')
   
   # Image for the Historgram of Good Pass Percent

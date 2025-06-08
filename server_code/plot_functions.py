@@ -443,11 +443,11 @@ def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_lab
 
 
 @anvil.server.callable
-def plot_histogram(league_value, plot_var, var_name ):
+def plot_histogram(lgy, plot_var, var_name):
   # given all this, look into the player_data csv stored in the csv_list datafile, then graph the FBHE Histogram
 
   # unpack the league data, and fetch player data
-  disp_league, disp_gender, disp_year = unpack_lgy( league_value)
+  disp_league, disp_gender, disp_year = unpack_lgy( lgy )
   player_data_df, player_stats_df = get_player_data( disp_league, disp_gender, disp_year)
 
   # calculate percentiles
@@ -459,9 +459,8 @@ def plot_histogram(league_value, plot_var, var_name ):
 
   # build a markdown text of this to return
   stat_text = f"""
-
-
-  ## {var_name} ##
+  
+  {var_name}
   10th Percentile : {float("{:.3f}".format(plot_var_10))}
   25th Percentile : {float("{:.3f}".format(plot_var_25))}
   50th Percentile : {float("{:.3f}".format(plot_var_50))}
