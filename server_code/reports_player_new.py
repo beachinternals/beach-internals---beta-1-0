@@ -600,20 +600,29 @@ def report_league_new(lgy, team, **rpt_filters):
              'Percent':['','','','','',0,0,0,0]
             }
   df_table = pd.DataFrame.from_dict( df_dict )
+  # Create the output dictionary
+  df_dict = {
+    'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Higher FBHE', 'Win w/ Higher Transition', 'Win w/ Lower Errors', 'Win w/Higher FBHE & Average Error & Trans'],
+    'Number': ['', 0, 0, 0, 0, 0, 0, 0, 0],
+    'Percent': ['', '', '', '', '', 0, 0, 0, 0]
+  }
+
+  # Create DataFrame and set index
+  df_table = pd.DataFrame.from_dict(df_dict).set_index('Metric')
 
   # count points as the number of rows in ppr:
-  df_table.at[1,'League'] = lgy
-  df_table.at[1,'Points'] = ppr_df.shape[0]
-  df_table.at[1,'Sets'] = tri_df.shape[0]
-  df_table.at[1,'Players'] = player_data_df.shape[0]
-  df_table.at[1,'Pairs'] = pair_data_df.shape[0]
-  df_table.at[1,'Win w/ Hgher FBHE'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
-  df_table.at[2,'Win w/ Hgher FBHE'] = df_table.at[1,'Win w/ Hgher FBHE']/df_table.at[1,'Sets']
-  df_table.at[1,'Win w/ Lower Errors'] = tri_df[ (tri_df['win_err_den'] - tri_df['loser_err_den']) <= 0 ].shape[0]
-  df_table.at[1,'Win w/ Higher Transtiion'] = tri_df[ (tri_df['win_tcr'] - tri_df['loser_tcr']) >= 0 ].shape[0]
-  df_table.at[1,'Win w/Higher FBHE & Average Error & Trans'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
+  df_table.at['League','Number'] = lgy
+  df_table.at['Points','Number'] = ppr_df.shape[0]
+  df_table.at['Sets','Number'] = tri_df.shape[0]
+  df_table.at['Players','Number'] = player_data_df.shape[0]
+  df_table.at['Pairs','Number'] = pair_data_df.shape[0]
+  df_table.at['Win w/ Hgher FBHE','Number'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
+  df_table.at['Win w/ Hgher FBHE','Percent'] = df_table.at['Win w/ Hgher FBHE','Number']/df_table.at['Sets','Number']
+  df_table.at['Win w/ Lower Errors','Number'] = tri_df[ (tri_df['win_err_den'] - tri_df['loser_err_den']) <= 0 ].shape[0]
+  df_table.at['Win w/ Higher Transtiion','Number'] = tri_df[ (tri_df['win_tcr'] - tri_df['loser_tcr']) >= 0 ].shape[0]
+  df_table.at['Win w/Higher FBHE & Average Error & Trans','Num'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
 
-  print(f'reports league: df_table {df_table}')
+  print(f'reports league: df_table \n {df_table}')
   # put the DF's in the df_list
   df_list[0] = df_table.to_dict('records')
 
@@ -656,7 +665,6 @@ def report_league_new(lgy, team, **rpt_filters):
   print(f" stat_text: {stat_text}")
   df = pd.DataFrame({"Plot Description": [stat_text]})
   df_list[5] = df.to_dict('records')
-  '''
 
   # Image for the Bar Graph of FBHE vs winning %
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
@@ -678,7 +686,11 @@ def report_league_new(lgy, team, **rpt_filters):
   # Image for the Bar Graph of Good Pass % vs winning %
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
   image_list[9] = hist_plot
-  '''
+  
 
+  print(f"Return Values: Title List \n {title_list}")
+  print(f"Return Values: Label List \n {label_list}")
+  print(f"Return Values: Image List \n {image_list}")
+  print(f"Return Values: DF List \n {df_list}")
   
   return title_list, label_list, image_list, df_list
