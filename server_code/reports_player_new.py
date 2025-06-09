@@ -616,11 +616,18 @@ def report_league_new(lgy, team, **rpt_filters):
   df_table.at['Sets','Number'] = tri_df.shape[0]
   df_table.at['Players','Number'] = player_data_df.shape[0]
   df_table.at['Pairs','Number'] = pair_data_df.shape[0]
+  
   df_table.at['Win w/ Hgher FBHE','Number'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
   df_table.at['Win w/ Hgher FBHE','Percent'] = df_table.at['Win w/ Hgher FBHE','Number']/df_table.at['Sets','Number']
+  
   df_table.at['Win w/ Lower Errors','Number'] = tri_df[ (tri_df['win_err_den'] - tri_df['loser_err_den']) <= 0 ].shape[0]
+  df_table.at['Win w/ Lower Errors','Percent'] = df_table.at['Win w/ Lower Errors','Number']/df_table.at['Points','Number']
+  
   df_table.at['Win w/ Higher Transtiion','Number'] = tri_df[ (tri_df['win_tcr'] - tri_df['loser_tcr']) >= 0 ].shape[0]
-  df_table.at['Win w/Higher FBHE & Average Error & Trans','Num'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
+  df_table.at['Win w/ Higher Transtiion','Percent'] = df_table.at['Win w/ Higher Transtiion','Number']/df_table.at['Points','Number']
+  
+  df_table.at['Win w/Higher FBHE & Average Error & Trans','Number'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
+  df_table.at['Win w/Higher FBHE & Average Error & Trans','Percent'] = df_table.at['Win w/Higher FBHE & Average Error & Trans','Number']/df_table.at['Points','Number']
 
   print(f'reports league: df_table \n {df_table}')
   # put the DF's in the df_list
@@ -665,6 +672,7 @@ def report_league_new(lgy, team, **rpt_filters):
   print(f" stat_text: {stat_text}")
   df = pd.DataFrame({"Plot Description": [stat_text]})
   df_list[5] = df.to_dict('records')
+'''
 
   # Image for the Bar Graph of FBHE vs winning %
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
