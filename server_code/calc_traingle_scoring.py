@@ -47,23 +47,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   result_string = "Calculate Triangle Scoring server module Called"
 
   c_team = "League"    # only updating the league tables
-  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
-  ppr_csv_row = app_tables.ppr_csv_tables.get( 
-    q.all_of(
-      league = c_league,
-      gender = c_gender,
-      year = c_year,
-      team = c_team
-      ) )
-
-  if ppr_csv_row:
-    ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
-    if ppr_df.shape[0] == 0:
-      return ["No Rows"]
-    player_df = pd.read_csv(io.BytesIO( ppr_csv_row['player_data'].get_bytes()))
-  else:
-    #print('No Rows Found')
-    return ["No Rows"]
+  ppr_df = get_ppr_data(c_league, c_gender, c_year, c_team, True )
+  player_df, player_stats_df = get_player_data(c_league, c_gender, c_year)
 
   # calculate data from plalyer_data
   err_den_mean = player_df['err_den'].mean(skipna=True, numeric_only=True)
@@ -77,7 +62,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   #print(f"Stats: Err Den: {err_den_25,err_den_75}, TCR: {tcr_25,tcr_75}")
   
   #print(f"shape of ppr_df :{ppr_df.shape}")
-  min_att = ppr_csv_row['min_att']
+  #min_att = ppr_csv_row['min_att']
+  min_att = 5
 
   # now, how many matches do we have, looking at video_id:
   m_list = ppr_df['video_id'].unique()
@@ -97,12 +83,29 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               'tk_a':None, 'te_a':None, 'tk_b':None, 'te_b':None, 'tran_pts_a':None, 'tran_pts_b':None, 'tran_adv_a':None, 'tran_pts':None, 
               'tran_pts_per':None, 'fb_pts_per':None, 
               'fbhe_a_noace':None, 'fbhe_b_noace':None, 'fbhe_a_withace':None, 'fbhe_b_withace':None, 'tcr_a':None, 'tcr_b':None, 'err_den_a':None, 'err_den_b':None, 
-              'err_den_criteria_met_a':None, 'err_den_criteria_met_b':None,'tcr_criteria_met_a':None,'tcr_criteria_met_b':None,
               'winning_team':None,'win_fbhe_noace':None,'win_fbhe_withace':None,'win_tcr':None, 'win_err_den':None, 'point_diff':None, 'loser_tcr':None, 'loser_err_den':None,
               'loser_fbhe_noace':None,'loser_fbhe_withace':None,
-              'fbhe_diff_noace':None,'fbhe_diff_withace':None,'win_err_den_criteria_met':None, 'win_tcr_criteria_met':None,
-              'assumption_met_noace':None, 'assumption_met_withace':None
+              'fbhe_diff_noace':None,'fbhe_diff_withace':None
              }
+  '''
+  Dictionary Definitions  
+              'total_pts':None, 
+              'teama_pts':None, 
+              teamb_pts':None, 
+              'tsa_a':None, 
+              'tse_a':None, 
+              'srv_num_a':None, '
+              tsa_b':None, 
+              'tse_b':None, 'srv_num_b':None, 
+              'tsrv_pts_a':None, 'tsrv_pts_b':None, 'tsrv_adv_a':None, 'tsrv_pts':None, 
+              'fbk_a':None, 'fbe_a':None, 'fbk_b':None, 'fbe_b':None, 'fb_pts_a':None, 'fb_pts_b':None, 'fb_adv_a':None, 'fb_pts':None, 
+              'tk_a':None, 'te_a':None, 'tk_b':None, 'te_b':None, 'tran_pts_a':None, 'tran_pts_b':None, 'tran_adv_a':None, 'tran_pts':None, 
+              'tran_pts_per':None, 'fb_pts_per':None, 
+              'fbhe_a_noace':None, 'fbhe_b_noace':None, 'fbhe_a_withace':None, 'fbhe_b_withace':None, 'tcr_a':None, 'tcr_b':None, 'err_den_a':None, 'err_den_b':None, 
+              'winning_team':None,'win_fbhe_noace':None,'win_fbhe_withace':None,'win_tcr':None, 'win_err_den':None, 'point_diff':None, 'loser_tcr':None, 'loser_err_den':None,
+              'loser_fbhe_noace':None,'loser_fbhe_withace':None,
+              'fbhe_diff_noace':None,'fbhe_diff_withace':None
+  '''
   #print(f"Player Dict:{player_dict}")
   tri_df = pd.DataFrame.from_records(tri_dict)
   #player_df = pd.DataFrame(player_dict, columns=['player', 'fbhe', 'fbhe1','fbhe2','fbhe3','fbhe4','fbhe5'])
