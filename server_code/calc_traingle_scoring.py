@@ -85,26 +85,82 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               'fbhe_a_noace':None, 'fbhe_b_noace':None, 'fbhe_a_withace':None, 'fbhe_b_withace':None, 'tcr_a':None, 'tcr_b':None, 'err_den_a':None, 'err_den_b':None, 
               'winning_team':None,'win_fbhe_noace':None,'win_fbhe_withace':None,'win_tcr':None, 'win_err_den':None, 'point_diff':None, 'loser_tcr':None, 'loser_err_den':None,
               'loser_fbhe_noace':None,'loser_fbhe_withace':None,
-              'fbhe_diff_noace':None,'fbhe_diff_withace':None
+              'fbhe_diff_noace':None,'fbhe_diff_withace':None,
+              'knockout_a':None, 'knockout_b':None, 'win_knockout':None, 'loser_knockout':None, 
+              'goodpass_a':None,'goodpass_b':None,'win_goodpass':None,'loser_goodpass':None,
              }
   '''
   Dictionary Definitions  
-              'total_pts':None, 
-              'teama_pts':None, 
-              teamb_pts':None, 
-              'tsa_a':None, 
-              'tse_a':None, 
-              'srv_num_a':None, '
-              tsa_b':None, 
-              'tse_b':None, 'srv_num_b':None, 
-              'tsrv_pts_a':None, 'tsrv_pts_b':None, 'tsrv_adv_a':None, 'tsrv_pts':None, 
-              'fbk_a':None, 'fbe_a':None, 'fbk_b':None, 'fbe_b':None, 'fb_pts_a':None, 'fb_pts_b':None, 'fb_adv_a':None, 'fb_pts':None, 
-              'tk_a':None, 'te_a':None, 'tk_b':None, 'te_b':None, 'tran_pts_a':None, 'tran_pts_b':None, 'tran_adv_a':None, 'tran_pts':None, 
-              'tran_pts_per':None, 'fb_pts_per':None, 
-              'fbhe_a_noace':None, 'fbhe_b_noace':None, 'fbhe_a_withace':None, 'fbhe_b_withace':None, 'tcr_a':None, 'tcr_b':None, 'err_den_a':None, 'err_den_b':None, 
-              'winning_team':None,'win_fbhe_noace':None,'win_fbhe_withace':None,'win_tcr':None, 'win_err_den':None, 'point_diff':None, 'loser_tcr':None, 'loser_err_den':None,
-              'loser_fbhe_noace':None,'loser_fbhe_withace':None,
-              'fbhe_diff_noace':None,'fbhe_diff_withace':None
+              game_date, set : we have one row per set in the database
+              'total_pts': Total Points Scored in the set
+              'teama_pts': Total point by team A
+              teamb_pts': Total Point by team B
+            Serving
+              'tsa_a': Aces by A
+              'tse_a': Errors by A
+              'srv_num_a': TOtal Serves by A
+              tsa_b': Aces by B
+              'tse_b': Errors by B
+              'srv_num_b': Total Serves by B
+              'tsrv_pts_a': A's terminal serve poitns (A's aces + B's errors)
+              'tsrv_pts_b': B's terminal serve points
+              'tsrv_adv_a': A's advantage (A - B)
+              'tsrv_pts': Total Terminal Serve Points
+            First Ball
+              'fbk_a':None, FBK by A
+              fbe_a':None, FB Errors by A
+              'fbk_b':None, FBK by B
+              'fbe_b':None, First BAll Errors by B
+              'fb_pts_a': First Ball Poitns for A (A kills + B Errors)
+              'fb_pts_b': First BAll Poiints B
+              'fb_adv_a': Adv A (A pts - B pts)
+              'fb_pts': Total First Ball Points
+            Transition
+              'tk_a': Transition Kills A
+              'te_a' Transition errors A
+              'tk_b': Transition Kills B
+              'te_b': Transition Errors B
+              'tran_pts_a': Transition Poiints A (A - B)
+              'tran_pts_b': Transition Points B
+              'tran_adv_a': Advantage A (A - B)
+                             tran_pts': total Transition Points
+            KNockout and Good Pass
+              'knockout_a'
+              'knockout_b'
+              'good_pass_a'
+              'good_pass_b'
+            Point Percentages
+              'total_pts' : Total Poitns (TS + FB + TR)
+              'terv_pts_per' : Percent of points taht are Terminal Serve
+              'tran_pts_per': Percent of total points that are Transition
+              'fb_pts_per': Percent of Total Points taht are Frist Ball
+            FBHE, TCR, and ED
+              'fbhe_a_noace':FBHE for A
+              'fbhe_b_noace':FBHE for B
+              'fbhe_a_withace': FBHE for A
+              'fbhe_b_withace': FHE for B
+              'tcr_a': TCR for Team A
+              'tcr_b': TCR for Team B
+              'err_den_a': Error Den A
+              'err_den_b':Error Den B
+            WInning and Losing teams
+              'winning_team':Text of wining team
+              'win_fbhe_noace': FBHE of Winning Team
+              'win_fbhe_withace':FBHE of Winning Team
+              'win_tcr': TCR of Winning Team
+              'win_err_den': Err Den opf winning Team
+              'win_knockout' : Winner's knockout rate
+              'win_goodpass' : WInner's good pass rate
+              'point_diff': ABS of points difference (always Postive)
+              'loser_tcr': Loser's TCR
+              'loser_err_den': Loser's Err Den
+              'loser_fbhe_noace': :Loser's FBHE
+              'loser_fbhe_withace':Loser FBHE
+              'loser_knockout': Loser's knockout rate
+              'loser'goodpass' : Loser's good pass rate
+              'fbhe_diff_noace': FBHE, winner's - loser's
+              'fbhe_diff_withace': FBHE, winners's - loser's
+              
   '''
   #print(f"Player Dict:{player_dict}")
   tri_df = pd.DataFrame.from_records(tri_dict)
@@ -267,101 +323,16 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         else:
           tri_df.at[tri_row,'fbhe_diff_withace'] = None        
 
-        # need to find the 25th and 75th percentile for error density, and TCR to see if conditions are met.
+        # knockoout and goodpass
+        tri_df.at[tri_row,'knockout_a'] = (calc_knock_out( set_df, player_a1) + calc_knock_out( set_df, player_a2))/2
+        tri_df.at[tri_row,'knockout_b'] = (calc_knock_out( set_df, player_b1) + calc_knock_out( set_df, player_b2))/2
+        tri_df.at[tri_row,'goodpass_a'] = ( calc_good_pass( set_df, player_a1) + calc_good_pass( set_df, player_a2))/2
+        tri_df.at[tri_row,'goodpass_b'] = (calc_good_pass( set_df, player_b1) + calc_good_pass( set_df, player_b2))/2
+        tri_df.at[tri_row,'win_knockout'] = tri_df.at[tri_row,'knockout_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'knockout_b']
+        tri_df.at[tri_row,'loser_knockout'] = tri_df.at[tri_row,'knockout_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'knockout_a']
+        tri_df.at[tri_row,'win_goodpass'] = tri_df.at[tri_row,'goodpass_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'goodpass_b']
+        tri_df.at[tri_row,'win_goodpass'] = tri_df.at[tri_row,'goodpass_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'goodpass_a']
 
-        # TCR criteria for team a
-        if ( isinstance(tri_df.at[tri_row,'tcr_a'],float)):
-          if ( tri_df.at[tri_row,'tcr_a'] > tcr_25 ):
-          #if ( tri_df.at[tri_row,'tcr_a'] < tcr_75):
-            #print(f"tcr a: {tri_df.at[tri_row,'tcr_a'], tcr_25}")
-            tri_df.at[tri_row,'tcr_criteria_met_a'] = True
-          else:
-            tri_df.at[tri_row,'tcr_criteria_met_a'] = False
-        else:
-          #print("tcr not a Float")
-          a=1
-          
-        # tcr criteria for team b
-        if ( isinstance(tri_df.at[tri_row,'tcr_b'],float)):
-          if ( tri_df.at[tri_row,'tcr_b'] > tcr_25 ):
-            #print(f"tcr b: {tri_df.at[tri_row,'tcr_b'], tcr_25}")
-            #if ( tri_df.at[tri_row,'tcr_b'] < tcr_75):
-            tri_df.at[tri_row,'tcr_criteria_met_b'] = True
-          else:
-            tri_df.at[tri_row,'tcr_criteria_met_b'] = False
-        else:
-          #print("tcr not a Float")
-          a=1
-
-        # error density criteria for team a
-        if ( isinstance(tri_df.at[tri_row,'err_den_a'],float)):
-          #if ( tri_df.at[tri_row,'err_den_a'] > tcr_25 ):
-          if ( tri_df.at[tri_row,'err_den_a'] < err_den_75):
-            #print(f"err den a True: {tri_df.at[tri_row,'err_den_a'], err_den_75}")
-            tri_df.at[tri_row,'err_den_criteria_met_a'] = True
-          else:
-            #print(f"err den a False: {tri_df.at[tri_row,'err_den_a'], err_den_75}")
-            tri_df.at[tri_row,'err_den_criteria_met_a'] = False
-        else:
-          #print("Error Density not a Float")
-          a=1
-          
-        # error density criteria for team b
-        if ( isinstance(tri_df.at[tri_row,'err_den_b'],float)):
-          #if ( tri_df.at[tri_row,'err_den_b'] > tcr_25 ):
-          if ( tri_df.at[tri_row,'err_den_b'] < err_den_75):
-            #print(f"err den b True: {tri_df.at[tri_row,'err_den_b'], err_den_75}")
-            tri_df.at[tri_row,'err_den_criteria_met_b'] = True
-          else:
-            #print(f"err den b False: {tri_df.at[tri_row,'err_den_b'], err_den_75}")
-            tri_df.at[tri_row,'err_den_criteria_met_b'] = False         
-        else:
-          #print("Error Density not a Float")
-          a=1
-          
-        # error density criteria for winning team
-        if ( tri_df.at[tri_row,'winning_team'] == teama  ):
-          tri_df.at[tri_row,'win_err_den_criteria_met'] = tri_df.at[tri_row,'err_den_criteria_met_a']
-        else:
-          tri_df.at[tri_row,'win_err_den_criteria_met'] = tri_df.at[tri_row,'err_den_criteria_met_a']
-        
-        # tcr criteria for winning team
-        #if ( tri_df.at[tri_row,'winning_team'] == teama  ):
-        #  tri_df.at[tri_row,'win_tcr_criteria_met'] = tri_df.at[tri_row,'tcr_criteria_met_a']
-        #else:
-        #  tri_df.at[tri_row,'win_tcr_criteria_met'] = tri_df.at[tri_row,'tcr_criteria_met_a']        
-
-        tri_df.at[tri_row,'win_tcr_criteria_met'] = tri_df.at[tri_row,'tcr_criteria_met_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'tcr_criteria_met_b']
-
-        # all assumptions met, no aces in FBHE:
-        if  tri_df.at[tri_row,'win_err_den_criteria_met']:
-          if tri_df.at[tri_row,'win_tcr_criteria_met']:
-            if ( isinstance(tri_df.at[tri_row,'win_fbhe_noace'],float) & isinstance(tri_df.at[tri_row,'loser_fbhe_noace'],float)):
-              if (tri_df.at[tri_row,'win_fbhe_noace'] >= tri_df.at[tri_row,'loser_fbhe_noace']):
-                tri_df.at[tri_row,'assumption_met_noace'] = True
-              else:
-                tri_df.at[tri_row,'assumption_met_noace'] = False
-            else:
-              tri_df.at[tri_row,'assumption_met_noace'] = False
-          else:
-            tri_df.at[tri_row,'assumption_met_noace'] = False
-        else:
-          tri_df.at[tri_row,'assumption_met_noace'] = False
-
-        # all assumptions met, including aces in FBHE
-        if ( tri_df.at[tri_row,'win_err_den_criteria_met']):
-          if tri_df.at[tri_row,'win_tcr_criteria_met']:
-            if ( isinstance(tri_df.at[tri_row,'win_fbhe_withace'],float) & isinstance(tri_df.at[tri_row,'loser_fbhe_withace'],float)):
-              if (tri_df.at[tri_row,'win_fbhe_withace'] >= tri_df.at[tri_row,'loser_fbhe_withace'] ):
-                tri_df.at[tri_row,'assumption_met_withace'] = True
-              else:
-                tri_df.at[tri_row,'assumption_met_withace'] = False
-            else: 
-              tri_df.at[tri_row,'assumption_met_withace'] = False
-          else: 
-            tri_df.at[tri_row,'assumption_met_withace'] = False
-        else: 
-          tri_df.at[tri_row,'assumption_met_withace'] = False
 
         #print("End of Loop over the Set")
         #print(tri_df)
