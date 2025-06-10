@@ -46,8 +46,25 @@ def calculate_triangle_scoring( c_league, c_gender, c_year):
 def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   result_string = "Calculate Triangle Scoring server module Called"
 
+
   c_team = "League"    # only updating the league tables
-  ppr_df = get_ppr_data(c_league, c_gender, c_year, c_team, True )
+  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+  ppr_csv_row = app_tables.ppr_csv_tables.get( 
+    q.all_of(
+      league = c_league,
+      gender = c_gender,
+      year = c_year,
+      team = c_team
+    ) )
+
+  if ppr_csv_row:
+    ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
+    if ppr_df.shape[0] == 0:
+      return ["No Rows"]
+  else:
+    #print('No Rows Found')
+    return ["No Rows"]
+  
   player_df, player_stats_df = get_player_data(c_league, c_gender, c_year)
 
   # calculate data from plalyer_data
@@ -344,6 +361,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   #---------------------------------------------------------------------------
   # first, I need to change the ppr_file dataframe to a csv file.
   #print("Saving Tri_df back to database")
+
+  
   tri_csv_file = pd.DataFrame.to_csv(tri_df)
   tri_media = anvil.BlobMedia(content_type="text/plain", content=tri_csv_file.encode(), name="triangle_data.csv")
 
