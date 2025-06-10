@@ -96,6 +96,9 @@ db_schema:
     - admin_ui: {order: 13.5, width: 200}
       name: ppr_file_date
       type: datetime
+    - admin_ui: {order: 22, width: 200}
+      name: video_id
+      type: string
     server: full
     title: btd_files
   league_comp_l1:

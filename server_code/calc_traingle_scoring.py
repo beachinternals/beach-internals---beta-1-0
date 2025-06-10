@@ -208,7 +208,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
     for s in [1,2,3]:
       set_df = ppr_df[ppr_df['video_id'] == m_list[i]]  # limit to this video match
       set_df = set_df[set_df['set'] == s ] # limit to this set
-      if (set_df.shape[0] != 0):
+      if (set_df.shape[0] > 8):
         # then we have a valid set to work with
 
         # add a row for this set

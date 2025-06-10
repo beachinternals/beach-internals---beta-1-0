@@ -477,7 +477,11 @@ def plot_histogram(lgy, plot_var, var_name):
   #now, let's create the plot using pandas.plot
   player_data_df[plot_var].plot( kind = 'hist', title = 'Histogram of '+var_name, xlabel = plot_var, bins = 25, figsize=(10,6))
 
-  return stat_text, anvil.mpl_util.plot_image()
+  plt_v = anvil.mpl_util.plot_image()
+  # Close the plot
+  plt.close()
+
+  return stat_text, plt_v
 
 
 

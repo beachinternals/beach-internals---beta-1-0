@@ -611,17 +611,28 @@ def report_league_new(lgy, team, **rpt_filters):
   df_table.at['Players','Number'] = player_data_df.shape[0]
   df_table.at['Pairs','Number'] = pair_data_df.shape[0]
   
-  df_table.at['Win w/ Hgher FBHE','Number'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
+  df_table.at['Win w/ Hgher FBHE','Number'] = tri_df[ (tri_df['win_fbhe_noace'] >= tri_df['loser_fbhe_noace'])  ].shape[0]
   df_table.at['Win w/ Hgher FBHE','Percent'] = df_table.at['Win w/ Hgher FBHE','Number']/df_table.at['Sets','Number']
   
-  df_table.at['Win w/ Lower Errors','Number'] = tri_df[ (tri_df['win_err_den'] - tri_df['loser_err_den']) <= 0 ].shape[0]
+  df_table.at['Win w/ Lower Errors','Number'] = tri_df[ (tri_df['win_err_den'] < tri_df['loser_err_den']) ].shape[0]
   df_table.at['Win w/ Lower Errors','Percent'] = df_table.at['Win w/ Lower Errors','Number']/df_table.at['Sets','Number']
   
-  df_table.at['Win w/ Higher Transtiion','Number'] = tri_df[ (tri_df['win_tcr'] - tri_df['loser_tcr']) >= 0 ].shape[0]
+  df_table.at['Win w/ Higher Transtiion','Number'] = tri_df[ (tri_df['win_tcr'] >= tri_df['loser_tcr']) ].shape[0]
   df_table.at['Win w/ Higher Transtiion','Percent'] = df_table.at['Win w/ Higher Transtiion','Number']/df_table.at['Sets','Number']
-  
-  df_table.at['Win w/Higher FBHE & Average Error & Trans','Number'] = tri_df[ (tri_df['win_fbhe_noace'] - tri_df['loser_fbhe_noace']) >= 0 ].shape[0]
-  df_table.at['Win w/Higher FBHE & Average Error & Trans','Percent'] = df_table.at['Win w/Higher FBHE & Average Error & Trans','Number']/df_table.at['Sets','Number']
+
+  # Extract scalar thresholds
+  err_den_high = (player_data_stats_df['err_den_mean'].iloc[0] + player_data_stats_df['err_den_stdev'].iloc[0])/100
+  tcr_low = (player_data_stats_df['tcr_mean'].iloc[0] + player_data_stats_df['tcr_stdev'].iloc[0])/100
+
+  # Filter tri_df
+  tmp_df = tri_df[tri_df['win_err_den'] < err_den_high]
+  tmp_df = tmp_df[tmp_df['win_tcr'] > tcr_low]
+
+  df_table.at['Win w/Higher FBHE & Average Error & Trans','Number'] = tmp_df[ (tmp_df['win_fbhe_noace'] >= tmp_df['loser_fbhe_noace'])  ].shape[0]
+  if tmp_df.shape[0] == 0:
+    df_table.at['Win w/Higher FBHE & Average Error & Trans','Percent'] = 0
+  else:
+    df_table.at['Win w/Higher FBHE & Average Error & Trans','Percent'] = df_table.at['Win w/Higher FBHE & Average Error & Trans','Number']/tmp_df.shape[0]
 
   print(f'reports league: df_table \n {df_table}')
   # put the DF's in the df_list
@@ -670,27 +681,27 @@ def report_league_new(lgy, team, **rpt_filters):
 
   # Image for the Bar Graph of FBHE vs winning %
   plot_df, status = count_wins( tri_df['win_fbhe_noace'], tri_df['loser_fbhe_noace'], -1, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by FBHE', 'FBHE', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by FBHE', 'FBHE', 'Percent Wins', [20,12], '', 0, bar_width=0.1)
   image_list[1] = bar_plot
 
   # Image for the Bar Graph of Error Denisty vs winning %
   plot_df, status = count_wins( tri_df['win_err_den'], tri_df['loser_err_den'], 0, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Error Density', 'Error Density', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Error Density', 'Error Density', 'Percent Wins', [20,12], '', 0, bar_width=0.1)
   image_list[3] = bar_plot
 
   # Image for the Bar Graph of TCR vs winning %
   plot_df, status = count_wins( tri_df['win_tcr'], tri_df['loser_tcr'], 0, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Transition Conversion Rate', 'Transition Conversion Rate', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Transition Conversion Rate', 'Transition Conversion Rate', 'Percent Wins', [20,12], '', 0, bar_width=0.1)
   image_list[5] = bar_plot
 
   # Image for the Bar Graph of Knock Out vs winning %
   plot_df, status = count_wins( tri_df['win_knockout'], tri_df['loser_knockout'], 0, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Knockoout Rate', 'Knockout', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Knockoout Rate', 'Knockout', 'Percent Wins', [20,12], '', 0, bar_width=0.1)
   image_list[7] = bar_plot
 
   # Image for the Bar Graph of Good Pass % vs winning %
   plot_df, status = count_wins( tri_df['win_goodpass'], tri_df['loser_goodpass'], 0, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Good Passes', 'Percent Good Passes', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Good Passes', 'Percent Good Passes', 'Percent Wins', [10,6], '', 0, bar_width=0.05)
   image_list[9] = bar_plot
   
 
@@ -768,17 +779,17 @@ def count_wins( win_column, Loser_column, l_min, l_max):
     max = min+step
     tmp_df = combined_df[ (combined_df['Value'] >= min) & (combined_df['Value'] < max )]
     df_table.loc[i] = [0,0,0,0,0,0,0]
-    df_table.at[i,'Min'] = min
-    df_table.at[i,'Max'] = max
-    df_table.at[i,'MidPoint'] = (max + min)/2
+    df_table.at[i,'Min'] = float('{:.2}'.format(min))
+    df_table.at[i,'Max'] = float('{:.2}'.format(max))
+    df_table.at[i,'MidPoint'] = float('{:.2}'.format((max + min)/2))
     df_table.at[i,'Wins'] = tmp_df[ ( tmp_df['Status'] == 'W') ].shape[0]
     df_table.at[i,'Losses'] = tmp_df[ ( tmp_df['Status'] == 'L') ].shape[0]
     if tmp_df.shape[0] == 0:
       df_table.at[i,'Win Percent'] = 0
       df_table.at[i,'Loss Percent'] = 0
     else:
-      df_table.at[i,'Win Percent'] = df_table.at[i,'Wins']/tmp_df.shape[0]
-      df_table.at[i,'Loss Percent'] = df_table.at[i,'Losses']/tmp_df.shape[0]
+      df_table.at[i,'Win Percent'] = float('{:.2}'.format(df_table.at[i,'Wins']/tmp_df.shape[0]))
+      df_table.at[i,'Loss Percent'] = float('{:.2}'.format(df_table.at[i,'Losses']/tmp_df.shape[0]))
 
   print(f' df table in count-wins functons: \n{df_table}')
   return df_table, True
