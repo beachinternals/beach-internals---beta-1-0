@@ -79,8 +79,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   #print(f"Stats: Err Den: {err_den_25,err_den_75}, TCR: {tcr_25,tcr_75}")
   
   #print(f"shape of ppr_df :{ppr_df.shape}")
-  #min_att = ppr_csv_row['min_att']
-  min_att = 5
+  min_att = ppr_csv_row['min_att']
+
 
   # now, how many matches do we have, looking at video_id:
   m_list = ppr_df['video_id'].unique()
@@ -91,7 +91,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   # build the ppr_dataframe out tpo the proper number of rows, equal total points,
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
 
-  tri_dict = {'video_id':[str()],'set':[int()],'filename':[str()],'game_date':None,
+  tri_dict = {'video_id':[str()],'set':[int()],'game_date':None,
               'teama':None, 'player_a1':None, 'player_a2':None, 'teamb':None, 'player_b1':None, 'player_b2':None,
               'total_pts':None, 'teama_pts':None, 'teamb_pts':None, 
               'tsa_a':None, 'tse_a':None, 'srv_num_a':None, 'tsa_b':None, 'tse_b':None, 'srv_num_b':None, 
@@ -348,7 +348,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         tri_df.at[tri_row,'win_knockout'] = tri_df.at[tri_row,'knockout_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'knockout_b']
         tri_df.at[tri_row,'loser_knockout'] = tri_df.at[tri_row,'knockout_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'knockout_a']
         tri_df.at[tri_row,'win_goodpass'] = tri_df.at[tri_row,'goodpass_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'goodpass_b']
-        tri_df.at[tri_row,'win_goodpass'] = tri_df.at[tri_row,'goodpass_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'goodpass_a']
+        tri_df.at[tri_row,'loser_goodpass'] = tri_df.at[tri_row,'goodpass_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'goodpass_a']
 
 
         #print("End of Loop over the Set")

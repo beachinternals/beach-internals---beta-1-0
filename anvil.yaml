@@ -711,7 +711,7 @@ db_schema:
     server: full
     title: Users
 dependencies: []
-metadata: {title: Beach Internals Application}
+metadata: {logo_img: 'asset:BeachInternals Logo-logo.jpeg', title: Beach Internals Application}
 name: Beach Internals Application
 native_deps: null
 package_name: Beach_Internals_Application
@@ -719,6 +719,7 @@ renamed: true
 runtime_options:
   client_version: '3'
   legacy_features: {__dict__: true, bootstrap3: true, class_names: true, root_container: true}
+  server_persist: true
   server_spec: {base: python310-datascience}
   server_spec_disabled: {base: python310-standard, requirements: ''}
   server_version: python3-full

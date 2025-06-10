@@ -594,12 +594,6 @@ def report_league_new(lgy, team, **rpt_filters):
   #           Define the suymmary / correlation dataframe
   #------------------------------------------------------------------------------------------------------
 
-  # create the output dataframe
-  df_dict = {' ':['League','Points','Sets','Players','Pairs','Win w/ Hgher FBHE', 'Win w/ Higher Transtiion','Win w/ Lower Errors', 'Win w/Higher FBHE & Average Error & Trans'],
-             'Number':['',0,0,0,0,0,0,0,0],
-             'Percent':['','','','','',0,0,0,0]
-            }
-  df_table = pd.DataFrame.from_dict( df_dict )
   # Create the output dictionary
   df_dict = {
     'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Higher FBHE', 'Win w/ Higher Transition', 'Win w/ Lower Errors', 'Win w/Higher FBHE & Average Error & Trans'],
@@ -631,6 +625,7 @@ def report_league_new(lgy, team, **rpt_filters):
 
   print(f'reports league: df_table \n {df_table}')
   # put the DF's in the df_list
+  df_table = df_table.reset_index()
   df_list[0] = df_table.to_dict('records')
 
 
@@ -673,28 +668,30 @@ def report_league_new(lgy, team, **rpt_filters):
   df = pd.DataFrame({"Plot Description": [stat_text]})
   df_list[5] = df.to_dict('records')
 
-  '''
-
   # Image for the Bar Graph of FBHE vs winning %
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
-  print(f" stat_text: {stat_text}")
-  image_list[1] = hist_plot
+  plot_df, status = count_wins( tri_df['win_fbhe_noace'], tri_df['loser_fbhe_noace'], -1, 1 )
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by FBHE', 'FBHE', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  image_list[1] = bar_plot
 
   # Image for the Bar Graph of Error Denisty vs winning %
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
-  image_list[3] = hist_plot
+  plot_df, status = count_wins( tri_df['win_err_den'], tri_df['loser_err_den'], 0, 1 )
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Error Density', 'Error Density', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  image_list[3] = bar_plot
 
   # Image for the Bar Graph of TCR vs winning %
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
-  image_list[5] = hist_plot
+  plot_df, status = count_wins( tri_df['win_tcr'], tri_df['loser_tcr'], 0, 1 )
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Transition Conversion Rate', 'Transition Conversion Rate', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  image_list[5] = bar_plot
 
   # Image for the Bar Graph of Knock Out vs winning %
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
-  image_list[7] = hist_plot
+  plot_df, status = count_wins( tri_df['win_knockout'], tri_df['loser_knockout'], 0, 1 )
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Knockoout Rate', 'Knockout', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  image_list[7] = bar_plot
 
   # Image for the Bar Graph of Good Pass % vs winning %
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
-  image_list[9] = hist_plot
+  plot_df, status = count_wins( tri_df['win_goodpass'], tri_df['loser_goodpass'], 0, 1 )
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Good Passes', 'Percent Good Passes', 'Percent Wins', [10,6], '', 0, bar_width=0.1)
+  image_list[9] = bar_plot
   
 
   print(f"Return Values: Title List \n {title_list}")
@@ -702,6 +699,87 @@ def report_league_new(lgy, team, **rpt_filters):
   print(f"Return Values: Image List \n {image_list}")
   print(f"Return Values: DF List \n {df_list}")
 
-  '''
+
   
   return title_list, label_list, image_list, df_list
+
+
+def count_wins( win_column, Loser_column, l_min, l_max):
+  '''
+  Take a tri_data column for the winner and the loser and return a single dataframe with mid-points and percent winners, percent losers, number of winners, number of losers
+
+  This could be fbhe, goodpass, err_den, whatever
+
+  l_min is logical miniumum
+  l_max is logical maximum
+
+  Status is ??
+
+  win_column should be a dataframe column: i.e:  tri_df['fbhe_noace']
+  
+  '''
+
+  # first, let's try to put these together, add a column
+  col1 = win_column.tolist()  # 
+  col2 = Loser_column.tolist()  # 
+
+  # Pair col1 with 'W'
+  col1_paired = [[x, 'W'] for x in col1 if not pd.isna(x)]  # 
+  # Pair col2 with 'L'
+  col2_paired = [[x, 'L'] for x in col2 if not pd.isna(x)]  # 
+  # Append the two
+  combined_list = col1_paired + col2_paired  # 
+
+  # back to a dataframe
+  # Convert to DataFrame for easier max/min
+  combined_df = pd.DataFrame(combined_list, columns=['Value', 'Status'])
+
+  # Max and min of 'Value' column
+  max_value = combined_df['Value'].max() 
+  if max_value > l_max:
+    max_value = l_max
+  min_value = combined_df['Value'].min()
+  if min_value < l_min:
+    min_value = l_min
+  bins = 20
+  step = (max_value-min_value)/bins
+  print(f"max, min, and step: Min:{min_value}, Max:{max_value}, Step:{step}")
+
+  # Create the output dictionary
+  df_dict = {
+    'Metric': [0],
+    'Min': [0],
+    'MidPoint': [0],
+    'Max':[0],
+    'Wins':[0],
+    'Losses':[0],
+    'Win Percent':[0],
+    'Loss Percent':[0]
+  }
+
+  # Create DataFrame and set index
+  df_table = pd.DataFrame.from_dict(df_dict).set_index('Metric')
+
+  print(f" df_table :\n {df_table}")
+  print(f"Combined df: \n {combined_df}")
+  
+  for i in range(1,bins+1):
+    min = (i-1)*step + min_value
+    max = min+step
+    tmp_df = combined_df[ (combined_df['Value'] >= min) & (combined_df['Value'] < max )]
+    df_table.loc[i] = [0,0,0,0,0,0,0]
+    df_table.at[i,'Min'] = min
+    df_table.at[i,'Max'] = max
+    df_table.at[i,'MidPoint'] = (max + min)/2
+    df_table.at[i,'Wins'] = tmp_df[ ( tmp_df['Status'] == 'W') ].shape[0]
+    df_table.at[i,'Losses'] = tmp_df[ ( tmp_df['Status'] == 'L') ].shape[0]
+    if tmp_df.shape[0] == 0:
+      df_table.at[i,'Win Percent'] = 0
+      df_table.at[i,'Loss Percent'] = 0
+    else:
+      df_table.at[i,'Win Percent'] = df_table.at[i,'Wins']/tmp_df.shape[0]
+      df_table.at[i,'Loss Percent'] = df_table.at[i,'Losses']/tmp_df.shape[0]
+
+  print(f' df table in count-wins functons: \n{df_table}')
+  return df_table, True
+  
