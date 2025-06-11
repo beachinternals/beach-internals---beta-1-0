@@ -359,7 +359,7 @@ def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
 '''
 
 # Grok generated version of this routine
-def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_label, line_value, bar_width=0.5):
+def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_label, line_value, plot_mean, mean_val, std_val, bar_width=0.5):
   """
     Create a bar graph with labeled bars, average line, and table, handling NaN values.
     
@@ -416,6 +416,12 @@ def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_lab
     if line_label and line_value:
       plt.axhline(y=line_value, color = 'blue', linestyle='-', linewidth=1,
                label=f'{line_label} : {line_value:.3f}')
+
+    # add vertical lines for mean, +/- stdev
+    if plot_mean:
+      plt.axvline( x=mean_val - std_val, color = 'green', linestyle='-', linewidth=1,label=f'17th Percentile :{mean_val-std_val:.2f}' )
+      plt.axvline( x=mean_val,           color = 'green', linestyle='-', linewidth=1, label=f'Mean :{mean_val:.2f}' )
+      plt.axvline( x=mean_val + std_val, color = 'green', linestyle='-', linewidth=1,label=f'83rd Percentile :{mean_val+std_val:.2f}' )
 
     # Set labels and title
     plt.title(title)

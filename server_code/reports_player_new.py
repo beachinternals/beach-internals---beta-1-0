@@ -680,27 +680,27 @@ def report_league_new(lgy, team, **rpt_filters):
 
   # Image for the Bar Graph of FBHE vs winning %
   plot_df, status = count_wins( tri_df['win_fbhe_noace'], tri_df['loser_fbhe_noace'], -1, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by FBHE', 'FBHE', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by FBHE', 'FBHE', 'Percent Wins', plt_size, '', 0, True, player_data_stats_df.at[0,'fbhe_mean'], player_data_stats_df.at[0,'fbhe_stdev'], bar_width=0.025)
   image_list[1] = bar_plot
 
   # Image for the Bar Graph of Error Denisty vs winning %
   plot_df, status = count_wins( tri_df['win_err_den'], tri_df['loser_err_den'], 0, 100 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Error Density', 'Error Density', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Error Density', 'Error Density', 'Percent Wins', plt_size, '', 0, True, player_data_stats_df.at[0,'err_den_mean']/100, player_data_stats_df.at[0,'err_den_stdev']/100, bar_width=0.025)
   image_list[3] = bar_plot
 
   # Image for the Bar Graph of TCR vs winning %
   plot_df, status = count_wins( tri_df['win_tcr'], tri_df['loser_tcr'], 0, 100 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Transition Conversion Rate', 'Transition Conversion Rate', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Transition Conversion Rate', 'Transition Conversion Rate', 'Percent Wins', plt_size, '', 0, True, player_data_stats_df.at[0,'tcr_mean']/100, player_data_stats_df.at[0,'tcr_stdev']/100, bar_width=0.025)
   image_list[5] = bar_plot
 
   # Image for the Bar Graph of Knock Out vs winning %
   plot_df, status = count_wins( tri_df['win_knockout'], tri_df['loser_knockout'], 0, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Knockoout Rate', 'Knockout', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Knockoout Rate', 'Knockout', 'Percent Wins', plt_size, '', 0, True, player_data_stats_df.at[0,'knockout_mean'], player_data_stats_df.at[0,'knockout_stdev'], bar_width=0.025)
   image_list[7] = bar_plot
 
   # Image for the Bar Graph of Good Pass % vs winning %
   plot_df, status = count_wins( tri_df['win_goodpass'], tri_df['loser_goodpass'], 0.1, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Good Passes', 'Percent Good Passes', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Good Passes', 'Percent Good Passes', 'Percent Wins', plt_size, '', 0, True, player_data_stats_df.at[0,'goodpass_mean'], player_data_stats_df.at[0,'goodpass_stdev'], bar_width=0.025)
   image_list[9] = bar_plot
   
 
