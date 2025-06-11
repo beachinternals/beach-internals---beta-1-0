@@ -626,11 +626,11 @@ def report_league_new(lgy, team, **rpt_filters):
   # Filter tri_df
   tmp_df = tri_df[tri_df['win_fbhe_withace'] < tri_df['loser_fbhe_withace'] ]
 
-  df_table.at['Win w/Lower FBHE & Average Trans','Number'] = tmp_df[ (tmp_df['win_tcr'] >= tcr_low) ].shape[0]
+  df_table.at['Win w/Lower FBHE & Average Trans','Number'] = tmp_df[ (tmp_df['win_tcr'] >= tcr_low) ].shape[0] + df_table.at['Win w/ Hgher FBHE','Number']
   if tmp_df.shape[0] == 0:
     df_table.at['Win w/Lower FBHE & Average Trans','Percent'] = 0
   else:
-    df_table.at['Win w/Lower FBHE & Average Trans','Percent'] = str('{:.1%}'.format(df_table.at['Win w/Lower FBHE & Average Trans','Number']/tmp_df.shape[0]))
+    df_table.at['Win w/Lower FBHE & Average Trans','Percent'] = str('{:.1%}'.format(df_table.at['Win w/Lower FBHE & Average Trans','Number']/df_table.at['Sets','Number']))
 
   print(f'reports league: df_table \n {df_table}')
   # put the DF's in the df_list

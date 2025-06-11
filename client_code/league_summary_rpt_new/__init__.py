@@ -71,6 +71,8 @@ class league_summary_rpt_new(league_summary_rpt_newTemplate):
             self.rpt_subtitle.text = title_list[1] + title_list[9] # for a pair report
           elif title_list[5] == 'new player':
             self.rpt_subtitle.text = title_list[1] + title_list[8] # for a player report
+          elif title_list[5] == 'league':
+            self.rpt_subtitle.text = title_list[1]  # for a league report    
           else:
             self.rpt_subtitle.text = title_list[1]
 
