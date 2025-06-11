@@ -596,9 +596,9 @@ def report_league_new(lgy, team, **rpt_filters):
 
   # Create the output dictionary
   df_dict = {
-    'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Hgher FBHE', 'Win w/ Higher Transtiion', 'Win w/ Lower Errors', 'Win w/Lower FBHE & Average Trans'],
-    'Number': ['', 0, 0, 0, 0, 0, 0, 0, 0],
-    'Percent': ['', '', '', '', '', 0, 0, 0, 0]
+    'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Hgher FBHE', 'Win w/ Higher Transtiion', 'Win w/ Lower Errors',' ', 'High FBHE Loser w/High Errors','High FBHE Loser w/Low Transition'],
+    'Number': ['', 0, 0, 0, 0, 0, 0, 0, '', 0, 0],
+    'Percent': ['', '', '', '', '', 0, 0, 0, '', 0, 0]
   }
 
   # Create DataFrame and set index
@@ -622,16 +622,24 @@ def report_league_new(lgy, team, **rpt_filters):
 
   # Extract scalar thresholds
   tcr_low = (player_data_stats_df['tcr_mean'].iloc[0] + player_data_stats_df['tcr_stdev'].iloc[0])/100
+  error_high = (player_data_stats_df['err_den_mean'].iloc[0] + player_data_stats_df['err_den_stdev'].iloc[0])/100
 
   # Filter tri_df
   tmp_df = tri_df[tri_df['win_fbhe_withace'] < tri_df['loser_fbhe_withace'] ]
 
-  df_table.at['Win w/Lower FBHE & Average Trans','Number'] = tmp_df[ (tmp_df['win_tcr'] >= tcr_low) ].shape[0] + df_table.at['Win w/ Hgher FBHE','Number']
+  #df_table.at['Low FBHE Win w/Low Transition','Number'] = tmp_df[ (tmp_df['win_tcr'] < tcr_low) ].shape[0] 
+  df_table.at['High FBHE Loser w/High Errors','Number'] = tmp_df[( tmp_df['loser_err_den'] >= error_high ) ].shape[0]
+  df_table.at['High FBHE Loser w/Low Transition','Number'] = tmp_df[( tmp_df['loser_tcr'] <= tcr_low ) ].shape[0]
+  
   if tmp_df.shape[0] == 0:
-    df_table.at['Win w/Lower FBHE & Average Trans','Percent'] = 0
+    #df_table.at['Low FBHE Win w/Low Transition','Percent'] = 0
+    df_table.at['High FBHE Loser w/High Errors','Percent'] = 0
+    df_table.at['High FBHE Loser w/Low Transition','Percent'] = 0
   else:
-    df_table.at['Win w/Lower FBHE & Average Trans','Percent'] = str('{:.1%}'.format(df_table.at['Win w/Lower FBHE & Average Trans','Number']/df_table.at['Sets','Number']))
-
+    #df_table.at['Low FBHE Win w/Low Transition','Percent'] = str('{:.1%}'.format(df_table.at['Low FBHE Win w/Low Transition','Number']/tmp_df.shape[0]))
+    df_table.at['High FBHE Loser w/High Errors','Percent'] = str('{:.1%}'.format(df_table.at['High FBHE Loser w/High Errors','Number']/tmp_df.shape[0]))
+    df_table.at['High FBHE Loser w/Low Transition','Percent'] = str('{:.1%}'.format(df_table.at['High FBHE Loser w/Low Transition','Number']/tmp_df.shape[0]))
+  
   print(f'reports league: df_table \n {df_table}')
   # put the DF's in the df_list
   df_table = df_table.reset_index()
