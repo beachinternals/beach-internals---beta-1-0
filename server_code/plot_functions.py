@@ -448,12 +448,16 @@ def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_lab
 
 
 @anvil.server.callable
-def plot_histogram(lgy, plot_var, var_name):
+def plot_histogram(lgy, plot_var, var_name, l_min, l_max):
   # given all this, look into the player_data csv stored in the csv_list datafile, then graph the FBHE Histogram
 
   # unpack the league data, and fetch player data
   disp_league, disp_gender, disp_year = unpack_lgy( lgy )
   player_data_df, player_stats_df = get_player_data( disp_league, disp_gender, disp_year)
+  if l_min:
+    player_data_df = player_data_df[ player_data_df[plot_var] >= l_min ]
+  if l_max:
+    player_data_df = player_data_df[ player_data_df[plot_var] <= l_max ]
 
   # calculate percentiles
   plot_var_10 = player_data_df[plot_var].quantile(0.10)

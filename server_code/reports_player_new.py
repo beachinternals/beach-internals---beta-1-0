@@ -617,7 +617,7 @@ def report_league_new(lgy, team, **rpt_filters):
   df_table.at['Win w/ Lower Errors','Number'] = tri_df[ (tri_df['win_err_den'] < tri_df['loser_err_den']) ].shape[0]
   df_table.at['Win w/ Lower Errors','Percent'] = str('{:.1%}'.format(df_table.at['Win w/ Lower Errors','Number']/df_table.at['Sets','Number']))
   
-  df_table.at['Win w/ Higher Transtiion','Number'] = tri_df[ (tri_df['win_tcr'] >= tri_df['loser_tcr']) ].shape[0]
+  df_table.at['Win w/ Higher Transtiion','Number'] = tri_df[ (tri_df['win_tcr'] > tri_df['loser_tcr']) ].shape[0]
   df_table.at['Win w/ Higher Transtiion','Percent'] = str('{:.1%}'.format(df_table.at['Win w/ Higher Transtiion','Number']/df_table.at['Sets','Number']))
 
   # Extract scalar thresholds
@@ -644,64 +644,65 @@ def report_league_new(lgy, team, **rpt_filters):
   #          Define Images and dataframes for 5 plots
   #------------------------------------------------------------------------------------------------------
 
+  plt_size = [20,15]
+
   # Image for the Historgram of FBHE
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'fbhe','First Ball Hitting Efficiency')
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'fbhe','First Ball Hitting Efficiency', -1, 1)
   image_list[0] = hist_plot
   print(f" stat_text: {stat_text}")
   df = pd.DataFrame({'':[stat_text]})
   df_list[1] = df.to_dict('records')
   
   # Image for the Historgram of Error Density
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'err_den','Error Density')
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'err_den','Error Density', 0, 100)
   image_list[2] = hist_plot
   print(f" stat_text: {stat_text}")
   df = pd.DataFrame({'':[stat_text]})
   df_list[2] = df.to_dict('records')
   
   # Image for the Historgram of Transition Conversion
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'tcr','Transition Conversion')
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'tcr','Transition Conversion', 0, 100)
   image_list[4] = hist_plot
   print(f" stat_text: {stat_text}")
   df = pd.DataFrame({'':[stat_text]})
   df_list[3] = df.to_dict('records')
   
   # Image for the Historgram of Knock Out
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'knockout','Serving Aggressiveness - Knock Out')
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'knockout','Serving Aggressiveness - Knock Out', 0,1)
   image_list[6] = hist_plot
   print(f" stat_text: {stat_text}")
   df = pd.DataFrame({'':[stat_text]})
   df_list[4] = df.to_dict('records')
   
   # Image for the Historgram of Good Pass Percent
-  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes')
+  stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes', 0.1, 1)
   image_list[8] = hist_plot
   print(f" stat_text: {stat_text}")
-  df = pd.DataFrame({"Plot Description": [stat_text]})
   df_list[5] = df.to_dict('records')
 
   # Image for the Bar Graph of FBHE vs winning %
   plot_df, status = count_wins( tri_df['win_fbhe_noace'], tri_df['loser_fbhe_noace'], -1, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by FBHE', 'FBHE', 'Percent Wins', [20,12], '', 0, bar_width=0.01)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by FBHE', 'FBHE', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
   image_list[1] = bar_plot
 
   # Image for the Bar Graph of Error Denisty vs winning %
-  plot_df, status = count_wins( tri_df['win_err_den'], tri_df['loser_err_den'], 0, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Error Density', 'Error Density', 'Percent Wins', [20,12], '', 0, bar_width=0.01)
+  plot_df, status = count_wins( tri_df['win_err_den'], tri_df['loser_err_den'], 0, 100 )
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Error Density', 'Error Density', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
   image_list[3] = bar_plot
 
   # Image for the Bar Graph of TCR vs winning %
-  plot_df, status = count_wins( tri_df['win_tcr'], tri_df['loser_tcr'], 0, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Transition Conversion Rate', 'Transition Conversion Rate', 'Percent Wins', [20,12], '', 0, bar_width=0.01)
+  plot_df, status = count_wins( tri_df['win_tcr'], tri_df['loser_tcr'], 0, 100 )
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Transition Conversion Rate', 'Transition Conversion Rate', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
   image_list[5] = bar_plot
 
   # Image for the Bar Graph of Knock Out vs winning %
   plot_df, status = count_wins( tri_df['win_knockout'], tri_df['loser_knockout'], 0, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Knockoout Rate', 'Knockout', 'Percent Wins', [20,12], '', 0, bar_width=0.01)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Knockoout Rate', 'Knockout', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
   image_list[7] = bar_plot
 
   # Image for the Bar Graph of Good Pass % vs winning %
-  plot_df, status = count_wins( tri_df['win_goodpass'], tri_df['loser_goodpass'], 0, 1 )
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Good Passes', 'Percent Good Passes', 'Percent Wins', [10,6], '', 0, bar_width=0.01)
+  plot_df, status = count_wins( tri_df['win_goodpass'], tri_df['loser_goodpass'], 0.1, 1 )
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Good Passes', 'Percent Good Passes', 'Percent Wins', plt_size, '', 0, bar_width=0.025)
   image_list[9] = bar_plot
   
 
