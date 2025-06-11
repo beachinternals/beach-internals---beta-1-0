@@ -596,7 +596,7 @@ def report_league_new(lgy, team, **rpt_filters):
 
   # Create the output dictionary
   df_dict = {
-    'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Hgher FBHE', 'Win w/ Higher Transtiion', 'Win w/ Lower Errors', 'Win w/Higher FBHE & Average Error & Trans'],
+    'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Hgher FBHE', 'Win w/ Higher Transtiion', 'Win w/ Lower Errors', 'Win w/Lower FBHE & Average Trans'],
     'Number': ['', 0, 0, 0, 0, 0, 0, 0, 0],
     'Percent': ['', '', '', '', '', 0, 0, 0, 0]
   }
@@ -621,18 +621,16 @@ def report_league_new(lgy, team, **rpt_filters):
   df_table.at['Win w/ Higher Transtiion','Percent'] = str('{:.1%}'.format(df_table.at['Win w/ Higher Transtiion','Number']/df_table.at['Sets','Number']))
 
   # Extract scalar thresholds
-  err_den_high = (player_data_stats_df['err_den_mean'].iloc[0] + player_data_stats_df['err_den_stdev'].iloc[0])/100
   tcr_low = (player_data_stats_df['tcr_mean'].iloc[0] + player_data_stats_df['tcr_stdev'].iloc[0])/100
 
   # Filter tri_df
-  tmp_df = tri_df[tri_df['win_err_den'] < err_den_high]
-  tmp_df = tmp_df[tmp_df['win_tcr'] > tcr_low]
+  tmp_df = tri_df[tri_df['win_fbhe_withace'] < tri_df['loser_fbhe_withace'] ]
 
-  df_table.at['Win w/Higher FBHE & Average Error & Trans','Number'] = tmp_df[ (tmp_df['win_fbhe_noace'] >= tmp_df['loser_fbhe_noace'])  ].shape[0]
+  df_table.at['Win w/Lower FBHE & Average Trans','Number'] = tmp_df[ (tmp_df['win_tcr'] >= tcr_low) ].shape[0]
   if tmp_df.shape[0] == 0:
-    df_table.at['Win w/Higher FBHE & Average Error & Trans','Percent'] = 0
+    df_table.at['Win w/Lower FBHE & Average Trans','Percent'] = 0
   else:
-    df_table.at['Win w/Higher FBHE & Average Error & Trans','Percent'] = str('{:.1%}'.format(df_table.at['Win w/Higher FBHE & Average Error & Trans','Number']/tmp_df.shape[0]))
+    df_table.at['Win w/Lower FBHE & Average Trans','Percent'] = str('{:.1%}'.format(df_table.at['Win w/Lower FBHE & Average Trans','Number']/tmp_df.shape[0]))
 
   print(f'reports league: df_table \n {df_table}')
   # put the DF's in the df_list
