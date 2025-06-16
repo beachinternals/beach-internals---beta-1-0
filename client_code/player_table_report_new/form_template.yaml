@@ -49,11 +49,11 @@ components:
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'LXVMNB,IYVCFA'}
-    name: label_3
+    name: box3_title
     properties: {align: center}
     type: Label
   - layout_properties: {grid_position: 'BBCNKO,GFLSDF'}
-    name: rich_text_1
+    name: box3
     properties: {}
     type: RichText
   layout_properties: {grid_position: 'LUOKOA,TDPZOX'}
@@ -62,11 +62,11 @@ components:
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'QMCWOL,ZXEUVK'}
-    name: label_4
-    properties: {}
+    name: box4_title
+    properties: {align: center}
     type: Label
   - layout_properties: {grid_position: 'SEWRXB,VCMNOS'}
-    name: rich_text_2
+    name: box4
     properties: {}
     type: RichText
   layout_properties: {grid_position: 'MFHNVH,NCDAVN'}

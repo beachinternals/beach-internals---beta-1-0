@@ -916,38 +916,44 @@ def player_sw_new(lgy, team, **rpt_filters):
       # now calculate the Offense strength and weakness markdown
       off_df = sw_df[ sw_df['Section'] == 'Offense'] 
       off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
-      #print(f"pair_sw_report: off_df: {off_df}")
       off_df = off_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
       off_df = off_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      print(f"pair_sw_report: off_df: {off_df}")
 
       # now calculate the Deffense strength and weakness markdown
       def_df = sw_df[ sw_df['Section'] == 'Serving'] 
       def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
       def_df = def_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
       def_df = def_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      print(f"pair_sw_report: def_df: {def_df}")
 
       # now calculate the Errors strength and weakness markdown
-      err_df = sw_df[ sw_df['Section'] == 'Error & Transitison'] 
-      err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
-      err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
-      err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      err_df = sw_df[ sw_df['Section'] == 'Error & Transition'] 
+      if err_df.shape[0] == 0:
+        err_df = pd.DataFrame({'key':['Description'],'Category':['No Data Found']})
+      else:
+        err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
+        err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+        err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      print(f"pair_sw_report: err_df: {err_df}")
 
       # now calculate the Errors strength and weakness markdown
       cons_df = sw_df[ sw_df['Section'] == 'Consistency'] 
       cons_df = cons_df.sort_values(by='Category', ascending=True, na_position='last')
       cons_df = cons_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
       cons_df = cons_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      print(f"pair_sw_report: consistenct_df: {cons_df}")
 
     else:
-      off_df = pd.DataFame(['No Data Found'],['String Column'])
-      def_df = pd.DataFame(['No Data Found'],['String Column'])
-      err_df = pd.DataFame(['No Data Found'],['String Column'])
-      cons_df = pd.DataFame(['No Data Found'],['String Column'])
+      off_df = pd.DataFrame({'key':['Description'],'Category':['No Data Found']})
+      def_df = pd.DataFrame({'key':['Description'],'Category':['No Data Found']})
+      err_df = pd.DataFrame({'key':['Description'],'Category':['No Data Found']})
+      cons_df = pd.DataFrame({'key':['Description'],'Category':['No Data Found']})
   else:
-    off_df = pd.DataFame(['No Data Found'],['String Column'])
-    def_df = pd.DataFame(['No Data Found'],['String Column'])
-    err_df = pd.DataFame(['No Data Found'],['String Column'])
-    cons_df = pd.DataFame(['No Data Found'],['String Column'])
+    off_df = pd.DataFrame({'key':['Description'],'Category':['No Data Found']})
+    def_df = pd.DataFrame({'key':['Description'],'Category':['No Data Found']})
+    err_df = pd.DataFrame({'key':['Description'],'Category':['No Data Found']})
+    cons_df = pd.DataFrame({'key':['Description'],'Category':['No Data Found']})
 
   # put the DF's in the df_list
   df_list[0] = off_df.to_dict('records')
