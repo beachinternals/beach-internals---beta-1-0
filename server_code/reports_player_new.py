@@ -815,4 +815,145 @@ def count_wins( win_column, Loser_column, l_min, l_max):
 
   print(f' df table in count-wins functons: \n{df_table}')
   return df_table, True
-  
+
+
+#---------------------------------------------------------------------------
+#
+#              player report stub NEW
+#
+#---------------------------------------------------------------------------
+@anvil.server.callable
+def player_sw_new(lgy, team, **rpt_filters):
+  '''
+  Report Functions:
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe and filter by all the report filters
+  #ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  #ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+
+  # initiate return lists
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+  title_list[0] = rpt_row['rpt_title']
+  title_list[1] = rpt_row['rpt_sub_title']
+  title_list[2] = rpt_row['rpt_section_title1']
+  title_list[3] = rpt_row['rpt_section_title2']
+  title_list[4] = rpt_row['team_name']
+  title_list[5] = rpt_row['rpt_type']
+  title_list[6] = rpt_row['filter_text']
+  title_list[7] = rpt_row['explain_text']
+  title_list[8] = rpt_filters.get('player')
+  title_list[9]= rpt_filters.get('pair')
+
+  label_list[0] = rpt_row['box1_title']
+  label_list[1] = rpt_row['box2_title']
+  label_list[2] = rpt_row['box3_title']
+  label_list[3] = rpt_row['box4_title']
+  label_list[4] = rpt_row['box5_title']
+  label_list[5] = rpt_row['box6_title']
+  label_list[6] = rpt_row['box7_title']
+  label_list[7] = rpt_row['box8_title']
+  label_list[8] = rpt_row['box9_title']
+  label_list[9] = rpt_row['box10_title']
+
+  #------------------------------------------------------------------------------------------------------
+  #
+  #            Create the images and dataframes with filtered ppr data for report
+  #
+  #-----------------------------------------------------------------------------------------------------
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  #ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+  #  (ppr_df['player_a2'] == disp_player) |
+  #  (ppr_df['player_b1'] == disp_player) |
+  #  (ppr_df['player_b2'] == disp_player) 
+  #  ]
+
+
+  # break disp_player into team, number, and shortname
+  # unpack player into team, number and short name
+  str_loc = disp_player.index(' ')
+  p_team = disp_player[:str_loc].strip()
+  p_player = disp_player[str_loc+1:]
+  str_loc = p_player.index(' ')
+  p_num = p_player[:str_loc].strip()
+  p_sname = p_player[str_loc+1:].strip()
+  sw_list = [(f_row['s_w']) for f_row in app_tables.master_player.search(league=disp_league,gender=disp_gender,year=disp_year,team=p_team,number=p_num,shortname=p_sname)]
+
+  print(f"sw_list: {sw_list}")
+  if sw_list:
+    if sw_list[0]:
+      # sw_list is now a media object, need to turn it back into a dataframe
+      sw_df =  pd.read_csv(io.BytesIO( sw_list[0].get_bytes()))
+
+      # now we are going split s & w into 3 
+      # now calculate the Offense strength and weakness markdown
+      off_df = sw_df[ sw_df['Section'] == 'Offense'] 
+      off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
+      #print(f"pair_sw_report: off_df: {off_df}")
+      off_df = off_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+      off_df = off_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+
+      # now calculate the Deffense strength and weakness markdown
+      def_df = sw_df[ sw_df['Section'] == 'Serving'] 
+      def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
+      def_df = def_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+      def_df = def_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+
+      # now calculate the Errors strength and weakness markdown
+      err_df = sw_df[ sw_df['Section'] == 'Error & Transitison'] 
+      err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
+      err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+      err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+
+      # now calculate the Errors strength and weakness markdown
+      cons_df = sw_df[ sw_df['Section'] == 'Consistency'] 
+      cons_df = cons_df.sort_values(by='Category', ascending=True, na_position='last')
+      cons_df = cons_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+      cons_df = cons_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+
+    else:
+      off_df = pd.DataFame(['No Data Found'],['String Column'])
+      def_df = pd.DataFame(['No Data Found'],['String Column'])
+      err_df = pd.DataFame(['No Data Found'],['String Column'])
+      cons_df = pd.DataFame(['No Data Found'],['String Column'])
+  else:
+    off_df = pd.DataFame(['No Data Found'],['String Column'])
+    def_df = pd.DataFame(['No Data Found'],['String Column'])
+    err_df = pd.DataFame(['No Data Found'],['String Column'])
+    cons_df = pd.DataFame(['No Data Found'],['String Column'])
+
+  # put the DF's in the df_list
+  df_list[0] = off_df.to_dict('records')
+  df_list[1] = def_df.to_dict('records')
+  df_list[2] = err_df.to_dict('records')
+  df_list[3] = cons_df.to_dict('records')
+
+  return title_list, label_list, image_list, df_list
+
