@@ -106,18 +106,40 @@ def generate_pdf_report(rpt_form, report_id):
     label_key = f'label_{i}'
     report_data['labels'][label_key] = rpt_data_row[label_key]
 
-  # Extract dataframes (df_1 to df_10)
-  for i in range(1, 11):
-    df_key = f'df_{i}'
-    df_value = rpt_data_row[df_key]
-    if isinstance(df_value, pd.DataFrame):
-      report_data['dataframes'][df_key] = df_value.to_dict('records')
-    elif isinstance(df_value, dict):
-      report_data['dataframes'][df_key] = df_value
-    elif df_value is not None:
-      report_data['dataframes'][df_key] = str(df_value)  # Fallback for non-serializable types
-    else:
-      report_data['dataframes'][df_key] = None
+    # Extract dataframes (df_1 to df_10)
+    for i in range(1, 11):
+      df_key = f'df_{i}'
+      try:
+        df_value = rpt_data_row[df_key]
+        if isinstance(df_value, anvil._server.LazyMedia):
+          # Get content type and bytes
+          content_type = df_value.content_type
+          df_bytes = df_value.get_bytes()
+          df_io = io.BytesIO(df_bytes)
+          try:
+            if 'csv' in content_type.lower():
+              df = pd.read_csv(df_io)
+              report_data['dataframes'][df_key] = df.to_dict('records')
+            elif 'json' in content_type.lower():
+              df = pd.read_json(df_io)
+              report_data['dataframes'][df_key] = df.to_dict('records')
+            elif 'pickle' in content_type.lower():
+              df = pd.read_pickle(df_io)
+              report_data['dataframes'][df_key] = df.to_dict('records')
+            else:
+              report_data['dataframes'][df_key] = f"Unsupported content type: {content_type}"
+          except Exception as e:
+            report_data['dataframes'][df_key] = f"Error parsing DataFrame: {str(e)}"
+        elif isinstance(df_value, pd.DataFrame):
+          report_data['dataframes'][df_key] = df_value.to_dict('records')
+        elif isinstance(df_value, dict):
+          report_data['dataframes'][df_key] = df_value
+        elif df_value is not None:
+          report_data['dataframes'][df_key] = str(df_value)
+        else:
+          report_data['dataframes'][df_key] = None
+      except KeyError:
+        report_data['dataframes'][df_key] = None
 
   # Extract images (image_1 to image_10)
   for i in range(1, 11):
