@@ -534,7 +534,7 @@ class Reports_main(Reports_mainTemplate):
     #new_window = anvil.js.window.open(f'{app_url}?form={rpt_form}&report_id={report_id}', '_blank')
     #--------------------------------------------------------------------
 
-    pdf_rpt = anvil.server.call("generate_pdf_report", rpt_form, report_id)
+    pdf_rpt, json_media = anvil.server.call("generate_pdf_report", rpt_form, report_id)
       
     result = anvil.server.call(
       "send_email",
@@ -544,9 +544,18 @@ class Reports_main(Reports_mainTemplate):
       "",
       "",
     )
+    result = anvil.server.call(
+      "send_email",
+      "Beach Internals Player Report - JSON Version",
+      "Attached please find the JSON version of the Report",
+      pdf_rpt,
+      "",
+      "",
+    )
 
     #alert(("PDF report emailed" + str(result)))
     anvil.media.download(pdf_rpt)
+    anvil.media.download(json_media)
     
     pass
 

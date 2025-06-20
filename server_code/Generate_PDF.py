@@ -9,6 +9,7 @@ import anvil.server
 from anvil.pdf import PDFRenderer
 from PyPDF2 import PdfMerger
 import io
+import json
 from datetime import datetime, timedelta, date
 from pair_functions import *
 from pair_reports import *
@@ -19,19 +20,125 @@ from player_reports import *
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
+'''
+
 @anvil.server.callable
 def generate_pdf_report( rpt_form, report_id):
   # need to look into report data file to make a useful pdf file name
-  rpt_data_row = app_tables.report_data.get(report_id=report_id)
-  if rpt_data_row['title_6'] == 'pair':
-    pdf_file = rpt_data_row['title_10']+' '+rpt_data_row['title_1']+'.pdf'
-  elif rpt_data_row['title_6'] == 'player':
-    pdf_file = rpt_data_row['title_9']+' '+rpt_data_row['title_1']+'.pdf'
-  else:
-    pdf_file = report_id+'.pdf'
-  rpt_pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form,report_id)
-  return rpt_pdf 
+  try:
+    # Get report data row
+    rpt_data_row = app_tables.report_data.get(report_id=report_id)
+    if not rpt_data_row:
+      return {'error': f'Report ID {report_id} not found'}
 
+      # Determine file names for PDF and JSON
+    if rpt_data_row['title_6'] == 'pair':
+      base_name = f"{rpt_data_row['title_10']} {rpt_data_row['title_1']}"
+      pdf_file = f"{base_name}.pdf"
+      json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    elif rpt_data_row['title_6'] == 'player':
+      base_name = f"{rpt_data_row['title_9']} {rpt_data_row['title_1']}"
+      pdf_file = f"{base_name}.pdf"
+      json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    else:
+      base_name = report_id
+      pdf_file = f"{base_name}.pdf"
+      json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+  
+    rpt_pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form,report_id)
+
+  except Exception as e:
+    return {'pdf': None, 'json_file_name': None, 'error': f'Error generating report: {str(e)}'}
+    
+  return rpt_pdf 
+'''
+
+@anvil.server.callable
+def generate_pdf_report(rpt_form, report_id):
+  """
+    Generate a PDF report and save all report data as JSON to Google Drive.
+    Args:
+        rpt_form: Anvil form or string identifier to render as PDF
+        report_id: ID of the report in app_tables.report_data
+    Returns:
+        dict: {'pdf': BlobMedia, 'json_file_name': str, 'error': str or None}
+    """
+    # Get report data row
+  rpt_data_row = app_tables.report_data.get(report_id=report_id)
+  if not rpt_data_row:
+    return {'error': f'Report ID {report_id} not found'}
+
+  # Determine file names for PDF and JSON
+  if rpt_data_row['title_6'] == 'pair':
+    base_name = f"{rpt_data_row['title_10'] or 'Pair'} {rpt_data_row['title_1'] or 'Report'}"
+    pdf_file = f"{base_name}.pdf"
+    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+  elif rpt_data_row['title_6'] == 'player':
+    base_name = f"{rpt_data_row['title_9'] or 'Player'} {rpt_data_row['title_1'] or 'Report'}"
+    pdf_file = f"{base_name}.pdf"
+    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+  else:
+    base_name = report_id
+    pdf_file = f"{base_name}.pdf"
+    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+  # Generate PDF
+  rpt_pdf = PDFRenderer(filename=pdf_file, landscape=True).render_form(rpt_form, report_id)
+
+  # Prepare report data for JSON
+  report_data = {
+    'report_id': report_id,
+    'timestamp': datetime.now().isoformat(),
+    'titles': {},
+    'labels': {},
+    'dataframes': {},
+    'images': {}
+  }
+
+  # Extract titles (title_1 to title_10)
+  for i in range(1, 11):
+    title_key = f'title_{i}'
+    report_data['titles'][title_key] = rpt_data_row[title_key]
+
+  # Extract labels (label_1 to label_10)
+  for i in range(1, 11):
+    label_key = f'label_{i}'
+    report_data['labels'][label_key] = rpt_data_row[label_key]
+
+  # Extract dataframes (df_1 to df_10)
+  for i in range(1, 11):
+    df_key = f'df_{i}'
+    df_value = rpt_data_row[df_key]
+    if isinstance(df_value, pd.DataFrame):
+      report_data['dataframes'][df_key] = df_value.to_dict('records')
+    elif isinstance(df_value, dict):
+      report_data['dataframes'][df_key] = df_value
+    elif df_value is not None:
+      report_data['dataframes'][df_key] = str(df_value)  # Fallback for non-serializable types
+    else:
+      report_data['dataframes'][df_key] = None
+
+  # Extract images (image_1 to image_10)
+  for i in range(1, 11):
+    img_key = f'image_{i}'
+    img_value = rpt_data_row[img_key]
+    if isinstance(img_value, anvil.BlobMedia):
+      report_data['images'][img_key] = img_value.name  # Store file name
+    elif isinstance(img_value, str):
+      report_data['images'][img_key] = img_value  # Store URL or path
+    else:
+      report_data['images'][img_key] = None
+
+  # Convert to JSON
+  json_str = json.dumps(report_data, indent=2, default=str)
+  json_bytes = json_str.encode('utf-8')
+  json_media = anvil.BlobMedia(content_type='application/json', content=json_bytes, name=json_file)
+
+  return rpt_pdf, json_media
+
+
+    
 
 
 @anvil.server.callable
