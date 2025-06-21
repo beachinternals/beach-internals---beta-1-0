@@ -58,9 +58,14 @@ components_by_slot:
         properties: {align: right, role: outlined-button, text: Generate Report}
         type: Button
       - event_bindings: {click: pdf_button_click}
-        layout_properties: {grid_position: 'ZDTNXF,IOTQYG'}
+        layout_properties: {grid_position: 'ZDTNXF,IOTQYG NVGQKA,OFCIMS'}
         name: pdf_button
-        properties: {role: outlined-button, text: Generate pdf}
+        properties: {role: outlined-button, text: Generate PDF}
+        type: Button
+      - event_bindings: {click: json_button_click}
+        layout_properties: {grid_position: 'ZDTNXF,IOTQYG YFPYAY,TOTUGP'}
+        name: json_button
+        properties: {role: outlined-button, text: Generate JSON}
         type: Button
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7

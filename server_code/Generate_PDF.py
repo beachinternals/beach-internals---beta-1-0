@@ -10,6 +10,8 @@ from anvil.pdf import PDFRenderer
 from PyPDF2 import PdfMerger
 import io
 import json
+import re
+import base64
 from datetime import datetime, timedelta, date
 from pair_functions import *
 from pair_reports import *
@@ -54,8 +56,41 @@ def generate_pdf_report( rpt_form, report_id):
   return rpt_pdf 
 '''
 
+
 @anvil.server.callable
 def generate_pdf_report(rpt_form, report_id):
+  """
+    Generate a PDF report and save all report data as JSON to Google Drive.
+    Args:
+        rpt_form: Anvil form or string identifier to render as PDF
+        report_id: ID of the report in app_tables.report_data
+    Returns:
+        dict: {'pdf': BlobMedia, 'json_file_name': str, 'error': str or None}
+    """
+  # Get report data row
+  rpt_data_row = app_tables.report_data.get(report_id=report_id)
+  if not rpt_data_row:
+    return {'error': f'Report ID {report_id} not found'}
+
+  # Determine file names for PDF and JSON
+  if rpt_data_row['title_6'] == 'pair':
+    base_name = f"{rpt_data_row['title_10'] or 'Pair'} {rpt_data_row['title_1'] or 'Report'}"
+    pdf_file = f"{base_name}.pdf"
+  elif rpt_data_row['title_6'] == 'player':
+    base_name = f"{rpt_data_row['title_9'] or 'Player'} {rpt_data_row['title_1'] or 'Report'}"
+    pdf_file = f"{base_name}.pdf"
+  else:
+    base_name = report_id
+    pdf_file = f"{base_name}.pdf"
+
+  # Generate PDF
+  rpt_pdf = PDFRenderer(filename=pdf_file, landscape=True).render_form(rpt_form, report_id)
+
+  return rpt_pdf
+
+
+@anvil.server.callable
+def generate_json_report(rpt_form, report_id):
   """
     Generate a PDF report and save all report data as JSON to Google Drive.
     Args:
@@ -72,19 +107,13 @@ def generate_pdf_report(rpt_form, report_id):
   # Determine file names for PDF and JSON
   if rpt_data_row['title_6'] == 'pair':
     base_name = f"{rpt_data_row['title_10'] or 'Pair'} {rpt_data_row['title_1'] or 'Report'}"
-    pdf_file = f"{base_name}.pdf"
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
   elif rpt_data_row['title_6'] == 'player':
     base_name = f"{rpt_data_row['title_9'] or 'Player'} {rpt_data_row['title_1'] or 'Report'}"
-    pdf_file = f"{base_name}.pdf"
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
   else:
     base_name = report_id
-    pdf_file = f"{base_name}.pdf"
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-
-  # Generate PDF
-  rpt_pdf = PDFRenderer(filename=pdf_file, landscape=True).render_form(rpt_form, report_id)
 
   # Prepare report data for JSON
   report_data = {
@@ -112,24 +141,19 @@ def generate_pdf_report(rpt_form, report_id):
       try:
         df_value = rpt_data_row[df_key]
         if isinstance(df_value, anvil._server.LazyMedia):
-          # Get content type and bytes
+          # Get markdown content
           content_type = df_value.content_type
-          df_bytes = df_value.get_bytes()
-          df_io = io.BytesIO(df_bytes)
-          try:
-            if 'csv' in content_type.lower():
-              df = pd.read_csv(df_io)
-              report_data['dataframes'][df_key] = df.to_dict('records')
-            elif 'json' in content_type.lower():
-              df = pd.read_json(df_io)
-              report_data['dataframes'][df_key] = df.to_dict('records')
-            elif 'pickle' in content_type.lower():
-              df = pd.read_pickle(df_io)
+          if ('markdown' in content_type.lower()) or ('plain' in content_type.lower()):
+            markdown_bytes = df_value.get_bytes()
+            markdown_text = markdown_bytes.decode('utf-8')
+            # Try to parse markdown table
+            df = parse_markdown_table(markdown_text)
+            if df is not None:
               report_data['dataframes'][df_key] = df.to_dict('records')
             else:
-              report_data['dataframes'][df_key] = f"Unsupported content type: {content_type}"
-          except Exception as e:
-            report_data['dataframes'][df_key] = f"Error parsing DataFrame: {str(e)}"
+              report_data['dataframes'][df_key] = {'raw_markdown': markdown_text}
+          else:
+            report_data['dataframes'][df_key] = f"Unsupported content type: {content_type}"
         elif isinstance(df_value, pd.DataFrame):
           report_data['dataframes'][df_key] = df_value.to_dict('records')
         elif isinstance(df_value, dict):
@@ -141,25 +165,82 @@ def generate_pdf_report(rpt_form, report_id):
       except KeyError:
         report_data['dataframes'][df_key] = None
 
-  # Extract images (image_1 to image_10)
-  for i in range(1, 11):
-    img_key = f'image_{i}'
-    img_value = rpt_data_row[img_key]
-    if isinstance(img_value, anvil.BlobMedia):
-      report_data['images'][img_key] = img_value.name  # Store file name
-    elif isinstance(img_value, str):
-      report_data['images'][img_key] = img_value  # Store URL or path
-    else:
-      report_data['images'][img_key] = None
+    # Extract images (image_1 to image_10)
+    for i in range(1, 11):
+      img_key = f'image_{i}'
+      try:
+        img_value = rpt_data_row[img_key]
+        if isinstance(img_value, (anvil.BlobMedia, anvil._server.LazyMedia)):
+          # Get image bytes and content type
+          img_bytes = img_value.get_bytes()
+          content_type = img_value.content_type
+          # Encode as base64 with data URI
+          img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+          data_uri = f"data:{content_type};base64,{img_base64}"
+          report_data['images'][img_key] = {
+            'name': img_value.name,
+            'content_type': content_type,
+            'data_uri': data_uri
+          }
+        elif isinstance(img_value, str):
+          report_data['images'][img_key] = {'url': img_value}
+        else:
+          report_data['images'][img_key] = None
+      except KeyError:
+        report_data['images'][img_key] = None
 
   # Convert to JSON
   json_str = json.dumps(report_data, indent=2, default=str)
   json_bytes = json_str.encode('utf-8')
   json_media = anvil.BlobMedia(content_type='application/json', content=json_bytes, name=json_file)
 
-  return rpt_pdf, json_media
+  return json_media
+
+def parse_markdown_table(markdown_text):
+  """
+    Parse a markdown table into a pandas DataFrame.
+    Args:
+        markdown_text (str): Markdown content containing a table
+    Returns:
+        pd.DataFrame or None: Parsed DataFrame or None if parsing fails
+    """
+  try:
+    # Split markdown into lines
+    lines = markdown_text.strip().split('\n')
+    if len(lines) < 2:
+      return None
+
+      # Find table headers and separator
+    headers = None
+    separator_line = None
+    for i, line in enumerate(lines):
+      if line.strip().startswith('|') and line.strip().endswith('|'):
+        if i + 1 < len(lines) and re.match(r'^\|[-:\s\|]+$', lines[i + 1]):
+          headers = [h.strip() for h in line.strip('|').split('|')]
+          separator_line = i + 1
+          break
+    if not headers:
+      return None
+
+      # Extract table rows
+    rows = []
+    for line in lines[separator_line + 1:]:
+      if line.strip().startswith('|') and line.strip().endswith('|'):
+        row = [cell.strip() for cell in line.strip('|').split('|')]
+        if len(row) == len(headers):
+          rows.append(row)
+
+    if not rows:
+      return None
+
+      # Create DataFrame
+    df = pd.DataFrame(rows, columns=headers)
+    return df
+  except Exception:
+    return None
 
 
+  
     
 
 
