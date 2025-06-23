@@ -194,7 +194,7 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
   df_list[0] = cons_table.to_dict('records')
   
   cons2_table, no_data1 = calc_consistency_s2s_table( ppr_df, disp_player )
-  df_list[1] = cons_table.to_dict('records')
+  df_list[1] = cons2_table.to_dict('records')
 
   #------------------------------------------------------------------------------------------------------
   #            Create and store images
