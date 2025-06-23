@@ -79,6 +79,18 @@ def generate_pdf_report(rpt_form, report_id):
   elif rpt_data_row['title_6'] == 'player':
     base_name = f"{rpt_data_row['title_9'] or 'Player'} {rpt_data_row['title_1'] or 'Report'}"
     pdf_file = f"{base_name}.pdf"
+  elif rpt_data_row['title_6'] == 'league':
+    base_name = f"{rpt_data_row['title_9'] or 'League'} {rpt_data_row['title_1'] or 'Report'}"
+    pdf_file = f"{base_name}.pdf"
+  elif rpt_data_row['title_6'] == 'dashboard':
+    base_name = f"{rpt_data_row['title_9'] or 'Dashboard'} {rpt_data_row['title_1'] or 'Report'}"
+    pdf_file = f"{base_name}.pdf"
+  elif rpt_data_row['title_6'] == 'scouting':
+    base_name = f"{rpt_data_row['title_9'] or 'Scouting'} {rpt_data_row['title_1'] or 'Report'}"
+    pdf_file = f"{base_name}.pdf"
+  elif rpt_data_row['title_6'] == 'diagnostic':
+    base_name = f"{rpt_data_row['title_9'] or 'Diagnostic'} {rpt_data_row['title_1'] or 'Report'}"
+    pdf_file = f"{base_name}.pdf"
   else:
     base_name = report_id
     pdf_file = f"{base_name}.pdf"
@@ -110,6 +122,18 @@ def generate_json_report(rpt_form, report_id):
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
   elif rpt_data_row['title_6'] == 'player':
     base_name = f"{rpt_data_row['title_9'] or 'Player'} {rpt_data_row['title_1'] or 'Report'}"
+    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+  elif rpt_data_row['title_6'] == 'league':
+    base_name = f"{rpt_data_row['title_4'] or 'League'} {rpt_data_row['title_1'] or 'Report'}"
+    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+  elif rpt_data_row['title_6'] == 'dashboard':
+    base_name = f"{rpt_data_row['title_9'] or 'Dashboard'} {rpt_data_row['title_1'] or 'Report'}"
+    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+  elif rpt_data_row['title_6'] == 'scouting':
+    base_name = f"{rpt_data_row['title_9'] or 'Scouting'} {rpt_data_row['title_1'] or 'Report'}"
+    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+  elif rpt_data_row['title_6'] == 'diagnostic':
+    base_name = f"{rpt_data_row['title_9'] or 'Diagnostic'} {rpt_data_row['title_1'] or 'Report'}"
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
   else:
     base_name = report_id

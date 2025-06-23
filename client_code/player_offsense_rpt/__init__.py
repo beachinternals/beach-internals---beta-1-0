@@ -36,7 +36,7 @@ class player_offsense_rpt(player_offsense_rptTemplate):
         title_list[0] = rpt_row['rpt_title']
         title_list[1] = rpt_row['rpt_sub_title']
         title_list[2] = rpt_row['rpt_section_title1']
-        title_list[3] = rpt_row['rpt_section_title2']
+        title_list[3] = rpt_row['lgy']
         title_list[4] = rpt_row['team_name']
         title_list[5] = rpt_row['rpt_type']
         title_list[6] = rpt_row['filter_text']

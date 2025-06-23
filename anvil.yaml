@@ -523,7 +523,7 @@ db_schema:
       name: rpt_section_title1
       type: string
     - admin_ui: {order: 4.875, width: 200}
-      name: rpt_section_title2
+      name: lgy
       type: string
     - admin_ui: {order: 4.625, width: 200}
       name: team_name

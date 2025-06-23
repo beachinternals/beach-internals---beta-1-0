@@ -73,7 +73,7 @@ def report_player_stub_new(lgy, team, **rpt_filters):
   title_list[0] = rpt_row['rpt_title']
   title_list[1] = rpt_row['rpt_sub_title']
   title_list[2] = rpt_row['rpt_section_title1']
-  title_list[3] = rpt_row['rpt_section_title2']
+  title_list[3] = rpt_row['lgy']
   title_list[4] = rpt_row['team_name']
   title_list[5] = rpt_row['rpt_type']
   title_list[6] = rpt_row['filter_text']
@@ -618,7 +618,7 @@ def report_league_new(lgy, team, **rpt_filters):
   df_table.at['Win w/ Lower Errors','Percent'] = str('{:.1%}'.format(df_table.at['Win w/ Lower Errors','Number']/df_table.at['Sets','Number']))
   
   df_table.at['Win w/ Higher Transition','Number'] = tri_df[ (tri_df['win_tcr'] > tri_df['loser_tcr']) ].shape[0]
-  df_table.at['Win w/ Higher Transition','Percent'] = str('{:.1%}'.format(df_table.at['Win w/ Higher Transtiion','Number']/df_table.at['Sets','Number']))
+  df_table.at['Win w/ Higher Transition','Percent'] = str('{:.1%}'.format(df_table.at['Win w/ Higher Transition','Number']/df_table.at['Sets','Number']))
 
   # Extract scalar thresholds
   tcr_low = (player_data_stats_df['tcr_mean'].iloc[0] + player_data_stats_df['tcr_stdev'].iloc[0])/100
@@ -684,6 +684,7 @@ def report_league_new(lgy, team, **rpt_filters):
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes', 0.1, 1)
   image_list[8] = hist_plot
   print(f" stat_text: {stat_text}")
+  df = pd.DataFrame({'':[stat_text]})
   df_list[5] = df.to_dict('records')
 
   # Image for the Bar Graph of FBHE vs winning %
@@ -862,13 +863,13 @@ def player_sw_new(lgy, team, **rpt_filters):
   title_list[0] = rpt_row['rpt_title']
   title_list[1] = rpt_row['rpt_sub_title']
   title_list[2] = rpt_row['rpt_section_title1']
-  title_list[3] = rpt_row['rpt_section_title2']
+  title_list[3] = rpt_filters.get('lgy')
   title_list[4] = rpt_row['team_name']
   title_list[5] = rpt_row['rpt_type']
   title_list[6] = rpt_row['filter_text']
   title_list[7] = rpt_row['explain_text']
   title_list[8] = rpt_filters.get('player')
-  title_list[9]= rpt_filters.get('pair')
+  title_list[9] = rpt_filters.get('pair')
 
   label_list[0] = rpt_row['box1_title']
   label_list[1] = rpt_row['box2_title']

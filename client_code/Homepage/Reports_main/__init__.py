@@ -274,6 +274,9 @@ class Reports_main(Reports_mainTemplate):
       
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     rpt_filters['player'] = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
+    print(f"league: { self.league_drop_down.selected_value}")
+    rpt_filters['lgy'] = self.league_drop_down.selected_value
+    print(f" report filters: {rpt_filters.get('lgy')}")
     
     if self.comp_l1_check_box.checked:
       rpt_filters['comp_l1'] = self.comp_l1_drop_down.selected_value['comp_l1']
@@ -535,7 +538,8 @@ class Reports_main(Reports_mainTemplate):
     #--------------------------------------------------------------------
 
     pdf_rpt = anvil.server.call("generate_pdf_report", rpt_form, report_id)
-      
+
+    '''
     result = anvil.server.call(
       "send_email",
       "Beach Internals Player Report - PDF Version",
@@ -544,6 +548,7 @@ class Reports_main(Reports_mainTemplate):
       "",
       "",
     )
+    '''
 
     #alert(("PDF report emailed" + str(result)))
     anvil.media.download(pdf_rpt)
@@ -750,6 +755,7 @@ class Reports_main(Reports_mainTemplate):
 
     json_media = anvil.server.call("generate_json_report", rpt_form, report_id)
 
+    '''
     result = anvil.server.call(
       "send_email",
       "Beach Internals Player Report - JSON Version",
@@ -758,6 +764,7 @@ class Reports_main(Reports_mainTemplate):
       "",
       "",
     )
+    '''
 
     #alert(("PDF report emailed" + str(result)))
     anvil.media.download(json_media)

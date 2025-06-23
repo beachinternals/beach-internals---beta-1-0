@@ -36,7 +36,7 @@ class league_summary_rpt_new(league_summary_rpt_newTemplate):
         title_list[0] = rpt_row['rpt_title']
         title_list[1] = rpt_row['rpt_sub_title']
         title_list[2] = rpt_row['rpt_section_title1']
-        title_list[3] = rpt_row['rpt_section_title2']
+        title_list[3] = rpt_row['lgy']
         title_list[4] = rpt_row['team_name']
         title_list[5] = rpt_row['report_type'] # pair, player, matchup, dashboard, scouting, internals
         title_list[6] = rpt_row['filter_text']
