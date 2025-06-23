@@ -69,6 +69,8 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
       #print(f" label to be stored: {var}, title: {title_list[i]}")
       rpt_data_row[var] = title_list[i]
 
+  # store the lgy in title_
+  rpt_data_row['title_4'] = lgy
   # we now overfide what might be int eh report_list table with the acutal filter text for this report
   rpt_data_row['title_7'] = make_filter_text( lgy, **rpt_filters)
   

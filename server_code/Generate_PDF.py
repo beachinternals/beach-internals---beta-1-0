@@ -72,7 +72,7 @@ def generate_pdf_report(rpt_form, report_id):
   if not rpt_data_row:
     return {'error': f'Report ID {report_id} not found'}
 
-  # Determine file names for PDF and JSON
+  # Determine file names for PDF 
   if rpt_data_row['title_6'] == 'pair':
     base_name = f"{rpt_data_row['title_10'] or 'Pair'} {rpt_data_row['title_1'] or 'Report'}"
     pdf_file = f"{base_name}.pdf"
@@ -80,7 +80,7 @@ def generate_pdf_report(rpt_form, report_id):
     base_name = f"{rpt_data_row['title_9'] or 'Player'} {rpt_data_row['title_1'] or 'Report'}"
     pdf_file = f"{base_name}.pdf"
   elif rpt_data_row['title_6'] == 'league':
-    base_name = f"{rpt_data_row['title_9'] or 'League'} {rpt_data_row['title_1'] or 'Report'}"
+    base_name = f"{rpt_data_row['title_4'] or 'League'} {rpt_data_row['title_1'] or 'Report'}"
     pdf_file = f"{base_name}.pdf"
   elif rpt_data_row['title_6'] == 'dashboard':
     base_name = f"{rpt_data_row['title_9'] or 'Dashboard'} {rpt_data_row['title_1'] or 'Report'}"
@@ -116,7 +116,7 @@ def generate_json_report(rpt_form, report_id):
   if not rpt_data_row:
     return {'error': f'Report ID {report_id} not found'}
 
-  # Determine file names for PDF and JSON
+  # Determine file names for JSON
   if rpt_data_row['title_6'] == 'pair':
     base_name = f"{rpt_data_row['title_10'] or 'Pair'} {rpt_data_row['title_1'] or 'Report'}"
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
