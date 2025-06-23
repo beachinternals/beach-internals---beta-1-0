@@ -378,10 +378,10 @@ def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_lab
         anvil.BlobMedia: PNG image of the plot
     """
   # Validate inputs
-  print(f"x_categories: {type(x_categories)}, \n{x_categories}")
-  print(f"y_values:{type(y_values)}, \n{y_values}")
-  print(f"lengh of x and y: {len(x_categories)}")
-  print(f"y {len(y_values)}")
+  #print(f"x_categories: {type(x_categories)}, \n{x_categories}")
+  #print(f"y_values:{type(y_values)}, \n{y_values}")
+  #print(f"lengh of x and y: {len(x_categories)}")
+  #print(f"y {len(y_values)}")
   
   if  len(x_categories) != len(y_values):
     raise ValueError("x_categories and y_values must be non-empty and of equal length")

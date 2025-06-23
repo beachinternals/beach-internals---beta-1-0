@@ -677,7 +677,7 @@ def rpt_mgr_generate_background():
       
       elif rpt_r['rpt_type'] == 'player':
         email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
-        ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['player'], disp_team)
+        ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['player_list'], disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgr_new__rpts Failed, {rpt_r['rpt_type']}")
         else:
@@ -685,7 +685,7 @@ def rpt_mgr_generate_background():
       
       elif rpt_r['rpt_type'] == 'pair':
         email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
-        ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['pair'], disp_team)
+        ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['pair_list'], disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgr_new_rpts Failed, {rpt_r['rpt_type']}")
         else:
@@ -693,7 +693,7 @@ def rpt_mgr_generate_background():
      
       elif rpt_r['rpt_type'] == 'league':
         email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
-        ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['player'], disp_team)
+        ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['player_list'], disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgr_new_rpts Failed, {rpt_r['rpt_type']}")
         else:
@@ -831,15 +831,24 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
     full_rpt_pdf = None
 
     # build the rpt_filers to pass
-    #             populate_filters_from_rpt_mgr_table( rpt_r, player_r, pair_r, opp_pair_r )
-    rpt_filters = populate_filters_from_rpt_mgr_table( rpt_r, False, p, False )
+    #  we will leave it up to the 
+    rpt_filters = populate_filters_from_rpt_mgr_table( rpt_r, p)
 
     # calculate the folder we will store thiese into
 
     pdf_folder = [ p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
     #print(f"pdf folder: {pdf_folder}")
     full_rpt_pdf = None
-    pdf_name = rpt_r['Report Description'] + rpt_filters['pair']+' Player Attacking NEW.pdf'
+    if rpt_r['player_list'] is not None:
+      # then this is a pair
+      player_pair = p['team'] + " "+p['number']+' '+p['shortname']
+    elif rpt_r['pair_list'] is not None:
+      # then this is a player table row
+      player_pair = p['pair']
+    else:
+      player_pair = ' Unknown '
+      
+    pdf_name = rpt_r['Report Description'] + ' ' + player_pair + '.pdf'
 
     #print(f"new player reports: player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")
     lgy = p['league']+' | '+p['gender']+' | '+p['year']
@@ -1229,7 +1238,7 @@ def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp
   return sr_matrix
 
 
-def populate_filters_from_rpt_mgr_table( rpt_r, player_r, pair_r, opp_pair_r ):
+def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
   '''
   
   use the data in the report row, a row from rpt_mgr data table, to make the rpt_filters list that is used to filter the data
@@ -1239,13 +1248,19 @@ def populate_filters_from_rpt_mgr_table( rpt_r, player_r, pair_r, opp_pair_r ):
 
   rpt_filters = {}
 
-  #pair, player, opp pair: 
-  if player_r:
-    rpt_filters['player'] = player_r['team'] + " "+player_r['number']+' '+player_r['shortname']
-  if pair_r:
-    rpt_filters['pair'] = pair_r['pair']
-  if opp_pair_r:
-    rpt_filters['opp_pair'] = opp_pair_r['pair']
+  print(f" in populate filters form rpt mgr table. rpt_r: \m{rpt_r} \n pair/player rot \n{p_r}")
+  
+  # first, we need to tellif this is a pair or a player table row:
+  if rpt_r['player_list'] is not None:
+    # then this is a pair
+    rpt_filters['player'] = p_r['team'] + " "+p_r['number']+' '+p_r['shortname']
+  elif rpt_r['pair_list'] is not None:
+    # then this is a player table row
+    rpt_filters['pair'] = p_r['pair']
+    
+  #pair_b list, opponent pair
+  if rpt_r['pair_b_list'] is not None:
+    rpt_filters['opp_pair'] = rpt_r['pair_b_list']['pair']
 
   if rpt_r['comp1'] is not None:
     rpt_filters['comp_l1'] = rpt_r['comp1']
@@ -1255,6 +1270,7 @@ def populate_filters_from_rpt_mgr_table( rpt_r, player_r, pair_r, opp_pair_r ):
     rpt_filters['comp_l3'] = rpt_r['comp3']
 
     '''
+    this is commented out, wiating until we do (or do not) put this level of detail in the report manager
   if not rpt_r['start_date']:
     rpt_filters['start_date'] = rpt_r['start_date']
   if not rpt_r['start_date']:

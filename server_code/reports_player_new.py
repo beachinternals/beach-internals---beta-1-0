@@ -389,7 +389,7 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
     sum_df.loc[i,'Good Pass'] = "{:.3f}".format(sum_df.loc[i,'Good Pass'])
     sum_df.loc[i,'Points'] = "{:.3f}".format(sum_df.loc[i,'Points'])
     
-  print(f" Summary dataframe: \n {sum_df}")
+  #print(f" Summary dataframe: \n {sum_df}")
   
   # now create histograms for each one
   size = [11,5]
@@ -552,7 +552,7 @@ def  pair_season_summary_new(lgy, team, **rpt_filters):
     sum_df.loc[i,'Good Pass'] = "{:.3f}".format(sum_df.loc[i,'Good Pass'])
     sum_df.loc[i,'Points'] = "{:.3f}".format(sum_df.loc[i,'Points'])
 
-  print(f" Summary dataframe: \n {sum_df}")
+  #print(f" Summary dataframe: \n {sum_df}")
 
   
   # now create histograms for each one
@@ -684,7 +684,7 @@ def report_league_new(lgy, team, **rpt_filters):
     df_table.at['High FBHE Loser w/High Errors','Percent'] = str('{:.1%}'.format(df_table.at['High FBHE Loser w/High Errors','Number']/tmp_df.shape[0]))
     df_table.at['High FBHE Loser w/Low Transition','Percent'] = str('{:.1%}'.format(df_table.at['High FBHE Loser w/Low Transition','Number']/tmp_df.shape[0]))
   
-  print(f'reports league: df_table \n {df_table}')
+  #print(f'reports league: df_table \n {df_table}')
   # put the DF's in the df_list
   df_table = df_table.reset_index()
   df_list[0] = df_table.to_dict('records')
@@ -858,7 +858,7 @@ def count_wins( win_column, Loser_column, l_min, l_max):
       df_table.at[i,'Win Percent'] = float('{:.2}'.format(df_table.at[i,'Wins']/tmp_df.shape[0]))
       df_table.at[i,'Loss Percent'] = float('{:.2}'.format(df_table.at[i,'Losses']/tmp_df.shape[0]))
 
-  print(f' df table in count-wins functons: \n{df_table}')
+  #print(f' df table in count-wins functons: \n{df_table}')
   return df_table, True
 
 
