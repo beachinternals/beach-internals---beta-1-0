@@ -695,17 +695,22 @@ def calc_point_diff( ppr_df, disp_player):
 def calc_consistency_match_table( m_ppr_df, disp_player ):
   # calculate hte consistency table for the during match parameters
   # create the output dataframe - This is speficif to the report
-  df_dict = {' ':['All','1a','1b','2a','2b','3a','3b','Mean','St Dev'],
-             'Points':[0,0,0,0,0,0,0,0,0],
-             'FBHE':[0,0,0,0,0,0,0,0,0],
-             'Att':[0,0,0,0,0,0,0,0,0],
-             'Tran Conv':[0,0,0,0,0,0,0,0,0],
-             "Error Den":[0,0,0,0,0,0,0,0,0],
-             'Knockout %':[0,0,0,0,0,0,0,0,0],
-             'Good Passes':[0,0,0,0,0,0,0,0,0],
-             'Points Earned':[0,0,0,0,0,0,0,0,0]
+  df_dict = {' ':['All','1a','1b','2a','2b','3a','3b','Mean','St Dev','Percentile'],
+             'Points':[0,0,0,0,0,0,0,0,0,0],
+             'FBHE':[0,0,0,0,0,0,0,0,0,0],
+             'Att':[0,0,0,0,0,0,0,0,0,0],
+             'Tran Conv':[0,0,0,0,0,0,0,0,0,0],
+             "Error Den":[0,0,0,0,0,0,0,0,0,0],
+             'Knockout %':[0,0,0,0,0,0,0,0,0,0],
+             'Good Passes':[0,0,0,0,0,0,0,0,0,0],
+             'Points Earned':[0,0,0,0,0,0,0,0,0,0]
             }
-  cons_table = pd.DataFrame.from_dict( df_dict )
+  # Define desired column order
+  column_order = [' ', 'Points', 'Att', 'FBHE', 'Tran Conv', 'Error Den', 'Knockout %', 'Good Passes', 'Points Earned']
+
+  # Create DataFrame with specified column order
+  cons_table = pd.DataFrame(df_dict, columns=column_order)
+  
   ko_vector = [0,0,0,0,0,0,0]
   fb_vector = [0,0,0,0,0,0,0]
   tcr_vector = [0,0,0,0,0,0,0]
@@ -752,7 +757,7 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
       # calculate fbhe 
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
       fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
-      cons_table.at[index,'FBHE'] = fbhe_vector[0] if fbhe_vector[3] != 0 else None  # fbhe
+      cons_table.at[index,'FBHE'] = fbhe_vector[0]  # fbhe
       fb_vector[index] = fbhe_vector[0]
       cons_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
       cons_table.at[index,'Points'] = tmp_df.shape[0]
@@ -791,6 +796,14 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
       cons_table.at[index,'Points Earned'] = pt_diff
       pts_vector[index] = pt_diff
 
+      # now I want to format all these to 3 decimals
+      cons_table.at[index,'FBHE'] = float('{:.3}'.format(cons_table.at[index,'FBHE']))
+      cons_table.at[index,'Error Den'] = float('{:.3}'.format(cons_table.at[index,'Error Den']))
+      cons_table.at[index,'Tran Conv'] = float('{:.3}'.format(cons_table.at[index,'Tran Conv']))
+      cons_table.at[index,'Knockout %'] = float('{:.3}'.format(cons_table.at[index,'Knockout %']))
+      cons_table.at[index,'Good Passes'] = float('{:.3}'.format(cons_table.at[index,'Good Passes']))
+      cons_table.at[index,'Points Earned'] = float('{:.3}'.format(cons_table.at[index,'Points Earned']))
+
     # now the last two rows, mean and stdev
     #print(f"Error Vector: {ed_vector}")
     # first, clean the data lists
@@ -803,29 +816,31 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
     cons_table.at[index+1,'Points'] = ' '
     cons_table.at[index+1,'Att'] = ' '
     cons_table.at[index+1,' '] = 'Mean'
-    cons_table.at[index+1,'FBHE'] = np.nanmean(fb_vector)
-    cons_table.at[index+1,'Error Den'] = np.nanmean(ed_vector)
+    cons_table.at[index+1,'FBHE'] = float('{:.3}'.format(np.nanmean(fb_vector)))
+    cons_table.at[index+1,'Error Den'] = float('{:.3}'.format(np.nanmean(ed_vector)))
     #print(f"cons table: player: {disp_player}, tcr_vector {tcr_vector}, mean: {np.nanmean(tcr_vector)}")
-    cons_table.at[index+1,'Tran Conv'] = np.nanmean(tcr_vector)
-    cons_table.at[index+1,'Knockout %'] = np.nanmean(ko_vector)
-    cons_table.at[index+1,'Good Passes'] = np.nanmean(pass_vector)
-    cons_table.at[index+1,'Points Earned'] = np.nanmean(pts_vector)
+    cons_table.at[index+1,'Tran Conv'] = float('{:.3}'.format(np.nanmean(tcr_vector)))
+    cons_table.at[index+1,'Knockout %'] = float('{:.3}'.format(np.nanmean(ko_vector)))
+    cons_table.at[index+1,'Good Passes'] = float('{:.3}'.format(np.nanmean(pass_vector)))
+    cons_table.at[index+1,'Points Earned'] = float('{:.3}'.format(np.nanmean(pts_vector)))
 
     index = index + 1
     cons_table.at[index+1,' '] = 'St Dev'
     cons_table.at[index+1,'Points'] = ' '
     cons_table.at[index+1,'Att'] = ' '
-    cons_table.at[index+1,'FBHE'] = np.nanstd(fb_vector)
-    cons_table.at[index+1,'Error Den'] = np.nanstd(ed_vector)
+    cons_table.at[index+1,'FBHE'] = float('{:.3}'.format(np.nanstd(fb_vector)))
+    cons_table.at[index+1,'Error Den'] = float('{:.3}'.format(np.nanstd(ed_vector)))
     #print(f"cons table: player: {disp_player}, tcr_vector {tcr_vector}, stdev: {np.nanstd(tcr_vector)}")
-    cons_table.at[index+1,'Tran Conv'] = np.nanstd(tcr_vector)
-    cons_table.at[index+1,'Knockout %'] = np.nanstd(ko_vector)
-    cons_table.at[index+1,'Good Passes'] = np.nanstd(pass_vector)
-    cons_table.at[index+1,'Points Earned'] = np.nanstd(pts_vector)
+    cons_table.at[index+1,'Tran Conv'] = float('{:.3}'.format(np.nanstd(tcr_vector)))
+    cons_table.at[index+1,'Knockout %'] = float('{:.3}'.format(np.nanstd(ko_vector)))
+    cons_table.at[index+1,'Good Passes'] = float('{:.3}'.format(np.nanstd(pass_vector)))
+    cons_table.at[index+1,'Points Earned'] = float('{:.3}'.format(np.nanstd(pts_vector)))
   else:
     cons_table = 'No Data Found'
     no_data = True
 
+  #cons_table = cons_table.set_index(' ')
+    
   return cons_table, no_data
 
 @anvil.server.callable
@@ -872,7 +887,7 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
     tmp_df = m_ppr_df[ (m_ppr_df['video_id'] == set_row['video_id'] ) & (m_ppr_df['set'] == set_row['set']) ]
     
     # we only record tis set if it has over 10 points
-    if tmp_df.shape[0] >= 10:
+    if tmp_df.shape[0] >= 20:
       index = index + 1
 
       # record the set information
@@ -882,8 +897,9 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
       # calculate fbhe 
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
       fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
-      cons2_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
-      cons2_table.at[index,'FBHE'] = fbhe_vector[0] if fbhe_vector[3] != 0 else None # fbhe
+      cons2_table.at[index,'Att'] = float(fbhe_vector[3])  # attack attempts
+      cons2_table.at[index,'FBHE'] = float(fbhe_vector[0]) if fbhe_vector[3] != 0 else None # fbhe
+      cons2_table.at[index,'FBHE'] = float('{:.3}'.format(cons2_table.at[index,'FBHE']))
       cons2_table.at[index,'Points'] = tmp_df.shape[0]
       stat_table.at[index,'FBHE'] = cons2_table.at[index,'FBHE']
 
@@ -895,30 +911,33 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
         stat_table.at[index,'Tran Conv'] = None
       else:
         cons2_table.at[index,'Tran Conv'] = float(trans_list[0][:-1])
+        #cons2_table.at[index,'Tran Conv'] = float('{:.3}'.format(cons2_table.at[index,'Tran Conv']))
         stat_table.at[index,'Tran Conv'] = float(trans_list[0][:-1])
 
       # calculate Error Density
       error_vector = calc_error_den(tmp_df, disp_player)
       #print(f"error vector: Player {disp_player}, Ed Vector {error_vector}")
       cons2_table.at[index,"Error Den"] = float(error_vector[0][:-1])  if error_vector[6] != 0 else None 
+      cons2_table.at[index,"Error Den"] = float('{:.3}'.format(cons2_table.at[index,"Error Den"]))
       stat_table.at[index,'Error Den'] = float(error_vector[0][:-1])  if error_vector[6] != 0 else None 
 
       # calcualte Knock Out
-      cons2_table.at[index,'Knockout %'] = calc_knock_out(tmp_df,disp_player)
+      cons2_table.at[index,'Knockout %'] = float('{:.3}'.format(calc_knock_out(tmp_df,disp_player)))
       stat_table.at[index,'Knockout %'] = cons2_table.at[index,'Knockout %']
       
       # Calculate good passing percent
       oos_vector = count_out_of_system(tmp_df,disp_player,'pass')
-      if oos_vector[1] == None:
+      if oos_vector[1] is None:
         cons2_table.at[index,'Good Passes'] = None
         stat_table.at[index,'Good Passes'] = None
       else:
-        cons2_table.at[index,'Good Passes'] = 1 - oos_vector[1]
+        cons2_table.at[index, 'Good Passes'] = float(1 - oos_vector[1])  # Ensure float
+        cons2_table.at[index, 'Good Passes'] = float('{:.3f}'.format(cons2_table.at[index, 'Good Passes']))  # Format to 3 decimal places
         stat_table.at[index,'Good Passes'] = 1-oos_vector[1]
 
       # calculate point differential (as a percent of total points)
-      pt_diff = calc_point_diff( tmp_df, disp_player)
-      cons2_table.at[index,'Points Earned'] = pt_diff
+      pt_diff = float(calc_point_diff( tmp_df, disp_player))
+      cons2_table.at[index,'Points Earned'] = float('{:.3}'.format(pt_diff))
       stat_table.at[index,'Points Earned'] = pt_diff
 
   no_data = False if index > -1 else False
@@ -930,22 +949,23 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
   cons2_table.at[index,'Att'] = ''
   cons2_table.at[index,'FBHE'] = stat_table['FBHE'].mean(skipna=True)
   #print(f"set 2 set: stat table {stat_table}")
-  cons2_table.at[index,'Tran Conv'] = stat_table['Tran Conv'].mean(skipna=True)
-  cons2_table.at[index,'Error Den'] = stat_table['Error Den'].mean(skipna=True)
-  cons2_table.at[index,'Knockout %'] = stat_table['Knockout %'].mean(skipna=True)
-  cons2_table.at[index,'Good Passes'] = stat_table['Good Passes'].mean(skipna=True)
-  cons2_table.at[index,'Points Earned'] = stat_table['Points Earned'].mean(skipna=True)
+  cons2_table.at[index,'Tran Conv'] = float('{:.3}'.format(stat_table['Tran Conv'].mean(skipna=True)))
+  cons2_table.at[index,'Error Den'] = float('{:.3}'.format(stat_table['Error Den'].mean(skipna=True)))
+  cons2_table.at[index,'Knockout %'] = float('{:.3}'.format(stat_table['Knockout %'].mean(skipna=True)))
+  cons2_table.at[index,'Good Passes'] = float('{:.3}'.format(stat_table['Good Passes'].mean(skipna=True)))
+  cons2_table.at[index,'Points Earned'] = float('{:.3}'.format(stat_table['Points Earned'].mean(skipna=True)))
   index = index + 1
   cons2_table.at[index,'Set'] = "St Dev"
   cons2_table.at[index,'Points'] = ''
   cons2_table.at[index,'Att'] = ''
-  cons2_table.at[index,'FBHE'] = stat_table['FBHE'].std(skipna=True)
-  cons2_table.at[index,'Tran Conv'] = stat_table['Tran Conv'].std(skipna=True)
-  cons2_table.at[index,'Error Den'] = stat_table['Error Den'].std(skipna=True)
-  cons2_table.at[index,'Knockout %'] = stat_table['Knockout %'].std(skipna=True)
-  cons2_table.at[index,'Good Passes'] = stat_table['Good Passes'].std(skipna=True)
-  cons2_table.at[index,'Points Earned'] = stat_table['Points Earned'].std(skipna=True)
+  cons2_table.at[index,'FBHE'] = float('{:.3}'.format(stat_table['FBHE'].std(skipna=True)))
+  cons2_table.at[index,'Tran Conv'] = float('{:.3}'.format(stat_table['Tran Conv'].std(skipna=True)))
+  cons2_table.at[index,'Error Den'] = float('{:.3}'.format(stat_table['Error Den'].std(skipna=True)))
+  cons2_table.at[index,'Knockout %'] = float('{:.3}'.format(stat_table['Knockout %'].std(skipna=True)))
+  cons2_table.at[index,'Good Passes'] = float('{:.3}'.format(stat_table['Good Passes'].std(skipna=True)))
+  cons2_table.at[index,'Points Earned'] = float('{:.3}'.format(stat_table['Points Earned'].std(skipna=True)))
 
+  #cons2_table = cons2_table.set_index('Set')
   return cons2_table, no_data
 
 

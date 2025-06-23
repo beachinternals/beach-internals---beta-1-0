@@ -10,6 +10,7 @@ import pandas as pd
 import io
 import math
 import inspect
+import scipy.stats as stats
 from tabulate import tabulate
 from server_functions import *
 from anvil import pdf
@@ -61,6 +62,7 @@ def report_player_stub_new(lgy, team, **rpt_filters):
   # fetch the ppr dataframe and filter by all the report filters
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
 
   # initiate return lists
   title_list = ['','','','','','','','','','']
@@ -169,6 +171,7 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
   # fetch the ppr dataframe and filter by all the report filters
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
   title_list, label_list, image_list, df_list = initialize_report_lists(inspect.currentframe().f_code.co_name, **rpt_filters)
 
   #------------------------------------------------------------------------------------------------------
@@ -191,9 +194,50 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
   #            Create and store DataFrames
   #------------------------------------------------------------------------------------------------------
   cons_table, no_data = calc_consistency_match_table( ppr_df, disp_player )
+  # now calculate percentile
+  cons_table.at[9,'FBHE'] = 1 - stats.norm.cdf( (cons_table.at[8,'FBHE'] - player_data_stats_df.at[0,'cons_fbhe_sd_match_mean'])/ player_data_stats_df.at[0,'cons_fbhe_sd_match_stdev'] )
+  cons_table.at[9,'Error Den'] = 1 - stats.norm.cdf( (cons_table.at[8,'Error Den'] - player_data_stats_df.at[0,'cons_ed_sd_match_mean'])/ player_data_stats_df.at[0,'cons_ed_sd_match_stdev'] )
+  cons_table.at[9,'Tran Conv'] = 1 - stats.norm.cdf( (cons_table.at[8,'Tran Conv'] - player_data_stats_df.at[0,'cons_tcr_sd_match_mean'])/ player_data_stats_df.at[0,'cons_tcr_sd_match_stdev'] )
+  cons_table.at[9,'Knockout %'] = 1 - stats.norm.cdf( (cons_table.at[8,'Knockout %'] - player_data_stats_df.at[0,'cons_ko_sd_match_mean'])/ player_data_stats_df.at[0,'cons_ko_sd_match_stdev'] )
+  cons_table.at[9,'Good Passes'] = 1 - stats.norm.cdf( (cons_table.at[8,'Good Passes'] - player_data_stats_df.at[0,'cons_pass_sd_match_mean'])/ player_data_stats_df.at[0,'cons_pass_sd_match_stdev'] )
+  cons_table.at[9,'Points Earned'] = 1 - stats.norm.cdf( (cons_table.at[8,'Points Earned'] - player_data_stats_df.at[0,'cons_pts_sd_match_mean'])/ player_data_stats_df.at[0,'cons_pts_sd_match_stdev'] )
+  cons_table.at[9,'Error Den'] = str('{:.1%}').format(cons_table.at[9,'Error Den'])
+  cons_table.at[9,'Tran Conv'] = str('{:.1%}').format(cons_table.at[9,'Tran Conv'])
+  cons_table.at[9,'Knockout %'] = str('{:.1%}').format(cons_table.at[9,'Knockout %'])
+  cons_table.at[9,'Good Passes'] = str('{:.1%}').format(cons_table.at[9,'Good Passes'])
+  cons_table.at[9,'Points Earned'] = str('{:.1%}').format(cons_table.at[9,'Points Earned'])
+  cons_table.at[9,'FBHE'] = str('{:.1%}').format(cons_table.at[9,'FBHE'])
+  cons_table.at[9,'Att'] = ''
+  cons_table.at[9,'Points'] = ''
+
+  # Define desired column order
+  column_order = [' ', 'Points', 'Att', 'FBHE', 'Tran Conv', 'Error Den', 'Knockout %', 'Good Passes', 'Points Earned']
+  cons_table = cons_table.reindex(columns = column_order)
   df_list[0] = cons_table.to_dict('records')
   
   cons2_table, no_data1 = calc_consistency_s2s_table( ppr_df, disp_player )
+  # now calculate percentile
+  index = cons2_table.shape[0]
+  cons2_table.at[index,'Set'] = 'Percentile'
+  cons2_table.at[index,'FBHE'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'FBHE'] - player_data_stats_df.at[0,'cons_fbhe_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_fbhe_sd_s2s_stdev'] )
+  cons2_table.at[index,'Error Den'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Error Den'] - player_data_stats_df.at[0,'cons_ed_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_ed_sd_s2s_stdev'] )
+  cons2_table.at[index,'Tran Conv'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Tran Conv'] - player_data_stats_df.at[0,'cons_tcr_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_tcr_sd_s2s_stdev'] )
+  cons2_table.at[index,'Knockout %'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Knockout %'] - player_data_stats_df.at[0,'cons_ko_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_ko_sd_s2s_stdev'] )
+  cons2_table.at[index,'Good Passes'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Good Passes'] - player_data_stats_df.at[0,'cons_pass_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_pass_sd_s2s_stdev'] )
+  cons2_table.at[index,'Points Earned'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Points Earned'] - player_data_stats_df.at[0,'cons_pts_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_pts_sd_s2s_stdev'] )
+  cons2_table.at[index,'Att'] = ''
+  cons2_table.at[index,'Points'] = ''
+  cons2_table.at[index,'FBHE'] = str('{:.1%}').format(cons2_table.at[index,'FBHE'])
+  cons2_table.at[index,'Error Den'] = str('{:.1%}').format(cons2_table.at[index,'Error Den'])
+  cons2_table.at[index,'Tran Conv'] = str('{:.1%}').format(cons2_table.at[index,'Tran Conv'])
+  cons2_table.at[index,'Knockout %'] = str('{:.1%}').format(cons2_table.at[index,'Knockout %'])
+  cons2_table.at[index,'Good Passes'] = str('{:.1%}').format(cons2_table.at[index,'Good Passes'])
+  cons2_table.at[index,'Points Earned'] = str('{:.1%}').format(cons2_table.at[index,'Points Earned'])
+
+  # Define desired column order
+  column_order = ['Set', 'Points', 'Att', 'FBHE', 'Tran Conv', 'Error Den', 'Knockout %', 'Good Passes', 'Points Earned']
+  cons2_table = cons2_table.reindex(columns = column_order)
+  
   df_list[1] = cons2_table.to_dict('records')
 
   #------------------------------------------------------------------------------------------------------
@@ -350,12 +394,12 @@ def  player_season_summary_new(lgy, team, **rpt_filters):
   # now create histograms for each one
   size = [11,5]
   avg_title = disp_league + " Average : "
-  plt1 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', size, avg_title, player_data_stats_df.at[0,'fbhe_mean']   )
-  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', size, avg_title, player_data_stats_df.at[0,'err_den_mean']/100 )
-  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', size, avg_title, player_data_stats_df.at[0,'tcr_mean']/100 )
-  plt4 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', size, avg_title, player_data_stats_df.at[0,'knockout_mean'] )
-  plt5 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', size, avg_title, player_data_stats_df.at[0,'goodpass_mean'] )
-  plt6 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', size, '', 0 )
+  plt1 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', size, avg_title, player_data_stats_df.at[0,'fbhe_mean'],False,'',''   )
+  plt2 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Denisty', '', 'Error Denisty', size, avg_title, player_data_stats_df.at[0,'err_den_mean']/100,False,'','' )
+  plt3 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', size, avg_title, player_data_stats_df.at[0,'tcr_mean']/100,False,'','' )
+  plt4 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', size, avg_title, player_data_stats_df.at[0,'knockout_mean'],False,'','' )
+  plt5 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', size, avg_title, player_data_stats_df.at[0,'goodpass_mean'],False,'','' )
+  plt6 = plot_bar_graph( sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', size, '', 0,False,'','' )
 
   # store the images in the list
   image_list[0] = plt1
