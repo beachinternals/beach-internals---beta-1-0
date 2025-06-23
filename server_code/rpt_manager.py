@@ -704,6 +704,10 @@ def rpt_mgr_generate_background():
     else:
       print(f"rpt_mgr_generate_background : Invalide Report Type : {rpt_r['rpt_type']}")
 
+  # last thing, empy the report_data table when we are done
+  email_text = email_text + 'Deleting all rows form report_data table \n'
+  app_tables.report_data.delete_all_rows()
+  
   #now, send an email with the updates
   internals_email = 'info@beachinternals.com'
   now1 = datetime.now()
