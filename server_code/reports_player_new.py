@@ -596,7 +596,7 @@ def report_league_new(lgy, team, **rpt_filters):
 
   # Create the output dictionary
   df_dict = {
-    'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Hgher FBHE', 'Win w/ Higher Transtiion', 'Win w/ Lower Errors',' ', 'High FBHE Loser w/High Errors','High FBHE Loser w/Low Transition'],
+    'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Hgher FBHE', 'Win w/ Higher Transition', 'Win w/ Lower Errors',' ', 'High FBHE Loser w/High Errors','High FBHE Loser w/Low Transition'],
     'Number': ['', 0, 0, 0, 0, 0, 0, 0, '', 0, 0],
     'Percent': ['', '', '', '', '', 0, 0, 0, '', 0, 0]
   }
@@ -617,8 +617,8 @@ def report_league_new(lgy, team, **rpt_filters):
   df_table.at['Win w/ Lower Errors','Number'] = tri_df[ (tri_df['win_err_den'] < tri_df['loser_err_den']) ].shape[0]
   df_table.at['Win w/ Lower Errors','Percent'] = str('{:.1%}'.format(df_table.at['Win w/ Lower Errors','Number']/df_table.at['Sets','Number']))
   
-  df_table.at['Win w/ Higher Transtiion','Number'] = tri_df[ (tri_df['win_tcr'] > tri_df['loser_tcr']) ].shape[0]
-  df_table.at['Win w/ Higher Transtiion','Percent'] = str('{:.1%}'.format(df_table.at['Win w/ Higher Transtiion','Number']/df_table.at['Sets','Number']))
+  df_table.at['Win w/ Higher Transition','Number'] = tri_df[ (tri_df['win_tcr'] > tri_df['loser_tcr']) ].shape[0]
+  df_table.at['Win w/ Higher Transition','Percent'] = str('{:.1%}'.format(df_table.at['Win w/ Higher Transtiion','Number']/df_table.at['Sets','Number']))
 
   # Extract scalar thresholds
   tcr_low = (player_data_stats_df['tcr_mean'].iloc[0] + player_data_stats_df['tcr_stdev'].iloc[0])/100

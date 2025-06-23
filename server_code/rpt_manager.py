@@ -675,7 +675,7 @@ def rpt_mgr_generate_background():
         else:
           email_text = email_text + ret_val + " \n"
       
-      elif rpt_r['rpt_type'] == 'new player':
+      elif rpt_r['rpt_type'] == 'player':
         email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
         ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['player'], disp_team)
         if not ret_val:
@@ -683,7 +683,7 @@ def rpt_mgr_generate_background():
         else:
           email_text = email_text + ret_val + '\n'
       
-      elif rpt_r['rpt_type'] == 'new pair':
+      elif rpt_r['rpt_type'] == 'pair':
         email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
         ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['pair'], disp_team)
         if not ret_val:
