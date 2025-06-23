@@ -699,35 +699,35 @@ def report_league_new(lgy, team, **rpt_filters):
   # Image for the Historgram of FBHE
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'fbhe','First Ball Hitting Efficiency', -1, 1)
   image_list[0] = hist_plot
-  print(f" stat_text: {stat_text}")
+  #print(f" stat_text: {stat_text}")
   df = pd.DataFrame({'':[stat_text]})
   df_list[1] = df.to_dict('records')
   
   # Image for the Historgram of Error Density
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'err_den','Error Density', 0, 100)
   image_list[2] = hist_plot
-  print(f" stat_text: {stat_text}")
+  #print(f" stat_text: {stat_text}")
   df = pd.DataFrame({'':[stat_text]})
   df_list[2] = df.to_dict('records')
   
   # Image for the Historgram of Transition Conversion
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'tcr','Transition Conversion', 0, 100)
   image_list[4] = hist_plot
-  print(f" stat_text: {stat_text}")
+  #print(f" stat_text: {stat_text}")
   df = pd.DataFrame({'':[stat_text]})
   df_list[3] = df.to_dict('records')
   
   # Image for the Historgram of Knock Out
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'knockout','Serving Aggressiveness - Knock Out', 0,1)
   image_list[6] = hist_plot
-  print(f" stat_text: {stat_text}")
+  #print(f" stat_text: {stat_text}")
   df = pd.DataFrame({'':[stat_text]})
   df_list[4] = df.to_dict('records')
   
   # Image for the Historgram of Good Pass Percent
   stat_text, hist_plot = anvil.server.call('plot_histogram',lgy,'goodpass','Percent Good Passes', 0.1, 1)
   image_list[8] = hist_plot
-  print(f" stat_text: {stat_text}")
+  #print(f" stat_text: {stat_text}")
   df = pd.DataFrame({'':[stat_text]})
   df_list[5] = df.to_dict('records')
 
@@ -838,8 +838,8 @@ def count_wins( win_column, Loser_column, l_min, l_max):
   # Create DataFrame and set index
   df_table = pd.DataFrame.from_dict(df_dict).set_index('Metric')
 
-  print(f" df_table :\n {df_table}")
-  print(f"Combined df: \n {combined_df}")
+  #print(f" df_table :\n {df_table}")
+  #print(f"Combined df: \n {combined_df}")
   
   for i in range(1,bins+1):
     min = (i-1)*step + min_value

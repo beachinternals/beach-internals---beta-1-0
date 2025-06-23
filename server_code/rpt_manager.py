@@ -847,11 +847,17 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
       player_pair = p['pair']
     else:
       player_pair = ' Unknown '
-      
-    pdf_name = rpt_r['Report Description'] + ' ' + player_pair + '.pdf'
 
     #print(f"new player reports: player {p['league']}, {p['gender']}, {p['year']}, {p['team']},{p['number']}, {p['shortname']}")
     lgy = p['league']+' | '+p['gender']+' | '+p['year']
+
+    if rpt_r['rpt_type'] == 'league':
+        player_pair = lgy  
+    
+    pdf_name = rpt_r['Report Description'] + ' ' + player_pair + '.pdf'
+
+
+    
     for rptname in rpt_r['rpts_inc']:
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
 
