@@ -450,7 +450,7 @@ def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_lab
     return plot_image
 
   finally:
-    plt.close()
+    plt.close('all')
 
 
 @anvil.server.callable
@@ -489,7 +489,7 @@ def plot_histogram(lgy, plot_var, var_name, l_min, l_max):
 
   plt_v = anvil.mpl_util.plot_image()
   # Close the plot
-  plt.close()
+  plt.close('all')
 
   return stat_text, plt_v
 
