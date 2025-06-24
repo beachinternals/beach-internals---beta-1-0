@@ -42,6 +42,7 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   image_list = []
   df_list = []
 
+  print(f"generate and store report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}\n Report Filters: {rpt_filters}")
   title_list, label_list, image_list, df_list = anvil.server.call( fnct_name, lgy, team, **rpt_filters )
 
   #print(f"Title List returned, Length: {len(title_list)}, list: {title_list}")
