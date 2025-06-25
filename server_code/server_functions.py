@@ -1171,3 +1171,62 @@ def apply_date_filters(df, column, value ):
   if df.empty:
     raise ValueError(f"No data after applying {column} filter")
   return df
+
+
+@anvil.server.callable
+def find_kill_error_clusters(report_id, category='kill'):
+  """
+    Find clusters of kills or errors using DBSCAN and return cluster labels and densities metrics.
+    """
+  try:
+    logger.info(f"Finding {category} clusters for report_id: {report_id}")
+    # Fetch data from app_tables.report_data
+    rows = app_tables.report_data.search(report_id=report_id)
+    data = [
+      {
+        'x': row.get('x', 0),
+        'y': row.get('y', 0),
+        'value': row.get('value', '').lower()
+      }
+      for row in rows
+      if row.get('x') is not None and row.get('y') is not None and row.get('value')
+    ]
+
+    if not data:
+      logger.warning(f"No valid data found for report_id: {report_id}")
+      return {'error': 'No valid data for clustering'}
+
+    df = pd.DataFrame(data)
+    # Filter for the specified category (kill or error)
+    df_category = df[df['value'] == category.lower()]
+    if df_category.empty:
+      logger.warning(f"No {category} data found for report_id: {report_id}")
+      return {'error': f'No {category} data found'}
+
+      # Extract coordinates
+    X = df_category[['x', 'y']].values
+
+    # Apply DBSCAN
+    eps = 0.5  # Adjust based on your data's scale (e.g., distance threshold)
+    min_samples = 5  # Minimum points to form a cluster
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
+    labels = db.labels_  # Cluster labels (-1 for noise)
+
+    # Calculate density (points per cluster)
+    cluster_counts = pd.Series(labels).value_counts()
+    densities_info = {
+      f'cluster_{label}': count for label, count in cluster_counts.items() if label != -1
+    }
+
+    # Add cluster labels to DataFrame
+    df_category['cluster'] = labels
+
+    return {
+      'status': 'success',
+      'data': df_category.to_dict('records'),
+      'density': density_info,
+      'n_clusters': len(set(labels)) - (1 if -1 in labels else 0)
+    }
+  except Exception as e:
+    logger.error(f"Error in find_kill_error_clusters: {str(e)}", exc_info=True)
+    return {'error': str(e)}
