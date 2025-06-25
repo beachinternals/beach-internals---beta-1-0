@@ -10,6 +10,9 @@ import pandas as pd
 import io
 import math
 import inspect
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 import scipy.stats as stats
 from tabulate import tabulate
 from server_functions import *
@@ -864,7 +867,7 @@ def count_wins( win_column, Loser_column, l_min, l_max):
 
 #---------------------------------------------------------------------------
 #
-#              player report stub NEW
+#              player strengths and weaknesses
 #
 #---------------------------------------------------------------------------
 @anvil.server.callable
@@ -1014,6 +1017,301 @@ def player_sw_new(lgy, team, **rpt_filters):
   df_list[1] = def_df.to_dict('records')
   df_list[2] = err_df.to_dict('records')
   df_list[3] = cons_df.to_dict('records')
+
+  return title_list, label_list, image_list, df_list
+
+
+#---------------------------------------------------------------------------
+#
+#              player FBHE by 45 Zones
+#
+#---------------------------------------------------------------------------
+@anvil.server.callable
+def player_45_fbhe_new(lgy, team, **rpt_filters):
+  '''
+  Report Functions:
+    - Caluclate and display the 45 zonesm plus general zone 1,3,5 table
+    - For this reports, calculate FBHE for each of the 45 zones
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe and filter by all the report filters
+  #
+  # comment out the dataframe not needed for this report
+  #
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  #print(f"PPR DF size, new {ppr_df.shape[0]}")
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # initiate return lists
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+  title_list[0] = rpt_row['rpt_title']
+  title_list[1] = rpt_row['rpt_sub_title']
+  title_list[2] = rpt_row['rpt_section_title1']
+  title_list[3] = rpt_filters.get('lgy')
+  title_list[4] = rpt_row['team_name']
+  title_list[5] = rpt_row['rpt_type']
+  title_list[6] = rpt_row['filter_text']
+  title_list[7] = rpt_row['explain_text']
+  title_list[8] = rpt_filters.get('player')
+  title_list[9] = rpt_filters.get('pair')
+
+  label_list[0] = rpt_row['box1_title']
+  label_list[1] = rpt_row['box2_title']
+  label_list[2] = rpt_row['box3_title']
+  label_list[3] = rpt_row['box4_title']
+  label_list[4] = rpt_row['box5_title']
+  label_list[5] = rpt_row['box6_title']
+  label_list[6] = rpt_row['box7_title']
+  label_list[7] = rpt_row['box8_title']
+  label_list[8] = rpt_row['box9_title']
+  label_list[9] = rpt_row['box10_title']
+
+  #------------------------------------------------------------------------------------------------------
+  #
+  #            Create the images and dataframes with filtered ppr data for report
+  #
+  #-----------------------------------------------------------------------------------------------------
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+  #print(f"ppr size after filter for the player: {disp_player}, {ppr_df.shape[0]}")
+
+  # break disp_player into team, number, and shortname
+  # unpack player into team, number and short name
+  str_loc = disp_player.index(' ')
+  p_team = disp_player[:str_loc].strip() # player team
+  p_player = disp_player[str_loc+1:]
+  str_loc = p_player.index(' ')
+  p_num = p_player[:str_loc].strip() # player number
+  p_sname = p_player[str_loc+1:].strip() # player short name
+
+
+  #------------------------------------------------------------------------------------
+  #
+  #     Report is 'set up', not calcualte acorss the 3 zones, then the 45 serves
+  #
+  #-------------------------------------------------------------------------------------
+  
+  # create the output dataframe - This dataframe is the summary for zone 1,3,5
+  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','URL'],
+             'All':[0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  if ppr_df.shape[0] > 0:
+    # calculate fbhe for all attacks
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    fbhe_vector = fbhe( ppr_df, disp_player, 'pass', True )
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[1,'All'] = fbhe_vector[4]  # confidence interval
+    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+
+    # calculate for zones 1 - 5
+    column = ['Zone 1','Zone 3','Zone 5','No Zone']
+    for i in [0,1,2,3]:
+      zone = 0 if i == 3 else (i*2)+1
+      fbhe_vector = fbhe( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', True )
+      fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
+      fbhe_table.at[2,column[i]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[3,column[i]] = fbhe_vector[2]  # errors
+      fbhe_table.at[4,column[i]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[1,column[i]] = fbhe_vector[4]  # fbso
+      fbhe_table.at[5,column[i]] = fbhe_vector[5]  # URL
+
+
+  else:
+    fbhe_table.at[0,'All'] = "No Data Found"
+
+    # get high and low for the color scheme, mean +/- 2 sdtd
+  cmax = player_data_stats_df.at[0,'fbhe_mean']+2*player_data_stats_df.at[0,'fbhe_stdev']
+  cmin = player_data_stats_df.at[0,'fbhe_mean']-2*player_data_stats_df.at[0,'fbhe_stdev']
+
+  # the order of the index
+  '''
+  index.  from.   to   
+  0.      1.       1C.  x = 0.8. y = 4.0
+  1.      1.       1D.  x = 0.8. y = 5.6
+  2.       1.      1E.   x = 0.8 y = 7.2
+  3       1.      2C.    x = 2.4. y = 4.0
+  4       1       2D.    x = 2.4  y = 5.6
+  5.      1.      2E.    x = 2.4. y = 7.2
+  6                3C.   x = 3.6. y = 4.0
+  7                3D.    x = 3.6. y = 5.6
+  8                3E.   x = 3.6. y = 7.2
+  9                4C
+  10               4D
+  '''
+  # now, get the variables 
+  pass_x = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass_y = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+
+  # create the output dataframe - This dataframe is the for a detail below each graph, 1,3,5, so we can see the fnhe #, and the URL
+  df_dict = {'Dest Zone':[' '],
+             'FBHE':[0],
+             'Att':[0],
+             'URL':[' ']
+            }
+  z1_table = pd.DataFrame.from_dict( df_dict )
+  z3_table = pd.DataFrame.from_dict( df_dict )
+  z5_table = pd.DataFrame.from_dict( df_dict )
+  z1_table_index = 0
+  z3_table_index = 0
+  z5_table_index = 0
+
+  # now, loop thru the list for serves from zone 1
+  index = 0
+  x = 8.8
+  for i in [1,2,3,4,5]:  # j is along the net
+    x = x - 1.6
+    y = 2.4
+    for j in ['c','d','e']: # k is depth+
+      y = y + 1.6
+      pass_x[index] = x
+      pass_y[index] = y
+
+      # Now let's calcualte from PPR data:
+      #print(f"size of ppr_df: {ppr_df.shape[0]}")
+      #print(f"size of ppr_df, srv src = 1: {ppr_df[ppr_df['serve_src_zone_net'] == 1].shape[0]}")
+      #print(f"size of ppr_df, srv src = 1, dest = {i}: {ppr_df[(ppr_df['serve_src_zone_net'] == 1)&(ppr_df['serve_dest_zone_net'] == i)].shape[0]}")
+      #print(f"size of ppr_df, srv src = 1, dest = {i}{j}: {ppr_df[(ppr_df['serve_src_zone_net'] == 1)&(ppr_df['serve_dest_zone_net'] == i)&(ppr_df['serve_dest_zone_depth'] == j.capitalize() )].shape[0]}")
+
+      # Zone 1
+      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
+                                  (ppr_df['serve_dest_zone_net'] == i) &
+                                  (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                         disp_player, 'pass', True
+        )
+      print(f"FBHE vector for 1, {i}{j}, {fbhe_vector}")
+      if fbhe_vector[3] >= 5:
+        pass1_val[index] = fbhe_vector[0]
+        z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        z1_table.loc[z1_table_index,'FBHE'] = fbhe_vector[0]
+        z1_table.loc[z1_table_index,'Att'] = fbhe_vector[3]
+        z1_table.loc[z1_table_index,'URL'] = fbhe_vector[5]
+        z1_table_index = z1_table_index + 1
+        
+
+      # Zone 3
+      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
+                                  (ppr_df['serve_dest_zone_net'] == i) &
+                                  (ppr_df['serve_dest_zone_depth'] == j.capitalize())],
+                         disp_player, 'pass', True
+                        )
+      if fbhe_vector[3] >= 5:        
+        pass3_val[index] = fbhe_vector[0]
+        z3_table.loc[z3_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        z3_table.loc[z3_table_index,'FBHE'] = fbhe_vector[0]
+        z3_table.loc[z3_table_index,'Att'] = fbhe_vector[3]
+        z3_table.loc[z3_table_index,'URL'] = fbhe_vector[5]
+        z3_table_index = z3_table_index + 1
+
+      # Zone 5
+      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
+                                  (ppr_df['serve_dest_zone_net'] == i) &
+                                  (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                         disp_player, 'pass', True
+                        )
+      if fbhe_vector[3] >= 5:      
+        pass5_val[index] = fbhe_vector[0]
+        z5_table.loc[z5_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        z5_table.loc[z5_table_index,'FBHE'] = fbhe_vector[0]
+        z5_table.loc[z5_table_index,'Att'] = fbhe_vector[3]
+        z5_table.loc[z5_table_index,'URL'] = fbhe_vector[5]
+        z5_table_index = z5_table_index + 1
+
+      index = index + 1
+
+  # I should now have the tables required
+  #print(f"x,y : {pass_x}, {pass_y}")
+  print(f"pass value 1:\n {pass1_val}, Pass Value 3:\n{pass3_val},  Pass Value 3:\n{pass5_val}")
+
+  # make x,y for serve lines:
+  x11 = [0.5,0.5,0.5]
+  x12 = [0,4,8]
+  x31 = [4,4,4]
+  x51 = [7.5,7.5,7.5]
+  y1 = [-8,-8,-8]
+  y2 = [8,8,8]
+
+  # Create the plot for serves from Zone 1 - define the figure, plot the court, plot a few serve lines, plot the dots
+  #cm = mpl.cm.cool
+  #norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass1_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  z1_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
+  z3_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
+  z5_plt = anvil.mpl_util.plot_image()
+
+  # put the Images in the image_list
+  image_list[0] = z1_plt
+  image_list[1] = z3_plt
+  image_list[2] = z5_plt
+  
+  # put the DF's in the df_list
+  df_list[0] = fbhe_table.to_dict('records')
+  df_list[1] = z1_table.to_dict('records')
+  df_list[2] = z3_table.to_dict('records')
+  df_list[3] = z5_table.to_dict('records')
 
   return title_list, label_list, image_list, df_list
 
