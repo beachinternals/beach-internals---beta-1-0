@@ -17,7 +17,14 @@ from matplotlib.patches import Ellipse
 import math
 from pair_functions import *
 from datetime import datetime, timedelta, date
+import logging
+import re
+from matplotlib.colors import LinearSegmentedColormap
+from sklearn.cluster import DBSCAN
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # This is a server module. It runs on the Anvil server,
 
@@ -1174,31 +1181,32 @@ def apply_date_filters(df, column, value ):
 
 
 @anvil.server.callable
-def find_kill_error_clusters(report_id, category='kill'):
+def find_kill_error_clusters(ppr_df, disp_player, category='FBK'):
   """
     Find clusters of kills or errors using DBSCAN and return cluster labels and densities metrics.
     """
+  print("Entered find kill error clusters")
+  print(f"size of ppr_df passed:{ppr_df.shape[0]}")
   try:
-    logger.info(f"Finding {category} clusters for report_id: {report_id}")
-    # Fetch data from app_tables.report_data
-    rows = app_tables.report_data.search(report_id=report_id)
-    data = [
-      {
-        'x': row.get('x', 0),
-        'y': row.get('y', 0),
-        'value': row.get('value', '').lower()
-      }
-      for row in rows
-      if row.get('x') is not None and row.get('y') is not None and row.get('value')
-    ]
+    logger.info(f"Finding {category} clusters for player: {disp_player}")
+    # Fetch data from ppr_df, limit to only pass by disp_player
+    ppr_df = ppr_df[ ppr_df['pass_player'] == disp_player]
+    print(f"ppr df size {ppr_df.shape[0]}")
+    print(f" ppr df pass src x:\n{ppr_df['pass_src_x']}")
+    print(f" ppr df pass src y:\n{ppr_df['pass_src_y']}")
+    print(f" ppr df point outcome:\n{ppr_df['point_outcome']}")
+    
+    # Select three columns and rename them
+    df = ppr_df[['pass_src_x', 'pass_src_y', 'point_outcome']]
+    print(f"DF with old columns: {df}")
+    df = df.rename(columns={
+                'pass_src_x': 'x', 'pass_src_y': 'y', 'point_outcome': 'value'
+          })
 
-    if not data:
-      logger.warning(f"No valid data found for report_id: {report_id}")
-      return {'error': 'No valid data for clustering'}
-
-    df = pd.DataFrame(data)
+    print(f" DF with new names: /n:{df}")
     # Filter for the specified category (kill or error)
-    df_category = df[df['value'] == category.lower()]
+    df_category = df[df['value'] == category]
+    print(f" category total: {df_category.shape[0]}")
     if df_category.empty:
       logger.warning(f"No {category} data found for report_id: {report_id}")
       return {'error': f'No {category} data found'}
@@ -1206,15 +1214,16 @@ def find_kill_error_clusters(report_id, category='kill'):
       # Extract coordinates
     X = df_category[['x', 'y']].values
 
+    print(f" X, whatever that is: {X}")
     # Apply DBSCAN
-    eps = 0.5  # Adjust based on your data's scale (e.g., distance threshold)
+    eps = 0.1  # Adjust based on your data's scale (e.g., distance threshold)
     min_samples = 5  # Minimum points to form a cluster
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     labels = db.labels_  # Cluster labels (-1 for noise)
 
     # Calculate density (points per cluster)
     cluster_counts = pd.Series(labels).value_counts()
-    densities_info = {
+    density_info = {
       f'cluster_{label}': count for label, count in cluster_counts.items() if label != -1
     }
 
@@ -1229,4 +1238,87 @@ def find_kill_error_clusters(report_id, category='kill'):
     }
   except Exception as e:
     logger.error(f"Error in find_kill_error_clusters: {str(e)}", exc_info=True)
+    return {'error': str(e)}
+
+@anvil.server.callable
+def plot_pass_clusters(ppr_df, disp_player):
+  """
+    Generate a Matplotlib scatter plot of kill/error clusters with RdYlGn colormap.
+    """
+  print("Entered Plot Pass Clusters")
+  try:
+    logger.info(f"Generating plot for Player: {disp_player}")
+    # Validate colormap
+    try:
+      cmap = plt.cm.get_cmap('RdYlGn')  # Red (max) to green (min)
+    except ValueError as e:
+      logger.error(f"Invalid colormap 'RdYlGn': {str(e)}")
+      return {'error': f"Invalid colormap: {str(e)}"}
+
+    print("Calling find kill error clusters")
+      # Get kill and error clusters
+    kill_result = anvil.server.call('find_kill_error_clusters', ppr_df, disp_player, category='FBK')
+    print(f"Kill Results:{kill_result}")
+    error_result = anvil.server.call('find_kill_error_clusters', ppr_df, disp_player, category='FBE')
+    print(f"Error Results:{error_result}")
+
+    
+    if 'error' in kill_result or 'error' in error_result:
+      error_msg = kill_result.get('error', '') or error_result.get('error', '')
+      logger.error(f"Clustering error: {error_msg}")
+      return {'error': error_msg}
+
+      # Convert results to DataFrames
+    df_kills = pd.DataFrame(kill_result.get('data', []))
+    df_errors = pd.DataFrame(error_result.get('data', []))
+    density_info = {
+      'kills': kill_result.get('density', {}),
+      'errors': error_result.get('density', {})
+    }
+
+    # Create scatter plot
+    fig, ax = plt.subplots()
+    if not df_kills.empty:
+      # Plot kills (red for high-density clusters)
+      kill_scatter = ax.scatter(
+        df_kills['x'], df_kills['y'],
+        c=df_kills['cluster'], cmap=cmap,
+        label='Kills', marker='o', s=50
+      )
+      fig.colorbar(kill_scatter, label='Kill Cluster ID')
+    if not df_errors.empty:
+      # Plot errors (blue for distinction)
+      error_scatter = ax.scatter(
+        df_errors['x'], df_errors['y'],
+        c=df_errors['cluster'], cmap='Blues',
+        label='Errors', marker='x', s=50
+      )
+      fig.colorbar(error_scatter, label='Error Cluster ID')
+
+    ax.set_xlabel('X Coordinate')
+    ax.set_ylabel('Y Coordinate')
+    ax.set_title(f'Kill and Error Clusters for {disp_player}')
+    ax.legend()
+
+    # Save plot to BytesIO
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight')
+    plt.close(fig)
+    buf.seek(0)
+    plot_media = anvil.BlobMedia('image/png', buf.getvalue(), name=f'cluster_plot_{report_id}.png')
+
+    return {
+      'timestamp': datetime.now().isoformat(),
+      'column_list': ['x', 'y', 'value'],
+      'media_list': [plot_media.name],
+      'none_count': 0,
+      'valid_media_count': 1,
+      'filtered_empty_notes': 0,
+      'stat_text': f"Kills: {len(df_kills)} points, {kill_result.get('n_clusters', 0)} clusters\n"
+      f"Errors: {len(df_errors)} points, {error_result.get('n_clusters', 0)} clusters\n"
+      f"Density: {density_info}",
+      'plot_image': plot_media,
+    }
+  except Exception as e:
+    logger.error(f"Error in plot_weekly_counts_no_xlabels: {str(e)}", exc_info=True)
     return {'error': str(e)}

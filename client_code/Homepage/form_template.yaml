@@ -174,10 +174,6 @@ components:
     spacing:
       padding: ['10', null, '10', null]
   type: ColumnPanel
-- layout_properties: {slot: top-left-btn}
-  name: image_1
-  properties: {display_mode: shrink_to_fit, height: 74.08505249023438, source: _/theme/BeachInternals Logo.jpg}
-  type: Image
 - layout_properties: {slot: title}
   name: title_label
   properties:

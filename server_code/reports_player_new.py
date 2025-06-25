@@ -1622,3 +1622,131 @@ def player_45_oos_new(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list
 
+
+
+#---------------------------------------------------------------------------
+#
+#              player pass cluster, provide a heat map of hte location of the player's passes, baed on outcome, kill or error
+#
+#---------------------------------------------------------------------------
+@anvil.server.callable
+def player_pass_cluster_new(lgy, team, **rpt_filters):
+  '''
+  Report Functions:
+    - Caluclate and display the 45 zonesm plus general zone 1,3,5 table
+    - For this reports, calculate FBHE for each of the 45 zones
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe and filter by all the report filters
+  #
+  # comment out the dataframe not needed for this report
+  #
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  #print(f"PPR DF size, new {ppr_df.shape[0]}")
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  #player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # initiate return lists
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+  title_list[0] = rpt_row['rpt_title']
+  title_list[1] = rpt_row['rpt_sub_title']
+  title_list[2] = rpt_row['rpt_section_title1']
+  title_list[3] = rpt_filters.get('lgy')
+  title_list[4] = rpt_row['team_name']
+  title_list[5] = rpt_row['rpt_type']
+  title_list[6] = rpt_row['filter_text']
+  title_list[7] = rpt_row['explain_text']
+  title_list[8] = rpt_filters.get('player')
+  title_list[9] = rpt_filters.get('pair')
+
+  label_list[0] = rpt_row['box1_title']
+  label_list[1] = rpt_row['box2_title']
+  label_list[2] = rpt_row['box3_title']
+  label_list[3] = rpt_row['box4_title']
+  label_list[4] = rpt_row['box5_title']
+  label_list[5] = rpt_row['box6_title']
+  label_list[6] = rpt_row['box7_title']
+  label_list[7] = rpt_row['box8_title']
+  label_list[8] = rpt_row['box9_title']
+  label_list[9] = rpt_row['box10_title']
+
+  #------------------------------------------------------------------------------------------------------
+  #
+  #            Create the images and dataframes with filtered ppr data for report
+  #
+  #-----------------------------------------------------------------------------------------------------
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+  print(f"ppr size after filter for the player: {disp_player}, {ppr_df.shape[0]}")
+
+  # break disp_player into team, number, and shortname
+  # unpack player into team, number and short name
+  str_loc = disp_player.index(' ')
+  p_team = disp_player[:str_loc].strip() # player team
+  p_player = disp_player[str_loc+1:]
+  str_loc = p_player.index(' ')
+  p_num = p_player[:str_loc].strip() # player number
+  p_sname = p_player[str_loc+1:].strip() # player short name
+
+
+  #------------------------------------------------------------------------------------
+  #
+  #     Report is 'set up', noW calculate acorss the 3 zones, then the 45 serves
+  #
+  #-------------------------------------------------------------------------------------
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  if ppr_df.shape[0] > 0:
+    plot_return = plot_pass_clusters(ppr_df, disp_player)
+    print(f" Return from plot: {plot_return}")
+    print(f" Return from plot, stat text: {plot_return.get('stat_text')}")
+  else:
+    plot_return  = { 
+      'stat_text':'Error: No data piointsin PPR_DF \n',
+      'plot_image':''
+        }
+    print(f" Return from plot, Error: {plot_return}")
+
+  # put the Images in the image_list
+  image_list[0] = plot_return.get('plot_image')
+
+
+  # put the DF's in the df_list
+  #df_list[0] = fbhe_table.to_dict('records')
+
+
+  return title_list, label_list, image_list, df_list
+
