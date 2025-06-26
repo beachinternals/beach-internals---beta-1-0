@@ -504,7 +504,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
             # now we need to calculate the area of the passes in this serve to/from
             el_points = pd.concat( [tmp1_df['pass_dest_x'],tmp1_df['pass_dest_y']], axis = 1)
             el_points = el_points.dropna().values
-            if len(el_points) > min_att:  # must have at least 5 points to calculate the ellipse
+            if len(el_points) >= min_att:  # must have at least 5 points to calculate the ellipse
               el_mean, el_width, el_height, el_angle  = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
               #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
               pair_df.at[i,fbhe_var_ea] = math.pi*(el_width/2)*(el_height/2)
@@ -551,7 +551,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
             # now we need to calculate the area of the passes in this serve to/from
             el_points = pd.concat( [tmp1_df['pass_dest_x'],tmp1_df['pass_dest_y']], axis = 1)
             el_points = el_points.dropna().values
-            if len(el_points) > min_att:  # must have at least 5 points to calculate the ellipse
+            if len(el_points) >= min_att:  # must have at least 5 points to calculate the ellipse
               el_mean, el_width, el_height, el_angle  = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
               #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
               pair_df.at[i,fbhe_var_ea] = math.pi*(el_width/2)*(el_height/2)
