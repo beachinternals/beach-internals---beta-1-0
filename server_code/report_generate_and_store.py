@@ -22,6 +22,7 @@ import math
 from plot_functions import *
 import numpy as np
 from server_functions import *
+from reports_player_new import *
 
 @anvil.server.callable
 def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
@@ -43,8 +44,33 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   df_list = []
 
   print(f"generate and store report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}\n Report Filters: {rpt_filters}")
-  title_list, label_list, image_list, df_list = anvil.server.call( fnct_name, lgy, team, **rpt_filters )
+  if fnct_name == 'report_league_new':
+    title_list, label_list, image_list, df_list = report_league_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'pair_season_summary_new':
+    title_list, label_list, image_list, df_list = pair_season_summary_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'report_player_attacking':
+    title_list, label_list, image_list, df_list = report_player_attacking( lgy, team, **rpt_filters )
+  elif fnct_name == 'player_consistency_report_new':
+    title_list, label_list, image_list, df_list = player_consistency_report_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'player_season_summary_new':
+    title_list, label_list, image_list, df_list = player_season_summary_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'player_sw_new':
+    title_list, label_list, image_list, df_list = player_sw_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'player_45_fbhe_new':
+    title_list, label_list, image_list, df_list = player_45_fbhe_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'player_45_oos_new':
+    title_list, label_list, image_list, df_list = player_45_oos_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'player_pass_cluster_new':
+    title_list, label_list, image_list, df_list = player_pass_cluster_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'player_45_pass_area_new':
+    title_list, label_list, image_list, df_list = player_45_pass_area_new( lgy, team, **rpt_filters )
+    #elif fnct_name == '':
+    #  title_list, label_list, image_list, df_list = ( lgy, team, **rpt_filters )
+  else:
+    title_list[0] = 'Report Not Found : '+fnct_name
 
+
+    
   # just to make sure ...
   plt.close('all')
   #print(f"Title List returned, Length: {len(title_list)}, list: {title_list}")

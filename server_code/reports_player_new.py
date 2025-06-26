@@ -775,14 +775,11 @@ def report_league_new(lgy, team, **rpt_filters):
   bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Good Passes', 'Percent Good Passes', 'Percent Wins', plt_size, '', 0, True, player_data_stats_df.at[0,'goodpass_mean'], player_data_stats_df.at[0,'goodpass_stdev'], bar_width)
   image_list[9] = bar_plot
   
+  #print(f"Return Values: Title List \n {title_list}")
+  #print(f"Return Values: Label List \n {label_list}")
+  #print(f"Return Values: Image List \n {image_list}")
+  #print(f"Return Values: DF List \n {df_list}")
 
-  print(f"Return Values: Title List \n {title_list}")
-  print(f"Return Values: Label List \n {label_list}")
-  print(f"Return Values: Image List \n {image_list}")
-  print(f"Return Values: DF List \n {df_list}")
-
-
-  
   return title_list, label_list, image_list, df_list
 
 
@@ -825,7 +822,7 @@ def count_wins( win_column, Loser_column, l_min, l_max):
     min_value = l_min
   bins = 20
   step = (max_value-min_value)/bins
-  print(f"max, min, and step: Min:{min_value}, Max:{max_value}, Step:{step}")
+  #print(f"max, min, and step: Min:{min_value}, Max:{max_value}, Step:{step}")
 
   # Create the output dictionary
   df_dict = {
