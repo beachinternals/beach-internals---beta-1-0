@@ -1231,7 +1231,9 @@ def find_clusters(ppr_df, disp_player, category):
     #print(f" X, whatever that is: {X.shape[0]},{X}")
     # Apply DBSCAN
     eps = .85  # Adjust based on your data's scale (e.g., distance threshold)
-    min_samples = 5  # Minimum points to form a cluster
+    min_samples = int(df_category.shape[0]/5)
+    if min_samples < 5:
+      min_samples = 5 # Minimum points to form a cluster
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     labels = db.labels_  # Cluster labels (-1 for noise)
 
