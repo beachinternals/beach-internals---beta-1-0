@@ -1258,7 +1258,7 @@ def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
 
   rpt_filters = {}
 
-  print(f" in populate filters form rpt mgr table. rpt_r: \m{rpt_r} \n pair/player rot \n{p_r}")
+  #print(f" in populate filters form rpt mgr table. rpt_r: \m{rpt_r} \n pair/player rot \n{p_r}")
   
   # first, we need to tellif this is a pair or a player table row:
   if rpt_r['player_list'] is not None:

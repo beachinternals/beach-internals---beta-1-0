@@ -111,6 +111,7 @@ def plot_lines_on_court( ppr_df, action, plt_num):
 
   plot_court_background(fig,ax)
   # Return this plot as a PNG image in a Media object
+
   return anvil.mpl_util.plot_image()
 
 @anvil.server.callable
@@ -153,7 +154,9 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
       ax.add_patch(ellipse)
     
   plot_court_background(fig,ax)
-  
+
+
+
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()
 
@@ -260,6 +263,7 @@ def plot_attack_zones( ppr_df, plt_num):
   popt.grid()
   
   pz1.plot()
+
 
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()

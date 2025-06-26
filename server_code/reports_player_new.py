@@ -1226,7 +1226,7 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
                                   (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                          disp_player, 'pass', True
         )
-      print(f"FBHE vector for 1, {i}{j}, {fbhe_vector}")
+      #print(f"FBHE vector for 1, {i}{j}, {fbhe_vector}")
       if fbhe_vector[3] >= 5:
         pass1_val[index] = fbhe_vector[0]
         z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
@@ -1268,7 +1268,7 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
 
   # I should now have the tables required
   #print(f"x,y : {pass_x}, {pass_y}")
-  print(f"pass value 1:\n {pass1_val}, Pass Value 3:\n{pass3_val},  Pass Value 3:\n{pass5_val}")
+  #print(f"pass value 1:\n {pass1_val}, Pass Value 3:\n{pass3_val},  Pass Value 3:\n{pass5_val}")
 
   # make x,y for serve lines:
   x11 = [0.5,0.5,0.5]
@@ -1519,7 +1519,7 @@ def player_45_oos_new(lgy, team, **rpt_filters):
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                          disp_player, 'pass'
                         )
-      print(f"OOS vector for 1, {i}{j}, {fbhe_vector}")
+      #print(f"OOS vector for 1, {i}{j}, {fbhe_vector}")
       if fbhe_vector[2] >= 5:
         pass1_val[index] = fbhe_vector[1]
         z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
@@ -1586,7 +1586,7 @@ def player_45_oos_new(lgy, team, **rpt_filters):
   if cmax > 0.5:
     cmax = 0.5
 
-  print(f" cmin {cmin}, cmax {cmax}")
+  #print(f" cmin {cmin}, cmax {cmax}")
 
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
@@ -1710,7 +1710,7 @@ def player_pass_cluster_new(lgy, team, **rpt_filters):
     (ppr_df['player_b1'] == disp_player) |
     (ppr_df['player_b2'] == disp_player) 
     ]
-  print(f"ppr size after filter for the player: {disp_player}, {ppr_df.shape[0]}")
+  #print(f"ppr size after filter for the player: {disp_player}, {ppr_df.shape[0]}")
 
   # break disp_player into team, number, and shortname
   # unpack player into team, number and short name
@@ -1731,14 +1731,14 @@ def player_pass_cluster_new(lgy, team, **rpt_filters):
   ############### Third Populate the dataframe, assuming we have data returned
   if ppr_df.shape[0] > 0:
     plot_return = plot_pass_clusters(ppr_df, disp_player)
-    print(f" Return from plot: {plot_return}")
-    print(f" Return from plot, stat text: {plot_return.get('stat_text')}")
+    #print(f" Return from plot: {plot_return}")
+    #print(f" Return from plot, stat text: {plot_return.get('stat_text')}")
   else:
     plot_return  = { 
       'stat_text':'Error: No data piointsin PPR_DF \n',
       'plot_image':''
         }
-    print(f" Return from plot, Error: {plot_return}")
+    #print(f" Return from plot, Error: {plot_return}")
 
   # put the Images in the image_list
   image_list[0] = plot_return.get('plot_image')
@@ -1837,7 +1837,7 @@ def player_45_pass_area_new(lgy, team, **rpt_filters):
     (ppr_df['player_b1'] == disp_player) |
     (ppr_df['player_b2'] == disp_player) 
     ]
-  print(f"ppr size after filter for the player: {disp_player}, {ppr_df.shape[0]}")
+  #print(f"ppr size after filter for the player: {disp_player}, {ppr_df.shape[0]}")
 
   # break disp_player into team, number, and shortname
   # unpack player into team, number and short name
@@ -1972,7 +1972,7 @@ def player_45_pass_area_new(lgy, team, **rpt_filters):
                                               (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                                     'pass', min_att=5
                                    )
-      print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
         pass1_val[index] = el_result.get('area')
         z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
@@ -1988,7 +1988,7 @@ def player_45_pass_area_new(lgy, team, **rpt_filters):
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                                     'pass', min_att=5
                                    )
-      print(f"el result for zone 3: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      #print(f"el result for zone 3: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
         pass3_val[index] = el_result.get('area')
         z3_table.loc[z3_table_index,'Dest Zone'] = str(i)+j.capitalize()
@@ -2004,7 +2004,7 @@ def player_45_pass_area_new(lgy, team, **rpt_filters):
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                                     'pass', min_att=5
                                    )
-      print(f"el result for zone 5: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      #print(f"el result for zone 5: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
         pass5_val[index] = el_result.get('area')
         z5_table.loc[z5_table_index,'Dest Zone'] = str(i)+j.capitalize()
@@ -2044,7 +2044,7 @@ def player_45_pass_area_new(lgy, team, **rpt_filters):
   if cmax > 20:
     cmax = 20
 
-  print(f" cmin {cmin}, cmax {cmax}")
+  #print(f" cmin {cmin}, cmax {cmax}")
 
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
