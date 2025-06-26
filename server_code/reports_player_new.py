@@ -1725,20 +1725,32 @@ def player_pass_cluster_new(lgy, team, **rpt_filters):
   #
   #-------------------------------------------------------------------------------------
 
+
+  # plot all pass locations on the court
+  pass_locations_plot_object = plot_points_on_the_court(ppr_df['pass_dest_x'],ppr_df['pass_dest_y'], 1, ppr_df['video_id'], ppr_df['pass_action_id'],True,ppr_df['point_outcome'])
+  
   ############### Third Populate the dataframe, assuming we have data returned
   if ppr_df.shape[0] > 0:
-    plot_return = plot_pass_clusters(ppr_df, disp_player)
-    #print(f" Return from plot: {plot_return}")
-    #print(f" Return from plot, stat text: {plot_return.get('stat_text')}")
+    plot1_return = plot_pass_clusters(ppr_df, disp_player, 'FBK')
+    #print(f" Return from plot 1: {plot1_return}")
+    print(f" Return from plot 1, stat text: {plot1_return.get('stat_text')}, media list: {plot1_return.get('media_list')}")
+    plot2_return = plot_pass_clusters(ppr_df, disp_player, 'FBE')
+    #print(f" Return from plot 2: {plot2_return}")
+    print(f" Return from plot 2, stat text: {plot2_return.get('stat_text')}, media list: {plot2_return.get('media_list')}")
   else:
-    plot_return  = { 
+    plot1_return  = { 
       'stat_text':'Error: No data piointsin PPR_DF \n',
       'plot_image':''
         }
-    #print(f" Return from plot, Error: {plot_return}")
+    plot2_return  = { 
+      'stat_text':'Error: No data piointsin PPR_DF \n',
+      'plot_image':''
+    }
 
   # put the Images in the image_list
-  image_list[0] = plot_return.get('plot_image')
+  image_list[0] = pass_locations_plot_object
+  image_list[1] = plot1_return.get('plot_image')
+  image_list[2] = plot2_return.get('plot_image')
 
 
   # put the DF's in the df_list

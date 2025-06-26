@@ -155,10 +155,16 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
     
   plot_court_background(fig,ax)
 
-
-
   # Return this plot as a PNG image in a Media object
-  return anvil.mpl_util.plot_image()
+
+  # Save plot to BytesIO
+  buf = io.BytesIO()
+  plt.savefig(buf, format='png', bbox_inches='tight')
+  plt.close(fig)
+  buf.seek(0)
+  plot_media = anvil.BlobMedia('image/png', buf.getvalue(), name='point_on_a_court_image.png')
+  
+  return plot_media
 
 #
 # a quick functin to create an array of colors when plotting points

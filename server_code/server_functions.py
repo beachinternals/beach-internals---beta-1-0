@@ -1181,7 +1181,7 @@ def apply_date_filters(df, column, value ):
 
 
 
-def find_kill_error_clusters(ppr_df, disp_player, category='FBK'):
+def find_clusters(ppr_df, disp_player, category):
   """
     Find clusters of kills or errors using DBSCAN and return cluster labels and densities metrics.
     """
@@ -1228,7 +1228,7 @@ def find_kill_error_clusters(ppr_df, disp_player, category='FBK'):
       # Extract coordinates
     X = df_category[['x', 'y']].values
 
-    print(f" X, whatever that is: {X.shape[0]},{X}")
+    #print(f" X, whatever that is: {X.shape[0]},{X}")
     # Apply DBSCAN
     eps = .85  # Adjust based on your data's scale (e.g., distance threshold)
     min_samples = 5  # Minimum points to form a cluster
@@ -1255,9 +1255,12 @@ def find_kill_error_clusters(ppr_df, disp_player, category='FBK'):
     return {'error': str(e)}
 
 
-def plot_pass_clusters(ppr_df, disp_player):
+def plot_pass_clusters(ppr_df, disp_player, category):
   """
     Generate a Matplotlib scatter plot of kill/error clusters with RdYlGn colormap.
+
+    Modified this only plot one category (FBK/FBE) each time it is called
+    
     """
   print("Entered Plot Pass Clusters")
   try:
@@ -1269,30 +1272,44 @@ def plot_pass_clusters(ppr_df, disp_player):
       logger.error(f"Invalid colormap 'RdYlGn': {str(e)}")
       return {'error': f"Invalid colormap: {str(e)}"}
 
-    print("Calling find kill error clusters")
-      # Get kill and error clusters
-    kill_result = find_kill_error_clusters(ppr_df, disp_player, category='FBK')
-    print(f"Kill Results:{kill_result}")    
-    error_result = find_kill_error_clusters(ppr_df, disp_player, category='FBE')
-    print(f"Error Results:{error_result}")
-
+    if not (category == "FBK" or category == 'FBE'):
+      print(f"Error, invalid category ; {category}")
+      error_msg = "Invalid Category" + category
+      logger.error(f"Clustering error: {error_msg}")
+      return {'error': error_msg}
+      
+    print(f"Calling find {category} error clusters")
+    # Get kill and error clusters
+    category_result = find_clusters(ppr_df, disp_player, category)
+    print(f"Category Results:{category}, {category_result.get('status')}")    
     
-    if 'error' in kill_result or 'error' in error_result:
-      error_msg = kill_result.get('error', '') or error_result.get('error', '')
+    if 'error' in category_result:
+      error_msg = category_result.get('error', '') 
       logger.error(f"Clustering error: {error_msg}")
       return {'error': error_msg}
 
       # Convert results to DataFrames
-    df_kills = pd.DataFrame(kill_result.get('data', []))
-    df_errors = pd.DataFrame(error_result.get('data', []))
+    df_kills = pd.DataFrame(category_result.get('data', []))
     density_info = {
-      'kills': kill_result.get('density', {}),
-      'errors': error_result.get('density', {})
+      category: category_result.get('density', {})
     }
 
-    print(f"Plot Pass Clusters, \n df_kills \n{df_kills}\ndf_errors:\n{df_errors}\n density info:\n{density_info}")
-    # Create scatter plot
-    fig, ax = plt.subplots()
+    print(f"Plot Pass Clusters, \n density info:\n{density_info}")
+    # Create scatter plot - use plot points on a court function
+
+    fig, ax = plt.subplots(figsize=(10,18))
+
+    # plot the court first
+    plt.xlim( -1, 9)
+    plt.ylim( -9, 9)
+    xpts = np.array([0,8,8,0,0,0])
+    ypts = np.array([-8,-8,8,8,-8,0])
+    ax.plot( xpts, ypts, c = 'black', linewidth = '3')
+    xpts = np.array([-1,9])
+    ypts = np.array([0,0])
+    ax.plot( xpts, ypts, c = 'black', linewidth = '9')
+    ax.grid()
+
     if not df_kills.empty:
       # Plot kills (red for high-density clusters)
       kill_scatter = ax.scatter(
@@ -1301,20 +1318,12 @@ def plot_pass_clusters(ppr_df, disp_player):
         label='Kills', marker='o', s=50
       )
       fig.colorbar(kill_scatter, label='Kill Cluster ID')
-    if not df_errors.empty:
-      # Plot errors (blue for distinction)
-      error_scatter = ax.scatter(
-        df_errors['x'], df_errors['y'],
-        c=df_errors['cluster'], cmap='Blues',
-        label='Errors', marker='x', s=50
-      )
-      fig.colorbar(error_scatter, label='Error Cluster ID')
 
     ax.set_xlabel('Distance Along the Net')
     ax.set_ylabel('Depth into the Court')
-    ax.set_title(f'Kill and Error Clusters for {disp_player}')
+    ax.set_title(f'{category} Clusters for {disp_player}')
     ax.legend()
-
+ 
     # Save plot to BytesIO
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight')
@@ -1329,8 +1338,8 @@ def plot_pass_clusters(ppr_df, disp_player):
       'none_count': 0,
       'valid_media_count': 1,
       'filtered_empty_notes': 0,
-      'stat_text': f"Kills: {len(df_kills)} points, {kill_result.get('n_clusters', 0)} clusters\n"
-      f"Errors: {len(df_errors)} points, {error_result.get('n_clusters', 0)} clusters\n"
+      'stat_text': f"Kills: {len(df_kills)} points, {category_result.get('n_clusters', 0)} clusters\n"
+      f"Errors: {len(df_kills)} points, {category_result.get('n_clusters', 0)} clusters\n"
       f"Density: {density_info}",
       'plot_image': plot_media,
     }
