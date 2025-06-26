@@ -1180,33 +1180,47 @@ def apply_date_filters(df, column, value ):
   return df
 
 
-@anvil.server.callable
+
 def find_kill_error_clusters(ppr_df, disp_player, category='FBK'):
   """
     Find clusters of kills or errors using DBSCAN and return cluster labels and densities metrics.
     """
   print("Entered find kill error clusters")
-  print(f"size of ppr_df passed:{ppr_df.shape[0]}")
+  #print(f"size of ppr_df passed:{ppr_df.shape[0]}")
   try:
     logger.info(f"Finding {category} clusters for player: {disp_player}")
     # Fetch data from ppr_df, limit to only pass by disp_player
     ppr_df = ppr_df[ ppr_df['pass_player'] == disp_player]
-    print(f"ppr df size {ppr_df.shape[0]}")
-    print(f" ppr df pass src x:\n{ppr_df['pass_src_x']}")
-    print(f" ppr df pass src y:\n{ppr_df['pass_src_y']}")
-    print(f" ppr df point outcome:\n{ppr_df['point_outcome']}")
+    #print(f"ppr df size {ppr_df.shape[0]}")
+    #print(f" ppr df pass src x:\n{ppr_df['pass_dest_x']}")
+    #print(f" ppr df pass src y:\n{ppr_df['pass_dest_y']}")
+    #print(f" ppr df point outcome:\n{ppr_df['point_outcome']}")
     
     # Select three columns and rename them
-    df = ppr_df[['pass_src_x', 'pass_src_y', 'point_outcome']]
-    print(f"DF with old columns: {df}")
+    df = ppr_df[['pass_dest_x', 'pass_dest_y', 'point_outcome']]
+    #print(f"DF with old columns: {df}")
     df = df.rename(columns={
-                'pass_src_x': 'x', 'pass_src_y': 'y', 'point_outcome': 'value'
+                'pass_dest_x': 'x', 'pass_dest_y': 'y', 'point_outcome': 'value'
           })
 
-    print(f" DF with new names: /n:{df}")
+    #print(f" DF with new names: /n:{df}")
+    
+    # Ensure x, y are numeric
+    df['x'] = pd.to_numeric(df['x'], errors='coerce')
+    df['y'] = pd.to_numeric(df['y'], errors='coerce')
+    df = df.dropna(subset=['x', 'y'])
+
+    # Logical limits on x values ( along the net)
+    lower = -1
+    upper = 9
+    ppr_df = ppr_df.loc[(ppr_df['pass_dest_x'] >= lower) & (ppr_df['pass_dest_x'] <= upper)]
+    lower = 0
+    upper = 9
+    ppr_df = ppr_df.loc[(ppr_df['pass_dest_y'] >= lower) & (ppr_df['pass_dest_y'] <= upper)]
+
     # Filter for the specified category (kill or error)
     df_category = df[df['value'] == category]
-    print(f" category total: {df_category.shape[0]}")
+    #print(f" category total: {df_category.shape[0]}")
     if df_category.empty:
       logger.warning(f"No {category} data found for report_id: {report_id}")
       return {'error': f'No {category} data found'}
@@ -1214,9 +1228,9 @@ def find_kill_error_clusters(ppr_df, disp_player, category='FBK'):
       # Extract coordinates
     X = df_category[['x', 'y']].values
 
-    print(f" X, whatever that is: {X}")
+    print(f" X, whatever that is: {X.shape[0]},{X}")
     # Apply DBSCAN
-    eps = 0.1  # Adjust based on your data's scale (e.g., distance threshold)
+    eps = .85  # Adjust based on your data's scale (e.g., distance threshold)
     min_samples = 5  # Minimum points to form a cluster
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
     labels = db.labels_  # Cluster labels (-1 for noise)
@@ -1240,7 +1254,7 @@ def find_kill_error_clusters(ppr_df, disp_player, category='FBK'):
     logger.error(f"Error in find_kill_error_clusters: {str(e)}", exc_info=True)
     return {'error': str(e)}
 
-@anvil.server.callable
+
 def plot_pass_clusters(ppr_df, disp_player):
   """
     Generate a Matplotlib scatter plot of kill/error clusters with RdYlGn colormap.
@@ -1257,9 +1271,9 @@ def plot_pass_clusters(ppr_df, disp_player):
 
     print("Calling find kill error clusters")
       # Get kill and error clusters
-    kill_result = anvil.server.call('find_kill_error_clusters', ppr_df, disp_player, category='FBK')
-    print(f"Kill Results:{kill_result}")
-    error_result = anvil.server.call('find_kill_error_clusters', ppr_df, disp_player, category='FBE')
+    kill_result = find_kill_error_clusters(ppr_df, disp_player, category='FBK')
+    print(f"Kill Results:{kill_result}")    
+    error_result = find_kill_error_clusters(ppr_df, disp_player, category='FBE')
     print(f"Error Results:{error_result}")
 
     
@@ -1276,6 +1290,7 @@ def plot_pass_clusters(ppr_df, disp_player):
       'errors': error_result.get('density', {})
     }
 
+    print(f"Plot Pass Clusters, \n df_kills \n{df_kills}\ndf_errors:\n{df_errors}\n density info:\n{density_info}")
     # Create scatter plot
     fig, ax = plt.subplots()
     if not df_kills.empty:
@@ -1295,8 +1310,8 @@ def plot_pass_clusters(ppr_df, disp_player):
       )
       fig.colorbar(error_scatter, label='Error Cluster ID')
 
-    ax.set_xlabel('X Coordinate')
-    ax.set_ylabel('Y Coordinate')
+    ax.set_xlabel('Distance Along the Net')
+    ax.set_ylabel('Depth into the Court')
     ax.set_title(f'Kill and Error Clusters for {disp_player}')
     ax.legend()
 
@@ -1305,7 +1320,7 @@ def plot_pass_clusters(ppr_df, disp_player):
     plt.savefig(buf, format='png', bbox_inches='tight')
     plt.close(fig)
     buf.seek(0)
-    plot_media = anvil.BlobMedia('image/png', buf.getvalue(), name=f'cluster_plot_{report_id}.png')
+    plot_media = anvil.BlobMedia('image/png', buf.getvalue(), name=f'cluster_plot_{disp_player}.png')
 
     return {
       'timestamp': datetime.now().isoformat(),
