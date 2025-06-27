@@ -13,7 +13,9 @@ import pandas as pd
 import io
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
+#from matplotlib.patches import Ellipse
+import matplotlib.patches as patches
+import matplotlib.colors as mcolors
 import math
 from pair_functions import *
 from datetime import datetime, timedelta, date
@@ -21,6 +23,7 @@ import logging
 import re
 from matplotlib.colors import LinearSegmentedColormap
 from sklearn.cluster import DBSCAN
+from plot_functions import *
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -1269,7 +1272,9 @@ def plot_pass_clusters(ppr_df, disp_player, category):
     logger.info(f"Generating plot for Player: {disp_player}")
     # Validate colormap
     try:
-      cmap = plt.cm.get_cmap('RdYlGn')  # Red (max) to green (min)
+      custom_colors = ['#ff0000', '#00ff00', '#0000ff', '#ff00ff', '#00ffff']  # # Red, Green, Blue, Magenta, Cyan
+      cmap = mcolors.ListedColormap(custom_colors)
+      colors = cmap.colors
     except ValueError as e:
       logger.error(f"Invalid colormap 'RdYlGn': {str(e)}")
       return {'error': f"Invalid colormap: {str(e)}"}
@@ -1299,33 +1304,64 @@ def plot_pass_clusters(ppr_df, disp_player, category):
     print(f"Plot Pass Clusters, \n density info:\n{density_info}")
     # Create scatter plot - use plot points on a court function
 
-    fig, ax = plt.subplots(figsize=(10,18))
+    # before we start plotting, need arrays of x and y for each cluster (excpet the -1 cluster, the outliers)
+    cluster_list = df_kills['cluster'].to_list()
+  
+    fig, ax = plt.subplots(figsize=(10, 18))
 
-    # plot the court first
-    plt.xlim( -1, 9)
-    plt.ylim( -9, 9)
-    xpts = np.array([0,8,8,0,0,0])
-    ypts = np.array([-8,-8,8,8,-8,0])
-    ax.plot( xpts, ypts, c = 'black', linewidth = '3')
-    xpts = np.array([-1,9])
-    ypts = np.array([0,0])
-    ax.plot( xpts, ypts, c = 'black', linewidth = '9')
+    # Plot the court
+    plt.xlim(-1, 9)
+    plt.ylim(-9, 9)
+    xpts = np.array([0, 8, 8, 0, 0, 0])
+    ypts = np.array([-8, -8, 8, 8, -8, 0])
+    ax.plot(xpts, ypts, c='black', linewidth='3')
+    xpts = np.array([-1, 9])
+    ypts = np.array([0, 0])
+    ax.plot(xpts, ypts, c='black', linewidth='9')
     ax.grid()
 
+    dot_label = 'Kills - Outliers' if category == "FBK" else 'Errors - Outliers'
     if not df_kills.empty:
-      # Plot kills (red for high-density clusters)
+      # Plot scatter points
       kill_scatter = ax.scatter(
         df_kills['x'], df_kills['y'],
         c=df_kills['cluster'], cmap=cmap,
-        label='Kills', marker='o', s=50
+        label=dot_label, marker='o', s=50
       )
-      fig.colorbar(kill_scatter, label='Kill Cluster ID')
+      #fig.colorbar(kill_scatter, label='Kill Cluster ID')
+
+      # Plot an ellipse for each cluster (excluding -1)
+      unique_clusters = df_kills['cluster'].unique()
+      unique_clusters = [c for c in unique_clusters if c != -1]  # Exclude outliers
+
+      for cluster_id in unique_clusters:
+        # Get points for this cluster
+        cluster_points = df_kills[df_kills['cluster'] == cluster_id][['x', 'y']].dropna().values
+        print(f"cluster points : number {cluster_points.shape[0]} \n{cluster_points}")
+        if cluster_points.shape[0] > 3:  # Ensure enough points for ellipse
+          el_mean, el_width, el_height, el_angle = calculate_standard_deviation_ellipse(cluster_points, confidence=1.0)
+          print(f"Ellipse info: mean {el_mean}, width {el_width}, height {el_height}, angle {el_angle}")
+          xy_center = (el_mean[0], el_mean[1])
+          # Add ellipse patch
+          ellipse = patches.Ellipse(
+              xy=xy_center,
+              width=el_width,
+              height=el_height,
+              angle=el_angle,
+              edgecolor=colors[cluster_id],
+              facecolor=colors[cluster_id],
+              linewidth=2,
+              alpha=0.2,  # Semi-transparent for visibility
+              label=f'Cluster {cluster_id} Ellipse'   # Label only first ellipse            
+              )
+          print('adding patch')
+          ax.add_patch(ellipse)
 
     ax.set_xlabel('Distance Along the Net')
     ax.set_ylabel('Depth into the Court')
     ax.set_title(f'{category} Clusters for {disp_player}')
     ax.legend()
- 
+
     # Save plot to BytesIO
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight')
@@ -1345,6 +1381,7 @@ def plot_pass_clusters(ppr_df, disp_player, category):
       f"Density: {density_info}",
       'plot_image': plot_media,
     }
+
   except Exception as e:
     logger.error(f"Error in plot_weekly_counts_no_xlabels: {str(e)}", exc_info=True)
     return {'error': str(e)}
