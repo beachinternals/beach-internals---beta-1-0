@@ -1267,7 +1267,7 @@ def plot_pass_clusters(ppr_df, disp_player, category):
     Modified this only plot one category (FBK/FBE) each time it is called
     
     """
-  print("Entered Plot Pass Clusters")
+  #print("Entered Plot Pass Clusters")
   try:
     logger.info(f"Generating plot for Player: {disp_player}")
     # Validate colormap
@@ -1285,10 +1285,10 @@ def plot_pass_clusters(ppr_df, disp_player, category):
       logger.error(f"Clustering error: {error_msg}")
       return {'error': error_msg}
       
-    print(f"Calling find {category} error clusters")
+    #print(f"Calling find {category} error clusters")
     # Get kill and error clusters
     category_result = find_clusters(ppr_df, disp_player, category)
-    print(f"Category Results:{category}, {category_result.get('status')}")    
+    #print(f"Category Results:{category}, {category_result.get('status')}")    
     
     if 'error' in category_result:
       error_msg = category_result.get('error', '') 
@@ -1301,11 +1301,8 @@ def plot_pass_clusters(ppr_df, disp_player, category):
       category: category_result.get('density', {})
     }
 
-    print(f"Plot Pass Clusters, \n density info:\n{density_info}")
+    #print(f"Plot Pass Clusters, \n density info:\n{density_info}")
     # Create scatter plot - use plot points on a court function
-
-    # before we start plotting, need arrays of x and y for each cluster (excpet the -1 cluster, the outliers)
-    cluster_list = df_kills['cluster'].to_list()
   
     fig, ax = plt.subplots(figsize=(10, 18))
 
@@ -1337,7 +1334,7 @@ def plot_pass_clusters(ppr_df, disp_player, category):
       for cluster_id in unique_clusters:
         # Get points for this cluster
         cluster_points = df_kills[df_kills['cluster'] == cluster_id][['x', 'y']].dropna().values
-        print(f"cluster points : number {cluster_points.shape[0]} \n{cluster_points}")
+        #print(f"cluster points : number {cluster_points.shape[0]} \n{cluster_points}")
         if cluster_points.shape[0] > 3:  # Ensure enough points for ellipse
           el_mean, el_width, el_height, el_angle = calculate_standard_deviation_ellipse(cluster_points, confidence=1.0)
           print(f"Ellipse info: mean {el_mean}, width {el_width}, height {el_height}, angle {el_angle}")
@@ -1354,7 +1351,7 @@ def plot_pass_clusters(ppr_df, disp_player, category):
               alpha=0.2,  # Semi-transparent for visibility
               label=f'Cluster {cluster_id} Ellipse'   # Label only first ellipse            
               )
-          print('adding patch')
+          #print('adding patch')
           ax.add_patch(ellipse)
 
     ax.set_xlabel('Distance Along the Net')

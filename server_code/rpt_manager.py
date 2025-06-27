@@ -1370,7 +1370,7 @@ if self.check_box_4c.checked:
 
   '''
   
-  print(f"Report Filters: {rpt_filters}")
+  #print(f"Report Filters: {rpt_filters}")
 
   return rpt_filters
 

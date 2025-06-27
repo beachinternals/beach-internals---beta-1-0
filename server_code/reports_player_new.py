@@ -1733,10 +1733,10 @@ def player_pass_cluster_new(lgy, team, **rpt_filters):
   if ppr_df.shape[0] > 0:
     plot1_return = plot_pass_clusters(ppr_df, disp_player, 'FBK')
     #print(f" Return from plot 1: {plot1_return}")
-    print(f" Return from plot 1, stat text: {plot1_return.get('stat_text')}, media list: {plot1_return.get('media_list')}")
+    #print(f" Return from plot 1, stat text: {plot1_return.get('stat_text')}, media list: {plot1_return.get('media_list')}")
     plot2_return = plot_pass_clusters(ppr_df, disp_player, 'FBE')
     #print(f" Return from plot 2: {plot2_return}")
-    print(f" Return from plot 2, stat text: {plot2_return.get('stat_text')}, media list: {plot2_return.get('media_list')}")
+    #print(f" Return from plot 2, stat text: {plot2_return.get('stat_text')}, media list: {plot2_return.get('media_list')}")
   else:
     plot1_return  = { 
       'stat_text':'Error: No data piointsin PPR_DF \n',
