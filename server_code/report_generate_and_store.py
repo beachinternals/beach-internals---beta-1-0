@@ -43,7 +43,7 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   image_list = []
   df_list = []
 
-  print(f"generate and store report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}\n Report Filters: {rpt_filters}")
+  #print(f"generate and store report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}\n Report Filters: {rpt_filters}")
   if fnct_name == 'report_league_new':
     title_list, label_list, image_list, df_list = report_league_new( lgy, team, **rpt_filters )
   elif fnct_name == 'pair_season_summary_new':

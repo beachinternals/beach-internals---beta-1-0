@@ -747,7 +747,7 @@ def rpt_mgr_new_player_rpts( rpt_r, disp_team ):
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
       
       # call the report function and save the report id
-      print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
+      #print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
       report_id = generate_and_store_report( rptname['function_name'], lgy, disp_team, **rpt_filters )
 
       # generate the PDF file
@@ -797,7 +797,7 @@ def rpt_mgr_new_pair_rpts( rpt_r, disp_team ):
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
 
       # call the report function and save the report id
-      print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
+      #print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
       report_id = generate_and_store_report( rptname['function_name'], lgy, disp_team, **rpt_filters )
 
       # generate the PDF file
@@ -866,7 +866,7 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
 
       # call the report function and save the report id
-      print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
+      #print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
       report_id = generate_and_store_report( rptname['function_name'], lgy, disp_team, **rpt_filters )
 
       # generate the PDF file

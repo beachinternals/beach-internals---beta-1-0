@@ -340,14 +340,14 @@ def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
   plt.figure(figsize=(size[0], size[1]))
 
   # Plot bars
-  print(f" x categories: {x_categories}, y_values : {y_values}")
+  #print(f" x categories: {x_categories}, y_values : {y_values}")
   plt.bar(x_categories, y_values, color='skyblue', edgecolor='navy', width = 0.5, align='center' )
   plt.title(title)
   plt.xlabel(xlabel)
   plt.ylabel(ylabel)
 
   # now a horizontal line for the average value
-  print(f"plot_bar, average count = {average_count}")
+  #print(f"plot_bar, average count = {average_count}")
   plt.axhline(y=average_count, color='red', linestyle='--', linewidth=2, 
               label=f'Average: {average_count:.2f}')
 

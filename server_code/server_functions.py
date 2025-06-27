@@ -1188,7 +1188,7 @@ def find_clusters(ppr_df, disp_player, category):
   """
     Find clusters of kills or errors using DBSCAN and return cluster labels and densities metrics.
     """
-  print("Entered find kill error clusters")
+  #print("Entered find kill error clusters")
   #print(f"size of ppr_df passed:{ppr_df.shape[0]}")
   try:
     logger.info(f"Finding {category} clusters for player: {disp_player}")
@@ -1337,7 +1337,7 @@ def plot_pass_clusters(ppr_df, disp_player, category):
         #print(f"cluster points : number {cluster_points.shape[0]} \n{cluster_points}")
         if cluster_points.shape[0] > 3:  # Ensure enough points for ellipse
           el_mean, el_width, el_height, el_angle = calculate_standard_deviation_ellipse(cluster_points, confidence=1.0)
-          print(f"Ellipse info: mean {el_mean}, width {el_width}, height {el_height}, angle {el_angle}")
+          #print(f"Ellipse info: mean {el_mean}, width {el_width}, height {el_height}, angle {el_angle}")
           xy_center = (el_mean[0], el_mean[1])
           # Add ellipse patch
           ellipse = patches.Ellipse(

@@ -952,7 +952,7 @@ def player_sw_new(lgy, team, **rpt_filters):
   p_sname = p_player[str_loc+1:].strip()
   sw_list = [(f_row['s_w']) for f_row in app_tables.master_player.search(league=disp_league,gender=disp_gender,year=disp_year,team=p_team,number=p_num,shortname=p_sname)]
 
-  print(f"sw_list: {sw_list}")
+  #print(f"sw_list: {sw_list}")
   if sw_list:
     if sw_list[0]:
       # sw_list is now a media object, need to turn it back into a dataframe
