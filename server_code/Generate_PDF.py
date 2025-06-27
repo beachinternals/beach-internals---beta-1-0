@@ -96,7 +96,7 @@ def generate_pdf_report(rpt_form, report_id):
     pdf_file = f"{base_name}.pdf"
 
   # Generate PDF
-  rpt_pdf = PDFRenderer(filename=pdf_file, landscape=True).render_form(rpt_form, report_id)
+  rpt_pdf = PDFRenderer(filename=pdf_file, landscape=False).render_form(rpt_form, report_id)
 
   return rpt_pdf
 
