@@ -375,7 +375,7 @@ class Reports_main(Reports_mainTemplate):
     # call the server function to run the report function and store the data in the table.
     report_id = anvil.server.call('generate_and_store_report', fnct_name, self.league_drop_down.selected_value, disp_team, **rpt_filters)
     #app_url = 'https://beachinternals.anvil.app/'  # Replace with your app URL
-    app_url = 'https://beachinternals.com/'  # Replace with your app URL
+    app_url = 'https://app.beachinternals.com/'  # Replace with your app URL
     new_window = anvil.js.window.open(f'{app_url}?form={rpt_form}&report_id={report_id}', '_blank')
     #--------------------------------------------------------------------
     
