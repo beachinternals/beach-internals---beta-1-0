@@ -92,17 +92,35 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
 
   tri_dict = {'video_id':[str()],'set':[int()],'game_date':None,
-              'teama':None, 'player_a1':None, 'player_a2':None, 'teamb':None, 'player_b1':None, 'player_b2':None,
+              'teama':None, 'player_a1':None, 'player_a2':None, 
+              'teamb':None, 'player_b1':None, 'player_b2':None,
               'total_pts':None, 'teama_pts':None, 'teamb_pts':None, 
+              # Serving point totals for team A and B
               'tsa_a':None, 'tse_a':None, 'srv_num_a':None, 'tsa_b':None, 'tse_b':None, 'srv_num_b':None, 
               'tsrv_pts_a':None, 'tsrv_pts_b':None, 'tsrv_adv_a':None, 'tsrv_pts':None, 
+              'ace_error_a':None,'ace_error_b':None,
+              # first point totals for team A and B
               'fbk_a':None, 'fbe_a':None, 'fbk_b':None, 'fbe_b':None, 'fb_pts_a':None, 'fb_pts_b':None, 'fb_adv_a':None, 'fb_pts':None, 
-              'tk_a':None, 'te_a':None, 'tk_b':None, 'te_b':None, 'tran_pts_a':None, 'tran_pts_b':None, 'tran_adv_a':None, 'tran_pts':None, 
+              # Transition data for team A and B
+              'tk_a':None, 'te_a':None, 'tk_b':None, 'te_b':None, 'tran_pts_a':None, 'tran_pts_b':None, 'tran_adv_a':None, 'tran_pts':None,
+              # point totals
               'tran_pts_per':None, 'fb_pts_per':None, 
-              'fbhe_a_noace':None, 'fbhe_b_noace':None, 'fbhe_a_withace':None, 'fbhe_b_withace':None, 'tcr_a':None, 'tcr_b':None, 'err_den_a':None, 'err_den_b':None, 
-              'winning_team':None,'win_fbhe_noace':None,'win_fbhe_withace':None,'win_tcr':None, 'win_err_den':None, 'point_diff':None, 'loser_tcr':None, 'loser_err_den':None,
-              'loser_fbhe_noace':None,'loser_fbhe_withace':None,
-              'fbhe_diff_noace':None,'fbhe_diff_withace':None,
+              # FBHE and FBSO for A and b
+              'fbhe_a_noace':None, 'fbhe_b_noace':None, 'fbhe_a_withace':None, 'fbhe_b_withace':None, 'fbso_a_noace':None, 'fbso_b_noace':None, 'fbso_a_withace':None, 'fbso_b_withace':None, 'eso_a':None, 'eso_b':None,
+              # Transition and errors for A and B
+              'tcr_a':None, 'tcr_b':None, 'err_den_a':None, 'err_den_b':None, 't_eff_a':None, 't_eff_b':None,
+              # Winning team metrics
+              'winning_team':None,'win_fbhe_noace':None,'win_fbhe_withace':None,'win_tcr':None, 'win_err_den':None, 'win_ace_error':None, 'win_fbso_noace':None, 
+              'win_fbso_withace':None, 'win_t_eff':None, 'win_eso':None,'win_knockout':None,'win_goodpass':None,
+              'point_diff':None, 
+              # Losing team metrics
+              'losing_team':None, 'loser_tcr':None, 'loser_err_den':None,'loser_fbhe_noace':None,'loser_fbhe_withace':None,'loser_ace_error':None, 
+              'loser_fbso_noace':None, 'loser_fbso_withace':None, 'loser_eso':None, 'loser_t_eff':None, 'loser_knockout':None,'loser_goodpass':None,
+              # differencees between winner and loser (winner - loser)
+              'fbhe_diff_noace':None,'fbhe_diff_withace':None,'fbso_diff_noace':None,'fbso_diff_withace':None,'eso_diff':None,'ace_error_diff':None,'t_eff_idff':None,
+              'knockout_diff':None,'goodpass_diff':None, 'tcr_diff':None,'err_den_diff':None,
+
+              # kncokout and goodpass:-)
               'knockout_a':None, 'knockout_b':None, 'win_knockout':None, 'loser_knockout':None, 
               'goodpass_a':None,'goodpass_b':None,'win_goodpass':None,'loser_goodpass':None,
              }
@@ -116,13 +134,16 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               'tsa_a': Aces by A
               'tse_a': Errors by A
               'srv_num_a': TOtal Serves by A
-              tsa_b': Aces by B
+              'tsa_b': Aces by B
               'tse_b': Errors by B
               'srv_num_b': Total Serves by B
               'tsrv_pts_a': A's terminal serve poitns (A's aces + B's errors)
               'tsrv_pts_b': B's terminal serve points
               'tsrv_adv_a': A's advantage (A - B)
               'tsrv_pts': Total Terminal Serve Points
+              'ace_error_a': ace to error ratio, A
+              'ace_error_b': ace to error ratio, B
+              
             First Ball
               'fbk_a':None, FBK by A
               fbe_a':None, FB Errors by A
@@ -132,25 +153,29 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               'fb_pts_b': First BAll Poiints B
               'fb_adv_a': Adv A (A pts - B pts)
               'fb_pts': Total First Ball Points
+              
             Transition
               'tk_a': Transition Kills A
               'te_a' Transition errors A
               'tk_b': Transition Kills B
               'te_b': Transition Errors B
-              'tran_pts_a': Transition Poiints A (A - B)
+              'tran_pts_a': Transition Poiints A (A kills + B errors)
               'tran_pts_b': Transition Points B
               'tran_adv_a': Advantage A (A - B)
-                             tran_pts': total Transition Points
+              'tran_pts': total Transition Points
+              
             KNockout and Good Pass
               'knockout_a'
               'knockout_b'
               'good_pass_a'
               'good_pass_b'
+              
             Point Percentages
               'total_pts' : Total Poitns (TS + FB + TR)
               'terv_pts_per' : Percent of points taht are Terminal Serve
               'tran_pts_per': Percent of total points that are Transition
               'fb_pts_per': Percent of Total Points taht are Frist Ball
+              
             FBHE, TCR, and ED
               'fbhe_a_noace':FBHE for A
               'fbhe_b_noace':FBHE for B
@@ -160,7 +185,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               'tcr_b': TCR for Team B
               'err_den_a': Error Den A
               'err_den_b':Error Den B
-            WInning and Losing teams
+              
+            Winning and Losing teams
               'winning_team':Text of wining team
               'win_fbhe_noace': FBHE of Winning Team
               'win_fbhe_withace':FBHE of Winning Team
@@ -168,13 +194,18 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               'win_err_den': Err Den opf winning Team
               'win_knockout' : Winner's knockout rate
               'win_goodpass' : WInner's good pass rate
+              'win_ace_error': Winner Ace to Error Ratio
+              
               'point_diff': ABS of points difference (always Postive)
-              'loser_tcr': Loser's TCR
-              'loser_err_den': Loser's Err Den
+
               'loser_fbhe_noace': :Loser's FBHE
               'loser_fbhe_withace':Loser FBHE
+              'loser_tcr': Loser's TCR
+              'loser_err_den': Loser's Err Den
               'loser_knockout': Loser's knockout rate
-              'loser'goodpass' : Loser's good pass rate
+              'loser_goodpass' : Loser's good pass rate
+              'loser_ace_error': Loser's Ace to Error Ratio
+              
               'fbhe_diff_noace': FBHE, winner's - loser's
               'fbhe_diff_withace': FBHE, winners's - loser's
               
