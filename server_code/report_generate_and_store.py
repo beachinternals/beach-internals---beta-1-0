@@ -64,10 +64,13 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
     title_list, label_list, image_list, df_list = player_pass_cluster_new( lgy, team, **rpt_filters )
   elif fnct_name == 'player_45_pass_area_new':
     title_list, label_list, image_list, df_list = player_45_pass_area_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'league_tri_corr':
+    title_list, label_list, image_list, df_list = league_tri_corr( lgy, team, **rpt_filters )
+    
     #elif fnct_name == '':
     #  title_list, label_list, image_list, df_list = ( lgy, team, **rpt_filters )
   else:
-    title_list[0] = 'Report Not Found : '+fnct_name
+    title_list = title_list.append('Report Not Found : '+fnct_name)
 
 
     

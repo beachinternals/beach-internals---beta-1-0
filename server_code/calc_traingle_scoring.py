@@ -104,7 +104,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               # Transition data for team A and B
               'tk_a':None, 'te_a':None, 'tk_b':None, 'te_b':None, 'tran_pts_a':None, 'tran_pts_b':None, 'tran_adv_a':None, 'tran_pts':None,
               # point totals
-              'tran_pts_per':None, 'fb_pts_per':None, 
+              'tran_pts_per':None, 'fb_pts_per':None, 'tsrv_pts_per':None,
               # FBHE and FBSO for A and b
               'fbhe_a_noace':None, 'fbhe_b_noace':None, 'fbhe_a_withace':None, 'fbhe_b_withace':None, 'fbso_a_noace':None, 'fbso_b_noace':None, 'fbso_a_withace':None, 'fbso_b_withace':None, 'eso_a':None, 'eso_b':None,
               # Transition and errors for A and B
@@ -117,7 +117,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               'losing_team':None, 'loser_tcr':None, 'loser_err_den':None,'loser_fbhe_noace':None,'loser_fbhe_withace':None,'loser_ace_error':None, 
               'loser_fbso_noace':None, 'loser_fbso_withace':None, 'loser_eso':None, 'loser_t_eff':None, 'loser_knockout':None,'loser_goodpass':None,
               # differencees between winner and loser (winner - loser)
-              'fbhe_diff_noace':None,'fbhe_diff_withace':None,'fbso_diff_noace':None,'fbso_diff_withace':None,'eso_diff':None,'ace_error_diff':None,'t_eff_idff':None,
+              'fbhe_diff_noace':None,'fbhe_diff_withace':None,'fbso_diff_noace':None,'fbso_diff_withace':None,'eso_diff':None,'ace_error_diff':None,'t_eff_diff':None,
               'knockout_diff':None,'goodpass_diff':None, 'tcr_diff':None,'err_den_diff':None,
 
               # kncokout and goodpass:-)
@@ -275,6 +275,10 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         tri_df.at[tri_row,'tsrv_adv_a'] = tri_df.at[tri_row,'tsrv_pts_a'] - tri_df.at[tri_row,'tsrv_pts_b']
         tri_df.at[tri_row,'tsrv_pts'] = tri_df.at[tri_row,'tsrv_pts_a'] + tri_df.at[tri_row,'tsrv_pts_b']
         #print(f"Terminal Serve: Ace {tri_df.at[tri_row,'tsa_a'],tri_df.at[tri_row,'tsa_b']} Terminal Serve Error: {tri_df.at[tri_row,'tse_a'],tri_df.at[tri_row,'tse_b']}")
+        if tri_df.at[tri_row,'tse_a'] != 0:
+          tri_df.at[tri_row,'ace_error_a'] = tri_df.at[tri_row,'tsa_a']/tri_df.at[tri_row,'tse_a']
+        if tri_df.at[tri_row,'tse_b'] != 0:
+          tri_df.at[tri_row,'ace_error_b'] = tri_df.at[tri_row,'tsa_b']/tri_df.at[tri_row,'tse_b']
         
         # first ball
         tmp_df = set_df[set_df['point_outcome'] == "FBK" ]
@@ -317,34 +321,49 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         tri_df.at[tri_row,'teama_pts'] = tri_df.at[tri_row,'tran_pts_a'] + tri_df.at[tri_row,'tsrv_pts_a'] + tri_df.at[tri_row,'fb_pts_a']
         tri_df.at[tri_row,'teamb_pts'] = tri_df.at[tri_row,'tran_pts_b'] + tri_df.at[tri_row,'tsrv_pts_b'] + tri_df.at[tri_row,'fb_pts_b']
         tri_df.at[tri_row,'winning_team'] = teama if tri_df.at[tri_row,'teama_pts'] > tri_df.at[tri_row,'teamb_pts'] else teamb
+        tri_df.at[tri_row,'losing_team'] = teama if tri_df.at[tri_row,'teama_pts'] <= tri_df.at[tri_row,'teamb_pts'] else teamb
         tri_df.at[tri_row,'point_diff'] = tri_df.at[tri_row,'teama_pts'] - tri_df.at[tri_row,'teamb_pts'] if tri_df.at[tri_row,'teama_pts'] > tri_df.at[tri_row,'teamb_pts'] else tri_df.at[tri_row,'teamb_pts'] - tri_df.at[tri_row,'teama_pts']
     
 
         # fbhe and tcr
         if ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tsa_b'] - tri_df.at[tri_row,'tse_b'] ) != 0:
           tri_df.at[tri_row,'fbhe_a_noace'] = ( tri_df.at[tri_row,'fbk_a'] - tri_df.at[tri_row,'fbe_a'] ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tsa_b'] - tri_df.at[tri_row,'tse_b'] )
+          tri_df.at[tri_row,'fbso_a_noace'] = ( tri_df.at[tri_row,'fbk_a'] ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tsa_b'] - tri_df.at[tri_row,'tse_b'] )
         else:
           tri_df.at[tri_row,'fbhe_a_noace'] = None
+          tri_df.at[tri_row,'fbso_a_noace'] = None
         if ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tsa_a'] - tri_df.at[tri_row,'tse_a'] ) != 0:
           tri_df.at[tri_row,'fbhe_b_noace'] = ( tri_df.at[tri_row,'fbk_b'] - tri_df.at[tri_row,'fbe_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tsa_a'] - tri_df.at[tri_row,'tse_a'] )
+          tri_df.at[tri_row,'fbso_b_noace'] = ( tri_df.at[tri_row,'fbk_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tsa_a'] - tri_df.at[tri_row,'tse_a'] )
         else:
           tri_df.at[tri_row,'fbhe_b_noace'] = None
+          tri_df.at[tri_row,'fbso_b_noace'] = None
 
         if ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] ) != 0:
           tri_df.at[tri_row,'fbhe_a_withace'] = ( tri_df.at[tri_row,'fbk_a'] - tri_df.at[tri_row,'fbe_a'] ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
+          tri_df.at[tri_row,'fbso_a_withace'] = ( tri_df.at[tri_row,'fbk_a']  ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
+          tri_df.at[tri_row,'eso_a'] = ( tri_df.at[tri_row,'fbk_a'] + tri_df.at[tri_row,'tk_a']/2 ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
         else:
           tri_df.at[tri_row,'fbhe_a_withace'] = None
+          tri_df.at[tri_row,'fbso_a_withace'] = None
         if ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] ) != 0:
           tri_df.at[tri_row,'fbhe_b_withace'] = ( tri_df.at[tri_row,'fbk_b'] - tri_df.at[tri_row,'fbe_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
+          tri_df.at[tri_row,'fbso_b_withace'] = ( tri_df.at[tri_row,'fbk_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
+          tri_df.at[tri_row,'eso_b'] = ( tri_df.at[tri_row,'fbk_b'] + tri_df.at[tri_row,'tk_b']/2 ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
         else:
           tri_df.at[tri_row,'fbhe_b_withace'] = None
+          tri_df.at[tri_row,'fbso_b_withace'] = None
         
         if ( tri_df.at[tri_row,'tran_pts'] != 0 ):
           tri_df.at[tri_row,'tcr_a'] = ( tri_df.at[tri_row,'tk_a'] + tri_df.at[tri_row,'te_b'] ) / ( tri_df.at[tri_row,'tran_pts'] )   
+          tri_df.at[tri_row,'t_eff_a'] = ( tri_df.at[tri_row,'tk_a'] - tri_df.at[tri_row,'te_a'] ) / ( tri_df.at[tri_row,'tran_pts'] )   
           tri_df.at[tri_row,'tcr_b'] = ( tri_df.at[tri_row,'tk_b'] + tri_df.at[tri_row,'te_a'] ) / ( tri_df.at[tri_row,'tran_pts'] )   
+          tri_df.at[tri_row,'t_eff_b'] = ( tri_df.at[tri_row,'tk_b'] - tri_df.at[tri_row,'te_b'] ) / ( tri_df.at[tri_row,'tran_pts'] )  
         else:
           tri_df.at[tri_row,'tcr_a'] = None
           tri_df.at[tri_row,'tcr_b'] = None
+          tri_df.at[tri_row,'t_eff_a'] = None
+          tri_df.at[tri_row,'t_eff_b'] = None
 
         if ( tri_df.at[tri_row,'total_pts'] != 0 ):
           tri_df.at[tri_row,'err_den_a'] = ( tri_df.at[tri_row,'te_a'] + tri_df.at[tri_row,'fbe_a'] + tri_df.at[tri_row,'tse_a']) / ( tri_df.at[tri_row,'total_pts'] )   
@@ -353,15 +372,39 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
           tri_df.at[tri_row,'err_den_a'] = None
           tri_df.at[tri_row,'err_den_b'] = None          
 
-        tri_df.at[tri_row,'win_fbhe_noace'] = tri_df.at[tri_row,'fbhe_a_noace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_noace']
-        tri_df.at[tri_row,'loser_fbhe_noace'] = tri_df.at[tri_row,'fbhe_b_noace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_a_noace']
-        tri_df.at[tri_row,'win_fbhe_withace'] = tri_df.at[tri_row,'fbhe_a_withace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_withace']
-        tri_df.at[tri_row,'loser_fbhe_withace'] = tri_df.at[tri_row,'fbhe_b_withace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_withace']
-        tri_df.at[tri_row,'win_tcr'] = tri_df.at[tri_row,'tcr_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'tcr_b']
-        tri_df.at[tri_row,'win_err_den'] = tri_df.at[tri_row,'err_den_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'err_den_b']
-        tri_df.at[tri_row,'loser_tcr'] = tri_df.at[tri_row,'tcr_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'tcr_a']
-        tri_df.at[tri_row,'loser_err_den'] = tri_df.at[tri_row,'err_den_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'err_den_a']
+        # knockoout and goodpass
+        tri_df.at[tri_row,'knockout_a'] = (calc_knock_out( set_df, player_a1) + calc_knock_out( set_df, player_a2))/2
+        tri_df.at[tri_row,'knockout_b'] = (calc_knock_out(set_df, player_b1) + calc_knock_out( set_df, player_b2))/2
+        tri_df.at[tri_row,'goodpass_a'] = ( calc_good_pass( set_df, player_a1) + calc_good_pass( set_df, player_a2))/2
+        tri_df.at[tri_row,'goodpass_b'] = (calc_good_pass( set_df, player_b1) + calc_good_pass( set_df, player_b2))/2
 
+        # calcualte winning and losing team variables
+        tri_df.at[tri_row,'win_fbhe_noace'] = tri_df.at[tri_row,'fbhe_a_noace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_noace']
+        tri_df.at[tri_row,'win_fbhe_withace'] = tri_df.at[tri_row,'fbhe_a_withace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_withace']
+        tri_df.at[tri_row,'win_fbso_noace'] = tri_df.at[tri_row,'fbso_a_noace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbso_b_noace']
+        tri_df.at[tri_row,'win_fbso_withace'] = tri_df.at[tri_row,'fbso_a_withace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbso_b_withace']
+        tri_df.at[tri_row,'win_tcr'] = tri_df.at[tri_row,'tcr_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'tcr_b']
+        tri_df.at[tri_row,'win_ace_error'] = tri_df.at[tri_row,'ace_error_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'ace_error_b']
+        tri_df.at[tri_row,'win_err_den'] = tri_df.at[tri_row,'err_den_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'err_den_b']
+        tri_df.at[tri_row,'win_t_eff'] = tri_df.at[tri_row,'t_eff_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'t_eff_b']
+        tri_df.at[tri_row,'win_knockout'] = tri_df.at[tri_row,'knockout_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'knockout_b']
+        tri_df.at[tri_row,'win_goodpass'] = tri_df.at[tri_row,'goodpass_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'goodpass_b']
+        tri_df.at[tri_row,'win_eso'] = tri_df.at[tri_row,'eso_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'eso_b']
+
+        tri_df.at[tri_row,'loser_fbhe_noace'] = tri_df.at[tri_row,'fbhe_a_noace'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'fbhe_b_noace']
+        tri_df.at[tri_row,'loser_fbhe_withace'] = tri_df.at[tri_row,'fbhe_a_withace'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'fbhe_b_withace']
+        tri_df.at[tri_row,'loser_fbso_noace'] = tri_df.at[tri_row,'fbso_a_noace'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'fbso_b_noace']
+        tri_df.at[tri_row,'loser_fbso_withace'] = tri_df.at[tri_row,'fbso_a_withace'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'fbso_b_withace']
+        tri_df.at[tri_row,'loser_tcr'] = tri_df.at[tri_row,'tcr_a'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'tcr_b']
+        tri_df.at[tri_row,'loser_ace_error'] = tri_df.at[tri_row,'ace_error_a'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'ace_error_b']
+        tri_df.at[tri_row,'loser_err_den'] = tri_df.at[tri_row,'err_den_a'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'err_den_b']
+        tri_df.at[tri_row,'loser_t_eff'] = tri_df.at[tri_row,'t_eff_a'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'t_eff_b']
+        tri_df.at[tri_row,'loser_knockout'] = tri_df.at[tri_row,'knockout_a'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'knockout_b']
+        tri_df.at[tri_row,'loser_goodpass'] = tri_df.at[tri_row,'goodpass_a'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'goodpass_b']
+        tri_df.at[tri_row,'loser_eso'] = tri_df.at[tri_row,'eso_a'] if tri_df.at[tri_row,'losing_team'] == teama else tri_df.at[tri_row,'eso_b']
+
+
+        # difference calculations
         if isinstance(tri_df.at[tri_row,'win_fbhe_noace'],float) & isinstance(tri_df.at[tri_row,'loser_fbhe_noace'],float) :
           tri_df.at[tri_row,'fbhe_diff_noace'] = tri_df.at[tri_row,'win_fbhe_noace'] - tri_df.at[tri_row,'loser_fbhe_noace']
         else:
@@ -369,18 +412,51 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         if isinstance(tri_df.at[tri_row,'win_fbhe_withace'],float) & isinstance(tri_df.at[tri_row,'loser_fbhe_withace'],float) :
           tri_df.at[tri_row,'fbhe_diff_withace'] = tri_df.at[tri_row,'win_fbhe_withace'] - tri_df.at[tri_row,'loser_fbhe_withace']
         else:
-          tri_df.at[tri_row,'fbhe_diff_withace'] = None        
+          tri_df.at[tri_row,'fbhe_diff_withace'] = None      
+          
+        if isinstance(tri_df.at[tri_row,'win_fbso_noace'],float) & isinstance(tri_df.at[tri_row,'loser_fbso_noace'],float) :
+          tri_df.at[tri_row,'fbso_diff_noace'] = tri_df.at[tri_row,'win_fbso_noace'] - tri_df.at[tri_row,'loser_fbso_noace']
+        else:
+          tri_df.at[tri_row,'fbso_diff_noace'] = None
+        if isinstance(tri_df.at[tri_row,'win_fbso_withace'],float) & isinstance(tri_df.at[tri_row,'loser_fbso_withace'],float) :
+          tri_df.at[tri_row,'fbso_diff_withace'] = tri_df.at[tri_row,'win_fbso_withace'] - tri_df.at[tri_row,'loser_fbso_withace']
+        else:
+          tri_df.at[tri_row,'fbso_diff_withace'] = None 
 
-        # knockoout and goodpass
-        tri_df.at[tri_row,'knockout_a'] = (calc_knock_out( set_df, player_a1) + calc_knock_out( set_df, player_a2))/2
-        tri_df.at[tri_row,'knockout_b'] = (calc_knock_out( set_df, player_b1) + calc_knock_out( set_df, player_b2))/2
-        tri_df.at[tri_row,'goodpass_a'] = ( calc_good_pass( set_df, player_a1) + calc_good_pass( set_df, player_a2))/2
-        tri_df.at[tri_row,'goodpass_b'] = (calc_good_pass( set_df, player_b1) + calc_good_pass( set_df, player_b2))/2
-        tri_df.at[tri_row,'win_knockout'] = tri_df.at[tri_row,'knockout_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'knockout_b']
-        tri_df.at[tri_row,'loser_knockout'] = tri_df.at[tri_row,'knockout_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'knockout_a']
-        tri_df.at[tri_row,'win_goodpass'] = tri_df.at[tri_row,'goodpass_a'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'goodpass_b']
-        tri_df.at[tri_row,'loser_goodpass'] = tri_df.at[tri_row,'goodpass_b'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'goodpass_a']
+        if isinstance(tri_df.at[tri_row,'win_eso'],float) & isinstance(tri_df.at[tri_row,'loser_eso'],float) :
+          tri_df.at[tri_row,'eso_diff'] = tri_df.at[tri_row,'win_eso'] - tri_df.at[tri_row,'loser_eso']
+        else:
+          tri_df.at[tri_row,'eso_diff'] = None
+          
+        if isinstance(tri_df.at[tri_row,'win_ace_error'],float) & isinstance(tri_df.at[tri_row,'loser_ace_error'],float) :
+          tri_df.at[tri_row,'ace_error_diff'] = tri_df.at[tri_row,'win_ace_error'] - tri_df.at[tri_row,'loser_ace_error']
+        else:
+          tri_df.at[tri_row,'ace_error_diff'] = None
 
+        if isinstance(tri_df.at[tri_row,'win_tcr'],float) & isinstance(tri_df.at[tri_row,'loser_tcr'],float) :
+          tri_df.at[tri_row,'tcr_diff'] = tri_df.at[tri_row,'win_tcr'] - tri_df.at[tri_row,'loser_tcr']
+        else:
+          tri_df.at[tri_row,'tcr_diff'] = None
+          
+        if isinstance(tri_df.at[tri_row,'win_t_eff'],float) & isinstance(tri_df.at[tri_row,'loser_t_eff'],float) :
+          tri_df.at[tri_row,'t_eff_diff'] = tri_df.at[tri_row,'win_t_eff'] - tri_df.at[tri_row,'loser_t_eff']
+        else:
+          tri_df.at[tri_row,'t_eff_diff'] = None
+          
+        if isinstance(tri_df.at[tri_row,'win_err_den'],float) & isinstance(tri_df.at[tri_row,'loser_err_den'],float) :
+          tri_df.at[tri_row,'err_den_diff'] = tri_df.at[tri_row,'win_err_den'] - tri_df.at[tri_row,'loser_err_den']
+        else:
+          tri_df.at[tri_row,'err_den_diff'] = None
+          
+        if isinstance(tri_df.at[tri_row,'win_knockout'],float) & isinstance(tri_df.at[tri_row,'loser_knockout'],float) :
+          tri_df.at[tri_row,'knockout_diff'] = tri_df.at[tri_row,'win_knockout'] - tri_df.at[tri_row,'loser_knockout']
+        else:
+          tri_df.at[tri_row,'knockout_diff'] = None
+          
+        if isinstance(tri_df.at[tri_row,'win_goodpass'],float) & isinstance(tri_df.at[tri_row,'loser_goodpass'],float) :
+          tri_df.at[tri_row,'goodpass_diff'] = tri_df.at[tri_row,'win_goodpass'] - tri_df.at[tri_row,'loser_goodpass']
+        else:
+          tri_df.at[tri_row,'goodpass_diff'] = None
 
         #print("End of Loop over the Set")
         #print(tri_df)

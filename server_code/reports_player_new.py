@@ -136,6 +136,8 @@ def report_player_stub_new(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list
 
+
+  
 #---------------------------------------------------------------------------------------------------
 #
 #.  Player Consistency Report
@@ -2165,3 +2167,176 @@ def find_ellipse_area(tmp1_df, type, min_att=5):
     'attempts':el_att,
     'URL':el_url
   }
+
+
+#---------------------------------------------------------------------------
+#
+#              report to calculate and show the corelations in a league, to wining sets
+#
+#---------------------------------------------------------------------------
+@anvil.server.callable
+def league_tri_corr(lgy, team, **rpt_filters):
+  '''
+  Report Functions:
+    - Caluclate and display the correlations of all v ariables int he triangle scoring table w.r.t. point differential
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe and filter by all the report filters
+  #
+  # comment out the dataframe not needed for this report
+  #
+  # for this report, only need the triangle scoring table
+  
+  #ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  #print(f"PPR DF size, new {ppr_df.shape[0]}")
+  #ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  #player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
+  tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # initiate return lists
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+  title_list[0] = rpt_row['rpt_title']
+  title_list[1] = rpt_row['rpt_sub_title']
+  title_list[2] = rpt_row['rpt_section_title1']
+  title_list[3] = rpt_filters.get('lgy')
+  title_list[4] = rpt_row['team_name']
+  title_list[5] = rpt_row['rpt_type']
+  title_list[6] = rpt_row['filter_text']
+  title_list[7] = rpt_row['explain_text']
+  title_list[8] = rpt_filters.get('player')
+  title_list[9] = rpt_filters.get('pair')
+
+  label_list[0] = rpt_row['box1_title']
+  label_list[1] = rpt_row['box2_title']
+  label_list[2] = rpt_row['box3_title']
+  label_list[3] = rpt_row['box4_title']
+  label_list[4] = rpt_row['box5_title']
+  label_list[5] = rpt_row['box6_title']
+  label_list[6] = rpt_row['box7_title']
+  label_list[7] = rpt_row['box8_title']
+  label_list[8] = rpt_row['box9_title']
+  label_list[9] = rpt_row['box10_title']
+
+  #------------------------------------------------------------------------------------------------------
+  #
+  #            Create the images and dataframes with filtered ppr data for report
+  #
+  #-----------------------------------------------------------------------------------------------------
+
+  '''
+  note, this is a league report, so no team or disp_player in this report
+  '''
+  
+  #=====================================================================================
+  #-------------------------------------------------------------------------------------
+  #
+  #     Report is 'set up', now calculate ...
+  #
+  #-------------------------------------------------------------------------------------
+  #=====================================================================================
+
+  # Select only columns containing 'win', 'loser', or 'diff' (case-insensitive)
+  filtered_cols = tri_df.filter(regex='(?i)(win|loser|diff)').columns
+
+  # Ensure 'point_diff' is in the filtered columns
+  if 'point_diff' not in filtered_cols:
+    raise ValueError("Column 'point_diff' not found in filtered columns")
+
+  # Select numeric columns from the filtered set
+  numeric_df = tri_df[filtered_cols].select_dtypes(include=['float64', 'int64'])
+
+  # Ensure 'point_diff' is in the numeric DataFrame
+  if 'point_diff' not in numeric_df.columns:
+    raise ValueError("Column 'point_diff' not found or is not numeric")
+
+  # Option 2: Fill missing values (e.g., with mean)
+  numeric_df = numeric_df.fillna(numeric_df.mean())
+
+  print(f"numberi df size {numeric_df.shape[0]}\n{numeric_df}")
+  # Calculate Pearson correlation of all numeric columns with 'point_diff'
+  correlations = numeric_df.corrwith(numeric_df['point_diff'])
+
+  # Sort correlations in descending order for better readability
+  correlations = correlations.sort_values(ascending=False)
+
+  print(f" correlations size: {len(correlations)}\n {correlations}")
+  
+  # Select top 10 positive and negative correlations
+  top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
+
+  # Create a bar chart
+  plt.figure(figsize=(10, 6))
+  top_corr.plot(kind='barh', ax=plt.gca(), legend=False)
+  plt.title('Top Correlations with point_diff')
+  plt.ylabel('Correlation Coefficient')
+  plt.tight_layout()
+
+  # Store the figure in image_list
+  image_list[0] = anvil.mpl_util.plot_image()
+
+  # Convert top_corr Series to a DataFrame
+  top_corr = top_corr.to_frame(name='Correlation')
+
+  # Add index column by resetting the index
+  top_corr = top_corr.reset_index().rename(columns={'index': 'Feature'})
+  
+  # Create scatter plots for top 4 and bottom 4 variables
+  top_4 = top_corr.head(4)['Feature'].tolist()
+  bottom_4 = top_corr.tail(4)['Feature'].tolist()
+  scatter_vars = top_4 + bottom_4
+
+  # Create a 2x4 grid of subplots for scatter plots
+  fig_scatter, axes = plt.subplots(nrows=2, ncols=4, figsize=(16, 8), sharex=True)
+  axes = axes.flatten()
+
+  for i, var in enumerate(scatter_vars):
+    if var in numeric_df.columns:
+      axes[i].scatter(numeric_df['point_diff'], numeric_df[var], alpha=0.5)
+      axes[i].set_title(f'{var} vs point_diff')
+      axes[i].set_xlabel('point_diff')
+      axes[i].set_ylabel(var)
+    else:
+      axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
+      axes[i].set_axis_off()
+
+  plt.tight_layout()
+
+  # Store the scatter plot figure in image_list[1]
+  image_list[1] = anvil.mpl_util.plot_image()
+
+  # Store top_corr DataFrame in df_list
+
+
+  df_list[0] = top_corr.to_dict('records')
+
+  plt.show()
+  plt.close('all')
+
+
+  return title_list, label_list, image_list, df_list
