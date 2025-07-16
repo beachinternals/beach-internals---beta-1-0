@@ -122,6 +122,150 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
     #print(f"fbhe Funct: fbhe_list:{fbhe_list}")
 
   return fbhe_list
+
+'''
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+calcualte earned side out
+
+eso = fbk + my TK / serves - tse
+
+Return as an object
+    
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+'''
+def calc_player_eso( ppr_df, disp_player ):
+  # pass this a query of rows, figures the FBHE for the display player as the attacker
+  # initialize the vector
+  #
+  # ppr_df - the data frame (ppr format)
+  # disp_player - player striing
+  # play_type: 'att', 'pass', 'srv'
+  # video_yn : True of False is desire the url at item 5.  
+
+  # limit to attacks by our player
+  #print(f"fbhe funct: ppr_df shape:{ppr_df.shape}")
+  if ppr_df.shape[0] == 0:      # Then no data passed!
+    return {
+      'status':False,
+      'error_msg':'No Rows in Dataframe'
+    }
+  else:
+    # limit to only serve receive
+    ppr_df = filter_serve_receive_only_player(ppr_df, disp_player)
+
+    print(f"eso : size of serve receive db: {ppr_df.shape[0]}")
+    
+    # now take out any service errors
+    ppr_df = ppr_df[ ppr_df['point_outcome'] != 'TSE']
+
+    print(f"eso : size of serve receive db without service errors: {ppr_df.shape[0]}")
+
+    # PPR_DF HOW HAS ALL SERVES WE ARE INTERESTED IN.
+    eso_attempts = ppr_df.shape[0]
+    eso_fbk = ppr_df[ ppr_df['point_outcome'] == 'FBK'].shape[0]
+    eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df[ppr_df['poiint_outcome_team'].str.contains(disp_player, na=False)])].shape[0]
+    eso = (eso_fbk+eso_tk)/eso_attempts
+
+    print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
+
+  return {
+    'status':True,
+    'video_url':'No Video in Code Yet',
+    'player': disp_player,
+    'eso': eso,
+    'attempts': eso_attempts,
+    'fbk': eso_fbk,
+    'tk' : eso_tk,
+    'eso_string': str('{:.3%}'.format(eso))
+  }
+
+
+def calc_team_eso( ppr_df, disp_team ):
+  # pass this a query of rows, figures the FBHE for the display player as the attacker
+  # initialize the vector
+  #
+  # ppr_df - the data frame (ppr format)
+  # disp_player - player striing
+  # play_type: 'att', 'pass', 'srv'
+  # video_yn : True of False is desire the url at item 5.  
+
+  # limit to attacks by our player
+  #print(f"fbhe funct: ppr_df shape:{ppr_df.shape}")
+  if ppr_df.shape[0] == 0:      # Then no data passed!
+    return {
+      'status':False,
+      'error_msg':'No Rows in Dataframe'
+    }
+  else:
+    # limit to only serve receive
+    ppr_df = filter_serve_receive_only_team(ppr_df, disp_team)
+
+    #print(f"eso : size of serve receive db: {ppr_df.shape[0]}")
+
+    # now take out any service errors
+    ppr_df = ppr_df[ ppr_df['point_outcome'] != 'TSE']
+
+    #print(f"eso : size of serve receive db without service errors: {ppr_df.shape[0]}")
+
+    # PPR_DF HOW HAS ALL SERVES WE ARE INTERESTED IN.
+    eso_attempts = ppr_df.shape[0]
+    eso_fbk = ppr_df[ ppr_df['point_outcome'] == 'FBK'].shape[0]
+    eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['point_outcome_team'] == disp_team ) ].shape[0]
+    eso = (eso_fbk+eso_tk)/eso_attempts
+
+    #print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
+
+  return {
+    'status':True,
+    'video_url':'No Video in Code Yet',
+    'team':disp_team,
+    'eso': eso,
+    'attempts': eso_attempts,
+    'fbk': eso_fbk,
+    'tk' : eso_tk,
+    'eso_string': str('{:.3%}'.format(eso))
+  }
+
+'''
+Get a quick list of all the partners of disp_player
+'''
+def get_partners(df, disp_player):
+  # Check each row to find disp_player and return their partner
+  partners = []
+  for index, row in df.iterrows():
+    if row['player_a1'] == disp_player:
+      partners.append(row['player_a2'])
+    elif row['player_a2'] == disp_player:
+      partners.append(row['player_a1'])
+    elif row['player_b1'] == disp_player:
+      partners.append(row['player_b2'])
+    elif row['player_b2'] == disp_player:
+      partners.append(row['player_b1'])
+  return partners
+'''
+quick roytine to limit to serve receive plays
+
+'''
+def filter_serve_receive_only_player(df, disp_player):
+  # Get partners of disp_player
+  partners = get_partners(df, disp_player)
+  # Combine disp_player and their partners
+  exclude_players = [disp_player] + partners
+  # Filter dataframe to exclude rows where serve_player is disp_player or their partners
+  filtered_df = df[~df['serve_player'].isin(exclude_players)]
+  return filtered_df
+
+def filter_serve_receive_only_team(df, disp_team):
+  # Get partners of disp_team
+  player1, player2 = pair_players(disp_team)
+  # Combine disp_player and their partners
+  exclude_players = [player1] + [player2]
+  # Filter dataframe to exclude rows where serve_player is disp_player or their partners
+  filtered_df = df[~df['serve_player'].isin(exclude_players)]
+  return filtered_df
+
+  
   
 def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):  
   #
@@ -989,7 +1133,8 @@ def get_form_url(form_name, params):
   
   return target_url  # Note: This may still require client-side context
 
-@anvil.server.callable
+
+
 def unpack_lgy(lgy):
   # unpacks the league/year/gender string into three
   # extract league, gender, year from league selected value

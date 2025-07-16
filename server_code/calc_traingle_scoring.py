@@ -49,6 +49,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
 
   c_team = "League"    # only updating the league tables
   #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+
+  # open out data files, get the correct row, then also get ppd_df, and player_data_df
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = c_league,
@@ -57,14 +59,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
       team = c_team
     ) )
 
-  if ppr_csv_row:
-    ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
-    if ppr_df.shape[0] == 0:
-      return ["No Rows"]
-  else:
-    #print('No Rows Found')
-    return ["No Rows"]
-  
+  ppr_df = get_ppr_data( c_league, c_gender, c_year, c_team, True)  
   player_df, player_stats_df = get_player_data(c_league, c_gender, c_year)
 
   # calculate data from plalyer_data
@@ -342,14 +337,20 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         if ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] ) != 0:
           tri_df.at[tri_row,'fbhe_a_withace'] = ( tri_df.at[tri_row,'fbk_a'] - tri_df.at[tri_row,'fbe_a'] ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
           tri_df.at[tri_row,'fbso_a_withace'] = ( tri_df.at[tri_row,'fbk_a']  ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
-          tri_df.at[tri_row,'eso_a'] = ( tri_df.at[tri_row,'fbk_a'] + tri_df.at[tri_row,'tk_a']/2 ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
+          eso_a_obj = calc_team_eso(ppr_df, teama)
+          if eso_a_obj.get('status'):
+            #print(f"saving eso_a {eso_a_obj.get('eso')}")
+            tri_df.at[tri_row,'eso_a'] = eso_a_obj.get('eso')
         else:
           tri_df.at[tri_row,'fbhe_a_withace'] = None
           tri_df.at[tri_row,'fbso_a_withace'] = None
         if ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] ) != 0:
           tri_df.at[tri_row,'fbhe_b_withace'] = ( tri_df.at[tri_row,'fbk_b'] - tri_df.at[tri_row,'fbe_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
           tri_df.at[tri_row,'fbso_b_withace'] = ( tri_df.at[tri_row,'fbk_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
-          tri_df.at[tri_row,'eso_b'] = ( tri_df.at[tri_row,'fbk_b'] + tri_df.at[tri_row,'tk_b']/2 ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
+          eso_b_obj = calc_team_eso(ppr_df, teamb)
+          if eso_b_obj.get('status'):
+            #print(f"saving eso_b {eso_b_obj.get('eso')}")
+            tri_df.at[tri_row,'eso_b'] = eso_b_obj.get('eso')
         else:
           tri_df.at[tri_row,'fbhe_b_withace'] = None
           tri_df.at[tri_row,'fbso_b_withace'] = None

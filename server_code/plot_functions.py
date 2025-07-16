@@ -329,44 +329,6 @@ def calculate_ellipse_area(width, height):
    """
    return math.pi * (width / 2) * (height / 2)
 
-'''
-def plot_bar_graph( x_categories, y_values, title, xlabel, ylabel, size ):
-
-  #print(f"plot_bar_graph : x: {x_categories}, y: {y_values}")
-  # Calculate average value
-  average_count = sum(y_values) / len(y_values) if len(y_values) != 0 else 0
-
-  # Create histogram with Matplotlib
-  plt.figure(figsize=(size[0], size[1]))
-
-  # Plot bars
-  #print(f" x categories: {x_categories}, y_values : {y_values}")
-  plt.bar(x_categories, y_values, color='skyblue', edgecolor='navy', width = 0.5, align='center' )
-  plt.title(title)
-  plt.xlabel(xlabel)
-  plt.ylabel(ylabel)
-
-  # now a horizontal line for the average value
-  #print(f"plot_bar, average count = {average_count}")
-  plt.axhline(y=average_count, color='red', linestyle='--', linewidth=2, 
-              label=f'Average: {average_count:.2f}')
-
-  # Create table data
-  table_data = [y_values]
-  table = plt.table(cellText=table_data, rowLabels=['Values'],
-                  colLabels=x_categories, loc='bottom')
-
-  plt.subplots_adjust(bottom=0.3) # Adjust to make space for the table
-
-  # Save plot to BytesIO
-  buffer = io.BytesIO()
-  plt.savefig(buffer, format='png')
-  buffer.seek(0)
-  plot_image = anvil.BlobMedia('image/png', buffer.getvalue(), name='histogram.png')
-  plt.close()
-
-  return plot_image
-'''
 
 # Grok generated version of this routine
 def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_label, line_value, plot_mean, mean_val, std_val, bar_width=0.5):
@@ -464,12 +426,10 @@ def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_lab
 
 
 @anvil.server.callable
-def plot_histogram(lgy, plot_var, var_name, l_min, l_max):
+def plot_histogram(player_data_df, plot_var, var_name, l_min, l_max):
   # given all this, look into the player_data csv stored in the csv_list datafile, then graph the FBHE Histogram
 
-  # unpack the league data, and fetch player data
-  disp_league, disp_gender, disp_year = unpack_lgy( lgy )
-  player_data_df, player_stats_df = get_player_data( disp_league, disp_gender, disp_year)
+  # filter for logical min and max values (for FBHE, that would be 0 and 1)
   if l_min:
     player_data_df = player_data_df[ player_data_df[plot_var] >= l_min ]
   if l_max:
