@@ -2285,15 +2285,17 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Sort correlations in descending order for better readability
   correlations = correlations.sort_values(ascending=False)
 
+  correlations = correlations.drop('point_diff', errors='ignore')
+  
   #print(f" correlations size: {len(correlations)}\n {correlations}")
   
   # Select top 10 positive and negative correlations
   top_corr = pd.concat([correlations.head(10), correlations.tail(10)])
 
   # Create a bar chart
-  plt.figure(figsize=(10, 6))
+  plt.figure(figsize=(15, 6))
   top_corr.plot(kind='barh', ax=plt.gca(), legend=False)
-  plt.title('Top Correlations with point_diff')
+  plt.title('Top Correlations with Point Differntial')
   plt.ylabel('Correlation Coefficient')
   plt.tight_layout()
 
@@ -2304,11 +2306,11 @@ def league_tri_corr(lgy, team, **rpt_filters):
   top_corr = top_corr.to_frame(name='Correlation')
 
   # Add index column by resetting the index
-  top_corr = top_corr.reset_index().rename(columns={'index': 'Feature'})
+  top_corr = top_corr.reset_index().rename(columns={'index': 'Metric'})
   
   # Create scatter plots for top 4 and bottom 4 variables
-  top_4 = top_corr.head(4)['Feature'].tolist()
-  bottom_4 = top_corr.tail(4)['Feature'].tolist()
+  top_4 = top_corr.head(4)['Metric'].tolist()
+  bottom_4 = top_corr.tail(4)['Metric'].tolist()
   scatter_vars = top_4 
 
   # Create a 2x2 grid of subplots for scatter plots
