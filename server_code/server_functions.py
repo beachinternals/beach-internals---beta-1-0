@@ -153,9 +153,15 @@ def calc_player_eso( ppr_df, disp_player ):
   else:
     # limit to only serve receive
     ppr_df = filter_serve_receive_only_player(ppr_df, disp_player)
-
     print(f"eso : size of serve receive db: {ppr_df.shape[0]}")
     
+    if ppr_df.shape[0] == 0:      # Then no data passed!
+      return {
+        'status':False,
+        'error_msg':'No Rows in Dataframe after filter for serve receive only'
+      }
+
+
     # now take out any service errors
     ppr_df = ppr_df[ ppr_df['point_outcome'] != 'TSE']
 

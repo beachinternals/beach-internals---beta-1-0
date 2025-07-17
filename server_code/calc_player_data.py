@@ -288,6 +288,11 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
       player_df.at[i,'fbhe_range'] = float("{:.3f}".format(fbhe_max - fbhe_min))
     else:
       player_df.at[i,'fbhe_range'] = None
+
+    #-------------------- Calculate Earned Sideout (eso)
+    eso_obj = calc_player_eso(ppr_df,p_list[i])
+    if eso_obj.get('status'):
+      player_df.at[i,'eso'] = eso_obj.get('eso')
       
     #------------------- Behind, Option, and Tempo fbhe and %
     fbhe_vector = fbhe(ppr_df, p_list[i], 'pass', True)
