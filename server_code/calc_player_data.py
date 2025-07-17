@@ -263,6 +263,23 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     this_team = teama[:teama_loc].strip()
     player_df.at[i,'team'] = this_team
 
+    # calculate point ratio
+    tmp_df = ppr_df[  (ppr_df['player_a1'] == p_list[i]) | 
+                      (ppr_df['player_a2'] == p_list[i]) |
+                      (ppr_df['player_b1'] == p_list[i]) |
+                      (ppr_df['player_b2'] == p_list[i]) 
+      ]
+
+    tot_pts = tmp_df.shape[0]
+    if tot_pts != 0:
+      #print(f"calc player data: tmp df size {tot_pts}, player {p_list[i]}")
+      tmp1_df = tmp_df[ tmp_df['point_outcome_team'].str.contains(p_list[i])]
+      #print(f"calc player data: tmp df size {tmp1_df.shape[0]}, player {p_list[i]}")
+      pts_earned = tmp1_df[ tmp1_df['point_outcome'] == 'FBK' ].shape[0] + tmp1_df[ tmp1_df['point_outcome'] == 'TK' ].shape[0] + tmp1_df[ tmp1_df['point_outcome'] == 'TSA' ].shape[0]
+      tmp1_df = tmp_df[ ~tmp_df['point_outcome_team'].str.contains(p_list[i])]
+      pts_earned = pts_earned + tmp1_df[ tmp1_df['point_outcome'] == 'FBE' ].shape[0] + tmp1_df[ tmp1_df['point_outcome'] == 'TE' ].shape[0] + tmp1_df[ tmp1_df['point_outcome'] == 'TSE' ].shape[0]
+      player_df.at[i,'point_per']  = pts_earned/tot_pts
+    
     # ----------- calculate FBHE, 1-5 ------------------
     fbhe_vector = fbhe(ppr_df, p_list[i], 'att', True )
     player_df.at[i,'fbhe_n'] = fbhe_vector[3]
@@ -357,10 +374,17 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     # ------------calculate transition Conversion ------------------
     trans_vector = calc_trans( ppr_df, p_list[i], 'all' )
     player_df.at[i,'tcr'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
+    if trans_vector[9] != 0:
+      player_df.at[i,'t_eff'] = (trans_vector[3] - trans_vector[5] )/trans_vector[9]
     trans_vector = calc_trans( ppr_df, p_list[i], 'srv' )
     player_df.at[i,'tcr_s'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
+    if trans_vector[9] != 0:
+      player_df.at[i,'t_eff_s'] = (trans_vector[3] - trans_vector[5] )/trans_vector[9]
     trans_vector = calc_trans( ppr_df, p_list[i], 'rcv' )
     player_df.at[i,'tcr_r'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
+    if trans_vector[9] != 0:
+      player_df.at[i,'t_eff_r'] = (trans_vector[3] - trans_vector[5] )/trans_vector[9]
+    
 
     # -------------- calculate expected value ---------------
     ev_vector = calc_ev(ppr_df, p_list[i])
@@ -635,6 +659,8 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   player_stats_df.at[0,"fbhe_stdev"] = player_df['fbhe'].std(skipna=True)  
   player_stats_df.at[0,"fbhe_range_mean"] = player_df['fbhe_range'].mean(skipna=True) 
   player_stats_df.at[0,"fbhe_range_stdev"] = player_df['fbhe_range'].std(skipna=True)
+  player_stats_df.at[0,"eso_mean"] = player_df['eso'].mean(skipna=True)
+  player_stats_df.at[0,"eso_stdev"] = player_df['eso'].std(skipna=True)  
   
   player_stats_df.at[0,"fbhe1_mean"] = player_df['fbhe1'].mean(skipna=True)
   player_stats_df.at[0,"fbhe1_stdev"] = player_df['fbhe1'].std(skipna=True)
@@ -688,7 +714,14 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   player_stats_df.at[0,"tcr_r_mean"] = player_df['tcr_r'].mean(skipna=True)
   player_stats_df.at[0,"tcr_r_stdev"] = player_df['tcr_r'].std(skipna=True)
   player_stats_df.at[0,"tcr_s_mean"] = player_df['tcr_s'].mean(skipna=True)
-  player_stats_df.at[0,"tcr_s_stdev"] = player_df['tcr_s'].std(skipna=True)
+  player_stats_df.at[0,"tcr_s_stdev"] = player_df['tcr_s'].std(skipna=True)  
+  player_stats_df.at[0,"t_eff_mean"] = player_df['t_eff'].mean(skipna=True)
+  player_stats_df.at[0,"t_eff_stdev"] = player_df['t_eff'].std(skipna=True)  
+  player_stats_df.at[0,"t_eff_r_mean"] = player_df['t_eff_r'].mean(skipna=True)
+  player_stats_df.at[0,"t_eff_r_stdev"] = player_df['t_eff_r'].std(skipna=True)  
+  player_stats_df.at[0,"t_eff_s_mean"] = player_df['t_eff_s'].mean(skipna=True)
+  player_stats_df.at[0,"t_eff_s_stdev"] = player_df['t_eff_s'].std(skipna=True)  
+
   player_stats_df.at[0,"expected_mean"] = player_df['expected'].mean(skipna=True)
   player_stats_df.at[0,"expected_stdev"] = player_df['expected'].std(skipna=True)
   player_stats_df.at[0,"err_den_mean"] = player_df['err_den'].mean(skipna=True)
@@ -780,6 +813,9 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   player_stats_df.at[0,'knockout_stdev'] = player_df['knockout'].std(skipna=True)
   player_stats_df.at[0,'goodpass_mean'] = player_df['goodpass'].mean(skipna=True)
   player_stats_df.at[0,'goodpass_stdev'] = player_df['goodpass'].std(skipna=True)
+
+  player_stats_df.at[0,'point_per_mean'] = player_df['point_per'].mean(skipna=True)
+  player_stats_df.at[0,'point_per_stdev'] = player_df['point_per'].std(skipna=True)
         
   # now lets store our player_data file back as a csv file in the database
   #---------------------------------------------------------------------------

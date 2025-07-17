@@ -161,7 +161,6 @@ def calc_player_eso( ppr_df, disp_player ):
         'error_msg':'No Rows in Dataframe after filter for serve receive only'
       }
 
-
     # now take out any service errors
     ppr_df = ppr_df[ ppr_df['point_outcome'] != 'TSE']
 
@@ -170,12 +169,12 @@ def calc_player_eso( ppr_df, disp_player ):
     # PPR_DF HOW HAS ALL SERVES WE ARE INTERESTED IN.
     eso_attempts = ppr_df.shape[0]
     eso_fbk = ppr_df[ ppr_df['point_outcome'] == 'FBK'].shape[0]
-    eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df[ppr_df['poiint_outcome_team'].str.contains(disp_player, na=False)])].shape[0]
+    eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( ppr_df['point_outcome_team'].str.contains(disp_player) ) ].shape[0]
     eso = (eso_fbk+eso_tk)/eso_attempts
 
     print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
 
-  return {
+    return {
     'status':True,
     'video_url':'No Video in Code Yet',
     'player': disp_player,

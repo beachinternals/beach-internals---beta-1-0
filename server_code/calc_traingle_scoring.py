@@ -144,8 +144,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               fbe_a':None, FB Errors by A
               'fbk_b':None, FBK by B
               'fbe_b':None, First BAll Errors by B
-              'fb_pts_a': First Ball Poitns for A (A kills + B Errors)
-              'fb_pts_b': First BAll Poiints B
+              'fb_pts_a': First Ball Points for A (A kills + B Errors)
+              'fb_pts_b': First BAll Points B
               'fb_adv_a': Adv A (A pts - B pts)
               'fb_pts': Total First Ball Points
               
