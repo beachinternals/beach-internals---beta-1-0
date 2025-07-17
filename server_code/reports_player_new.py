@@ -2283,17 +2283,18 @@ def league_tri_corr(lgy, team, **rpt_filters):
   correlations = numeric_df.corrwith(numeric_df['point_diff'])
 
   # Sort correlations in descending order for better readability
-  correlations = correlations.sort_values(ascending=False)
+  correlations = correlations.sort_values(ascending=True)
 
   correlations = correlations.drop('point_diff', errors='ignore')
   
   #print(f" correlations size: {len(correlations)}\n {correlations}")
   
   # Select top 10 positive and negative correlations
-  top_corr = pd.concat([correlations.head(10), correlations.tail(10)])
+  top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
 
+  fig_size = [15,15]
   # Create a bar chart
-  plt.figure(figsize=(15, 6))
+  plt.figure(figsize=fig_size)
   top_corr.plot(kind='barh', ax=plt.gca(), legend=False)
   plt.title('Top Correlations with Point Differntial')
   plt.ylabel('Correlation Coefficient')
@@ -2311,10 +2312,10 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Create scatter plots for top 4 and bottom 4 variables
   top_4 = top_corr.head(4)['Metric'].tolist()
   bottom_4 = top_corr.tail(4)['Metric'].tolist()
-  scatter_vars = top_4 
+  scatter_vars = top_4 +bottom_4
 
   # Create a 2x2 grid of subplots for scatter plots
-  fig_scatter, axes = plt.subplots(nrows=2, ncols=2, figsize=(16, 8), sharex=True)
+  fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
   axes = axes.flatten()
 
   for i, var in enumerate(scatter_vars):
@@ -2331,33 +2332,15 @@ def league_tri_corr(lgy, team, **rpt_filters):
 
   # Store the scatter plot figure in image_list[1]
   image_list[1] = anvil.mpl_util.plot_image()
-
-  scatter_vars = bottom_4 
-
-  # Create a 2x2 grid of subplots for scatter plots
-  fig_scatter, axes = plt.subplots(nrows=2, ncols=2, figsize=(16, 8), sharex=True)
-  axes = axes.flatten()
-
-  for i, var in enumerate(scatter_vars):
-    if var in numeric_df.columns:
-      axes[i].scatter(numeric_df['point_diff'], numeric_df[var], alpha=0.5)
-      axes[i].set_title(f'{var} vs point_diff')
-      axes[i].set_xlabel('point_diff')
-      axes[i].set_ylabel(var)
-    else:
-      axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
-      axes[i].set_axis_off()
-
-    plt.tight_layout()
-
-  # Store the scatter plot figure in image_list[1]
-  image_list[2] = anvil.mpl_util.plot_image()
-
-  # Store top_corr DataFrame in df_list
-  df_list[0] = top_corr.to_dict('records')
-
   plt.show()
   plt.close('all')
-
+  
+  # Store top_corr DataFrame in df_list
+  empty_df = pd.DataFrame({' ':[' ']})
+  df_list[0] = empty_df.to_dict('records')
+  # limit top_corr to top and bottom 5
+  top_corr = pd.concat([top_corr.head(5), top_corr.tail(5)])
+  top_corr = top_corr.sort_values(by='Correlation',ascending=False)
+  df_list[1] = top_corr.to_dict('records')
 
   return title_list, label_list, image_list, df_list
