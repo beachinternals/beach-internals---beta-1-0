@@ -154,7 +154,8 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                  'opp_fbhe_5_5c':None,'opp_fbhe_5_5c_n':None,'opp_fbhe_5_5c_ea':None,'opp_fbhe_5_5d':None,'opp_fbhe_5_5d_n':None,'opp_fbhe_5_5d_ea':None,'opp_fbhe_5_5e':None,'opp_fbhe_5_5e_n':None,'opp_fbhe_5_5e_ea':None,
                  'cons_fbhe_sd_match':None,'cons_tcr_sd_match':None,'cons_ed_sd_match':None,'cons_ko_sd_match':None,'cons_pass_sd_match':None,'cons_pts_sd_match':None,
                  'cons_fbhe_sd_s2s':None,'cons_tcr_sd_s2s':None,'cons_ed_sd_s2s':None,'cons_ko_sd_s2s':None,'cons_pass_sd_s2s':None,'cons_pts_sd_s2s':None ,
-                 'knockout':None, 'goodpass':None
+                 'knockout':None, 'goodpass':None,
+                 'eso':None,'t_eff':None,'t_eff_r':None,'t_eff_s':None,'point_per':None 
                  }
   #print(f"Player Dict:{player_dict}")
   player_df = pd.DataFrame.from_records(player_dict)
@@ -243,7 +244,9 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                        'cons_fbhe_sd_s2s_mean':[float()],'cons_tcr_sd_s2s_mean':[float()],'cons_ed_sd_s2s_mean':[float()],'cons_ko_sd_s2s_mean':[float()],'cons_pass_sd_s2s_mean':[float()],'cons_pts_sd_s2s_mean':[float()],
                        'cons_fbhe_sd_match_stdev':[float()],'cons_tcr_sd_match_stdev':[float()],'cons_ed_sd_match_stdev':[float()],'cons_ko_sd_match_stdev':[float()],'cons_pass_sd_match_stdev':[float()],'cons_pts_sd_match_stdev':[float()],
                        'cons_fbhe_sd_s2s_stdev':[float()],'cons_tcr_sd_s2s_stdev':[float()],'cons_ed_sd_s2s_stdev':[float()],'cons_ko_sd_s2s_stdev':[float()],'cons_pass_sd_s2s_stdev':[float()],'cons_pts_sd_s2s_stdev':[float()],
-                       'knockout_mean':[float()],'knockout_stdev':[float()], 'goodpass_mean':[float()], 'goodpass_stdev':[float()]
+                       'knockout_mean':[float()],'knockout_stdev':[float()], 'goodpass_mean':[float()], 'goodpass_stdev':[float()],
+                       'eso_mean':[float()],'t_eff_mean':[float()],'t_eff_r_mean':[float()],'t_eff_s_mean':[float()],'point_per_mean':[float()] ,
+                       'eso_stdev':[float()],'t_eff_stdev':[float()],'t_eff_r_stdev':[float()],'t_eff_s_stdev':[float()],'point_per_stdev':[float()] 
                       }
   player_stats_df =  pd.DataFrame.from_records(player_stats_dict)    # shoudl only need one row here
   #print(f"player stats df:{player_stats_df}")

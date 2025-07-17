@@ -2209,7 +2209,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   #ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   #print(f"PPR DF size, new {ppr_df.shape[0]}")
   #ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
-  #player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
   #pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
   tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
 
@@ -2261,6 +2261,11 @@ def league_tri_corr(lgy, team, **rpt_filters):
   #-------------------------------------------------------------------------------------
   #=====================================================================================
 
+  ##
+  ##
+  ## Fist step ... correlation analuysis of hte Tri_data file
+  ##
+  ##
   # Select only columns containing 'win', 'loser', or 'diff' (case-insensitive)
   filtered_cols = tri_df.filter(regex='(?i)(win|loser|diff)').columns
 
@@ -2343,4 +2348,93 @@ def league_tri_corr(lgy, team, **rpt_filters):
   top_corr = top_corr.sort_values(by='Correlation',ascending=False)
   df_list[1] = top_corr.to_dict('records')
 
+  '''
+
+  ##
+  ##
+  ## Second step ... correlation analysis of the player data file
+  ##
+  ##
+  # Select only columns containing 'win', 'loser', or 'diff' (case-insensitive)
+  filtered_cols = player_data_df.filter(regex='(?i)(win|loser|diff)').columns
+
+  # Ensure 'point_diff' is in the filtered columns
+  if 'point_diff' not in filtered_cols:
+    raise ValueError("Column 'point_diff' not found in filtered columns")
+
+  # Select numeric columns from the filtered set
+  numeric_df = tri_df[filtered_cols].select_dtypes(include=['float64', 'int64'])
+
+  # Ensure 'point_diff' is in the numeric DataFrame
+  if 'point_diff' not in numeric_df.columns:
+    raise ValueError("Column 'point_diff' not found or is not numeric")
+
+  # Option 2: Fill missing values (e.g., with mean)
+  numeric_df = numeric_df.fillna(numeric_df.mean())
+
+  #print(f"numberi df size {numeric_df.shape[0]}\n{numeric_df}")
+  # Calculate Pearson correlation of all numeric columns with 'point_diff'
+  correlations = numeric_df.corrwith(numeric_df['point_diff'])
+
+  # Sort correlations in descending order for better readability
+  correlations = correlations.sort_values(ascending=True)
+
+  correlations = correlations.drop('point_diff', errors='ignore')
+
+  #print(f" correlations size: {len(correlations)}\n {correlations}")
+
+  # Select top 10 positive and negative correlations
+  top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
+
+  fig_size = [15,15]
+  # Create a bar chart
+  plt.figure(figsize=fig_size)
+  top_corr.plot(kind='barh', ax=plt.gca(), legend=False)
+  plt.title('Top Correlations with Point Differntial')
+  plt.ylabel('Correlation Coefficient')
+  plt.tight_layout()
+
+  # Store the figure in image_list
+  image_list[0] = anvil.mpl_util.plot_image()
+
+  # Convert top_corr Series to a DataFrame
+  top_corr = top_corr.to_frame(name='Correlation')
+
+  # Add index column by resetting the index
+  top_corr = top_corr.reset_index().rename(columns={'index': 'Metric'})
+
+  # Create scatter plots for top 4 and bottom 4 variables
+  top_4 = top_corr.head(4)['Metric'].tolist()
+  bottom_4 = top_corr.tail(4)['Metric'].tolist()
+  scatter_vars = top_4 +bottom_4
+
+  # Create a 2x2 grid of subplots for scatter plots
+  fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
+  axes = axes.flatten()
+
+  for i, var in enumerate(scatter_vars):
+    if var in numeric_df.columns:
+      axes[i].scatter(numeric_df['point_diff'], numeric_df[var], alpha=0.5)
+      axes[i].set_title(f'{var} vs point_diff')
+      axes[i].set_xlabel('point_diff')
+      axes[i].set_ylabel(var)
+    else:
+      axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
+      axes[i].set_axis_off()
+
+  plt.tight_layout()
+
+  # Store the scatter plot figure in image_list[1]
+  image_list[1] = anvil.mpl_util.plot_image()
+  plt.show()
+  plt.close('all')
+
+  # Store top_corr DataFrame in df_list
+  empty_df = pd.DataFrame({' ':[' ']})
+  df_list[0] = empty_df.to_dict('records')
+  # limit top_corr to top and bottom 5
+  top_corr = pd.concat([top_corr.head(5), top_corr.tail(5)])
+  top_corr = top_corr.sort_values(by='Correlation',ascending=False)
+  df_list[1] = top_corr.to_dict('records')
+  '''  
   return title_list, label_list, image_list, df_list
