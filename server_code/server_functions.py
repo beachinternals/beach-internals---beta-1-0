@@ -153,7 +153,7 @@ def calc_player_eso( ppr_df, disp_player ):
   else:
     # limit to only serve receive
     ppr_df = filter_serve_receive_only_player(ppr_df, disp_player)
-    print(f"eso : size of serve receive db: {ppr_df.shape[0]}")
+    #print(f"eso : size of serve receive db: {ppr_df.shape[0]}")
     
     if ppr_df.shape[0] == 0:      # Then no data passed!
       return {
@@ -164,7 +164,7 @@ def calc_player_eso( ppr_df, disp_player ):
     # now take out any service errors
     ppr_df = ppr_df[ ppr_df['point_outcome'] != 'TSE']
 
-    print(f"eso : size of serve receive db without service errors: {ppr_df.shape[0]}")
+    #print(f"eso : size of serve receive db without service errors: {ppr_df.shape[0]}")
 
     # PPR_DF HOW HAS ALL SERVES WE ARE INTERESTED IN.
     eso_attempts = ppr_df.shape[0]
@@ -172,7 +172,7 @@ def calc_player_eso( ppr_df, disp_player ):
     eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( ppr_df['point_outcome_team'].str.contains(disp_player) ) ].shape[0]
     eso = (eso_fbk+eso_tk)/eso_attempts
 
-    print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
+    #print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
 
     return {
     'status':True,
