@@ -15,6 +15,13 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import scipy.stats as stats
+from statsmodels.formula.api import ols
+from statsmodels.stats.anova import anova_lm
+from sklearn.preprocessing import LabelEncoder
+from sklearn.feature_selection import mutual_info_classif
+#import sklearn
+import seaborn as sns
+
 from tabulate import tabulate
 from server_functions import *
 from anvil import pdf
@@ -2438,24 +2445,124 @@ def league_tri_corr(lgy, team, **rpt_filters):
   ## Third step ... correlation analysis of the ppr file when pointoutcome is FBK
   ##
   ##----------------------------------------------------------------------------------------
-  # Assuming ppr is your dataframe
-  # Filter rows where point_outcome_ == 'FBK'
-  fbk_df = ppr_df[ppr_df['point_outcome'] == 'FBK']
 
-  # Select numerical columns
-  numerical_cols = fbk_df.select_dtypes(include=['int64', 'float64']).columns
-  fbk_numerical = fbk_df[numerical_cols]
+  # Assuming ppr_df is your dataframe
+  # Step 1: Clean column names
+  # Replace special characters (e.g., periods, spaces, colons) with underscores
+  ppr_df.columns = [col.replace(' ', '_').replace('.', '_').replace(':', '_') for col in ppr_df.columns]
 
-  # Check if there are enough data points and numerical columns
-  if fbk_numerical.shape[0] < 2:
-    print("Not enough data points where point_outcome_ == 'FBK' to compute correlation.")
-  elif fbk_numerical.shape[1] < 2:
-    print("Fewer than two numerical columns to compute correlation.")
-  else:
-    # Compute correlation matrix
-    correlation_matrix = fbk_numerical.corr(method='pearson')
-    print("Correlation matrix for numerical columns where point_outcome_ == 'FBK':")
-    print(correlation_matrix)
+  # Drop any 'Unnamed' columns (e.g., Unnamed: 0_1)
+  ppr_df = ppr_df.loc[:, ~ppr_df.columns.str.contains('^Unnamed')]
 
+  # Step 2: Identify numerical columns
+  numerical_cols = ppr_df.select_dtypes(include=['int64', 'float64']).columns
+
+  # Step 3: Diagnose infinite/large values and clean data
+  print("Checking for infinite or large values in numerical columns:")
+  ppr_df_clean = ppr_df.copy()
+  for col in numerical_cols:
+    inf_count = np.isinf(ppr_df_clean[col]).sum()
+    large_count = (np.abs(ppr_df_clean[col]) > 1e308).sum()
+    nan_count = ppr_df_clean[col].isna().sum()
+    print(f"{col}: {inf_count} infinite, {large_count} too large, {nan_count} NaN")
+    # Replace inf/-inf with NaN
+    ppr_df_clean[col] = ppr_df_clean[col].replace([np.inf, -np.inf], np.nan)
+    # Cap values at 99th percentile (of non-NaN values)
+    if not ppr_df_clean[col].isna().all():
+      max_val = ppr_df_clean[col].quantile(0.99, interpolation='nearest')
+      ppr_df_clean[col] = ppr_df_clean[col].clip(upper=max_val, lower=-max_val)
+    
+  # Step 4: Kruskal-Wallis test for each numerical column vs. point_outcome
+  results = []
+  for col in numerical_cols:
+    # Group data by point_outcome
+    groups = [ppr_df[ppr_df['point_outcome'] == outcome][col].dropna() 
+              for outcome in ppr_df['point_outcome'].unique()]
+
+    # Check if groups have enough data
+    if all(len(group) > 0 for group in groups) and len(groups) > 1:
+      try:
+        # Perform Kruskal-Wallis test
+        h_stat, p_value = stats.kruskal(*groups)
+
+        # Compute epsilon-squared (effect size)
+        n_total = sum(len(g) for g in groups)
+        k = len(groups)
+        epsilon_squared = (h_stat - k + 1) / (n_total - k) if n_total > k else 0
+
+        results.append({
+          'Metric': col,
+          'H-Statistic': h_stat,
+          'P-Value': p_value,
+          'Epsilon-Squared': epsilon_squared
+        })
+      except ValueError as e:
+        results.append({
+          'Metric': col,
+          'H-Statistic': None,
+          'P-Value': None,
+          'Epsilon-Squared': None,
+          'Note': f'Error: {str(e)}'
+        })
+    else:
+      results.append({
+        'Metric': col,
+        'H-Statistic': None,
+        'P-Value': None,
+        'Epsilon-Squared': None,
+        'Note': 'Insufficient data or single group'
+      })
+
+  # Create results dataframe
+  kw_results = pd.DataFrame(results)
+  print("Kruskal-Wallis Results for metrics vs. point_outcome:")
+  print(kw_results.sort_values(by='P-Value', ascending=True))
+
+  # Step 4: Point-Biserial Correlation for 'FBK' vs. others (if 'FBK' is present)
+  if 'FBK' in ppr_df['point_outcome'].values:
+    ppr_df['is_FBK'] = (ppr_df['point_outcome'] == 'FBK').astype(int)
+    pb_results = []
+    for col in numerical_cols:
+      # Ensure no NaN values in the column for correlation
+      valid_data = ppr_df[[col, 'is_FBK']].dropna()
+      if len(valid_data) > 1 and len(valid_data['is_FBK'].unique()) > 1:
+        corr, p_value = stats.pointbiserialr(valid_data['is_FBK'], valid_data[col])
+        pb_results.append({'Metric': col, 'Correlation': corr, 'P-Value': p_value})
+      else:
+        pb_results.append({
+          'Metric': col,
+          'Correlation': None,
+          'P-Value': None,
+          'Note': 'Insufficient data or single category'
+        })
+
+    pb_results_df = pd.DataFrame(pb_results)
+    print("\nPoint-Biserial Correlation for 'FBK' vs. others:")
+    print(pb_results_df.sort_values(by='P-Value', ascending=True))
+  
+  # Step 5: Mutual Information (non-linear relationships)
+  le = LabelEncoder()
+  y_encoded = le.fit_transform(ppr_df['point_outcome'])
+  mi_scores = mutual_info_classif(ppr_df[numerical_cols].fillna(0), y_encoded, random_state=42)
+  mi_results = pd.DataFrame({
+    'Metric': numerical_cols,
+    'Mutual Information': mi_scores
+  })
+  print("\nMutual Information Scores:")
+  print(mi_results.sort_values(by='Mutual Information', ascending=False))
+  df_list[3] = mi_results.to_dict('records')
+
+  # Step 6: Visualize significant metrics (box plots)
+  significant_metrics = kw_results[kw_results['P-Value'] < 0.05]['Metric']
+  plt_num = 4
+  for metric in significant_metrics:
+    plt.figure(figsize=(8, 6))
+    sns.boxplot(x='point_outcome', y=metric, data=ppr_df)
+    plt.title(f'Box Plot of {metric} by point_outcome')
+    if plt_num < 10:
+      image_list[plt_num] = anvil.mpl_util.plot_image()
+    plt_num = plt_num +1
+    plt.show()
+  
   
   return title_list, label_list, image_list, df_list
