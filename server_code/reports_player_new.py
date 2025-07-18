@@ -2206,9 +2206,9 @@ def league_tri_corr(lgy, team, **rpt_filters):
   #
   # for this report, only need the triangle scoring table
   
-  #ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   #print(f"PPR DF size, new {ppr_df.shape[0]}")
-  #ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
   #pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
   tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
@@ -2354,15 +2354,11 @@ def league_tri_corr(lgy, team, **rpt_filters):
   ## Second step ... correlation analysis of the player data file
   ##
   ##----------------------------------------------------------------------------------------
-  # Select only columns containing 'win', 'loser', or 'diff' (case-insensitive)
-  #filtered_cols = player_data_df.filter(regex='(?i)(win|loser|diff)').columns
-
-  # Ensure 'point_diff' is in the filtered columns
-  #if 'point_per' not in filtered_cols:
-  #  raise ValueError("Column 'point_per' not found in filtered columns")
-
+  # Select only columns containing not includeing '_n' fields
+  filtered_cols = player_data_df.filter(regex='^(?!.*_n$)').columns
+  
   # Select numeric columns from the filtered set
-  numeric_df = player_data_df.select_dtypes(include=['float64', 'int64'])
+  numeric_df = player_data_df[filtered_cols].select_dtypes(include=['float64', 'int64'])
 
   # Ensure 'point_per' is in the numeric DataFrame
   if 'point_per' not in numeric_df.columns:
@@ -2381,7 +2377,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
 
   correlations = correlations.drop('point_per', errors='ignore')
 
-  print(f" correlations size: {len(correlations)}\n {correlations}")
+  #print(f" correlations size: {len(correlations)}\n {correlations}")
 
   # Select top 10 positive and negative correlations
   top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
@@ -2434,5 +2430,32 @@ def league_tri_corr(lgy, team, **rpt_filters):
   top_corr = pd.concat([top_corr.head(15), top_corr.tail(15)])
   top_corr = top_corr.sort_values(by='Correlation',ascending=False)
   df_list[2] = top_corr.to_dict('records')
+
+
+
+  ##-----------------------------------------------------------------------------------------
+  ##
+  ## Third step ... correlation analysis of the ppr file when pointoutcome is FBK
+  ##
+  ##----------------------------------------------------------------------------------------
+  # Assuming ppr is your dataframe
+  # Filter rows where point_outcome_ == 'FBK'
+  fbk_df = ppr_df[ppr_df['point_outcome'] == 'FBK']
+
+  # Select numerical columns
+  numerical_cols = fbk_df.select_dtypes(include=['int64', 'float64']).columns
+  fbk_numerical = fbk_df[numerical_cols]
+
+  # Check if there are enough data points and numerical columns
+  if fbk_numerical.shape[0] < 2:
+    print("Not enough data points where point_outcome_ == 'FBK' to compute correlation.")
+  elif fbk_numerical.shape[1] < 2:
+    print("Fewer than two numerical columns to compute correlation.")
+  else:
+    # Compute correlation matrix
+    correlation_matrix = fbk_numerical.corr(method='pearson')
+    print("Correlation matrix for numerical columns where point_outcome_ == 'FBK':")
+    print(correlation_matrix)
+
   
   return title_list, label_list, image_list, df_list

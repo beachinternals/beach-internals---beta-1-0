@@ -88,10 +88,10 @@ class league_summary_rpt_new(league_summary_rpt_newTemplate):
       #----------------------------------------
       if isinstance(label_list[0], str):
         self.box1_title.text = label_list[0]
-      #if isinstance(label_list[1], str):
-      #  self.box2_title.text = label_list[1]
-      #if isinstance(label_list[2], str):
-      #  self.box3_title.text = label_list[2]
+      if isinstance(label_list[1], str):
+        self.box2_title.text = label_list[1]
+      if isinstance(label_list[2], str):
+        self.box3_title.text = label_list[2]
       #if isinstance(label_list[3], str):
       #  self.box4_title.text = label_list[3]
       #if isinstance(label_list[4], str):
