@@ -2457,10 +2457,88 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Step 2: Identify numerical columns
   numerical_cols = ppr_df.select_dtypes(include=['int64', 'float64']).columns
 
+  # instead, we will list explicitly which columns to cinlude in the analysis
+  desired_cols = {
+    'serve_src_x',
+    'serve_src_y',
+    #'serve_src_zone_net',
+    'serve_dest_x',
+    'serve_dest_y',
+    #'serve_dest_zone_depth',
+    #'serve_dest_zone_net',
+    'serve_dist',
+    'serve_dur',
+    'serve_speed',
+    'serve_angle',
+    'serve_height',
+    'pass_src_x',
+    'pass_src_y',
+    #'pass_src_zone_depth',
+    #'pass_src_zone_net',
+    'pass_dest_x',
+    'pass_dest_y',
+    #'pass_dest_zone_depth',
+    #'pass_dest_zone_net',
+    'pass_dist',
+    'pass_dur',
+    'pass_speed',
+    'pass_angle',
+    'pass_height',
+    #'pass_rtg_btd',
+    'pass_oos',
+    #pass_touch_position
+    #pass_touch_type
+    'set_src_x',
+    'set_src_y',
+    #'set_src_zone_depth',
+    #'set_src_zone_net',
+    'set_dest_x',
+    'set_dest_y',
+    #'set_dest_zone_depth',
+    #'set_dest_zone_net',
+    'set_dist',
+    'set_dur',
+    'set_speed',
+    'set_angle',
+    'set_height',
+    #set_touch_type
+    'att_src_x',
+    'att_src_y',
+    #'att_src_zone_depth',
+    #'att_src_zone_net',
+    'att_dest_x',
+    'att_dest_y',
+    #'att_dest_zone_depth',
+    #'att_dest_zone_net',
+    'att_dist',
+    'att_dur',
+    'att_speed',
+    'att_angle',
+    'att_height',
+    'att_touch_height',
+    'dig_src_x',
+    'dig_src_y',
+    #'dig_src_zone_depth',
+    #'dig_src_zone_net',
+    'dig_dest_x',
+    'dig_dest_y',
+    #'dig_dest_zone_depth',
+    #'dig_dest_zone_net',
+    'dig_dist',
+    'dig_dur',
+    'dig_speed',
+    'dig_angle',
+    'dig_height'
+    #'point_outcome',
+    #'point_outcome_team',
+    #tactic
+  }
+  
   # Step 3: Diagnose infinite/large values and clean data
   print("Checking for infinite or large values in numerical columns:")
   ppr_df_clean = ppr_df.copy()
-  for col in numerical_cols:
+  for col in desired_cols:
+    print(f"Desired Column: {col}")
     inf_count = np.isinf(ppr_df_clean[col]).sum()
     large_count = (np.abs(ppr_df_clean[col]) > 1e308).sum()
     nan_count = ppr_df_clean[col].isna().sum()
@@ -2474,7 +2552,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
     
   # Step 4: Kruskal-Wallis test for each numerical column vs. point_outcome
   results = []
-  for col in numerical_cols:
+  for col in desired_cols:
     # Group data by point_outcome
     groups = [ppr_df[ppr_df['point_outcome'] == outcome][col].dropna() 
               for outcome in ppr_df['point_outcome'].unique()]
@@ -2529,10 +2607,10 @@ def league_tri_corr(lgy, team, **rpt_filters):
   print(kw_results.sort_values(by='P-Value', ascending=True))
 
   # Step 5: Point-Biserial Correlation for 'FBK' vs. others
-  if 'FBK' in ppr_df_clean['point_outcome'].values:
+  if 'FBE' in ppr_df_clean['point_outcome'].values:
     ppr_df_clean['is_FBK'] = (ppr_df_clean['point_outcome'] == 'FBK').astype(int)
     pb_results = []
-    for col in numerical_cols:
+    for col in desired_cols:
       valid_data = ppr_df_clean[[col, 'is_FBK']].dropna()
       if len(valid_data) > 1 and len(valid_data['is_FBK'].unique()) > 1:
         corr, p_value = stats.pointbiserialr(valid_data['is_FBK'], valid_data[col])
