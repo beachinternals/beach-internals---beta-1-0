@@ -2581,7 +2581,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
     sns.boxplot(x='point_outcome', y=metric, data=ppr_df_clean)
     plt.title(f'Box Plot of {metric} by point_outcome')
     plt.show()
-    if plt_num < 9:
+    if plt_num < 10:
       image_list[plt_num] = anvil.mpl_util.plot_image()
     plt_num = plt_num + 1
   
