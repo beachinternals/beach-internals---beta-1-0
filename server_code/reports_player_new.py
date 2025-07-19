@@ -2478,23 +2478,33 @@ def league_tri_corr(lgy, team, **rpt_filters):
     # Group data by point_outcome
     groups = [ppr_df[ppr_df['point_outcome'] == outcome][col].dropna() 
               for outcome in ppr_df['point_outcome'].unique()]
+    
+    # Diagnose group sizes and variance
+    group_sizes = [len(g) for g in groups]
+    group_variances = [g.var() if len(g) > 1 else 0 for g in groups]
+    note = ""
+    if len(groups) < 2:
+      note = "Only one group (need multiple categories)"
+    elif any(len(g) == 0 for g in groups):
+      note = f"Empty group(s): {group_sizes}"
+    elif any(len(g) == 1 for g in groups):
+      note = f"Single-value group(s): {group_sizes}"
+    elif any(v == 0 for g, v in zip(groups, group_variances) if len(g) > 1):
+      note = f"No variance in group(s): {group_variances}"
 
-    # Check if groups have enough data
-    if all(len(group) > 0 for group in groups) and len(groups) > 1:
+    # Perform Kruskal-Wallis if valid
+    if not note and all(len(g) > 0 for g in groups) and len(groups) > 1:
       try:
-        # Perform Kruskal-Wallis test
         h_stat, p_value = stats.kruskal(*groups)
-
-        # Compute epsilon-squared (effect size)
         n_total = sum(len(g) for g in groups)
         k = len(groups)
         epsilon_squared = (h_stat - k + 1) / (n_total - k) if n_total > k else 0
-
         results.append({
           'Metric': col,
           'H-Statistic': h_stat,
           'P-Value': p_value,
-          'Epsilon-Squared': epsilon_squared
+          'Epsilon-Squared': epsilon_squared,
+          'Note': ''
         })
       except ValueError as e:
         results.append({
@@ -2510,24 +2520,23 @@ def league_tri_corr(lgy, team, **rpt_filters):
         'H-Statistic': None,
         'P-Value': None,
         'Epsilon-Squared': None,
-        'Note': 'Insufficient data or single group'
+        'Note': note
       })
 
-  # Create results dataframe
+  # Create and display results
   kw_results = pd.DataFrame(results)
-  print("Kruskal-Wallis Results for metrics vs. point_outcome:")
+  print("\nKruskal-Wallis Results for metrics vs. point_outcome:")
   print(kw_results.sort_values(by='P-Value', ascending=True))
 
-  # Step 4: Point-Biserial Correlation for 'FBK' vs. others (if 'FBK' is present)
-  if 'FBK' in ppr_df['point_outcome'].values:
-    ppr_df['is_FBK'] = (ppr_df['point_outcome'] == 'FBK').astype(int)
+  # Step 5: Point-Biserial Correlation for 'FBK' vs. others
+  if 'FBK' in ppr_df_clean['point_outcome'].values:
+    ppr_df_clean['is_FBK'] = (ppr_df_clean['point_outcome'] == 'FBK').astype(int)
     pb_results = []
     for col in numerical_cols:
-      # Ensure no NaN values in the column for correlation
-      valid_data = ppr_df[[col, 'is_FBK']].dropna()
+      valid_data = ppr_df_clean[[col, 'is_FBK']].dropna()
       if len(valid_data) > 1 and len(valid_data['is_FBK'].unique()) > 1:
         corr, p_value = stats.pointbiserialr(valid_data['is_FBK'], valid_data[col])
-        pb_results.append({'Metric': col, 'Correlation': corr, 'P-Value': p_value})
+        pb_results.append({'Metric': col, 'Correlation': corr, 'P-Value': p_value, 'Note': ''})
       else:
         pb_results.append({
           'Metric': col,
@@ -2539,30 +2548,42 @@ def league_tri_corr(lgy, team, **rpt_filters):
     pb_results_df = pd.DataFrame(pb_results)
     print("\nPoint-Biserial Correlation for 'FBK' vs. others:")
     print(pb_results_df.sort_values(by='P-Value', ascending=True))
-  
-  # Step 5: Mutual Information (non-linear relationships)
+
+  # Step 6: Mutual Information (if scikit-learn is available)
   le = LabelEncoder()
-  y_encoded = le.fit_transform(ppr_df['point_outcome'])
-  mi_scores = mutual_info_classif(ppr_df[numerical_cols].fillna(0), y_encoded, random_state=42)
+  y_encoded = le.fit_transform(ppr_df_clean['point_outcome'])
+  # Impute NaN with median for mutual information
+  mi_data = ppr_df_clean[numerical_cols].copy()
+  for col in numerical_cols:
+    if not mi_data[col].isna().all():
+      mi_data[col] = mi_data[col].fillna(mi_data[col].median())
+    else:
+      mi_data[col] = mi_data[col].fillna(0)  # Fallback for all-NaN columns
+  mi_scores = mutual_info_classif(mi_data, y_encoded, random_state=42)
   mi_results = pd.DataFrame({
     'Metric': numerical_cols,
-    'Mutual Information': mi_scores
+    'Mutual Information': mi_scores,
+    'Note': ''
   })
   print("\nMutual Information Scores:")
   print(mi_results.sort_values(by='Mutual Information', ascending=False))
-  df_list[3] = mi_results.to_dict('records')
+  # store thus to display
+  mi_results = mi_results.sort_values(by='Mutual Information', ascending=False)
+  return_results = mi_results.head(20)
+  df_list[3] = return_results.to_dict('records')
 
-  # Step 6: Visualize significant metrics (box plots)
-  significant_metrics = kw_results[kw_results['P-Value'] < 0.05]['Metric']
+
+  # Step 7: Visualize significant metrics (box plots)
   plt_num = 4
+  significant_metrics = kw_results[kw_results['P-Value'] < 0.05]['Metric']
   for metric in significant_metrics:
     plt.figure(figsize=(8, 6))
-    sns.boxplot(x='point_outcome', y=metric, data=ppr_df)
+    sns.boxplot(x='point_outcome', y=metric, data=ppr_df_clean)
     plt.title(f'Box Plot of {metric} by point_outcome')
-    if plt_num < 10:
-      image_list[plt_num] = anvil.mpl_util.plot_image()
-    plt_num = plt_num +1
     plt.show()
+    if plt_num < 9:
+      image_list[plt_num] = anvil.mpl_util.plot_image()
+    plt_num = plt_num + 1
   
   
   return title_list, label_list, image_list, df_list
