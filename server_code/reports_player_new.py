@@ -2438,8 +2438,115 @@ def league_tri_corr(lgy, team, **rpt_filters):
   top_corr = top_corr.sort_values(by='Correlation',ascending=False)
   df_list[2] = top_corr.to_dict('records')
 
+  ##-----------------------------------------------------------------------------------------
+  ##
+  ## Third step ... correlation analysis of the ppr file with point outcome, where FBK = 1, TK,TE = 0, FBE = -1
+  ##
+  ##----------------------------------------------------------------------------------------
 
+  # Assuming ppr_df is your dataframe
+  # Step 1: Clean column names
+  ppr_df.columns = [col.replace(' ', '_').replace('.', '_').replace(':', '_') for col in ppr_df.columns]
+  ppr_df = ppr_df.loc[:, ~ppr_df.columns.str.contains('^Unnamed')]
 
+  # Step 2: Replace point_outcome values as integers
+  ppr_df['point_outcome'] = ppr_df['point_outcome'].replace({
+    'FBK': 1,
+    'FBE': -1,
+    'TK': 0,
+    'TE': 0
+  }).fillna(np.nan)  # Handle unmapped values
+  
+  # Convert to integer, handling NaN (converts to float64 if NaN exists)
+  ppr_df['point_outcome'] = pd.to_numeric(ppr_df['point_outcome'], errors='coerce')
+  # If you want to drop rows with NaN in point_outcome to ensure int64
+  ppr_df = ppr_df.dropna(subset=['point_outcome'])
+  ppr_df['point_outcome'] = ppr_df['point_outcome'].astype('int64')
+
+  # Verify replacement
+  print("Updated point_outcome values:")
+  print(ppr_df['point_outcome'].value_counts())
+
+  # Step 3: Limit ppr_df to numerical columns
+  ppr_df = ppr_df.select_dtypes(include=['int64', 'float64'])
+  print("\nColumns in ppr_df after limiting to numerical:")
+  print(ppr_df.columns.tolist())
+
+  # Step 4: Define desired columns (numerical only)
+  desired_cols = [
+    'serve_src_x', 'serve_src_y', 'serve_src_zone_net', 'serve_dest_x', 'serve_dest_y',
+    'serve_dest_zone_depth', 'serve_dest_zone_net', 'serve_dist', 'serve_dur', 'serve_speed',
+    'serve_angle', 'serve_height', 'pass_src_x', 'pass_src_y', 'pass_src_zone_depth',
+    'pass_src_zone_net', 'pass_dest_x', 'pass_dest_y', 'pass_dest_zone_depth',
+    'pass_dest_zone_net', 'pass_dist', 'pass_dur', 'pass_speed', 'pass_angle', 'pass_height',
+    'pass_rtg_btd', 'pass_oos', 'set_src_x', 'set_src_y', 'set_src_zone_depth',
+    'set_src_zone_net', 'set_dest_x', 'set_dest_y', 'set_dest_zone_depth',
+    'set_dest_zone_net', 'set_dist', 'set_dur', 'set_speed', 'set_angle', 'set_height',
+    'att_src_x', 'att_src_y', 'att_src_zone_depth', 'att_src_zone_net', 'att_dest_x',
+    'att_dest_y', 'att_dest_zone_depth', 'att_dest_zone_net', 'att_dist', 'att_dur',
+    'att_speed', 'att_angle', 'att_height', 'att_touch_height', 'dig_src_x', 'dig_src_y',
+    'dig_src_zone_depth', 'dig_src_zone_net', 'dig_dest_x', 'dig_dest_y',
+    'dig_dest_zone_depth', 'dig_dest_zone_net', 'dig_dist', 'dig_dur', 'dig_speed',
+    'dig_angle', 'dig_height', 'point_outcome'
+  ]
+
+  # Filter numerical columns from desired_cols
+  numerical_cols = [col for col in desired_cols if col in ppr_df.columns]
+  print(f"\nNumerical columns used for analysis: {numerical_cols}")
+
+  # Step 5: Clean data (handle inf/large values)
+  print("\nChecking for infinite or large values:")
+  for col in numerical_cols:
+    inf_count = np.isinf(ppr_df[col]).sum()
+    large_count = (np.abs(ppr_df[col]) > 1e308).sum()
+    nan_count = ppr_df[col].isna().sum()
+    print(f"{col}: {inf_count} infinite, {large_count} too large, {nan_count} NaN")
+    ppr_df[col] = ppr_df[col].replace([np.inf, -np.inf], np.nan)
+    if not ppr_df[col].isna().all():
+      max_val = ppr_df[col].quantile(0.99, interpolation='nearest')
+      ppr_df[col] = ppr_df[col].clip(upper=max_val, lower=-max_val)
+      ppr_df[col] = ppr_df[col].fillna(ppr_df[col].median())
+
+  # Step 6: Pearson Correlation with point_outcome
+  corr_results = []
+  for col in numerical_cols:
+    if col != 'point_outcome':  # Exclude point_outcome itself
+      valid_data = ppr_df[[col, 'point_outcome']].dropna()
+      if len(valid_data) > 1 and valid_data['point_outcome'].nunique() > 1:
+        corr, p_value = stats.pearsonr(valid_data[col], valid_data['point_outcome'])
+        corr_results.append({
+          'Metric': col,
+          'Correlation': corr,
+          'P-Value': p_value,
+          'Note': ''
+        })
+      else:
+        corr_results.append({
+          'Metric': col,
+          'Correlation': None,
+          'P-Value': None,
+          'Note': 'Insufficient data or single category'
+        })
+
+  corr_results_df = pd.DataFrame(corr_results)
+  corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
+  print("\nPearson Correlation with point_outcome:")
+  print(corr_results_df.sort_values(by='Correlation', ascending=False))
+
+  # Step 7: Visualize significant correlations (bar plot)
+  significant_metrics = corr_results_df[corr_results_df['P-Value'] < 0.05]['Metric']
+  if not significant_metrics.empty:
+    plt.figure(figsize=(fig_size))
+    sns.barplot(x='Correlation', y='Metric', data=corr_results_df[corr_results_df['P-Value'] < 0.05])
+    plt.title('Significant Correlations with point_outcome')
+    plt.show()
+    
+  image_list[4] = anvil.mpl_util.plot_image()
+  corr_results_df = corr_results_df[ corr_results_df['P-Value'] < 0.05]
+  corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
+  df_list[3] = corr_results_df.to_dict('records')
+  
+  '''
   ##-----------------------------------------------------------------------------------------
   ##
   ## Third step ... correlation analysis of the ppr file when pointoutcome is FBK
@@ -2662,6 +2769,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
     if plt_num < 10:
       image_list[plt_num] = anvil.mpl_util.plot_image()
     plt_num = plt_num + 1
+  '''
   
   
   return title_list, label_list, image_list, df_list
