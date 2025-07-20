@@ -2214,6 +2214,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # for this report, only need the triangle scoring table
   
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_save = ppr_df
   #print(f"PPR DF size, new {ppr_df.shape[0]}")
   ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
@@ -2299,10 +2300,12 @@ def league_tri_corr(lgy, team, **rpt_filters):
 
   correlations = correlations.drop('point_diff', errors='ignore')
   
-  #print(f" correlations size: {len(correlations)}\n {correlations}")
+  # Round the 'Correlation' and 'P-value' columns to 3 decimal places
+  correlations = correlations.round(3)
+  correlations = correlations.dropna()
   
-  # Select top 10 positive and negative correlations
   top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
+  #print(f" correlations size: {len(correlations)}\n {correlations}")
 
   fig_size = [15,15]
   # Create a bar chart
@@ -2347,13 +2350,10 @@ def league_tri_corr(lgy, team, **rpt_filters):
   plt.show()
   plt.close('all')
   
-  # Store top_corr DataFrame in df_list
-  empty_df = pd.DataFrame({' ':[' ']})
-  df_list[0] = empty_df.to_dict('records')
   # limit top_corr to top and bottom 5
-  top_corr = pd.concat([top_corr.head(5), top_corr.tail(5)])
+  top_corr = pd.concat([top_corr.head(10), top_corr.tail(10)])
   top_corr = top_corr.sort_values(by='Correlation',ascending=False)
-  df_list[1] = top_corr.to_dict('records')
+  df_list[0] = top_corr.to_dict('records')
 
 
   ##-----------------------------------------------------------------------------------------
@@ -2383,6 +2383,9 @@ def league_tri_corr(lgy, team, **rpt_filters):
   correlations = correlations.sort_values(ascending=True)
 
   correlations = correlations.drop('point_per', errors='ignore')
+  
+  # Round the 'Correlation' and 'P-value' columns to 3 decimal places
+  correlations = correlations.round(3)
 
   #print(f" correlations size: {len(correlations)}\n {correlations}")
 
@@ -2434,9 +2437,9 @@ def league_tri_corr(lgy, team, **rpt_filters):
 
   # Store top_corr DataFrame in df_list
   # limit top_corr to top and bottom 5
-  top_corr = pd.concat([top_corr.head(15), top_corr.tail(15)])
+  top_corr = pd.concat([top_corr.head(10), top_corr.tail(10)])
   top_corr = top_corr.sort_values(by='Correlation',ascending=False)
-  df_list[2] = top_corr.to_dict('records')
+  df_list[1] = top_corr.to_dict('records')
 
   ##-----------------------------------------------------------------------------------------
   ##
@@ -2445,10 +2448,16 @@ def league_tri_corr(lgy, team, **rpt_filters):
   ##----------------------------------------------------------------------------------------
 
   # Assuming ppr_df is your dataframe
+  ppr_df = ppr_save
+
   # Step 1: Clean column names
   ppr_df.columns = [col.replace(' ', '_').replace('.', '_').replace(':', '_') for col in ppr_df.columns]
   ppr_df = ppr_df.loc[:, ~ppr_df.columns.str.contains('^Unnamed')]
 
+  # Limit the Dataframe to only these plays, remove all TSE and TSA
+  ppr_df = ppr_df[ ppr_df['point_outcome'] != 'TSA']
+  ppr_df = ppr_df[ ppr_df['point_outcome'] != 'TSE']
+  
   # Step 2: Replace point_outcome values as integers
   ppr_df['point_outcome'] = ppr_df['point_outcome'].replace({
     'FBK': 1,
@@ -2464,7 +2473,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   ppr_df['point_outcome'] = ppr_df['point_outcome'].astype('int64')
 
   # Verify replacement
-  print("Updated point_outcome values:")
+  print("Updated point_outcome values FBK & FBE:")
   print(ppr_df['point_outcome'].value_counts())
 
   # Step 3: Limit ppr_df to numerical columns
@@ -2530,6 +2539,11 @@ def league_tri_corr(lgy, team, **rpt_filters):
 
   corr_results_df = pd.DataFrame(corr_results)
   corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
+
+  # Round the 'Correlation' and 'P-value' columns to 3 decimal places
+  corr_results_df['Correlation'] = corr_results_df['Correlation'].round(3)
+  corr_results_df['P-Value'] = corr_results_df['P-Value'].round(3)
+  
   print("\nPearson Correlation with point_outcome:")
   print(corr_results_df.sort_values(by='Correlation', ascending=False))
 
@@ -2542,9 +2556,180 @@ def league_tri_corr(lgy, team, **rpt_filters):
     plt.show()
     
   image_list[4] = anvil.mpl_util.plot_image()
+
+  # Create scatter plots for top 4 and bottom 4 variables
+  top_4 = significant_metrics.head(4)
+  bottom_4 = significant_metrics.tail(4)
+  scatter_vars = top_4 +bottom_4
+  
+  # Create a 2x2 grid of subplots for scatter plots
+  fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
+  axes = axes.flatten()
+
+  for i, var in enumerate(scatter_vars):
+    if var in   corr_results_df.columns:
+      axes[i].scatter(corr_results_df['point_outcome'], corr_results_df[var], alpha=0.5)
+      axes[i].set_title(f'{var} vs Point Outcome FBE (-1) -> FBK (1)')
+      axes[i].set_xlabel('Percentage of Points')
+      axes[i].set_ylabel(var)
+    else:
+      axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
+      axes[i].set_axis_off()
+
+  plt.tight_layout()
+  image_list[5] = anvil.mpl_util.plot_image()
+  
   corr_results_df = corr_results_df[ corr_results_df['P-Value'] < 0.05]
+  corr_results_df = pd.concat([corr_results_df.head(10), corr_results_df.tail(10)])
+  corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
+  df_list[2] = corr_results_df.to_dict('records')
+
+
+  ##-----------------------------------------------------------------------------------------
+  ##
+  ## Fourth step ... correlation analysis of the ppr file with point outcome, where TSA = 1, TSE = -1
+  ##
+  ##----------------------------------------------------------------------------------------
+
+  # Assuming ppr_df is your dataframe
+  # Step 1: Clean column names
+  ppr_df = ppr_save
+  ppr_df.columns = [col.replace(' ', '_').replace('.', '_').replace(':', '_') for col in ppr_df.columns]
+  ppr_df = ppr_df.loc[:, ~ppr_df.columns.str.contains('^Unnamed')]
+
+  # Limit the Dataframe to only these plays, only TSA and TSE
+  ppr_df = ppr_df[ (ppr_df['point_outcome'] == 'TSA') | ( ppr_df['point_outcome'] != 'TSE' )]
+
+  # Step 2: Replace point_outcome values as integers
+  ppr_df['point_outcome'] = ppr_df['point_outcome'].replace({
+    'TSA': 1,
+    'TSE': -1,
+    'TK': 0,
+    'TE': 0,
+    'FBK': 0,
+    'FBE': 0
+  }).fillna(np.nan)  # Handle unmapped values
+
+  # Convert to integer, handling NaN (converts to float64 if NaN exists)
+  ppr_df['point_outcome'] = pd.to_numeric(ppr_df['point_outcome'], errors='coerce')
+  # If you want to drop rows with NaN in point_outcome to ensure int64
+  ppr_df = ppr_df.dropna(subset=['point_outcome'])
+  ppr_df['point_outcome'] = ppr_df['point_outcome'].astype('int64')
+
+  # Verify replacement
+  print("Updated point_outcome values TSA & TSE:")
+  print(ppr_df['point_outcome'].value_counts())
+
+  # Step 3: Limit ppr_df to numerical columns
+  ppr_df = ppr_df.select_dtypes(include=['int64', 'float64'])
+  print("\nColumns in ppr_df after limiting to numerical:")
+  print(ppr_df.columns.tolist())
+
+  # Step 4: Define desired columns (numerical only)
+  desired_cols = [
+    'serve_src_x', 'serve_src_y', 'serve_src_zone_net', 'serve_dest_x', 'serve_dest_y',
+    'serve_dest_zone_depth', 'serve_dest_zone_net', 'serve_dist', 'serve_dur', 'serve_speed',
+    'serve_angle', 'serve_height', 'pass_src_x', 'pass_src_y', 'pass_src_zone_depth',
+    'pass_src_zone_net', 'pass_dest_x', 'pass_dest_y', 'pass_dest_zone_depth',
+    'pass_dest_zone_net', 'pass_dist', 'pass_dur', 'pass_speed', 'pass_angle', 'pass_height',
+    'pass_rtg_btd', 'pass_oos', 'set_src_x', 'set_src_y', 'set_src_zone_depth',
+    'set_src_zone_net', 'set_dest_x', 'set_dest_y', 'set_dest_zone_depth',
+    'set_dest_zone_net', 'set_dist', 'set_dur', 'set_speed', 'set_angle', 'set_height',
+    'att_src_x', 'att_src_y', 'att_src_zone_depth', 'att_src_zone_net', 'att_dest_x',
+    'att_dest_y', 'att_dest_zone_depth', 'att_dest_zone_net', 'att_dist', 'att_dur',
+    'att_speed', 'att_angle', 'att_height', 'att_touch_height', 'dig_src_x', 'dig_src_y',
+    'dig_src_zone_depth', 'dig_src_zone_net', 'dig_dest_x', 'dig_dest_y',
+    'dig_dest_zone_depth', 'dig_dest_zone_net', 'dig_dist', 'dig_dur', 'dig_speed',
+    'dig_angle', 'dig_height', 'point_outcome'
+  ]
+
+  # Filter numerical columns from desired_cols
+  numerical_cols = [col for col in desired_cols if col in ppr_df.columns]
+  print(f"\nNumerical columns used for analysis: {numerical_cols}")
+
+  # Step 5: Clean data (handle inf/large values)
+  print("\nChecking for infinite or large values:")
+  for col in numerical_cols:
+    inf_count = np.isinf(ppr_df[col]).sum()
+    large_count = (np.abs(ppr_df[col]) > 1e308).sum()
+    nan_count = ppr_df[col].isna().sum()
+    print(f"{col}: {inf_count} infinite, {large_count} too large, {nan_count} NaN")
+    ppr_df[col] = ppr_df[col].replace([np.inf, -np.inf], np.nan)
+    if not ppr_df[col].isna().all():
+      max_val = ppr_df[col].quantile(0.99, interpolation='nearest')
+      ppr_df[col] = ppr_df[col].clip(upper=max_val, lower=-max_val)
+      ppr_df[col] = ppr_df[col].fillna(ppr_df[col].median())
+
+  # Step 6: Pearson Correlation with point_outcome
+  corr_results = []
+  for col in numerical_cols:
+    if col != 'point_outcome':  # Exclude point_outcome itself
+      valid_data = ppr_df[[col, 'point_outcome']].dropna()
+      if len(valid_data) > 1 and valid_data['point_outcome'].nunique() > 1:
+        corr, p_value = stats.pearsonr(valid_data[col], valid_data['point_outcome'])
+        corr_results.append({
+          'Metric': col,
+          'Correlation': corr,
+          'P-Value': p_value,
+          'Note': ''
+        })
+      else:
+        corr_results.append({
+          'Metric': col,
+          'Correlation': None,
+          'P-Value': None,
+          'Note': 'Insufficient data or single category'
+        })
+
+  corr_results_df = pd.DataFrame(corr_results)
+  corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
+  
+  # Round the 'Correlation' and 'P-value' columns to 3 decimal places
+  corr_results_df['Correlation'] = corr_results_df['Correlation'].round(3)
+  corr_results_df['P-Value'] = corr_results_df['P-Value'].round(3)
+  
+  print("\nPearson Correlation with point_outcome:")
+  print(corr_results_df.sort_values(by='Correlation', ascending=False))
+
+  # Step 7: Visualize significant correlations (bar plot)
+  significant_metrics = corr_results_df[corr_results_df['P-Value'] < 0.05]['Metric']
+  if not significant_metrics.empty:
+    plt.figure(figsize=(fig_size))
+    sns.barplot(x='Correlation', y='Metric', data=corr_results_df[corr_results_df['P-Value'] < 0.05])
+    plt.title('Significant Correlations with point_outcome')
+    plt.show()
+  image_list[6] = anvil.mpl_util.plot_image()
+
+
+  # Create scatter plots for top 4 and bottom 4 variables
+  top_4 = significant_metrics.head(4)
+  bottom_4 = significant_metrics.tail(4)
+  scatter_vars = top_4 + bottom_4
+  print(f"Scatter Vars: {scatter_vars}")
+
+  # Create a 2x2 grid of subplots for scatter plots
+  fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
+  axes = axes.flatten()
+
+  for i, var in enumerate(scatter_vars):
+    if var in   corr_results_df.columns:
+      axes[i].scatter(corr_results_df['point_outcome'], corr_results_df[var], alpha=0.5)
+      axes[i].set_title(f'{var} vs Point Outcome FBE (-1) -> FBK (1)')
+      axes[i].set_xlabel('Percentage of Points')
+      axes[i].set_ylabel(var)
+    else:
+      axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
+      axes[i].set_axis_off()
+
+  plt.tight_layout()
+  image_list[7] = anvil.mpl_util.plot_image()
+  
+  corr_results_df = corr_results_df[ corr_results_df['P-Value'] < 0.05]
+  corr_results_df = pd.concat([corr_results_df.head(10), corr_results_df.tail(10)])
   corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
   df_list[3] = corr_results_df.to_dict('records')
+
+
   
   '''
   ##-----------------------------------------------------------------------------------------
