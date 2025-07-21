@@ -2560,7 +2560,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Create scatter plots for top 4 and bottom 4 variables
   top_4 = significant_metrics.head(4)
   bottom_4 = significant_metrics.tail(4)
-  scatter_vars = top_4 +bottom_4
+  scatter_vars = pd.concat([top_4, bottom_4])
   
   # Create a 2x2 grid of subplots for scatter plots
   fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
@@ -2704,7 +2704,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Create scatter plots for top 4 and bottom 4 variables
   top_4 = significant_metrics.head(4)
   bottom_4 = significant_metrics.tail(4)
-  scatter_vars = top_4 + bottom_4
+  scatter_vars = pd.concat([top_4, bottom_4])
   print(f"Scatter Vars: {scatter_vars}")
 
   # Create a 2x2 grid of subplots for scatter plots
