@@ -565,7 +565,8 @@ def calc_ppr_data(ppr_df):
       # for each attack, we now want to determine the angular zone of this attack, used for attack tendencies
       att_angle_obj = calc_attack_angles(ppr_r['att_src_x'],ppr_r['att_src_y'],ppr_df.at[index,'att_angle'])
       #if att_angle_obj.get('success'):
-      ppr_df.at[index,'att_angular_zone'] = att_angle_obj.get('att_angular_zone')
+      ppr_df.at[index,'att_angular_zone'] = att_angle_obj.get('angular_zone')
+      print(f"Attack Angular Zone: {ppr_df.at[index,'att_angular_zone']}")
         
     if ppr_r['dig_yn'] == "Y":
       ppr_df.at[index,'dig_dist'] = calc_dist(ppr_r['dig_src_x'],ppr_r['dig_src_y'],ppr_r['dig_dest_x'],ppr_r['dig_dest_y'])
@@ -916,6 +917,7 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
 def calc_attack_angles( att_x, att_y, att_angle ):
   # calculate the angular zone of the attack
 
+  angular_zone = ''
   print(f"Calc Attack Angles: Passed arguments: att_x {att_x}, att_y {att_y}, att_angle {att_angle}")
   if att_x is not None and att_y is not None and att_angle is not None and att_angle != 0 :
     a1 = math.atan( (8+att_y) / att_x )*57.29578
@@ -951,7 +953,7 @@ def calc_attack_angles( att_x, att_y, att_angle ):
   else:
     return {
       'success':False,
-      'angular_zone':None,
+      'angular_zone':'',
       'err_msg':'a passed parameter is None '
     }
 
