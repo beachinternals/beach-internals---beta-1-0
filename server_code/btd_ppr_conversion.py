@@ -205,6 +205,7 @@ def btd_to_ppr_df(btd_df, flist_r):
     'att_player':blank,'att_yn':yn,'att_src_x':zero,'att_src_y':zero,'att_src_t':zero,'att_src_zone_depth':blank,'att_src_zone_net':zero,
                   'att_dest_x':zero,'att_dest_y':zero,'att_dest_t':zero,'att_dest_zone_depth':blank,'att_dest_zone_net':zero,
                   'att_dist':zero,'att_dur':zero,'att_speed':zero,'att_angle':zero,'att_action_id':zero,'att_height':zero, 'att_touch_height':zero,
+                  'att_angular_zone':blank,
     'dig_player':blank,'dig_yn':yn,'dig_src_x':zero,'dig_src_y':zero,'dig_src_t':zero,'dig_src_zone_depth':blank,'dig_src_zone_net':zero,
                   'dig_dest_x':zero,'dig_dest_y':zero,'dig_dest_t':zero,'dig_dest_zone_depth':blank,'dig_dest_zone_net':zero,
                   'dig_dist':zero,'dig_dur':zero,'dig_speed':zero,'dig_angle':zero,'dig_action_id':zero,'dig_height':zero,
@@ -561,6 +562,11 @@ def calc_ppr_data(ppr_df):
           ppr_df.at[index,'att_speed'] = calc_speed(ppr_df.at[index,'att_dist'],ppr_df.at[index,'att_dur'])
         ppr_df.at[index,'att_height'] = calc_height(ppr_r['att_src_t'],ppr_r['att_dest_t'])
 
+      # for each attack, we now want to determine the angular zone of this attack, used for attack tendencies
+      att_angle_obj = calc_attack_angles(ppr_r['att_src_x'],ppr_r['att_src_y'],ppr_df.at[index,'att_angle'])
+      if att_angle_obj.get('success'):
+        ppr_df.at[index,'att_angular_zone'] = att_angle_obj.get('att_angular_zone')
+        
     if ppr_r['dig_yn'] == "Y":
       ppr_df.at[index,'dig_dist'] = calc_dist(ppr_r['dig_src_x'],ppr_r['dig_src_y'],ppr_r['dig_dest_x'],ppr_r['dig_dest_y'])
       ppr_df.at[index,'dig_src_zone_depth'] = zone_depth(ppr_r['dig_src_y'])
@@ -794,6 +800,7 @@ def srv_zone_depth(x1):
       zone = " "
     
   return zone
+  
 def zone_net(x1):
   if x1 is not None:
     if math.isnan(x1):
@@ -831,7 +838,8 @@ def srv_zone_net(x1):
     zone = 0
     
   return zone
-  
+
+
 def calc_tactic( ppr_df ):
   for index, ppr_r in ppr_df.iterrows():
     # calculate the following tactics, put them into the 
@@ -860,6 +868,7 @@ def print_to_string(*args, **kwargs):
   contents = output.getvalue()
   output.close()
   return contents
+
 
 def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle, dest_y):
   # calcualte the out of system flag
@@ -902,3 +911,49 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
    # print(f'6 oos flag: {oos_flag}, Dest net, depth, height, src net, angle: {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
     
   return oos_flag
+
+
+def calc_attack_angles( att_x, att_y, att_angle ):
+  # calculate the angular zone of the attack
+
+  print(f"Calc Attack Angles: Passed arguments: att_x {att_x}, att_y {att_y}, att_angle {att_angle}")
+  if att_x is not None and att_y is not None and att_angle is not None and att_angle != 0 :
+    a1 = math.atan( (8+att_y) / att_x )*57.29578
+    a2 = math.atan( att_x / (8+att_x ))*57.29578
+    a3 = math.atan( (8-att_x) / (8+att_y ) )*57.29578
+    a4 = math.atan( (8+att_y) / (8-att_x) )*57.29578
+
+    b1 = a1/2
+    b2 = a1/2 + a2/2 
+    b3 = a2/2 + a3/2
+    b4 = a3/2 + a4/2
+    b5 = a4/2
+
+    print(f"Calc Attack Angles: A's and B's, a1:{a1}, a2:{a2}, a3:{a3}, a4:{a4}, b1:{b1}, b2:{b2}, b3:{b3}, b4:{b4}, b5:{b5}")
+    if att_angle > 90-b5:
+      angular_zone = 'A1'
+    elif att_angle < (90-b5) and att_angle > (90-b5-b4):
+      angular_zone = 'A2'
+    elif att_angle < (90-b5-b4) and att_angle > (90-b5-b4-b3):
+      angular_zone = 'A3'
+    elif att_angle < (90-b5-b4-b3) and att_angle > (90-b5-b4-b3-b2):
+      angular_zone = 'A4'
+    elif att_angle < (90-b5-b4-b3-b2) and att_angle > -90:
+      angular_zone = 'A5'
+    else:
+      angular_zone = ''
+
+    print(f"Attack angular zone: {angular_zone}")
+    return {
+      'success':True,
+      'angular_zone': angular_zone
+    }
+  else:
+    return {
+      'success':False,
+      'angular_zone':None,
+      'err_msg':'a passed parameter is None '
+    }
+
+
+  
