@@ -564,8 +564,8 @@ def calc_ppr_data(ppr_df):
 
       # for each attack, we now want to determine the angular zone of this attack, used for attack tendencies
       att_angle_obj = calc_attack_angles(ppr_r['att_src_x'],ppr_r['att_src_y'],ppr_df.at[index,'att_angle'])
-      if att_angle_obj.get('success'):
-        ppr_df.at[index,'att_angular_zone'] = att_angle_obj.get('att_angular_zone')
+      #if att_angle_obj.get('success'):
+      ppr_df.at[index,'att_angular_zone'] = att_angle_obj.get('att_angular_zone')
         
     if ppr_r['dig_yn'] == "Y":
       ppr_df.at[index,'dig_dist'] = calc_dist(ppr_r['dig_src_x'],ppr_r['dig_src_y'],ppr_r['dig_dest_x'],ppr_r['dig_dest_y'])
