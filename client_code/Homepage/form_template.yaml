@@ -137,28 +137,36 @@ components:
     type: Link
   - layout_properties: {grid_position: 'WASNKQ,LJQPFH'}
     name: label_3
-    properties: {align: center, background: 'theme:Secondary Container', bold: true, spacing_above: none, spacing_below: none, text: Website}
+    properties: {align: center, background: 'theme:Secondary Container', bold: true, spacing_above: none, spacing_below: none, text: Website, visible: false}
     type: Label
+  - layout_properties: {grid_position: 'UXLRAM,AKFREC'}
+    name: link_1
+    properties: {align: center, background: 'theme:Secondary Container', text: Website, url: 'http://www.beachinternals.com/'}
+    type: Link
   - event_bindings: {click: about_us_link2_click}
     layout_properties: {grid_position: 'KFWFWT,APDDXN'}
     name: about_us_link2
-    properties: {text: About Us}
+    properties: {text: About Us, visible: false}
     type: Link
   - event_bindings: {click: contact_us_link_click}
     layout_properties: {grid_position: 'IFSYAN,THUAZQ'}
     name: contact_us_link
-    properties: {text: Contact Us}
+    properties: {text: Contact Us, visible: false}
     type: Link
   - event_bindings: {click: help_link2_click}
     layout_properties: {grid_position: 'ASTZBJ,QNBNRV'}
     name: help_link2
-    properties: {text: Help}
+    properties: {text: Help, visible: false}
     type: Link
   - event_bindings: {click: beta_link_click}
     layout_properties: {grid_position: 'XYVQRW,NHFDHT'}
     name: beta_link
-    properties: {text: Beta Development}
+    properties: {text: Beta Development, visible: false}
     type: Link
+  - layout_properties: {grid_position: 'FNKXML,FFBQFA'}
+    name: label_4
+    properties: {}
+    type: Label
   - data_bindings:
     - {code: 'self.item['''']', property: visible, writeback: false}
     event_bindings: {click: admin_link_click}

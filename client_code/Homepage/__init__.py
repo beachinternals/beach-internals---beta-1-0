@@ -27,17 +27,18 @@ class Homepage(HomepageTemplate):
         self.reports_main.visible = True
       else:
         self.admin_link.visible = False
-        self.pair_rpt_link.visible = True
-        self.league_rpt_link.visible = True
-        self.rpt_mgr_link.visible = False
-        self.scouting_rpt_link.visible = True
+        self.pair_rpt_link.visible = False
+        self.league_rpt_link.visible = False
+        self.rpt_mgr_link.visible = True
+        self.scouting_rpt_link.visible = False
+        self.reports_main.visible = True        
     else:
       self.admin_link.visible = False
       self.pair_rpt_link.visible = False
       self.league_rpt_link.visible = False
-      self.rpt_mgr_link.visible = False
+      self.rpt_mgr_link.visible = True
       self.scouting_rpt_link.visible = False
-      self.reports_main.visible = False
+      self.reports_main.visible = True
 
     pass
     

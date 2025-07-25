@@ -7,6 +7,7 @@ import anvil.users
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
+from anvil.js.window import window
 
 
 class UserMgr(UserMgrTemplate):
@@ -68,7 +69,7 @@ class UserMgr(UserMgrTemplate):
       self.gender_label.text = ""
       self.year_label.text = ""
       
-      
+    window.location.reload()
     pass
   
   def signin_button_click(self, **event_args):
@@ -103,7 +104,7 @@ class UserMgr(UserMgrTemplate):
 
     if self.label_3.text == "Visitor":
       self.team_info_link.visible = True
-      
+    window.location.reload()
     pass
 
   def team_info_link_click(self, **event_args):
