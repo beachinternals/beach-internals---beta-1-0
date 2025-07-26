@@ -170,9 +170,13 @@ def calc_player_eso( ppr_df, disp_player ):
     eso_attempts = ppr_df.shape[0]
     eso_fbk = ppr_df[ ppr_df['point_outcome'] == 'FBK'].shape[0]
     eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( ppr_df['point_outcome_team'].str.contains(disp_player) ) ].shape[0]
-    eso = (eso_fbk+eso_tk)/eso_attempts
-
-    #print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
+    if eso_attempts != 0:
+      eso = float((eso_fbk+eso_tk)/eso_attempts)
+      eso = round(eso,3)
+    else:
+      eso = None
+      
+    print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
 
     return {
     'status':True,
@@ -182,7 +186,7 @@ def calc_player_eso( ppr_df, disp_player ):
     'attempts': eso_attempts,
     'fbk': eso_fbk,
     'tk' : eso_tk,
-    'eso_string': str('{:.3%}'.format(eso))
+    'eso_string': str('{:.1%}'.format(eso))
   }
 
 
@@ -219,7 +223,7 @@ def calc_team_eso( ppr_df, disp_team ):
     eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['point_outcome_team'] == disp_team ) ].shape[0]
     eso = (eso_fbk+eso_tk)/eso_attempts
 
-    #print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
+    print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
 
   return {
     'status':True,

@@ -58,8 +58,8 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
     title_list, label_list, image_list, df_list = player_sw_new( lgy, team, **rpt_filters )
   elif fnct_name == 'player_45_fbhe_new':
     title_list, label_list, image_list, df_list = player_45_fbhe_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_45_oos_new':
-    title_list, label_list, image_list, df_list = player_45_oos_new( lgy, team, **rpt_filters )
+  elif fnct_name == 'player_45_passing_new':
+    title_list, label_list, image_list, df_list = player_45_passing_new( lgy, team, **rpt_filters )
   elif fnct_name == 'player_pass_cluster_new':
     title_list, label_list, image_list, df_list = player_pass_cluster_new( lgy, team, **rpt_filters )
   elif fnct_name == 'player_45_pass_area_new':

@@ -34,39 +34,6 @@ components:
   name: column_panel_11
   properties: {}
   type: ColumnPanel
-- components:
-  - layout_properties: {grid_position: 'RIQODD,MMUTFI'}
-    name: box3_title
-    properties: {align: center}
-    type: Label
-  - layout_properties: {grid_position: 'ZIGNPY,VMCVPI NMGFEM,KLJPUF'}
-    name: image_4
-    properties: {height: '520'}
-    type: Image
-  - layout_properties: {grid_position: 'ZIGNPY,VMCVPI RAPTWN,VBAEVF'}
-    name: box_5
-    properties: {content: ''}
-    type: RichText
-  - layout_properties: {grid_position: 'ZIGNPY,RSUCQA LLEBHD,ZSUOVP'}
-    name: image_5
-    properties: {height: '520'}
-    type: Image
-  - layout_properties: {grid_position: 'ZIGNPY,RSUCQA QTQSEC,LPBNKG'}
-    name: box_6
-    properties: {}
-    type: RichText
-  - layout_properties: {grid_position: 'ZIGNPY,KEHNTW TKIXVB,AZCCRF'}
-    name: image_6
-    properties: {height: '520'}
-    type: Image
-  - layout_properties: {grid_position: 'ZIGNPY,KEHNTW PUBQAZ,GCOVYX'}
-    name: box_7
-    properties: {}
-    type: RichText
-  layout_properties: {grid_position: 'IRLTTD,XOEHHG'}
-  name: column_panel_13
-  properties: {col_widths: '{"RCEVNR":25}'}
-  type: ColumnPanel
 - layout_properties: {grid_position: 'FLACQC,KBHHLM'}
   name: box2_title
   properties: {align: center}
@@ -109,6 +76,43 @@ components:
   layout_properties: {grid_position: 'UUZDSY,WBRXJY'}
   name: column_panel_16
   properties: {}
+  type: ColumnPanel
+- layout_properties: {grid_position: 'JPIITM,ICGSQO'}
+  name: box3_title
+  properties: {align: center}
+  type: Label
+- layout_properties: {grid_position: 'FXBLZZ,KGFYCX'}
+  name: box_5
+  properties: {}
+  type: RichText
+- components:
+  - layout_properties: {grid_position: 'ZIGNPY,VMCVPI NMGFEM,KLJPUF'}
+    name: image_4
+    properties: {height: '520'}
+    type: Image
+  - layout_properties: {grid_position: 'ZIGNPY,VMCVPI RAPTWN,VBAEVF'}
+    name: box_6
+    properties: {content: ''}
+    type: RichText
+  - layout_properties: {grid_position: 'ZIGNPY,RSUCQA LLEBHD,ZSUOVP'}
+    name: image_5
+    properties: {height: '520'}
+    type: Image
+  - layout_properties: {grid_position: 'ZIGNPY,RSUCQA QTQSEC,LPBNKG'}
+    name: box_7
+    properties: {}
+    type: RichText
+  - layout_properties: {grid_position: 'ZIGNPY,KEHNTW TKIXVB,AZCCRF'}
+    name: image_6
+    properties: {height: '520'}
+    type: Image
+  - layout_properties: {grid_position: 'ZIGNPY,KEHNTW PUBQAZ,GCOVYX'}
+    name: box_8
+    properties: {}
+    type: RichText
+  layout_properties: {grid_position: 'DKPRJK,MRLFPV'}
+  name: column_panel_13
+  properties: {col_widths: '{}'}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'IFOHDJ,SNQJLY'}

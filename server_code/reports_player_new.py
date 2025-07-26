@@ -1133,12 +1133,12 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   #-------------------------------------------------------------------------------------
   
   # create the output dataframe - This dataframe is the summary for zone 1,3,5
-  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','URL'],
-             'All':[0,0,0,0,0,' '],
-             'Zone 1':[0,0,0,0,0,' '],
-             'Zone 3':[0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,' '],
-             'No Zone':[0,0,0,0,0,' ']
+  df_dict = {' ':['FBHE','FBSO','ESO','Kills','Errors','Attempts','% In System','URL'],
+             'All':[0,0,0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
@@ -1147,26 +1147,34 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( ppr_df, disp_player, 'pass', True )
+    eso_obj = calc_player_eso(ppr_df,disp_player)
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[1,'All'] = fbhe_vector[4]  # confidence interval
-    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+    fbhe_table.at[3,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[4,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[5,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[1,'All'] = fbhe_vector[4]  # FBSO
+    fbhe_table.at[7,'All'] = fbhe_vector[5]  # URL
+    fbhe_table.at[2,'All'] = eso_obj.get('eso')  # ESO
+    #fbhe_table.at[2,'All'] = float("{:.3f}").format(fbhe_table.at[2,'All'])    
+    fbhe_table.at[6,'All'] = calc_good_pass(ppr_df,disp_player)  # Good Pass
+    fbhe_table.at[6,'All'] = str('{:.1%}').format(fbhe_table.at[6,'All'])
 
     # calculate for zones 1 - 5
     column = ['Zone 1','Zone 3','Zone 5','No Zone']
     for i in [0,1,2,3]:
       zone = 0 if i == 3 else (i*2)+1
       fbhe_vector = fbhe( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', True )
+      eso_obj = calc_player_eso(ppr_df[ppr_df['serve_src_zone_net']==zone],disp_player)
       fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[2,column[i]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[3,column[i]] = fbhe_vector[2]  # errors
-      fbhe_table.at[4,column[i]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[3,column[i]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[4,column[i]] = fbhe_vector[2]  # errors
+      fbhe_table.at[5,column[i]] = fbhe_vector[3]  # attempts
       fbhe_table.at[1,column[i]] = fbhe_vector[4]  # fbso
-      fbhe_table.at[5,column[i]] = fbhe_vector[5]  # URL
-
-
+      fbhe_table.at[7,column[i]] = fbhe_vector[5]  # URL
+      fbhe_table.at[2,column[i]] = eso_obj.get('eso')  # ESO
+      #fbhe_table.at[2,column[i]] = float('{:.3f}').format(fbhe_table.at[2,column[i]])
+      fbhe_table.at[6,column[i]] =  calc_good_pass(ppr_df[ppr_df['serve_src_zone_net']==zone],disp_player)  # Good Pass
+      fbhe_table.at[6,column[i]] = str('{:.1%}').format(fbhe_table.at[6,column[i]])
   else:
     fbhe_table.at[0,'All'] = "No Data Found"
 
@@ -1195,6 +1203,9 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   pass1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
   pass3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
   pass5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  att1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  att3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  att5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
 
   # create the output dataframe - This dataframe is the for a detail below each graph, 1,3,5, so we can see the fnhe #, and the URL
   df_dict = {'Dest Zone':[' '],
@@ -1235,6 +1246,7 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
       #print(f"FBHE vector for 1, {i}{j}, {fbhe_vector}")
       if fbhe_vector[3] >= 5:
         pass1_val[index] = fbhe_vector[0]
+        att1_val[index] = fbhe_vector[4]
         z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
         z1_table.loc[z1_table_index,'FBHE'] = fbhe_vector[0]
         z1_table.loc[z1_table_index,'Att'] = fbhe_vector[3]
@@ -1250,6 +1262,7 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
                         )
       if fbhe_vector[3] >= 5:        
         pass3_val[index] = fbhe_vector[0]
+        att3_val[index] = fbhe_vector[4]
         z3_table.loc[z3_table_index,'Dest Zone'] = str(i)+j.capitalize()
         z3_table.loc[z3_table_index,'FBHE'] = fbhe_vector[0]
         z3_table.loc[z3_table_index,'Att'] = fbhe_vector[3]
@@ -1264,6 +1277,7 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
                         )
       if fbhe_vector[3] >= 5:      
         pass5_val[index] = fbhe_vector[0]
+        att5_val[index] = fbhe_vector[4]
         z5_table.loc[z5_table_index,'Dest Zone'] = str(i)+j.capitalize()
         z5_table.loc[z5_table_index,'FBHE'] = fbhe_vector[0]
         z5_table.loc[z5_table_index,'Att'] = fbhe_vector[3]
@@ -1320,6 +1334,37 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   df_list[2] = z3_table.to_dict('records')
   df_list[3] = z5_table.to_dict('records')
 
+  #
+  #  now create plots for attempts from zone 1,3,5
+  #
+  # from zone 1
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att1_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  a1_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
+  a3_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
+  a5_plt = anvil.mpl_util.plot_image()
+
+  image_list[3] = a1_plt
+  image_list[4] = a3_plt
+  image_list[5] = a5_plt
+
+  plt.close('All')
+  
   return title_list, label_list, image_list, df_list
 
 
@@ -1329,7 +1374,7 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
 #
 #---------------------------------------------------------------------------
 @anvil.server.callable
-def player_45_oos_new(lgy, team, **rpt_filters):
+def player_45_passing_new(lgy, team, **rpt_filters):
   '''
   Report Functions:
     - Caluclate and display the 45 zonesm plus general zone 1,3,5 table
@@ -1411,6 +1456,9 @@ def player_45_oos_new(lgy, team, **rpt_filters):
     ]
   #print(f"ppr size after filter for the player: {disp_player}, {ppr_df.shape[0]}")
 
+  # firt, this reprot is only when the player is passing, so:
+  ppr_df = ppr_df[ppr_df['pass_player'] == disp_player] 
+  
   # break disp_player into team, number, and shortname
   # unpack player into team, number and short name
   str_loc = disp_player.index(' ')
@@ -1436,7 +1484,18 @@ def player_45_oos_new(lgy, team, **rpt_filters):
              'No Zone':[0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
+  df_dict1 = {' Pass Area':['Area','Attempts','URL'],
+             'All':[0,0,' '],
+             'Zone 1':[0,0,' '],
+             'Zone 3':[0,0,' '],
+             'Zone 5':[0,0,' '],
+             'No Zone':[0,0,' ']
+            }
+  area_table = pd.DataFrame.from_dict( df_dict1 )
 
+  # storing the area so I can get max and min for the graph
+  el_area = []
+  
   # oos_vector = count_out_of_system(ppr_df,disp_player,action)
   # action is 'pass', 'att', 'srv'
   # returns a vector : oos_vector[0] = number OOS (int), oos_vector[1] = percent out of system (Float()), oos_vector[2] = attempts (int())
@@ -1451,6 +1510,15 @@ def player_45_oos_new(lgy, team, **rpt_filters):
     fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
     #fbhe_table.at[3,'All'] = fbhe_vector[3]  # URL (someday?)
 
+    el_result = find_ellipse_area(ppr_df, 'pass', min_att=5)
+    if el_result.get('attempts') >= 5:
+      area_table.at[0,'All'] = str('{:.1f}').format(el_result.get('area'))
+      area_table.at[1,'All'] = el_result.get('attempts')
+      area_table.at[2,'All'] = el_result.get('URL')  
+      el_area.append(el_result.get('area'))
+
+      
+    
     # calculate for zones 1 - 5
     column = ['Zone 1','Zone 3','Zone 5','No Zone']
     for i in [0,1,2,3]:
@@ -1461,10 +1529,18 @@ def player_45_oos_new(lgy, team, **rpt_filters):
       fbhe_table.at[2,column[i]] = fbhe_vector[2]  # errors
       #fbhe_table.at[3,column[i]] = fbhe_vector[3]  # URL someday
 
+      el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], 'pass', min_att=5)
+      if el_result.get('attempts') >= 5:
+        area_table.at[0,column[i]] = str('{:.1f}').format(el_result.get('area'))
+        area_table.at[1,column[i]] = el_result.get('attempts')
+        area_table.at[2,column[i]] = el_result.get('URL')
+        el_area.append(el_result.get('area'))
+
 
 
   else:
     fbhe_table.at[0,'All'] = "No Data Found"
+    area_table.at[0,'All'] = "No Data Found"
 
   
   # the order of the index
@@ -1488,6 +1564,9 @@ def player_45_oos_new(lgy, team, **rpt_filters):
   pass1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
   pass3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
   pass5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  area1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  area3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  area5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
 
   # create the output dataframe - This dataframe is the for a detail below each graph, 1,3,5, so we can see the fnhe #, and the URL
   df_dict = {'Dest Zone':[' '],
@@ -1501,6 +1580,17 @@ def player_45_oos_new(lgy, team, **rpt_filters):
   z1_table_index = 0
   z3_table_index = 0
   z5_table_index = 0
+  df_dict9 = {'Dest Zone':[' '],
+             'Area':[0],
+             'Att':[0],
+             'URL':[' ']
+            }
+  a1_table = pd.DataFrame.from_dict( df_dict9 )
+  a3_table = pd.DataFrame.from_dict( df_dict9 )
+  a5_table = pd.DataFrame.from_dict( df_dict9 )
+  a1_table_index = 0
+  a3_table_index = 0
+  a5_table_index = 0
 
   # now, loop thru the list for serves from zone 1
   index = 0
@@ -1534,7 +1624,22 @@ def player_45_oos_new(lgy, team, **rpt_filters):
         z1_table.loc[z1_table_index,'URL'] = ' '
         z1_table_index = z1_table_index + 1
 
-
+        # Zone 1 Area
+      el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                                    'pass', min_att=5
+                                   )
+      print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      if el_result.get('attempts') >= 5:
+        area1_val[index] = el_result.get('area')
+        a1_table.loc[a1_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        a1_table.loc[a1_table_index,'Area'] = str('{:.1f}').format(el_result.get('area'))
+        a1_table.loc[a1_table_index,'Att'] = el_result.get('attempts')
+        a1_table.loc[a1_table_index,'URL'] = el_result.get('URL')
+        el_area.append(el_result.get('area'))
+        a1_table_index = a1_table_index + 1
+        
       # Zone 3
       fbhe_vector = count_out_of_system(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
         (ppr_df['serve_dest_zone_net'] == i) &
@@ -1549,6 +1654,22 @@ def player_45_oos_new(lgy, team, **rpt_filters):
         z3_table.loc[z3_table_index,'URL'] = ' '
         z3_table_index = z3_table_index + 1
 
+        # Zone 3 Area
+      el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                                    'pass', min_att=5
+                                   )
+      #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      if el_result.get('attempts') >= 5:
+        area3_val[index] = el_result.get('area')
+        a3_table.loc[a3_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        a3_table.loc[a3_table_index,'Area'] = str('{:.1f}').format(el_result.get('area'))
+        a3_table.loc[a3_table_index,'Att'] = el_result.get('attempts')
+        a3_table.loc[a3_table_index,'URL'] = el_result.get('URL')
+        el_area.append(el_result.get('area'))
+        a3_table_index = a3_table_index + 1
+
       # Zone 5
       fbhe_vector = count_out_of_system(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
         (ppr_df['serve_dest_zone_net'] == i) &
@@ -1562,6 +1683,22 @@ def player_45_oos_new(lgy, team, **rpt_filters):
         z5_table.loc[z5_table_index,'Att'] = fbhe_vector[2]
         z5_table.loc[z5_table_index,'URL'] = ' '
         z5_table_index = z5_table_index + 1
+
+        # Zone 5 Area
+      el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                                    'pass', min_att=5
+                                   )
+      #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      if el_result.get('attempts') >= 5:
+        area5_val[index] = el_result.get('area')
+        a5_table.loc[a5_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        a5_table.loc[a5_table_index,'Area'] = str('{:.1f}').format(el_result.get('area'))
+        a5_table.loc[a5_table_index,'Att'] = el_result.get('attempts')
+        a5_table.loc[a5_table_index,'URL'] = el_result.get('URL')
+        el_area.append(el_result.get('area'))
+        a5_table_index = a5_table_index + 1
 
       index = index + 1
 
@@ -1615,16 +1752,51 @@ def player_45_oos_new(lgy, team, **rpt_filters):
   fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap=custom_cmap),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
   z5_plt = anvil.mpl_util.plot_image()
 
+  cmin = min(el_area)
+  if cmin < 0:
+    cmin = 0
+  cmax = max(el_area)
+  if cmax > 20:
+    cmax = 20
+  
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=area1_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
+  a1_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=area3_val, vmin=cmin, vmax=cmax, cmap=custom_cmap ) 
+  a3_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=area5_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap=custom_cmap),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
+  a5_plt = anvil.mpl_util.plot_image()
+
   # put the Images in the image_list
   image_list[0] = z1_plt
   image_list[1] = z3_plt
   image_list[2] = z5_plt
+  image_list[3] = a1_plt
+  image_list[4] = a3_plt
+  image_list[5] = a5_plt
 
   # put the DF's in the df_list
   df_list[0] = fbhe_table.to_dict('records')
   df_list[1] = z1_table.to_dict('records')
   df_list[2] = z3_table.to_dict('records')
   df_list[3] = z5_table.to_dict('records')
+  df_list[4] = area_table.to_dict('records')
+  df_list[5] = a1_table.to_dict('records')
+  df_list[6] = a3_table.to_dict('records')
+  df_list[7] = a5_table.to_dict('records') 
 
   return title_list, label_list, image_list, df_list
 

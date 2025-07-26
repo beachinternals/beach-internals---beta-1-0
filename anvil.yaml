@@ -307,7 +307,7 @@ db_schema:
   report_data:
     client: none
     columns:
-    - admin_ui: {order: 0, width: 200}
+    - admin_ui: {order: 0, width: 279}
       name: report_id
       type: string
     - admin_ui: {order: 0.375, width: 200}

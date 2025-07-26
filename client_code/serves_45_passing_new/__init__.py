@@ -1,4 +1,4 @@
-from ._anvil_designer import serves_45_newTemplate
+from ._anvil_designer import serves_45_passing_newTemplate
 from anvil import *
 import anvil.server
 import anvil.google.auth, anvil.google.drive
@@ -9,7 +9,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 
 
-class serves_45_new(serves_45_newTemplate):
+class serves_45_passing_new(serves_45_passing_newTemplate):
   def __init__(self, report_id=None, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
@@ -19,8 +19,10 @@ class serves_45_new(serves_45_newTemplate):
 
     # Create a header panel
     header_panel = LinearPanel()
-    header_panel.background = 'gray'
-    header_label = Label(text='Beach Internals, info@beachinternals.com', foreground='black', font_size=14)
+    header_panel.background = "gray"
+    header_label = Label(
+      text="Beach Internals, info@beachinternals.com", foreground="black", font_size=14
+    )
     header_panel.add_component(header_label)
     self.add_component(header_panel)
 
@@ -55,23 +57,25 @@ class serves_45_new(serves_45_newTemplate):
         label_list[8] = rpt_row['box9_title']
         label_list[9] = rpt_row['box10_title']
       """
-      #---------------------------------------
+      # ---------------------------------------
       #
       # Populate The titles
       #
-      #----------------------------------------
+      # ----------------------------------------
       # populate the title
       # Report Title
       # Report Sub-title + player or pair
       if isinstance(title_list[0], str):
         self.rpt_title.text = title_list[0]
-      if isinstance(title_list[1],str) and isinstance(title_list[8], str):
-        if isinstance(title_list[5],str):
-          if title_list[5] == 'pair':
-            self.rpt_subtitle.text = title_list[1] + title_list[9] # for a pair report
-          elif title_list[5] == 'player':
-            self.rpt_subtitle.text = title_list[1] + title_list[8] # for a player report
-          elif title_list[5] == 'league':
+      if isinstance(title_list[1], str) and isinstance(title_list[8], str):
+        if isinstance(title_list[5], str):
+          if title_list[5] == "pair":
+            self.rpt_subtitle.text = title_list[1] + title_list[9]  # for a pair report
+          elif title_list[5] == "player":
+            self.rpt_subtitle.text = (
+              title_list[1] + title_list[8]
+            )  # for a player report
+          elif title_list[5] == "league":
             self.rpt_subtitle.text = title_list[1]  # for a league report
           else:
             self.rpt_subtitle.text = title_list[1]
@@ -81,24 +85,24 @@ class serves_45_new(serves_45_newTemplate):
       if isinstance(title_list[6], str):
         self.filter_text.content = title_list[6]
 
-      #---------------------------------------
+      # ---------------------------------------
       #
       # Populate The box titles
       #
-      #----------------------------------------
+      # ----------------------------------------
       if isinstance(label_list[0], str):
         self.box1_title.text = label_list[0]
       if isinstance(label_list[1], str):
         self.box2_title.text = label_list[1]
       if isinstance(label_list[2], str):
         self.box3_title.text = label_list[2]
-      #if isinstance(label_list[3], str):
+      # if isinstance(label_list[3], str):
       #  self.box4_title.text = label_list[3]
-      #if isinstance(label_list[4], str):
+      # if isinstance(label_list[4], str):
       #  self.box5_title.text = label_list[4]
-      #if isinstance(label_list[5], str):
+      # if isinstance(label_list[5], str):
       #  self.box6_title.text = label_list[5]
-      '''
+      """
       if isinstance(label_list[6], str):
         self.box7_title.text = label_list[6]
       if isinstance(label_list[7], str):
@@ -107,14 +111,13 @@ class serves_45_new(serves_45_newTemplate):
         self.box9_title.text = label_list[8]
       if isinstance(label_list[9], str):
         self.box10_title.text = label_list[9]
-      '''
+      """
 
-
-      #---------------------------------------
+      # ---------------------------------------
       #
       # Populate The plots / images
       #
-      #----------------------------------------
+      # ----------------------------------------
       if isinstance(image_list[0], str):
         if len(image_list[0]) != 0:
           self.image_1.source = image_list[0]
@@ -135,7 +138,7 @@ class serves_45_new(serves_45_newTemplate):
       elif isinstance(image_list[2], anvil.Media):
         if len(image_list[2].get_bytes()) != 0:
           self.image_3.source = image_list[2]
- 
+
       if isinstance(image_list[3], str):
         if len(image_list[3]) != 0:
           self.image_4.source = image_list[3]
@@ -156,7 +159,7 @@ class serves_45_new(serves_45_newTemplate):
       elif isinstance(image_list[5], anvil.Media):
         if len(image_list[5].get_bytes()) != 0:
           self.image_6.source = image_list[5]
-      '''
+      """
       if isinstance(image_list[6], str):
         if len(image_list[6]) != 0:
           self.image_7.source = image_list[6]
@@ -184,13 +187,13 @@ class serves_45_new(serves_45_newTemplate):
       elif isinstance(image_list[9], anvil.Media):
         if len(image_list[9].get_bytes()) != 0:
           self.image_10.source = image_list[9]
-      '''
+      """
 
-      #---------------------------------------
+      # ---------------------------------------
       #
       # Populate The dataframes / rich text / tables
       #
-      #----------------------------------------
+      # ----------------------------------------
       if isinstance(df_list[0], str):
         if len(df_list[0]) != 0:
           self.box_1.content = df_list[0]
@@ -218,7 +221,7 @@ class serves_45_new(serves_45_newTemplate):
       elif isinstance(df_list[3], anvil.Media):
         if len(df_list[3].get_bytes()) != 0:
           self.box_4.content = df_list[3]
-      '''
+
       if isinstance(df_list[4], str):
         if len(df_list[4]) != 0:
           self.box_5.content = df_list[4]
@@ -232,7 +235,21 @@ class serves_45_new(serves_45_newTemplate):
       elif isinstance(df_list[5], anvil.Media):
         if len(df_list[5].get_bytes()) != 0:
           self.box_6.content = df_list[5]
-      '''
+
+      if isinstance(df_list[6], str):
+        if len(df_list[6]) != 0:
+          self.box_7.content = df_list[6]
+      elif isinstance(df_list[6], anvil.Media):
+        if len(df_list[6].get_bytes()) != 0:
+          self.box_7.content = df_list[6]
+
+      if isinstance(df_list[7], str):
+        if len(df_list[7]) != 0:
+          self.box_8.content = df_list[7]
+      elif isinstance(df_list[7], anvil.Media):
+        if len(df_list[7].get_bytes()) != 0:
+          self.box_8.content = df_list[7]
+
 
     else:
       self.label_1.text = "No Report Data Found"
