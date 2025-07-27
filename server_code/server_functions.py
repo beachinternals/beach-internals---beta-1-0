@@ -176,7 +176,7 @@ def calc_player_eso( ppr_df, disp_player ):
     else:
       eso = None
       
-    print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
+    #print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
 
     return {
     'status':True,

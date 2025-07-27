@@ -1133,12 +1133,12 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   #-------------------------------------------------------------------------------------
   
   # create the output dataframe - This dataframe is the summary for zone 1,3,5
-  df_dict = {' ':['FBHE','FBSO','ESO','Kills','Errors','Attempts','% In System','URL'],
-             'All':[0,0,0,0,0,0,0,' '],
-             'Zone 1':[0,0,0,0,0,0,0,' '],
-             'Zone 3':[0,0,0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,0,0,' '],
-             'No Zone':[0,0,0,0,0,0,0,' ']
+  df_dict = {' ':['FBHE','Percentile','FBSO','ESO','Kills','Errors','Attempts','% In System','Percentile','URL'],
+             'All':[0,0,0,0,0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
@@ -1149,16 +1149,23 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
     fbhe_vector = fbhe( ppr_df, disp_player, 'pass', True )
     eso_obj = calc_player_eso(ppr_df,disp_player)
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[3,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[4,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[5,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[1,'All'] = fbhe_vector[4]  # FBSO
-    fbhe_table.at[7,'All'] = fbhe_vector[5]  # URL
-    fbhe_table.at[2,'All'] = eso_obj.get('eso')  # ESO
-    #fbhe_table.at[2,'All'] = float("{:.3f}").format(fbhe_table.at[2,'All'])    
-    fbhe_table.at[6,'All'] = calc_good_pass(ppr_df,disp_player)  # Good Pass
-    fbhe_table.at[6,'All'] = str('{:.1%}').format(fbhe_table.at[6,'All'])
-
+    fbhe_table.at[4,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[5,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[6,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[2,'All'] = fbhe_vector[4]  # FBSO
+    fbhe_table.at[9,'All'] = fbhe_vector[5]  # URL
+    fbhe_table.at[3,'All'] = eso_obj.get('eso')  # ESO
+    #fbhe_table.at[3,'All'] = float("{:.3f}").format(fbhe_table.at[2,'All'])    
+    fbhe_table.at[7,'All'] = calc_good_pass(ppr_df,disp_player)  # Good Pass
+    fbhe_table.at[7,'All'] = str('{:.1%}').format(fbhe_table.at[7,'All'])
+    # FBHE Percentile
+    fbhe_table.at[1,'All'] =  round( stats.norm.cdf( (fbhe_vector[0] - player_data_stats_df.at[0,'fbhe_mean'])/ player_data_stats_df.at[0,'fbhe_stdev'] ), 3)
+    fbhe_table.at[1,'All'] = str('{:.0%}').format(fbhe_table.at[1,'All'])
+    value = fbhe_table.at[7, 'All']  # '89.3%'
+    float_value = float(value.replace('%', ''))/100  # 89.3
+    fbhe_table.at[8,'All'] =  round( stats.norm.cdf( (float_value - player_data_stats_df.at[0,'goodpass_mean'])/ player_data_stats_df.at[0,'goodpass_stdev'] ), 3)
+    fbhe_table.at[8,'All'] = str('{:.0%}').format(fbhe_table.at[8,'All'])
+    
     # calculate for zones 1 - 5
     column = ['Zone 1','Zone 3','Zone 5','No Zone']
     for i in [0,1,2,3]:
@@ -1166,15 +1173,21 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
       fbhe_vector = fbhe( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', True )
       eso_obj = calc_player_eso(ppr_df[ppr_df['serve_src_zone_net']==zone],disp_player)
       fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[3,column[i]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[4,column[i]] = fbhe_vector[2]  # errors
-      fbhe_table.at[5,column[i]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[1,column[i]] = fbhe_vector[4]  # fbso
-      fbhe_table.at[7,column[i]] = fbhe_vector[5]  # URL
-      fbhe_table.at[2,column[i]] = eso_obj.get('eso')  # ESO
-      #fbhe_table.at[2,column[i]] = float('{:.3f}').format(fbhe_table.at[2,column[i]])
-      fbhe_table.at[6,column[i]] =  calc_good_pass(ppr_df[ppr_df['serve_src_zone_net']==zone],disp_player)  # Good Pass
-      fbhe_table.at[6,column[i]] = str('{:.1%}').format(fbhe_table.at[6,column[i]])
+      fbhe_table.at[4,column[i]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[5,column[i]] = fbhe_vector[2]  # errors
+      fbhe_table.at[6,column[i]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[2,column[i]] = fbhe_vector[4]  # fbso
+      fbhe_table.at[9,column[i]] = fbhe_vector[5]  # URL
+      fbhe_table.at[3,column[i]] = eso_obj.get('eso')  # ESO
+      #fbhe_table.at[3,column[i]] = float('{:.3f}').format(fbhe_table.at[2,column[i]])
+      fbhe_table.at[7,column[i]] =  calc_good_pass(ppr_df[ppr_df['serve_src_zone_net']==zone],disp_player)  # Good Pass
+      fbhe_table.at[7,column[i]] = str('{:.1%}').format(fbhe_table.at[7,column[i]])
+      fbhe_table.at[1,column[i]] =  round( stats.norm.cdf( (fbhe_vector[0] - player_data_stats_df.at[0,'fbhe_mean'])/ player_data_stats_df.at[0,'fbhe_stdev'] ), 3)
+      fbhe_table.at[1,column[i]] = str('{:.0%}').format(fbhe_table.at[1,column[i]])
+      value = fbhe_table.at[7,column[i]]  # '89.3%'
+      float_value = float(value.replace('%', ''))/100  # 89.3
+      fbhe_table.at[8,column[i]] =  round( stats.norm.cdf( (float_value - player_data_stats_df.at[0,'goodpass_mean'])/ player_data_stats_df.at[0,'goodpass_stdev'] ), 3)
+      fbhe_table.at[8,column[i]] = str('{:.0%}').format(fbhe_table.at[8,column[i]])
   else:
     fbhe_table.at[0,'All'] = "No Data Found"
 
@@ -1246,7 +1259,7 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
       #print(f"FBHE vector for 1, {i}{j}, {fbhe_vector}")
       if fbhe_vector[3] >= 5:
         pass1_val[index] = fbhe_vector[0]
-        att1_val[index] = fbhe_vector[4]
+        att1_val[index] = fbhe_vector[3]
         z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
         z1_table.loc[z1_table_index,'FBHE'] = fbhe_vector[0]
         z1_table.loc[z1_table_index,'Att'] = fbhe_vector[3]
@@ -1262,7 +1275,7 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
                         )
       if fbhe_vector[3] >= 5:        
         pass3_val[index] = fbhe_vector[0]
-        att3_val[index] = fbhe_vector[4]
+        att3_val[index] = fbhe_vector[3]
         z3_table.loc[z3_table_index,'Dest Zone'] = str(i)+j.capitalize()
         z3_table.loc[z3_table_index,'FBHE'] = fbhe_vector[0]
         z3_table.loc[z3_table_index,'Att'] = fbhe_vector[3]
@@ -1277,7 +1290,7 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
                         )
       if fbhe_vector[3] >= 5:      
         pass5_val[index] = fbhe_vector[0]
-        att5_val[index] = fbhe_vector[4]
+        att5_val[index] = fbhe_vector[3]
         z5_table.loc[z5_table_index,'Dest Zone'] = str(i)+j.capitalize()
         z5_table.loc[z5_table_index,'FBHE'] = fbhe_vector[0]
         z5_table.loc[z5_table_index,'Att'] = fbhe_vector[3]
@@ -1302,10 +1315,16 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   #cm = mpl.cm.cool
   #norm = mpl.colors.Normalize(vmin=-1, vmax=1)
 
+  # get high and low for the color scheme, mean +/- 2 sdtd
+  cmax = player_data_stats_df.at[0,'fbhe_mean']+2*player_data_stats_df.at[0,'fbhe_stdev']
+  cmin = player_data_stats_df.at[0,'fbhe_mean']-2*player_data_stats_df.at[0,'fbhe_stdev']
+  
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
   ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass1_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  # Add title with large font
+  ax.set_title("FBHE from Zone 1, Left", fontsize=30)
   z1_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
@@ -1313,6 +1332,8 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   plot_court_background(fig,ax)
   ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
+  # Add title with large font
+  ax.set_title("FBHE from Zone 3, Middle", fontsize=30)
   z3_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
@@ -1321,6 +1342,8 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
   fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
+  # Add title with large font
+  ax.set_title("FBHE from Zone 5, Right", fontsize=30)
   z5_plt = anvil.mpl_util.plot_image()
 
   # put the Images in the image_list
@@ -1337,26 +1360,37 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   #
   #  now create plots for attempts from zone 1,3,5
   #
+
+  # get high and low for the color scheme, mean +/- 2 sdtd
+  cmax = 25  # kind of a guess on the maximum number of attemtps in one of the 46 serves
+  cmin = 5  # a logical minimum since we don show anything less then 5 attempts
+  
   # from zone 1
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
+  print(f"Attemtps values 1 {att1_val}")
   ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
-  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att1_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att1_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
+  ax.set_title("Attempts from Zone 1, Left", fontsize=30)
   a1_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
+  print(f"Attemtps values 3 {att3_val}")
   ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
+  ax.set_title("Attempts from Zone 3, Middle", fontsize=30)
   a3_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
+  print(f"Attemtps values 5 {att5_val}")
   ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
-  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='Attempts')
+  ax.set_title("Attempts from Zone 5, Right", fontsize=30)
   a5_plt = anvil.mpl_util.plot_image()
 
   image_list[3] = a1_plt
