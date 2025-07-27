@@ -1510,20 +1510,20 @@ def player_45_passing_new(lgy, team, **rpt_filters):
   #-------------------------------------------------------------------------------------
 
   # create the output dataframe - This dataframe is the summary for zone 1,3,5
-  df_dict = {' Out of System':['Number','Percent','Attempts','URL'],
+  df_dict = {' Out of System':['Number','Percent','Percentile','Attempts','URL'],
+             'All':[0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,' '],
+             'No Zone':[0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+  df_dict1 = {' Pass Area':['Area','Percentile','Attempts','URL'],
              'All':[0,0,0,' '],
              'Zone 1':[0,0,0,' '],
              'Zone 3':[0,0,0,' '],
              'Zone 5':[0,0,0,' '],
              'No Zone':[0,0,0,' ']
-            }
-  fbhe_table = pd.DataFrame.from_dict( df_dict )
-  df_dict1 = {' Pass Area':['Area','Attempts','URL'],
-             'All':[0,0,' '],
-             'Zone 1':[0,0,' '],
-             'Zone 3':[0,0,' '],
-             'Zone 5':[0,0,' '],
-             'No Zone':[0,0,' ']
             }
   area_table = pd.DataFrame.from_dict( df_dict1 )
 
@@ -1539,16 +1539,19 @@ def player_45_passing_new(lgy, team, **rpt_filters):
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = count_out_of_system( ppr_df, disp_player, 'pass' )
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[1,'All'] = str('{:.1%}').format(fbhe_vector[1])  # attacks
-    fbhe_table.at[2,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  #number out of system,
+    fbhe_table.at[1,'All'] = str('{:.1%}').format(fbhe_vector[1])  # percent out of system
+    fbhe_table.at[2,'All'] = round( (((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev'])) , 3)
+    fbhe_table.at[2,'All'] = str('{:.0%}').format(fbhe_table.at[2,'All'])
+    fbhe_table.at[3,'All'] = fbhe_vector[2]  # attempts
     #fbhe_table.at[3,'All'] = fbhe_vector[3]  # URL (someday?)
 
     el_result = find_ellipse_area(ppr_df, 'pass', min_att=5)
     if el_result.get('attempts') >= 5:
       area_table.at[0,'All'] = str('{:.1f}').format(el_result.get('area'))
-      area_table.at[1,'All'] = el_result.get('attempts')
-      area_table.at[2,'All'] = el_result.get('URL')  
+      area_table.at[2,'All'] = el_result.get('attempts')
+      #area_table.at[1,'All'] = round( ((el_result.get('area')- player_data_stats_df.at[0,'pass_ea_mean'])/(player_data_stats_df.at[0,'pass_es_stdev'])) , 3)
+      area_table.at[3,'All'] = el_result.get('URL')  
       el_area.append(el_result.get('area'))
 
       
@@ -1560,14 +1563,17 @@ def player_45_passing_new(lgy, team, **rpt_filters):
       fbhe_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass')
       fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
       fbhe_table.at[1,column[i]] = str('{:.1%}').format(fbhe_vector[1])  # attacks
-      fbhe_table.at[2,column[i]] = fbhe_vector[2]  # errors
+      fbhe_table.at[2,column[i]] = round( (((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev'])) , 3)
+      fbhe_table.at[2,column[i]] = str('{:.0%}').format(fbhe_table.at[2,column[i]])
+      fbhe_table.at[3,column[i]] = fbhe_vector[2]  # errors
       #fbhe_table.at[3,column[i]] = fbhe_vector[3]  # URL someday
 
       el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], 'pass', min_att=5)
       if el_result.get('attempts') >= 5:
         area_table.at[0,column[i]] = str('{:.1f}').format(el_result.get('area'))
-        area_table.at[1,column[i]] = el_result.get('attempts')
-        area_table.at[2,column[i]] = el_result.get('URL')
+        #area_table.at[1,column[i]] = round( ((el_result.get('area')- player_data_stats_df.at[0,'pass_ea_mean'])/(player_data_stats_df.at[0,'pass_es_stdev'])) , 3)
+        area_table.at[2,column[i]] = el_result.get('attempts')
+        area_table.at[3,column[i]] = el_result.get('URL')
         el_area.append(el_result.get('area'))
 
 
@@ -1769,6 +1775,7 @@ def player_45_passing_new(lgy, team, **rpt_filters):
   plot_court_background(fig,ax)
   ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass1_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
+  ax.set_title("Percent Good Passes from Zone 1, Left", fontsize=30)
   z1_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
@@ -1776,6 +1783,7 @@ def player_45_passing_new(lgy, team, **rpt_filters):
   plot_court_background(fig,ax)
   ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass3_val, vmin=cmin, vmax=cmax, cmap=custom_cmap ) 
+  ax.set_title("Percent Good Passes from Zone 3, Middle", fontsize=30)
   z3_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
@@ -1783,7 +1791,8 @@ def player_45_passing_new(lgy, team, **rpt_filters):
   plot_court_background(fig,ax)
   ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass5_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
-  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap=custom_cmap),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap=custom_cmap),ax=ax, orientation='vertical', label='Percent Good Passes')
+  ax.set_title("Percent Good Passes from Zone 5, Right", fontsize=30)
   z5_plt = anvil.mpl_util.plot_image()
 
   cmin = min(el_area)
@@ -1797,6 +1806,7 @@ def player_45_passing_new(lgy, team, **rpt_filters):
   plot_court_background(fig,ax)
   ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=area1_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
+  ax.set_title("Pass Area from Zone 1, Left", fontsize=30)
   a1_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
@@ -1804,6 +1814,7 @@ def player_45_passing_new(lgy, team, **rpt_filters):
   plot_court_background(fig,ax)
   ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=area3_val, vmin=cmin, vmax=cmax, cmap=custom_cmap ) 
+  ax.set_title("Pass Area from Zone 3, Middle", fontsize=30)
   a3_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
@@ -1811,7 +1822,8 @@ def player_45_passing_new(lgy, team, **rpt_filters):
   plot_court_background(fig,ax)
   ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=area5_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
-  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap=custom_cmap),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap=custom_cmap),ax=ax, orientation='vertical', label='Pass Area')
+  ax.set_title("Pass Area from Zone 5, Right", fontsize=30)
   a5_plt = anvil.mpl_util.plot_image()
 
   # put the Images in the image_list
