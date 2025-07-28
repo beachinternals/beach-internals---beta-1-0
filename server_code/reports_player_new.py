@@ -1543,7 +1543,7 @@ def player_45_passing_new(lgy, team, **rpt_filters):
     fbhe_vector = count_out_of_system(ppr_df, disp_player, 'pass')
     fbhe_table.at[0,'All'] = fbhe_vector[0]  #number out of system,
     fbhe_table.at[1,'All'] = str('{:.1%}').format(fbhe_vector[1])  # percent out of system
-    fbhe_table.at[2,'All'] = round( (((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev'])) , 3)
+    fbhe_table.at[2,'All'] = round( stats.norm.cdf((((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
     fbhe_table.at[2,'All'] = str('{:.0%}').format(fbhe_table.at[2,'All'])
     fbhe_table.at[3,'All'] = fbhe_vector[2]  # attempts
     #fbhe_table.at[3,'All'] = fbhe_vector[3]  # URL (someday?)
@@ -1565,7 +1565,7 @@ def player_45_passing_new(lgy, team, **rpt_filters):
       fbhe_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass')
       fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
       fbhe_table.at[1,column[i]] = str('{:.1%}').format(fbhe_vector[1])  # attacks
-      fbhe_table.at[2,column[i]] = round( (((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev'])) , 3)
+      fbhe_table.at[2,column[i]] = round( stats.norm.cdf((((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
       fbhe_table.at[2,column[i]] = str('{:.0%}').format(fbhe_table.at[2,column[i]])
       fbhe_table.at[3,column[i]] = fbhe_vector[2]  # errors
       #fbhe_table.at[3,column[i]] = fbhe_vector[3]  # URL someday
