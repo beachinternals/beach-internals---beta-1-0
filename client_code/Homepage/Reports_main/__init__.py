@@ -123,15 +123,18 @@ class Reports_main(Reports_mainTemplate):
         list(set(row['rpt_type'] for row in app_tables.report_list.search(private=False) if row['rpt_type'] is not None))
       )
 
-    # populate the reports drop down
+    # Populate the reports drop-down
     if anvil.users.get_user()["team"] == "INTERNALS":
       self.report_drop_down.items = [
-        (row["report_name"]) for row in app_tables.report_list.search(rpt_type=self.rpt_type_drop_down.selected_value)
+        row["report_name"] for row in app_tables.report_list.search(
+          rpt_type=self.rpt_type_drop_down.selected_value, q.order_by("order", ascending=True)
+        )
       ]
     else:
       self.report_drop_down.items = [
-        (row["report_name"])
-        for row in app_tables.report_list.search(private=False, rpt_type=self.rpt_type_drop_down.selected_value)
+        row["report_name"] for row in app_tables.report_list.search(
+          private=False, rpt_type=self.rpt_type rop_down.selected_value, q.order_by("order", ascending=True)
+        )
       ]
 
   def comp_l1_drop_down_change(self, **event_args):
