@@ -5,9 +5,10 @@ import anvil.server
 import anvil.google.auth, anvil.google.drive
 from anvil.google.drive import app_files
 import anvil.users
-import anvil.tables as tables
-import anvil.tables.query as q
-from anvil.tables import app_tables
+#import anvil.tables as tables
+#from anvil.tables import app_tables
+from anvil.tables import app_tables, query as q
+#import anvil.tables.query as q
 import datetime
 from anvil import open_form
 import anvil.js
@@ -127,13 +128,16 @@ class Reports_main(Reports_mainTemplate):
     if anvil.users.get_user()["team"] == "INTERNALS":
       self.report_drop_down.items = [
         row["report_name"] for row in app_tables.report_list.search(
-          rpt_type=self.rpt_type_drop_down.selected_value, q.order_by("order", ascending=True)
+          rpt_type=self.rpt_type_drop_down.selected_value, 
+          q.order_by("order", ascending=True)
         )
       ]
     else:
       self.report_drop_down.items = [
         row["report_name"] for row in app_tables.report_list.search(
-          private=False, rpt_type=self.rpt_type rop_down.selected_value, q.order_by("order", ascending=True)
+          private=False, 
+          rpt_type=self.rpt_type_drop_down.selected_value, 
+          q.order_by("order", ascending=True)
         )
       ]
 
