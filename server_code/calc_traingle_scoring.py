@@ -376,8 +376,12 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         # knockoout and goodpass
         tri_df.at[tri_row,'knockout_a'] = (calc_knock_out( set_df, player_a1) + calc_knock_out( set_df, player_a2))/2
         tri_df.at[tri_row,'knockout_b'] = (calc_knock_out(set_df, player_b1) + calc_knock_out( set_df, player_b2))/2
-        tri_df.at[tri_row,'goodpass_a'] = ( calc_good_pass( set_df, player_a1) + calc_good_pass( set_df, player_a2))/2
-        tri_df.at[tri_row,'goodpass_b'] = (calc_good_pass( set_df, player_b1) + calc_good_pass( set_df, player_b2))/2
+        oos_vector_a1 = count_out_of_system( set_df, player_a1, 'pass')
+        oos_vector_a2 = count_out_of_system( set_df, player_a2, 'pass')
+        oos_vector_b1 = count_out_of_system( set_df, player_b1, 'pass')
+        oos_vector_b2 = count_out_of_system( set_df, player_b2, 'pass')
+        tri_df.at[tri_row,'goodpass_a'] = ( (1-oos_vector_a1[1]) + (1-oos_vector_a2) ) /2 
+        tri_df.at[tri_row,'goodpass_b'] = ( (1-oos_vector_a1[1]) + (1-oos_vector_a2) ) /2
 
         # calcualte winning and losing team variables
         tri_df.at[tri_row,'win_fbhe_noace'] = tri_df.at[tri_row,'fbhe_a_noace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_noace']

@@ -51,8 +51,16 @@ def rpt_mgr_generate_background():
   explain_text = ' '
 
 
+  rpt_rows = app_tables.rpt_mgr.search(active="Yes")
+  for rpt_r in rpt_rows:
+    print(type(rpt_r['rpts_inc']), rpt_r['rpts_inc'])  # Check type and content
+    for rptname in rpt_r['rpts_inc']:
+      print(type(rptname), dict(rptname))  # Check type and columns of each rptname
+      break
+    break
+  
   # Open the data file, loop over rows
-  for rpt_r in app_tables.rpt_mgr.search( active="Yes" ):
+  for rpt_r in rpt_rows:
     
     # for this row, now look at each report:
     #print(f"Report Row: {rpt_r}")
@@ -860,9 +868,19 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
     
     pdf_name = rpt_r['Report Description'] + ' ' + player_pair + '.pdf'
 
+    # Convert LiveObjectProxy objects to DataTableRow objects
+    rptname_rows = [app_tables.report_list.get(id=rptname1['id']) for rptname1 in rpt_r['rpts_inc'] if rptname1]
 
+    # Sort by the desired column (e.g., 'order')
+    sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
     
-    for rptname in rpt_r['rpts_inc']:
+    # Debug: Print sorted_rptnames and its type
+    print(f"sorted rptnames: {[dict(row) for row in sorted_rptnames]}, \n type: {type(sorted_rptnames)}")
+
+    # If you want to access rpt_r['rpts_inc'], do it here
+    print(f"rpts_inc from rpt_r: {rpt_r['rpts_inc']}")
+    
+    for rptname in sorted_rptnames:
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
 
       # call the report function and save the report id

@@ -821,15 +821,6 @@ def calc_knock_out( ppr_df, disp_player):
    knock_out = (player_point_totals.at[0,'p_tsa']+player_point_totals.at[0,'o_bad_pass'] )/player_point_totals.at[0,'p_serves']
   return knock_out
 
-def calc_good_pass( ppr_df, disp_player):
-  player_point_totals = player_pt_total(ppr_df, disp_player)
-  if (player_point_totals.at[0,'p_good_pass'] + player_point_totals.at[0,'p_bad_pass']) == 0:
-    good_pass = 0
-  else:
-    good_pass = (player_point_totals.at[0,'p_good_pass'])/(player_point_totals.at[0,'p_good_pass'] + player_point_totals.at[0,'p_bad_pass'])
-  return good_pass
-
-
 
 def calc_point_diff( ppr_df, disp_player):
   #player_point_totals = player_pt_total(ppr_df, disp_player)

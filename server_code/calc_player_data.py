@@ -647,7 +647,8 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
 
     # calculate knockout rates and good pass rates
     player_df.at[i,'knockout'] = calc_knock_out(ppr_df,p_list[i])
-    player_df.at[i,'goodpass'] = calc_good_pass(ppr_df,p_list[i])
+    oos_vector = count_out_of_system(ppr_df, p_list[i], 'pass')
+    player_df.at[i,'goodpass'] = 1 - oos_vector[1]
 
 
   ########## end of loop over players

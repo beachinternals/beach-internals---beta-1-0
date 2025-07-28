@@ -528,6 +528,9 @@ db_schema:
     - admin_ui: {order: 4.625, width: 200}
       name: team_name
       type: string
+    - admin_ui: {order: -1.5, width: 74}
+      name: id
+      type: string
     server: full
     title: report_list
   rpt_mgr:
