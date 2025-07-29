@@ -752,6 +752,12 @@ scheduled_tasks:
     at: {hour: 9, minute: 0}
     every: day
     n: 1
+- job_id: IHUTNGYR
+  task_name: check_inconsistent_data
+  time_spec:
+    at: {hour: 8, minute: 30}
+    every: day
+    n: 1
 services:
 - client_config: {}
   server_config: {}

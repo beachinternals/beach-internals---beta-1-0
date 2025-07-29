@@ -126,3 +126,9 @@ class scheduled_tasks(scheduled_tasksTemplate):
     return return_value
     pass
 
+  def outlined_button_5_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    return_value = anvil.server.call('trigger_nightly_check')
+
+    pass
+

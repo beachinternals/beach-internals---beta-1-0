@@ -21,6 +21,10 @@ components:
     name: label_5
     properties: {align: right, text: email PDF Reports}
     type: Label
+  - layout_properties: {grid_position: 'YVKKFQ,VYNCIF LIDPMM,NVNCJV'}
+    name: label_9
+    properties: {align: right, text: Nightly Data Check}
+    type: Label
   - event_bindings: {click: login_hist_click}
     layout_properties: {grid_position: 'YVKKFQ,RLNRSN PPYNBS,EKNQTZ'}
     name: login_hist
@@ -33,6 +37,11 @@ components:
   - layout_properties: {grid_position: 'YVKKFQ,RLNRSN PXLDQZ,FBJPQK'}
     name: outlined_button_2
     properties: {role: outlined-button, text: eMail PDF Reports}
+    type: Button
+  - event_bindings: {click: outlined_button_5_click}
+    layout_properties: {grid_position: 'YVKKFQ,RLNRSN CKVUNB,PTDQYQ'}
+    name: outlined_button_5
+    properties: {role: outlined-button, text: Data Check}
     type: Button
   - components:
     - layout_properties: {grid_position: 'YACHSG,PQORCC'}
@@ -111,7 +120,7 @@ components:
     type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5
-  properties: {col_widths: '{"VYNCIF":20,"RLNRSN":15,"NHRAUN":25}', role: outlined-card}
+  properties: {col_widths: '{"VYNCIF":15,"RLNRSN":20,"NHRAUN":25}', role: outlined-card}
   type: ColumnPanel
 container: {type: ColumnPanel}
 is_package: true
