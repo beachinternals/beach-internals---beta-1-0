@@ -14,13 +14,13 @@ import pandas as pd
 import uuid
 import json
 from datetime import datetime, timedelta, date
-from server_functions import *
 import inspect
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import math
-from plot_functions import *
+import scipy.stats as stats
 import numpy as np
+from plot_functions import *
 from server_functions import *
 from reports_player_new import *
 
@@ -252,6 +252,7 @@ def report_player_attacking( lgy, team, **rpt_filters):
   # fetch the ppr dataframe and filter by all the report filters
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
 
   # initiate return lists
   title_list = ['','','','','','','','','','']
@@ -298,7 +299,7 @@ def report_player_attacking( lgy, team, **rpt_filters):
                   ]
 
   # set up dataframe 1 to display the attack table for this player
-  att_table = get_player_attack_table(ppr_df, disp_player)
+  att_table = get_player_attack_table(ppr_df, player_data_stats_df, disp_player)
   if att_table is None:
     df_list[0] = []  # Empty list for DataGrid
   else:
@@ -335,7 +336,7 @@ def report_player_attacking( lgy, team, **rpt_filters):
 
 
 @anvil.server.callable
-def get_player_attack_table(ppr_df, disp_player):
+def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
   '''
   geenrates the dataframe for the player attacking table
 
@@ -348,40 +349,51 @@ def get_player_attack_table(ppr_df, disp_player):
     
   '''
   # create the output dataframe
-  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','URL'],
-             'All':[0,0,0,0,0,' '],
-             'Zone 1':[0,0,0,0,0,' '],
-             "Zone 2":[0,0,0,0,0,' '],
-             'Zone 3':[0,0,0,0,0,' '],
-             'Zone 4':[0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,' '],
-             'No Zone':[0,0,0,0,0,' ']
+  df_dict = {' ':['FBHE','Percentile','FBSO','Kills','Errors','Attempts','URL'],
+             'All':[0,0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,0,' '],
+             "Zone 2":[0,0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,0,' '],
+             'Zone 4':[0,0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
+  var_mean = 'fbhe'+'_mean'
+  var_stdev = 'fbhe'+'_stdev'
+  
   # if the eata is not empty, create my df, populate it, and return it
   if ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = fbhe( ppr_df, disp_player, 'att', True )
     fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[2,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[3,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[4,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[1,'All'] = fbhe_vector[4]  # confidence interval
-    fbhe_table.at[5,'All'] = fbhe_vector[5]  # URL
+    fbhe_table.at[3,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[4,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[5,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[2,'All'] = fbhe_vector[4]  # fbso
+    fbhe_table.at[6,'All'] = fbhe_vector[5]  # URL
+    # calucalte percentile
+    fbhe_table.at[1,'All'] = round( stats.norm.cdf((((fbhe_vector[0])- player_data_stats_df.at[0,var_mean])/(player_data_stats_df.at[0,var_stdev]))) , 3)
+    fbhe_table.at[1,'All'] = str('{:.0%}').format(fbhe_table.at[1,'All'])
 
     # calculate for zones 1 - 5
     column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5','No Zone']
     for i in [1,2,3,4,5,6]:
       zone = 0 if i == 6 else i
+      if i != 6:
+        var_mean = 'fbhe'+ str(zone)+'_mean'
+        var_stdev = 'fbhe'+str(zone)+'_stdev'
       fbhe_vector = fbhe( ppr_df[ppr_df['att_src_zone_net']==zone], disp_player, 'att', True )
       fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[2,column[i-1]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[3,column[i-1]] = fbhe_vector[2]  # errors
-      fbhe_table.at[4,column[i-1]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[1,column[i-1]] = fbhe_vector[4]  # confidence interval
-      fbhe_table.at[5,column[i-1]] = fbhe_vector[5]  # URL
+      fbhe_table.at[3,column[i-1]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[4,column[i-1]] = fbhe_vector[2]  # errors
+      fbhe_table.at[5,column[i-1]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[2,column[i-1]] = fbhe_vector[4]  # confidence interval
+      fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
+      fbhe_table.at[1,column[i-1]] = round( stats.norm.cdf((((fbhe_vector[0])- player_data_stats_df.at[0,var_mean])/(player_data_stats_df.at[0,var_stdev]))) , 3)
+      fbhe_table.at[1,column[i-1]] = str('{:.0%}').format(fbhe_table.at[1,column[i-1]])
 
     return fbhe_table
   else:
@@ -402,7 +414,7 @@ def get_player_attack_plots( ppr_df, disp_player):
   attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',4)
   attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',5)
 
-  zone_dict = {'1':['FBHE','FBSO','ATT','URL'],'Value':[0,0,0,'']}
+  zone_dict = {'Metric':['FBHE','FBSO','ATT','URL'],'Value':[0,0,0,'']}
   z1_df = pd.DataFrame.from_dict(zone_dict)
   z2_df = pd.DataFrame.from_dict(zone_dict)
   z3_df = pd.DataFrame.from_dict(zone_dict)
