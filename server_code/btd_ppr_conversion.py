@@ -248,7 +248,7 @@ def btd_to_ppr_df(btd_df, flist_r):
       btd_r['player'] = player_b2
     else:
       # ######## print this to a file to display as this is an error in the data #####################
-      print(f"Could not find the player!! {btd_r['player']}, Row {index} in these four: {flist_r['player1']}, {flist_r['player2']}, {flist_r['player3']}, {flist_r['player4']}") 
+      #print(f"Could not find the player!! {btd_r['player']}, Row {index} in these four: {flist_r['player1']}, {flist_r['player2']}, {flist_r['player3']}, {flist_r['player4']}") 
       btd_r['player'] = " "
     
     # if this is a serve, then start a new point
@@ -566,7 +566,7 @@ def calc_ppr_data(ppr_df):
       att_angle_obj = calc_attack_angles(ppr_r['att_src_x'],ppr_r['att_src_y'],ppr_df.at[index,'att_angle'])
       #if att_angle_obj.get('success'):
       ppr_df.at[index,'att_angular_zone'] = att_angle_obj.get('angular_zone')
-      print(f"Attack Angular Zone: {ppr_df.at[index,'att_angular_zone']}")
+      #print(f"Attack Angular Zone: {ppr_df.at[index,'att_angular_zone']}")
         
     if ppr_r['dig_yn'] == "Y":
       ppr_df.at[index,'dig_dist'] = calc_dist(ppr_r['dig_src_x'],ppr_r['dig_src_y'],ppr_r['dig_dest_x'],ppr_r['dig_dest_y'])
@@ -918,12 +918,24 @@ def calc_attack_angles( att_x, att_y, att_angle ):
   # calculate the angular zone of the attack
 
   angular_zone = ''
-  print(f"Calc Attack Angles: Passed arguments: att_x {att_x}, att_y {att_y}, att_angle {att_angle}")
+  #print(f"Calc Attack Angles: Passed arguments: att_x {att_x}, att_y {att_y}, att_angle {att_angle}")
   if att_x is not None and att_y is not None and att_angle is not None and att_angle != 0 :
-    a1 = math.atan( (8+att_y) / att_x )*57.29578
-    a2 = math.atan( att_x / (8+att_x ))*57.29578
-    a3 = math.atan( (8-att_x) / (8+att_y ) )*57.29578
-    a4 = math.atan( (8+att_y) / (8-att_x) )*57.29578
+    if att_x != 0:
+      a1 = math.atan( (8+att_y) / att_x )*57.29578
+    else:
+      a1 = 90 if (8+att_y) > 0 else -90
+    if att_x != -8:
+      a2 = math.atan( att_x / (8+att_x ))*57.29578
+    else:
+      a2 = 90 if (att_x)>0 else -90   
+    if att_y != -8:
+      a3 = math.atan( (8-att_x) / (8+att_y ) )*57.29578
+    else:
+      a3 = 90 if (8-att_x) > 0 else -90
+    if att_x != 8:
+      a4 = math.atan( (8+att_y) / (8-att_x) )*57.29578
+    else:
+      a4 = 90 if (8+att_y)>0 else -90
 
     b1 = a1/2
     b2 = a1/2 + a2/2 
@@ -931,7 +943,7 @@ def calc_attack_angles( att_x, att_y, att_angle ):
     b4 = a3/2 + a4/2
     b5 = a4/2
 
-    print(f"Calc Attack Angles: A's and B's, a1:{a1}, a2:{a2}, a3:{a3}, a4:{a4}, b1:{b1}, b2:{b2}, b3:{b3}, b4:{b4}, b5:{b5}")
+    #print(f"Calc Attack Angles: A's and B's, a1:{a1}, a2:{a2}, a3:{a3}, a4:{a4}, b1:{b1}, b2:{b2}, b3:{b3}, b4:{b4}, b5:{b5}")
     if att_angle > 90-b5:
       angular_zone = 'A1'
     elif att_angle < (90-b5) and att_angle > (90-b5-b4):
@@ -945,7 +957,7 @@ def calc_attack_angles( att_x, att_y, att_angle ):
     else:
       angular_zone = ''
 
-    print(f"Attack angular zone: {angular_zone}")
+    #print(f"Attack angular zone: {angular_zone}")
     return {
       'success':True,
       'angular_zone': angular_zone
