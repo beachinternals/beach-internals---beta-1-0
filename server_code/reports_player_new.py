@@ -3178,3 +3178,195 @@ def league_tri_corr(lgy, team, **rpt_filters):
   
   
   return title_list, label_list, image_list, df_list
+
+
+@anvil.server.callable
+def player_att_tendencies(lgy, team, **rpt_filters):
+  '''
+  Report Functions:
+    - display attack tendencies by angule, we use the anguler zone for this
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe and filter by all the report filters
+  #
+  # comment out the dataframe not needed for this report
+  #
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  #print(f"PPR DF size, new {ppr_df.shape[0]}")
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # initiate return lists
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+  title_list[0] = rpt_row['rpt_title']
+  title_list[1] = rpt_row['rpt_sub_title']
+  title_list[2] = rpt_row['rpt_section_title1']
+  title_list[3] = rpt_filters.get('lgy')
+  title_list[4] = rpt_row['team_name']
+  title_list[5] = rpt_row['rpt_type']
+  title_list[6] = rpt_row['filter_text']
+  title_list[7] = rpt_row['explain_text']
+  title_list[8] = rpt_filters.get('player')
+  title_list[9] = rpt_filters.get('pair')
+
+  label_list[0] = rpt_row['box1_title']
+  label_list[1] = rpt_row['box2_title']
+  label_list[2] = rpt_row['box3_title']
+  label_list[3] = rpt_row['box4_title']
+  label_list[4] = rpt_row['box5_title']
+  label_list[5] = rpt_row['box6_title']
+  label_list[6] = rpt_row['box7_title']
+  label_list[7] = rpt_row['box8_title']
+  label_list[8] = rpt_row['box9_title']
+  label_list[9] = rpt_row['box10_title']
+
+  #------------------------------------------------------------------------------------------------------
+  #
+  #            Create the images and dataframes with filtered ppr data for report
+  #
+  #-----------------------------------------------------------------------------------------------------
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+   ]
+  #print(f"ppr size after filter for the player: {disp_player}, {ppr_df.shape[0]}")
+
+  # break disp_player into team, number, and shortname
+  # unpack player into team, number and short name
+  str_loc = disp_player.index(' ')
+  p_team = disp_player[:str_loc].strip() # player team
+  p_player = disp_player[str_loc+1:]
+  str_loc = p_player.index(' ')
+  p_num = p_player[:str_loc].strip() # player number
+  p_sname = p_player[str_loc+1:].strip() # player short name
+
+
+  #------------------------------------------------------------------------------------
+  #
+  #     Report is 'set up', not calcualte acorss the 3 zones, then the 45 serves
+  #
+  #-------------------------------------------------------------------------------------
+
+
+  ############### Third Populate the dataframe, assuming we have data returned
+
+  # count zone 1 and 2 attacks
+
+  att12 = ppr_df[ (ppr_df['att_src_zone_net'] == 1) | 
+                  (ppr_df['att_src_zone_net'] == 2) ].shape[0]
+  att34 = ppr_df[ (ppr_df['att_src_zone_net'] == 3) | 
+                  (ppr_df['att_src_zone_net'] == 4) ].shape[0]
+
+  att_front = '12' if att12 >= att34 else '34'
+  att_posn = ['front','behind','middle']
+  angles = ['A1','A2','A3','A4','A5']
+  
+  for att in att_posn:
+
+    # condition the ppr, get me down to just attacks, and where therre are angles
+    new_df = ppr_df[ (ppr_df['att_yn'] == 'Y') & ppr_df['att_player'] == disp_player]
+
+    if att_front == '12' and att == 'front':
+      new_df = new_df[ ((new_df['att_src_zone_net'] == 1) | (new_df['att_src_zone_net'] == 2)) & (new_df['tactic'] != 'behind')]
+    elif att_front == '12' and att == 'behind':
+      new_df = new_df[ (new_df['tactic'] == 'behind') ]
+    elif att_front == '12' and att == 'middle':
+      new_df = new_df[ (new_df['att_src_zone_net'] != 1) & (new_df['att_src_zone_net'] != 2) & (new_df['tactic'] != 'behind')]    
+    if att_front == '34' and att == 'front':
+      new_df = new_df[ ((new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 4)) & (new_df['tactic'] != 'behind')]
+    elif att_front == '34' and att == 'behind':
+      new_df = new_df[ (new_df['tactic'] == 'behind') ] 
+    elif att_front == '34' and att == 'middle':
+      new_df = new_df[ (new_df['att_src_zone_net'] != 3) & (new_df['att_src_zone_net'] != 4) & (new_df['tactic'] != 'behind')]  
+      
+    angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
+
+    '''
+
+    # now generate the plot
+    attack_front_plot_object = plot_lines_on_court(new_ppr,'att',1)
+
+    for ang in angles:
+      # now plot the elipse for each set of attacks by angle, A1 - A5
+      plt_df = new_df[ new_df['att_angular_zone'] == ang]
+      el_points = pd.concat( [ppr_x, ppr_y], axis = 1)
+      #print(f" el_points {el_points}")
+      el_points = el_points.dropna().values
+      if el_points.shape[0] > 3:
+        el_mean, el_width, el_height, el_angle =  calculate_standard_deviation_ellipse(el_points, confidence=1.0)
+        #print(f" Ellispe details: mean: {el_mean[0]}, {el_mean[1]} width: {el_width}, height : {el_height}, angle: {el_angle}")
+        xy_center = (el_mean[0],el_mean[1])
+        ellipse = patches.Ellipse(xy = xy_center, width = el_width, height = el_height, angle = el_angle, edgecolor='b', facecolor='blue', linewidth=2, label="1 Std Dev Ellipse", alpha=0.05)
+        ax.add_patch(ellipse)
+    '''    
+
+    
+    # store this dataframe
+    if att == 'front':
+      df_list[0] = angular_att_table.to_dict('records')
+    elif att == 'behind':
+      df_list[1] = angular_att_table.to_dict('records')
+    elif att == 'middle':
+      df_list[2] = angular_att_table.to_dict('records')
+
+  return
+
+
+def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
+  # create the output dataframe - This dataframe is the summary for zone 1,3,5
+  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','% In System','URL'],
+             'Cut-Right':[0,0,0,0,0,0,' '],  # Zone A1
+             'Angle-Right':[0,0,0,0,0,0,' '],  # Zone A2
+             'Over-Middle':[0,0,0,0,0,0,' '], # Zone A3
+             'Angle-Left':[0,0,0,0,0,0,' '], # Zone A4
+             'Cut-Left':[0,0,0,0,0,0,' ']  # Zone A5
+            }
+  angle_table = pd.DataFrame.from_dict(df_dict)
+
+  angles = ['A1','A2','A3','A4','A5']
+  #ang_labels = ['Cut-Right','Angle-Right','Over-Middle','Angle-Left','Cut-Left']
+  for i in [0,1,2,3,4]:
+    # filter the datafarme
+    tmp_df = new_df[ new_df['att_angular_zone'] == angles[i]]
+    fbhe_vector = fbhe(tmp_df,disp_player,'att',False)
+    oos_vector = count_out_of_system( tmp_df, disp_player,'att')
+    angle_table.at[i,'FBHE'] = fbhe_vector[0]
+    angle_table.at[i,'FBHE'] = fbhe_vector[4]   
+    angle_table.at[i,'Kills'] = fbhe_vector[1]
+    angle_table.at[i,'Errors'] = fbhe_vector[2]
+    angle_table.at[i,'Attempts'] = fbhe_vector[3]
+    angle_table.at[i,'% In System'] = str('{:.1%}').format((1-oos_vector(1)))
+
+  return angle_table
+    
