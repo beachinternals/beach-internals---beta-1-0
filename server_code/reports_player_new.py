@@ -13,8 +13,10 @@ import inspect
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Ellipse
 import numpy as np
 import scipy.stats as stats
+from scipy.stats import chi2
 from statsmodels.formula.api import ols
 from statsmodels.stats.anova import anova_lm
 from sklearn.preprocessing import LabelEncoder
@@ -3288,14 +3290,16 @@ def player_att_tendencies(lgy, team, **rpt_filters):
   att34 = ppr_df[ (ppr_df['att_src_zone_net'] == 3) | 
                   (ppr_df['att_src_zone_net'] == 4) ].shape[0]
 
+  
   att_front = '12' if att12 >= att34 else '34'
   att_posn = ['front','behind','middle']
-  angles = ['A1','A2','A3','A4','A5']
+  #angles = ['A1','A2','A3','A4','A5']
+  print(f" attacks, from 1 and 2: {att12}, from 3 & 4: {att34}, att_front is {att_front}")
   
   for att in att_posn:
 
     # condition the ppr, get me down to just attacks, and where therre are angles
-    new_df = ppr_df[ (ppr_df['att_yn'] == 'Y') & ppr_df['att_player'] == disp_player]
+    new_df = ppr_df[ (ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == disp_player )]
 
     if att_front == '12' and att == 'front':
       new_df = new_df[ ((new_df['att_src_zone_net'] == 1) | (new_df['att_src_zone_net'] == 2)) & (new_df['tactic'] != 'behind')]
@@ -3312,61 +3316,151 @@ def player_att_tendencies(lgy, team, **rpt_filters):
       
     angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
 
-    '''
+    # now for the plot
+    plt_image = plot_volleyball_attacks(new_df)
 
-    # now generate the plot
-    attack_front_plot_object = plot_lines_on_court(new_ppr,'att',1)
-
-    for ang in angles:
-      # now plot the elipse for each set of attacks by angle, A1 - A5
-      plt_df = new_df[ new_df['att_angular_zone'] == ang]
-      el_points = pd.concat( [ppr_x, ppr_y], axis = 1)
-      #print(f" el_points {el_points}")
-      el_points = el_points.dropna().values
-      if el_points.shape[0] > 3:
-        el_mean, el_width, el_height, el_angle =  calculate_standard_deviation_ellipse(el_points, confidence=1.0)
-        #print(f" Ellispe details: mean: {el_mean[0]}, {el_mean[1]} width: {el_width}, height : {el_height}, angle: {el_angle}")
-        xy_center = (el_mean[0],el_mean[1])
-        ellipse = patches.Ellipse(xy = xy_center, width = el_width, height = el_height, angle = el_angle, edgecolor='b', facecolor='blue', linewidth=2, label="1 Std Dev Ellipse", alpha=0.05)
-        ax.add_patch(ellipse)
-    '''    
-
-    
     # store this dataframe
     if att == 'front':
       df_list[0] = angular_att_table.to_dict('records')
+      image_list[0] = plt_image
     elif att == 'behind':
       df_list[1] = angular_att_table.to_dict('records')
+      image_list[1] = plt_image
     elif att == 'middle':
       df_list[2] = angular_att_table.to_dict('records')
+      image_list[2] = plt_image
 
-  return
+  return title_list, label_list, image_list, df_list
+
+
 
 
 def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
-  # create the output dataframe - This dataframe is the summary for zone 1,3,5
-  df_dict = {' ':['FBHE','FBSO','Kills','Errors','Attempts','% In System','URL'],
-             'Cut-Right':[0,0,0,0,0,0,' '],  # Zone A1
-             'Angle-Right':[0,0,0,0,0,0,' '],  # Zone A2
-             'Over-Middle':[0,0,0,0,0,0,' '], # Zone A3
-             'Angle-Left':[0,0,0,0,0,0,' '], # Zone A4
-             'Cut-Left':[0,0,0,0,0,0,' ']  # Zone A5
-            }
+  # Define the structure of the DataFrame
+  df_dict = {
+    ' ': ['FBHE', 'FBSO', 'Kills', 'Errors', 'Attempts', '% In System', 'URL'],
+    'Cut-Right': [0, 0, 0, 0, 0, 0, ' '],  # Zone A1
+    'Angle-Right': [0, 0, 0, 0, 0, 0, ' '],  # Zone A2
+    'Over-Middle': [0, 0, 0, 0, 0, 0, ' '],  # Zone A3
+    'Angle-Left': [0, 0, 0, 0, 0, 0, ' '],   # Zone A4
+    'Cut-Left': [0, 0, 0, 0, 0, 0, ' ']      # Zone A5
+  }
+
+  # Create DataFrame without setting an index
   angle_table = pd.DataFrame.from_dict(df_dict)
 
-  angles = ['A1','A2','A3','A4','A5']
-  #ang_labels = ['Cut-Right','Angle-Right','Over-Middle','Angle-Left','Cut-Left']
-  for i in [0,1,2,3,4]:
-    # filter the datafarme
-    tmp_df = new_df[ new_df['att_angular_zone'] == angles[i]]
-    fbhe_vector = fbhe(tmp_df,disp_player,'att',False)
-    oos_vector = count_out_of_system( tmp_df, disp_player,'att')
-    angle_table.at[i,'FBHE'] = fbhe_vector[0]
-    angle_table.at[i,'FBHE'] = fbhe_vector[4]   
-    angle_table.at[i,'Kills'] = fbhe_vector[1]
-    angle_table.at[i,'Errors'] = fbhe_vector[2]
-    angle_table.at[i,'Attempts'] = fbhe_vector[3]
-    angle_table.at[i,'% In System'] = str('{:.1%}').format((1-oos_vector(1)))
+  print(f"get player angular attack table: df passed in: {new_df.shape[0]}, player: {disp_player}")
+  print(f"angle table (initial):\n{angle_table}")
+
+  angles = ['A1', 'A2', 'A3', 'A4', 'A5']
+  ang_labels = ['Cut-Right', 'Angle-Right', 'Over-Middle', 'Angle-Left', 'Cut-Left']
+
+  for i in range(5):
+    # Filter the DataFrame for the current angular zone
+    tmp_df = new_df[new_df['att_angular_zone'] == angles[i]]
+    print(f"in Loop for i:{i}, ang_label: {ang_labels[i]}, angles: {angles[i]}, # of rows: {tmp_df.shape[0]}")
+
+    # Compute metrics
+    fbhe_vector = fbhe(tmp_df, disp_player, 'att', False)
+    oos_vector = count_out_of_system(tmp_df, disp_player, 'att')
+
+    # Update the DataFrame using row index (integer) and column (ang_labels[i])
+    angle_table.loc[angle_table[' '] == 'FBHE', ang_labels[i]] = fbhe_vector[0]
+    angle_table.loc[angle_table[' '] == 'FBSO', ang_labels[i]] = fbhe_vector[4]
+    angle_table.loc[angle_table[' '] == 'Kills', ang_labels[i]] = fbhe_vector[1]
+    angle_table.loc[angle_table[' '] == 'Errors', ang_labels[i]] = fbhe_vector[2]
+    angle_table.loc[angle_table[' '] == 'Attempts', ang_labels[i]] = fbhe_vector[3]
+    #angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = 1 - oos_vector[1]  # Keep as float  
+    # Optionally format as percentage for display later
+    angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = f"{(1 - oos_vector[1]):.1%}"
+
+  print(f"angular table (formatted for display):\n{angle_table}")
 
   return angle_table
-    
+
+
+def plot_volleyball_attacks(ppr_df):
+  # Create figure and axis
+  fig, ax = plt.subplots(figsize=(10, 15))
+
+  # Plot court background (assuming plot_court_background is defined)
+  plot_court_background(fig, ax)
+
+  # Define colors for outcomes
+  outcome_colors = {
+    'FBK': 'green',
+    'FBE': 'red'
+  }
+
+  # Plot lines with arrows
+  for idx, row in ppr_df.iterrows():
+    src_x = row['att_src_x']
+    src_y = row['att_src_y']
+    dest_x = row['att_dest_x']
+    dest_y = row['att_dest_y']
+    outcome = row['point_outcome']
+
+    # Set color based on outcome
+    color = outcome_colors.get(outcome, 'blue')
+
+    # Plot line
+    ax.plot([src_x, dest_x], [src_y, dest_y], color=color, alpha=0.6)
+
+    # Calculate direction vector for the arrow
+    dx = dest_x - src_x
+    dy = dest_y - src_y
+    # Normalize the direction vector to a small length for the arrow
+    length = np.sqrt(dx**2 + dy**2)
+    if length > 0:  # Avoid division by zero
+      dx = dx / length * 0.3  # Scale for arrow size
+      dy = dy / length * 0.3
+      # Add arrow at destination, aligned with line direction
+      ax.arrow(dest_x - dx, dest_y - dy, dx, dy, 
+               head_width=0.3, head_length=0.3, 
+               fc=color, ec=color, alpha=0.6)
+
+    # Process ellipses for each angular zone
+  angular_zones = ['A1', 'A2', 'A3', 'A4', 'A5']
+
+  for zone in angular_zones:
+    # Filter data for the current angular zone
+    zone_df = ppr_df[ppr_df['att_angular_zone'] == zone]
+    if zone_df.empty:
+      continue
+
+      # Second standard deviation ellipse (all points in zone)
+    dest_points = zone_df[['att_dest_x', 'att_dest_y']].values
+    if len(dest_points) > 1:
+      mean = np.mean(dest_points, axis=0)
+      cov = np.cov(dest_points, rowvar=False)
+      # Chi-square for 2 std devs (~95% confidence)
+      lambda_, v = np.linalg.eigh(cov)
+      lambda_ = np.sqrt(lambda_) * np.sqrt(chi2.ppf(0.95, df=2))
+      ellipse = Ellipse(xy=mean, width=lambda_[0]*2, height=lambda_[1]*2, 
+                        angle=np.degrees(np.arctan2(*v[:,0][::-1])),
+                        edgecolor='orange', fc='orange', alpha=0.3)
+      ax.add_patch(ellipse)
+
+      # First standard deviation ellipse (kills only)
+    kill_df = zone_df[zone_df['point_outcome'] == 'FBK']
+    if len(kill_df) > 1:
+      kill_points = kill_df[['att_dest_x', 'att_dest_y']].values
+      mean = np.mean(kill_points, axis=0)
+      cov = np.cov(kill_points, rowvar=False)
+      # Chi-square for 1 std dev (~68% confidence)
+      lambda_, v = np.linalg.eigh(cov)
+      lambda_ = np.sqrt(lambda_) * np.sqrt(chi2.ppf(0.68, df=2))
+      ellipse = Ellipse(xy=mean, width=lambda_[0]*2, height=lambda_[1]*2, 
+                        angle=np.degrees(np.arctan2(*v[:,0][::-1])),
+                        edgecolor='lightgreen', fc='lightgreen', alpha=0.5)
+      ax.add_patch(ellipse)
+
+    # Set plot limits and aspect ratio
+  ax.set_xlim(-1, 9)  # Assuming standard volleyball court dimensions
+  ax.set_ylim(-9, 9)
+  ax.set_aspect('equal')
+
+  # Create Anvil plot component
+
+  plt_image = anvil.mpl_util.plot_image()
+  return plt_image

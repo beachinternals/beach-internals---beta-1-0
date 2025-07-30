@@ -28,7 +28,7 @@ components:
     type: Label
   - layout_properties: {grid_position: 'ZGHJCJ,WFWFOE'}
     name: box_1
-    properties: {spacing_above: none, spacing_below: none}
+    properties: {font_size: 10, spacing_above: none, spacing_below: none}
     type: RichText
   - layout_properties: {grid_position: 'ZGHJCJ,UIWPSJ'}
     name: image_1
@@ -36,12 +36,12 @@ components:
     type: Image
   layout_properties: {grid_position: 'ZAJYUI,VPBOBC'}
   name: column_panel_11
-  properties: {}
+  properties: {col_widths: '{"WFWFOE":25,"UIWPSJ":35}'}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'UJWQYC,KSSUPV'}
     name: box2_title
-    properties: {align: center, spacing_above: none, spacing_below: none}
+    properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
     type: Label
   - layout_properties: {grid_position: 'JQSJBI,GDWKGD'}
     name: box_2
@@ -53,12 +53,12 @@ components:
     type: Image
   layout_properties: {grid_position: 'UUZDSY,VYMMVD'}
   name: column_panel_14
-  properties: {}
+  properties: {col_widths: '{"GDWKGD":25,"YVHNYI":35}'}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'IIWGDB,SEKUDC'}
     name: box3_title
-    properties: {align: center, spacing_above: none, spacing_below: none}
+    properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
     type: Label
   - layout_properties: {grid_position: 'CUSNIS,EGFBCP'}
     name: box_3
@@ -70,7 +70,7 @@ components:
     type: Image
   layout_properties: {grid_position: 'IDDGXT,ULYXCB'}
   name: column_panel_15
-  properties: {}
+  properties: {col_widths: '{"EGFBCP":25,"GFHJOS":35}'}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'IFOHDJ,SNQJLY'}
