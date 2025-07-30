@@ -3342,11 +3342,11 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
   # Define the structure of the DataFrame
   df_dict = {
     ' ': ['FBHE', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts','% In System', 'URL'],
-    'Cut-Right': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A1
-    'Angle-Right': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A2
+    'Cut-Left': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A1
+    'Angle-Left': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A2
     'Over-Middle': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A3
-    'Angle-Left': [0, 0, 0, 0, 0, 0, 0, ' '],   # Zone A4
-    'Cut-Left': [0, 0, 0, 0, 0, 0, 0, ' ']      # Zone A5
+    'Angle-Right': [0, 0, 0, 0, 0, 0, 0, ' '],   # Zone A4
+    'Cut-Right': [0, 0, 0, 0, 0, 0, 0, ' ']      # Zone A5
   }
 
   # Create DataFrame without setting an index
@@ -3356,7 +3356,7 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
   print(f"angle table (initial):\n{angle_table}")
 
   angles = ['A1', 'A2', 'A3', 'A4', 'A5']
-  ang_labels = ['Cut-Right', 'Angle-Right', 'Over-Middle', 'Angle-Left', 'Cut-Left']
+  ang_labels = ['Cut-Left', 'Angle-Left', 'Over-Middle', 'Angle-Right', 'Cut-Right']
   attempts = 0
   
   for i in range(5):
@@ -3386,9 +3386,9 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
     print(f"Value: {value}")
     value = float(value)
     if attempts != 0:
-      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = ( value/attempts )
+      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = str('{:.0%}').format( value/attempts )
     else:
-      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = ( value/attempts ) = 0
+      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = 0
     print(f" number of attempts: { value }, attempts: {attempts}, percent of attempts: { angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]]}")
     #angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = str('{:.1%}').format(angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]])
     
