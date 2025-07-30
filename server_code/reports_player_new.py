@@ -3285,34 +3285,37 @@ def player_att_tendencies(lgy, team, **rpt_filters):
 
   # count zone 1 and 2 attacks
 
-  att12 = ppr_df[ (ppr_df['att_src_zone_net'] == 1) | 
-                  (ppr_df['att_src_zone_net'] == 2) ].shape[0]
-  att34 = ppr_df[ (ppr_df['att_src_zone_net'] == 3) | 
-                  (ppr_df['att_src_zone_net'] == 4) ].shape[0]
+  ppr_df = ppr_df[ (ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == disp_player )]
+  att12 = ppr_df[ ( (ppr_df['att_src_zone_net'] == 1) | 
+                    (ppr_df['att_src_zone_net'] == 2) ) &
+                  (ppr_df['tactic'] != 'behind') ].shape[0]
+  att45 = ppr_df[ ( (ppr_df['att_src_zone_net'] == 4) | 
+                  (ppr_df['att_src_zone_net'] == 5) ) &
+                  (ppr_df['tactic'] != 'behind') ].shape[0]
 
   
-  att_front = '12' if att12 >= att34 else '34'
+  att_front = '12' if att12 >= att45 else '45'
   att_posn = ['front','behind','middle']
   #angles = ['A1','A2','A3','A4','A5']
-  print(f" attacks, from 1 and 2: {att12}, from 3 & 4: {att34}, att_front is {att_front}")
+  print(f" attacks, from 1 and 2: {att12}, from 4 & 5: {att45}, att_front is {att_front}")
   
   for att in att_posn:
 
     # condition the ppr, get me down to just attacks, and where therre are angles
-    new_df = ppr_df[ (ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == disp_player )]
+    new_df = ppr_df
 
     if att_front == '12' and att == 'front':
       new_df = new_df[ ((new_df['att_src_zone_net'] == 1) | (new_df['att_src_zone_net'] == 2)) & (new_df['tactic'] != 'behind')]
     elif att_front == '12' and att == 'behind':
       new_df = new_df[ (new_df['tactic'] == 'behind') ]
     elif att_front == '12' and att == 'middle':
-      new_df = new_df[ (new_df['att_src_zone_net'] != 1) & (new_df['att_src_zone_net'] != 2) & (new_df['tactic'] != 'behind')]    
-    if att_front == '34' and att == 'front':
-      new_df = new_df[ ((new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 4)) & (new_df['tactic'] != 'behind')]
-    elif att_front == '34' and att == 'behind':
+      new_df = new_df[ ( (new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 4) | (new_df['att_src_zone_net'] == 5) ) & (new_df['tactic'] != 'behind')]    
+    if att_front == '45' and att == 'front':
+      new_df = new_df[ ((new_df['att_src_zone_net'] == 4) | (new_df['att_src_zone_net'] == 5)) & (new_df['tactic'] != 'behind')]
+    elif att_front == '45' and att == 'behind':
       new_df = new_df[ (new_df['tactic'] == 'behind') ] 
-    elif att_front == '34' and att == 'middle':
-      new_df = new_df[ (new_df['att_src_zone_net'] != 3) & (new_df['att_src_zone_net'] != 4) & (new_df['tactic'] != 'behind')]  
+    elif att_front == '45' and att == 'middle':
+      new_df = new_df[ ( (new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 1) | (new_df['att_src_zone_net'] == 2) ) & (new_df['tactic'] != 'behind')]   
       
     angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
 
@@ -3338,12 +3341,12 @@ def player_att_tendencies(lgy, team, **rpt_filters):
 def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
   # Define the structure of the DataFrame
   df_dict = {
-    ' ': ['FBHE', 'FBSO', 'Kills', 'Errors', 'Attempts', '% In System', 'URL'],
-    'Cut-Right': [0, 0, 0, 0, 0, 0, ' '],  # Zone A1
-    'Angle-Right': [0, 0, 0, 0, 0, 0, ' '],  # Zone A2
-    'Over-Middle': [0, 0, 0, 0, 0, 0, ' '],  # Zone A3
-    'Angle-Left': [0, 0, 0, 0, 0, 0, ' '],   # Zone A4
-    'Cut-Left': [0, 0, 0, 0, 0, 0, ' ']      # Zone A5
+    ' ': ['FBHE', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts','% In System', 'URL'],
+    'Cut-Right': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A1
+    'Angle-Right': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A2
+    'Over-Middle': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A3
+    'Angle-Left': [0, 0, 0, 0, 0, 0, 0, ' '],   # Zone A4
+    'Cut-Left': [0, 0, 0, 0, 0, 0, 0, ' ']      # Zone A5
   }
 
   # Create DataFrame without setting an index
@@ -3354,7 +3357,8 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
 
   angles = ['A1', 'A2', 'A3', 'A4', 'A5']
   ang_labels = ['Cut-Right', 'Angle-Right', 'Over-Middle', 'Angle-Left', 'Cut-Left']
-
+  attempts = 0
+  
   for i in range(5):
     # Filter the DataFrame for the current angular zone
     tmp_df = new_df[new_df['att_angular_zone'] == angles[i]]
@@ -3373,7 +3377,13 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
     #angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = 1 - oos_vector[1]  # Keep as float  
     # Optionally format as percentage for display later
     angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = f"{(1 - oos_vector[1]):.1%}"
+    attempts = fbhe_vector[3] + attempts
 
+  # calcualte percent of attempts
+  for i in range(5):
+    angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = ( angle_table.loc[angle_table[' '] == 'Attempts', ang_labels[i]]/attempts )
+    #angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = str('{:.1%}').format(angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]])
+    
   print(f"angular table (formatted for display):\n{angle_table}")
 
   return angle_table
@@ -3404,7 +3414,7 @@ def plot_volleyball_attacks(ppr_df):
     color = outcome_colors.get(outcome, 'blue')
 
     # Plot line
-    ax.plot([src_x, dest_x], [src_y, dest_y], color=color, alpha=0.6)
+    ax.plot([src_x, dest_x], [src_y, dest_y], color=color, alpha=0.9)
 
     # Calculate direction vector for the arrow
     dx = dest_x - src_x
@@ -3412,12 +3422,12 @@ def plot_volleyball_attacks(ppr_df):
     # Normalize the direction vector to a small length for the arrow
     length = np.sqrt(dx**2 + dy**2)
     if length > 0:  # Avoid division by zero
-      dx = dx / length * 0.3  # Scale for arrow size
-      dy = dy / length * 0.3
+      dx = dx / length * 0.5  # Scale for arrow size
+      dy = dy / length * 0.5
       # Add arrow at destination, aligned with line direction
       ax.arrow(dest_x - dx, dest_y - dy, dx, dy, 
-               head_width=0.3, head_length=0.3, 
-               fc=color, ec=color, alpha=0.6)
+               head_width=0.2, head_length=0.3, 
+               fc=color, ec=color, alpha=0.9)
 
     # Process ellipses for each angular zone
   angular_zones = ['A1', 'A2', 'A3', 'A4', 'A5']
@@ -3435,7 +3445,7 @@ def plot_volleyball_attacks(ppr_df):
       cov = np.cov(dest_points, rowvar=False)
       # Chi-square for 2 std devs (~95% confidence)
       lambda_, v = np.linalg.eigh(cov)
-      lambda_ = np.sqrt(lambda_) * np.sqrt(chi2.ppf(0.95, df=2))
+      lambda_ = np.sqrt(lambda_) * np.sqrt(chi2.ppf(0.68, df=2))
       ellipse = Ellipse(xy=mean, width=lambda_[0]*2, height=lambda_[1]*2, 
                         angle=np.degrees(np.arctan2(*v[:,0][::-1])),
                         edgecolor='orange', fc='orange', alpha=0.3)
@@ -3449,7 +3459,7 @@ def plot_volleyball_attacks(ppr_df):
       cov = np.cov(kill_points, rowvar=False)
       # Chi-square for 1 std dev (~68% confidence)
       lambda_, v = np.linalg.eigh(cov)
-      lambda_ = np.sqrt(lambda_) * np.sqrt(chi2.ppf(0.68, df=2))
+      lambda_ = np.sqrt(lambda_) * np.sqrt(chi2.ppf(0.50, df=2))
       ellipse = Ellipse(xy=mean, width=lambda_[0]*2, height=lambda_[1]*2, 
                         angle=np.degrees(np.arctan2(*v[:,0][::-1])),
                         edgecolor='lightgreen', fc='lightgreen', alpha=0.5)
