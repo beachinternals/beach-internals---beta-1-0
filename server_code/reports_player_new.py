@@ -3378,10 +3378,18 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
     # Optionally format as percentage for display later
     angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = f"{(1 - oos_vector[1]):.1%}"
     attempts = fbhe_vector[3] + attempts
+    print(f"Attempts: {attempts}")
 
   # calcualte percent of attempts
   for i in range(5):
-    angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = ( angle_table.loc[angle_table[' '] == 'Attempts', ang_labels[i]]/attempts )
+    value = angle_table.loc[4, ang_labels[i]]
+    print(f"Value: {value}")
+    value = float(value)
+    if attempts != 0:
+      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = ( value/attempts )
+    else:
+      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = ( value/attempts ) = 0
+    print(f" number of attempts: { value }, attempts: {attempts}, percent of attempts: { angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]]}")
     #angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = str('{:.1%}').format(angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]])
     
   print(f"angular table (formatted for display):\n{angle_table}")
