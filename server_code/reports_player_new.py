@@ -24,6 +24,13 @@ from sklearn.feature_selection import mutual_info_classif
 #import sklearn
 import seaborn as sns
 
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import anvil.media
+from io import BytesIO
+import inspect
+
 from tabulate import tabulate
 from server_functions import *
 from anvil import pdf
@@ -3397,6 +3404,8 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
   return angle_table
 
 
+
+
 def plot_volleyball_attacks(ppr_df):
   # Create figure and axis
   fig, ax = plt.subplots(figsize=(10, 15))
@@ -3482,3 +3491,187 @@ def plot_volleyball_attacks(ppr_df):
 
   plt_image = anvil.mpl_util.plot_image()
   return plt_image
+
+
+
+
+@anvil.server.callable
+def player_correlation_set(lgy, team, **rpt_filters):
+  '''
+    Report Functions:
+        - compute correlations between point difference and diff metrics for the specified pair (team)
+        - generate a horizontal bar plot for all correlations and a 4x2 subplot for top/bottom 4 correlated metrics using Matplotlib
+
+    INPUT Parameters:
+        - lgy : league, gender, year combination (as in dropdowns)
+        - team : the team of the user calling the report
+        - rpt_filters : the list of filters to limit the data, including 'player', 'pair', 'start_date', 'end_date'
+
+    OUTPUT Cognizance: The player_correlation_set function computes correlations between the point difference (teama_pts - teamb_pts) and various 'diff' metrics for a specified team (disp_pair from rpt_filters['pair']), adjusting for whether the team is the winner or loser in each row. It generates two plots using Matplotlib: a horizontal bar plot for all correlations and a 4x2 subplot of scatter plots for the top 4 and bottom 4 correlated metrics. The results are stored in df_list and image_list, returned along with title_list and label_list.
+
+    OUTPUT Return Parameters:
+        - title_list : a list of up to 10 titles to display on the report
+        - label_list : a list of up to 10 labels to display on the report
+        - image_list : a list of up to 10 images to plot data on the report
+        - df_list : a list of up to 10 data frames to display tables
+    '''
+  #------------------------------------------------------------------------------------------------------
+  # Initialize all lists, get and filter the data, and fetch information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch player data (though not used in correlation analysis, kept for consistency)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+
+  # Initiate return lists
+  title_list = [''] * 10
+  label_list = [''] * 10
+  image_list = [''] * 10
+  df_list = [''] * 10
+
+  # Fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+  title_list[0] = rpt_row['rpt_title']
+  title_list[1] = rpt_row['rpt_sub_title']
+  title_list[2] = rpt_row['rpt_section_title1']
+  title_list[3] = rpt_filters.get('lgy')
+  title_list[4] = rpt_row['team_name']
+  title_list[5] = rpt_row['rpt_type']
+  title_list[6] = rpt_row['filter_text']
+  title_list[7] = rpt_row['explain_text']
+  title_list[8] = rpt_filters.get('player')
+  title_list[9] = rpt_filters.get('pair')
+
+  label_list[0] = rpt_row['box1_title']
+  label_list[1] = rpt_row['box2_title']
+  label_list[2] = rpt_row['box3_title']
+  label_list[3] = rpt_row['box4_title']
+  label_list[4] = rpt_row['box5_title']
+  label_list[5] = rpt_row['box6_title']
+  label_list[6] = rpt_row['box7_title']
+  label_list[7] = rpt_row['box8_title']
+  label_list[8] = rpt_row['box9_title']
+  label_list[9] = rpt_row['box10_title']
+
+  #------------------------------------------------------------------------------------------------------
+  # Correlation Analysis
+  #-----------------------------------------------------------------------------------------------------
+  # Fetch tri data
+  disp_start_date = rpt_filters.get('start_date')
+  disp_end_date = rpt_filters.get('end_date')
+  tri_df, tri_df_found = get_tri_data(disp_league, disp_gender, disp_year, False, disp_start_date, disp_end_date)
+
+  if not tri_df_found or tri_df.empty:
+    df_list[0] = pd.DataFrame({'Error': ['No data found for the specified filters']}).to_dict('records')
+    image_list[0] = ''
+    image_list[1] = ''
+    return title_list, label_list, image_list, df_list
+
+    # Get disp_pair from rpt_filters
+  disp_pair = rpt_filters.get('pair')
+  if not disp_pair:
+    df_list[0] = pd.DataFrame({'Error': ['No pair specified in rpt_filters']}).to_dict('records')
+    image_list[0] = ''
+    image_list[1] = ''
+    return title_list, label_list, image_list, df_list
+
+    # Filter tri_df to rows where disp_pair is in teama or teamb
+  tri_df_filtered = tri_df[tri_df['teama'] == disp_pair].combine_first(tri_df[tri_df['teamb'] == disp_pair])
+
+  if tri_df_filtered.empty:
+    df_list[0] = pd.DataFrame({'Error': [f"No data found for pair {disp_pair} in teama or teamb"]}).to_dict('records')
+    image_list[0] = ''
+    image_list[1] = ''
+    return title_list, label_list, image_list, df_list
+
+    # Calculate point difference (teama_pts - teamb_pts)
+  tri_df_filtered['point_diff'] = tri_df_filtered['teama_pts'] - tri_df_filtered['teamb_pts']
+
+  # Adjust point_diff and diff metrics based on whether disp_pair is the winner
+  df_adjusted = tri_df_filtered.copy()
+  diff_metrics = [
+    'fbhe_diff_noace', 'fbhe_diff_withace', 'fbso_diff_noace', 'fbso_diff_withace',
+    'eso_diff', 'ace_error_diff', 't_eff_diff', 'knockout_diff', 'goodpass_diff',
+    'tcr_diff', 'err_den_diff'
+  ]
+
+  for index, row in df_adjusted.iterrows():
+    is_winner = (row['winning_team'] == disp_pair)
+    if not is_winner:
+      df_adjusted.at[index, 'point_diff'] = -row['point_diff']
+      for metric in diff_metrics:
+        if metric in row and pd.notnull(row[metric]):
+          df_adjusted.at[index, metric] = -row[metric]
+
+    # Calculate correlations
+  correlations = {}
+  for metric in diff_metrics:
+    if metric in df_adjusted.columns:
+      valid_data = df_adjusted[['point_diff', metric]].dropna()
+      if not valid_data.empty:
+        correlations[metric] = valid_data['point_diff'].corr(valid_data[metric])
+
+    # Create correlation DataFrame
+  corr_df = pd.DataFrame.from_dict(correlations, orient='index', columns=['Correlation'])
+  corr_df = corr_df.reset_index().rename(columns={'index': 'Metric'})
+  corr_df = corr_df.sort_values(by='Correlation', ascending=False)
+  df_list[0] = corr_df.to_dict('records')
+
+  #------------------------------------------------------------------------------------------------------
+  # Generate Plots with Matplotlib
+  #-----------------------------------------------------------------------------------------------------
+  if not corr_df.empty:
+    # 1. Horizontal Bar Plot for All Correlations
+    plt.figure(figsize=(10, 8))
+    colors = ['red' if x < 0 else 'blue' for x in corr_df['Correlation']]
+    plt.barh(corr_df['Metric'], corr_df['Correlation'], color=colors)
+    plt.xlabel('Correlation Coefficient')
+    plt.ylabel('Metric')
+    plt.title(f'Correlation of Metrics with Point Difference for {disp_pair}\n({disp_league}, {disp_gender}, {disp_year})')
+    plt.xlim(-1, 1)
+    plt.grid(True, axis='x', linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    image_list[0] = anvil.mpl_util.plot_image()
+    buffer_bar = BytesIO()
+    plt.savefig(buffer_bar, format='png', dpi=100)
+    plt.close()
+    buffer_bar.seek(0)
+    #image_list[0] = anvil.mpl_util.plot_image()
+    #image_list[1] = anvil.media.from_file(buffer_bar, 'image/png', 'correlation_bar_plot.png')
+
+    # 2. 4x2 Subplot for Top 4 and Bottom 4 Correlated Metrics
+    corr_df_sorted = corr_df.sort_values(by='Correlation', key=abs, ascending=False)
+    top_bottom_metrics = corr_df_sorted['Metric'].head(8).tolist()
+    if len(top_bottom_metrics) > 4:
+      top_metrics = top_bottom_metrics[:4]
+      bottom_metrics = top_bottom_metrics[-4:][::-1]  # Reverse for readability
+    else:
+      top_metrics = top_bottom_metrics
+      bottom_metrics = []
+
+    fig, axes = plt.subplots(4, 2, figsize=(10, 12), sharex=True, sharey=True)
+    axes = axes.flatten()
+    for i, metric in enumerate(top_metrics + bottom_metrics):
+      valid_data = df_adjusted[['point_diff', metric]].dropna()
+      if not valid_data.empty:
+        axes[i].scatter(valid_data[metric], valid_data['point_diff'], alpha=0.6)
+        axes[i].set_title(metric, fontsize=10)
+        axes[i].grid(True, linestyle='--', alpha=0.7)
+        if i % 2 == 0:
+          axes[i].set_ylabel('Point Difference')
+        if i >= 6:
+          axes[i].set_xlabel('Metric Value')
+
+    plt.suptitle(f'Top and Bottom Correlated Metrics with Point Difference for {disp_pair}\n({disp_league}, {disp_gender}, {disp_year})', fontsize=12)
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    image_list[1] = anvil.mpl_util.plot_image()
+    buffer_scatter = BytesIO()
+    plt.savefig(buffer_scatter, format='png', dpi=100)
+    plt.close()
+    buffer_scatter.seek(0)
+    #image_list[1] = anvil.mpl_util.plot_image()
+    #image_list[1] = anvil.media.from_file(buffer_scatter, 'image/png', 'correlation_scatter_plot.png')
+
+  return title_list, label_list, image_list, df_list
+
