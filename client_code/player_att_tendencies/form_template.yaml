@@ -26,7 +26,7 @@ components:
     name: box1_title
     properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
     type: Label
-  - layout_properties: {grid_position: 'ZGHJCJ,WFWFOE'}
+  - layout_properties: {grid_position: 'NDAMRE,DOXELF'}
     name: box_1
     properties: {font_size: 10, spacing_above: none, spacing_below: none}
     type: RichText
@@ -34,9 +34,13 @@ components:
     name: image_1
     properties: {height: '520'}
     type: Image
+  - layout_properties: {grid_position: 'ZGHJCJ,VFBXTY'}
+    name: image_2
+    properties: {height: '520'}
+    type: Image
   layout_properties: {grid_position: 'ZAJYUI,VPBOBC'}
   name: column_panel_11
-  properties: {col_widths: '{"WFWFOE":25,"UIWPSJ":35}'}
+  properties: {col_widths: '{"UIWPSJ":35}'}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'UJWQYC,KSSUPV'}
@@ -47,13 +51,13 @@ components:
     name: box_2
     properties: {font_size: 10, spacing_above: none, spacing_below: none}
     type: RichText
-  - layout_properties: {grid_position: 'JQSJBI,YVHNYI'}
-    name: image_2
+  - layout_properties: {grid_position: 'JQSJBI,AWTMPI'}
+    name: image_3
     properties: {height: '520'}
     type: Image
   layout_properties: {grid_position: 'UUZDSY,VYMMVD'}
   name: column_panel_14
-  properties: {col_widths: '{"GDWKGD":25,"YVHNYI":35}'}
+  properties: {col_widths: '{"GDWKGD":25}'}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'IIWGDB,SEKUDC'}
@@ -64,13 +68,13 @@ components:
     name: box_3
     properties: {font_size: 10, spacing_above: none, spacing_below: none}
     type: RichText
-  - layout_properties: {grid_position: 'CUSNIS,GFHJOS'}
-    name: image_3
+  - layout_properties: {grid_position: 'CUSNIS,VICWPG'}
+    name: image_4
     properties: {height: '520'}
     type: Image
   layout_properties: {grid_position: 'IDDGXT,ULYXCB'}
   name: column_panel_15
-  properties: {col_widths: '{"EGFBCP":25,"GFHJOS":35}'}
+  properties: {col_widths: '{"EGFBCP":25}'}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'IFOHDJ,SNQJLY'}

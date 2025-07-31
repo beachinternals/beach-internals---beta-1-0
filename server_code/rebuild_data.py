@@ -512,98 +512,114 @@ def load_pair_data_table():
 
 
 
-
 @anvil.server.background_task
 def check_inconsistent_data():
   """
     Nightly task to check for inconsistent data in btd_files and master_player tables,
-    and send an email report to beachinternals@gmail.com with detailed row information.
+    including duplicate video_id in btd_files and near-duplicate numbers in master_player
+    only for league='NCAA', and send an email report to beachinternals@gmail.com.
     """
   try:
-    logger.info("Starting nightly data consistency check")
+    logger.info("Starting nightly data consistency check at %s", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     issues = []
 
-    # Check btd_files for per_xy == 0 or points < 25
+    # Check btd_files for per_xy == 0, points < 25, and duplicate video_id
     btd_issues = []
-    btd_rows = app_tables.btd_files.search()
+    btd_rows = list(app_tables.btd_files.search())  # Convert to list for multiple passes
+
+    # Check per_xy and points
     for row in btd_rows:
       row_issues = []
       if row['per_xy'] == 0:
-        row_issues.append(f"per_xy is 0")
+        row_issues.append("per_xy is 0")
       if row['points'] is not None and row['points'] < 25:
         row_issues.append(f"points ({row['points']}) < 25")
       if row_issues:
-        # Include additional fields in the issue description
-        league = row['league'] or 'None'
-        gender = row['gender'] or 'None'
-        year = row['year'] if row['year'] is not None else 'None'
-        team = row['team'] or 'None'
-        filename = row['filename'] or 'None'
+        league = str(row['league'] or 'None')
+        gender = str(row['gender'] or 'None')
+        year = str(row['year'] if row['year'] is not None else 'None')
+        team = str(row['team'] or 'None')
+        filename = str(row['filename'] or 'None')
         btd_issues.append(
           f"Row ID {row.get_id()}: {', '.join(row_issues)} "
           f"(league={league}, gender={gender}, year={year}, team={team}, filename={filename})"
         )
 
+        # Check for duplicate video_id
+    video_id_counts = {}
+    for row in btd_rows:
+      video_id = row['video_id']
+      if video_id is not None:
+        video_id = str(video_id)  # Ensure string for consistency
+        video_id_counts[video_id] = video_id_counts.get(video_id, []) + [row]
+
+    for video_id, rows in video_id_counts.items():
+      if len(rows) > 1:  # Duplicates found
+        row_ids = [row.get_id() for row in rows]
+        for row in rows:
+          league = str(row['league'] or 'None')
+          gender = str(row['gender'] or 'None')
+          year = str(row['year'] if row['year'] is not None else 'None')
+          team = str(row['team'] or 'None')
+          filename = str(row['filename'] or 'None')
+          btd_issues.append(
+            f"Row ID {row.get_id()}: Duplicate video_id '{video_id}' (found in Row IDs {', '.join(row_ids)}) "
+            f"(league={league}, gender={gender}, year={year}, team={team}, filename={filename})"
+          )
+
     if btd_issues:
       issues.append("<h3>btd_files Issues</h3><ul>" + "".join(f"<li>{issue}</li>" for issue in btd_issues) + "</ul>")
 
-      # Check master_player for single-digit number without leading zero and near-duplicates
+      # Check master_player for single-digit number and near-duplicates (NCAA only)
     mp_issues = []
-    mp_rows = app_tables.master_player.search()
-    # Group rows by league, gender, year, team for duplicate checks
+    mp_rows = list(app_tables.master_player.search())
     groups = {}
     for row in mp_rows:
-      key = (row['league'] or 'None', row['gender'] or 'None', row['year'] if row['year'] is not None else -1, row['team'] or 'None')
-      if key not in groups:
-        groups[key] = []
-      groups[key].append(row)
+      key = (
+        str(row['league'] or 'None'),
+        str(row['gender'] or 'None'),
+        row['year'] if row['year'] is not None else -1,
+        str(row['team'] or 'None')
+      )
+      groups.setdefault(key, []).append(row)
 
-      # Check for single-digit number and near-duplicates
     for key, rows in groups.items():
+      league, gender, year, team = key
       for row in rows:
         number = row['number']
         row_id = row.get_id()
-        # Include additional fields
-        league = row['league'] or 'None'
-        gender = row['gender'] or 'None'
-        year = row['year'] if row['year'] is not None else 'None'
-        team = row['team'] or 'None'
-        # Check for single-digit number without leading zero
+        # Single-digit number check (all leagues)
         if number and number.isdigit() and len(number) == 1:
           mp_issues.append(
             f"Row ID {row_id}: Single-digit number '{number}' without leading zero "
             f"(league={league}, gender={gender}, year={year}, team={team})"
           )
-
-          # Check for near-duplicates (same number, one with leading zero)
-        for other_row in rows:
-          if row is other_row:
-            continue
-          other_number = other_row['number']
-          if number and other_number and number.lstrip('0') == other_number.lstrip('0'):
-            mp_issues.append(
-              f"Row ID {row_id} and {other_row.get_id()}: Near-duplicate numbers '{number}' and '{other_number}' "
-              f"(league={league}, gender={gender}, year={year}, team={team})"
-            )
+          # Near-duplicate number check (league='NCAA' only)
+        if league == 'NCAA':
+          for other_row in rows:
+            if row is other_row:
+              continue
+            other_number = other_row['number']
+            if number and other_number and number.lstrip('0') == other_number.lstrip('0'):
+              mp_issues.append(
+                f"Row ID {row_id} and {other_row.get_id()}: Near-duplicate numbers '{number}' and '{other_number}' "
+                f"(league={league}, gender={gender}, year={year}, team={team})"
+              )
 
     if mp_issues:
       issues.append("<h3>master_player Issues</h3><ul>" + "".join(f"<li>{issue}</li>" for issue in mp_issues) + "</ul>")
 
       # Prepare email content
-    if issues:
-      email_body = f"""
-            <h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')}</h2>
-            <p>Found the following inconsistencies in the database:</p>
-            {''.join(issues)}
-            <p>Please review these issues and update the data as needed.</p>
-            """
-    else:
-      email_body = f"""
-            <h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')}</h2>
-            <p>No inconsistencies found in btd_files or master_player tables.</p>
-            """
+    email_body = (
+      f"<h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')}</h2>"
+      f"<p>Found the following inconsistencies in the database:</p>{''.join(issues)}"
+      f"<p>Please review these issues and update the data as needed.</p>"
+    ) if issues else (
+      f"<h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')}</h2>"
+      f"<p>No inconsistencies found in btd_files or master_player tables.</p>"
+    )
 
-      # Send email
+    # Send email
     anvil.email.send(
       to="beachinternals@gmail.com",
       subject=f"Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')}",
@@ -626,3 +642,4 @@ def trigger_nightly_check():
     """
   anvil.server.launch_background_task('check_inconsistent_data')
   return {"status": "Nightly check triggered"}
+  
