@@ -175,7 +175,7 @@ def rpt_mgr_generate_background():
     day_of_week = today.strftime("%A")
     #print(f"Day of the week: {day_of_week}, Report Day of Week: {rpt_r['dow']}")
     if (rpt_r['dow'] == day_of_week) | (rpt_r['dow'] == 'Everyday'):
-
+      '''
       #print(f"processing report type : {rpt_r['rpt_type']}")
       if rpt_r['rpt_type'] == 'player-old':
         # loop over all the players for this report listing
@@ -295,14 +295,14 @@ def rpt_mgr_generate_background():
           # put this pdf into the pdf list
           pdf_list[pdf_num] = full_rpt_pdf
           pdf_num = pdf_num + 1
-        '''
+        
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                           from_address="no-reply",
                                           subject='Beach Internals - Pair Summary '+disp_pair,
                                           cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',                                       
                                           text='Attached please find the summary report(s) for '+disp_pair,
                                           attachments=pdf_list)
-        '''
+        
       
       elif rpt_r['rpt_type'] == 'dashboard-old':
         # dashboard reports are for a whole team, so we ignore the pair and player entries, ump right o the reports
@@ -421,7 +421,7 @@ def rpt_mgr_generate_background():
             pdf_list[pdf_num] = full_rpt_pdf
             pdf_num = pdf_num + 1
 
-        '''
+        
         email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
                                       cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
@@ -430,7 +430,7 @@ def rpt_mgr_generate_background():
                                       attachments=pdf_list)
         if not email_status:
           print("report:Manager, Scouting Reports, email send failed")
-        '''
+        
       
       elif rpt_r['rpt_type'] == 'scouting - pdf only':
         # this category is for reports taht can only be generated as pdf files, not as web pages.
@@ -662,7 +662,7 @@ def rpt_mgr_generate_background():
           #for i in range(0,len(pdf_list)):
           #  print(f"PDF List to email: item number :{i}, PDF File: {pdf_list[i]}")
             
-          '''
+          
           email_status = anvil.email.send(to=rpt_r['emailto'],
                                       from_address="no-reply",
                                       cc='beachinternals@gmail.com' if rpt_r['copy_beachinternals'] else '',
@@ -672,7 +672,7 @@ def rpt_mgr_generate_background():
 
           if not email_status:
             print("report:Manager, Scouting Reports, email send failed")
-          '''
+          
       
       elif rpt_r['rpt_type'] == 'matchup-old':
         #print(f"Matchup Reports: {rpt_r['rpt_type']}")
@@ -682,8 +682,8 @@ def rpt_mgr_generate_background():
           print(f"Report Manager : rpt_mgt_matachup_rpts Failed, {rpt_r['rpt_type']}")
         else:
           email_text = email_text + ret_val + " \n"
-      
-      elif rpt_r['rpt_type'] == 'player':
+      '''
+      if rpt_r['rpt_type'] == 'player':
         email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
         ret_val = rpt_mgr_new_rpts(rpt_r, rpt_r['player_list'], disp_team)
         if not ret_val:
@@ -851,11 +851,11 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
     pdf_folder = [ p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d") ]
     #print(f"pdf folder: {pdf_folder}")
     full_rpt_pdf = None
-    if rpt_r['player_list'] is not None:
-      # then this is a pair
+    if rpt_r['rpt_type'] == 'player':
+      # then this is a player
       player_pair = p['team'] + " "+p['number']+' '+p['shortname']
-    elif rpt_r['pair_list'] is not None:
-      # then this is a player table row
+    elif rpt_r['rpt_type'] == 'pair':
+      # then this is a pair table row
       player_pair = p['pair']
     else:
       player_pair = ' Unknown '
@@ -1279,10 +1279,10 @@ def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
   #print(f" in populate filters form rpt mgr table. rpt_r: \m{rpt_r} \n pair/player rot \n{p_r}")
   
   # first, we need to tellif this is a pair or a player table row:
-  if rpt_r['player_list'] is not None:
+  if rpt_r['rpt_type'] == 'player':
     # then this is a pair
     rpt_filters['player'] = p_r['team'] + " "+p_r['number']+' '+p_r['shortname']
-  elif rpt_r['pair_list'] is not None:
+  elif rpt_r['rpt_type'] == 'pair':
     # then this is a player table row
     rpt_filters['pair'] = p_r['pair']
     
