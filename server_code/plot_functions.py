@@ -273,7 +273,134 @@ def plot_attack_zones( ppr_df, plt_num):
 
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()
-                         
+
+
+
+def plot_pass_clusters(ppr_df, disp_player, category):
+  """
+    Generate a Matplotlib scatter plot of kill/error clusters with RdYlGn colormap.
+
+    Modified this only plot one category (FBK/FBE) each time it is called
+    
+    """
+  print("Entered Plot Pass Clusters")
+  try:
+    logger.info(f"Generating plot for Player: {disp_player}")
+    # Validate colormap
+    try:
+      custom_colors = ['#ff0000', '#00ff00', '#0000ff', '#ff00ff', '#00ffff']  # # Red, Green, Blue, Magenta, Cyan
+      cmap = mcolors.ListedColormap(custom_colors)
+      colors = cmap.colors
+    except ValueError as e:
+      logger.error(f"Invalid colormap 'RdYlGn': {str(e)}")
+      return {'error': f"Invalid colormap: {str(e)}"}
+
+    if not (category == "FBK" or category == 'FBE'):
+      print(f"Error, invalid category ; {category}")
+      error_msg = "Invalid Category" + category
+      logger.error(f"Clustering error: {error_msg}")
+      return {'error': error_msg}
+
+    print(f"Calling find {category} error clusters")
+    # Get kill and error clusters
+    category_result = find_clusters(ppr_df, disp_player, category)
+    print(f"Category Results:{category}, {category_result.get('status')}")    
+
+    if 'error' in category_result:
+      error_msg = category_result.get('error', '') 
+      logger.error(f"Clustering error: {error_msg}")
+      return {'error': error_msg}
+
+      # Convert results to DataFrames
+    df_kills = pd.DataFrame(category_result.get('data', []))
+    density_info = {
+      category: category_result.get('density', {})
+    }
+
+    print(f"Plot Pass Clusters, \n density info:\n{density_info}")
+    # Create scatter plot - use plot points on a court function
+
+    fig, ax = plt.subplots(figsize=(10, 18))
+
+    # Plot the court
+    plt.xlim(-1, 9)
+    plt.ylim(-9, 9)
+    xpts = np.array([0, 8, 8, 0, 0, 0])
+    ypts = np.array([-8, -8, 8, 8, -8, 0])
+    ax.plot(xpts, ypts, c='black', linewidth='3')
+    xpts = np.array([-1, 9])
+    ypts = np.array([0, 0])
+    ax.plot(xpts, ypts, c='black', linewidth='9')
+    ax.grid()
+
+    dot_label = 'Kills - Outliers' if category == "FBK" else 'Errors - Outliers'
+    if not df_kills.empty:
+      # Plot scatter points
+      kill_scatter = ax.scatter(
+        df_kills['x'], df_kills['y'],
+        c=df_kills['cluster'], cmap=cmap,
+        label=dot_label, marker='o', s=50
+      )
+      #fig.colorbar(kill_scatter, label='Kill Cluster ID')
+
+      # Plot an ellipse for each cluster (excluding -1)
+      unique_clusters = df_kills['cluster'].unique()
+      unique_clusters = [c for c in unique_clusters if c != -1]  # Exclude outliers
+
+      for cluster_id in unique_clusters:
+        # Get points for this cluster
+        cluster_points = df_kills[df_kills['cluster'] == cluster_id][['x', 'y']].dropna().values
+        #print(f"cluster points : number {cluster_points.shape[0]} \n{cluster_points}")
+        if cluster_points.shape[0] > 3:  # Ensure enough points for ellipse
+          el_mean, el_width, el_height, el_angle = calculate_standard_deviation_ellipse(cluster_points, confidence=1.0)
+          print(f"Ellipse info: mean {el_mean}, width {el_width}, height {el_height}, angle {el_angle}")
+          xy_center = (el_mean[0], el_mean[1])
+          # Add ellipse patch
+          ellipse = patches.Ellipse(
+            xy=xy_center,
+            width=el_width,
+            height=el_height,
+            angle=el_angle,
+            edgecolor=colors[cluster_id],
+            facecolor=colors[cluster_id],
+            linewidth=2,
+            alpha=0.2,  # Semi-transparent for visibility
+            label=f'Cluster {cluster_id} Ellipse'   # Label only first ellipse            
+          )
+          print('adding patch')
+          ax.add_patch(ellipse)
+
+    ax.set_xlabel('Distance Along the Net')
+    ax.set_ylabel('Depth into the Court')
+    ax.set_title(f'{category} Clusters for {disp_player}')
+    ax.legend()
+
+    # Save plot to BytesIO
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight')
+    plt.close(fig)
+    buf.seek(0)
+    plot_media = anvil.BlobMedia('image/png', buf.getvalue(), name=f'cluster_plot_{disp_player}.png')
+
+    return {
+      'timestamp': datetime.now().isoformat(),
+      'column_list': ['x', 'y', 'value'],
+      'media_list': [plot_media.name],
+      'none_count': 0,
+      'valid_media_count': 1,
+      'filtered_empty_notes': 0,
+      'stat_text': f"Kills: {len(df_kills)} points, {category_result.get('n_clusters', 0)} clusters\n"
+      f"Errors: {len(df_kills)} points, {category_result.get('n_clusters', 0)} clusters\n"
+      f"Density: {density_info}",
+      'plot_image': plot_media,
+    }
+
+  except Exception as e:
+    logger.error(f"Error in plot_weekly_counts_no_xlabels: {str(e)}", exc_info=True)
+    return {'error': str(e)}
+
+
+
 
 def calculate_standard_deviation_ellipse(points, confidence=1.0):
    """
@@ -289,7 +416,7 @@ def calculate_standard_deviation_ellipse(points, confidence=1.0):
        height (float): The height of the ellipse (minor axis length).
        angle (float): The rotation angle of the ellipse in degrees.
    """
-   #print(f"calculate_standard_deviation_ellipse: points passed: {points}")
+   print(f"calculate_standard_deviation_ellipse: points passed: {points}")
   
    # Compute the mean of the points
    mean = np.mean(points, axis=0)
