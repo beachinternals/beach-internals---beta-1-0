@@ -416,7 +416,7 @@ def calculate_standard_deviation_ellipse(points, confidence=1.0):
        height (float): The height of the ellipse (minor axis length).
        angle (float): The rotation angle of the ellipse in degrees.
    """
-   print(f"calculate_standard_deviation_ellipse: points passed: {points}")
+   #print(f"calculate_standard_deviation_ellipse: points passed: {points}")
   
    # Compute the mean of the points
    mean = np.mean(points, axis=0)

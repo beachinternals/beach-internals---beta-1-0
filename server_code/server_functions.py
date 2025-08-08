@@ -422,6 +422,118 @@ def calc_trans( ppr_df, disp_player, flag ):
 
   return trans_list
 
+
+def calc_trans_obj( ppr_df, disp_player, flag ):
+  # return the different parameters as an object
+  # calcaulte transition details
+
+  # defiitions:
+  #  tcr_per = % of transition
+  #  tcr_percentile = Percentile
+  #   = % of transition
+  #  tran_kills_won = Kills Earned
+  #  tran_errors_won = Errors Received
+  #  tran_kills_lost = Kills Lost
+  #  tran_errors_lost = Errors Given
+  #  tran_pts_earned = Points Earned
+  #  tran_pts_lost = Points Lost
+  #  Tran_total_pts = Total Points
+
+  return_status = True
+  error_msg = ''
+  
+  # first, make sue we have point relating to this player
+  ppr_df = ppr_df[(( ppr_df['player_a1'].str.strip() == disp_player.strip() ) |
+                   ( ppr_df['player_a2'].str.strip() == disp_player.strip() ) |
+                   ( ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
+                   ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) ]
+
+  # if the flag is passes at srv or receive, limit the data
+  if flag == 'srv':
+    ppr_df = ppr_df[ ppr_df['serve_player'].str.strip() == disp_player.strip()]
+  elif flag == 'rcv':
+    ppr_df = ppr_df[ ppr_df['pass_player'].str.strip() == disp_player.strip()]
+
+  # need to record the total points
+  all_total_pts = ppr_df.shape[0]
+  if all_total_pts == 0:
+    error_msg = 'In Transition Calcaultions, All Total Points is 0'
+
+
+  # now filter for just transition points
+  ppr_df = ppr_df[  (( ppr_df['point_outcome'] == 'TK') | ( ppr_df['point_outcome'] == 'TE' ))]
+  
+  # caculate total transsition points
+  tran_total_pts = ppr_df.shape[0]
+  print(f"Calc_tran_obj called: disp_player: {disp_player}, {flag}, all total points = {all_total_pts}, transition points {tran_total_pts}")
+  
+  # set return status if we have no data left
+  if tran_total_pts == 0:
+    return_status = False
+    error_msg = 'Total Transition Points is 0'
+    
+  # kills earned and errors lost
+  tmp_df = ppr_df[ (ppr_df['point_outcome_team'].str.contains(disp_player[:-1]) )]
+  #print(f"Transition points earned by team with {disp_player} = {tmp_df.shape[0]}")
+  tran_kills_won = tmp_df[ (tmp_df['point_outcome'] == 'TK')].shape[0]    # kills earned
+  tran_errors_lost = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]      # errors given
+
+  # second, calculate the opponent's kills and errors
+  tmp_df = ppr_df[ (~ppr_df['point_outcome_team'].str.contains(disp_player[:-1]) ) ]
+  #print(f"Transition points earned by team without {disp_player} = {tmp_df.shape[0]}")
+  tran_kills_lost = tmp_df[ (tmp_df['point_outcome'] == 'TK')].shape[0]    # kills earned
+  tran_errors_won = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]      # errors given
+
+  # total points earned
+  tran_pts_won = tran_errors_won + tran_errors_won
+  tran_pts_lost = tran_kills_lost + tran_errors_lost
+
+  # transition conversion rate, float and string
+  if tran_total_pts != 0:
+    tcr = tran_pts_won / tran_total_pts
+    tcr_str = str('{:.1%}').format(tcr)
+  else:
+    tcr = None
+    tcr_str = None
+    error_msg = 'Transition Total Points is 0'
+
+  # transition effeiciency
+  if tran_total_pts != 0:
+    t_eff = (tran_kills_won - tran_errors_lost) / tran_total_pts
+    t_eff_str = str('{:.1%}').format(t_eff)
+  else:
+    t_eff = None
+    t_eff_str = None
+    error_msg = 'Transition Total Points is 0'
+    
+  # transition creates
+  if tran_total_pts != 0:
+    t_create = (tran_total_pts) / all_total_pts
+    t_create_str = str('{:.1%}').format(t_create)
+  else:
+    t_create = None
+    t_create_str= None
+    error_msg = 'Transition Total Points is 0'
+    
+  return {
+    'status':return_status,
+    'error_msg':error_msg,
+    'tran_kills_won':tran_kills_won,
+    'tran_errors_lost':tran_errors_lost,
+    'tran_kills_lost':tran_kills_lost,
+    'tran_errors_won':tran_errors_won,
+    'tran_pts_won':tran_pts_won,
+    'tran_pts_lost':tran_pts_lost,
+    'tran_total_pts':tran_total_pts,
+    'tcr':tcr,
+    'tcr_str':tcr_str,
+    't_eff':t_eff,
+    't_eff_str':t_eff_str,
+    't_create':t_create,
+    't_create_str':t_create_str
+  }
+
+
 def calc_ev(ppr_df, disp_player):
   # calculate expected value
   #
@@ -1420,7 +1532,7 @@ def calculate_standard_deviation_ellipse(points, confidence=1.0):
        height (float): The height of the ellipse (minor axis length).
        angle (float): The rotation angle of the ellipse in degrees.
    """
-  print(f"calculate_standard_deviation_ellipse: points passed: {points}")
+  #print(f"calculate_standard_deviation_ellipse: points passed: {points}")
 
   # Compute the mean of the points
   mean = np.mean(points, axis=0)
