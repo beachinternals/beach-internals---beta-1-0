@@ -398,7 +398,7 @@ def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
       fbhe_table.at[2,column[i-1]] = fbhe_vector[4]  # confidence interval
       fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
       fbhe_table.at[1,column[i-1]] = round( stats.norm.cdf((((fbhe_vector[0])- player_data_stats_df.at[0,var_mean])/(player_data_stats_df.at[0,var_stdev]))) , 3)
-      fbhe_table.at[1,column[i-1]] = str('{:.0%}').format(fbhe_table.at[1,column[i-1]])
+      fbhe_table.at[1,column[i-1]] = str('{:.0%}ile').format(fbhe_table.at[1,column[i-1]])
 
     return fbhe_table
   else:
@@ -413,11 +413,11 @@ def get_player_attack_plots( ppr_df, disp_player):
   new_ppr = ppr_df[ ppr_df['att_player'] == disp_player]
   
   # set up 5 sub plots
-  attack_z1_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')],'att',1)  
-  attack_z2_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')],'att',2)
-  attack_z3_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')],'att',3)
-  attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',4)
-  attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',5)
+  attack_z1_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')],'att',1,'Attacks from Left Pin')  
+  attack_z2_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')],'att',2, 'Attacks from Left Slot')
+  attack_z3_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')],'att',3, 'Attacks from Middle')
+  attack_z4_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')],'att',4, 'Attacks from Right Slot')
+  attack_z5_plot_object = plot_lines_on_court(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')],'att',5, 'Attacks from Right Pin')
 
   zone_dict = {'Metric':['FBHE','FBSO','ATT','URL'],'Value':[0,0,0,'']}
   z1_df = pd.DataFrame.from_dict(zone_dict)
@@ -472,8 +472,18 @@ def get_player_attack_plots( ppr_df, disp_player):
   #z4_mkdn = pd.DataFrame.to_markdown(z4_df, index=False, headers=['',''])
   #z5_mkdn = pd.DataFrame.to_markdown(z5_df, index=False, headers=['',''])
 
+  # now change the column names
+  # Rename the 'Metric' column based on DataFrame name
+  z1_df = z1_df.rename(columns={'Metric': 'Zone 1'})
+  z2_df = z2_df.rename(columns={'Metric': 'Zone 2'})
+  z3_df = z3_df.rename(columns={'Metric': 'Zone 3'})
+  z4_df = z4_df.rename(columns={'Metric': 'Zone 4'})
+  z5_df = z5_df.rename(columns={'Metric': 'Zone 5'})
+  
   return attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, z1_df, z2_df, z3_df, z4_df, z5_df
 
+
+  
 
 def make_filter_text( lgy, **rpt_filters):
   

@@ -27,7 +27,7 @@ from server_functions import *
 #----------------------------------------------
 
 @anvil.server.callable
-def plot_lines_on_court( ppr_df, action, plt_num):
+def plot_lines_on_court( ppr_df, action, plt_num, plt_title=''):
   # 
   # line drawing of the serve from source to destination
   #
@@ -110,6 +110,7 @@ def plot_lines_on_court( ppr_df, action, plt_num):
       ax.arrow(ppr_r[x2], ppr_r[y2], dx, dy, shape='full', lw=2, length_includes_head=True, head_width=.10, head_length = .25, color = line_color)
 
   plot_court_background(fig,ax)
+  ax.set_title(plt_title, fontsize=35)
   # Return this plot as a PNG image in a Media object
 
   return anvil.mpl_util.plot_image()

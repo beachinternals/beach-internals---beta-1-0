@@ -3311,40 +3311,40 @@ def player_att_tendencies(lgy, team, **rpt_filters):
     if att_front == '12' and att == 'front':
       angular_att_table = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 1) | (ppr_df['att_src_zone_net'] == 2)) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
       df_list[0] = angular_att_table.to_dict('records')
-      plt_image1 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 1) ) & (ppr_df['tactic'] != 'behind')])
-      plt_image2 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 2) ) & (ppr_df['tactic'] != 'behind')])
+      plt_image1 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 1) ) & (ppr_df['tactic'] != 'behind')],'Pin Attacks in Front')
+      plt_image2 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 2) ) & (ppr_df['tactic'] != 'behind')], 'Slot Attacks in Front')
       image_list[0] = plt_image1
       image_list[1] = plt_image2
     elif att_front == '12' and att == 'behind':
       angular_att_table = get_player_angular_attack_table(ppr_df[ (ppr_df['tactic'] == 'behind') ], player_data_stats_df, disp_player)
       df_list[1] = angular_att_table.to_dict('records')
-      plt_image = plot_volleyball_attacks(ppr_df[ (ppr_df['tactic'] == 'behind') ])
+      plt_image = plot_volleyball_attacks(ppr_df[ (ppr_df['tactic'] == 'behind') ],'Attacks Behind Setter')
       image_list[2] = plt_image
     elif att_front == '12' and att == 'middle':
       new_df = new_df[ ( (new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 4) | (new_df['att_src_zone_net'] == 5) ) & (new_df['tactic'] != 'behind')]  
       angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
       df_list[2] = angular_att_table.to_dict('records')
-      plt_image = plot_volleyball_attacks(new_df)
+      plt_image = plot_volleyball_attacks(new_df,'Attacks from the Middle')
       image_list[3] = plt_image
       
     elif att_front == '45' and att == 'front':
       new_df = new_df[ ((new_df['att_src_zone_net'] == 4) | (new_df['att_src_zone_net'] == 5)) & (new_df['tactic'] != 'behind')]
       angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
       df_list[0] = angular_att_table.to_dict('records')
-      plt_image1 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 5) ) & (ppr_df['tactic'] != 'behind')])
-      plt_image2 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 4) ) & (ppr_df['tactic'] != 'behind')])
+      plt_image1 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 5) ) & (ppr_df['tactic'] != 'behind')],'Pin Attacks in Front')
+      plt_image2 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 4) ) & (ppr_df['tactic'] != 'behind')],'Slot Attacks in Front')
       image_list[0] = plt_image1
       image_list[1] = plt_image2
     elif att_front == '45' and att == 'behind':
       angular_att_table = get_player_angular_attack_table(ppr_df[ (ppr_df['tactic'] == 'behind') ] , player_data_stats_df, disp_player)
       df_list[1] = angular_att_table.to_dict('records')
-      plt_image = plot_volleyball_attacks(ppr_df[ (ppr_df['tactic'] == 'behind') ])
+      plt_image = plot_volleyball_attacks(ppr_df[ (ppr_df['tactic'] == 'behind') ],'Attacks Behind Setter')
       image_list[2] = plt_image
     elif att_front == '45' and att == 'middle':
       new_df = new_df[ ( (new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 1) | (new_df['att_src_zone_net'] == 2) ) & (new_df['tactic'] != 'behind')]   
       angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
       df_list[2] = angular_att_table.to_dict('records')
-      plt_image = plot_volleyball_attacks(new_df)
+      plt_image = plot_volleyball_attacks(new_df,'Attacks from the Middle')
       image_list[3] = plt_image
 
 
@@ -3414,7 +3414,7 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
 
 
 
-def plot_volleyball_attacks(ppr_df):
+def plot_volleyball_attacks(ppr_df, plt_title=''):
   # Create figure and axis
   fig, ax = plt.subplots(figsize=(10, 18))
 
@@ -3493,7 +3493,9 @@ def plot_volleyball_attacks(ppr_df):
     # Set plot limits and aspect ratio
   ax.set_xlim(-1, 9)  # Assuming standard volleyball court dimensions
   ax.set_ylim(-9, 9)
-  ax.set_aspect('equal')
+  #ax.set_aspect('equal')
+  ax.set_title(plt_title, fontsize=35)
+
 
   # Create Anvil plot component
 
