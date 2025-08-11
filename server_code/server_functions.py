@@ -193,7 +193,8 @@ def build_video_links(ppr_df: pd.DataFrame) -> str:
 
     action_ids = ','.join(actions)
     url = f"https://app.balltime.com/video/{video_id}?actionIds={action_ids}"
-    link = f'<a href="{url}" target="_blank">G{idx}</a>'
+    link = '[G]('+url+')'
+    #link = f'<a href="{url}" target="_blank">G{idx}</a>'
     links.append(link)
 
   return ' '.join(links)

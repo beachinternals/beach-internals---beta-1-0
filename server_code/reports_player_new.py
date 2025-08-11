@@ -3835,13 +3835,13 @@ def report_player_sets(lgy, team, **rpt_filters):
   xmin = 0
   xmax = 8
   ymin = 1
-  ymax = 5
+  ymax = 4
   attmin = 5
-  attmax = 25
+  attmax = 20
 
   # FBHE scatter plot
   fig1, ax1 = plt.subplots()
-  scatter1 = ax1.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['fbhe'], cmap='RdYlGn', vmin=vmin, vmax=vmax, s=50)
+  scatter1 = ax1.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['fbhe'], cmap='RdYlGn', vmin=vmin, vmax=vmax, s=80)
   fig1.colorbar(scatter1)
   ax1.set_xlim(xmin, xmax)
   ax1.set_ylim(ymin, ymax)
@@ -3854,7 +3854,7 @@ def report_player_sets(lgy, team, **rpt_filters):
 
   # Attempts scatter plot
   fig2, ax2 = plt.subplots()
-  scatter2 = ax2.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['attempts'], cmap='RdYlGn', vmin=attmin, vmax=attmax, s=50)
+  scatter2 = ax2.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['attempts'], cmap='RdYlGn', vmin=attmin, vmax=attmax, s=80)
   fig2.colorbar(scatter2)
   ax2.set_xlim(xmin, xmax)
   ax2.set_ylim(ymin, ymax)
