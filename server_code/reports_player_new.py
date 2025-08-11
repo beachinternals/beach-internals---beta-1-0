@@ -3719,3 +3719,150 @@ def player_correlation_set(lgy, team, **rpt_filters):
     plt.close()
     
     return title_list, label_list, image_list, df_list
+
+
+#---------------------------------------------------------------------------
+#
+#              player report player 
+#
+#---------------------------------------------------------------------------
+def report_player_sets(lgy, team, **rpt_filters):
+  '''
+  Report Functions:
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # fetch the ppr dataframe and filter by all the report filters
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+
+  # initiate return lists
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+  title_list[0] = rpt_row['rpt_title']
+  title_list[1] = rpt_row['rpt_sub_title']
+  title_list[2] = rpt_row['rpt_section_title1']
+  title_list[3] = rpt_row['lgy']
+  title_list[4] = rpt_row['team_name']
+  title_list[5] = rpt_row['rpt_type']
+  title_list[6] = rpt_row['filter_text']
+  title_list[7] = rpt_row['explain_text']
+  title_list[8] = rpt_filters.get('player')
+  title_list[9]= rpt_filters.get('pair')
+
+  label_list[0] = rpt_row['box1_title']
+  label_list[1] = rpt_row['box2_title']
+  label_list[2] = rpt_row['box3_title']
+  label_list[3] = rpt_row['box4_title']
+  label_list[4] = rpt_row['box5_title']
+  label_list[5] = rpt_row['box6_title']
+  label_list[6] = rpt_row['box7_title']
+  label_list[7] = rpt_row['box8_title']
+  label_list[8] = rpt_row['box9_title']
+  label_list[9] = rpt_row['box10_title']
+
+  #------------------------------------------------------------------------------------------------------
+  #
+  #            Create the images and dataframes with filtered ppr data for report
+  #
+  #-----------------------------------------------------------------------------------------------------
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+
+  # For FBHE, filter to attacks by the player
+  ppr_df = ppr_df[ppr_df['att_player'] == disp_player]
+
+  # Bin the set_distance and set_height into 0.5 meter increments
+  distance_bins = np.arange(0, 10.5, 0.5)
+  height_bins = np.arange(0, 6.5, 0.5)
+  ppr_df['distance_bin'] = pd.cut(ppr_df['set_dist'], bins=distance_bins, labels=(distance_bins[:-1] + distance_bins[1:]) / 2)
+  ppr_df['height_bin'] = pd.cut(ppr_df['set_height'], bins=height_bins, labels=(height_bins[:-1] + height_bins[1:]) / 2)
+
+  # Define function to calculate FBHE and attempts using fbhe_obj
+  def calculate_fbhe(group):
+    if group.empty:
+      return pd.Series({'attempts': 0, 'fbhe': 0.0})
+    result = fbhe_obj(group, disp_player, 'att', True)
+    return pd.Series({'attempts': result.attempts, 'fbhe': result.fbhe,'URL':result.video_link})
+
+  # Group by bins and apply the calculation
+  grouped = ppr_df.groupby(['distance_bin', 'height_bin'], as_index=False).apply(calculate_fbhe)
+  grouped = grouped[grouped['attempts'] > 4]
+
+  # Table of attempts for df_list[0]
+  attempts_table = grouped[['distance_bin', 'height_bin', 'attempts','fbhe','URL']].rename(columns={'distance_bin': 'set_dist', 'height_bin': 'set_height'})
+  df_list[0] = attempts_table.to_dict('records')
+
+  ## Table of fbhe for df_list[1]
+  #fbhe_table = grouped[['distance_bin', 'height_bin', 'fbhe']].rename(columns={'distance_bin': 'set_dist', 'height_bin': 'set_height'})
+  #df_list[1] = fbhe_table.to_dict('records')
+  
+  # Get mean and stdev for color scaling
+  fbhe_mean = player_data_stats_df['fbhe_mean']
+  fbhe_stdev = player_data_stats_df['fbhe_stdev']
+  vmin = fbhe_mean - fbhe_stdev
+  vmax = fbhe_mean + fbhe_stdev
+  xmin = 0
+  xmax = 8
+  ymin = 1
+  ymax = 5
+  attmin = 5
+  attmax = 25
+
+  # FBHE scatter plot
+  fig1, ax1 = plt.subplots()
+  scatter1 = ax1.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['fbhe'], cmap='RdYlGn', vmin=vmin, vmax=vmax, s=50)
+  fig1.colorbar(scatter1)
+  ax1.set_xlim(xmin, xmax)
+  ax1.set_ylim(ymin, ymax)
+  ax1.set_xticks(np.arange(xmin, xmax+0.5, 0.5))
+  ax1.set_yticks(np.arange(ymin, ymax+0.5, 0.5))
+  ax1.set_xlabel('Set Distance (m)')
+  ax1.set_ylabel('Set Height (m)')
+  ax1.set_title(f'{disp_player} FBHE by Set Position')
+  image_list[0] = anvil.mpl_util.plot_image()
+
+  # Attempts scatter plot
+  fig2, ax2 = plt.subplots()
+  scatter2 = ax2.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['attempts'], cmap='RdYlGn', vmin=attmin, vmax=attmax, s=50)
+  fig2.colorbar(scatter2)
+  ax2.set_xlim(xmin, xmax)
+  ax2.set_ylim(ymin, ymax)
+  ax2.set_xticks(np.arange(xmin, xmax+0.5, 0.5))
+  ax2.set_yticks(np.arange(ymin, ymax+0.5, 0.5))
+  ax2.set_xlabel('Set Distance (m)')
+  ax2.set_ylabel('Set Height (m)')
+  ax2.set_title(f'{disp_player} Attempts by Set Position (colored by Attempts)')
+  image_list[1] = anvil.mpl_util.plot_image()
+
+  return title_list, label_list, image_list, df_list

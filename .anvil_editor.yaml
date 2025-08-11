@@ -66,6 +66,7 @@ unique_ids:
     player_correlation_rpt_new: '1753034139289765471408360.8672'
     player_offsense_rpt: '1747949445345563670656466.0521'
     player_season_summary_rpt: '1748360586677969814578949.4941'
+    player_sets_new: '1750859090769341370076268.6079'
     player_summary_rpt: '1734951727078729205229054.4757'
     player_table_report_new: '1750084139260689077501258.4138'
     plot_one_zone_attacks: '174499561956776240933673.07582'
@@ -75,7 +76,6 @@ unique_ids:
     scout_3court_6attack_plot_rpt: '1739466639897232615023359.67886'
     scout_3court_plot_rpt: '1739466610822705234409164.9165'
     scouting_summary_rpt: '1737423435551649753407776.746'
-    serves_45_new: '1750859090769341370076268.6079'
     serves_45_passing_new: '1753558369128687269397373.304'
   modules: {}
   scripts: {}

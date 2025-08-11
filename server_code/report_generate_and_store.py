@@ -70,6 +70,8 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
     title_list, label_list, image_list, df_list = player_att_tendencies( lgy, team, **rpt_filters )
   elif fnct_name == 'player_correlation_set':
     title_list, label_list, image_list, df_list = player_correlation_set( lgy, team, **rpt_filters )
+  elif fnct_name == 'report_player_sets':
+    title_list, label_list, image_list, df_list = report_player_sets( lgy, team, **rpt_filters )
     
     
     #elif fnct_name == '':

@@ -1,4 +1,4 @@
-from ._anvil_designer import serves_45_newTemplate
+from ._anvil_designer import player_sets_newTemplate
 from anvil import *
 import anvil.server
 import anvil.google.auth, anvil.google.drive
@@ -9,7 +9,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 
 
-class serves_45_new(serves_45_newTemplate):
+class player_sets_new(player_sets_newTemplate):
   def __init__(self, report_id=None, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)

@@ -24,6 +24,7 @@ import re
 from matplotlib.colors import LinearSegmentedColormap
 from sklearn.cluster import DBSCAN
 from plot_functions import *
+from dataclasses import dataclass
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -119,9 +120,149 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
     fbhe_list[4] = fbhe_list[1] / fbhe_list[3] if fbhe_list[3] != 0 else 0.0
     fbhe_list[4] = float("{:.3f}".format(fbhe_list[4]))    
     fbhe_list[5] = video_link
-    #print(f"fbhe Funct: fbhe_list:{fbhe_list}")
+    print(f"fbhe Funct: fbhe_list:{fbhe_list}")
 
+  
   return fbhe_list
+
+#-------------------------------------------------------------------------------
+#
+# New FBHE FUnction and video link function
+#
+#-------------------------------------------------------------------------------
+@dataclass
+class FBHEResult:
+  """
+    Data class to hold the results of the FBHE calculation.
+    
+    Attributes:
+    - fbhe (float): First Ball Hitting Efficiency, rounded to 3 decimal places.
+    - kills (int): Number of kills.
+    - errors (int): Number of errors.
+    - attempts (int): Number of attempts.
+    - fbso (float): First Ball Sideout, rounded to 3 decimal places.
+    - video_link (str): Video links string, "N/A", or " No Data Available ".
+    """
+  fbhe: float
+  kills: int
+  errors: int
+  attempts: int
+  fbso: float
+  video_link: str
+
+def build_video_links(ppr_df: pd.DataFrame) -> str:
+  """
+    Builds a concatenated string of HTML links for video playback based on the provided DataFrame.
+    
+    This function groups the rows by 'video_id', collects unique non-zero action IDs from specified columns 
+    in the order they first appear, and constructs an HTML link for each group that opens in a new window/tab.
+    Links are joined with spaces for readability.
+    
+    Parameters:
+    - ppr_df (pd.DataFrame): The DataFrame containing play-by-play data with columns like 'video_id', 
+                             'serve_action_id', 'pass_action_id', 'set_action_id', 'att_action_id', 
+                             and 'dig_action_id'.
+    
+    Returns:
+    - str: A string of concatenated HTML links, e.g., '<a href="url1" target="_blank">G0</a> <a href="url2" target="_blank">G1</a>'.
+           Returns an empty string if no valid links can be built.
+    """
+  if ppr_df.empty:
+    return ""
+
+  groups = ppr_df.groupby('video_id')
+  links = []
+  action_columns = ['serve_action_id', 'pass_action_id', 'set_action_id', 'att_action_id', 'dig_action_id']
+
+  for idx, (video_id, group) in enumerate(groups):
+    if pd.isna(video_id) or video_id == "No Video Id":
+      continue
+
+    actions = []
+    seen = set()
+    for _, row in group.iterrows():
+      for col in action_columns:
+        val = row[col]
+        str_val = str(val)
+        if val != 0 and str_val not in seen:
+          actions.append(str_val)
+          seen.add(str_val)
+
+    if not actions:
+      continue
+
+    action_ids = ','.join(actions)
+    url = f"https://app.balltime.com/video/{video_id}?actionIds={action_ids}"
+    link = f'<a href="{url}" target="_blank">G{idx}</a>'
+    links.append(link)
+
+  return ' '.join(links)
+
+def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str, video_yn: bool) -> FBHEResult:
+  """
+    Calculates the First Ball Hitting Efficiency (FBHE) and related statistics for a given player based on 
+    the provided play-by-play data.
+    
+    The function filters the data to include only rows where the specified player performed the action 
+    corresponding to the play_type. It then computes aggregate statistics such as FBHE, kills, errors, 
+    attempts, and First Ball Sideout (FBSO). If video_yn is True, it generates video links using the 
+    build_video_links function.
+    
+    Supports handling both a DataFrame (multiple plays) and a Series (single play) by converting Series to DataFrame.
+    
+    Parameters:
+    - ppr_df (pd.DataFrame | pd.Series): The play-by-play data. Can be a DataFrame for multiple plays or a Series for a single play.
+    - disp_player (str): The name of the player to calculate statistics for.
+    - play_type (str): The type of play ('att' for attack, 'srv' for serve, 'pass' for pass).
+    - video_yn (bool): Whether to generate video links (True) or not (False).
+    
+    Returns:
+    - FBHEResult: An instance of FBHEResult containing the calculated values.
+    """
+  # Convert Series to DataFrame if necessary
+  if isinstance(ppr_df, pd.Series):
+    ppr_df = ppr_df.to_frame().T
+
+  if ppr_df.empty:
+    return FBHEResult(0.0, 0, 0, 0, 0.0, " No Data Available ")
+
+    # Filter based on play_type
+  disp_player = disp_player.strip()
+  if play_type == "att":
+    ppr_df = ppr_df[ppr_df['att_player'].str.strip() == disp_player]
+  elif play_type == "srv":
+    ppr_df = ppr_df[ppr_df['serve_player'].str.strip() == disp_player]
+  elif play_type == "pass":
+    ppr_df = ppr_df[ppr_df['pass_player'].str.strip() == disp_player]
+  else:
+    raise ValueError("Invalid play_type. Must be 'att', 'srv', or 'pass'.")
+
+  if ppr_df.empty:
+    return FBHEResult(0.0, 0, 0, 0, 0.0, " No Data Available ")
+
+    # Calculate statistics
+  attempts = len(ppr_df)
+  kills = (ppr_df['point_outcome'] == "FBK").sum()
+  errors = (ppr_df['point_outcome'] == "FBE").sum()
+  fbhe_val = (kills - errors) / attempts if attempts > 0 else 0.0
+  fbso = kills / attempts if attempts > 0 else 0.0
+
+  # Generate video links if requested
+  if video_yn:
+    video_link = build_video_links(ppr_df)
+    video_link = video_link if video_link else " No Data Available "
+  else:
+    video_link = "N/A"
+
+  return FBHEResult(
+    fbhe=round(fbhe_val, 3),
+    kills=int(kills),
+    errors=int(errors),
+    attempts=attempts,
+    fbso=round(fbso, 3),
+    video_link=video_link
+  )
+
 
 '''
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
