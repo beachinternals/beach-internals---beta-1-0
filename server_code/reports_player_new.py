@@ -128,26 +128,11 @@ def report_player_stub_new(lgy, team, **rpt_filters):
     (ppr_df['player_b2'] == disp_player) 
     ]
 
-  # set up dataframe 1 to display the attack table for this player
-  att_table = get_player_attack_table(ppr_df, disp_player)
-  df_list[0] = att_table.to_dict('records')
+  # Routines to calculate the dataframes and images (plots)
 
-  # get the grpahs of attacks, zone 1 - 5, all as one graph
-  z1_plt, z2_plt, z3_plt, z4_plt, z5_plt, z1_df, z2_df, z3_df, z4_df, z5_df = get_player_attack_plots(ppr_df, disp_player)
-
-  # put the plots in the image list
-  image_list[0] = z1_plt
-  image_list[1] = z2_plt
-  image_list[2] = z3_plt
-  image_list[3] = z4_plt
-  image_list[4] = z5_plt
-
-  # put the DF's in the df_list
-  df_list[1] = z1_df.to_dict('records')
-  df_list[2] = z2_df.to_dict('records')
-  df_list[3] = z3_df.to_dict('records')
-  df_list[4] = z4_df.to_dict('records')
-  df_list[5] = z5_df.to_dict('records')
+  # not store the dataframes and images in the df_list and image_list to return
+  df_list[1] = df.to_dict('records')
+  image_list[0] = plt
 
 
   return title_list, label_list, image_list, df_list
