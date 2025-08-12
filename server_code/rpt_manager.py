@@ -875,10 +875,10 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
     sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
     
     # Debug: Print sorted_rptnames and its type
-    print(f"sorted rptnames: {[dict(row) for row in sorted_rptnames]}, \n type: {type(sorted_rptnames)}")
+    #print(f"sorted rptnames: {[dict(row) for row in sorted_rptnames]}, \n type: {type(sorted_rptnames)}")
 
     # If you want to access rpt_r['rpts_inc'], do it here
-    print(f"rpts_inc from rpt_r: {rpt_r['rpts_inc']}")
+    #print(f"rpts_inc from rpt_r: {rpt_r['rpts_inc']}")
     
     for rptname in sorted_rptnames:
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")

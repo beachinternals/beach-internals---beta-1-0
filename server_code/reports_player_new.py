@@ -2505,7 +2505,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Option 2: Fill missing values (e.g., with mean)
   numeric_df = numeric_df.fillna(numeric_df.mean())
 
-  #print(f"numberi df size {numeric_df.shape[0]}\n{numeric_df}")
+  print(f"numberi df size {numeric_df.shape[0]}\n{numeric_df}")
   # Calculate Pearson correlation of all numeric columns with 'point_diff'
   correlations = numeric_df.corrwith(numeric_df['point_diff'])
 
@@ -2519,7 +2519,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   correlations = correlations.dropna()
   
   top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
-  #print(f" correlations size: {len(correlations)}\n {correlations}")
+  print(f" correlations size: {len(correlations)}\n {correlations}")
 
   fig_size = [15,15]
   # Create a bar chart
@@ -2601,7 +2601,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Round the 'Correlation' and 'P-value' columns to 3 decimal places
   correlations = correlations.round(3)
 
-  #print(f" correlations size: {len(correlations)}\n {correlations}")
+  print(f" correlations size: {len(correlations)}\n {correlations}")
 
   # Select top 10 positive and negative correlations
   top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
@@ -2693,7 +2693,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Step 3: Limit ppr_df to numerical columns
   ppr_df = ppr_df.select_dtypes(include=['int64', 'float64'])
   print("\nColumns in ppr_df after limiting to numerical:")
-  print(ppr_df.columns.tolist())
+  #print(ppr_df.columns.tolist())
 
   # Step 4: Define desired columns (numerical only)
   desired_cols = [
@@ -2715,15 +2715,15 @@ def league_tri_corr(lgy, team, **rpt_filters):
 
   # Filter numerical columns from desired_cols
   numerical_cols = [col for col in desired_cols if col in ppr_df.columns]
-  print(f"\nNumerical columns used for analysis: {numerical_cols}")
+  #print(f"\nNumerical columns used for analysis: {numerical_cols}")
 
   # Step 5: Clean data (handle inf/large values)
-  print("\nChecking for infinite or large values:")
+  #print("\nChecking for infinite or large values:")
   for col in numerical_cols:
     inf_count = np.isinf(ppr_df[col]).sum()
     large_count = (np.abs(ppr_df[col]) > 1e308).sum()
     nan_count = ppr_df[col].isna().sum()
-    print(f"{col}: {inf_count} infinite, {large_count} too large, {nan_count} NaN")
+    #print(f"{col}: {inf_count} infinite, {large_count} too large, {nan_count} NaN")
     ppr_df[col] = ppr_df[col].replace([np.inf, -np.inf], np.nan)
     if not ppr_df[col].isna().all():
       max_val = ppr_df[col].quantile(0.99, interpolation='nearest')
@@ -2758,8 +2758,8 @@ def league_tri_corr(lgy, team, **rpt_filters):
   corr_results_df['Correlation'] = corr_results_df['Correlation'].round(3)
   corr_results_df['P-Value'] = corr_results_df['P-Value'].round(3)
   
-  print("\nPearson Correlation with point_outcome:")
-  print(corr_results_df.sort_values(by='Correlation', ascending=False))
+  #print("\nPearson Correlation with point_outcome:")
+  #print(corr_results_df.sort_values(by='Correlation', ascending=False))
 
   # Step 7: Visualize significant correlations (bar plot)
   significant_metrics = corr_results_df[corr_results_df['P-Value'] < 0.05]['Metric']
@@ -2831,13 +2831,13 @@ def league_tri_corr(lgy, team, **rpt_filters):
   ppr_df['point_outcome'] = ppr_df['point_outcome'].astype('int64')
 
   # Verify replacement
-  print("Updated point_outcome values TSA & TSE:")
-  print(ppr_df['point_outcome'].value_counts())
+  #print("Updated point_outcome values TSA & TSE:")
+  #print(ppr_df['point_outcome'].value_counts())
 
   # Step 3: Limit ppr_df to numerical columns
   ppr_df = ppr_df.select_dtypes(include=['int64', 'float64'])
-  print("\nColumns in ppr_df after limiting to numerical:")
-  print(ppr_df.columns.tolist())
+  #print("\nColumns in ppr_df after limiting to numerical:")
+  #print(ppr_df.columns.tolist())
 
   # Step 4: Define desired columns (numerical only)
   desired_cols = [
@@ -2859,15 +2859,15 @@ def league_tri_corr(lgy, team, **rpt_filters):
 
   # Filter numerical columns from desired_cols
   numerical_cols = [col for col in desired_cols if col in ppr_df.columns]
-  print(f"\nNumerical columns used for analysis: {numerical_cols}")
+  #print(f"\nNumerical columns used for analysis: {numerical_cols}")
 
   # Step 5: Clean data (handle inf/large values)
-  print("\nChecking for infinite or large values:")
+  #print("\nChecking for infinite or large values:")
   for col in numerical_cols:
     inf_count = np.isinf(ppr_df[col]).sum()
     large_count = (np.abs(ppr_df[col]) > 1e308).sum()
     nan_count = ppr_df[col].isna().sum()
-    print(f"{col}: {inf_count} infinite, {large_count} too large, {nan_count} NaN")
+    #print(f"{col}: {inf_count} infinite, {large_count} too large, {nan_count} NaN")
     ppr_df[col] = ppr_df[col].replace([np.inf, -np.inf], np.nan)
     if not ppr_df[col].isna().all():
       max_val = ppr_df[col].quantile(0.99, interpolation='nearest')
@@ -2902,8 +2902,8 @@ def league_tri_corr(lgy, team, **rpt_filters):
   corr_results_df['Correlation'] = corr_results_df['Correlation'].round(3)
   corr_results_df['P-Value'] = corr_results_df['P-Value'].round(3)
   
-  print("\nPearson Correlation with point_outcome:")
-  print(corr_results_df.sort_values(by='Correlation', ascending=False))
+  #print("\nPearson Correlation with point_outcome:")
+  #print(corr_results_df.sort_values(by='Correlation', ascending=False))
 
   # Step 7: Visualize significant correlations (bar plot)
   significant_metrics = corr_results_df[corr_results_df['P-Value'] < 0.05]['Metric']
@@ -2919,7 +2919,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   top_4 = significant_metrics.head(4)
   bottom_4 = significant_metrics.tail(4)
   scatter_vars = pd.concat([top_4, bottom_4])
-  print(f"Scatter Vars: {scatter_vars}")
+  #print(f"Scatter Vars: {scatter_vars}")
 
   # Create a 2x2 grid of subplots for scatter plots
   fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
