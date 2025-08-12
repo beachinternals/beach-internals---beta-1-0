@@ -65,6 +65,19 @@ components:
   properties: {}
   type: ColumnPanel
 - components:
+  - layout_properties: {grid_position: 'UQTWZT,NBDVUI'}
+    name: box2_title
+    properties: {align: center}
+    type: Label
+  - layout_properties: {grid_position: 'FJJLEG,XWDOOQ'}
+    name: box_2
+    properties: {}
+    type: RichText
+  layout_properties: {grid_position: 'HJXCAY,MSYXEY'}
+  name: column_panel_2
+  properties: {}
+  type: ColumnPanel
+- components:
   - layout_properties: {grid_position: 'IFOHDJ,SNQJLY'}
     name: label_1
     properties: {align: center, bold: true, spacing_above: none, spacing_below: none, text: Report Description}

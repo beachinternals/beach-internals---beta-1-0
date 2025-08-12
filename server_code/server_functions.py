@@ -328,7 +328,7 @@ def calc_player_eso( ppr_df, disp_player ):
     'attempts': eso_attempts,
     'fbk': eso_fbk,
     'tk' : eso_tk,
-    'eso_string': str('{:.1%}'.format(eso))
+    'eso_string': '' if eso is None else f'{eso:.1%}' if isinstance(eso, (int, float)) else str(eso)
   }
 
 

@@ -26,29 +26,40 @@ components:
     name: box1_title
     properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
     type: Label
+  - layout_properties: {grid_position: 'GIFGRC,GPJLOE'}
+    name: box2_title
+    properties: {align: center}
+    type: Label
   - layout_properties: {grid_position: 'NDAMRE,DOXELF'}
     name: box_1
     properties: {font_size: 10, spacing_above: none, spacing_below: none}
     type: RichText
+  - layout_properties: {grid_position: 'NDAMRE,AILWVX'}
+    name: box_2
+    properties:
+      font_size: 10
+      spacing:
+        margin: ['0', null, '0', null]
+    type: RichText
   - layout_properties: {grid_position: 'ZGHJCJ,UIWPSJ'}
     name: image_1
-    properties: {height: '520'}
+    properties: {height: '520', spacing_above: none, spacing_below: none}
     type: Image
   - layout_properties: {grid_position: 'ZGHJCJ,VFBXTY'}
     name: image_2
-    properties: {height: '520'}
+    properties: {height: '520', spacing_above: none, spacing_below: none}
     type: Image
-  layout_properties: {grid_position: 'ZAJYUI,VPBOBC'}
+  layout_properties: {grid_position: 'OIWSVO,LCJMCK'}
   name: column_panel_11
-  properties: {col_widths: '{"UIWPSJ":35}'}
+  properties: {col_widths: '{"UIWPSJ":35,"VFBXTY":30}'}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'UJWQYC,KSSUPV'}
-    name: box2_title
+    name: box3_title
     properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
     type: Label
   - layout_properties: {grid_position: 'JQSJBI,GDWKGD'}
-    name: box_2
+    name: box_3
     properties: {font_size: 10, spacing_above: none, spacing_below: none}
     type: RichText
   - layout_properties: {grid_position: 'JQSJBI,AWTMPI'}
@@ -61,11 +72,11 @@ components:
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'IIWGDB,SEKUDC'}
-    name: box3_title
+    name: box4_title
     properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
     type: Label
   - layout_properties: {grid_position: 'CUSNIS,EGFBCP'}
-    name: box_3
+    name: box_4
     properties: {font_size: 10, spacing_above: none, spacing_below: none}
     type: RichText
   - layout_properties: {grid_position: 'CUSNIS,VICWPG'}

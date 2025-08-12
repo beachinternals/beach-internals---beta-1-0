@@ -3294,41 +3294,44 @@ def player_att_tendencies(lgy, team, **rpt_filters):
   for att in att_posn:
     new_df = ppr_df
     if att_front == '12' and att == 'front':
-      angular_att_table = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 1) | (ppr_df['att_src_zone_net'] == 2)) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
-      df_list[0] = angular_att_table.to_dict('records')
+      angular_att_table1 = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 1) ) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
+      angular_att_table2 = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 2) ) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
+      df_list[0] = angular_att_table1.to_dict('records')
+      df_list[1] = angular_att_table2.to_dict('records')
       plt_image1 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 1) ) & (ppr_df['tactic'] != 'behind')],'Pin Attacks in Front')
       plt_image2 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 2) ) & (ppr_df['tactic'] != 'behind')], 'Slot Attacks in Front')
       image_list[0] = plt_image1
       image_list[1] = plt_image2
     elif att_front == '12' and att == 'behind':
       angular_att_table = get_player_angular_attack_table(ppr_df[ (ppr_df['tactic'] == 'behind') ], player_data_stats_df, disp_player)
-      df_list[1] = angular_att_table.to_dict('records')
+      df_list[2] = angular_att_table.to_dict('records')
       plt_image = plot_volleyball_attacks(ppr_df[ (ppr_df['tactic'] == 'behind') ],'Attacks Behind Setter')
       image_list[2] = plt_image
     elif att_front == '12' and att == 'middle':
       new_df = new_df[ ( (new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 4) | (new_df['att_src_zone_net'] == 5) ) & (new_df['tactic'] != 'behind')]  
       angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
-      df_list[2] = angular_att_table.to_dict('records')
+      df_list[3] = angular_att_table.to_dict('records')
       plt_image = plot_volleyball_attacks(new_df,'Attacks from the Middle')
       image_list[3] = plt_image
       
     elif att_front == '45' and att == 'front':
-      new_df = new_df[ ((new_df['att_src_zone_net'] == 4) | (new_df['att_src_zone_net'] == 5)) & (new_df['tactic'] != 'behind')]
-      angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
-      df_list[0] = angular_att_table.to_dict('records')
+      angular_att_table1 = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 4) ) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
+      angular_att_table2 = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 5) ) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
+      df_list[0] = angular_att_table1.to_dict('records')
+      df_list[1] = angular_att_table2.to_dict('records')
       plt_image1 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 5) ) & (ppr_df['tactic'] != 'behind')],'Pin Attacks in Front')
       plt_image2 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 4) ) & (ppr_df['tactic'] != 'behind')],'Slot Attacks in Front')
       image_list[0] = plt_image1
       image_list[1] = plt_image2
     elif att_front == '45' and att == 'behind':
       angular_att_table = get_player_angular_attack_table(ppr_df[ (ppr_df['tactic'] == 'behind') ] , player_data_stats_df, disp_player)
-      df_list[1] = angular_att_table.to_dict('records')
+      df_list[2] = angular_att_table.to_dict('records')
       plt_image = plot_volleyball_attacks(ppr_df[ (ppr_df['tactic'] == 'behind') ],'Attacks Behind Setter')
       image_list[2] = plt_image
     elif att_front == '45' and att == 'middle':
       new_df = new_df[ ( (new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 1) | (new_df['att_src_zone_net'] == 2) ) & (new_df['tactic'] != 'behind')]   
       angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
-      df_list[2] = angular_att_table.to_dict('records')
+      df_list[3] = angular_att_table.to_dict('records')
       plt_image = plot_volleyball_attacks(new_df,'Attacks from the Middle')
       image_list[3] = plt_image
 
@@ -3865,4 +3868,37 @@ def report_player_sets(lgy, team, **rpt_filters):
   ax2.set_title(f'{disp_player} Attempts by Set Position (colored by Attempts)')
   image_list[1] = anvil.mpl_util.plot_image()
 
+  #--------------------------------------------------------------------
+  #
+  #     Now, calculate the transition table
+  #
+  #--------------------------------------------------------------------
+
+  # calcualte the transition obj routine, then store it in a table
+  trans_dict = {
+    ' ':['Percent','Percentile','Kills',"Opponent's Errors","Opponent's Kills",'Errors','Total Points'],
+    'Transition Conversion Rate':[0,0,0,0,0,0],
+    'Transition Efficiency':[0,0,0,0,0,0],
+    'Transition Create':[0,0,0,0,0,0]
+  }
+  trans_table = pd.DataFrame.from_dict(trans_dict)
+
+
+  trans_obj = calc_trans_obj(ppr_df, disp_player, 'rcv')
+  print(f"Transition Object:{trans_obj}")
+  print(f"tcr {trans_obj.get('tcr_str')}, t_eff : {trans_obj.get('t_eff_str')}, t_create : {trans_obj.get('treate_str')}")
+  trans_table.at['Percent','Transition Conversion Rate'] = trans_obj.get('tcr_str')
+  trans_table.at['Percent','Transition Efficiency'] = trans_obj.get('t_eff_str')
+  trans_table.at['Percent','Transition Create'] = trans_obj.get('t_create_str')
+  trans_table.at['Percentile','Transition Conversion Rate'] = trans_obj.get('tcr_str')
+  trans_table.at['Percentile','Transition Efficiency'] = trans_obj.get('t_eff_str')
+  trans_table.at['Percentile','Transition Create'] = trans_obj.get('t_create_str')
+  trans_table.at['Kills','Transition Conversion Rate'] = trans_obj.get('tran_kills_won')
+  trans_table.at["Opponent's Errors",'Transition Conversion Rate'] = trans_obj.get('tran_errors_won')
+  trans_table.at["Opponent's Kills",'Transition Conversion Rate'] = trans_obj.get('tran_kills_lost')
+  trans_table.at['Errors','Transition Conversion Rate'] = trans_obj.get('tran_errors_lost')
+  trans_table.at['Total Points','Transition Conversion Rate'] = trans_obj.get('tran_total_pts')
+
+  df_list[1] = trans_table.to_dict('records')
+  
   return title_list, label_list, image_list, df_list

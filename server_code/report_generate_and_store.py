@@ -20,9 +20,143 @@ import matplotlib as mpl
 import math
 import scipy.stats as stats
 import numpy as np
+import importlib
+import logging
+from typing import Tuple, List, Dict, Any
+
 from plot_functions import *
 from server_functions import *
 from reports_player_new import *
+
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Cache for valid function names
+_valid_functions_cache = None
+
+def get_valid_functions() -> set:
+  """Retrieve valid function names from the report_list table, with caching."""
+  global _valid_functions_cache
+  if _valid_functions_cache is None:
+    _valid_functions_cache = {row['function_name'] for row in tables.app_tables.report_list.search()}
+  return _valid_functions_cache
+
+@anvil.server.callable
+def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters) -> str:
+  """
+    Generate a report using the specified function, store results in report_data table, and return the report ID.
+    
+    Args:
+        fnct_name: Name of the report function to call.
+        lgy: League identifier.
+        team: Team identifier.
+        **rpt_filters: Additional report filters.
+    
+    Returns:
+        report_id: Unique ID of the stored report.
+    
+    Raises:
+        ValueError: If function name is invalid or data processing fails.
+    """
+  # Initialize result lists
+  title_list: List[str] = []
+  label_list: List[str] = []
+  image_list: List[Any] = []
+  df_list: List[Dict] = []
+
+  # Log the request
+  logger.info(f"Generating report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}, filters: {rpt_filters}")
+
+  # Validate function name against report_list table
+  valid_functions = get_valid_functions()
+  if fnct_name not in valid_functions:
+    logger.error(f"Function name '{fnct_name}' not found in report_list table")
+    title_list.append(f"Report Not Found: {fnct_name}")
+  else:
+    # Dynamically get the function from globals
+    try:
+      func = globals()[fnct_name]
+    except KeyError:
+      logger.error(f"Function '{fnct_name}' is not implemented in the global namespace")
+      title_list.append(f"Function Error: {fnct_name}")
+    else:
+      # Call the function
+      try:
+        title_list, label_list, image_list, df_list = func(lgy, team, **rpt_filters)
+      except Exception as e:
+        logger.error(f"Error executing {fnct_name}: {str(e)}")
+        title_list.append(f"Execution Error: {fnct_name}")
+
+    # Close any open matplotlib plots
+  try:
+    import matplotlib.pyplot as plt
+    plt.close('all')
+  except ImportError:
+    pass  # Matplotlib may not be used
+
+    # Generate unique report ID
+  report_id = str(uuid.uuid4())
+
+  # Store in report_data table
+  rpt_data_row = tables.app_tables.report_data.add_row(
+    report_id=report_id,
+    created_at=datetime.now()
+  )
+
+  # Store titles (max 10)
+  rpt_data_row['no_title'] = min(len(title_list), 10)
+  for i, title in enumerate(title_list[:10]):
+    rpt_data_row[f'title_{i+1}'] = title
+
+    # Store league in title_4
+  rpt_data_row['title_4'] = lgy
+
+  # Store filter text in title_7
+  try:
+    rpt_data_row['title_7'] = make_filter_text(lgy, **rpt_filters)
+  except NameError:
+    logger.warning("make_filter_text not defined; skipping filter text storage")
+    rpt_data_row['title_7'] = str(rpt_filters)
+
+    # Store labels (max 10)
+  rpt_data_row['no_label'] = min(len(label_list), 10)
+  for i, label in enumerate(label_list[:10]):
+    rpt_data_row[f'label_{i+1}'] = label
+
+    # Store images (max 10, only non-string types)
+  no_images = 0
+  for i, image in enumerate(image_list[:10]):
+    if not isinstance(image, str):
+      rpt_data_row[f'image_{i+1}'] = image
+      no_images += 1
+  rpt_data_row['no_image'] = no_images
+
+  # Store DataFrames as markdown (max 10)
+  no_dfs = 0
+  for i, df_data in enumerate(df_list[:10]):
+    if df_data:  # Check if not empty
+      try:
+        if not isinstance(df_data, list) or not all(isinstance(row, dict) for row in df_data):
+          raise ValueError(f"Expected list of dictionaries for df_{i+1}, got {type(df_data)}")
+        df_tmp = pd.DataFrame(df_data)
+        mkdn_file = df_tmp.to_markdown(index=False)
+        rpt_data_row[f'df_{i+1}'] = anvil.BlobMedia(
+          content_type="text/plain",
+          content=mkdn_file.encode(),
+          name=f'df_{i+1}.mkdn'
+        )
+        no_dfs += 1
+      except Exception as e:
+        logger.error(f"Failed to store DataFrame {i+1}: {str(e)}")
+  rpt_data_row['no_df'] = no_dfs
+
+  logger.info(f"Stored report with ID: {report_id}")
+  return report_id
+
+
+'''
 
 @anvil.server.callable
 def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
@@ -152,6 +286,7 @@ def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
   rpt_data_row['no_df'] = no_dfs
 
   return report_id
+'''
 
 @anvil.server.callable
 def get_report_data(report_id):
