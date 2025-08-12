@@ -1,0 +1,144 @@
+components:
+- components:
+  - layout_properties: {}
+    name: company_name
+    properties: {align: center, background: 'theme:Dark Overlay 1', bold: true, italic: true, text: Beach Internals}
+    type: Label
+  layout_properties: {full_width_row: true, grid_position: 'LLSKHC,DRBXAA'}
+  name: linear_panel
+  properties: {}
+  type: LinearPanel
+- components:
+  - layout_properties: {grid_position: 'BZLNEZ,XDOJAR'}
+    name: rpt_title
+    properties: {align: center, bold: true, font_size: 24, spacing_above: none, spacing_below: none}
+    type: Label
+  - layout_properties: {grid_position: 'MQHUQU,RGYHZN'}
+    name: rpt_subtitle
+    properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
+    type: Label
+  layout_properties: {grid_position: 'MHEOJM,LEROUB'}
+  name: column_panel_1
+  properties: {}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'GIFGRC,RLFOXW'}
+    name: box1_title
+    properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
+    type: Label
+  - layout_properties: {grid_position: 'ZGHJCJ,WFWFOE'}
+    name: box_1
+    properties: {spacing_above: none, spacing_below: none}
+    type: RichText
+  layout_properties: {grid_position: 'ZAJYUI,VPBOBC'}
+  name: column_panel_11
+  properties: {}
+  type: ColumnPanel
+- layout_properties: {grid_position: 'FLACQC,KBHHLM'}
+  name: box2_title
+  properties: {align: center, spacing_above: none, spacing_below: none}
+  type: Label
+- components:
+  - layout_properties: {grid_position: 'JLKKTE,UGBSQX'}
+    name: image_1
+    properties: {height: '520'}
+    type: Image
+  - layout_properties: {grid_position: 'JGQGUQ,ZENLLP'}
+    name: box_2
+    properties: {font_size: 10, spacing_above: none, spacing_below: none}
+    type: RichText
+  layout_properties: {grid_position: 'UUZDSY,VYMMVD'}
+  name: column_panel_14
+  properties: {}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'AKMMHW,VUTMZI'}
+    name: image_2
+    properties: {height: '520'}
+    type: Image
+  - layout_properties: {grid_position: 'PPTASA,TTJEVN'}
+    name: box_3
+    properties: {font_size: 10, spacing_above: none, spacing_below: none}
+    type: RichText
+  layout_properties: {grid_position: 'UUZDSY,KUQRRQ'}
+  name: column_panel_15
+  properties: {}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'IFBFIT,HWAWFT'}
+    name: image_3
+    properties: {height: '520'}
+    type: Image
+  - layout_properties: {grid_position: 'JSKXBU,LKPKKA'}
+    name: box_4
+    properties: {font_size: 10, spacing_above: none, spacing_below: none}
+    type: RichText
+  layout_properties: {grid_position: 'UUZDSY,WBRXJY'}
+  name: column_panel_16
+  properties: {}
+  type: ColumnPanel
+- layout_properties: {grid_position: 'JPIITM,ICGSQO'}
+  name: box3_title
+  properties: {align: center, spacing_above: none, spacing_below: none}
+  type: Label
+- layout_properties: {grid_position: 'FXBLZZ,KGFYCX'}
+  name: box_5
+  properties: {spacing_above: none, spacing_below: none}
+  type: RichText
+- components:
+  - layout_properties: {grid_position: 'ZIGNPY,VMCVPI NMGFEM,KLJPUF'}
+    name: image_4
+    properties: {height: '520'}
+    type: Image
+  - layout_properties: {grid_position: 'ZIGNPY,VMCVPI RAPTWN,VBAEVF'}
+    name: box_6
+    properties: {content: '', font_size: 10, spacing_above: none, spacing_below: none}
+    type: RichText
+  - layout_properties: {grid_position: 'ZIGNPY,RSUCQA LLEBHD,ZSUOVP'}
+    name: image_5
+    properties: {height: '520'}
+    type: Image
+  - layout_properties: {grid_position: 'ZIGNPY,RSUCQA QTQSEC,LPBNKG'}
+    name: box_7
+    properties: {font_size: 10, spacing_above: none, spacing_below: none}
+    type: RichText
+  - layout_properties: {grid_position: 'ZIGNPY,KEHNTW TKIXVB,AZCCRF'}
+    name: image_6
+    properties: {height: '520'}
+    type: Image
+  - layout_properties: {grid_position: 'ZIGNPY,KEHNTW PUBQAZ,GCOVYX'}
+    name: box_8
+    properties: {font_size: 10, spacing_above: none, spacing_below: none}
+    type: RichText
+  layout_properties: {grid_position: 'DKPRJK,MRLFPV'}
+  name: column_panel_13
+  properties: {col_widths: '{}'}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'IFOHDJ,SNQJLY'}
+    name: label_1
+    properties: {align: center, bold: true, spacing_above: none, spacing_below: none, text: Report Description}
+    type: Label
+  - layout_properties: {grid_position: 'LZJFGY,MWSFPD'}
+    name: explain_text
+    properties: {spacing_above: none, spacing_below: none}
+    type: RichText
+  layout_properties: {grid_position: 'OOTPFF,HFYQMS'}
+  name: column_panel_4
+  properties: {}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'ZHCBED,YHCGGG'}
+    name: label_2
+    properties: {align: center, bold: true, spacing_above: none, spacing_below: none, text: Report Data Filters}
+    type: Label
+  layout_properties: {grid_position: 'OOTPFF,DJDXGH IPTEDY,GBMEFE'}
+  name: column_panel_5
+  properties: {}
+  type: ColumnPanel
+- layout_properties: {grid_position: 'OOTPFF,DJDXGH DEXJPO,AJILEX'}
+  name: filter_text
+  properties: {spacing_above: none, spacing_below: none}
+  type: RichText
+container: {type: ColumnPanel}
+is_package: true
