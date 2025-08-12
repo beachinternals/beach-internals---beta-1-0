@@ -1343,9 +1343,9 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   z5_plt = anvil.mpl_util.plot_image()
 
   # put the Images in the image_list
-  image_list[0] = z1_plt
-  image_list[1] = z3_plt
-  image_list[2] = z5_plt
+  image_list[3] = z1_plt
+  image_list[4] = z3_plt
+  image_list[5] = z5_plt
   
   # put the DF's in the df_list
   df_list[0] = fbhe_table.to_dict('records')
@@ -1389,9 +1389,9 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   ax.set_title("Attempts from Zone 5, Right", fontsize=35)
   a5_plt = anvil.mpl_util.plot_image()
 
-  image_list[3] = a1_plt
-  image_list[4] = a3_plt
-  image_list[5] = a5_plt
+  image_list[0] = a1_plt
+  image_list[1] = a3_plt
+  image_list[2] = a5_plt
 
   plt.close('All')
   
