@@ -3873,6 +3873,7 @@ def report_player_sets(lgy, team, **rpt_filters):
   #     Now, calculate the transition table
   #
   #--------------------------------------------------------------------
+  '''
 
   # calcualte the transition obj routine, then store it in a table
   trans_dict = {
@@ -3900,5 +3901,6 @@ def report_player_sets(lgy, team, **rpt_filters):
   trans_table.at['Total Points','Transition Conversion Rate'] = trans_obj.get('tran_total_pts')
 
   df_list[1] = trans_table.to_dict('records')
+  '''
   
   return title_list, label_list, image_list, df_list
