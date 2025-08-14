@@ -21,6 +21,7 @@ from pair_functions import *
 from datetime import datetime, timedelta, date
 import logging
 import re
+import scipy.stats as stats
 from matplotlib.colors import LinearSegmentedColormap
 from sklearn.cluster import DBSCAN
 from plot_functions import *
@@ -720,6 +721,56 @@ def calc_ev(ppr_df, disp_player):
   ev_vector[0] = str('{:.2%}').format(ev_vector[0])
   
   return ev_vector
+
+def calc_ev_obj(ppr_df, disp_player):
+  # Calculate expected value and return as a dictionary
+  ev_dict = {
+    'expected_value': 0,
+    'total_points': 0,
+    'points_won': 0,
+    'fbk_earned': 0,
+    'tk_earned': 0,
+    'te_received': 0,
+    'tse_received': 0,
+    'points_lost': 0,
+    'fbe_given': 0,
+    'te_given': 0,
+    'tk_lost': 0,
+    'tsa_lost': 0
+  }
+
+  # Filter ppr_df to where disp_player receives serve
+  ppr_df = ppr_df[ppr_df['pass_player'].str.strip() == disp_player.strip()]
+
+  ev_dict['fbk_earned'] = ppr_df[ppr_df['point_outcome'] == "FBK"].shape[0]
+  ev_dict['fbe_given'] = ppr_df[ppr_df['point_outcome'] == 'FBE'].shape[0]
+
+  tmp_df = ppr_df[ppr_df['point_outcome_team'].str.contains(disp_player[:-1])]
+  ev_dict['tk_earned'] = tmp_df[tmp_df['point_outcome'] == "TK"].shape[0]
+  ev_dict['te_given'] = tmp_df[tmp_df['point_outcome'] == "TE"].shape[0]
+
+  tmp_df = ppr_df[~ppr_df['point_outcome_team'].str.contains(disp_player[:-1])]
+  ev_dict['tk_lost'] = tmp_df[tmp_df['point_outcome'] == "TK"].shape[0]
+  ev_dict['te_received'] = tmp_df[tmp_df['point_outcome'] == "TE"].shape[0]
+  ev_dict['tsa_lost'] = tmp_df[tmp_df['point_outcome'] == "TSA"].shape[0]
+  ev_dict['tse_received'] = tmp_df[tmp_df['point_outcome'] == "TSE"].shape[0]
+
+  # Points earned
+  ev_dict['points_won'] = ev_dict['fbk_earned'] + ev_dict['tk_earned'] + ev_dict['te_received']
+
+  # Points lost
+  ev_dict['points_lost'] = ev_dict['fbe_given'] + ev_dict['te_given'] + ev_dict['tk_lost'] + ev_dict['tsa_lost']
+
+  # Total points
+  ev_dict['total_points'] = ev_dict['points_won'] + ev_dict['points_lost']
+
+  # Expected value percentage
+  ev_dict['expected_value'] = (ev_dict['points_won'] / ev_dict['total_points'] 
+                               if ev_dict['total_points'] != 0 else 0)
+  ev_dict['expected_value'] = f"{ev_dict['expected_value']:.2%}"
+
+  return ev_dict
+
   
 def calc_error_den( ppr_df, disp_player):
 

@@ -4040,81 +4040,6 @@ def report_player_attack_transition(lgy, team, **rpt_filters):
     _, table_data['No Area'][5] = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
     table_data['No Area'][6] = str(trans_obj_no_area['tran_total_pts'])
 
-  '''
-    
-  # Calculate metrics for 'All'
-  trans_obj_all = calc_trans_obj(ppr_df, disp_player, 'rcv')
-  if trans_obj_all['status']:
-    table_data['All'][0] = trans_obj_all['tcr_str']  # Transition Conversion
-    table_data['All'][1] = calculate_percentile(trans_obj_all['tcr'], player_data_stats_df['tcr_mean'], player_data_stats_df['tcr_stdev']) # Percentile (not provided)
-    table_data['All'][2] = trans_obj_all['t_eff_str']  # Transition Effectiveness
-    table_data['All'][3] = ' ' #calculate_percentile(trans_obj_all['t_eff'], player_data_stats_df['t_eff_mean'], player_data_stats_df['t_eff_stdev'])   # Percentile (not provided)
-    table_data['All'][4] = trans_obj_all['t_create_str']  # Transition Creates
-    table_data['All'][5] = ' ' #calculate_percentile(trans_obj_all['t_create'], player_data_stats_df['t_create_mean'], player_data_stats_df['t_create_stdev'])   # Percentile (not provided)
-    table_data['All'][6] = str(trans_obj_all['tran_total_pts'])  # Transition Points
-
-  # Calculate metrics for each area (1 to 5)
-  for area in range(1, 6):
-    area_df = ppr_df[ppr_df['att_src_zone_net'] == area]
-    trans_obj_area = calc_trans_obj(area_df, disp_player, 'rcv')
-    if trans_obj_area['status']:
-      table_data[f'Area {area}'][0] = trans_obj_area['tcr_str']
-      table_data[f'Area {area}'][1] = ''
-      table_data[f'Area {area}'][2] = trans_obj_area['t_eff_str']
-      table_data[f'Area {area}'][3] = ''
-      table_data[f'Area {area}'][4] = trans_obj_area['t_create_str']
-      table_data[f'Area {area}'][5] = ''
-      table_data[f'Area {area}'][6] = str(trans_obj_area['tran_total_pts'])
-
-  # Calculate metrics for 'No Area'
-  no_area_df = ppr_df[ppr_df['att_src_zone_net'].isna()]
-  trans_obj_no_area = calc_trans_obj(no_area_df, disp_player, 'rcv')
-  if trans_obj_no_area['status']:
-    table_data['No Area'][0] = trans_obj_no_area['tcr_str']
-    table_data['No Area'][1] = ''
-    table_data['No Area'][2] = trans_obj_no_area['t_eff_str']
-    table_data['No Area'][3] = ''
-    table_data['No Area'][4] = trans_obj_no_area['t_create_str']
-    table_data['No Area'][5] = ''
-    table_data['No Area'][6] = str(trans_obj_no_area['tran_total_pts'])
-  
-  # Calculate metrics for 'All'
-  trans_obj_all = calc_trans_obj(ppr_df, disp_player, 'rcv')
-  if trans_obj_all['status']:
-    table_data['All'][0] = trans_obj_all['tcr_str']  # Transition Conversion
-    _, table_data['All'][1] = calculate_percentile(trans_obj_all['tcr'], player_data_stats_df['tcr_mean'], player_data_stats_df['tcr_stdev'])  # Percentile
-    table_data['All'][2] = trans_obj_all['t_eff_str']  # Transition Effectiveness
-    _, table_data['All'][3] = calculate_percentile(trans_obj_all['t_eff'], player_data_stats_df['t_eff_mean'], player_data_stats_df['t_eff_stdev'])  # Percentile
-    table_data['All'][4] = trans_obj_all['t_create_str']  # Transition Creates
-    _, table_data['All'][5] = calculate_percentile(trans_obj_all['t_create'], player_data_stats_df['t_create_mean'], player_data_stats_df['t_create_stdev'])  # Percentile
-    table_data['All'][6] = str(trans_obj_all['tran_total_pts'])  # Transition Points
-
-  # Calculate metrics for each area (1 to 5)
-  for area in range(1, 6):
-    area_df = ppr_df[ppr_df['att_src_zone_net'] == area]
-    trans_obj_area = calc_trans_obj(area_df, disp_player, 'rcv')
-    if trans_obj_area['status']:
-      table_data[f'Area {area}'][0] = trans_obj_area['tcr_str']
-      _, table_data[f'Area {area}'][1] = calculate_percentile(trans_obj_area['tcr'], player_data_stats_df['tcr_mean'], player_data_stats_df['tcr_stdev'])
-      table_data[f'Area {area}'][2] = trans_obj_area['t_eff_str']
-      _, table_data[f'Area {area}'][3] = calculate_percentile(trans_obj_area['t_eff'], player_data_stats_df['t_eff_mean'], player_data_stats_df['t_eff_stdev'])
-      table_data[f'Area {area}'][4] = trans_obj_area['t_create_str']
-      _, table_data[f'Area {area}'][5] = calculate_percentile(trans_obj_area['t_create'], player_data_stats_df['t_create_mean'], player_data_stats_df['t_create_stdev'])
-      table_data[f'Area {area}'][6] = str(trans_obj_area['tran_total_pts'])
-
-  # Calculate metrics for 'No Area'
-  no_area_df = ppr_df[ppr_df['att_src_zone_net'].isna()]
-  trans_obj_no_area = calc_trans_obj(no_area_df, disp_player, 'rcv')
-  if trans_obj_no_area['status']:
-    table_data['No Area'][0] = trans_obj_no_area['tcr_str']
-    _, table_data['No Area'][1] = calculate_percentile(trans_obj_no_area['tcr'], player_data_stats_df['tcr_mean'], player_data_stats_df['tcr_stdev'])
-    table_data['No Area'][2] = trans_obj_no_area['t_eff_str']
-    _, table_data['No Area'][3] = calculate_percentile(trans_obj_no_area['t_eff'], player_data_stats_df['t_eff_mean'], player_data_stats_df['t_eff_stdev'])
-    table_data['No Area'][4] = trans_obj_no_area['t_create_str']
-    _, table_data['No Area'][5] = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df['t_create_mean'], player_data_stats_df['t_create_stdev'])
-    table_data['No Area'][6] = str(trans_obj_no_area['tran_total_pts'])
-
-  '''
   # Convert table_data to DataFrame
   df = pd.DataFrame(table_data)
 
@@ -4122,3 +4047,131 @@ def report_player_attack_transition(lgy, team, **rpt_filters):
   df_list[0] = df.to_dict('records')
 
   return title_list, label_list, image_list, df_list
+
+
+@anvil.server.callable
+def report_player_expected_value(lgy, team, **rpt_filters):
+  '''
+    Report Function to display a table of player metrics by area.
+
+    INPUT Parameters:
+      - lgy : league, gender, year combination (as in dropdowns)
+      - team : the team of the user calling the report
+      - rpt_filters : the list of filters to limit the data
+
+    OUTPUT Return Parameters:
+      - title_list : a list of up to 10 titles to display on the report
+      - label_list : a list of up to 10 labels to display on the report
+      - image_list : a list of up to 10 images to plot data on the report
+      - df_list : a list of up to 10 data frames to display tables
+    '''
+  #------------------------------------------------------------------------------------------------------
+  # Initialize all lists, get and filter the data, and fetch information from report_list
+  #------------------------------------------------------------------------------------------------------
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe and filter by all the report filters
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+
+  # Initiate return lists
+  title_list = [''] * 10
+  label_list = [''] * 10
+  image_list = [''] * 10
+  df_list = [''] * 10
+
+  # Fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+  title_list[0] = rpt_row['rpt_title']
+  title_list[1] = rpt_row['rpt_sub_title']
+  title_list[2] = rpt_row['rpt_section_title1']
+  title_list[3] = rpt_row['lgy']
+  title_list[4] = rpt_row['team_name']
+  title_list[5] = rpt_row['rpt_type']
+  title_list[6] = rpt_row['filter_text']
+  title_list[7] = rpt_row['explain_text']
+  title_list[8] = rpt_filters.get('player')
+  title_list[9] = rpt_filters.get('pair')
+
+  label_list[0] = rpt_row['box1_title']
+  label_list[1] = rpt_row['box2_title']
+  label_list[2] = rpt_row['box3_title']
+  label_list[3] = rpt_row['box4_title']
+  label_list[4] = rpt_row['box5_title']
+  label_list[5] = rpt_row['box6_title']
+  label_list[6] = rpt_row['box7_title']
+  label_list[7] = rpt_row['box8_title']
+  label_list[8] = rpt_row['box9_title']
+  label_list[9] = rpt_row['box10_title']
+
+  #------------------------------------------------------------------------------------------------------
+  # Create the table with filtered ppr data for report
+  #------------------------------------------------------------------------------------------------------
+  # Limit the data to plays where att_player is disp_player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ppr_df['att_player'] == disp_player]
+
+  # Initialize table data
+  table_data = {
+    'Metric': ['FBHE', 'Percentile', 'Transition Conversion', 'Percentile', 'Expected Value', 'Percentile', 'Transition Points'],
+    'All': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 1': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 2': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 3': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 4': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 5': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'No Area': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0]
+  }
+
+  # Calculate metrics for each area
+  areas = [1, 2, 3, 4, 5]
+  for area in ['All'] + [f'Area {i}' for i in areas] + ['No Area']:
+    if area == 'All':
+      temp_df = ppr_df
+    elif area == 'No Area':
+      temp_df = ppr_df[~ppr_df['att_src_zone_net'].isin(areas)]
+    else:
+      area_num = int(area.split()[-1])
+      temp_df = ppr_df[ppr_df['att_src_zone_net'] == area_num]
+
+      # Calculate FBHE
+    fbhe_result = fbhe_obj(temp_df, disp_player, play_type='att', video_yn=False)
+    table_data[area][0] = fbhe_result.fbhe
+    table_data[area][1] = calculate_percentile(
+      table_data[area][0],
+      player_data_stats_df.at[0, 'fbhe_mean'],
+      player_data_stats_df.at[0, 'fbhe_stdev']
+    )
+
+    # Calculate Transition Conversion
+    trans_result = calc_trans_obj(temp_df, disp_player, flag='rcv')
+    table_data[area][2] = trans_result.get('tcr', 0.0)
+    table_data[area][3] = calculate_percentile(
+      table_data[area][2],
+      player_data_stats_df.at[0, 'tcr_mean'],
+      player_data_stats_df.at[0, 'tcr_stdev']
+    )
+
+    # Calculate Expected Value
+    ev_result = calc_ev_obj(temp_df, disp_player)
+    table_data[area][4] = ev_result.get('expected_value', '0.00%')
+    # Convert percentage string to float for percentile calculation
+    ev_value = float(ev_result.get('expected_value', '0.00%').strip('%')) / 100
+    table_data[area][5] = calculate_percentile(
+      ev_value,
+      player_data_stats_df.at[0, 'expected_mean'],
+      player_data_stats_df.at[0, 'expected_stdev']
+    )
+
+    # Calculate Transition Points
+    table_data[area][6] = trans_result.get('tran_total_pts', 0.0)
+
+    # Convert to DataFrame
+  df = pd.DataFrame(table_data)
+  df_list[0] = df.to_dict('records')
+
+  return title_list, label_list, image_list, df_list
+
+  
