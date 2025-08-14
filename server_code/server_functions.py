@@ -27,8 +27,8 @@ from plot_functions import *
 from dataclasses import dataclass
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+#logging.basicConfig(level=logging.INFO)
+#logger = logging.getLogger(__name__)
 
 # This is a server module. It runs on the Anvil server,
 
@@ -1714,3 +1714,29 @@ def calculate_ellipse_area(width, height):
    """
   return math.pi * (width / 2) * (height / 2)
 
+def calculate_percentile(metric, mean, std_dev):
+  '''
+    Calculate the percentile for a given metric based on mean and standard deviation.
+    
+    INPUT Parameters:
+        - metric: The value to calculate the percentile for
+        - mean: The mean of the distribution
+        - std_dev: The standard deviation of the distribution
+    
+    OUTPUT Return Parameters:
+        - percentile: Float value of the percentile
+        - percentile_str: String representation of the percentile (e.g., '88.9%')
+    '''
+  if std_dev == 0 or metric is None or mean is None or std_dev is None:
+    return None, None
+
+    # Calculate the z-score
+  z_score = (metric - mean) / std_dev
+
+  # Calculate the percentile using the cumulative distribution function
+  percentile = stats.norm.cdf(z_score)
+
+  # Convert to percentage string
+  percentile_str = f"{percentile * 100:.1f}%"
+
+  return percentile, percentile_str

@@ -22,6 +22,7 @@ import scipy.stats as stats
 import numpy as np
 import importlib
 import logging
+import sys
 from typing import Tuple, List, Dict, Any
 
 from plot_functions import *
@@ -30,8 +31,15 @@ from reports_player_new import *
 
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+# Set up logging to output to stdout
+logging.basicConfig(
+  level=logging.INFO,
+  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+  handlers=[logging.StreamHandler(sys.stdout)]
+)
 logger = logging.getLogger(__name__)
+logger.info("This is an info message")
+logger.error("This is an error message")
 
 # Cache for valid function names
 _valid_functions_cache = None
