@@ -719,7 +719,10 @@ db_schema:
       type: simpleObject
     server: full
     title: Users
-dependencies: []
+dependencies:
+- dep_id: dep_op0s4fqzn80gn
+  resolution_hints: {app_id: C6ZZPAPN4YYF5NVJ, name: Anvil Extras, package_name: anvil_extras}
+  version: {version_tag: v3.3.0}
 metadata: {logo_img: 'asset:BeachInternals Logo-logo.jpeg', title: Beach Internals Application}
 name: Beach Internals Application
 native_deps: null
