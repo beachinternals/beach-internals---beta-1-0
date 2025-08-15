@@ -54,7 +54,7 @@ All 'new' format using opoup window and filters by **rpt_filters
 #              player report stub NEW
 #
 #---------------------------------------------------------------------------
-@anvil.server.callable
+
 def report_player_stub_new(lgy, team, **rpt_filters):
   '''
   Report Functions:
@@ -4049,7 +4049,7 @@ def report_player_attack_transition(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list
 
 
-@anvil.server.callable
+
 def report_player_expected_value(lgy, team, **rpt_filters):
   '''
     Report Function to display a table of player metrics by area.
@@ -4150,9 +4150,10 @@ def report_player_expected_value(lgy, team, **rpt_filters):
     # Calculate Transition Conversion
     trans_result = calc_trans_obj(temp_df, disp_player, flag='rcv')
     table_data[area][2] = trans_result.get('tcr_str', 0.0)
+    tcr_value = trans_result.get('tcr', 0.0)
     # Use percentile_str from calculate_percentile
     _, tcr_percentile_str = calculate_percentile(
-      table_data[area][2],
+      tcr_value,
       player_data_stats_df.at[0, 'tcr_mean'],
       player_data_stats_df.at[0, 'tcr_stdev']
       )

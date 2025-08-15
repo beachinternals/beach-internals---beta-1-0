@@ -21,13 +21,29 @@ import math
 import scipy.stats as stats
 import numpy as np
 import importlib
-from anvil_extras.logging import Logger
 import sys
 from typing import Tuple, List, Dict, Any
 
 from plot_functions import *
 from server_functions import *
 from reports_player_new import *
+
+# Option A: Check if it's just called Logger
+from anvil_extras.logging import Logger
+# Create a detailed formatter
+formatter = logging.Formatter(
+  '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s'
+)
+logger = Logger()
+
+
+
+
+# Use it in your code
+logger.info("Application started")
+logger.debug("Debug information")
+logger.warning("This is a warning")
+logger.error("An error occurred")
 
 '''
 # Set up logging
