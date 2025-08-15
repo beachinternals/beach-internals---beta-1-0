@@ -21,7 +21,7 @@ import math
 import scipy.stats as stats
 import numpy as np
 import importlib
-import logging
+from anvil_extras.logging import Logger
 import sys
 from typing import Tuple, List, Dict, Any
 
@@ -29,7 +29,7 @@ from plot_functions import *
 from server_functions import *
 from reports_player_new import *
 
-
+'''
 # Set up logging
 # Set up logging to output to stdout
 logging.basicConfig(
@@ -40,7 +40,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.info("This is an info message")
 logger.error("This is an error message")
-
+'''
 # Cache for valid function names
 _valid_functions_cache = None
 
