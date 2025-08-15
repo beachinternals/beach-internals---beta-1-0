@@ -1012,6 +1012,60 @@ def count_out_of_system(ppr_df,disp_player,action):
   #print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
   return oos_vector
 
+def count_oos_obj(ppr_df, disp_player, action):
+  """
+    Count out-of-system statistics for a player's actions.
+    
+    Args:
+        ppr_df: DataFrame containing player performance data
+        disp_player: Player name to analyze
+        action: Action type ('pass', 'att', 'srv')
+    
+    Returns:
+        dict: Dictionary with keys 'count', 'percent', 'attempts'
+              Use .get() method to safely access values with defaults
+    """
+
+  # Map actions to column names
+  action_mapping = {
+    'att': 'att_player',
+    'pass': 'pass_player', 
+    'srv': 'serve_player'
+  }
+
+  # Get action filter or default to pass
+  action_filter = action_mapping.get(action.lower())
+  if action_filter is None:
+    print(f'Invalid action: {action}. Valid options: {list(action_mapping.keys())}. Using "pass".')
+    action_filter = 'pass_player'
+
+    # Initialize result dictionary
+  result = {
+    'count': 0,      # number out of system
+    'percent': 0.0,  # percent out of system
+    'attempts': 0    # total attempts
+  }
+
+  # Check if DataFrame is empty
+  if ppr_df.empty:
+    return result
+
+    # Filter data for the specific player
+  player_data = ppr_df[ppr_df[action_filter] == disp_player]
+
+  # Calculate statistics
+  result['attempts'] = len(player_data)
+
+  if result['attempts'] > 0:
+    # Count out-of-system occurrences
+    result['count'] = len(player_data[player_data['pass_oos'] > 0])
+    # Calculate percentage
+    result['percent'] = result['count'] / result['attempts']
+
+  return result
+
+
+  
 #-----------------------------------------------------------------------------------------------
 #
 #          Functions for saving files to the server
@@ -1125,6 +1179,99 @@ def calc_knock_out( ppr_df, disp_player):
   else:
    knock_out = (player_point_totals.at[0,'p_tsa']+player_point_totals.at[0,'o_bad_pass'] )/player_point_totals.at[0,'p_serves']
   return knock_out
+
+
+def calc_knock_out_obj(ppr_df, disp_player):
+  """
+    Calculate knock-out statistics for a player.
+    
+    Knock-out rate is calculated as:
+    (Player Total Service Aces + Opponent Bad Passes) / Player Total Serves
+    
+    Args:
+        ppr_df: DataFrame containing player performance data
+        disp_player: Player name to analyze
+    
+    Returns:
+        dict: Dictionary with keys for knock-out statistics
+              Use .get() method to safely access values with defaults
+    """
+
+  try:
+    # Get player point totals
+    player_point_totals = player_pt_total(ppr_df, disp_player)
+
+    # Initialize result dictionary
+    result = {
+      'knock_out_rate': 0.0,     # Main knock-out rate
+      'total_serves': 0,         # Total serves by player
+      'service_aces': 0,         # Player's service aces
+      'opponent_bad_passes': 0,  # Opponent bad passes caused
+      'knock_out_points': 0,     # Total knock-out points (aces + bad passes)
+      'has_serves': False        # Whether player has any serves
+    }
+
+    # Check if player_point_totals has data
+    if player_point_totals.empty:
+      return result
+
+      # Extract values from the DataFrame
+    total_serves = player_point_totals.at[0, 'p_serves']
+    service_aces = player_point_totals.at[0, 'p_tsa']
+    bad_passes = player_point_totals.at[0, 'o_bad_pass']
+
+    # Populate result dictionary
+    result['total_serves'] = total_serves
+    result['service_aces'] = service_aces
+    result['opponent_bad_passes'] = bad_passes
+    result['knock_out_points'] = service_aces + bad_passes
+    result['has_serves'] = total_serves > 0
+
+    # Calculate knock-out rate
+    if total_serves > 0:
+      result['knock_out_rate'] = (service_aces + bad_passes) / total_serves
+    else:
+      result['knock_out_rate'] = 0.0
+
+  except (KeyError, IndexError) as e:
+    print(f"Error calculating knock-out stats for {disp_player}: {e}")
+    # Return default values on error
+    result = {
+      'knock_out_rate': 0.0,
+      'total_serves': 0,
+      'service_aces': 0,
+      'opponent_bad_passes': 0,
+      'knock_out_points': 0,
+      'has_serves': False,
+      'error': str(e)
+    }
+
+  return result
+
+
+def get_knock_out_summary(ppr_df, disp_player):
+  """
+    Get a formatted summary of knock-out statistics.
+    
+    Args:
+        ppr_df: DataFrame containing player performance data
+        disp_player: Player name to analyze
+    
+    Returns:
+        dict: Summary statistics with formatted strings
+    """
+
+  stats = calc_knock_out(ppr_df, disp_player)
+
+  return {
+    'player': disp_player,
+    'knock_out_rate': stats.get('knock_out_rate', 0.0),
+    'knock_out_percentage': f"{stats.get('knock_out_rate', 0.0):.1%}",
+    'summary': f"{stats.get('knock_out_points', 0)} knock-out points on {stats.get('total_serves', 0)} serves",
+    'breakdown': f"Aces: {stats.get('service_aces', 0)}, Bad passes caused: {stats.get('opponent_bad_passes', 0)}",
+    'has_data': stats.get('has_serves', False)
+  }
+
 
 
 def calc_point_diff( ppr_df, disp_player):
