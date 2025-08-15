@@ -4136,42 +4136,46 @@ def report_player_expected_value(lgy, team, **rpt_filters):
       area_num = int(area.split()[-1])
       temp_df = ppr_df[ppr_df['att_src_zone_net'] == area_num]
 
-      # Calculate FBHE
+    # Calculate FBHE
     fbhe_result = fbhe_obj(temp_df, disp_player, play_type='att', video_yn=False)
     table_data[area][0] = fbhe_result.fbhe
-    table_data[area][1] = calculate_percentile(
+    # Use percentile_str from calculate_percentile
+    _, fbhe_percentile_str = calculate_percentile(
       table_data[area][0],
       player_data_stats_df.at[0, 'fbhe_mean'],
       player_data_stats_df.at[0, 'fbhe_stdev']
     )
+    table_data[area][1] = fbhe_percentile_str if fbhe_percentile_str is not None else '0.00%'
 
     # Calculate Transition Conversion
     trans_result = calc_trans_obj(temp_df, disp_player, flag='rcv')
-    table_data[area][2] = trans_result.get('tcr', 0.0)
-    table_data[area][3] = calculate_percentile(
+    table_data[area][2] = trans_result.get('tcr_str', 0.0)
+    # Use percentile_str from calculate_percentile
+    _, tcr_percentile_str = calculate_percentile(
       table_data[area][2],
       player_data_stats_df.at[0, 'tcr_mean'],
       player_data_stats_df.at[0, 'tcr_stdev']
-    )
+      )
+    table_data[area][3] = tcr_percentile_str if tcr_percentile_str is not None else '0%'
 
     # Calculate Expected Value
     ev_result = calc_ev_obj(temp_df, disp_player)
-    table_data[area][4] = ev_result.get('expected_value', '0.00%')
+    table_data[area][4] = ev_result.get('expected_value', '0%')
     # Convert percentage string to float for percentile calculation
-    ev_value = float(ev_result.get('expected_value', '0.00%').strip('%')) / 100
-    table_data[area][5] = calculate_percentile(
+    ev_value = float(ev_result.get('expected_value', '0%').strip('%')) / 100
+    print(f" ev_value {ev_value}, mean {player_data_stats_df.at[0, 'expected_mean']}, stdev {player_data_stats_df.at[0, 'expected_stdev']}")
+    _, ev_percentile_str = calculate_percentile(
       ev_value,
       player_data_stats_df.at[0, 'expected_mean'],
       player_data_stats_df.at[0, 'expected_stdev']
     )
+    table_data[area][5] = ev_percentile_str if ev_percentile_str is not None else '0%'
 
     # Calculate Transition Points
     table_data[area][6] = trans_result.get('tran_total_pts', 0.0)
 
-    # Convert to DataFrame
+  # Convert to DataFrame
   df = pd.DataFrame(table_data)
   df_list[0] = df.to_dict('records')
 
   return title_list, label_list, image_list, df_list
-
-  

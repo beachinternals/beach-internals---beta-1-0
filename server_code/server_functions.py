@@ -767,7 +767,7 @@ def calc_ev_obj(ppr_df, disp_player):
   # Expected value percentage
   ev_dict['expected_value'] = (ev_dict['points_won'] / ev_dict['total_points'] 
                                if ev_dict['total_points'] != 0 else 0)
-  ev_dict['expected_value'] = f"{ev_dict['expected_value']:.2%}"
+  ev_dict['expected_value'] = f"{ev_dict['expected_value']:.0%}"
 
   return ev_dict
 
@@ -1788,6 +1788,6 @@ def calculate_percentile(metric, mean, std_dev):
   percentile = stats.norm.cdf(z_score)
 
   # Convert to percentage string
-  percentile_str = f"{percentile * 100:.1f}%"
+  percentile_str = f"{percentile * 100:.0f}%"
 
   return percentile, percentile_str

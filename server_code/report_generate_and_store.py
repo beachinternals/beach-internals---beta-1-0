@@ -34,7 +34,7 @@ from reports_player_new import *
 # Set up logging to output to stdout
 logging.basicConfig(
   level=logging.INFO,
-  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - Line: %(lineno)d',
   handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger(__name__)
