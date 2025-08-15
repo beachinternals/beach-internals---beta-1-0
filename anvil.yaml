@@ -305,6 +305,9 @@ db_schema:
     - admin_ui: {order: 13.5, width: 200}
       name: pair_data_stats_date
       type: datetime
+    - admin_ui: {order: 9.75, width: 200}
+      name: player_stats_json
+      type: media
     server: full
     title: ppr_csv_tables
   report_data:
