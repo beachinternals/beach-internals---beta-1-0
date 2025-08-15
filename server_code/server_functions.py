@@ -608,7 +608,7 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
   
   # caculate total transsition points
   tran_total_pts = ppr_df.shape[0]
-  print(f"Calc_tran_obj called: disp_player: {disp_player}, {flag}, all total points = {all_total_pts}, transition points {tran_total_pts}")
+  #print(f"Calc_tran_obj called: disp_player: {disp_player}, {flag}, all total points = {all_total_pts}, transition points {tran_total_pts}")
   
   # set return status if we have no data left
   if tran_total_pts == 0:
@@ -634,7 +634,7 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
   # transition conversion rate, float and string
   if tran_total_pts != 0:
     tcr = tran_pts_won / tran_total_pts
-    tcr_str = str('{:.1%}').format(tcr)
+    tcr_str = str('{:.0%}').format(tcr)
   else:
     tcr = None
     tcr_str = None
@@ -643,7 +643,7 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
   # transition effeiciency
   if tran_total_pts != 0:
     t_eff = (tran_kills_won - tran_errors_lost) / tran_total_pts
-    t_eff_str = str('{:.1%}').format(t_eff)
+    t_eff_str = str('{:.0%}').format(t_eff)
   else:
     t_eff = None
     t_eff_str = None
@@ -652,7 +652,7 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
   # transition creates
   if tran_total_pts != 0:
     t_create = (tran_total_pts) / all_total_pts
-    t_create_str = str('{:.1%}').format(t_create)
+    t_create_str = str('{:.0%}').format(t_create)
   else:
     t_create = None
     t_create_str= None

@@ -4163,8 +4163,8 @@ def report_player_expected_value(lgy, team, **rpt_filters):
     ev_result = calc_ev_obj(temp_df, disp_player)
     table_data[area][4] = ev_result.get('expected_value', '0%')
     # Convert percentage string to float for percentile calculation
-    ev_value = float(ev_result.get('expected_value', '0%').strip('%')) / 100
-    print(f" ev_value {ev_value}, mean {player_data_stats_df.at[0, 'expected_mean']}, stdev {player_data_stats_df.at[0, 'expected_stdev']}")
+    ev_value = float(ev_result.get('expected_value', '0%').strip('%')) 
+    #print(f" ev_value {ev_value}, mean {player_data_stats_df.at[0, 'expected_mean']}, stdev {player_data_stats_df.at[0, 'expected_stdev']}")
     _, ev_percentile_str = calculate_percentile(
       ev_value,
       player_data_stats_df.at[0, 'expected_mean'],
