@@ -511,6 +511,12 @@ db_schema:
     - admin_ui: {order: 20.874969482421875, width: 200}
       name: image_desc_10
       type: string
+    - admin_ui: {order: 11.374969482421875, width: 200}
+      name: no_image_desc
+      type: number
+    - admin_ui: {order: 1.796844482421875, width: 200}
+      name: no_df_desc
+      type: number
     server: full
     title: report_data
   report_list:
@@ -596,6 +602,66 @@ db_schema:
       type: string
     - admin_ui: {order: -1.5, width: 74}
       name: id
+      type: string
+    - admin_ui: {order: 10.19140625, width: 200}
+      name: df_desc_1
+      type: string
+    - admin_ui: {order: 11.19140625, width: 200}
+      name: df_desc_2
+      type: string
+    - admin_ui: {order: 12.19140625, width: 200}
+      name: df_desc_3
+      type: string
+    - admin_ui: {order: 13.19140625, width: 200}
+      name: df_desc_4
+      type: string
+    - admin_ui: {order: 14.19140625, width: 200}
+      name: df_desc_5
+      type: string
+    - admin_ui: {order: 15.19140625, width: 200}
+      name: df_desc_6
+      type: string
+    - admin_ui: {order: 16.19140625, width: 200}
+      name: df_desc_7
+      type: string
+    - admin_ui: {order: 17.19140625, width: 200}
+      name: df_desc_8
+      type: string
+    - admin_ui: {order: 18.19140625, width: 200}
+      name: df_desc_9
+      type: string
+    - admin_ui: {order: 19.19140625, width: 200}
+      name: df_desc_10
+      type: string
+    - admin_ui: {order: 20.19140625, width: 200}
+      name: image_desc_1
+      type: string
+    - admin_ui: {order: 21.19140625, width: 200}
+      name: image_desc_2
+      type: string
+    - admin_ui: {order: 22.19140625, width: 200}
+      name: image_desc_3
+      type: string
+    - admin_ui: {order: 23.19140625, width: 200}
+      name: image_desc_4
+      type: string
+    - admin_ui: {order: 24.19140625, width: 200}
+      name: image_desc_5
+      type: string
+    - admin_ui: {order: 25.19140625, width: 200}
+      name: image_desc_6
+      type: string
+    - admin_ui: {order: 26.19140625, width: 200}
+      name: image_desc_7
+      type: string
+    - admin_ui: {order: 27.19140625, width: 200}
+      name: image_desc_8
+      type: string
+    - admin_ui: {order: 28.19140625, width: 200}
+      name: image_desc_9
+      type: string
+    - admin_ui: {order: 29.19140625, width: 200}
+      name: image_desc_10
       type: string
     server: full
     title: report_list

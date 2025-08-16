@@ -27,7 +27,7 @@ class player_attacking_rpt(player_attacking_rptTemplate):
     # ------------------------------
     if report_id:
       # Fetch report data from server
-      title_list, label_list, image_list, df_list = anvil.server.call(
+      title_list, label_list, image_list, df_list, df_desc, image_desc = anvil.server.call(
         "get_report_data", report_id
       )
 

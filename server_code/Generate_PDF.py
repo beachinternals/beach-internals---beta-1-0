@@ -22,40 +22,6 @@ from player_reports import *
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
-'''
-
-@anvil.server.callable
-def generate_pdf_report( rpt_form, report_id):
-  # need to look into report data file to make a useful pdf file name
-  try:
-    # Get report data row
-    rpt_data_row = app_tables.report_data.get(report_id=report_id)
-    if not rpt_data_row:
-      return {'error': f'Report ID {report_id} not found'}
-
-      # Determine file names for PDF and JSON
-    if rpt_data_row['title_6'] == 'pair':
-      base_name = f"{rpt_data_row['title_10']} {rpt_data_row['title_1']}"
-      pdf_file = f"{base_name}.pdf"
-      json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    elif rpt_data_row['title_6'] == 'player':
-      base_name = f"{rpt_data_row['title_9']} {rpt_data_row['title_1']}"
-      pdf_file = f"{base_name}.pdf"
-      json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    else:
-      base_name = report_id
-      pdf_file = f"{base_name}.pdf"
-      json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-
-  
-    rpt_pdf = PDFRenderer( filename=pdf_file, landscape = True).render_form(rpt_form,report_id)
-
-  except Exception as e:
-    return {'pdf': None, 'json_file_name': None, 'error': f'Error generating report: {str(e)}'}
-    
-  return rpt_pdf 
-'''
-
 
 @anvil.server.callable
 def generate_pdf_report(rpt_form, report_id):
@@ -111,7 +77,7 @@ def generate_json_report(rpt_form, report_id):
     Returns:
         dict: {'pdf': BlobMedia, 'json_file_name': str, 'error': str or None}
     """
-    # Get report data row
+  # Get report data row
   rpt_data_row = app_tables.report_data.get(report_id=report_id)
   if not rpt_data_row:
     return {'error': f'Report ID {report_id} not found'}
@@ -146,7 +112,9 @@ def generate_json_report(rpt_form, report_id):
     'titles': {},
     'labels': {},
     'dataframes': {},
-    'images': {}
+    'dataframe_descriptions': {},
+    'images': {},
+    'image_descriptions': {}
   }
 
   # Extract titles (title_1 to title_10)
@@ -189,6 +157,14 @@ def generate_json_report(rpt_form, report_id):
       except KeyError:
         report_data['dataframes'][df_key] = None
 
+    # Extract dataframe descriptions (df_desc_1 to df_desc_10)
+    for i in range(1, 11):
+      df_desc_key = f'df_desc_{i}'
+      try:
+        report_data['dataframe_descriptions'][df_desc_key] = rpt_data_row[df_desc_key]
+      except KeyError:
+        report_data['dataframe_descriptions'][df_desc_key] = None
+
     # Extract images (image_1 to image_10)
     for i in range(1, 11):
       img_key = f'image_{i}'
@@ -212,6 +188,14 @@ def generate_json_report(rpt_form, report_id):
           report_data['images'][img_key] = None
       except KeyError:
         report_data['images'][img_key] = None
+
+    # Extract image descriptions (image_desc_1 to image_desc_10)
+    for i in range(1, 11):
+      img_desc_key = f'image_desc_{i}'
+      try:
+        report_data['image_descriptions'][img_desc_key] = rpt_data_row[img_desc_key]
+      except KeyError:
+        report_data['image_descriptions'][img_desc_key] = None
 
   # Convert to JSON
   json_str = json.dumps(report_data, indent=2, default=str)
@@ -262,10 +246,6 @@ def parse_markdown_table(markdown_text):
     return df
   except Exception:
     return None
-
-
-  
-    
 
 
 @anvil.server.callable

@@ -67,6 +67,11 @@ def get_valid_functions() -> set:
     _valid_functions_cache = {row['function_name'] for row in tables.app_tables.report_list.search()}
   return _valid_functions_cache
 
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+  #
+  #        Generate and Store Report
+  #
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
 @anvil.server.callable
 def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters) -> str:
   """
@@ -89,6 +94,8 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
   label_list: List[str] = []
   image_list: List[Any] = []
   df_list: List[Dict] = []
+  df_desc_list: List[str] = []
+  image_desc_list: List[str] = []
 
   # Log the request
   logger.info(f"Generating report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}, filters: {rpt_filters}")
@@ -108,7 +115,7 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
     else:
       # Call the function
       try:
-        title_list, label_list, image_list, df_list = func(lgy, team, **rpt_filters)
+        title_list, label_list, image_list, df_list, df_desc_list, image_desc_list = func(lgy, team, **rpt_filters)
       except Exception as e:
         logger.error(f"Error executing {fnct_name}: {str(e)}")
         title_list.append(f"Execution Error: {fnct_name}")
@@ -157,6 +164,11 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
       no_images += 1
   rpt_data_row['no_image'] = no_images
 
+  # Store image descriptions (max 10)
+  rpt_data_row['no_image_desc'] = min(len(image_desc_list), 10)
+  for i, image_desc in enumerate(image_desc_list[:10]):
+    rpt_data_row[f'image_desc_{i+1}'] = image_desc
+
   # Store DataFrames as markdown (max 10)
   no_dfs = 0
   for i, df_data in enumerate(df_list[:10]):
@@ -176,142 +188,19 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
         logger.error(f"Failed to store DataFrame {i+1}: {str(e)}")
   rpt_data_row['no_df'] = no_dfs
 
+  # Store DataFrame descriptions (max 10)
+  rpt_data_row['no_df_desc'] = min(len(df_desc_list), 10)
+  for i, df_desc in enumerate(df_desc_list[:10]):
+    rpt_data_row[f'df_desc_{i+1}'] = df_desc
+
   logger.info(f"Stored report with ID: {report_id}")
   return report_id
 
-
-'''
-
-@anvil.server.callable
-def generate_and_store_report( fnct_name, lgy, team, **rpt_filters ):
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
   #
-  # this routine runs the given report (fnct_name) using the parameters in *(**kwargs) and 
-  # stores the data in the report_data table, returngin the index to that table
+  #        Get Report Data
   #
-
-  #
-  # Call the report function storing the results in three lists:
-  #      label_list[ ] - list of text tables
-  #.     image_list[] - list of images, mainly plots
-  #.     df_list[] - a list of dataframes (to be converted to mkdn), but kep as a df for now
-  #
-  #.     Th emax we can store are 10 items in each list, that is the max in the report_data tables, and the hmtl forms are configured for a max of 10 in each
-  title_list = []
-  label_list = []
-  image_list = []
-  df_list = []
-
-  #print(f"generate and store report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}\n Report Filters: {rpt_filters}")
-  if fnct_name == 'report_league_new':
-    title_list, label_list, image_list, df_list = report_league_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'pair_season_summary_new':
-    title_list, label_list, image_list, df_list = pair_season_summary_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'report_player_attacking':
-    title_list, label_list, image_list, df_list = report_player_attacking( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_consistency_report_new':
-    title_list, label_list, image_list, df_list = player_consistency_report_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_season_summary_new':
-    title_list, label_list, image_list, df_list = player_season_summary_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_sw_new':
-    title_list, label_list, image_list, df_list = player_sw_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_45_fbhe_new':
-    title_list, label_list, image_list, df_list = player_45_fbhe_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_45_passing_new':
-    title_list, label_list, image_list, df_list = player_45_passing_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_pass_cluster_new':
-    title_list, label_list, image_list, df_list = player_pass_cluster_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_45_pass_area_new':
-    title_list, label_list, image_list, df_list = player_45_pass_area_new( lgy, team, **rpt_filters )
-  elif fnct_name == 'league_tri_corr':
-    title_list, label_list, image_list, df_list = league_tri_corr( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_att_tendencies':
-    title_list, label_list, image_list, df_list = player_att_tendencies( lgy, team, **rpt_filters )
-  elif fnct_name == 'player_correlation_set':
-    title_list, label_list, image_list, df_list = player_correlation_set( lgy, team, **rpt_filters )
-  elif fnct_name == 'report_player_sets':
-    title_list, label_list, image_list, df_list = report_player_sets( lgy, team, **rpt_filters )
-    
-    
-    #elif fnct_name == '':
-    #  title_list, label_list, image_list, df_list = ( lgy, team, **rpt_filters )
-  else:
-    title_list = title_list.append('Report Not Found : '+fnct_name)
-
-
-    
-  # just to make sure ...
-  plt.close('all')
-  #print(f"Title List returned, Length: {len(title_list)}, list: {title_list}")
-  #print(f"Label List returned, Length: {len(label_list)}, list: {label_list}")
-  #print(f"Image List returned, Length: {len(image_list)}, list: {image_list}")
-  #print(f"DF List returned, Length: {len(df_list)}, list: {df_list}")
-  
-  # now store the returned data in the report_data table
-  # Generate unique report ID
-  report_id = str(uuid.uuid4())
-
-  # Store in temporary Data Table row
-  app_tables.report_data.add_row(
-    report_id=report_id,
-    created_at=datetime.now()
-  )
-
-  # get this record and store the labels , images, and dfs
-  rpt_data_row = app_tables.report_data.get(report_id = report_id)
-
-  rpt_data_row['no_title'] = len(title_list)  
-  if len(title_list) > 0:
-    for i in range(0,len(title_list)):
-      var = 'title_'+str(i+1)
-      #print(f" label to be stored: {var}, title: {title_list[i]}")
-      rpt_data_row[var] = title_list[i]
-
-  # store the lgy in title_
-  rpt_data_row['title_4'] = lgy
-  # we now overfide what might be int eh report_list table with the acutal filter text for this report
-  rpt_data_row['title_7'] = make_filter_text( lgy, **rpt_filters)
-  
-  rpt_data_row['no_label'] = len(label_list)
-  if len(label_list) > 0:
-    for i in range(0,len(label_list)):
-      var = 'label_'+str(i+1)
-      #print(f" label to be stored: {var}, label: {label_list[i]}")
-      rpt_data_row[var] = label_list[i]
-      
-  no_images = 0
-  if len(image_list) > 0:
-    for i in range(0,len(image_list)):
-      if type(image_list[i]) is not str:
-        var = 'image_'+str(i+1)
-        rpt_data_row[var] = image_list[i]
-        no_images = no_images + 1
-  rpt_data_row['no_image'] = no_images 
-      
-  no_dfs = 0
-  #print(f"store report data, df_list, length {len(df_list)} df list : {df_list}")
-  if len(df_list) > 0:
-    for i in range(0,len(df_list)):
-      #print(f"df list # :{i}, df : {type(df_list[i])}")
-      var = 'df_'+str(i+1)
-      if len(df_list[i]) != 0:
-
-        # Validate and recover DataFrame
-        if not isinstance(df_list[i], list) or not all(isinstance(row, dict) for row in df_list[i]):
-          raise ValueError(f"Expected list of dictionaries, got {type(df_list[i])}")
-        try:
-          df_tmp = pd.DataFrame(df_list[i])
-        except Exception as e:
-          raise ValueError(f"Failed to recover DataFrame: {str(e)}")
-
-        # need to store the data as a markdown, not datafarme (no pandas in the client)
-        mkdn_file = pd.DataFrame.to_markdown(df_tmp, index = False ) # now convert it to mkdn formate
-        rpt_data_row[var] = anvil.BlobMedia(content_type="text/plain", content=mkdn_file.encode(), name=var+'.mkdn')
-        no_dfs = no_dfs + 1
-  rpt_data_row['no_df'] = no_dfs
-
-  return report_id
-'''
-
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
 @anvil.server.callable
 def get_report_data(report_id):
 
@@ -321,18 +210,20 @@ def get_report_data(report_id):
   label_list = ['','','','','','','','','','']
   image_list = ['','','','','','','','','','']
   df_list = ['','','','','','','','','','']
-  
+  df_desc_list = ['','','','','','','','','','']
+  image_desc_list = ['','','','','','','','','','']
+
   if not row:
     return None
   else:
     for i in range(0,row['no_title']):
       title_var = 'title_'+str(i+1)
       title_list[i] = row[title_var]
-      
+
     for i in range(0,row['no_label']):
       label_var = 'label_'+str(i+1)
       label_list[i] = row[label_var]
-      
+
     for i in range(0,row['no_image']):
       image_var = 'image_'+str(i+1)
       image_list[i] = row[image_var]
@@ -341,54 +232,167 @@ def get_report_data(report_id):
       df_var = 'df_'+str(i+1)
       mkdn_file = row[df_var].get_bytes().decode('utf-8')
       df_list[i] = mkdn_file
-        
-  return title_list, label_list, image_list, df_list
 
-@anvil.server.callable
-def report_test( lgy, team, **rpt_filters):
-  # lgy is the legaue+gender+year string
-  # unpack lgy into league, gender, year
-  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+    for i in range(0,row['no_df_desc']):
+      df_desc_var = 'df_desc_'+str(i+1)
+      df_desc_list[i] = row[df_desc_var]
 
-  # fetch the ppr dataframe
-  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+    for i in range(0,row['no_image_desc']):
+      image_desc_var = 'image_desc_'+str(i+1)
+      image_desc_list[i] = row[image_desc_var]
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+  #
+  #        Setup Report Basics
+  #
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+def setup_report_basics(lgy, team, function_name=None):
+  """
+  Helper function to set up basic title and label lists from report_list table.
+  This can be reused by all report functions.
   
-  # now filter the ppr dataframe
-  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  Args:
+    function_name: Name of the function in report_list table
+    lgy: League identifier
+    team: Team identifier
+    
+  Returns:
+    tuple: (title_list, label_list) pre-populated from database
+  """
+
+  if function_name is None:
+    function_name = inspect.stack()[1].function
     
   # initiate return lists
   title_list = ['','','','','','','','','','']
   label_list = ['','','','','','','','','','']
+  df_desc_list = ['','','','','','','','','','']
+  image_desc_list = ['','','','','','','','','','']
+
+  # fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=function_name)
+  if rpt_row:
+    title_list[0] = rpt_row['rpt_title']
+    title_list[1] = rpt_row['rpt_sub_title']
+    title_list[2] = rpt_row['rpt_section_title1']
+    title_list[3] = lgy  # Override with actual lgy parameter
+    title_list[4] = team  # Override with actual team parameter
+    title_list[5] = rpt_row['rpt_type']
+    title_list[6] = rpt_row['filter_text']
+    title_list[7] = rpt_row['explain_text']
+
+    label_list[0] = rpt_row['box1_title']
+    label_list[1] = rpt_row['box2_title']
+    label_list[2] = rpt_row['box3_title']
+    label_list[3] = rpt_row['box4_title']
+    label_list[4] = rpt_row['box5_title']
+    label_list[5] = rpt_row['box6_title']
+    label_list[6] = rpt_row['box7_title']
+    label_list[7] = rpt_row['box8_title']
+    label_list[8] = rpt_row['box9_title']
+    label_list[9] = rpt_row['box10_title']
+
+    df_desc_list[0] = rpt_row['df_desc_1']
+    df_desc_list[1] = rpt_row['df_desc_2']
+    df_desc_list[2] = rpt_row['df_desc_3']
+    df_desc_list[3] = rpt_row['df_desc_4']
+    df_desc_list[4] = rpt_row['df_desc_5']
+    df_desc_list[5] = rpt_row['df_desc_6']
+    df_desc_list[6] = rpt_row['df_desc_7']
+    df_desc_list[7] = rpt_row['df_desc_8']
+    df_desc_list[8] = rpt_row['df_desc_9']
+    df_desc_list[9] = rpt_row['df_desc_10']
+
+    image_desc_list[0] = rpt_row['image_desc_1']
+    image_desc_list[1] = rpt_row['image_desc_2']
+    image_desc_list[2] = rpt_row['image_desc_3']
+    image_desc_list[3] = rpt_row['image_desc_4']
+    image_desc_list[4] = rpt_row['image_desc_5']
+    image_desc_list[5] = rpt_row['image_desc_6']
+    image_desc_list[6] = rpt_row['image_desc_7']
+    image_desc_list[7] = rpt_row['image_desc_8']
+    image_desc_list[8] = rpt_row['image_desc_9']
+    image_desc_list[9] = rpt_row['image_desc_10']
+  
+
+  return title_list, label_list, df_desc_list, image_desc_list
+
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+  #
+  #        Generic Report Stub - Copy this as a starting Point
+  #
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+def report_test(lgy, team, **rpt_filters):
+  """
+  Test report function - serves as a stub/template for other report functions.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
   image_list = ['','','','','','','','','','']
   df_list = ['','','','','','','','','','']
 
-  # fetch the labels from the database
-  rpt_row = app_tables.report_list.get(function_name='report_test')
-  title_list[0] = rpt_row['rpt_title']
-  title_list[1] = rpt_row['rpt_sub_title']
-  title_list[2] = rpt_row['rpt_section_title1']
-  title_list[3] = rpt_row['lgy']
-  title_list[4] = rpt_row['team_name']
-  title_list[5] = rpt_row['rpt_type']
-  title_list[6] = rpt_row['filter_text']
-  title_list[7] = rpt_row['explain_text']
-  
-  label_list[0] = rpt_row['box1_title']
-  label_list[1] = rpt_row['box2_title']
-  label_list[2] = rpt_row['box3_title']
-  label_list[3] = rpt_row['box4_title']
-  label_list[4] = rpt_row['box5_title']
-  label_list[5] = rpt_row['box6_title']
-  label_list[6] = rpt_row['box7_title']
-  label_list[7] = rpt_row['box8_title']
-  label_list[8] = rpt_row['box9_title']
-  label_list[9] = rpt_row['box10_title']
-  
-  
-  return title_list, label_list, image_list, df_list
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
+
+  # Example: Create a simple DataFrame from filtered data
+  if not ppr_df.empty:
+    # Convert first 10 rows to dict format for storage
+    sample_data = ppr_df.head(10).to_dict('records')
+    df_list[0] = sample_data
+
+  # Example: Create a summary DataFrame
+  if not ppr_df.empty and len(ppr_df) > 1:
+    summary_data = [
+      {'Metric': 'Total Records', 'Value': len(ppr_df)},
+      {'Metric': 'Team', 'Value': team},
+      {'Metric': 'League', 'Value': disp_league},
+      {'Metric': 'Gender', 'Value': disp_gender},
+      {'Metric': 'Year', 'Value': disp_year}
+    ]
+    df_list[1] = summary_data
+
+  # Example: You would generate actual plots/images here
+  # For now, just adding placeholder descriptions
+  if not ppr_df.empty:
+    _ = None
+    # image_list[0] = your_generated_plot_here
+    # image_list[1] = your_other_plot_here
+
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
-@anvil.server.callable
+
+
 def report_player_attacking( lgy, team, **rpt_filters):
   '''
   Report Functions:
@@ -411,44 +415,25 @@ def report_player_attacking( lgy, team, **rpt_filters):
   #            Initialize all lists, get and filter the data, and fetch in information from report_list
   #
   #-----------------------------------------------------------------------------------------------------
-  # lgy is the legaue+gender+year string
-  # unpack lgy into league, gender, year
-  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
 
-  # fetch the ppr dataframe and filter by all the report filters
-  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
-  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
-  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
-
-  # initiate return lists
-  title_list = ['','','','','','','','','','']
-  label_list = ['','','','','','','','','','']
+  # Initialize the calculated lists
   image_list = ['','','','','','','','','','']
   df_list = ['','','','','','','','','','']
 
-  # fetch the labels from the database
-  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
-  title_list[0] = rpt_row['rpt_title']
-  title_list[1] = rpt_row['rpt_sub_title']
-  title_list[2] = rpt_row['rpt_section_title1']
-  title_list[3] = rpt_filters.get('lgy')
-  title_list[4] = rpt_row['team_name']
-  title_list[5] = rpt_row['rpt_type']
-  title_list[6] = rpt_row['filter_text']
-  title_list[7] = rpt_row['explain_text']
-  title_list[8] = rpt_filters.get('player')
-  title_list[9]= rpt_filters.get('pair')
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
-  label_list[0] = rpt_row['box1_title']
-  label_list[1] = rpt_row['box2_title']
-  label_list[2] = rpt_row['box3_title']
-  label_list[3] = rpt_row['box4_title']
-  label_list[4] = rpt_row['box5_title']
-  label_list[5] = rpt_row['box6_title']
-  label_list[6] = rpt_row['box7_title']
-  label_list[7] = rpt_row['box8_title']
-  label_list[8] = rpt_row['box9_title']
-  label_list[9] = rpt_row['box10_title']
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+  
 
   #------------------------------------------------------------------------------------------------------
   #
@@ -479,6 +464,8 @@ def report_player_attacking( lgy, team, **rpt_filters):
         att_table[col] = att_table[col].astype(object).where(att_table[col].notna(), None)  # Numpy to Python
     df_list[0] = att_table.to_dict('records')
 
+    print(f"Player Attacking Along Net, df0 = {df_list[0]}")
+
 
   # get the grpahs of attacks, zone 1 - 5, all as one graph
   z1_plt, z2_plt, z3_plt, z4_plt, z5_plt, z1_df, z2_df, z3_df, z4_df, z5_df = get_player_attack_plots(ppr_df, disp_player)
@@ -498,7 +485,7 @@ def report_player_attacking( lgy, team, **rpt_filters):
   df_list[5] = z5_df.to_dict('records')
   
   
-  return title_list, label_list, image_list, df_list
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
 @anvil.server.callable
