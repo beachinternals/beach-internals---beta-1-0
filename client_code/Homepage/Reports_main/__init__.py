@@ -272,10 +272,6 @@ class Reports_main(Reports_mainTemplate):
       rpt_filters['rpt_detail'] = 'detail'
     if self.rpt_summary.selected:
       rpt_filters['rpt_detail'] = 'summary'
-
-
-    if self.opp_pair_drop_down.selected_value:
-      rpt_filters['opp_pair'] == self.opp_pair_drop_down.selected_value
       
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     rpt_filters['player'] = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
@@ -625,6 +621,24 @@ class Reports_main(Reports_mainTemplate):
           rpt_type=self.rpt_type_drop_down.selected_value
         )
       ]
+
+    # set visibility based on report type
+    if self.rpt_type_drop_down.selected_value == 'player':
+      self.label_12.visible = True
+      self.player_drop_down.visible =  True
+      self.label_1.visible = False
+      self.pair_drop_down.visible = False
+    elif self.rpt_type_drop_down.selected_value =='pair':
+      self.label_12.visible = False
+      self.player_drop_down.visible =  False
+      self.label_1.visible = True
+      self.pair_drop_down.visible = True
+    elif self.rpt_type_drop_down.selected_value =='league':
+      self.label_12.visible = False
+      self.player_drop_down.visible =  False
+      self.label_1.visible = False
+      self.pair_drop_down.visible = False
+      
     pass
 
   def json_button_click(self, **event_args):
@@ -654,9 +668,6 @@ class Reports_main(Reports_mainTemplate):
     #pair, player, opp pair
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     #rpt_filters['player'] = self.player_drop_down.selected_value['player']
-
-    if self.opp_pair_drop_down.selected_value:
-      rpt_filters['opp_pair'] == self.opp_pair_drop_down.selected_value
 
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     rpt_filters['player'] = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
