@@ -45,18 +45,7 @@ logger.debug("Debug information")
 logger.warning("This is a warning")
 logger.error("An error occurred")
 
-'''
-# Set up logging
-# Set up logging to output to stdout
-logging.basicConfig(
-  level=logging.INFO,
-  format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - Line: %(lineno)d',
-  handlers=[logging.StreamHandler(sys.stdout)]
-)
-logger = logging.getLogger(__name__)
-logger.info("This is an info message")
-logger.error("This is an error message")
-'''
+
 # Cache for valid function names
 _valid_functions_cache = None
 
@@ -67,11 +56,12 @@ def get_valid_functions() -> set:
     _valid_functions_cache = {row['function_name'] for row in tables.app_tables.report_list.search()}
   return _valid_functions_cache
 
-  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
-  #
-  #        Generate and Store Report
-  #
-  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+  
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+#
+#        Generate and Store Report
+#
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
 @anvil.server.callable
 def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters) -> str:
   """
@@ -150,6 +140,12 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
   except NameError:
     logger.warning("make_filter_text not defined; skipping filter text storage")
     rpt_data_row['title_7'] = str(rpt_filters)
+
+  # Store player in title_9
+  rpt_data_row['title_9'] = rpt_filters.get('player')
+
+  # Store pair in title_10
+  rpt_data_row['title_10'] = rpt_filters.get('pair')
 
     # Store labels (max 10)
   rpt_data_row['no_label'] = min(len(label_list), 10)
@@ -659,6 +655,10 @@ Data Filters:
     filter_text += f"- End Date = {str(rpt_filters['end_date'])}\n"
   if rpt_filters.get("set") is not None and rpt_filters.get("set") != "":
     filter_text += f"- Set = {str(rpt_filters['set'])}\n"
+  if rpt_filters.get("set_ht_low") is not None and rpt_filters.get("set_ht_low") != "":
+    filter_text += f"- Set Height, Low  = {str(rpt_filters['set_ht_low'])}\n"
+  if rpt_filters.get("set_ht_high") is not None and rpt_filters.get("set_ht_high") != "":
+    filter_text += f"- Set Height, High  = {str(rpt_filters['set_ht_high'])}\n"
   if rpt_filters.get("set_touch_type") is not None and rpt_filters.get("set_touch_type") != "":
     filter_text += f"- Set Touch Type = {str(rpt_filters['set_touch_type'])}\n"
   if rpt_filters.get("pass_oos") is not None and rpt_filters.get("pass_oos") != "":

@@ -1684,22 +1684,23 @@ def filter_ppr_df( dataframe, **kwargs):
     if column == 'end_date':
       result = apply_date_filters(result, column, value )
 
-    # opponent pair for matchu0ps
-    if column == 'opp_pair':
-      result = result[ ( result['teama'] == value | result['teamb'] == value ) ]
-
     # set, these are setup as a radio button, so only one can be chceked.  We pass the 'set' as either 1,2,3, or it is not in the list
     if column == 'set':
       result = result[ result[column] == value ]
 
-    # serving to, this is a list of up to 15 zones
-    if column == 'srv_fr':
-      result = result[ result['serve_src_zone_net'].isin(value) ]
 
-    # serving from, this is a list of 3 zones
+    # serving from, this is a list of up to 15 zones
+    if column == 'srv_fr':
+      result = result[ (result['serve_src_zone_net'].isin(value) )]
+      print(f"Srv_fr filter, {value}, result : {result.shape[0]}")
+
+      # serving to filter...
     if column == 'srv_to':
-      result['srv_to'] = str(result['serve_dest_zone_net'])+result['serve_dest_zone_depth']
-      result = result[ result['srv_to'].isin(value) ]
+      # Create the srv_to column by concatenating (convert each value to string)
+      result['srv_to'] = result['serve_dest_zone_net'].astype(str) + result['serve_dest_zone_depth'].astype(str)
+      result = result[result['srv_to'].isin(value)]
+      print(f"Srv_to filter, {value}, result : {result.shape[0]}")
+
 
     # serve speed
     if column == 'srv_speed_low':
