@@ -1688,18 +1688,20 @@ def filter_ppr_df( dataframe, **kwargs):
     if column == 'set':
       result = result[ result[column] == value ]
 
-
-    # serving from, this is a list of up to 15 zones
     if column == 'srv_fr':
-      result = result[ (result['serve_src_zone_net'].isin(value) )]
-      print(f"Srv_fr filter, {value}, result : {result.shape[0]}")
+      #print(f"Value list: {value}, type of first item: {type(value[0])}")
+      #print(f"Column values: {result['serve_src_zone_net'].head()}")
+      #print(f"Column dtype: {result['serve_src_zone_net'].dtype}")
+
+      result = result[result['serve_src_zone_net'].astype(str).isin(value)]
+      #print(f"Srv_fr filter, {value}, result : {result.shape[0]}")
 
       # serving to filter...
     if column == 'srv_to':
       # Create the srv_to column by concatenating (convert each value to string)
       result['srv_to'] = result['serve_dest_zone_net'].astype(str) + result['serve_dest_zone_depth'].astype(str)
       result = result[result['srv_to'].isin(value)]
-      print(f"Srv_to filter, {value}, result : {result.shape[0]}")
+      #print(f"Srv_to filter, {value}, result : {result.shape[0]}")
 
 
     # serve speed
@@ -1736,9 +1738,9 @@ def filter_ppr_df( dataframe, **kwargs):
 
     # att height
     if column == 'att_ht_low':
-      result = result[ result['att_height'] >= value ]
+      result = result[ result['att_touch_height'] >= value ]
     if column == 'att_ht_high':
-      result = result[ result['att_height'] <= value ]
+      result = result[ result['att_touch_height'] <= value ]
 
     # att speed
     if column == 'att_speed_low':

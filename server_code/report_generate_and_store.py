@@ -542,7 +542,7 @@ def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
       fbhe_table.at[2,column[i-1]] = fbhe_vector[4]  # confidence interval
       fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
       fbhe_table.at[1,column[i-1]] = round( stats.norm.cdf((((fbhe_vector[0])- player_data_stats_df.at[0,var_mean])/(player_data_stats_df.at[0,var_stdev]))) , 3)
-      fbhe_table.at[1,column[i-1]] = str('{:.0%}ile').format(fbhe_table.at[1,column[i-1]])
+      fbhe_table.at[1,column[i-1]] = str('{:.0%}').format(fbhe_table.at[1,column[i-1]])
 
     return fbhe_table
   else:
