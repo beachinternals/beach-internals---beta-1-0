@@ -29,7 +29,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import anvil.media
 from io import BytesIO
-import inspect
+
 
 from tabulate import tabulate
 from server_functions import *
@@ -3723,14 +3723,14 @@ def player_correlation_set(lgy, team, **rpt_filters):
     
     return title_list, label_list, image_list, df_list
 
-
+'''
 #---------------------------------------------------------------------------
 #
 #              player report player 
 #
 #---------------------------------------------------------------------------
 def report_player_sets(lgy, team, **rpt_filters):
-  '''
+  
   Report Functions:
 
   INPUT Parameters:
@@ -3744,7 +3744,7 @@ def report_player_sets(lgy, team, **rpt_filters):
     - image_list : a list of up to 10 imiages to plot data on the report
     - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
     
-  '''
+  
 
   #------------------------------------------------------------------------------------------------------
   #            Initialize all lists, get and filter the data, and fetch in information from report_list
@@ -3873,7 +3873,7 @@ def report_player_sets(lgy, team, **rpt_filters):
   #     Now, calculate the transition table
   #
   #--------------------------------------------------------------------
-  '''
+  
 
   # calcualte the transition obj routine, then store it in a table
   trans_dict = {
@@ -3901,7 +3901,7 @@ def report_player_sets(lgy, team, **rpt_filters):
   trans_table.at['Total Points','Transition Conversion Rate'] = trans_obj.get('tran_total_pts')
 
   df_list[1] = trans_table.to_dict('records')
-  '''
+  
   
   return title_list, label_list, image_list, df_list
 
@@ -3909,7 +3909,7 @@ def report_player_sets(lgy, team, **rpt_filters):
 
 @anvil.server.callable
 def report_player_attack_transition(lgy, team, **rpt_filters):
-  '''
+  
   Report Function to display a table of player attack transition metrics.
 
   INPUT Parameters:
@@ -3922,7 +3922,7 @@ def report_player_attack_transition(lgy, team, **rpt_filters):
     - label_list : a list of up to 10 labels to display on the report
     - image_list : a list of up to 10 images to plot data on the report
     - df_list : a list of up to 10 data frames to display tables
-  '''
+  
 
   #------------------------------------------------------------------------------------------------------
   #            Initialize all lists, get and filter the data, and fetch information from report_list
@@ -4051,7 +4051,7 @@ def report_player_attack_transition(lgy, team, **rpt_filters):
 
 
 def report_player_expected_value(lgy, team, **rpt_filters):
-  '''
+  
     Report Function to display a table of player metrics by area.
 
     INPUT Parameters:
@@ -4064,7 +4064,7 @@ def report_player_expected_value(lgy, team, **rpt_filters):
       - label_list : a list of up to 10 labels to display on the report
       - image_list : a list of up to 10 images to plot data on the report
       - df_list : a list of up to 10 data frames to display tables
-    '''
+    
   #------------------------------------------------------------------------------------------------------
   # Initialize all lists, get and filter the data, and fetch information from report_list
   #------------------------------------------------------------------------------------------------------
@@ -4180,3 +4180,4 @@ def report_player_expected_value(lgy, team, **rpt_filters):
   df_list[0] = df.to_dict('records')
 
   return title_list, label_list, image_list, df_list
+'''

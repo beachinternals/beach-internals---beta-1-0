@@ -29,7 +29,7 @@ class player_att_tendencies(player_att_tendenciesTemplate):
     # ------------------------------
     if report_id:
       # Fetch report data from server
-      title_list, label_list, image_list, df_list = anvil.server.call(
+      title_list, label_list, image_list, df_list, df_desc_list, image_desc_list = anvil.server.call(
         "get_report_data", report_id
       )
 

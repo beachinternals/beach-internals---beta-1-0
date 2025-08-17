@@ -1,33 +1,45 @@
-import anvil.server
 import anvil.email
 import anvil.google.auth, anvil.google.drive, anvil.google.mail
 from anvil.google.drive import app_files
-import anvil.users
-import anvil.tables.query as q
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
-from PIL import Image
-from io import BytesIO
-import base64
+import anvil.users
+import anvil.server
 import pandas as pd
-import uuid
-import json
-from datetime import datetime, timedelta, date
-import inspect
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+import io
 import math
-import scipy.stats as stats
+import inspect
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Ellipse
 import numpy as np
-import importlib
-import sys
-from typing import Tuple, List, Dict, Any
+import scipy.stats as stats
+from scipy.stats import chi2
+from statsmodels.formula.api import ols
+from statsmodels.stats.anova import anova_lm
+from sklearn.preprocessing import LabelEncoder
+from sklearn.feature_selection import mutual_info_classif
+#import sklearn
+import seaborn as sns
 
-from plot_functions import *
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import anvil.media
+from io import BytesIO
+
+
+from tabulate import tabulate
 from server_functions import *
-from reports_player_new import *
-
+from anvil import pdf
+from pair_functions import *
+from matchup_reports import player_45_serves
+from plot_functions import *
+from datetime import datetime, timedelta
+from server_functions import *
+from plot_functions import *
 
 def report_player_att_along_net( lgy, team, **rpt_filters):
   '''
@@ -270,70 +282,40 @@ def get_player_attack_plots( ppr_df, disp_player):
 
 
 def report_player_att_tendencies(lgy, team, **rpt_filters):
-  '''
-  Report Functions:
-    - display attack tendencies by angule, we use the anguler zone for this
-
-  INPUT Parameters:
-    - lgy : league, gender, year combination (as in dropdowns)
-    - team : the team of the user calling the report
-    - rpt_filters : the list of filters to limit the data
-
-  OUTPUT Retrun Parameters:
-    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
-    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
-    - image_list : a list of up to 10 imiages to plot data on the report
-    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+  """
+  Test report function - serves as a stub/template for other report functions.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
     
-  '''
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
 
-  #------------------------------------------------------------------------------------------------------
-  #            Initialize all lists, get and filter the data, and fetch in information from report_list
-  #-----------------------------------------------------------------------------------------------------
-  # lgy is the legaue+gender+year string
-  # unpack lgy into league, gender, year
-  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
-
-  # fetch the ppr dataframe and filter by all the report filters
-  #
-  # comment out the dataframe not needed for this report
-  #
-  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
-  #print(f"PPR DF size, new {ppr_df.shape[0]}")
-  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
-  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
-  #pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
-  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
-
-  # initiate return lists
-  title_list = ['','','','','','','','','','']
-  label_list = ['','','','','','','','','','']
+  # Initialize the calculated lists
   image_list = ['','','','','','','','','','']
   df_list = ['','','','','','','','','','']
 
-  # fetch the labels from the database
-  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
-  title_list[0] = rpt_row['rpt_title']
-  title_list[1] = rpt_row['rpt_sub_title']
-  title_list[2] = rpt_row['rpt_section_title1']
-  title_list[3] = rpt_filters.get('lgy')
-  title_list[4] = rpt_row['team_name']
-  title_list[5] = rpt_row['rpt_type']
-  title_list[6] = rpt_row['filter_text']
-  title_list[7] = rpt_row['explain_text']
-  title_list[8] = rpt_filters.get('player')
-  title_list[9] = rpt_filters.get('pair')
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
-  label_list[0] = rpt_row['box1_title']
-  label_list[1] = rpt_row['box2_title']
-  label_list[2] = rpt_row['box3_title']
-  label_list[3] = rpt_row['box4_title']
-  label_list[4] = rpt_row['box5_title']
-  label_list[5] = rpt_row['box6_title']
-  label_list[6] = rpt_row['box7_title']
-  label_list[7] = rpt_row['box8_title']
-  label_list[8] = rpt_row['box9_title']
-  label_list[9] = rpt_row['box10_title']
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
 
   #------------------------------------------------------------------------------------------------------
   #
@@ -429,9 +411,377 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
       plt_image = plot_volleyball_attacks(new_df,'Attacks from the Middle')
       image_list[3] = plt_image
 
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
 
-  return title_list, label_list, image_list, df_list
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+
+#---------------------------------------------------------------------------
+#              player report player 
+#---------------------------------------------------------------------------
+def report_player_att_set(lgy, team, **rpt_filters):
+  """
+  Test report function - serves as a stub/template for other report functions.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
+
+  #------------------------------------------------------------------------------------------------------
+  #
+  #            Create the images and dataframes with filtered ppr data for report
+  #
+  #-----------------------------------------------------------------------------------------------------
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+
+  # For FBHE, filter to attacks by the player
+  ppr_df = ppr_df[ppr_df['att_player'] == disp_player]
+
+  # Bin the set_distance and set_height into 0.5 meter increments
+  distance_bins = np.arange(0, 10.5, 0.5)
+  height_bins = np.arange(0, 6.5, 0.5)
+  ppr_df['distance_bin'] = pd.cut(ppr_df['set_dist'], bins=distance_bins, labels=(distance_bins[:-1] + distance_bins[1:]) / 2)
+  ppr_df['height_bin'] = pd.cut(ppr_df['set_height'], bins=height_bins, labels=(height_bins[:-1] + height_bins[1:]) / 2)
+
+  # Define function to calculate FBHE and attempts using fbhe_obj
+  def calculate_fbhe(group):
+    if group.empty:
+      return pd.Series({'attempts': 0, 'fbhe': 0.0})
+    result = fbhe_obj(group, disp_player, 'att', True)
+    return pd.Series({'attempts': result.attempts, 'fbhe': result.fbhe,'URL':result.video_link})
+
+  # Group by bins and apply the calculation
+  grouped = ppr_df.groupby(['distance_bin', 'height_bin'], as_index=False).apply(calculate_fbhe)
+  grouped = grouped[grouped['attempts'] > 4]
+
+  # Table of attempts for df_list[0]
+  attempts_table = grouped[['distance_bin', 'height_bin', 'attempts','fbhe','URL']].rename(columns={'distance_bin': 'set_dist', 'height_bin': 'set_height'})
+  df_list[0] = attempts_table.to_dict('records')
+
+  ## Table of fbhe for df_list[1]
+  #fbhe_table = grouped[['distance_bin', 'height_bin', 'fbhe']].rename(columns={'distance_bin': 'set_dist', 'height_bin': 'set_height'})
+  #df_list[1] = fbhe_table.to_dict('records')
+
+  # Get mean and stdev for color scaling
+  fbhe_mean = player_data_stats_df['fbhe_mean']
+  fbhe_stdev = player_data_stats_df['fbhe_stdev']
+  vmin = fbhe_mean - fbhe_stdev
+  vmax = fbhe_mean + fbhe_stdev
+  xmin = 0
+  xmax = 8
+  ymin = 1
+  ymax = 4
+  attmin = 5
+  attmax = 20
+
+  # FBHE scatter plot
+  fig1, ax1 = plt.subplots()
+  scatter1 = ax1.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['fbhe'], cmap='RdYlGn', vmin=vmin, vmax=vmax, s=80)
+  fig1.colorbar(scatter1)
+  ax1.set_xlim(xmin, xmax)
+  ax1.set_ylim(ymin, ymax)
+  ax1.set_xticks(np.arange(xmin, xmax+0.5, 0.5))
+  ax1.set_yticks(np.arange(ymin, ymax+0.5, 0.5))
+  ax1.set_xlabel('Set Distance (m)')
+  ax1.set_ylabel('Set Height (m)')
+  ax1.set_title(f'{disp_player} FBHE by Set Position')
+  image_list[0] = anvil.mpl_util.plot_image()
+
+  # Attempts scatter plot
+  fig2, ax2 = plt.subplots()
+  scatter2 = ax2.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['attempts'], cmap='RdYlGn', vmin=attmin, vmax=attmax, s=80)
+  fig2.colorbar(scatter2)
+  ax2.set_xlim(xmin, xmax)
+  ax2.set_ylim(ymin, ymax)
+  ax2.set_xticks(np.arange(xmin, xmax+0.5, 0.5))
+  ax2.set_yticks(np.arange(ymin, ymax+0.5, 0.5))
+  ax2.set_xlabel('Set Distance (m)')
+  ax2.set_ylabel('Set Height (m)')
+  ax2.set_title(f'{disp_player} Attempts by Set Position (colored by Attempts)')
+  image_list[1] = anvil.mpl_util.plot_image()
+
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+def report_player_att_transition(lgy, team, **rpt_filters):
+  """
+  Test report function - serves as a stub/template for other report functions.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
+
+  #------------------------------------------------------------------------------------------------------
+  #            Create the dataframe for player attack transition metrics
+  #-----------------------------------------------------------------------------------------------------
+  disp_player = rpt_filters.get('player')
+  # Filter ppr_df to only include rows where att_player matches disp_player
+  ppr_df = ppr_df[ppr_df['att_player'].str.strip() == disp_player.strip()]
+
+  # Initialize the table data
+  table_data = {
+    'Metric': [
+      'Transition Conversion', 'Percentile',
+      'Transition Effectiveness', 'Percentile',
+      'Transition Creates', 'Percentile',
+      'Transition Points'
+    ],
+    'All': ['', '', '', '', '', '', ''],
+    'Area 1': ['', '', '', '', '', '', ''],
+    'Area 2': ['', '', '', '', '', '', ''],
+    'Area 3': ['', '', '', '', '', '', ''],
+    'Area 4': ['', '', '', '', '', '', ''],
+    'Area 5': ['', '', '', '', '', '', ''],
+    'No Area': ['', '', '', '', '', '', '']
+  }
+
+  # Helper function to calculate percentile
+  def calculate_percentile(metric, mean, std_dev):
+    if std_dev == 0 or metric is None or mean is None or std_dev is None:
+      return None, None
+    z_score = (metric - mean) / std_dev
+    percentile = stats.norm.cdf(z_score)
+    percentile_str = f"{percentile * 100:.1f}%"
+    return percentile, percentile_str
+
+  # Calculate metrics for 'All'
+  trans_obj_all = calc_trans_obj(ppr_df, disp_player, 'rcv')
+  if trans_obj_all['status']:
+    table_data['All'][0] = trans_obj_all['tcr_str']  # Transition Conversion
+    _, table_data['All'][1] = calculate_percentile(trans_obj_all['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])  # Percentile
+    table_data['All'][2] = trans_obj_all['t_eff_str']  # Transition Effectiveness
+    _, table_data['All'][3] = calculate_percentile(trans_obj_all['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])  # Percentile
+    table_data['All'][4] = trans_obj_all['t_create_str']  # Transition Creates
+    _, table_data['All'][5] = calculate_percentile(trans_obj_all['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])  # Percentile
+    table_data['All'][6] = str(trans_obj_all['tran_total_pts'])  # Transition Points
+
+  # Calculate metrics for each area (1 to 5)
+  for area in range(1, 6):
+    area_df = ppr_df[ppr_df['att_src_zone_net'] == area]
+    trans_obj_area = calc_trans_obj(area_df, disp_player, 'rcv')
+    if trans_obj_area['status']:
+      table_data[f'Area {area}'][0] = trans_obj_area['tcr_str']
+      _, table_data[f'Area {area}'][1] = calculate_percentile(trans_obj_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
+      table_data[f'Area {area}'][2] = trans_obj_area['t_eff_str']
+      _, table_data[f'Area {area}'][3] = calculate_percentile(trans_obj_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
+      table_data[f'Area {area}'][4] = trans_obj_area['t_create_str']
+      _, table_data[f'Area {area}'][5] = calculate_percentile(trans_obj_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+      table_data[f'Area {area}'][6] = str(trans_obj_area['tran_total_pts'])
+
+  # Calculate metrics for 'No Area'
+  no_area_df = ppr_df[ (ppr_df['att_src_zone_net'] != 1) & 
+    (ppr_df['att_src_zone_net'] != 2) & 
+    (ppr_df['att_src_zone_net'] != 3) & 
+    (ppr_df['att_src_zone_net'] != 4) & 
+    (ppr_df['att_src_zone_net'] != 5) 
+    ]
+  trans_obj_no_area = calc_trans_obj(no_area_df, disp_player, 'rcv')
+  if trans_obj_no_area['status']:
+    table_data['No Area'][0] = trans_obj_no_area['tcr_str']
+    _, table_data['No Area'][1] = calculate_percentile(trans_obj_no_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
+    table_data['No Area'][2] = trans_obj_no_area['t_eff_str']
+    _, table_data['No Area'][3] = calculate_percentile(trans_obj_no_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
+    table_data['No Area'][4] = trans_obj_no_area['t_create_str']
+    _, table_data['No Area'][5] = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+    table_data['No Area'][6] = str(trans_obj_no_area['tran_total_pts'])
+
+  # Convert table_data to DataFrame
+  df = pd.DataFrame(table_data)
+
+  # Store the dataframe in df_list[0]
+  df_list[0] = df.to_dict('records')
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+
+def report_player_att_expected(lgy, team, **rpt_filters):
+  """
+  Test report function - serves as a stub/template for other report functions.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
+  
+
+  #------------------------------------------------------------------------------------------------------
+  # Create the table with filtered ppr data for report
+  #------------------------------------------------------------------------------------------------------
+  # Limit the data to plays where att_player is disp_player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ppr_df['att_player'] == disp_player]
+
+  # Initialize table data
+  table_data = {
+    'Metric': ['FBHE', 'Percentile', 'Transition Conversion', 'Percentile', 'Expected Value', 'Percentile', 'Transition Points'],
+    'All': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 1': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 2': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 3': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 4': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'Area 5': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
+    'No Area': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0]
+  }
+
+  # Calculate metrics for each area
+  areas = [1, 2, 3, 4, 5]
+  for area in ['All'] + [f'Area {i}' for i in areas] + ['No Area']:
+    if area == 'All':
+      temp_df = ppr_df
+    elif area == 'No Area':
+      temp_df = ppr_df[~ppr_df['att_src_zone_net'].isin(areas)]
+    else:
+      area_num = int(area.split()[-1])
+      temp_df = ppr_df[ppr_df['att_src_zone_net'] == area_num]
+
+    # Calculate FBHE
+    fbhe_result = fbhe_obj(temp_df, disp_player, play_type='att', video_yn=False)
+    table_data[area][0] = fbhe_result.fbhe
+    # Use percentile_str from calculate_percentile
+    _, fbhe_percentile_str = calculate_percentile(
+      table_data[area][0],
+      player_data_stats_df.at[0, 'fbhe_mean'],
+      player_data_stats_df.at[0, 'fbhe_stdev']
+    )
+    table_data[area][1] = fbhe_percentile_str if fbhe_percentile_str is not None else '0.00%'
+
+    # Calculate Transition Conversion
+    trans_result = calc_trans_obj(temp_df, disp_player, flag='rcv')
+    table_data[area][2] = trans_result.get('tcr_str', 0.0)
+    tcr_value = trans_result.get('tcr', 0.0)
+    # Use percentile_str from calculate_percentile
+    _, tcr_percentile_str = calculate_percentile(
+      tcr_value,
+      player_data_stats_df.at[0, 'tcr_mean'],
+      player_data_stats_df.at[0, 'tcr_stdev']
+    )
+    table_data[area][3] = tcr_percentile_str if tcr_percentile_str is not None else '0%'
+
+    # Calculate Expected Value
+    ev_result = calc_ev_obj(temp_df, disp_player)
+    table_data[area][4] = ev_result.get('expected_value', '0%')
+    # Convert percentage string to float for percentile calculation
+    ev_value = float(ev_result.get('expected_value', '0%').strip('%')) 
+    #print(f" ev_value {ev_value}, mean {player_data_stats_df.at[0, 'expected_mean']}, stdev {player_data_stats_df.at[0, 'expected_stdev']}")
+    _, ev_percentile_str = calculate_percentile(
+      ev_value,
+      player_data_stats_df.at[0, 'expected_mean'],
+      player_data_stats_df.at[0, 'expected_stdev']
+    )
+    table_data[area][5] = ev_percentile_str if ev_percentile_str is not None else '0%'
+
+    # Calculate Transition Points
+    table_data[area][6] = trans_result.get('tran_total_pts', 0.0)
+
+  # Convert to DataFrame
+  df = pd.DataFrame(table_data)
+  df_list[0] = df.to_dict('records')
+
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
 

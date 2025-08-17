@@ -26,6 +26,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from sklearn.cluster import DBSCAN
 from plot_functions import *
 from dataclasses import dataclass
+import inspect
 
 # Set up logging
 #logging.basicConfig(level=logging.INFO)
@@ -1941,3 +1942,80 @@ def calculate_percentile(metric, mean, std_dev):
   percentile_str = f"{percentile * 100:.0f}%"
 
   return percentile, percentile_str
+
+
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+  #
+  #        Setup Report Basics
+  #
+  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+def setup_report_basics(lgy, team, function_name=None):
+  """
+  Helper function to set up basic title and label lists from report_list table.
+  This can be reused by all report functions.
+  
+  Args:
+    function_name: Name of the function in report_list table
+    lgy: League identifier
+    team: Team identifier
+    
+  Returns:
+    tuple: (title_list, label_list) pre-populated from database
+  """
+
+  if function_name is None:
+    function_name = inspect.stack()[1].function
+
+  # initiate return lists
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  df_desc_list = ['','','','','','','','','','']
+  image_desc_list = ['','','','','','','','','','']
+
+  # fetch the labels from the database
+  rpt_row = app_tables.report_list.get(function_name=function_name)
+  if rpt_row:
+    title_list[0] = rpt_row['rpt_title']
+    title_list[1] = rpt_row['rpt_sub_title']
+    title_list[2] = rpt_row['rpt_section_title1']
+    title_list[3] = lgy  # Override with actual lgy parameter
+    title_list[4] = team  # Override with actual team parameter
+    title_list[5] = rpt_row['rpt_type']
+    title_list[6] = rpt_row['filter_text']
+    title_list[7] = rpt_row['explain_text']
+
+    label_list[0] = rpt_row['box1_title']
+    label_list[1] = rpt_row['box2_title']
+    label_list[2] = rpt_row['box3_title']
+    label_list[3] = rpt_row['box4_title']
+    label_list[4] = rpt_row['box5_title']
+    label_list[5] = rpt_row['box6_title']
+    label_list[6] = rpt_row['box7_title']
+    label_list[7] = rpt_row['box8_title']
+    label_list[8] = rpt_row['box9_title']
+    label_list[9] = rpt_row['box10_title']
+
+    df_desc_list[0] = rpt_row['df_desc_1']
+    df_desc_list[1] = rpt_row['df_desc_2']
+    df_desc_list[2] = rpt_row['df_desc_3']
+    df_desc_list[3] = rpt_row['df_desc_4']
+    df_desc_list[4] = rpt_row['df_desc_5']
+    df_desc_list[5] = rpt_row['df_desc_6']
+    df_desc_list[6] = rpt_row['df_desc_7']
+    df_desc_list[7] = rpt_row['df_desc_8']
+    df_desc_list[8] = rpt_row['df_desc_9']
+    df_desc_list[9] = rpt_row['df_desc_10']
+
+    image_desc_list[0] = rpt_row['image_desc_1']
+    image_desc_list[1] = rpt_row['image_desc_2']
+    image_desc_list[2] = rpt_row['image_desc_3']
+    image_desc_list[3] = rpt_row['image_desc_4']
+    image_desc_list[4] = rpt_row['image_desc_5']
+    image_desc_list[5] = rpt_row['image_desc_6']
+    image_desc_list[6] = rpt_row['image_desc_7']
+    image_desc_list[7] = rpt_row['image_desc_8']
+    image_desc_list[8] = rpt_row['image_desc_9']
+    image_desc_list[9] = rpt_row['image_desc_10']
+
+
+  return title_list, label_list, df_desc_list, image_desc_list

@@ -362,7 +362,7 @@ Beach Internals Report Manager
 
   return return_text
 
-
+'''
 @anvil.server.callable
 def generate_json_report(rpt_form, report_id):
   """
@@ -542,7 +542,7 @@ def parse_markdown_table(markdown_text):
     return df
   except Exception:
     return None
-
+'''
 
 def srv_to_fr( s_fr, s_to_net, s_to_depth):
   # quick little function to convert data structures
