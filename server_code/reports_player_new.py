@@ -3173,10 +3173,10 @@ def league_tri_corr(lgy, team, **rpt_filters):
   
   return title_list, label_list, image_list, df_list
 
-
+'''
 @anvil.server.callable
 def player_att_tendencies(lgy, team, **rpt_filters):
-  '''
+  
   Report Functions:
     - display attack tendencies by angule, we use the anguler zone for this
 
@@ -3191,7 +3191,7 @@ def player_att_tendencies(lgy, team, **rpt_filters):
     - image_list : a list of up to 10 imiages to plot data on the report
     - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
     
-  '''
+  
 
   #------------------------------------------------------------------------------------------------------
   #            Initialize all lists, get and filter the data, and fetch in information from report_list
@@ -3489,7 +3489,7 @@ def plot_volleyball_attacks(ppr_df, plt_title=''):
 
   plt_image = anvil.mpl_util.plot_image()
   return plt_image
-
+'''
 
 def player_correlation_set(lgy, team, **rpt_filters):
   '''

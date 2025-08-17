@@ -388,9 +388,9 @@ def report_test(lgy, team, **rpt_filters):
 
 
 
-
+'''
 def report_player_attacking( lgy, team, **rpt_filters):
-  '''
+  
   Report Functions:
 
   INPUT Parameters:
@@ -404,7 +404,7 @@ def report_player_attacking( lgy, team, **rpt_filters):
     - image_list : a list of up to 10 imiages to plot data on the report
     - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
     
-  '''
+  
 
   #------------------------------------------------------------------------------------------------------
   #
@@ -486,7 +486,7 @@ def report_player_attacking( lgy, team, **rpt_filters):
 
 @anvil.server.callable
 def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
-  '''
+  
   geenrates the dataframe for the player attacking table
 
   INPUTS:
@@ -496,7 +496,7 @@ def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
   RETURNS
     - the dataframe
     
-  '''
+  
   # create the output dataframe
   df_dict = {' ':['FBHE','Percentile','FBSO','Kills','Errors','Attempts','URL'],
              'All':[0,0,0,0,0,0,' '],
@@ -625,7 +625,7 @@ def get_player_attack_plots( ppr_df, disp_player):
   z5_df = z5_df.rename(columns={'Metric': 'Zone 5'})
   
   return attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, z1_df, z2_df, z3_df, z4_df, z5_df
-
+'''
 
   
 
