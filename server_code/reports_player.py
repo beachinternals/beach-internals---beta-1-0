@@ -2264,7 +2264,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
   # =============================================================================
 
   # firt, this reprot is only when the player is serving, so:
-  ppr_df = ppr_df[ppr_df['srv_player'] == disp_player] 
+  ppr_df = ppr_df[ppr_df['serve_player'] == disp_player] 
 
 
   #------------------------------------------------------------------------------------
@@ -2310,7 +2310,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
     fbhe_table.at[3,'All'] = fbhe_vector[2]  # attempts
     #fbhe_table.at[3,'All'] = fbhe_vector[3]  # URL (someday?)
 
-    el_result = find_ellipse_area(ppr_df, disp_player, 'srv', min_srv=5)
+    el_result = find_ellipse_area(ppr_df, disp_player, 'srv', min_att=5)
     if el_result.get('attempts') >= 5:
       area_table.at[0,'All'] = str('{:.1f}').format(el_result.get('area'))
       area_table.at[2,'All'] = el_result.get('attempts')
@@ -2334,7 +2334,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
       fbhe_table.at[3,column[i]] = fbhe_vector[2]  # errors
       #fbhe_table.at[3,column[i]] = fbhe_vector[3]  # URL someday
 
-      el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv', min_srv=5)
+      el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv', min_att=5)
       if el_result.get('attempts') >= 5:
         area_table.at[0,column[i]] = str('{:.1f}').format(el_result.get('area'))
         #area_table.at[1,column[i]] = round( ((el_result.get('area')- player_data_stats_df.at[0,'pass_ea_mean'])/(player_data_stats_df.at[0,'pass_es_stdev'])) , 3)
@@ -2434,7 +2434,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
       el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                                    disp_player, 'srv', min_srv=5
+                                    disp_player, 'srv', min_att=5
                                    )
       print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
@@ -2464,7 +2464,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
       el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                                    disp_player, 'srv', min_srv=5
+                                    disp_player, 'srv', min_att=5
                                    )
       #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
@@ -2494,7 +2494,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
       el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                                    disp_player, 'srv', min_srv=5
+                                    disp_player, 'srv', min_att=5
                                    )
       #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
