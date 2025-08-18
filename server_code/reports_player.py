@@ -995,6 +995,14 @@ def player_other_sw(lgy, team, **rpt_filters):
     (ppr_df['player_b1'] == disp_player) |
     (ppr_df['player_b2'] == disp_player) 
     ]
+
+  # unpack player into team, number and short name
+  str_loc = disp_player.index(' ')
+  p_team = disp_player[:str_loc].strip()
+  p_player = disp_player[str_loc+1:]
+  str_loc = p_player.index(' ')
+  p_num = p_player[:str_loc].strip()
+  p_sname = p_player[str_loc+1:].strip()
   
   # =============================================================================
   # REPORT-SPECIFIC LOGIC STARTS HERE
@@ -2433,8 +2441,9 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
         # Zone 1 Area
       el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
         (ppr_df['serve_dest_zone_net'] == i) &
-        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                                    disp_player, 'srv', min_att=5
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() ) &
+        (ppr_df['serve_player'] == disp_player) ],
+                                    disp_player, 'pass', min_att=5
                                    )
       print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
@@ -2463,8 +2472,9 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
         # Zone 3 Area
       el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
         (ppr_df['serve_dest_zone_net'] == i) &
-        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                                    disp_player, 'srv', min_att=5
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() ) & 
+        (ppr_df['serve_player'] == disp_player) ],
+                                    disp_player, 'pass', min_att=5
                                    )
       #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
@@ -2479,7 +2489,8 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
       # Zone 5
       fbhe_vector = count_out_of_system(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
         (ppr_df['serve_dest_zone_net'] == i) &
-        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() ) &
+        (ppr_df['serve_player'] == disp_player) ],
                                         disp_player, 'srv'
                                        )
       if fbhe_vector[2] >= 5:      
@@ -2494,7 +2505,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
       el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                                    disp_player, 'srv', min_att=5
+                                    disp_player, 'pass', min_att=5
                                    )
       #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
@@ -2617,4 +2628,129 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+def report_player_srv_transition(lgy, team, **rpt_filters):
+  """
+  Test report function - serves as a stub/template for other report functions.
   
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
+
+  #------------------------------------------------------------------------------------------------------
+  #            Create the dataframe for player attack transition metrics
+  #-----------------------------------------------------------------------------------------------------
+  disp_player = rpt_filters.get('player')
+  # Filter ppr_df to only include rows where att_player matches disp_player
+  ppr_df = ppr_df[ppr_df['serve_player'].str.strip() == disp_player.strip()]
+
+  # Initialize the table data
+  table_data = {
+    'Metric': [
+      'Transition Conversion', 'Percentile',
+      'Transition Effectiveness', 'Percentile',
+      'Transition Creates', 'Percentile',
+      'Transition Points'
+    ],
+    'All': ['', '', '', '', '', '', ''],
+    'Area 1': ['', '', '', '', '', '', ''],
+    'Area 2': ['', '', '', '', '', '', ''],
+    'Area 3': ['', '', '', '', '', '', ''],
+    'Area 4': ['', '', '', '', '', '', ''],
+    'Area 5': ['', '', '', '', '', '', ''],
+    'No Area': ['', '', '', '', '', '', '']
+  }
+
+  # Helper function to calculate percentile
+  def calculate_percentile(metric, mean, std_dev):
+    if std_dev == 0 or metric is None or mean is None or std_dev is None:
+      return None, None
+    z_score = (metric - mean) / std_dev
+    percentile = stats.norm.cdf(z_score)
+    percentile_str = f"{percentile * 100:.1f}%"
+    return percentile, percentile_str
+
+  # Calculate metrics for 'All'
+  trans_obj_all = calc_trans_obj(ppr_df, disp_player, 'srv')
+  if trans_obj_all['status']:
+    table_data['All'][0] = trans_obj_all['tcr_str']  # Transition Conversion
+    _, table_data['All'][1] = calculate_percentile(trans_obj_all['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])  # Percentile
+    table_data['All'][2] = trans_obj_all['t_eff_str']  # Transition Effectiveness
+    _, table_data['All'][3] = calculate_percentile(trans_obj_all['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])  # Percentile
+    table_data['All'][4] = trans_obj_all['t_create_str']  # Transition Creates
+    percent, _ = calculate_percentile(trans_obj_all['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])  # Percentile
+    table_data['All'][5] =  f"{1-percent:.0%}"
+    table_data['All'][6] = str(trans_obj_all['tran_total_pts'])  # Transition Points
+
+  # Calculate metrics for each area (1 to 5)
+  for area in range(1, 6):
+    area_df = ppr_df[ppr_df['att_src_zone_net'] == area]
+    trans_obj_area = calc_trans_obj(area_df, disp_player, 'srv')
+    if trans_obj_area['status']:
+      table_data[f'Area {area}'][0] = trans_obj_area['tcr_str']
+      _, table_data[f'Area {area}'][1] = calculate_percentile(trans_obj_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
+      table_data[f'Area {area}'][2] = trans_obj_area['t_eff_str']
+      _, table_data[f'Area {area}'][3] = calculate_percentile(trans_obj_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
+      table_data[f'Area {area}'][4] = trans_obj_area['t_create_str']
+      percent, _ = calculate_percentile(trans_obj_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+      table_data[f'Area {area}'][5] = f"{1-percent:.0%}"
+      table_data[f'Area {area}'][6] = str(trans_obj_area['tran_total_pts'])
+
+  # Calculate metrics for 'No Area'
+  no_area_df = ppr_df[ (ppr_df['att_src_zone_net'] != 1) & 
+    (ppr_df['att_src_zone_net'] != 2) & 
+    (ppr_df['att_src_zone_net'] != 3) & 
+    (ppr_df['att_src_zone_net'] != 4) & 
+    (ppr_df['att_src_zone_net'] != 5) 
+    ]
+  trans_obj_no_area = calc_trans_obj(no_area_df, disp_player, 'srv')
+  if trans_obj_no_area['status']:
+    table_data['No Area'][0] = trans_obj_no_area['tcr_str']
+    _, table_data['No Area'][1] = calculate_percentile(trans_obj_no_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
+    table_data['No Area'][2] = trans_obj_no_area['t_eff_str']
+    _, table_data['No Area'][3] = calculate_percentile(trans_obj_no_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
+    table_data['No Area'][4] = trans_obj_no_area['t_create_str']
+    percent, _ = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+    table_data['No Area'][5] = f"{1-percent:.0%}"
+    table_data['No Area'][6] = str(trans_obj_no_area['tran_total_pts'])
+
+  # Convert table_data to DataFrame
+  df = pd.DataFrame(table_data)
+
+  # Store the dataframe in df_list[0]
+  df_list[0] = df.to_dict('records')
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+

@@ -2049,23 +2049,23 @@ def find_ellipse_area(tmp1_df, disp_player, type, min_att=5):
   if type == 'srv':
     var_x = 'serve_dest_x'
     var_y = 'serve_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['serve_player'] == disp_player]
+    #tmp1_df = tmp1_df[tmp1_df['serve_player'] == disp_player]
   elif type == 'pass':
     var_x = 'pass_dest_x'
     var_y = 'pass_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['pass_player'] == disp_player]
+    #tmp1_df = tmp1_df[tmp1_df['pass_player'] == disp_player]
   elif type == 'set':
     var_x = 'set_dest_x'
     var_y = 'set_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['set_player'] == disp_player]
+    #tmp1_df = tmp1_df[tmp1_df['set_player'] == disp_player]
   elif type == 'att':
     var_x = 'att_dest_x'
     var_y = 'att_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['att_player'] == disp_player]
+    #tmp1_df = tmp1_df[tmp1_df['att_player'] == disp_player]
   elif type == 'dig':
     var_x = 'dig_dest_x'
     var_y = 'pdig_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['dig_player'] == disp_player]
+    #tmp1_df = tmp1_df[tmp1_df['dig_player'] == disp_player]
   else:
     # default to pass
     el_message = el_message + 'type mismatch, used pass.  type='+type
