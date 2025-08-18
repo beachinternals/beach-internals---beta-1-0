@@ -628,7 +628,7 @@ def check_inconsistent_data():
     logger.info("Data consistency check completed and email sent")
 
   except Exception as e:
-    logger.error(f"Error in check_inconsistent_data: {str(e)}", exc_info=True)
+    logger.error(f"Error in check_inconsistent_data: {str(e)}")
     anvil.email.send(
       to="beachinternals@gmail.com",
       subject=f"Data Consistency Check Error - {datetime.now().strftime('%Y-%m-%d')}",

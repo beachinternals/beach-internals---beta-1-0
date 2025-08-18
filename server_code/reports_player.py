@@ -41,6 +41,13 @@ from datetime import datetime, timedelta
 from server_functions import *
 from plot_functions import *
 
+# Create logger with formatting
+from anvil_extras.logging import Logger
+import logging
+logger = Logger()
+# If the library supports standard Python logging formatting:
+formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
+
 def report_player_att_along_net( lgy, team, **rpt_filters):
   '''
   Report Functions:
@@ -136,34 +143,29 @@ def report_player_att_along_net( lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
-
 def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
   '''
   geenrates the dataframe for the player attacking table
-
   INPUTS:
     - ppr dataframe, limited as desired before calling
     - player for the dataframe
-
   RETURNS
     - the dataframe
     
   '''
   # create the output dataframe
-  df_dict = {' ':['FBHE','Percentile','FBSO','Kills','Errors','Attempts','URL'],
-             'All':[0,0,0,0,0,0,' '],
-             'Zone 1':[0,0,0,0,0,0,' '],
-             "Zone 2":[0,0,0,0,0,0,' '],
-             'Zone 3':[0,0,0,0,0,0,' '],
-             'Zone 4':[0,0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,0,' '],
-             'No Zone':[0,0,0,0,0,0,' ']
+  df_dict = {' ':['FBHE','Percentile','FBSO','Kills','Errors','Attempts','Percent Errors','URL'],
+             'All':[0,0,0,0,0,0,0,' '],
+             'Area 1':[0,0,0,0,0,0,0,' '],
+             "Area 2":[0,0,0,0,0,0,0,' '],
+             'Area 3':[0,0,0,0,0,0,0,' '],
+             'Area 4':[0,0,0,0,0,0,0,' '],
+             'Area 5':[0,0,0,0,0,0,0,' '],
+             'No Area':[0,0,0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
-
   var_mean = 'fbhe'+'_mean'
   var_stdev = 'fbhe'+'_stdev'
-
   # if the eata is not empty, create my df, populate it, and return it
   if ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
@@ -174,13 +176,17 @@ def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
     fbhe_table.at[4,'All'] = fbhe_vector[2]  # errors
     fbhe_table.at[5,'All'] = fbhe_vector[3]  # attempts
     fbhe_table.at[2,'All'] = fbhe_vector[4]  # fbso
-    fbhe_table.at[6,'All'] = fbhe_vector[5]  # URL
+    fbhe_table.at[7,'All'] = fbhe_vector[5]  # URL
+    # calculate percent errors
+    if fbhe_vector[3] > 0:  # attempts
+      fbhe_table.at[6,'All'] = str('{:.0%}').format(fbhe_vector[2] / fbhe_vector[3])  # errors / attempts
+    else:
+      fbhe_table.at[6,'All'] = '0%'
     # calucalte percentile
     fbhe_table.at[1,'All'] = round( stats.norm.cdf((((fbhe_vector[0])- player_data_stats_df.at[0,var_mean])/(player_data_stats_df.at[0,var_stdev]))) , 3)
     fbhe_table.at[1,'All'] = str('{:.0%}').format(fbhe_table.at[1,'All'])
-
-    # calculate for zones 1 - 5
-    column = ['Zone 1','Zone 2','Zone 3','Zone 4','Zone 5','No Zone']
+    # calculate for areas 1 - 5
+    column = ['Area 1','Area 2','Area 3','Area 4','Area 5','No Area']
     for i in [1,2,3,4,5,6]:
       zone = 0 if i == 6 else i
       if i != 6:
@@ -192,16 +198,20 @@ def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
       fbhe_table.at[4,column[i-1]] = fbhe_vector[2]  # errors
       fbhe_table.at[5,column[i-1]] = fbhe_vector[3]  # attempts
       fbhe_table.at[2,column[i-1]] = fbhe_vector[4]  # confidence interval
-      fbhe_table.at[6,column[i-1]] = fbhe_vector[5]  # URL
+      fbhe_table.at[7,column[i-1]] = fbhe_vector[5]  # URL
+      # calculate percent errors
+      if fbhe_vector[3] > 0:  # attempts
+        fbhe_table.at[6,column[i-1]] = str('{:.0%}').format(fbhe_vector[2] / fbhe_vector[3])  # errors / attempts
+      else:
+        fbhe_table.at[6,column[i-1]] = '0%'
       fbhe_table.at[1,column[i-1]] = round( stats.norm.cdf((((fbhe_vector[0])- player_data_stats_df.at[0,var_mean])/(player_data_stats_df.at[0,var_stdev]))) , 3)
       fbhe_table.at[1,column[i-1]] = str('{:.0%}').format(fbhe_table.at[1,column[i-1]])
-
     return fbhe_table
   else:
-    fbhe_table.at[0,'Zone 1'] = 'No Data Found'
+    fbhe_table.at[0,'Area 1'] = 'No Data Found'
     return fbhe_table
 
-
+  
 
 def get_player_attack_plots( ppr_df, disp_player):
 
@@ -270,11 +280,11 @@ def get_player_attack_plots( ppr_df, disp_player):
 
   # now change the column names
   # Rename the 'Metric' column based on DataFrame name
-  z1_df = z1_df.rename(columns={'Metric': 'Zone 1'})
-  z2_df = z2_df.rename(columns={'Metric': 'Zone 2'})
-  z3_df = z3_df.rename(columns={'Metric': 'Zone 3'})
-  z4_df = z4_df.rename(columns={'Metric': 'Zone 4'})
-  z5_df = z5_df.rename(columns={'Metric': 'Zone 5'})
+  z1_df = z1_df.rename(columns={'Metric': 'Area 1'})
+  z2_df = z2_df.rename(columns={'Metric': 'Area 2'})
+  z3_df = z3_df.rename(columns={'Metric': 'Area 3'})
+  z4_df = z4_df.rename(columns={'Metric': 'Area 4'})
+  z5_df = z5_df.rename(columns={'Metric': 'Area 5'})
 
   return attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, z1_df, z2_df, z3_df, z4_df, z5_df
 
@@ -614,27 +624,29 @@ def report_player_att_transition(lgy, team, **rpt_filters):
     return percentile, percentile_str
 
   # Calculate metrics for 'All'
-  trans_obj_all = calc_trans_obj(ppr_df, disp_player, 'rcv')
+  trans_obj_all = calc_trans_obj(ppr_df, disp_player, 'att')
   if trans_obj_all['status']:
     table_data['All'][0] = trans_obj_all['tcr_str']  # Transition Conversion
     _, table_data['All'][1] = calculate_percentile(trans_obj_all['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])  # Percentile
     table_data['All'][2] = trans_obj_all['t_eff_str']  # Transition Effectiveness
     _, table_data['All'][3] = calculate_percentile(trans_obj_all['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])  # Percentile
     table_data['All'][4] = trans_obj_all['t_create_str']  # Transition Creates
-    _, table_data['All'][5] = calculate_percentile(trans_obj_all['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])  # Percentile
+    percent, _ = calculate_percentile(trans_obj_all['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])  # Percentile
+    table_data['All'][5] =  f"{1-percent:.0%}"
     table_data['All'][6] = str(trans_obj_all['tran_total_pts'])  # Transition Points
 
   # Calculate metrics for each area (1 to 5)
   for area in range(1, 6):
     area_df = ppr_df[ppr_df['att_src_zone_net'] == area]
-    trans_obj_area = calc_trans_obj(area_df, disp_player, 'rcv')
+    trans_obj_area = calc_trans_obj(area_df, disp_player, 'att')
     if trans_obj_area['status']:
       table_data[f'Area {area}'][0] = trans_obj_area['tcr_str']
       _, table_data[f'Area {area}'][1] = calculate_percentile(trans_obj_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
       table_data[f'Area {area}'][2] = trans_obj_area['t_eff_str']
       _, table_data[f'Area {area}'][3] = calculate_percentile(trans_obj_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
       table_data[f'Area {area}'][4] = trans_obj_area['t_create_str']
-      _, table_data[f'Area {area}'][5] = calculate_percentile(trans_obj_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+      percent, _ = calculate_percentile(trans_obj_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+      table_data[f'Area {area}'][5] = f"{1-percent:.0%}"
       table_data[f'Area {area}'][6] = str(trans_obj_area['tran_total_pts'])
 
   # Calculate metrics for 'No Area'
@@ -644,14 +656,15 @@ def report_player_att_transition(lgy, team, **rpt_filters):
     (ppr_df['att_src_zone_net'] != 4) & 
     (ppr_df['att_src_zone_net'] != 5) 
     ]
-  trans_obj_no_area = calc_trans_obj(no_area_df, disp_player, 'rcv')
+  trans_obj_no_area = calc_trans_obj(no_area_df, disp_player, 'att')
   if trans_obj_no_area['status']:
     table_data['No Area'][0] = trans_obj_no_area['tcr_str']
     _, table_data['No Area'][1] = calculate_percentile(trans_obj_no_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
     table_data['No Area'][2] = trans_obj_no_area['t_eff_str']
     _, table_data['No Area'][3] = calculate_percentile(trans_obj_no_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
     table_data['No Area'][4] = trans_obj_no_area['t_create_str']
-    _, table_data['No Area'][5] = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+    percent, _ = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+    table_data['No Area'][5] = f"{1-percent:.0%}"
     table_data['No Area'][6] = str(trans_obj_no_area['tran_total_pts'])
 
   # Convert table_data to DataFrame
@@ -664,8 +677,6 @@ def report_player_att_transition(lgy, team, **rpt_filters):
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-
-
 
 def report_player_att_expected(lgy, team, **rpt_filters):
   """
@@ -702,7 +713,7 @@ def report_player_att_expected(lgy, team, **rpt_filters):
   # REPORT-SPECIFIC LOGIC STARTS HERE
   # This is where you would customize for each different report function
   # =============================================================================
-  
+
 
   #------------------------------------------------------------------------------------------------------
   # Create the table with filtered ppr data for report
@@ -713,14 +724,14 @@ def report_player_att_expected(lgy, team, **rpt_filters):
 
   # Initialize table data
   table_data = {
-    'Metric': ['FBHE', 'Percentile', 'Transition Conversion', 'Percentile', 'Expected Value', 'Percentile', 'Transition Points'],
-    'All': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
-    'Area 1': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
-    'Area 2': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
-    'Area 3': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
-    'Area 4': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
-    'Area 5': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0],
-    'No Area': [0.0, 0.0, 0.0, 0.0, '0.00%', 0.0, 0.0]
+    'Metric': ['FBHE', 'Percentile', 'First Ball Attempts', 'Transition Conversion', 'Percentile', 'Transition Attempts', 'Expected Value', 'Percentile', 'First Ball & Transition Attempts'],
+    'All': [0.0, 0.0, 0, 0.0, 0.0, 0, '0.00%', 0.0, 0],
+    'Area 1': [0.0, 0.0, 0, 0.0, 0.0, 0, '0.00%', 0.0, 0],
+    'Area 2': [0.0, 0.0, 0, 0.0, 0.0, 0, '0.00%', 0.0, 0],
+    'Area 3': [0.0, 0.0, 0, 0.0, 0.0, 0, '0.00%', 0.0, 0],
+    'Area 4': [0.0, 0.0, 0, 0.0, 0.0, 0, '0.00%', 0.0, 0],
+    'Area 5': [0.0, 0.0, 0, 0.0, 0.0, 0, '0.00%', 0.0, 0],
+    'No Area': [0.0, 0.0, 0, 0.0, 0.0, 0, '0.00%', 0.0, 0]
   }
 
   # Calculate metrics for each area
@@ -745,9 +756,12 @@ def report_player_att_expected(lgy, team, **rpt_filters):
     )
     table_data[area][1] = fbhe_percentile_str if fbhe_percentile_str is not None else '0.00%'
 
+    # Calculate First Ball Attempts
+    table_data[area][2] = int(fbhe_result.attempts)
+
     # Calculate Transition Conversion
-    trans_result = calc_trans_obj(temp_df, disp_player, flag='rcv')
-    table_data[area][2] = trans_result.get('tcr_str', 0.0)
+    trans_result = calc_trans_obj(temp_df, disp_player, flag='att')
+    table_data[area][3] = trans_result.get('tcr_str', 0.0)
     tcr_value = trans_result.get('tcr', 0.0)
     # Use percentile_str from calculate_percentile
     _, tcr_percentile_str = calculate_percentile(
@@ -755,11 +769,14 @@ def report_player_att_expected(lgy, team, **rpt_filters):
       player_data_stats_df.at[0, 'tcr_mean'],
       player_data_stats_df.at[0, 'tcr_stdev']
     )
-    table_data[area][3] = tcr_percentile_str if tcr_percentile_str is not None else '0%'
+    table_data[area][4] = tcr_percentile_str if tcr_percentile_str is not None else '0%'
+
+    # Calculate Transition Attempts
+    table_data[area][5] = int(trans_result.get('tran_total_pts', 0))
 
     # Calculate Expected Value
     ev_result = calc_ev_obj(temp_df, disp_player)
-    table_data[area][4] = ev_result.get('expected_value', '0%')
+    table_data[area][6] = ev_result.get('expected_value', '0%')
     # Convert percentage string to float for percentile calculation
     ev_value = float(ev_result.get('expected_value', '0%').strip('%')) 
     #print(f" ev_value {ev_value}, mean {player_data_stats_df.at[0, 'expected_mean']}, stdev {player_data_stats_df.at[0, 'expected_stdev']}")
@@ -768,10 +785,10 @@ def report_player_att_expected(lgy, team, **rpt_filters):
       player_data_stats_df.at[0, 'expected_mean'],
       player_data_stats_df.at[0, 'expected_stdev']
     )
-    table_data[area][5] = ev_percentile_str if ev_percentile_str is not None else '0%'
+    table_data[area][7] = ev_percentile_str if ev_percentile_str is not None else '0%'
 
-    # Calculate Transition Points
-    table_data[area][6] = trans_result.get('tran_total_pts', 0.0)
+    # Calculate First Ball & Transition Attempts
+    table_data[area][8] = int(fbhe_result.attempts) + int(trans_result.get('tran_total_pts', 0))
 
   # Convert to DataFrame
   df = pd.DataFrame(table_data)
@@ -782,7 +799,7 @@ def report_player_att_expected(lgy, team, **rpt_filters):
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-
+  
 
 
 def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
@@ -933,3 +950,948 @@ def plot_volleyball_attacks(ppr_df, plt_title=''):
 
   plt_image = anvil.mpl_util.plot_image()
   return plt_image
+
+
+
+
+#------------------------------------------------------
+#  Player Passing Reports
+#=-------------------------------------------------------------
+def player_sw_new(lgy, team, **rpt_filters):
+  """
+  Test report function - serves as a stub/template for other report functions.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+  
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+  
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
+
+  sw_list = [(f_row['s_w']) for f_row in app_tables.master_player.search(league=disp_league,gender=disp_gender,year=disp_year,team=p_team,number=p_num,shortname=p_sname)]
+
+  #print(f"sw_list: {sw_list}")
+  if sw_list:
+    if sw_list[0]:
+      # sw_list is now a media object, need to turn it back into a dataframe
+      sw_df =  pd.read_csv(io.BytesIO( sw_list[0].get_bytes()))
+
+      # now we are going split s & w into 3 
+      # now calculate the Offense strength and weakness markdown
+      off_df = sw_df[ sw_df['Section'] == 'Offense'] 
+      if off_df.shape[0] == 0:
+        off_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+      else:
+        off_df = off_df.sort_values(by='Category', ascending=True, na_position='last')
+        off_df = off_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+        off_df = off_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      #print(f"pair_sw_report: off_df: {off_df}")
+
+      # now calculate the Deffense strength and weakness markdown
+      def_df = sw_df[ sw_df['Section'] == 'Serving']
+      if def_df.shape[0] == 0:
+        def_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+      else:
+        def_df = def_df.sort_values(by='Category', ascending=True, na_position='last')
+        def_df = def_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+        def_df = def_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      #print(f"pair_sw_report: def_df: {def_df}")
+
+      # now calculate the Errors strength and weakness markdown
+      err_df = sw_df[ sw_df['Section'] == 'Error & Transition'] 
+      if err_df.shape[0] == 0:
+        err_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+      else:
+        err_df = err_df.sort_values(by='Category', ascending=True, na_position='last')
+        err_df = err_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+        err_df = err_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      #print(f"pair_sw_report: err_df: {err_df}")
+
+      # now calculate the Errors strength and weakness markdown
+      cons_df = sw_df[ sw_df['Section'] == 'Consistency'] 
+      if cons_df.shape[0] == 0:
+        cons_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+      else:
+        cons_df = cons_df.sort_values(by='Category', ascending=True, na_position='last')
+        cons_df = cons_df[['Description','Category','Var Desc','Var Value','Var Percentile']]
+        cons_df = cons_df.rename(columns={'Var Desc':'Variable','Var Value':'Value','Var Percentile':'Percentile'})
+      #print(f"pair_sw_report: consistenct_df: {cons_df}")
+
+    else:
+      off_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+      def_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+      err_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+      cons_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+  else:
+    off_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+    def_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+    err_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+    cons_df = pd.DataFrame({'Description':['No Data Found'],'Category':['No Data Found']})
+
+  # put the DF's in the df_list
+  df_list[0] = off_df.to_dict('records')
+  df_list[1] = def_df.to_dict('records')
+  df_list[2] = err_df.to_dict('records')
+  df_list[3] = cons_df.to_dict('records')
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+
+
+
+def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
+  """
+  Test report function - serves as a stub/template for other report functions.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
+
+  #------------------------------------------------------------------------------------
+  #
+  #     Report is 'set up', not calcualte acorss the 3 zones, then the 45 serves
+  #
+  #-------------------------------------------------------------------------------------
+
+  # create the output dataframe - This dataframe is the summary for zone 1,3,5
+  df_dict = {' ':['FBHE','Percentile','FBSO','ESO','Kills','Errors','Attempts','% In System','Percentile','URL'],
+             'All':[0,0,0,0,0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  if ppr_df.shape[0] > 0:
+    # calculate fbhe for all attacks
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    fbhe_vector = fbhe( ppr_df, disp_player, 'pass', True )
+    eso_obj = calc_player_eso(ppr_df,disp_player)
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
+    fbhe_table.at[4,'All'] = fbhe_vector[1]  # attacks
+    fbhe_table.at[5,'All'] = fbhe_vector[2]  # errors
+    fbhe_table.at[6,'All'] = fbhe_vector[3]  # attempts
+    fbhe_table.at[2,'All'] = fbhe_vector[4]  # FBSO
+    fbhe_table.at[9,'All'] = fbhe_vector[5]  # URL
+    fbhe_table.at[3,'All'] = eso_obj.get('eso')  # ESO
+    #fbhe_table.at[3,'All'] = float("{:.3f}").format(fbhe_table.at[2,'All'])    
+    oos_vector = count_out_of_system( ppr_df, disp_player, 'pass' )
+    fbhe_table.at[7,'All'] = 1 - oos_vector[1]  # Good Pass
+    fbhe_table.at[7,'All'] = str('{:.1%}').format(fbhe_table.at[7,'All'])
+    # FBHE Percentile
+    fbhe_table.at[1,'All'] =  round( stats.norm.cdf( (fbhe_vector[0] - player_data_stats_df.at[0,'fbhe_mean'])/ player_data_stats_df.at[0,'fbhe_stdev'] ), 3)
+    fbhe_table.at[1,'All'] = str('{:.0%}').format(fbhe_table.at[1,'All'])
+    value = fbhe_table.at[7, 'All']  # '89.3%'
+    float_value = float(value.replace('%', ''))/100  # 89.3
+    fbhe_table.at[8,'All'] =  round( stats.norm.cdf( (float_value - player_data_stats_df.at[0,'goodpass_mean'])/ player_data_stats_df.at[0,'goodpass_stdev'] ), 3)
+    fbhe_table.at[8,'All'] = str('{:.0%}').format(fbhe_table.at[8,'All'])
+
+    # calculate for zones 1 - 5
+    column = ['Zone 1','Zone 3','Zone 5','No Zone']
+    for i in [0,1,2,3]:
+      zone = 0 if i == 3 else (i*2)+1
+      fbhe_vector = fbhe( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', True )
+      eso_obj = calc_player_eso(ppr_df[ppr_df['serve_src_zone_net']==zone],disp_player)
+      fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
+      fbhe_table.at[4,column[i]] = fbhe_vector[1]  # attacks
+      fbhe_table.at[5,column[i]] = fbhe_vector[2]  # errors
+      fbhe_table.at[6,column[i]] = fbhe_vector[3]  # attempts
+      fbhe_table.at[2,column[i]] = fbhe_vector[4]  # fbso
+      fbhe_table.at[9,column[i]] = fbhe_vector[5]  # URL
+      fbhe_table.at[3,column[i]] = eso_obj.get('eso')  # ESO
+      #fbhe_table.at[3,column[i]] = float('{:.3f}').format(fbhe_table.at[2,column[i]])
+      oos_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass' )
+      fbhe_table.at[7,column[i]] = 1 - oos_vector[1]  # Good Pass
+      fbhe_table.at[7,column[i]] = str('{:.1%}').format(fbhe_table.at[7,column[i]])
+      fbhe_table.at[1,column[i]] =  round( stats.norm.cdf( (fbhe_vector[0] - player_data_stats_df.at[0,'fbhe_mean'])/ player_data_stats_df.at[0,'fbhe_stdev'] ), 3)
+      fbhe_table.at[1,column[i]] = str('{:.0%}').format(fbhe_table.at[1,column[i]])
+      value = fbhe_table.at[7,column[i]]  # '89.3%'
+      float_value = float(value.replace('%', ''))/100  # 89.3
+      fbhe_table.at[8,column[i]] =  round( stats.norm.cdf( (float_value - player_data_stats_df.at[0,'goodpass_mean'])/ player_data_stats_df.at[0,'goodpass_stdev'] ), 3)
+      fbhe_table.at[8,column[i]] = str('{:.0%}').format(fbhe_table.at[8,column[i]])
+  else:
+    fbhe_table.at[0,'All'] = "No Data Found"
+
+    # get high and low for the color scheme, mean +/- 2 sdtd
+  cmax = player_data_stats_df.at[0,'fbhe_mean']+2*player_data_stats_df.at[0,'fbhe_stdev']
+  cmin = player_data_stats_df.at[0,'fbhe_mean']-2*player_data_stats_df.at[0,'fbhe_stdev']
+
+  # the order of the index
+  '''
+  index.  from.   to   
+  0.      1.       1C.  x = 0.8. y = 4.0
+  1.      1.       1D.  x = 0.8. y = 5.6
+  2.       1.      1E.   x = 0.8 y = 7.2
+  3       1.      2C.    x = 2.4. y = 4.0
+  4       1       2D.    x = 2.4  y = 5.6
+  5.      1.      2E.    x = 2.4. y = 7.2
+  6                3C.   x = 3.6. y = 4.0
+  7                3D.    x = 3.6. y = 5.6
+  8                3E.   x = 3.6. y = 7.2
+  9                4C
+  10               4D
+  '''
+  # now, get the variables 
+  pass_x = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass_y = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  att1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  att3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  att5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+
+  # create the output dataframe - This dataframe is the for a detail below each graph, 1,3,5, so we can see the fnhe #, and the URL
+  df_dict = {'Dest Zone':[' '],
+             'FBHE':[0],
+             'Att':[0],
+             'URL':[' ']
+            }
+  z1_table = pd.DataFrame.from_dict( df_dict )
+  z3_table = pd.DataFrame.from_dict( df_dict )
+  z5_table = pd.DataFrame.from_dict( df_dict )
+  z1_table_index = 0
+  z3_table_index = 0
+  z5_table_index = 0
+
+  # now, loop thru the list for serves from zone 1
+  index = 0
+  x = 8.8
+  for i in [1,2,3,4,5]:  # j is along the net
+    x = x - 1.6
+    y = 2.4
+    for j in ['c','d','e']: # k is depth+
+      y = y + 1.6
+      pass_x[index] = x
+      pass_y[index] = y
+
+      # Now let's calcualte from PPR data:
+      #print(f"size of ppr_df: {ppr_df.shape[0]}")
+      #print(f"size of ppr_df, srv src = 1: {ppr_df[ppr_df['serve_src_zone_net'] == 1].shape[0]}")
+      #print(f"size of ppr_df, srv src = 1, dest = {i}: {ppr_df[(ppr_df['serve_src_zone_net'] == 1)&(ppr_df['serve_dest_zone_net'] == i)].shape[0]}")
+      #print(f"size of ppr_df, srv src = 1, dest = {i}{j}: {ppr_df[(ppr_df['serve_src_zone_net'] == 1)&(ppr_df['serve_dest_zone_net'] == i)&(ppr_df['serve_dest_zone_depth'] == j.capitalize() )].shape[0]}")
+
+      # Zone 1
+      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                         disp_player, 'pass', True
+                        )
+      #print(f"FBHE vector for 1, {i}{j}, {fbhe_vector}")
+      if fbhe_vector[3] >= 5:
+        pass1_val[index] = fbhe_vector[0]
+        att1_val[index] = fbhe_vector[3]
+        z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        z1_table.loc[z1_table_index,'FBHE'] = fbhe_vector[0]
+        z1_table.loc[z1_table_index,'Att'] = fbhe_vector[3]
+        z1_table.loc[z1_table_index,'URL'] = fbhe_vector[5]
+        z1_table_index = z1_table_index + 1
+
+
+      # Zone 3
+      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize())],
+                         disp_player, 'pass', True
+                        )
+      if fbhe_vector[3] >= 5:        
+        pass3_val[index] = fbhe_vector[0]
+        att3_val[index] = fbhe_vector[3]
+        z3_table.loc[z3_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        z3_table.loc[z3_table_index,'FBHE'] = fbhe_vector[0]
+        z3_table.loc[z3_table_index,'Att'] = fbhe_vector[3]
+        z3_table.loc[z3_table_index,'URL'] = fbhe_vector[5]
+        z3_table_index = z3_table_index + 1
+
+      # Zone 5
+      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                         disp_player, 'pass', True
+                        )
+      if fbhe_vector[3] >= 5:      
+        pass5_val[index] = fbhe_vector[0]
+        att5_val[index] = fbhe_vector[3]
+        z5_table.loc[z5_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        z5_table.loc[z5_table_index,'FBHE'] = fbhe_vector[0]
+        z5_table.loc[z5_table_index,'Att'] = fbhe_vector[3]
+        z5_table.loc[z5_table_index,'URL'] = fbhe_vector[5]
+        z5_table_index = z5_table_index + 1
+
+      index = index + 1
+
+  # I should now have the tables required
+  #print(f"x,y : {pass_x}, {pass_y}")
+  #print(f"pass value 1:\n {pass1_val}, Pass Value 3:\n{pass3_val},  Pass Value 3:\n{pass5_val}")
+
+  # make x,y for serve lines:
+  x11 = [0.5,0.5,0.5]
+  x12 = [0,4,8]
+  x31 = [4,4,4]
+  x51 = [7.5,7.5,7.5]
+  y1 = [-8,-8,-8]
+  y2 = [8,8,8]
+
+  # Create the plot for serves from Zone 1 - define the figure, plot the court, plot a few serve lines, plot the dots
+  #cm = mpl.cm.cool
+  #norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+
+  # get high and low for the color scheme, mean +/- 2 sdtd
+  cmax = player_data_stats_df.at[0,'fbhe_mean']+2*player_data_stats_df.at[0,'fbhe_stdev']
+  cmin = player_data_stats_df.at[0,'fbhe_mean']-2*player_data_stats_df.at[0,'fbhe_stdev']
+
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass1_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  # Add title with large font
+  ax.set_title("FBHE from Zone 1, Left", fontsize=35)
+  z1_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
+  # Add title with large font
+  ax.set_title("FBHE from Zone 3, Middle", fontsize=35)
+  z3_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='First Ball Hitting Efficiency')
+  # Add title with large font
+  ax.set_title("FBHE from Zone 5, Right", fontsize=35)
+  z5_plt = anvil.mpl_util.plot_image()
+
+  # put the Images in the image_list
+  image_list[3] = z1_plt
+  image_list[4] = z3_plt
+  image_list[5] = z5_plt
+  
+  # put the DF's in the df_list
+  df_list[0] = fbhe_table.to_dict('records')
+  df_list[1] = z1_table.to_dict('records')
+  df_list[2] = z3_table.to_dict('records')
+  df_list[3] = z5_table.to_dict('records')
+
+  #
+  #  now create plots for attempts from zone 1,3,5
+  #
+
+  # get high and low for the color scheme, mean +/- 2 sdtd
+  cmax = 25  # kind of a guess on the maximum number of attemtps in one of the 46 serves
+  cmin = 5  # a logical minimum since we don show anything less then 5 attempts
+  
+  # from zone 1
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  print(f"Attemtps values 1 {att1_val}")
+  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att1_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
+  ax.set_title("Attempts from Zone 1, Left", fontsize=35)
+  a1_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  print(f"Attemtps values 3 {att3_val}")
+  ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
+  ax.set_title("Attempts from Zone 3, Middle", fontsize=35)
+  a3_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  print(f"Attemtps values 5 {att5_val}")
+  ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='Attempts')
+  ax.set_title("Attempts from Zone 5, Right", fontsize=35)
+  a5_plt = anvil.mpl_util.plot_image()
+
+  image_list[0] = a1_plt
+  image_list[1] = a3_plt
+  image_list[2] = a5_plt
+
+  plt.close('All')
+
+
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+
+def report_player_passing_45_pass(lgy, team, **rpt_filters):
+  """
+  Test report function - serves as a stub/template for other report functions.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
+  
+  # firt, this reprot is only when the player is passing, so:
+  ppr_df = ppr_df[ppr_df['pass_player'] == disp_player] 
+
+  # break disp_player into team, number, and shortname
+  # unpack player into team, number and short name
+  str_loc = disp_player.index(' ')
+  p_team = disp_player[:str_loc].strip() # player team
+  p_player = disp_player[str_loc+1:]
+  str_loc = p_player.index(' ')
+  p_num = p_player[:str_loc].strip() # player number
+  p_sname = p_player[str_loc+1:].strip() # player short name
+
+
+  #------------------------------------------------------------------------------------
+  #
+  #     Report is 'set up', noW calculate acorss the 3 zones, then the 45 serves
+  #
+  #-------------------------------------------------------------------------------------
+
+  # create the output dataframe - This dataframe is the summary for zone 1,3,5
+  df_dict = {' Out of System':['Number','Percent','Percentile','Attempts','URL'],
+             'All':[0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,' '],
+             'No Zone':[0,0,0,0,' ']
+            }
+  fbhe_table = pd.DataFrame.from_dict( df_dict )
+  df_dict1 = {' Pass Area':['Area','Percentile','Attempts','URL'],
+              'All':[0,0,0,' '],
+              'Zone 1':[0,0,0,' '],
+              'Zone 3':[0,0,0,' '],
+              'Zone 5':[0,0,0,' '],
+              'No Zone':[0,0,0,' ']
+             }
+  area_table = pd.DataFrame.from_dict( df_dict1 )
+
+  # storing the area so I can get max and min for the graph
+  el_area = []
+
+  # oos_vector = count_out_of_system(ppr_df,disp_player,action)
+  # action is 'pass', 'att', 'srv'
+  # returns a vector : oos_vector[0] = number OOS (int), oos_vector[1] = percent out of system (Float()), oos_vector[2] = attempts (int())
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  if ppr_df.shape[0] > 0:
+    # calculate fbhe for all attacks
+    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
+    fbhe_vector = count_out_of_system(ppr_df, disp_player, 'pass')
+    fbhe_table.at[0,'All'] = fbhe_vector[0]  #number out of system,
+    fbhe_table.at[1,'All'] = str('{:.1%}').format(fbhe_vector[1])  # percent out of system
+    fbhe_table.at[2,'All'] = round( stats.norm.cdf((((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
+    fbhe_table.at[2,'All'] = str('{:.0%}').format(fbhe_table.at[2,'All'])
+    fbhe_table.at[3,'All'] = fbhe_vector[2]  # attempts
+    #fbhe_table.at[3,'All'] = fbhe_vector[3]  # URL (someday?)
+
+    el_result = find_ellipse_area(ppr_df, 'pass', min_att=5)
+    if el_result.get('attempts') >= 5:
+      area_table.at[0,'All'] = str('{:.1f}').format(el_result.get('area'))
+      area_table.at[2,'All'] = el_result.get('attempts')
+      #area_table.at[1,'All'] = round( ((el_result.get('area')- player_data_stats_df.at[0,'pass_ea_mean'])/(player_data_stats_df.at[0,'pass_es_stdev'])) , 3)
+      area_table.at[3,'All'] = el_result.get('URL')  
+      el_area.append(el_result.get('area'))
+
+
+
+    # calculate for zones 1 - 5
+    column = ['Zone 1','Zone 3','Zone 5','No Zone']
+    for i in [0,1,2,3]:
+      zone = 0 if i == 3 else (i*2)+1
+      fbhe_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass')
+      fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
+      fbhe_table.at[1,column[i]] = str('{:.1%}').format(fbhe_vector[1])  # attacks
+      fbhe_table.at[2,column[i]] = round( stats.norm.cdf((((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
+      fbhe_table.at[2,column[i]] = str('{:.0%}').format(fbhe_table.at[2,column[i]])
+      fbhe_table.at[3,column[i]] = fbhe_vector[2]  # errors
+      #fbhe_table.at[3,column[i]] = fbhe_vector[3]  # URL someday
+
+      el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], 'pass', min_att=5)
+      if el_result.get('attempts') >= 5:
+        area_table.at[0,column[i]] = str('{:.1f}').format(el_result.get('area'))
+        #area_table.at[1,column[i]] = round( ((el_result.get('area')- player_data_stats_df.at[0,'pass_ea_mean'])/(player_data_stats_df.at[0,'pass_es_stdev'])) , 3)
+        area_table.at[2,column[i]] = el_result.get('attempts')
+        area_table.at[3,column[i]] = el_result.get('URL')
+        el_area.append(el_result.get('area'))
+
+
+
+  else:
+    fbhe_table.at[0,'All'] = "No Data Found"
+    area_table.at[0,'All'] = "No Data Found"
+
+
+  # the order of the index
+  '''
+  index.  from.   to   
+  0.      1.       1C.  x = 0.8. y = 4.0
+  1.      1.       1D.  x = 0.8. y = 5.6
+  2.       1.      1E.   x = 0.8 y = 7.2
+  3       1.      2C.    x = 2.4. y = 4.0
+  4       1       2D.    x = 2.4  y = 5.6
+  5.      1.      2E.    x = 2.4. y = 7.2
+  6                3C.   x = 3.6. y = 4.0
+  7                3D.    x = 3.6. y = 5.6
+  8                3E.   x = 3.6. y = 7.2
+  9                4C
+  10               4D
+  '''
+  # now, get the variables 
+  pass_x = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass_y = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  pass5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  area1_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  area3_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+  area5_val = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+
+  # create the output dataframe - This dataframe is the for a detail below each graph, 1,3,5, so we can see the fnhe #, and the URL
+  df_dict = {'Dest Zone':[' '],
+             'Out Sys':[0],
+             'Att':[0],
+             'URL':[' ']
+            }
+  z1_table = pd.DataFrame.from_dict( df_dict )
+  z3_table = pd.DataFrame.from_dict( df_dict )
+  z5_table = pd.DataFrame.from_dict( df_dict )
+  z1_table_index = 0
+  z3_table_index = 0
+  z5_table_index = 0
+  df_dict9 = {'Dest Zone':[' '],
+              'Area':[0],
+              'Att':[0],
+              'URL':[' ']
+             }
+  a1_table = pd.DataFrame.from_dict( df_dict9 )
+  a3_table = pd.DataFrame.from_dict( df_dict9 )
+  a5_table = pd.DataFrame.from_dict( df_dict9 )
+  a1_table_index = 0
+  a3_table_index = 0
+  a5_table_index = 0
+
+  # now, loop thru the list for serves from zone 1
+  index = 0
+  x = 8.8
+  for i in [1,2,3,4,5]:  # j is along the net
+    x = x - 1.6
+    y = 2.4
+    for j in ['c','d','e']: # k is depth+
+      y = y + 1.6
+      pass_x[index] = x
+      pass_y[index] = y
+
+      # Now let's calcualte from PPR data:
+      #print(f"size of ppr_df: {ppr_df.shape[0]}")
+      #print(f"size of ppr_df, srv src = 1: {ppr_df[ppr_df['serve_src_zone_net'] == 1].shape[0]}")
+      #print(f"size of ppr_df, srv src = 1, dest = {i}: {ppr_df[(ppr_df['serve_src_zone_net'] == 1)&(ppr_df['serve_dest_zone_net'] == i)].shape[0]}")
+      #print(f"size of ppr_df, srv src = 1, dest = {i}{j}: {ppr_df[(ppr_df['serve_src_zone_net'] == 1)&(ppr_df['serve_dest_zone_net'] == i)&(ppr_df['serve_dest_zone_depth'] == j.capitalize() )].shape[0]}")
+
+      # Zone 1
+      fbhe_vector = count_out_of_system(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                                        disp_player, 'pass'
+                                       )
+      #print(f"OOS vector for 1, {i}{j}, {fbhe_vector}")
+      if fbhe_vector[2] >= 5:
+        pass1_val[index] = fbhe_vector[1]
+        z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        z1_table.loc[z1_table_index,'Out Sys'] = str('{:.1%}').format(fbhe_vector[1])
+        z1_table.loc[z1_table_index,'Att'] = fbhe_vector[2]
+        z1_table.loc[z1_table_index,'URL'] = ' '
+        z1_table_index = z1_table_index + 1
+
+        # Zone 1 Area
+      el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                                    'pass', min_att=5
+                                   )
+      print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      if el_result.get('attempts') >= 5:
+        area1_val[index] = el_result.get('area')
+        a1_table.loc[a1_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        a1_table.loc[a1_table_index,'Area'] = str('{:.1f}').format(el_result.get('area'))
+        a1_table.loc[a1_table_index,'Att'] = el_result.get('attempts')
+        a1_table.loc[a1_table_index,'URL'] = el_result.get('URL')
+        el_area.append(el_result.get('area'))
+        a1_table_index = a1_table_index + 1
+
+      # Zone 3
+      fbhe_vector = count_out_of_system(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize())],
+                                        disp_player, 'pass'
+                                       )
+      if fbhe_vector[2] >= 5:        
+        pass3_val[index] = fbhe_vector[1]
+        z3_table.loc[z3_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        z3_table.loc[z3_table_index,'Out Sys'] = str('{:.1%}').format(fbhe_vector[1])
+        z3_table.loc[z3_table_index,'Att'] = fbhe_vector[2]
+        z3_table.loc[z3_table_index,'URL'] = ' '
+        z3_table_index = z3_table_index + 1
+
+        # Zone 3 Area
+      el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                                    'pass', min_att=5
+                                   )
+      #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      if el_result.get('attempts') >= 5:
+        area3_val[index] = el_result.get('area')
+        a3_table.loc[a3_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        a3_table.loc[a3_table_index,'Area'] = str('{:.1f}').format(el_result.get('area'))
+        a3_table.loc[a3_table_index,'Att'] = el_result.get('attempts')
+        a3_table.loc[a3_table_index,'URL'] = el_result.get('URL')
+        el_area.append(el_result.get('area'))
+        a3_table_index = a3_table_index + 1
+
+      # Zone 5
+      fbhe_vector = count_out_of_system(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                                        disp_player, 'pass'
+                                       )
+      if fbhe_vector[2] >= 5:      
+        pass5_val[index] = fbhe_vector[1]
+        z5_table.loc[z5_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        z5_table.loc[z5_table_index,'Out Sys'] = str('{:.1%}').format(fbhe_vector[1])
+        z5_table.loc[z5_table_index,'Att'] = fbhe_vector[2]
+        z5_table.loc[z5_table_index,'URL'] = ' '
+        z5_table_index = z5_table_index + 1
+
+        # Zone 5 Area
+      el_result = find_ellipse_area(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
+        (ppr_df['serve_dest_zone_net'] == i) &
+        (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
+                                    'pass', min_att=5
+                                   )
+      #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      if el_result.get('attempts') >= 5:
+        area5_val[index] = el_result.get('area')
+        a5_table.loc[a5_table_index,'Dest Zone'] = str(i)+j.capitalize()
+        a5_table.loc[a5_table_index,'Area'] = str('{:.1f}').format(el_result.get('area'))
+        a5_table.loc[a5_table_index,'Att'] = el_result.get('attempts')
+        a5_table.loc[a5_table_index,'URL'] = el_result.get('URL')
+        el_area.append(el_result.get('area'))
+        a5_table_index = a5_table_index + 1
+
+      index = index + 1
+
+  # I should now have the tables required
+  #print(f"x,y : {pass_x}, {pass_y}")
+  #print(f"pass value 1:\n {pass1_val}, Pass Value 3:\n{pass3_val},  Pass Value 3:\n{pass5_val}")
+
+  # make x,y for serve lines:
+  x11 = [0.5,0.5,0.5]
+  x12 = [0,4,8]
+  x31 = [4,4,4]
+  x51 = [7.5,7.5,7.5]
+  y1 = [-8,-8,-8]
+  y2 = [8,8,8]
+
+  # Create the plot for serves from Zone 1 - define the figure, plot the court, plot a few serve lines, plot the dots
+  #cm = mpl.cm.cool
+  #norm = mpl.colors.Normalize(vmin=-1, vmax=1)
+
+  colors = ['green', 'yellow', 'red']  # Min to max
+  custom_cmap = LinearSegmentedColormap.from_list('custom_red_green', colors)
+
+  # get high and low for the color scheme, mean +/- 2 sdtd
+  cmin = 1 - (player_data_stats_df.at[0,'goodpass_mean']+2*player_data_stats_df.at[0,'goodpass_stdev'])
+  if cmin < 0:
+    cmin = 0
+  cmax = 1 - (player_data_stats_df.at[0,'goodpass_mean']-2*player_data_stats_df.at[0,'goodpass_stdev'])
+  if cmax > 0.5:
+    cmax = 0.5
+
+  #print(f" cmin {cmin}, cmax {cmax}")
+
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass1_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
+  ax.set_title("Percent Good Passes from Zone 1, Left", fontsize=35)
+  z1_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass3_val, vmin=cmin, vmax=cmax, cmap=custom_cmap ) 
+  ax.set_title("Percent Good Passes from Zone 3, Middle", fontsize=35)
+  z3_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass5_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap=custom_cmap),ax=ax, orientation='vertical', label='Percent Good Passes')
+  ax.set_title("Percent Good Passes from Zone 5, Right", fontsize=35)
+  z5_plt = anvil.mpl_util.plot_image()
+
+  cmin = min(el_area)
+  if cmin < 0:
+    cmin = 0
+  cmax = max(el_area)
+  if cmax > 20:
+    cmax = 20
+  
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=area1_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
+  ax.set_title("Pass Area from Zone 1, Left", fontsize=40)
+  a1_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=area3_val, vmin=cmin, vmax=cmax, cmap=custom_cmap ) 
+  ax.set_title("Pass Area from Zone 3, Middle", fontsize=35)
+  a3_plt = anvil.mpl_util.plot_image()
+
+  # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
+  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
+  plot_court_background(fig,ax)
+  ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
+  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=area5_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
+  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap=custom_cmap),ax=ax, orientation='vertical', label='Pass Area')
+  ax.set_title("Pass Area from Zone 5, Right", fontsize=35)
+  a5_plt = anvil.mpl_util.plot_image()
+
+  # put the Images in the image_list
+  image_list[0] = z1_plt
+  image_list[1] = z3_plt
+  image_list[2] = z5_plt
+  image_list[3] = a1_plt
+  image_list[4] = a3_plt
+  image_list[5] = a5_plt
+
+  # put the DF's in the df_list
+  df_list[0] = fbhe_table.to_dict('records')
+  df_list[1] = z1_table.to_dict('records')
+  df_list[2] = z3_table.to_dict('records')
+  df_list[3] = z5_table.to_dict('records')
+  df_list[4] = area_table.to_dict('records')
+  df_list[5] = a1_table.to_dict('records')
+  df_list[6] = a3_table.to_dict('records')
+  df_list[7] = a5_table.to_dict('records') 
+
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+def report_player_passing_cluster(lgy, team, **rpt_filters):
+  """
+  Test report function - serves as a stub/template for other report functions.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  # comment some in our out based on this reports needs.
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # This is where you would customize for each different report function
+  # =============================================================================
+
+
+  #------------------------------------------------------------------------------------
+  #
+  #     Report is 'set up', noW calculate acorss the 3 zones, then the 45 serves
+  #
+  #-------------------------------------------------------------------------------------
+
+
+  # plot all pass locations on the court
+  pass_locations_plot_object = plot_points_on_the_court(ppr_df['pass_dest_x'],ppr_df['pass_dest_y'], 1, ppr_df['video_id'], ppr_df['pass_action_id'],True,ppr_df['point_outcome'])
+
+  ############### Third Populate the dataframe, assuming we have data returned
+  if ppr_df.shape[0] > 0:
+    plot1_return = plot_pass_clusters(ppr_df, disp_player, 'FBK')
+    print(f" Return from plot 1: {plot1_return}")
+    print(f" Return from plot 1, stat text: {plot1_return.get('stat_text')}, media list: {plot1_return.get('media_list')}")
+    plot2_return = plot_pass_clusters(ppr_df, disp_player, 'FBE')
+    print(f" Return from plot 2: {plot2_return}")
+    print(f" Return from plot 2, stat text: {plot2_return.get('stat_text')}, media list: {plot2_return.get('media_list')}")
+  else:
+    plot1_return  = { 
+      'stat_text':'Error: No data piointsin PPR_DF \n',
+      'plot_image':''
+    }
+    plot2_return  = { 
+      'stat_text':'Error: No data piointsin PPR_DF \n',
+      'plot_image':''
+    }
+
+  # put the Images in the image_list
+  image_list[0] = pass_locations_plot_object
+  image_list[1] = plot1_return.get('plot_image')
+  image_list[2] = plot2_return.get('plot_image')
+
+
+  # put the DF's in the df_list
+  #df_list[0] = fbhe_table.to_dict('records')
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list

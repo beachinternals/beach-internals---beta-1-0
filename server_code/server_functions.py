@@ -28,17 +28,12 @@ from plot_functions import *
 from dataclasses import dataclass
 import inspect
 
-# Set up logging
-#logging.basicConfig(level=logging.INFO)
-#logger = logging.getLogger(__name__)
-
-# This is a server module. It runs on the Anvil server,
-
-# Functions in this library
-#
-#   fbhe( ppr_df, disp_player):
-#
-#   get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ): 
+# Create logger with formatting
+from anvil_extras.logging import Logger
+import logging
+logger = Logger()
+# If the library supports standard Python logging formatting:
+formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
 
  
 def fbhe( ppr_df, disp_player, play_type, video_yn ):
@@ -597,6 +592,8 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
     ppr_df = ppr_df[ ppr_df['serve_player'].str.strip() == disp_player.strip()]
   elif flag == 'rcv':
     ppr_df = ppr_df[ ppr_df['pass_player'].str.strip() == disp_player.strip()]
+  elif flag == 'att':
+    ppr_df = ppr_df[ ppr_df['att_player'].str.strip() == disp_player.strip()]
 
   # need to record the total points
   all_total_pts = ppr_df.shape[0]
@@ -1857,7 +1854,7 @@ def find_clusters(ppr_df, disp_player, category):
       'n_clusters': len(set(labels)) - (1 if -1 in labels else 0)
     }
   except Exception as e:
-    logger.error(f"Error in find_kill_error_clusters: {str(e)}", exc_info=True)
+    logger.error(f"Error in find_kill_error_clusters: {str(e)}")
     return {'error': str(e)}
 
 
@@ -2019,3 +2016,75 @@ def setup_report_basics(lgy, team, function_name=None):
 
 
   return title_list, label_list, df_desc_list, image_desc_list
+
+#------------------------------------------------------------------------------------------
+#
+#.   Calculate Ellipse Area
+#       This is a bit differenct, calc_player_data uses similar code, but not this function (yet)
+#
+#--------------------------------------------------------------------------------------------------
+def find_ellipse_area(tmp1_df, type, min_att=5):
+  '''
+  tmp1_df is the ppr dataframe with the data in one of the touch dest x,y to calculate ellipse for
+  type can be:
+    - 'srv'
+    - 'pass'
+    - 'set'
+    - 'att'
+    - 'dig'
+
+    This always uses the desitnation coordinate, defaults to pass of it does not recognize type
+
+    min_att, pass the minimum number of attempts, defualt is 5
+
+    This calculates for all points in tmp1_df, so limit it to the point desired before calling
+  '''
+
+  # default 
+  el_area = None
+  el_message = 'find_ellipse_area: '
+  el_success = False
+  el_url = ''
+
+  if type == 'srv':
+    var_x = 'serve_dest_x'
+    var_y = 'serve_dest_y'
+  elif type == 'pass':
+    var_x = 'pass_dest_x'
+    var_y = 'pass_dest_y'
+  elif type == 'set':
+    var_x = 'set_dest_x'
+    var_y = 'set_dest_y'
+  elif type == 'att':
+    var_x = 'att_dest_x'
+    var_y = 'att_dest_y'
+  elif type == 'dig':
+    var_x = 'dig_dest_x'
+    var_y = 'pdig_dest_y'
+  else:
+    # default to pass
+    el_message = el_message + 'type mismatch, used pass.  type='+type
+    var_x = 'pass_dest_x'
+    var_y = 'pass_dest_y'
+
+  el_points = pd.concat( [tmp1_df[var_x],tmp1_df[var_y]], axis = 1)
+  #print(f" el_points {el_points}")
+  el_points = el_points.dropna().values
+  el_att = len(el_points)
+  if el_att >= min_att:  # must have at least 5 points to calculate the ellipse
+    el_message = el_message + ' Ellipse calculated, number of points ='+str(el_att)
+    el_mean, el_width, el_height, el_angle  = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
+
+    # not store the ellipse area
+    #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
+    el_area = math.pi*(el_width/2)*(el_height/2)
+    el_success = True
+
+  return {
+    'area':el_area, 
+    'type':type, 
+    'message':el_message, 
+    'success':el_success,
+    'attempts':el_att,
+    'URL':el_url
+  }

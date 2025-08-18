@@ -866,6 +866,7 @@ def count_wins( win_column, Loser_column, l_min, l_max):
   return df_table, True
 
 
+'''
 #---------------------------------------------------------------------------
 #
 #              player strengths and weaknesses
@@ -873,7 +874,7 @@ def count_wins( win_column, Loser_column, l_min, l_max):
 #---------------------------------------------------------------------------
 @anvil.server.callable
 def player_sw_new(lgy, team, **rpt_filters):
-  '''
+  
   Report Functions:
 
   INPUT Parameters:
@@ -887,7 +888,7 @@ def player_sw_new(lgy, team, **rpt_filters):
     - image_list : a list of up to 10 imiages to plot data on the report
     - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
     
-  '''
+  
 
   #------------------------------------------------------------------------------------------------------
   #            Initialize all lists, get and filter the data, and fetch in information from report_list
@@ -1020,7 +1021,7 @@ def player_sw_new(lgy, team, **rpt_filters):
   df_list[3] = cons_df.to_dict('records')
 
   return title_list, label_list, image_list, df_list
-
+'''
 
 #---------------------------------------------------------------------------
 #
@@ -2317,77 +2318,7 @@ def player_45_pass_area_new(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list
 
-#------------------------------------------------------------------------------------------
-#
-#.   Calculate Ellipse Area
-#       This is a bit differenct, calc_player_data uses similar code, but not this function (yet)
-#
-#--------------------------------------------------------------------------------------------------
-def find_ellipse_area(tmp1_df, type, min_att=5):
-  '''
-  tmp1_df is the ppr dataframe with the data in one of the touch dest x,y to calculate ellipse for
-  type can be:
-    - 'srv'
-    - 'pass'
-    - 'set'
-    - 'att'
-    - 'dig'
 
-    This always uses the desitnation coordinate, defaults to pass of it does not recognize type
-
-    min_att, pass the minimum number of attempts, defualt is 5
-
-    This calculates for all points in tmp1_df, so limit it to the point desired before calling
-  '''
-
-  # default 
-  el_area = None
-  el_message = 'find_ellipse_area: '
-  el_success = False
-  el_url = ''
-  
-  if type == 'srv':
-    var_x = 'serve_dest_x'
-    var_y = 'serve_dest_y'
-  elif type == 'pass':
-    var_x = 'pass_dest_x'
-    var_y = 'pass_dest_y'
-  elif type == 'set':
-    var_x = 'set_dest_x'
-    var_y = 'set_dest_y'
-  elif type == 'att':
-    var_x = 'att_dest_x'
-    var_y = 'att_dest_y'
-  elif type == 'dig':
-    var_x = 'dig_dest_x'
-    var_y = 'pdig_dest_y'
-  else:
-    # default to pass
-    el_message = el_message + 'type mismatch, used pass.  type='+type
-    var_x = 'pass_dest_x'
-    var_y = 'pass_dest_y'
-    
-  el_points = pd.concat( [tmp1_df[var_x],tmp1_df[var_y]], axis = 1)
-  #print(f" el_points {el_points}")
-  el_points = el_points.dropna().values
-  el_att = len(el_points)
-  if el_att >= min_att:  # must have at least 5 points to calculate the ellipse
-    el_message = el_message + ' Ellipse calculated, number of points ='+str(el_att)
-    el_mean, el_width, el_height, el_angle  = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
-
-    # not store the ellipse area
-    #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
-    el_area = math.pi*(el_width/2)*(el_height/2)
-    el_success = True
-
-  return {
-    'area':el_area, 
-    'type':type, 
-    'message':el_message, 
-    'success':el_success,
-    'attempts':el_att,
-    'URL':el_url
-  }
 
 
 #---------------------------------------------------------------------------

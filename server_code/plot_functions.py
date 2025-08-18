@@ -12,10 +12,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import math
-import io
 from server_functions import *
 
-#import plotly.graph_objects as go
+from anvil_extras.logging import Logger
+import logging
+
+# Create logger with formatting
+logger = Logger()
+# If the library supports standard Python logging formatting:
+formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -397,7 +402,7 @@ def plot_pass_clusters(ppr_df, disp_player, category):
     }
 
   except Exception as e:
-    logger.error(f"Error in plot_weekly_counts_no_xlabels: {str(e)}", exc_info=True)
+    logger.error(f"Error in plot_weekly_counts_no_xlabels: {str(e)}")
     return {'error': str(e)}
 
 

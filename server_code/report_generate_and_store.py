@@ -31,11 +31,11 @@ from reports_player import *
 
 # Option A: Check if it's just called Logger
 from anvil_extras.logging import Logger
+import logging
 # Create a detailed formatter
-formatter = logging.Formatter(
-  '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s'
-)
 logger = Logger()
+formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
+
 
 
 
