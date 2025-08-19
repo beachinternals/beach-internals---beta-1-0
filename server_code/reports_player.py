@@ -1457,7 +1457,7 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
   # =============================================================================
   
   # firt, this reprot is only when the player is passing, so:
-  ppr_df = ppr_df[ppr_df['pass_player'] == disp_player] 
+  #ppr_df = ppr_df[ppr_df['pass_player'] == disp_player] 
 
   # break disp_player into team, number, and shortname
   # unpack player into team, number and short name
