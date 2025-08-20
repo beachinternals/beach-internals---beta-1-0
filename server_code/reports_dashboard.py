@@ -101,28 +101,27 @@ def report_stub(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
+import pandas as pd
+import numpy as np
+
 def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   """
     Dashboard report showing key metrics for all players on a team.
     
     Args:
         lgy: League+gender+year string
+        team: Team name
         **rpt_filters: Additional report filters (should include 'team' filter)
         
     Returns:
         tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
     """
-  # Extract team from rpt_filters - this is required for this report
-  #team = rpt_filters.get('team')
-  #if not team:
-  #  raise ValueError("Team filter is required for dashboard key metrics report")
-
-    # Get basic title and label setup from database
+  # Get basic title and label setup from database
   title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
 
   # Initialize the calculated lists
-  image_list = ['','','','','','','','','','']
-  df_list = ['','','','','','','','','','']
+  image_list = [''] * 10
+  df_list = [''] * 10
 
   # Unpack lgy into league, gender, year
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
@@ -133,11 +132,6 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
   # Filter the ppr dataframe with any additional filters
   ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
-
-  # =============================================================================
-  # REPORT-SPECIFIC LOGIC STARTS HERE
-  # Dashboard Key Metrics for All Team Players
-  # =============================================================================
 
   # Get list of all players for this team from master_player or from ppr_df
   team_players = get_team_players(disp_league, disp_gender, disp_year, team)
@@ -166,97 +160,110 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
     'Error_Density': []   # Error Density
   }
 
-  # Calculate metrics for each player
+  # Helper function to parse percentage strings
+  def parse_percentage(value, player, column):
+    try:
+      if isinstance(value, str):
+        if value == '56%32%0%0%56%58%55%70%':  # Explicitly handle malformed string
+          print(f"Found malformed {column} for {player}: {value}")
+          return 0.0
+        if '%' in value:
+          cleaned_value = value.replace('%', '')
+          return float(cleaned_value) / 100  # Convert to decimal
+      return float(value)  # Handle numeric or string numeric values
+    except (ValueError, TypeError):
+      print(f"Invalid {column} for {player}: {value}")
+      return 0.0  # Default to 0 if conversion fails
+
+    # Helper function to convert NumPy types to Python types
+  def to_python_type(value):
+    if isinstance(value, (np.floating, np.integer)):
+      return float(value) if isinstance(value, np.floating) else int(value)
+    return value
+
+    # Calculate metrics for each player
   for player in team_players:
     print(f"Processing player: {player}")
-
     try:
       # Add player name
       metrics_data['Player'].append(player)
 
       # Get FBHE and FBSO from fbhe_obj function
-      fbhe_result = fbhe_obj(ppr_df, player)
-      metrics_data['FBHE'].append(fbhe_result.get('fbhe', 0) if fbhe_result else 0)
-      metrics_data['FBSO'].append(fbhe_result.get('fbso', 0) if fbhe_result else 0)
+      fbhe_result = fbhe_obj(ppr_df, player, 'att', False)
+      metrics_data['FBHE'].append(to_python_type(fbhe_result.fbhe) if fbhe_result else 0)
+      metrics_data['FBSO'].append(to_python_type(fbhe_result.fbso) if fbhe_result else 0)
 
       # Get TCR from calc_trans_obj function
-      tcr_result = calc_trans_obj(ppr_df, player)
-      metrics_data['TCR'].append(tcr_result.get('tcr', 0) if tcr_result else 0)
+      tcr_result = calc_trans_obj(ppr_df, player, 'all')
+      metrics_data['TCR'].append(tcr_result.get('tcr')) 
 
       # Get ESO from calc_eso function
-      eso_result = calc_eso(ppr_df, player)
-      if isinstance(eso_result, dict):
-        metrics_data['ESO'].append(eso_result.get('eso', 0))
-      else:
-        metrics_data['ESO'].append(eso_result if eso_result else 0)
+      eso_result = calc_player_eso_obj(ppr_df, player)
+      metrics_data['ESO'].append(eso_result.get('eso'))
 
         # Get Expected Value from calc_ev_obj function
       ev_result = calc_ev_obj(ppr_df, player)
-      metrics_data['Expected_Value'].append(ev_result.get('expected_value', 0) if ev_result else 0)
+      metrics_data['Expected_Value'].append(ev_result.get('expected_value') )
 
       # Get Good Pass percentage from count_good_passes_obj function
       good_pass_result = count_good_passes_obj(ppr_df, player, 'pass')
-      metrics_data['Good_Pass_Pct'].append(good_pass_result.get('percent_str', '0%') if good_pass_result else '0%')
+      good_pass_value = good_pass_result.get('percent') 
+      print(f"Raw Good_Pass_Pct for {player}: {good_pass_value}")
+      metrics_data['Good_Pass_Pct'].append(parse_percentage(good_pass_value, player, 'Good_Pass_Pct'))
 
       # Get Knockout Ratio from calc_knockout_obj function
-      knockout_result = calc_knockout_obj(ppr_df, player)
-      metrics_data['Knockout_Ratio'].append(knockout_result.get('ratio', 0) if knockout_result else 0)
+      knockout_result = calc_knock_out_obj(ppr_df, player)
+      metrics_data['Knockout_Ratio'].append(knockout_result.get('ratio', 0))
 
       # Get Ace Error Ratio
       ace_error_result = calc_ace_error_ratio_from_ppr(ppr_df, player)
-      metrics_data['Ace_Error_Ratio'].append(ace_error_result.get('ratio', 0) if ace_error_result else 0)
+      metrics_data['Ace_Error_Ratio'].append(ace_error_result.get('ratio', 0)) 
 
       # Get Consistency in Errors from player_data_stats_df
       consistency_result = get_consistency_errors_from_stats(player_data_stats_df, player)
-      metrics_data['Consistency_Errors'].append(consistency_result if consistency_result else 0)
+      metrics_data['Consistency_Errors'].append(consistency_result)
 
       # Get Error Density from calc_error_density_obj function
       error_density_result = calc_error_density_obj(ppr_df, player)
-      metrics_data['Error_Density'].append(error_density_result.get('error_density', '0.00%') if error_density_result else '0.00%')
+      error_density_value = error_density_result.get('error_density') 
+      print(f"Raw Error_Density for {player}: {error_density_value}")
+      metrics_data['Error_Density'].append(parse_percentage(error_density_value, player, 'Error_Density'))
 
     except Exception as e:
       print(f"Error processing player {player}: {str(e)}")
-      # Fill with default values if error occurs
+      # Remove the player name we just added if error occurs
       if len(metrics_data['Player']) > len(metrics_data['FBHE']):
-        # Remove the player name we just added
         metrics_data['Player'].pop()
 
     # Create the main metrics DataFrame
-
   metrics_df = pd.DataFrame(metrics_data)
 
   # Sort by player name
   metrics_df = metrics_df.sort_values('Player').reset_index(drop=True)
 
+  # Debug: Print metrics_df to inspect values and types
+  print("Metrics DataFrame:")
+  print(metrics_df[['Player', 'FBHE', 'Good_Pass_Pct', 'Error_Density']])
+  print("Data types:")
+  print(metrics_df.dtypes)
+
   # Add team summary row
-  if len(metrics_df) > 0:
+  if not metrics_df.empty:
     summary_row = {'Player': 'TEAM AVERAGE'}
 
     # Calculate averages for numeric columns
     numeric_cols = ['FBHE', 'FBSO', 'TCR', 'ESO', 'Expected_Value', 'Knockout_Ratio', 'Ace_Error_Ratio', 'Consistency_Errors']
     for col in numeric_cols:
-      summary_row[col] = round(metrics_df[col].mean(), 3)
+      summary_row[col] = round(metrics_df[col].mean(), 3) if not metrics_df[col].empty else 0
 
-      # Handle percentage string columns
-    good_pass_pcts = []
-    error_densities = []
+      # Calculate averages for percentage columns
+    for col in ['Good_Pass_Pct', 'Error_Density']:
+      valid_values = [v for v in metrics_df[col] if pd.notnull(v)]
+      summary_row[col] = round(sum(valid_values) / len(valid_values), 3) if valid_values else 0.0
 
-    for pct in metrics_df['Good_Pass_Pct']:
-      try:
-        if '%' in str(pct):
-          good_pass_pcts.append(float(str(pct).replace('%', '')))
-      except:
-        pass
-
-    for ed in metrics_df['Error_Density']:
-      try:
-        if '%' in str(ed):
-          error_densities.append(float(str(ed).replace('%', '')))
-      except:
-        pass
-
-    summary_row['Good_Pass_Pct'] = f"{round(sum(good_pass_pcts) / len(good_pass_pcts), 0):.0f}%" if good_pass_pcts else '0%'
-    summary_row['Error_Density'] = f"{round(sum(error_densities) / len(error_densities), 1):.1f}%" if error_densities else '0.0%'
+      # Convert percentage columns back to string format for display
+    summary_row['Good_Pass_Pct'] = f"{summary_row['Good_Pass_Pct'] * 100:.0f}%"
+    summary_row['Error_Density'] = f"{summary_row['Error_Density'] * 100:.1f}%"
 
     # Add summary row
     summary_df = pd.DataFrame([summary_row])
@@ -266,74 +273,76 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   df_list[0] = metrics_df
   df_desc_list[0] = f"Key Performance Metrics - Team {team}"
 
-  # Create additional summary tables/charts if needed
-
   # Top performers table (top 5 in each category)
   if len(metrics_df) > 6:  # More than just team average + 5 players
     top_performers = []
     categories = [
-      ('FBHE', 'First Ball Hitting Efficiency'),
-      ('Good_Pass_Pct', 'Good Pass Percentage'), 
-      ('TCR', 'Transition Conversion Rate'),
-      ('ESO', 'Expected Side Out')
-    ]
+            ('FBHE', 'First Ball Hitting Efficiency'),
+            ('Good_Pass_Pct', 'Good Pass Percentage'),
+            ('TCR', 'Transition Conversion Rate'),
+            ('ESO', 'Expected Side Out')
+        ]
 
     for metric, desc in categories:
-      if metric in ['Good_Pass_Pct']:
-        # Handle percentage strings
         temp_df = metrics_df[metrics_df['Player'] != 'TEAM AVERAGE'].copy()
-        temp_df['sort_val'] = temp_df[metric].str.replace('%', '').astype(float)
-        top_player = temp_df.nlargest(1, 'sort_val')
-      else:
-        # Handle numeric columns
-        temp_df = metrics_df[metrics_df['Player'] != 'TEAM AVERAGE']
         top_player = temp_df.nlargest(1, metric)
-
-      if not top_player.empty:
-        top_performers.append({
-          'Category': desc,
-          'Player': top_player['Player'].iloc[0],
-          'Value': top_player[metric].iloc[0]
-        })
+        if not top_player.empty:
+            # Format value for display
+            value = top_player[metric].iloc[0]
+            if metric in ['Good_Pass_Pct', 'Error_Density']:
+                value = f"{value * 100:.0f}%" if metric == 'Good_Pass_Pct' else f"{value * 100:.1f}%"
+            top_performers.append({
+                'Category': desc,
+                'Player': top_player['Player'].iloc[0],
+                'Value': value
+            })
 
     if top_performers:
-      top_performers_df = pd.DataFrame(top_performers)
-      df_list[1] = top_performers_df
-      df_desc_list[1] = "Top Performers by Category"
+        top_performers_df = pd.DataFrame(top_performers)
+        df_list[1] = top_performers_df
+        df_desc_list[1] = "Top Performers by Category"
 
-    # Update titles and labels
+  # Update titles and labels
   title_list[0] = f"Team {team} - Key Metrics Dashboard"
   label_list[0] = f"Comprehensive performance metrics for all players"
 
-  # =============================================================================
-  # END REPORT-SPECIFIC LOGIC
-  # =============================================================================
-
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+    
 
+
+  
 def get_team_players(disp_league, disp_gender, disp_year, team):
   """
-    Get list of players for a specific team from master_player table.
+    Get list of players for a specific team from master_player Anvil Data Table.
     """
   try:
-    import pandas as pd
-    query = f"""
-        SELECT DISTINCT player_name 
-        FROM master_player 
-        WHERE league = '{disp_league}' 
-        AND gender = '{disp_gender}' 
-        AND year = '{disp_year}' 
-        AND team = '{team}'
-        ORDER BY player_name
-        """
+    # Debug: Print input parameters to verify
+    print(f"Parameters: league={disp_league}, gender={disp_gender}, year={disp_year}, team={team}")
 
-    result_df = pd.read_sql(query, con)
-    return result_df['player_name'].tolist() if not result_df.empty else []
+    # Query the master_player Data Table
+    rows = app_tables.master_player.search(
+      league=disp_league,
+      gender=disp_gender,
+      year=disp_year,
+      team=team  # Case-sensitive exact match
+    )
+
+    # Extract unique player names and sort
+    player_names = sorted(set(row['team']+' '+row['number']+' '+row['shortname'] for row in rows))
+
+    # Debug: Print results or indicate if empty
+    if not player_names:
+      print(f"No players found for team={team}, league={disp_league}, gender={disp_gender}, year={disp_year}")
+
+    print(f"Player Names: {player_names}")
+    return player_names
+
   except Exception as e:
     print(f"Error getting team players: {e}")
     return []
 
+    
 
 def calc_ace_error_ratio_from_ppr(ppr_df, player):
   """
