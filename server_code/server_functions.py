@@ -274,6 +274,9 @@ Return as an object
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 '''
 def calc_player_eso( ppr_df, disp_player ):
+  return calc_player_eso_obj(ppr_df,disp_player)
+  
+def calc_player_eso_obj( ppr_df, disp_player ):
   # pass this a query of rows, figures the FBHE for the display player as the attacker
   # initialize the vector
   #
@@ -769,6 +772,135 @@ def calc_ev_obj(ppr_df, disp_player):
 
   return ev_dict
 
+
+#========-----------=============----------===========-------------===============-------------===========
+def calc_error_density_obj(ppr_df, disp_player):
+  """
+    Calculate error density metrics for a specific player.
+    
+    Args:
+        ppr_df (pandas.DataFrame): Point-by-point results dataframe containing match data
+        disp_player (str): Name of the player to analyze (will be stripped of whitespace)
+    
+    Returns:
+        dict: Dictionary containing error density metrics with the following keys:
+            - 'error_density': Error density as a percentage string (e.g., '15.25%')
+            - 'percentile': Percentile ranking (placeholder, currently always 0)
+            - 'first_ball_errors': Count of first ball errors by the player
+            - 'service_errors': Count of service errors by the player
+            - 'transition_errors': Count of transition errors by the player (weighted by 0.5)
+            - 'total_errors': Sum of all error types
+            - 'total_points': Total number of points the player was involved in
+            - 'error_density_raw': Raw error density as a float (for calculations)
+    
+    Note:
+        - Only includes points where the player was actively involved (present in any player position)
+        - Transition errors are weighted by 0.5 (assumes team responsibility)
+        - Returns all zeros if player was not involved in any points
+    """
+
+  # Input validation
+  if ppr_df is None or ppr_df.empty:
+    return _create_empty_error_dict()
+
+  if not disp_player or not isinstance(disp_player, str):
+    return _create_empty_error_dict()
+
+    # Clean player name
+  clean_player_name = disp_player.strip()
+
+  # Filter dataframe to only include points where the player was involved
+  # Check all four possible player positions (a1, a2, b1, b2)
+  player_involved_mask = (
+    (ppr_df['player_a1'].str.strip() == clean_player_name) |
+    (ppr_df['player_a2'].str.strip() == clean_player_name) |
+    (ppr_df['player_b1'].str.strip() == clean_player_name) |
+    (ppr_df['player_b2'].str.strip() == clean_player_name)
+  )
+
+  filtered_df = ppr_df[player_involved_mask].copy()
+  total_points = len(filtered_df)
+
+  # If player wasn't involved in any points, return zeros
+  if total_points == 0:
+    return _create_empty_error_dict()
+
+    # Calculate different types of errors
+
+    # First Ball Errors (FBE) - where this player made the attacking error
+  first_ball_errors = len(filtered_df[
+    (filtered_df['point_outcome'] == 'FBE') & 
+    (filtered_df['att_player'].str.strip() == clean_player_name)
+    ])
+
+  # Service Errors (TSE) - where this player made the service error
+  service_errors = len(filtered_df[
+    (filtered_df['point_outcome'] == 'TSE') & 
+    (filtered_df['serve_player'].str.strip() == clean_player_name)
+    ])
+
+  # Transition Errors (TE) - weighted by 0.5 (team responsibility)
+  # Only count if player's name appears in the point_outcome_team field
+  transition_errors = len(filtered_df[
+    (filtered_df['point_outcome'] == 'TE') & 
+    (filtered_df['point_outcome_team'].str.contains(clean_player_name, na=False))
+    ]) * 0.5
+
+  # Calculate service attempts (serves by this player)
+  service_attempts = len(filtered_df[
+    filtered_df['serve_player'].str.strip() == clean_player_name
+    ])
+
+  # Calculate service error percentage
+  percent_service_error = service_errors / service_attempts if service_attempts > 0 else 0.0
+  percent_service_error_str = f"{percent_service_error:.0%}"
+
+  # Calculate totals
+  total_errors = first_ball_errors + service_errors + transition_errors
+  error_density_raw = total_errors / total_points if total_points > 0 else 0.0
+
+  # Format error density as percentage
+  error_density_formatted = f"{error_density_raw:.2%}"
+
+  # TODO: Implement percentile calculation based on league/tournament averages
+  percentile = 0  # Placeholder for future implementation
+
+  return {
+    'error_density': error_density_formatted,
+    'error_density_raw': error_density_raw,
+    'percentile': percentile,
+    'first_ball_errors': first_ball_errors,
+    'service_errors': service_errors,
+    'service_attempts': service_attempts,
+    'percent_service_error': percent_service_error,
+    'percent_service_error_str': percent_service_error_str,
+    'transition_errors': transition_errors,
+    'total_errors': total_errors,
+    'total_points': total_points
+  }
+
+
+def _create_empty_error_dict():
+  """
+    Create a dictionary with all error metrics set to zero/empty values.
+    
+    Returns:
+        dict: Dictionary with all error metrics initialized to zero
+    """
+  return {
+    'error_density': '0.00%',
+    'error_density_raw': 0.0,
+    'percentile': 0,
+    'first_ball_errors': 0,
+    'service_errors': 0,
+    'service_attempts': 0,
+    'percent_service_error': 0.0,
+    'percent_service_error_str': '0%',
+    'transition_errors': 0.0,
+    'total_errors': 0.0,
+    'total_points': 0
+  }
+
   
 def calc_error_den( ppr_df, disp_player):
 
@@ -1010,6 +1142,7 @@ def count_out_of_system(ppr_df,disp_player,action):
   #print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
   return oos_vector
 
+#=============----------------===============---------------==============----------
 def count_oos_obj(ppr_df, disp_player, action):
   """
     Count out-of-system statistics for a player's actions.
@@ -1020,10 +1153,13 @@ def count_oos_obj(ppr_df, disp_player, action):
         action: Action type ('pass', 'att', 'srv')
     
     Returns:
-        dict: Dictionary with keys 'count', 'percent', 'attempts'
+        dict: Dictionary with keys 'count', 'percent', 'percent_str', 'attempts'
               Use .get() method to safely access values with defaults
+        'count' - number out of system
+        'percent' - decimal percentage out of system (e.g., 0.15 for 15%)
+        'percent_str' - formatted percentage string with no decimals (e.g., '15%')
+        'attempts' - total attempts for the action
     """
-
   # Map actions to column names
   action_mapping = {
     'att': 'att_player',
@@ -1039,9 +1175,10 @@ def count_oos_obj(ppr_df, disp_player, action):
 
     # Initialize result dictionary
   result = {
-    'count': 0,      # number out of system
-    'percent': 0.0,  # percent out of system
-    'attempts': 0    # total attempts
+    'count': 0,           # number out of system
+    'percent': 0.0,       # percent out of system (decimal)
+    'percent_str': '0%',  # percent out of system (formatted string)
+    'attempts': 0         # total attempts
   }
 
   # Check if DataFrame is empty
@@ -1057,10 +1194,58 @@ def count_oos_obj(ppr_df, disp_player, action):
   if result['attempts'] > 0:
     # Count out-of-system occurrences
     result['count'] = len(player_data[player_data['pass_oos'] > 0])
+
     # Calculate percentage
     result['percent'] = result['count'] / result['attempts']
 
+    # Format percentage string with no decimals
+    result['percent_str'] = f"{result['percent']:.0%}"
+
   return result
+
+#=============----------------===============---------------==============----------
+def count_good_passes_obj(ppr_df, disp_player, action='pass'):
+  """
+    Count good passes (in-system) statistics for a player's actions.
+    This is the inverse of out-of-system passes.
+    
+    Args:
+        ppr_df: DataFrame containing player performance data
+        disp_player: Player name to analyze
+        action: Action type ('pass', 'att', 'srv'), defaults to 'pass'
+    
+    Returns:
+        dict: Dictionary with keys 'count', 'percent', 'percent_str', 'attempts'
+              Use .get() method to safely access values with defaults
+        'count' - number of good passes (in-system)
+        'percent' - decimal percentage of good passes (e.g., 0.85 for 85%)
+        'percent_str' - formatted percentage string with no decimals (e.g., '85%')
+        'attempts' - total attempts for the action
+    """
+  # Get out-of-system statistics first
+  oos_stats = count_oos_obj(ppr_df, disp_player, action)
+
+  # Calculate good passes as the inverse of out-of-system
+  total_attempts = oos_stats.get('attempts', 0)
+  oos_count = oos_stats.get('count', 0)
+
+  # Calculate good passes
+  good_count = total_attempts - oos_count
+  good_percent = 1.0 - oos_stats.get('percent', 0.0) if total_attempts > 0 else 0.0
+
+  # Format percentage string with no decimals
+  good_percent_str = f"{good_percent:.0%}"
+
+  return {
+    'count': good_count,           # number of good passes
+    'percent': good_percent,       # percent of good passes (decimal)
+    'percent_str': good_percent_str,  # percent of good passes (formatted string)
+    'attempts': total_attempts     # total attempts
+  }
+
+
+
+
 
 
   
@@ -1071,12 +1256,11 @@ def count_oos_obj(ppr_df, disp_player, action):
 #-----------------------------------------------------------------------------------------------
 
 # a simple routine to write. afile to the drive
-@anvil.server.callable
+
 def create_google_drive_file( folder, filename, file ):
     return folder.create_file(filename, file)
   
 #.     Get the report folder, and/or create it
-@anvil.server.callable
 def get_report_folder( root_folder, r_league, r_gender, r_year, r_team, r_date):
   #
   folder_name = r_league.upper() + '/' + r_gender.upper() + '/' + r_year.upper() + '/' + r_team.upper() + '/' + r_date.upper()
@@ -1091,7 +1275,7 @@ def get_report_folder( root_folder, r_league, r_gender, r_year, r_team, r_date):
   return rpt_folder
 
 
-@anvil.server.callable
+
 def does_folder_exist(folder_name):
     try:
         # Attempt to access the folder by name under app_files
@@ -1107,7 +1291,7 @@ def does_folder_exist(folder_name):
 
 
 # Example usage
-@anvil.server.callable
+
 def create_report_folder(folder_name, parent_id):
     #folder_name = "MyNewFolder"  # Replace with your desired folder name
     #parent_id = None  # Optional: Replace with a parent folder ID if needed
@@ -1118,7 +1302,7 @@ def write_pdf_to_google_drive( folder, filename, pdf_file):
   new_pdf = folder.create_file(filename, pdf_file)
   return new_pdf
 
-@anvil.server.callable
+
 def write_to_drive(filename, directory, content):
     # Access the app_files folder (replace 'my_folder' with your folder name from the Google API Service)
     folder = app_files.reports  # e.g., app_files.my_folder if you added a folder named "my_folder"
@@ -1135,7 +1319,7 @@ def write_to_drive(filename, directory, content):
 # Example usage from client code
 # anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
 
-@anvil.server.callable
+
 def write_to_nested_folder(folder_path, filename, content):
   from anvil.google.drive import app_files
   current_folder = app_files.reports  # Replace with your folder name

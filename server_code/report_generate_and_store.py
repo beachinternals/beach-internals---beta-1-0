@@ -28,6 +28,7 @@ from plot_functions import *
 from server_functions import *
 from reports_player_new import *
 from reports_player import *
+from reports_dashboard import *
 
 # Option A: Check if it's just called Logger
 from anvil_extras.logging import Logger

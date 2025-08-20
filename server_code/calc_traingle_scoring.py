@@ -116,8 +116,8 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
               'knockout_diff':None,'goodpass_diff':None, 'tcr_diff':None,'err_den_diff':None,
 
               # kncokout and goodpass:-)
-              'knockout_a':None, 'knockout_b':None, 'win_knockout':None, 'loser_knockout':None, 
-              'goodpass_a':None,'goodpass_b':None,'win_goodpass':None,'loser_goodpass':None,
+              'knockout_a':None, 'knockout_b':None, 
+              'goodpass_a':None,'goodpass_b':None,
              }
   '''
   Dictionary Definitions  
