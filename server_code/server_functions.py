@@ -727,6 +727,7 @@ def calc_ev_obj(ppr_df, disp_player):
   # Calculate expected value and return as a dictionary
   ev_dict = {
     'expected_value': 0,
+    'expected_value_per': '',
     'total_points': 0,
     'points_won': 0,
     'fbk_earned': 0,
@@ -768,7 +769,7 @@ def calc_ev_obj(ppr_df, disp_player):
   # Expected value percentage
   ev_dict['expected_value'] = (ev_dict['points_won'] / ev_dict['total_points'] 
                                if ev_dict['total_points'] != 0 else 0)
-  ev_dict['expected_value'] = f"{ev_dict['expected_value']:.0%}"
+  ev_dict['expected_value_per'] = f"{ev_dict['expected_value']:.0%}"
 
   return ev_dict
 

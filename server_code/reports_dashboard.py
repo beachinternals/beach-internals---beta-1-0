@@ -203,7 +203,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
         # Get Expected Value from calc_ev_obj function
       ev_result = calc_ev_obj(ppr_df, player)
-      metrics_data['Expected_Value'].append(ev_result.get('expected_value') )
+      metrics_data['Expected_Value'].append(to_python_type(ev_result.get('expected_value')) )
 
       # Get Good Pass percentage from count_good_passes_obj function
       good_pass_result = count_good_passes_obj(ppr_df, player, 'pass')
@@ -213,7 +213,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
       # Get Knockout Ratio from calc_knockout_obj function
       knockout_result = calc_knock_out_obj(ppr_df, player)
-      metrics_data['Knockout_Ratio'].append(knockout_result.get('ratio', 0))
+      metrics_data['Knockout_Ratio'].append(to_python_type(knockout_result.get('ratio', 0)))
 
       # Get Ace Error Ratio
       ace_error_result = calc_ace_error_ratio_from_ppr(ppr_df, player)
@@ -221,7 +221,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
       # Get Consistency in Errors from player_data_stats_df
       consistency_result = get_consistency_errors_from_stats(player_data_stats_df, player)
-      metrics_data['Consistency_Errors'].append(consistency_result)
+      metrics_data['Consistency_Errors'].append(to_python_type(consistency_result))
 
       # Get Error Density from calc_error_density_obj function
       error_density_result = calc_error_density_obj(ppr_df, player)
@@ -243,7 +243,8 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
   # Debug: Print metrics_df to inspect values and types
   print("Metrics DataFrame:")
-  print(metrics_df[['Player', 'FBHE', 'Good_Pass_Pct', 'Error_Density']])
+  print(metrics_df[['Player','FBHE', 'FBSO', 'TCR', 'ESO', ]])
+  print(metrics_df[['Player','Expected_Value', 'Knockout_Ratio', 'Ace_Error_Ratio', 'Consistency_Errors']])
   print("Data types:")
   print(metrics_df.dtypes)
 
@@ -356,7 +357,7 @@ def calc_ace_error_ratio_from_ppr(ppr_df, player):
       return {'ratio': 0, 'aces': 0, 'errors': 0}
 
       # Count aces and service errors
-    aces = len(player_serves[player_serves['point_outcome'] == 'ACE'])
+    aces = len(player_serves[player_serves['point_outcome'] == 'TSA'])
     service_errors = len(player_serves[player_serves['point_outcome'] == 'TSE'])
 
     # Calculate ratio
