@@ -303,11 +303,11 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   metrics_df['TCR'] = metrics_df['TCR'].round(3).astype(str)
   metrics_df['ESO'] = metrics_df['ESO'].round(3).astype(str)
   metrics_df['Expected'] = metrics_df['Expected'].round(3).astype(str)
-  metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3).astype(str)
+  #metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3).astype(str)
   metrics_df['Knockout'] = metrics_df['Knockout'].round(3).astype(str)
   metrics_df['Ace/Error'] = metrics_df['Ace/Error'].round(3).astype(str)
   metrics_df['Consistency_Errors'] = metrics_df['Consistency_Errors'].round(3).astype(str)
-  metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3).astype(str)
+  #metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3).astype(str)
 
   
       # Store the main metrics table
