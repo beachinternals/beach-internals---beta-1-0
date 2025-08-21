@@ -229,6 +229,8 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       print(f"Raw Error_Density for {player}: {error_density_value}")
       metrics_data['Error_Density'].append(parse_percentage(error_density_value, player, 'Error_Density'))
 
+      print(f"Metrics Data Row:{metrics_data}")
+
     except Exception as e:
       print(f"Error processing player {player}: {str(e)}")
       # Remove the player name we just added if error occurs
