@@ -208,8 +208,8 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       # Get Good Pass percentage from count_good_passes_obj function
       good_pass_result = count_good_passes_obj(ppr_df, player, 'pass')
       good_pass_value = good_pass_result.get('percent') 
-      print(f"Raw Good_Pass_Pct for {player}: {good_pass_value}")
-      metrics_data['Good_Pass_Pct'].append(parse_percentage(good_pass_value, player, 'Good_Pass_Pct'))
+      #print(f"Raw Good_Pass_Pct for {player}: {good_pass_value}")
+      metrics_data['Good_Pass_Pct'].append(to_python_type(good_pass_value))
 
       # Get Knockout Ratio from calc_knockout_obj function
       knockout_result = calc_knock_out_obj(ppr_df, player)
@@ -226,10 +226,10 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       # Get Error Density from calc_error_density_obj function
       error_density_result = calc_error_density_obj(ppr_df, player)
       error_density_value = error_density_result.get('error_density') 
-      print(f"Raw Error_Density for {player}: {error_density_value}")
+      #print(f"Raw Error_Density for {player}: {error_density_value}")
       metrics_data['Error_Density'].append(parse_percentage(error_density_value, player, 'Error_Density'))
 
-      print(f"Metrics Data Row:{metrics_data}")
+      #print(f"Metrics Data Row:{metrics_data}")
 
     except Exception as e:
       print(f"Error processing player {player}: {str(e)}")
@@ -244,11 +244,11 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   metrics_df = metrics_df.sort_values('Player').reset_index(drop=True)
 
   # Debug: Print metrics_df to inspect values and types
-  print("Metrics DataFrame:")
-  print(metrics_df[['Player','FBHE', 'FBSO', 'TCR', 'ESO', ]])
-  print(metrics_df[['Player','Expected_Value', 'Knockout_Ratio', 'Ace_Error_Ratio', 'Consistency_Errors']])
-  print("Data types:")
-  print(metrics_df.dtypes)
+  #print("Metrics DataFrame:")
+  #print(metrics_df[['Player','FBHE', 'FBSO', 'TCR', 'ESO', ]])
+  #print(metrics_df[['Player','Expected_Value', 'Knockout_Ratio', 'Ace_Error_Ratio', 'Consistency_Errors']])
+  #print("Data types:")
+  #print(metrics_df.dtypes)
 
   # Add team summary row
   if not metrics_df.empty:
@@ -273,41 +273,43 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
     metrics_df = pd.concat([metrics_df, summary_df], ignore_index=True)
 
     # Store the main metrics table
-  df_list[0] = metrics_df
-  df_desc_list[0] = f"Key Performance Metrics - Team {team}"
+  df_list[0] = metrics_df.to_dict('records')
+  print(f"Metrics df:{metrics_data}")
+  #df_desc_list[0] = f"Key Performance Metrics - Team {team}"
 
   # Top performers table (top 5 in each category)
   if len(metrics_df) > 6:  # More than just team average + 5 players
     top_performers = []
     categories = [
             ('FBHE', 'First Ball Hitting Efficiency'),
-            ('Good_Pass_Pct', 'Good Pass Percentage'),
             ('TCR', 'Transition Conversion Rate'),
             ('ESO', 'Expected Side Out')
         ]
 
     for metric, desc in categories:
-        temp_df = metrics_df[metrics_df['Player'] != 'TEAM AVERAGE'].copy()
-        top_player = temp_df.nlargest(1, metric)
-        if not top_player.empty:
-            # Format value for display
-            value = top_player[metric].iloc[0]
-            if metric in ['Good_Pass_Pct', 'Error_Density']:
-                value = f"{value * 100:.0f}%" if metric == 'Good_Pass_Pct' else f"{value * 100:.1f}%"
-            top_performers.append({
-                'Category': desc,
-                'Player': top_player['Player'].iloc[0],
-                'Value': value
-            })
+      temp_df = metrics_df[metrics_df['Player'] != 'TEAM AVERAGE'].copy()
+      top_player = temp_df.nlargest(1, metric)
+      if not top_player.empty:
+        # Format value for display
+        # Convert value to Python type and format for display
+        value = to_python_type(top_player[metric].iloc[0])
+        if metric in ['Good_Pass_Pct', 'Error_Density']:
+          value = f"{value * 100:.0f}%" if metric == 'Good_Pass_Pct' else f"{value * 100:.1f}%"
+        top_performers.append({
+          'Category': desc,
+          'Player': top_player['Player'].iloc[0],
+          'Value': value
+          })
 
     if top_performers:
-        top_performers_df = pd.DataFrame(top_performers)
-        df_list[1] = top_performers_df
-        df_desc_list[1] = "Top Performers by Category"
+      top_performers_df = pd.DataFrame(top_performers)
+      df_list[1] = top_performers_df.to_dict('records')
+      print(f"Top Performers: {top_performers}")
+      #df_desc_list[1] = "Top Performers by Category"
 
   # Update titles and labels
-  title_list[0] = f"Team {team} - Key Metrics Dashboard"
-  label_list[0] = f"Comprehensive performance metrics for all players"
+  #title_list[0] = f"Team {team} - Key Metrics Dashboard"
+  #label_list[0] = f"Comprehensive performance metrics for all players"
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
