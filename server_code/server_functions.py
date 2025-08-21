@@ -758,7 +758,7 @@ def calc_ev_obj(ppr_df, disp_player):
   ev_dict['tse_received'] = tmp_df[tmp_df['point_outcome'] == "TSE"].shape[0]
 
   # Points earned
-  ev_dict['points_won'] = ev_dict['fbk_earned'] + ev_dict['tk_earned'] + ev_dict['te_received']
+  ev_dict['points_won'] = ev_dict['fbk_earned'] + ev_dict['tk_earned'] + ev_dict['te_received'] + ev_dict['tse_received']
 
   # Points lost
   ev_dict['points_lost'] = ev_dict['fbe_given'] + ev_dict['te_given'] + ev_dict['tk_lost'] + ev_dict['tsa_lost']

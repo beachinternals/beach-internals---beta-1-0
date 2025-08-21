@@ -101,9 +101,6 @@ def report_stub(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
-import pandas as pd
-import numpy as np
-
 def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   """
     Dashboard report showing key metrics for all players on a team.
@@ -152,10 +149,10 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
     'FBSO': [],           # First Ball Side Out
     'TCR': [],            # Transition Conversion Rate
     'ESO': [],            # Expected Side Out
-    'Expected_Value': [], # Expected Value
+    'Expected': [], # Expected Value
     'Good_Pass_Pct': [],  # Good Pass Percentage
-    'Knockout_Ratio': [], # Knockout Ratio
-    'Ace_Error_Ratio': [], # Ace to Error Ratio
+    'Knockout': [], # Knockout Ratio
+    'Ace/Error': [], # Ace to Error Ratio
     'Consistency_Errors': [], # Consistency in Errors
     'Error_Density': []   # Error Density
   }
@@ -203,7 +200,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
         # Get Expected Value from calc_ev_obj function
       ev_result = calc_ev_obj(ppr_df, player)
-      metrics_data['Expected_Value'].append(to_python_type(ev_result.get('expected_value')) )
+      metrics_data['Expected'].append(to_python_type(ev_result.get('expected_value')) )
 
       # Get Good Pass percentage from count_good_passes_obj function
       good_pass_result = count_good_passes_obj(ppr_df, player, 'pass')
@@ -213,11 +210,11 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
       # Get Knockout Ratio from calc_knockout_obj function
       knockout_result = calc_knock_out_obj(ppr_df, player)
-      metrics_data['Knockout_Ratio'].append(to_python_type(knockout_result.get('ratio', 0)))
+      metrics_data['Knockout'].append(to_python_type(knockout_result.get('ratio', 0)))
 
       # Get Ace Error Ratio
       ace_error_result = calc_ace_error_ratio_from_ppr(ppr_df, player)
-      metrics_data['Ace_Error_Ratio'].append(ace_error_result.get('ratio', 0)) 
+      metrics_data['Ace/Error'].append(ace_error_result.get('ratio', 0)) 
 
       # Get Consistency in Errors from player_data_stats_df
       consistency_result = get_consistency_errors_from_stats(player_data_stats_df, player)
@@ -243,19 +240,12 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   # Sort by player name
   metrics_df = metrics_df.sort_values('Player').reset_index(drop=True)
 
-  # Debug: Print metrics_df to inspect values and types
-  #print("Metrics DataFrame:")
-  #print(metrics_df[['Player','FBHE', 'FBSO', 'TCR', 'ESO', ]])
-  #print(metrics_df[['Player','Expected_Value', 'Knockout_Ratio', 'Ace_Error_Ratio', 'Consistency_Errors']])
-  #print("Data types:")
-  #print(metrics_df.dtypes)
-
   # Add team summary row
   if not metrics_df.empty:
     summary_row = {'Player': 'TEAM AVERAGE'}
 
     # Calculate averages for numeric columns
-    numeric_cols = ['FBHE', 'FBSO', 'TCR', 'ESO', 'Expected_Value', 'Knockout_Ratio', 'Ace_Error_Ratio', 'Consistency_Errors']
+    numeric_cols = ['FBHE', 'FBSO', 'TCR', 'ESO', 'Expected', 'Knockout', 'Ace/Error', 'Consistency_Errors']
     for col in numeric_cols:
       summary_row[col] = round(metrics_df[col].mean(), 3) if not metrics_df[col].empty else 0
 
@@ -272,18 +262,18 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
     summary_df = pd.DataFrame([summary_row])
     metrics_df = pd.concat([metrics_df, summary_df], ignore_index=True)
 
-    # Store the main metrics table
-  df_list[0] = metrics_df.to_dict('records')
-  print(f"Metrics df:{metrics_data}")
-  #df_desc_list[0] = f"Key Performance Metrics - Team {team}"
 
   # Top performers table (top 5 in each category)
   if len(metrics_df) > 6:  # More than just team average + 5 players
     top_performers = []
     categories = [
             ('FBHE', 'First Ball Hitting Efficiency'),
+            ('FBSO', "First Ball Side Out"),
             ('TCR', 'Transition Conversion Rate'),
-            ('ESO', 'Expected Side Out')
+            ('ESO', 'Earned Side Out'),
+            ('Knockout','Knockout Ratio'),
+            #('Error_Density', 'Error Density')
+            ('Expected', 'Expected Value')
         ]
 
     for metric, desc in categories:
@@ -300,16 +290,30 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
           'Player': top_player['Player'].iloc[0],
           'Value': value
           })
-
+  
     if top_performers:
       top_performers_df = pd.DataFrame(top_performers)
       df_list[1] = top_performers_df.to_dict('records')
       print(f"Top Performers: {top_performers}")
-      #df_desc_list[1] = "Top Performers by Category"
 
-  # Update titles and labels
-  #title_list[0] = f"Team {team} - Key Metrics Dashboard"
-  #label_list[0] = f"Comprehensive performance metrics for all players"
+  # format the metrics df:
+  print(metrics_df.dtypes)
+  metrics_df['FBHE'] = metrics_df['FBHE'].round(3).astype(str)
+  metrics_df['FBSO'] = metrics_df['FBSO'].round(3).astype(str)
+  metrics_df['TCR'] = metrics_df['TCR'].round(3).astype(str)
+  metrics_df['ESO'] = metrics_df['ESO'].round(3).astype(str)
+  metrics_df['Expected'] = metrics_df['Expected'].round(3).astype(str)
+  #metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3).astype(str)
+  metrics_df['Knockout'] = metrics_df['Knockout'].round(3).astype(str)
+  metrics_df['Ace/Error'] = metrics_df['Ace/Error'].round(3).astype(str)
+  metrics_df['Consistency_Errors'] = metrics_df['Consistency_Errors'].round(3).astype(str)
+  #metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3).astype(str)
+
+  
+      # Store the main metrics table
+  df_list[0] = metrics_df.to_dict('records')
+  print(f"Metrics df:{metrics_data}")
+  #df_desc_list[0] = f"Key Performance Metrics - Team {team}"
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
