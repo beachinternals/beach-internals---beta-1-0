@@ -217,7 +217,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       metrics_data['Ace/Error'].append(ace_error_result.get('ratio', 0)) 
 
       # Get Consistency in Errors from player_data_stats_df
-      consistency_result = get_consistency_errors_from_stats(player_data_stats_df, player)
+      consistency_result = get_consistency_errors_from_stats(player_data_df, player, 'cons_ed_sd_match')
       metrics_data['Consistency_Errors'].append(to_python_type(consistency_result))
 
       # Get Error Density from calc_error_density_obj function
@@ -283,8 +283,8 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
         # Format value for display
         # Convert value to Python type and format for display
         value = to_python_type(top_player[metric].iloc[0])
-        if metric in ['Good_Pass_Pct', 'Error_Density']:
-          value = f"{value * 100:.0f}%" if metric == 'Good_Pass_Pct' else f"{value * 100:.1f}%"
+        #if metric in ['Good_Pass_Pct', 'Error_Density']:
+        #  value = f"{value * 100:.0f}%" if metric == 'Good_Pass_Pct' else f"{value * 100:.1f}%"
         top_performers.append({
           'Category': desc,
           'Player': top_player['Player'].iloc[0],
@@ -303,11 +303,11 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   metrics_df['TCR'] = metrics_df['TCR'].round(3).astype(str)
   metrics_df['ESO'] = metrics_df['ESO'].round(3).astype(str)
   metrics_df['Expected'] = metrics_df['Expected'].round(3).astype(str)
-  #metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3).astype(str)
+  metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3).astype(str)
   metrics_df['Knockout'] = metrics_df['Knockout'].round(3).astype(str)
   metrics_df['Ace/Error'] = metrics_df['Ace/Error'].round(3).astype(str)
   metrics_df['Consistency_Errors'] = metrics_df['Consistency_Errors'].round(3).astype(str)
-  #metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3).astype(str)
+  metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3).astype(str)
 
   
       # Store the main metrics table
@@ -381,21 +381,29 @@ def calc_ace_error_ratio_from_ppr(ppr_df, player):
     return {'ratio': 0, 'aces': 0, 'errors': 0}
 
 
-def get_consistency_errors_from_stats(player_data_stats_df, player):
+def get_consistency_errors_from_stats(player_data_df, player, var):
   """
-    Get consistency in errors from player_data_stats_df.
+    Get consistency in errors from player_data_df for a specific player.
+
+    Args:
+        player_data_df (pandas.DataFrame): DataFrame containing player statistics
+        player (str): Player identifier to match against the 'player' column
+        var (str): Variable/column name (not used in current implementation)
+
+    Returns:
+        float: Consistency error value or 0 if not found or on error
     """
   try:
-    # Access the specific field as mentioned: player_data_stats_df.at['0','cons_ed_sd_match']
-    # This might need adjustment based on how your DataFrame is indexed
-    if not player_data_stats_df.empty:
-      # If indexed by player name
-      if player in player_data_stats_df.index:
-        return player_data_stats_df.at[player, 'cons_ed_sd_match']
-        # If using row index '0' as specified
-      elif 'cons_ed_sd_match' in player_data_stats_df.columns:
-        return player_data_stats_df.at[0, 'cons_ed_sd_match']
-
+    # Check if DataFrame is not None and not empty
+    if player_data_df is not None and not player_data_df.empty:
+      # Check if required columns exist
+      if 'player' in player_data_df.columns and 'cons_ed_sd_match' in player_data_df.columns:
+        # Filter DataFrame where 'player' column matches the input player
+        matching_row = player_data_df[player_data_df['player'] == player]
+        # If a matching row is found, return the 'cons_ed_sd_match' value
+        if not matching_row.empty:
+          return float(matching_row['cons_ed_sd_match'].iloc[0])
+      return 0
     return 0
-  except Exception as e:
+  except Exception:
     return 0
