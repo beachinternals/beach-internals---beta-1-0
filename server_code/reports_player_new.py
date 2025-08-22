@@ -144,7 +144,8 @@ def report_player_stub_new(lgy, team, **rpt_filters):
 #.  Player Consistency Report
 #
 #-------------------------------------------------------------------------------------------------
-@anvil.server.callable
+
+
 def  player_consistency_report_new(lgy, team, **rpt_filters):
   '''
 
@@ -175,11 +176,15 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
   # unpack lgy into league, gender, year
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+  # Initialize the calculated lists
+  image_list = [''] * 10
+  df_list = [''] * 10
+  
   # fetch the ppr dataframe and filter by all the report filters
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
-  title_list, label_list, image_list, df_list = initialize_report_lists(inspect.currentframe().f_code.co_name, **rpt_filters)
 
   #------------------------------------------------------------------------------------------------------
   #            Set ot a Player or Pair Report
@@ -253,7 +258,7 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
   # z1_plt = get_player_attack_plots(ppr_df, disp_player)
   # image_list[0] = z1_plt
 
-  return title_list, label_list, image_list, df_list
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 #---------------------------------------------------------------------------------------------------
 #
