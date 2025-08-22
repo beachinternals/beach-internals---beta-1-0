@@ -781,19 +781,19 @@ db_schema:
     - admin_ui: {width: 106}
       name: league
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {order: 3, width: 97}
       name: gender
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {order: 4, width: 99}
       name: year
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {order: 5, width: 124}
       name: start_date
       type: date
-    - admin_ui: {width: 200}
+    - admin_ui: {order: 6, width: 105}
       name: end_date
       type: date
-    - admin_ui: {width: 200}
+    - admin_ui: {order: 7, width: 101}
       name: num_users
       type: number
     server: full

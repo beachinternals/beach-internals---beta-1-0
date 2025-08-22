@@ -2754,3 +2754,202 @@ def report_player_srv_transition(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+
+
+def report_player_trends(lgy, team, **rpt_filters):
+  """
+  Player trends report function - shows weekly performance trends for a player.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters including optional start_date, end_date, player
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, and/or player stats, and/or tri-data
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # This is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # =============================================================================
+
+  # Determine start and end dates
+  if 'start_date' in rpt_filters and 'end_date' in rpt_filters:
+    start_date = rpt_filters.get('start_date')
+    end_date = rpt_filters.get('end_date')
+  else:
+    # Load subscription data from CSV to get dates
+    try:
+      # Try to read from the uploaded file first
+      try:
+        subscriptions_df = pd.read_csv('export.csv')
+      except:
+        # If that fails, try reading from window.fs (for web environment)
+        csv_content = window.fs.readFile('export.csv', {'encoding': 'utf8'})
+        from io import StringIO
+        subscriptions_df = pd.read_csv(StringIO(csv_content))
+
+      # Find matching subscription record
+      matching_subscription = subscriptions_df[
+        (subscriptions_df['team'] == team) & 
+        (subscriptions_df['league'] == disp_league) & 
+        (subscriptions_df['gender'] == disp_gender) & 
+        (subscriptions_df['year'] == str(disp_year))
+        ]
+
+      if not matching_subscription.empty:
+        start_date = pd.to_datetime(matching_subscription.iloc[0]['start_date'])
+        end_date = pd.to_datetime(matching_subscription.iloc[0]['end_date'])
+        print(f"Found subscription dates: {start_date} to {end_date}")
+      else:
+        print(f"No matching subscription found for team={team}, league={disp_league}, gender={disp_gender}, year={disp_year}")
+        # Fallback to default dates if no matching subscription found
+        start_date = datetime(2025, 2, 19)
+        end_date = start_date + timedelta(days=7*11)
+    except Exception as e:
+      print(f"Error loading subscription data: {e}")
+      # Fallback to default dates if CSV reading fails
+      start_date = datetime(2025, 2, 19)
+      end_date = start_date + timedelta(days=7*11)
+
+  # Convert to datetime objects if they aren't already
+  if isinstance(start_date, str):
+    start_date = pd.to_datetime(start_date)
+  if isinstance(end_date, str):
+    end_date = pd.to_datetime(end_date)
+
+  # Convert to date objects for consistency
+  if hasattr(start_date, 'date'):
+    start_date = start_date.date()
+  if hasattr(end_date, 'date'):
+    end_date = end_date.date()
+
+  # Calculate number of weeks based on actual date range
+  total_days = (end_date - start_date).days
+  num_weeks = int(total_days / 7) + (1 if total_days % 7 > 0 else 0)
+
+  # Create a list with the start and end date for each week
+  weekly_dates = []
+  week_labels = []
+
+  for i in range(num_weeks):
+    week_start = start_date + timedelta(days=7 * i)
+    week_end = min(week_start + timedelta(days=6), end_date)  # Don't exceed end_date
+
+    weekly_dates.append({
+      'start_date': week_start,
+      'end_date': week_end
+    })
+
+    # Create date labels for every week
+    week_labels.append(week_start.strftime('%m/%d/%y'))
+
+  # Set up the pandas dataframe with date labels
+  df_dict = {
+    'Variable': week_labels,
+    'FBHE': [0] * num_weeks,
+    'Errors': [0] * num_weeks,
+    'Transition': [0] * num_weeks,
+    'Knockout': [0] * num_weeks,
+    'Good Pass': [0] * num_weeks,
+    'Points': [0] * num_weeks
+  }
+  sum_df = pd.DataFrame.from_dict(df_dict)
+
+  # Loop over the weeks to calculate metrics
+  for i in range(num_weeks):
+    # Filter ppr_df to tmp_df for this week
+    tmp_df = ppr_df.copy()
+    tmp_df['game_date'] = pd.to_datetime(tmp_df['game_date'])
+    tmp_df['game_date'] = tmp_df['game_date'].dt.date
+
+    tmp_df = tmp_df[ 
+      (tmp_df['game_date'] >= weekly_dates[i]['start_date']) & 
+      (tmp_df['game_date'] <= weekly_dates[i]['end_date']) 
+      ]
+
+    # Calculate player point totals for this week
+    pt_totals_df = player_pt_total(tmp_df, disp_player)
+
+    if pt_totals_df.shape[0] > 0:  # Check if there's data for this week
+      # Calculate metrics with error handling for division by zero
+      try:
+        sum_df.loc[i,'FBHE'] = (pt_totals_df.at[0,'p_fbk']-pt_totals_df.at[0,'p_fbe']) / pt_totals_df.at[0,'p_att_total'] if pt_totals_df.at[0,'p_att_total'] > 0 else 0
+        sum_df.loc[i,'Errors'] = (pt_totals_df.at[0,'p_fbe']+pt_totals_df.at[0,'p_tse']+pt_totals_df.at[0,'p_te_r']+pt_totals_df.at[0,'p_te_s']) / pt_totals_df.at[0,'pts_total'] if pt_totals_df.at[0,'pts_total'] > 0 else 0
+        sum_df.loc[i,'Transition'] = (pt_totals_df.at[0,'p_tk_s']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'o_te_r']+pt_totals_df.at[0,'o_te_s']) / pt_totals_df.at[0,'trans_total'] if pt_totals_df.at[0,'trans_total'] > 0 else 0
+        sum_df.loc[i,'Knockout'] = (pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'o_bad_pass']) / pt_totals_df.at[0,'p_serves'] if pt_totals_df.at[0,'p_serves'] > 0 else 0
+        sum_df.loc[i,'Good Pass'] = pt_totals_df.at[0,'p_good_pass'] / (pt_totals_df.at[0,'p_good_pass']+pt_totals_df.at[0,'p_bad_pass']) if (pt_totals_df.at[0,'p_good_pass']+pt_totals_df.at[0,'p_bad_pass']) > 0 else 0
+        sum_df.loc[i,'Points'] = ((pt_totals_df.at[0,'p_tsa']+pt_totals_df.at[0,'p_fbk']+pt_totals_df.at[0,'p_tk_r']+pt_totals_df.at[0,'p_tk_s']) + (pt_totals_df.at[0,'o_tse']+pt_totals_df.at[0,'o_fbe']+pt_totals_df.at[0,'o_te_r']+pt_totals_df.at[0,'o_te_s'])) / pt_totals_df.at[0,'pts_total'] if pt_totals_df.at[0,'pts_total'] > 0 else 0
+      except (KeyError, IndexError, ZeroDivisionError):
+        # Set to 0 if calculation fails
+        pass
+
+    # Format the entries to 3 decimal places
+    sum_df.loc[i,'FBHE'] = "{:.3f}".format(sum_df.loc[i,'FBHE'])
+    sum_df.loc[i,'Errors'] = "{:.3f}".format(sum_df.loc[i,'Errors'])
+    sum_df.loc[i,'Transition'] = "{:.3f}".format(sum_df.loc[i,'Transition'])
+    sum_df.loc[i,'Knockout'] = "{:.3f}".format(sum_df.loc[i,'Knockout'])
+    sum_df.loc[i,'Good Pass'] = "{:.3f}".format(sum_df.loc[i,'Good Pass'])
+    sum_df.loc[i,'Points'] = "{:.3f}".format(sum_df.loc[i,'Points'])
+
+  # Create bar graphs for each metric
+  size = [11, 5]
+  avg_title = disp_league + " Average : "
+
+  # Generate plots with league averages where available
+  try:
+    plt1 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', size, avg_title, player_data_stats_df.at[0,'fbhe_mean'], False, '', '')
+    plt2 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Density', '', 'Error Density', size, avg_title, player_data_stats_df.at[0,'err_den_mean']/100, False, '', '')
+    plt3 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', size, avg_title, player_data_stats_df.at[0,'tcr_mean']/100, False, '', '')
+    plt4 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', size, avg_title, player_data_stats_df.at[0,'knockout_mean'], False, '', '')
+    plt5 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', size, avg_title, player_data_stats_df.at[0,'goodpass_mean'], False, '', '')
+    plt6 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', size, '', 0, False, '', '')
+  except (KeyError, IndexError):
+    # Fallback plots without league averages if stats not available
+    plt1 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['FBHE'].tolist(), 'First Ball Hitting Efficiency', '', 'FBHE', size, '', 0, False, '', '')
+    plt2 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Errors'].tolist(), 'Error Density', '', 'Error Density', size, '', 0, False, '', '')
+    plt3 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Transition'].tolist(), 'Transition Conversion', '', 'Transition Conversion', size, '', 0, False, '', '')
+    plt4 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Knockout'].tolist(), 'Serving Aggressiveness', '', 'Serving - Knockout Percent', size, '', 0, False, '', '')
+    plt5 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Good Pass'].tolist(), 'Passing Quality', '', 'Percent Good Passes', size, '', 0, False, '', '')
+    plt6 = plot_bar_graph(sum_df['Variable'].tolist(), sum_df['Points'].tolist(), 'Percent of Points Won', '', 'Percent of Points Earned', size, '', 0, False, '', '')
+
+  # Store the images in the list
+  image_list[0] = plt1
+  image_list[1] = plt2
+  image_list[2] = plt3
+  image_list[3] = plt4
+  image_list[4] = plt5
+  image_list[5] = plt6
+
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+  

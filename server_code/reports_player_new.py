@@ -260,7 +260,7 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
 #.  Player Season Summary
 #
 #-------------------------------------------------------------------------------------------------
-@anvil.server.callable
+
 def  player_season_summary_new(lgy, team, **rpt_filters):
   '''
 

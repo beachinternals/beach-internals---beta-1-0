@@ -44,14 +44,6 @@ components_by_slot:
         properties:
           items: []
         type: DropDown
-      - layout_properties: {grid_position: 'LFVHTF,HSKEKD MAVMHF,JKODMH'}
-        name: rpt_summary
-        properties: {align: center, selected: true, text: Summary}
-        type: RadioButton
-      - layout_properties: {grid_position: 'LFVHTF,HSKEKD MAVMHF,WPJYYV'}
-        name: rpt_detail
-        properties: {align: center, text: Detail}
-        type: RadioButton
       - event_bindings: {click: generate_report_button_click}
         layout_properties: {grid_position: 'ZDTNXF,LBDMQF'}
         name: generate_report_button

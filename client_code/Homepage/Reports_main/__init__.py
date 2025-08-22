@@ -114,10 +114,12 @@ class Reports_main(Reports_mainTemplate):
     
     # populate the report type drop down
     if anvil.users.get_user()["team"] == "INTERNALS":
+      self.json_button.visible = True
       self.rpt_type_drop_down.items = sorted(
         list(set(row['rpt_type'] for row in app_tables.report_list.search() if row['rpt_type'] is not None))
       )
     else:
+      self.json_button.visible = False
       self.rpt_type_drop_down.items = sorted(
         list(set(row['rpt_type'] for row in app_tables.report_list.search(private=False) if row['rpt_type'] is not None))
       )
@@ -266,12 +268,6 @@ class Reports_main(Reports_mainTemplate):
 
     # builld the rpt_filter 
     rpt_filters = {}
-
-    #pair, player, opp pair
-    if self.rpt_detail.selected:
-      rpt_filters['rpt_detail'] = 'detail'
-    if self.rpt_summary.selected:
-      rpt_filters['rpt_detail'] = 'summary'
       
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     rpt_filters['player'] = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
@@ -634,6 +630,11 @@ class Reports_main(Reports_mainTemplate):
       self.label_1.visible = True
       self.pair_drop_down.visible = True
     elif self.rpt_type_drop_down.selected_value =='league':
+      self.label_12.visible = False
+      self.player_drop_down.visible =  False
+      self.label_1.visible = False
+      self.pair_drop_down.visible = False
+    elif self.rpt_type_drop_down.selected_value =='dashboard':
       self.label_12.visible = False
       self.player_drop_down.visible =  False
       self.label_1.visible = False
