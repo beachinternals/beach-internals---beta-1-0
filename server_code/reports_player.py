@@ -2768,6 +2768,12 @@ def report_player_trends(lgy, team, **rpt_filters):
   Returns:
     tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
   """
+  import anvil.tables as tables
+  from anvil.tables import app_tables
+  from datetime import datetime, timedelta
+  import pandas as pd
+  import matplotlib.pyplot as plt
+
   # Get basic title and label setup from database
   title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
 
@@ -2802,28 +2808,19 @@ def report_player_trends(lgy, team, **rpt_filters):
     start_date = rpt_filters.get('start_date')
     end_date = rpt_filters.get('end_date')
   else:
-    # Load subscription data from CSV to get dates
+    # Query Anvil data table for subscriptions
     try:
-      # Try to read from the uploaded file first
-      try:
-        subscriptions_df = pd.read_csv('export.csv')
-      except:
-        # If that fails, try reading from window.fs (for web environment)
-        csv_content = window.fs.readFile('export.csv', {'encoding': 'utf8'})
-        from io import StringIO
-        subscriptions_df = pd.read_csv(StringIO(csv_content))
+      # Find matching subscription record in Anvil table
+      matching_subscription = app_tables.subscriptions.search(
+        team=team,
+        league=disp_league,
+        gender=disp_gender,
+        year=str(disp_year)
+      )
 
-      # Find matching subscription record
-      matching_subscription = subscriptions_df[
-        (subscriptions_df['team'] == team) & 
-        (subscriptions_df['league'] == disp_league) & 
-        (subscriptions_df['gender'] == disp_gender) & 
-        (subscriptions_df['year'] == str(disp_year))
-        ]
-
-      if not matching_subscription.empty:
-        start_date = pd.to_datetime(matching_subscription.iloc[0]['start_date'])
-        end_date = pd.to_datetime(matching_subscription.iloc[0]['end_date'])
+      if matching_subscription and len(matching_subscription) > 0:
+        start_date = matching_subscription[0]['start_date']
+        end_date = matching_subscription[0]['end_date']
         print(f"Found subscription dates: {start_date} to {end_date}")
       else:
         print(f"No matching subscription found for team={team}, league={disp_league}, gender={disp_gender}, year={disp_year}")
@@ -2831,8 +2828,8 @@ def report_player_trends(lgy, team, **rpt_filters):
         start_date = datetime(2025, 2, 19)
         end_date = start_date + timedelta(days=7*11)
     except Exception as e:
-      print(f"Error loading subscription data: {e}")
-      # Fallback to default dates if CSV reading fails
+      print(f"Error querying subscription table: {e}")
+      # Fallback to default dates if query fails
       start_date = datetime(2025, 2, 19)
       end_date = start_date + timedelta(days=7*11)
 
@@ -2950,6 +2947,5 @@ def report_player_trends(lgy, team, **rpt_filters):
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-
 
   
