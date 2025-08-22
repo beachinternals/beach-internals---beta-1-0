@@ -2948,4 +2948,127 @@ def report_player_trends(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+def report_player_profile(lgy, team, **rpt_filters):
+  """
+  Player profile report function - displays player info and key metrics in a single dataframe.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters including optional player
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  import pandas as pd
+  import anvil.tables as tables
+  from anvil.tables import app_tables
+
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe and player stats
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+
+  # Filter the ppr dataframe
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # This is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player) 
+    ]
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # =============================================================================
+
+  # Fetch player info from master_player table
+  player_info = {'Team': '', 'Number': '', 'Shortname': '', 'Fullname': ''}
+  try:
+    player_record = app_tables.master_player.search(player_id=disp_player)
+    if player_record and len(player_record) > 0:
+      player_info['Team'] = player_record[0]['team'] or ''
+      player_info['Number'] = player_record[0]['number'] or ''
+      player_info['Shortname'] = player_record[0]['shortname'] or ''
+      player_info['Fullname'] = player_record[0]['fullname'] or ''
+    else:
+      print(f"No player found in master_player for player_id={disp_player}")
+  except Exception as e:
+    print(f"Error querying master_player table: {e}")
+
+  # Calculate player point totals
+  pt_totals_df = player_pt_total(ppr_df, disp_player)
+
+  # Initialize dictionary for dataframe
+  metrics_dict = {
+    'Metric': ['Player Info'] + ['FBHE', 'FBSO', 'TCR', 'Expected Value', 'Error Density', 'Knockout', 'Ace/Error'],
+    'Value': [f"{player_info['Team']} #{player_info['Number']} {player_info['Shortname']} ({player_info['Fullname']})"] + [0.0] * 7,
+    'League Average': [''] + [0.0] * 7
+  }
+
+  # Calculate metrics with error handling
+  if pt_totals_df.shape[0] > 0:  # Check if there's data for this player
+    try:
+      # FBHE: First Ball Hitting Efficiency
+      metrics_dict['Value'][1] = (pt_totals_df.at[0,'p_fbk'] - pt_totals_df.at[0,'p_fbe']) / pt_totals_df.at[0,'p_att_total'] if pt_totals_df.at[0,'p_att_total'] > 0 else 0
+      metrics_dict['League Average'][1] = player_data_stats_df.at[0,'fbhe_mean'] if 'fbhe_mean' in player_data_stats_df.columns else 0
+
+      # FBSO: First Ball Side Out
+      metrics_dict['Value'][2] = pt_totals_df.at[0,'p_sideout'] / pt_totals_df.at[0,'p_att_total'] if pt_totals_df.at[0,'p_att_total'] > 0 else 0
+      metrics_dict['League Average'][2] = player_data_stats_df.at[0,'fbso_mean'] if 'fbso_mean' in player_data_stats_df.columns else 0
+
+      # TCR: Transition Conversion Rate
+      metrics_dict['Value'][3] = (pt_totals_df.at[0,'p_tk_s'] + pt_totals_df.at[0,'p_tk_r'] + pt_totals_df.at[0,'o_te_r'] + pt_totals_df.at[0,'o_te_s']) / pt_totals_df.at[0,'trans_total'] if pt_totals_df.at[0,'trans_total'] > 0 else 0
+      metrics_dict['League Average'][3] = player_data_stats_df.at[0,'tcr_mean'] / 100 if 'tcr_mean' in player_data_stats_df.columns else 0
+
+      # Expected Value
+      metrics_dict['Value'][4] = ((pt_totals_df.at[0,'p_tsa'] + pt_totals_df.at[0,'p_fbk'] + pt_totals_df.at[0,'p_tk_r'] + pt_totals_df.at[0,'p_tk_s']) / pt_totals_df.at[0,'pts_total'] if pt_totals_df.at[0,'pts_total'] > 0 else 0)
+      metrics_dict['League Average'][4] = player_data_stats_df.at[0,'exp_val_mean'] if 'exp_val_mean' in player_data_stats_df.columns else 0
+
+      # Error Density
+      metrics_dict['Value'][5] = (pt_totals_df.at[0,'p_fbe'] + pt_totals_df.at[0,'p_tse'] + pt_totals_df.at[0,'p_te_r'] + pt_totals_df.at[0,'p_te_s']) / pt_totals_df.at[0,'pts_total'] if pt_totals_df.at[0,'pts_total'] > 0 else 0
+      metrics_dict['League Average'][5] = player_data_stats_df.at[0,'err_den_mean'] / 100 if 'err_den_mean' in player_data_stats_df.columns else 0
+
+      # Knockout
+      metrics_dict['Value'][6] = (pt_totals_df.at[0,'p_tsa'] + pt_totals_df.at[0,'o_bad_pass']) / pt_totals_df.at[0,'p_serves'] if pt_totals_df.at[0,'p_serves'] > 0 else 0
+      metrics_dict['League Average'][6] = player_data_stats_df.at[0,'knockout_mean'] if 'knockout_mean' in player_data_stats_df.columns else 0
+
+      # Ace/Error
+      metrics_dict['Value'][7] = pt_totals_df.at[0,'p_tsa'] / (pt_totals_df.at[0,'p_tse'] + pt_totals_df.at[0,'p_fbe']) if (pt_totals_df.at[0,'p_tse'] + pt_totals_df.at[0,'p_fbe']) > 0 else 0
+      metrics_dict['League Average'][7] = player_data_stats_df.at[0,'ace_error_mean'] if 'ace_error_mean' in player_data_stats_df.columns else 0
+
+      # Format all numeric values to 3 decimal places
+      for i in range(1, 8):
+        metrics_dict['Value'][i] = "{:.3f}".format(metrics_dict['Value'][i])
+        metrics_dict['League Average'][i] = "{:.3f}".format(metrics_dict['League Average'][i])
+    except (KeyError, IndexError, ZeroDivisionError):
+      # Set to 0 if calculation fails
+      for i in range(1, 8):
+        metrics_dict['Value'][i] = "{:.3f}".format(0)
+        metrics_dict['League Average'][i] = "{:.3f}".format(0)
+
+  # Create dataframe from metrics
+  sum_df = pd.DataFrame.from_dict(metrics_dict)
+
+  # Store the dataframe in df_list
+  df_list[0] = sum_df.to_dict('records')
+  df_desc_list[0] = f"Player profile for {disp_player} in {disp_league} {disp_gender} {disp_year}"
+
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
   
