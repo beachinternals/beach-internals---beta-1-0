@@ -2278,3 +2278,16 @@ def find_ellipse_area(tmp1_df, disp_player, type, min_att=5):
     'attempts':el_att,
     'URL':el_url
   }
+
+def calc_ace_error_ratio(ppr_df, disp_player):
+  # Filter rows where the player is serving
+  player_serves = ppr_df[ppr_df['serve_player'] == disp_player]
+
+  # Count aces (TSA) and errors (TSE)
+  aces = len(player_serves[player_serves['point_outcome'] == 'TSA'])
+  errors = len(player_serves[player_serves['point_outcome'] == 'TSE'])
+
+  # Calculate ratio (handle division by zero)
+  if errors == 0:
+    return float('inf') if aces > 0 else 0
+  return aces / errors if aces > 0 or errors > 0 else 0

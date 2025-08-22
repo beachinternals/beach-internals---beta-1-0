@@ -16,7 +16,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Ellipse
 import numpy as np
 import scipy.stats as stats
-from scipy.stats import chi2
+from scipy.stats import chi2, norm
 from statsmodels.formula.api import ols
 from statsmodels.stats.anova import anova_lm
 from sklearn.preprocessing import LabelEncoder
@@ -2948,6 +2948,7 @@ def report_player_trends(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+
 def report_player_profile(lgy, team, **rpt_filters):
   """
   Player profile report function - displays player info and key metrics in a single dataframe.
@@ -2960,9 +2961,7 @@ def report_player_profile(lgy, team, **rpt_filters):
   Returns:
     tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
   """
-  import pandas as pd
-  import anvil.tables as tables
-  from anvil.tables import app_tables
+  from scipy.stats import norm
 
   # Get basic title and label setup from database
   title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
@@ -2978,90 +2977,187 @@ def report_player_profile(lgy, team, **rpt_filters):
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
 
+  # Debug: Check player_data_stats_df
+  print(f"player_data_stats_df shape: {player_data_stats_df.shape}")
+  print(f"player_data_stats_df columns: {player_data_stats_df.columns.tolist()}")
+
   # Filter the ppr dataframe
   ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
 
   # This is a player report, so limit the data to plays with this player
   disp_player = rpt_filters.get('player')
-  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
-    (ppr_df['player_a2'] == disp_player) |
-    (ppr_df['player_b1'] == disp_player) |
-    (ppr_df['player_b2'] == disp_player) 
+  ppr_df = ppr_df[ (ppr_df['player_a1'].str.strip() == disp_player.strip()) | 
+    (ppr_df['player_a2'].str.strip() == disp_player.strip()) |
+    (ppr_df['player_b1'].str.strip() == disp_player.strip()) |
+    (ppr_df['player_b2'].str.strip() == disp_player.strip()) 
     ]
+
+  # Debug: Print the size of ppr_df after filtering
+  print(f"Size of ppr_df after filtering for player '{disp_player}': {ppr_df.shape[0]} rows")
 
   # =============================================================================
   # REPORT-SPECIFIC LOGIC STARTS HERE
   # =============================================================================
 
-  # Fetch player info from master_player table
+  # Fetch player info from master_player table using disp_player as 'team number shortname'
   player_info = {'Team': '', 'Number': '', 'Shortname': '', 'Fullname': ''}
   try:
-    player_record = app_tables.master_player.search(player_id=disp_player)
+    # Split disp_player into team, number, and shortname
+    player_parts = disp_player.strip().split(' ', 2)
+    if len(player_parts) != 3:
+      print(f"Error: disp_player '{disp_player}' does not match expected format 'team number shortname'")
+      raise ValueError("Invalid player format")
+
+    team_part, number_part, shortname_part = player_parts
+    print(f"Searching master_player with team='{team_part}', number='{number_part}', shortname='{shortname_part}'")
+
+    # Query master_player table
+    player_record = app_tables.master_player.search(
+      team=q.ilike(team_part),
+      number=q.ilike(number_part),
+      shortname=q.ilike(shortname_part)
+    )
+
     if player_record and len(player_record) > 0:
       player_info['Team'] = player_record[0]['team'] or ''
       player_info['Number'] = player_record[0]['number'] or ''
       player_info['Shortname'] = player_record[0]['shortname'] or ''
       player_info['Fullname'] = player_record[0]['fullname'] or ''
+      print(f"Found player: {player_info}")
     else:
-      print(f"No player found in master_player for player_id={disp_player}")
+      print(f"No player found in master_player for team='{team_part}', number='{number_part}', shortname='{shortname_part}'")
   except Exception as e:
-    print(f"Error querying master_player table: {e}")
-
-  # Calculate player point totals
-  pt_totals_df = player_pt_total(ppr_df, disp_player)
+    print(f"Error querying master_player table for {disp_player}: {e}")
 
   # Initialize dictionary for dataframe
   metrics_dict = {
-    'Metric': ['Player Info'] + ['FBHE', 'FBSO', 'TCR', 'Expected Value', 'Error Density', 'Knockout', 'Ace/Error'],
-    'Value': [f"{player_info['Team']} #{player_info['Number']} {player_info['Shortname']} ({player_info['Fullname']})"] + [0.0] * 7,
-    'League Average': [''] + [0.0] * 7
+    'Metric': ['Player Info'] + ['FBHE', 'FBSO', 'TCR', 'Expected Value', 'Error Density', 'Knockout', 'Ace/Error', 'Goodpass', 'Cons_ed_sd_match'],
+    'Value': [f"{player_info['Team']} #{player_info['Number']} {player_info['Shortname']} ({player_info['Fullname']})"] + ['0.000'] * 2 + ['0%'] * 6 + ['0.000'] * 1,
+    'League Average': [''] + ['0.000'] * 2 + ['0%'] * 6 + ['0.000'] * 1,
+    'League Percentile': [''] + ['0%'] * 9
   }
 
+  # Debug: Check metrics_dict initialization
+  #print(f"metrics_dict['Value'] length: {len(metrics_dict['Value'])}")
+  #print(f"metrics_dict['Value'] contents: {metrics_dict['Value']}")
+
   # Calculate metrics with error handling
-  if pt_totals_df.shape[0] > 0:  # Check if there's data for this player
+  if not ppr_df.empty:  # Check if there's data for this player
     try:
-      # FBHE: First Ball Hitting Efficiency
-      metrics_dict['Value'][1] = (pt_totals_df.at[0,'p_fbk'] - pt_totals_df.at[0,'p_fbe']) / pt_totals_df.at[0,'p_att_total'] if pt_totals_df.at[0,'p_att_total'] > 0 else 0
-      metrics_dict['League Average'][1] = player_data_stats_df.at[0,'fbhe_mean'] if 'fbhe_mean' in player_data_stats_df.columns else 0
+      # FBHE and FBSO from fbhe_obj
+      fbhe_result = fbhe_obj(ppr_df, disp_player, 'att', False)
+      #print(f"FBHE result: {fbhe_result.__dict__}")
+      metrics_dict['Value'][1] = "{:.3f}".format(fbhe_result.fbhe)
+      metrics_dict['Value'][2] = "{:.3f}".format(fbhe_result.fbso)
+      metrics_dict['League Average'][1] = "{:.3f}".format(player_data_stats_df.at[0,'fbhe_mean'] if 'fbhe_mean' in player_data_stats_df.columns else 0)
+      metrics_dict['League Average'][2] = "{:.3f}".format(player_data_stats_df.at[0,'fbso_mean'] if 'fbso_mean' in player_data_stats_df.columns else 0)
+      # Calculate percentiles for FBHE and FBSO
+      if 'fbhe_mean' in player_data_stats_df.columns and 'fbhe_stdev' in player_data_stats_df.columns:
+        z_score = (fbhe_result.fbhe - player_data_stats_df.at[0,'fbhe_mean']) / player_data_stats_df.at[0,'fbhe_stdev'] if player_data_stats_df.at[0,'fbhe_stdev'] > 0 else 0
+        metrics_dict['League Percentile'][1] = "{:.0%}".format(norm.cdf(z_score))
+      if 'fbso_mean' in player_data_stats_df.columns and 'fbso_stdev' in player_data_stats_df.columns:
+        z_score = (fbhe_result.fbso - player_data_stats_df.at[0,'fbso_mean']) / player_data_stats_df.at[0,'fbso_stdev'] if player_data_stats_df.at[0,'fbso_stdev'] > 0 else 0
+        metrics_dict['League Percentile'][2] = "{:.0%}".format(norm.cdf(z_score))
 
-      # FBSO: First Ball Side Out
-      metrics_dict['Value'][2] = pt_totals_df.at[0,'p_sideout'] / pt_totals_df.at[0,'p_att_total'] if pt_totals_df.at[0,'p_att_total'] > 0 else 0
-      metrics_dict['League Average'][2] = player_data_stats_df.at[0,'fbso_mean'] if 'fbso_mean' in player_data_stats_df.columns else 0
+      # TCR from calc_trans_obj
+      trans_result = calc_trans_obj(ppr_df, disp_player, 'all')
+      #print(f"TCR result: {trans_result}")
+      metrics_dict['Value'][3] = "{:.0%}".format(trans_result['tcr'] if trans_result['tcr'] is not None else 0)
+      metrics_dict['League Average'][3] = "{:.0%}".format(player_data_stats_df.at[0,'tcr_mean'] if 'tcr_mean' in player_data_stats_df.columns else 0)
+      # Calculate percentile for TCR
+      if 'tcr_mean' in player_data_stats_df.columns and 'tcr_stdev' in player_data_stats_df.columns:
+        z_score = (trans_result['tcr'] - player_data_stats_df.at[0,'tcr_mean']) / player_data_stats_df.at[0,'tcr_stdev'] if player_data_stats_df.at[0,'tcr_stdev'] > 0 else 0
+        metrics_dict['League Percentile'][3] = "{:.0%}".format(norm.cdf(z_score))
 
-      # TCR: Transition Conversion Rate
-      metrics_dict['Value'][3] = (pt_totals_df.at[0,'p_tk_s'] + pt_totals_df.at[0,'p_tk_r'] + pt_totals_df.at[0,'o_te_r'] + pt_totals_df.at[0,'o_te_s']) / pt_totals_df.at[0,'trans_total'] if pt_totals_df.at[0,'trans_total'] > 0 else 0
-      metrics_dict['League Average'][3] = player_data_stats_df.at[0,'tcr_mean'] / 100 if 'tcr_mean' in player_data_stats_df.columns else 0
+      # Expected Value from calc_ev_obj
+      ev_result = calc_ev_obj(ppr_df, disp_player)
+      #print(f"Expected Value result: {ev_result}")
+      metrics_dict['Value'][4] = "{:.3f}".format(ev_result['expected_value'] if ev_result['total_points'] > 0 else 0)
+      metrics_dict['League Average'][4] = "{:.3f}".format(player_data_stats_df.at[0,'expected_mean'] / 100 if 'expected_mean' in player_data_stats_df.columns else 0)
+      # Calculate percentile for Expected Value (accounting for 100x scaling)
+      if 'expected_mean' in player_data_stats_df.columns and 'expected_stdev' in player_data_stats_df.columns:
+        z_score = (ev_result['expected_value'] - (player_data_stats_df.at[0,'expected_mean'] / 100)) / (player_data_stats_df.at[0,'expected_stdev'] / 100) if player_data_stats_df.at[0,'expected_stdev'] > 0 else 0
+        metrics_dict['League Percentile'][4] = "{:.0%}".format(norm.cdf(z_score))
 
-      # Expected Value
-      metrics_dict['Value'][4] = ((pt_totals_df.at[0,'p_tsa'] + pt_totals_df.at[0,'p_fbk'] + pt_totals_df.at[0,'p_tk_r'] + pt_totals_df.at[0,'p_tk_s']) / pt_totals_df.at[0,'pts_total'] if pt_totals_df.at[0,'pts_total'] > 0 else 0)
-      metrics_dict['League Average'][4] = player_data_stats_df.at[0,'exp_val_mean'] if 'exp_val_mean' in player_data_stats_df.columns else 0
+      # Error Density from calc_error_density_obj
+      error_density_result = calc_error_density_obj(ppr_df, disp_player)
+      #print(f"Error Density result: {error_density_result}")
+      metrics_dict['Value'][5] = "{:.0%}".format(error_density_result['error_density_raw'] if error_density_result['total_points'] > 0 else 0)
+      metrics_dict['League Average'][5] = "{:.0%}".format(player_data_stats_df.at[0,'err_den_mean'] / 100 if 'err_den_mean' in player_data_stats_df.columns else 0)
+      # Calculate percentile for Error Density
+      if 'err_den_mean' in player_data_stats_df.columns and 'err_den_stdev' in player_data_stats_df.columns:
+        z_score = (error_density_result['error_density_raw'] - (player_data_stats_df.at[0,'err_den_mean'] / 100)) / (player_data_stats_df.at[0,'err_den_stdev'] / 100) if player_data_stats_df.at[0,'err_den_stdev'] > 0 else 0
+        metrics_dict['League Percentile'][5] = "{:.0%}".format(norm.cdf(z_score))
 
-      # Error Density
-      metrics_dict['Value'][5] = (pt_totals_df.at[0,'p_fbe'] + pt_totals_df.at[0,'p_tse'] + pt_totals_df.at[0,'p_te_r'] + pt_totals_df.at[0,'p_te_s']) / pt_totals_df.at[0,'pts_total'] if pt_totals_df.at[0,'pts_total'] > 0 else 0
-      metrics_dict['League Average'][5] = player_data_stats_df.at[0,'err_den_mean'] / 100 if 'err_den_mean' in player_data_stats_df.columns else 0
+      # Knockout from calc_knock_out_obj
+      knockout_result = calc_knock_out_obj(ppr_df, disp_player)
+      #print(f"Knockout result: {knockout_result}")
+      metrics_dict['Value'][6] = "{:.0%}".format(knockout_result['knock_out_rate'] if knockout_result['has_serves'] else 0)
+      metrics_dict['League Average'][6] = "{:.0%}".format(player_data_stats_df.at[0,'knockout_mean'] if 'knockout_mean' in player_data_stats_df.columns else 0)
+      # Calculate percentile for Knockout
+      if 'knockout_mean' in player_data_stats_df.columns and 'knockout_stdev' in player_data_stats_df.columns:
+        z_score = (knockout_result['knock_out_rate'] - player_data_stats_df.at[0,'knockout_mean']) / player_data_stats_df.at[0,'knockout_stdev'] if player_data_stats_df.at[0,'knockout_stdev'] > 0 else 0
+        metrics_dict['League Percentile'][6] = "{:.0%}".format(norm.cdf(z_score))
 
-      # Knockout
-      metrics_dict['Value'][6] = (pt_totals_df.at[0,'p_tsa'] + pt_totals_df.at[0,'o_bad_pass']) / pt_totals_df.at[0,'p_serves'] if pt_totals_df.at[0,'p_serves'] > 0 else 0
-      metrics_dict['League Average'][6] = player_data_stats_df.at[0,'knockout_mean'] if 'knockout_mean' in player_data_stats_df.columns else 0
+      # Ace/Error from calc_ace_error_ratio
+      ace_error = calc_ace_error_ratio(ppr_df, disp_player)
+      #print(f"Ace/Error result: {ace_error}")
+      metrics_dict['Value'][7] = "{:.0%}".format(ace_error if ace_error != float('inf') else 0)
+      metrics_dict['League Average'][7] = "{:.0%}".format(player_data_stats_df.at[0,'ace_error_mean'] if 'ace_error_mean' in player_data_stats_df.columns else 0)
+      # Calculate percentile for Ace/Error
+      if 'ace_error_mean' in player_data_stats_df.columns and 'ace_error_stdev' in player_data_stats_df.columns:
+        z_score = (ace_error - player_data_stats_df.at[0,'ace_error_mean']) / player_data_stats_df.at[0,'ace_error_stdev'] if player_data_stats_df.at[0,'ace_error_stdev'] > 0 and ace_error != float('inf') else 0
+        metrics_dict['League Percentile'][7] = "{:.0%}".format(norm.cdf(z_score))
 
-      # Ace/Error
-      metrics_dict['Value'][7] = pt_totals_df.at[0,'p_tsa'] / (pt_totals_df.at[0,'p_tse'] + pt_totals_df.at[0,'p_fbe']) if (pt_totals_df.at[0,'p_tse'] + pt_totals_df.at[0,'p_fbe']) > 0 else 0
-      metrics_dict['League Average'][7] = player_data_stats_df.at[0,'ace_error_mean'] if 'ace_error_mean' in player_data_stats_df.columns else 0
+      # Goodpass from count_good_passes_obj
+      goodpass_result = count_good_passes_obj(ppr_df, disp_player, 'pass')
+      #print(f"Goodpass result: {goodpass_result}")
+      metrics_dict['Value'][8] = "{:.0%}".format(goodpass_result['percent'] if goodpass_result['attempts'] > 0 else 0)
+      metrics_dict['League Average'][8] = "{:.0%}".format(player_data_stats_df.at[0,'goodpass_mean'] if 'goodpass_mean' in player_data_stats_df.columns else 0)
+      # Calculate percentile for Goodpass
+      if 'goodpass_mean' in player_data_stats_df.columns and 'goodpass_stdev' in player_data_stats_df.columns:
+        z_score = (goodpass_result['percent'] - player_data_stats_df.at[0,'goodpass_mean']) / player_data_stats_df.at[0,'goodpass_stdev'] if player_data_stats_df.at[0,'goodpass_stdev'] > 0 else 0
+        metrics_dict['League Percentile'][8] = "{:.0%}".format(norm.cdf(z_score))
 
-      # Format all numeric values to 3 decimal places
-      for i in range(1, 8):
-        metrics_dict['Value'][i] = "{:.3f}".format(metrics_dict['Value'][i])
-        metrics_dict['League Average'][i] = "{:.3f}".format(metrics_dict['League Average'][i])
-    except (KeyError, IndexError, ZeroDivisionError):
+      # Cons_ed_sd_match from player_data_df
+      cons_ed_sd = player_data_df[player_data_df['player'] == disp_player]['cons_ed_sd_match'].iloc[0] if not player_data_df[player_data_df['player'] == disp_player].empty and 'cons_ed_sd_match' in player_data_df.columns else 0
+      #print(f"Cons_ed_sd_match value: {cons_ed_sd}")
+      # Debug: Check metrics_dict['Value'] before assignment
+      #print(f"Before Cons_ed_sd_match assignment - metrics_dict['Value'] length: {len(metrics_dict['Value'])}")
+      #print(f"Before Cons_ed_sd_match assignment - metrics_dict['Value'] contents: {metrics_dict['Value']}")
+      metrics_dict['Value'][9] = "{:.3f}".format(cons_ed_sd)
+      metrics_dict['League Average'][9] = "{:.3f}".format(player_data_stats_df.at[0,'cons_ed_sd_match_mean'] if 'cons_ed_sd_match_mean' in player_data_stats_df.columns else 0)
+      # Calculate percentile for Cons_ed_sd_match
+      try:
+        if 'cons_ed_sd_match_mean' in player_data_stats_df.columns and 'cons_ed_sd_match_stdev' in player_data_stats_df.columns:
+          z_score = (cons_ed_sd - player_data_stats_df.at[0,'cons_ed_sd_match_mean']) / player_data_stats_df.at[0,'cons_ed_sd_match_stdev'] if player_data_stats_df.at[0,'cons_ed_sd_match_stdev'] > 0 else 0
+          metrics_dict['League Percentile'][9] = "{:.0%}".format(norm.cdf(z_score))
+        else:
+          print(f"Warning: Missing cons_ed_sd_match_mean or cons_ed_sd_match_stdev in player_data_stats_df")
+          metrics_dict['League Percentile'][9] = "{:.0%}".format(0)
+      except Exception as e:
+        print(f"Error in Cons_ed_sd_match percentile calculation: {e}")
+        metrics_dict['League Percentile'][9] = "{:.0%}".format(0)
+
+    except Exception as e:
+      print(f"Error calculating metrics for {disp_player}: {e}")
       # Set to 0 if calculation fails
-      for i in range(1, 8):
+      for i in range(1, 3):
         metrics_dict['Value'][i] = "{:.3f}".format(0)
         metrics_dict['League Average'][i] = "{:.3f}".format(0)
+        metrics_dict['League Percentile'][i] = "{:.0%}".format(0)
+      for i in range(3, 9):
+        metrics_dict['Value'][i] = "{:.0%}".format(0)
+        metrics_dict['League Average'][i] = "{:.0%}".format(0)
+        metrics_dict['League Percentile'][i] = "{:.0%}".format(0)
+      metrics_dict['Value'][9] = "{:.3f}".format(0)
+      metrics_dict['League Average'][9] = "{:.3f}".format(0)
+      metrics_dict['League Percentile'][9] = "{:.0%}".format(0)
 
   # Create dataframe from metrics
   sum_df = pd.DataFrame.from_dict(metrics_dict)
 
-  # Store the dataframe in df_list
+  # Store the dataframe as a list of dicts in df_list
   df_list[0] = sum_df.to_dict('records')
   df_desc_list[0] = f"Player profile for {disp_player} in {disp_league} {disp_gender} {disp_year}"
 
@@ -3070,5 +3166,4 @@ def report_player_profile(lgy, team, **rpt_filters):
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-
   
