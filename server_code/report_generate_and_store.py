@@ -26,9 +26,11 @@ from typing import Tuple, List, Dict, Any
 
 from plot_functions import *
 from server_functions import *
-from reports_player_new import *
+#from reports_player_new import *
 from reports_player import *
 from reports_dashboard import *
+from reports_league import *
+from reports_pair import *
 
 # Option A: Check if it's just called Logger
 from anvil_extras.logging import Logger

@@ -477,6 +477,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
 
   return m_ppr_df
 
+
 def ppr_df_limit( m_ppr_df, 
                           comp_l1_checked, disp_comp_l1, 
                           comp_l2_checked, disp_comp_l2, 
@@ -501,6 +502,7 @@ def ppr_df_limit( m_ppr_df,
     #print(f"Limitiing by Dates:{disp_start_date},{disp_end_date}")
     
   return m_ppr_df
+
 
 def calc_trans( ppr_df, disp_player, flag ):
   # calcaulte transition details
@@ -772,6 +774,7 @@ def calc_ev_obj(ppr_df, disp_player):
   ev_dict['expected_value_per'] = f"{ev_dict['expected_value']:.0%}"
 
   return ev_dict
+
 
 
 #========-----------=============----------===========-------------===============-------------===========
@@ -1143,6 +1146,8 @@ def count_out_of_system(ppr_df,disp_player,action):
   #print(f"count_out_of_system: Number OOS: {oos_vector[0]}, Percent OOS: {oos_vector[1]}, Total Attempts: {oos_vector[2]}")
   return oos_vector
 
+
+  
 #=============----------------===============---------------==============----------
 def count_oos_obj(ppr_df, disp_player, action):
   """
@@ -1245,11 +1250,7 @@ def count_good_passes_obj(ppr_df, disp_player, action='pass'):
   }
 
 
-
-
-
-
-  
+ 
 #-----------------------------------------------------------------------------------------------
 #
 #          Functions for saving files to the server
@@ -1363,6 +1364,7 @@ def calc_knock_out( ppr_df, disp_player):
    knock_out = (player_point_totals.at[0,'p_tsa']+player_point_totals.at[0,'o_bad_pass'] )/player_point_totals.at[0,'p_serves']
   return knock_out
 
+  
 
 def calc_knock_out_obj(ppr_df, disp_player):
   """
@@ -1455,6 +1457,8 @@ def get_knock_out_summary(ppr_df, disp_player):
     'has_data': stats.get('has_serves', False)
   }
 
+
+  
 
 
 def calc_point_diff( ppr_df, disp_player):
@@ -1966,6 +1970,7 @@ def apply_date_filters(df, column, value ):
   return df
 
 
+  
 
 def find_clusters(ppr_df, disp_player, category):
   """
