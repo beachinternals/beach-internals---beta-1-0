@@ -39,10 +39,10 @@ class Reports_main(Reports_mainTemplate):
     # Check for login
     user_row = anvil.users.get_user(allow_remembered=True)
     if not user_row:
-      alert("Please Sign In to Beach Internals")
+      #alert("Please Sign In to Beach Internals")
       open_form("Homepage.UserMgr")
     elif not user_row["team"]:
-      alert("Please Contact Beach Internals to be Assigned to a Team")
+      #alert("Please Contact Beach Internals to be Assigned to a Team")
       open_form("Homepage.Contact")
 
     disp_league = user_row["def_league"]

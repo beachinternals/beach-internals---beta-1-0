@@ -19,8 +19,9 @@ def check_user_team():
   user_row = anvil.users.get_user()
   if user_row:
     current_team = anvil.users.get_user()['team']
-    current_team = current_team.strip()
-    current_team = current_team.upper()
+    if current_team is not None:
+      current_team = current_team.strip()
+      current_team = current_team.upper()
     if current_team in team_list:
       # all is good
       #print(f"Current user is on a valid team: {current_team}")
@@ -43,13 +44,13 @@ def check_user_team():
 
     # last thing .. if any defaults are blank, set them to our default value ...
     user_row['team'] = "Visitor" if not user_row['team'] else user_row['team']
-    user_row['def_league'] = "FIVB" if not user_row['def_league'] else user_row['def_league']
+    user_row['def_league'] = "NCAA" if not user_row['def_league'] else user_row['def_league']
     user_row['def_gender'] = "W" if not user_row['def_gender'] else user_row['def_gender']
     user_row['def_year'] = "2024" if not user_row['def_year'] else user_row['def_year']
 
-    # last, last thing, if they are a visitor, only subscriptions are fivb m/w 2024.  This is in subscriptions DB, but set default here
+    # last, last thing, if they are a visitor, only subscriptions are ncaa m/w 2024.  This is in subscriptions DB, but set default here
     if user_row['team'] == 'VISITOR':
-      user_row['def_league'] = 'FIVB'
+      user_row['def_league'] = 'NCAA'
       user_row['def_gender'] = "W"
       user_row['def_year'] = '2024'
   
