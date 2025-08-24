@@ -8,6 +8,7 @@ from anvil.tables import app_tables
 import anvil.server
 import pandas as pd
 import io
+from typing import Union, Tuple
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -112,18 +113,28 @@ def player_filter(ppr_df, disp_player):
 #------------------------------------------------------------------
 #           Pair Players - lireturn the two players in the pair 
 #------------------------------------------------------------------
-@anvil.server.callable
-def pair_players(disp_pair):
-  # search the master pair table to find the two players
-  disp_pair = disp_pair
-  disp_player1 = 'Not Found'
-  disp_player2 = 'Not Found'
-  #print(f"pair_players: Looking for players in pair: {disp_pair}, length: {len(disp_pair)}")
-  for pair_row in app_tables.master_pair.search(pair=disp_pair):
-    disp_player1 = pair_row['player1']
-    disp_player2 = pair_row['player2']
-  return disp_player1, disp_player2
+def pair_players(disp_pair: str) -> Tuple[str, str]:
+  """
+    Retrieve the two player names associated with a pair identifier from the master_pair table.
+    
+    Args:
+        disp_pair (str): Pair identifier (e.g., "Player1/Player2" or other unique pair ID)
+        
+    Returns:
+        tuple[str, str]: A tuple containing the two player names (player1, player2)
+        
+    Raises:
+        ValueError: If disp_pair is empty or not a string, or if no players are found for the pair
+    """
+  if not isinstance(disp_pair, str) or not disp_pair.strip():
+    raise ValueError("Pair identifier must be a non-empty string")
 
+  disp_pair = disp_pair.strip()
+  for pair_row in app_tables.master_pair.search(pair=disp_pair):
+    return pair_row['player1'], pair_row['player2']
+
+  raise ValueError(f"No players found for pair: {disp_pair}")
+  
 #-----------------------------------------------------------------
 #
 #           Get master pair row
