@@ -639,6 +639,11 @@ class Reports_main(Reports_mainTemplate):
       self.player_drop_down.visible =  False
       self.label_1.visible = False
       self.pair_drop_down.visible = False
+    elif self.rpt_type_drop_down.selected_value =='scouting':
+      self.label_12.visible = False
+      self.player_drop_down.visible =  False
+      self.label_1.visible = True
+      self.pair_drop_down.visible = True
       
     pass
 

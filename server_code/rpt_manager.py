@@ -10,7 +10,7 @@ from Generate_PDF import *
 from pair_functions import *
 from server_functions import *
 import pandas as pd
-from matchup_reports import *
+#from matchup_reports import *
 from report_generate_and_store import *
 from datetime import datetime, timedelta, date
 import json
@@ -701,7 +701,7 @@ from Generate_PDF import *
 from pair_functions import *
 from server_functions import *
 import pandas as pd
-from matchup_reports import *
+#from matchup_reports import *
 from report_generate_and_store import *
 from datetime import datetime, timedelta, date
 

@@ -31,6 +31,7 @@ from reports_player import *
 from reports_dashboard import *
 from reports_league import *
 from reports_pair import *
+from reports_scouting import *
 
 # Option A: Check if it's just called Logger
 from anvil_extras.logging import Logger
