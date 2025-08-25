@@ -76,7 +76,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       # Get full name from master_player table using team + ' ' + number + ' ' + shortname
       try:
         # Assuming player ID is in format "team number shortname"
-        player_row = app_tables.master_player.get(player_id=player)
+        player_row = get_player_row(player)
         full_name = player_row['fullname'] if player_row and 'fullname' in player_row else player
       except Exception as e:
         print(f"Error fetching fullname for player {player}: {str(e)}")
@@ -93,7 +93,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       hit_side = 'Left' if att12 >= att45 else 'Right'
 
       # Calculate FBHE and Expected Value
-      fbhe_result = fbhe_obj(ppr_df, player, 'pass', False)
+      fbhe_result = fbhe_obj(ppr_df[ppr_df['att_player'] == player], player, 'pass', False)
       fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
       ev_result = calc_ev_obj(ppr_df, player)
       expected = round(ev_result.get('expected_value', 0.0), 2)
@@ -185,9 +185,9 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       serve_zones = [1, 3, 5]
       fbhe_scores = []
       for zone in serve_zones:
-        zone_df = ppr_df[(ppr_df['serve_player'] == player) & (ppr_df['serve_src_zone_net'] == zone)]
+        zone_df = ppr_df[(ppr_df['pass_player'] == player) & (ppr_df['serve_src_zone_net'] == zone)]
         if not zone_df.empty:
-          fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
+          fbhe_result = fbhe_obj(zone_df, player, 'att', False)
           fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
           fbhe_scores.append((zone, fbhe))
 
@@ -202,13 +202,15 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       serve_combinations = []
       for from_zone in serve_zones:
         for to_zone in [1, 2, 3, 4, 5]:
-          zone_df = ppr_df[(ppr_df['serve_player'] == player) & 
-            (ppr_df['serve_src_zone_net'] == from_zone) & 
-            (ppr_df['serve_dest_zone_net'] == to_zone)]
-          if not zone_df.empty:
-            fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
-            fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
-            serve_combinations.append((from_zone, to_zone, fbhe))
+          for to_zone_depth in ['C','D','E']:
+            zone_df = ppr_df[(ppr_df['pass_player'] == player) & 
+              (ppr_df['serve_src_zone_net'] == from_zone) & 
+              (ppr_df['serve_dest_zone_net'] == to_zone) & 
+              (ppr_df['serve_dest_zone_depth'] == to_zone_depth) ]
+            if not zone_df.empty:
+              fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
+              fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
+              serve_combinations.append((from_zone, str(to_zone)+str(to_zone_depth), fbhe))
 
       # Sort by FBHE and take top 3
       serve_combinations = sorted(serve_combinations, key=lambda x: x[2])[:3]

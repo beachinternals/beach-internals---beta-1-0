@@ -2296,3 +2296,22 @@ def calc_ace_error_ratio(ppr_df, disp_player):
   if errors == 0:
     return float('inf') if aces > 0 else 0
   return aces / errors if aces > 0 or errors > 0 else 0
+
+def get_player_row(disp_player):
+  from anvil.tables import app_tables
+
+  # Split disp_player into team, number, and shortname
+  parts = disp_player.split(' ', 2)  # Still split on first two spaces
+  if len(parts) < 3:  # Ensure we have at least team, number, and some shortname
+    return None
+
+  team, number, shortname = parts[0], parts[1], parts[2]
+
+  # Query the master_player table
+  player_row = app_tables.master_player.get(
+    team=team,
+    number=number,
+    shortname=shortname
+  )
+
+  return player_row
