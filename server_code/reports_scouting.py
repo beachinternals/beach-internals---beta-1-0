@@ -64,8 +64,9 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
   try:
-    # Extract player names
+    # Extract player names and filter ppr_df to points involving pair_a
     player1, player2 = pair_players(pair_a)
+    ppr_df = ppr_df[(ppr_df['teama'] == pair_a) | (ppr_df['teamb'] == pair_a)]
 
     # First Table: Player Performance Statistics
     performance_data = []
@@ -189,7 +190,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
           fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
           fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
           fbhe_scores.append((zone, fbhe))
-      
+
       # Optimal serve zone with FBHE
       if fbhe_scores:
         optimal_zone, optimal_fbhe = min(fbhe_scores, key=lambda x: x[1])
@@ -202,8 +203,8 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       for from_zone in serve_zones:
         for to_zone in [1, 2, 3, 4, 5]:
           zone_df = ppr_df[(ppr_df['serve_player'] == player) & 
-                          (ppr_df['serve_src_zone_net'] == from_zone) & 
-                          (ppr_df['serve_dest_zone_net'] == to_zone)]
+            (ppr_df['serve_src_zone_net'] == from_zone) & 
+            (ppr_df['serve_dest_zone_net'] == to_zone)]
           if not zone_df.empty:
             fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
             fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
@@ -381,6 +382,8 @@ def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year:
   except Exception as e:
     error_df = pd.DataFrame({'Error': [f"Error generating pair performance analysis: {str(e)}"]})
     return error_df.to_dict('records')
+
+    
 
     
 
