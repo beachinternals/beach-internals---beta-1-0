@@ -17,6 +17,371 @@ import numpy as np
 from typing import Union
 from server_functions import *
 
+def report_scouting_overview(lgy, team, **rpt_filters):
+  """
+    Scouting overview report function - provides detailed analysis for a single pair.
+    
+    This function generates comprehensive performance analysis for one pair including
+    individual player statistics, serving/receiving breakdowns, and zone-specific
+    performance metrics for tactical planning.
+    
+    Args:
+        lgy (str): League+gender+year string (format: "LEAGUE_GENDER_YEAR")
+        team (str): Team identifier
+        **rpt_filters: Additional report filters including:
+            - pair: Pair identifier for analysis (format: "Player1/Player2")
+        
+    Returns:
+        tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+            - df_list[0]: Player performance statistics (fullname, hit side, FBHE, Expected Value, Serve Receive %)
+            - df_list[1]: Player recommendations based on FBHE/Expected Value and attack tendencies
+            - df_list[2]: Serving recommendations based on optimal serve zones
+    """
+
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = [''] * 10
+  df_list = [''] * 10
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Get the ppr data
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # Get required filter parameters
+  pair_a = rpt_filters.get('pair')
+
+  # Validate that pair is provided
+  if not pair_a:
+    print("report_scouting_overview, Pair_a not found")
+    error_df = pd.DataFrame({'Error': ["No pair specified for analysis"]})
+    df_list[0] = error_df.to_dict('records')
+    df_desc_list[0] = "Error: Missing Pair Parameter"
+    return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+  try:
+    # Extract player names
+    player1, player2 = pair_players(pair_a)
+
+    # First Table: Player Performance Statistics
+    performance_data = []
+    total_receives = 0
+
+    for player in [player1, player2]:
+      # Get full name from master_player table using team + ' ' + number + ' ' + shortname
+      try:
+        # Assuming player ID is in format "team number shortname"
+        player_row = app_tables.master_player.get(player_id=player)
+        full_name = player_row['fullname'] if player_row and 'fullname' in player_row else player
+      except Exception as e:
+        print(f"Error fetching fullname for player {player}: {str(e)}")
+        full_name = player
+
+      # Determine hitting side
+      player_ppr_df = ppr_df[(ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == player)]
+      att12 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 1) | 
+                             (player_ppr_df['att_src_zone_net'] == 2)) & 
+        (player_ppr_df['tactic'] != 'behind')].shape[0]
+      att45 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 4) | 
+                             (player_ppr_df['att_src_zone_net'] == 5)) & 
+        (player_ppr_df['tactic'] != 'behind')].shape[0]
+      hit_side = 'Left' if att12 >= att45 else 'Right'
+
+      # Calculate FBHE and Expected Value
+      fbhe_result = fbhe_obj(ppr_df, player, 'pass', False)
+      fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
+      ev_result = calc_ev_obj(ppr_df, player)
+      expected = round(ev_result.get('expected_value', 0.0), 2)
+
+      # Calculate Serve Receive %
+      player_receives = len(ppr_df[ppr_df['pass_player'] == player])
+      total_receives += player_receives
+
+      performance_data.append({
+        'Full Name': full_name,
+        'Hit Side': hit_side,
+        'FBHE': fbhe,
+        'Expected Value': expected,
+        'Serve Receive %': player_receives  # Temporary value, will be converted to % later
+      })
+
+    # Convert Serve Receive to percentage
+    for data in performance_data:
+      data['Serve Receive %'] = round(data['Serve Receive %'] / total_receives * 100, 1) if total_receives > 0 else 0.0
+
+    performance_df = pd.DataFrame(performance_data, index=[player1, player2])
+    df_list[0] = performance_df.to_dict('records')
+    df_desc_list[0] = f"Player Performance Statistics: {pair_a}"
+
+    # Second Table: Player Recommendations and Attack Tendencies
+    recommendation_data = {
+      'Metric': ['Serve Recommendation', 'Attack Tendency in Front', 'On 2 Tendency'],
+      player1: ['', '', ''],
+      player2: ['', '', '']
+    }
+
+    # Serve Recommendation
+    fbhe1, fbhe2 = performance_data[0]['FBHE'], performance_data[1]['FBHE']
+    ev1, ev2 = performance_data[0]['Expected Value'], performance_data[1]['Expected Value']
+
+    # Use FBHE if available, otherwise Expected Value
+    metric1, metric2 = (fbhe1, fbhe2) if fbhe1 != 0.0 and fbhe2 != 0.0 else (ev1, ev2)
+
+    if metric1 != 0 and metric2 != 0:
+      if metric1 < metric2 * 0.75:  # 25% lower
+        recommendation_data[player1][0] = 'Strongly Recommended'
+        recommendation_data[player2][0] = ''
+      elif metric1 < metric2 * 0.85:  # 15% lower
+        recommendation_data[player1][0] = 'Recommended'
+        recommendation_data[player2][0] = ''
+      elif metric2 < metric1 * 0.75:
+        recommendation_data[player2][0] = 'Strongly Recommended'
+        recommendation_data[player1][0] = ''
+      elif metric2 < metric1 * 0.85:
+        recommendation_data[player2][0] = 'Recommended'
+        recommendation_data[player1][0] = ''
+      else:
+        recommendation_data[player1][0] = 'Neutral'
+        recommendation_data[player2][0] = 'Neutral'
+
+    # Attack Tendency in Front
+    att_front = '12' if performance_data[0]['Hit Side'] == 'Left' else '45'
+    for i, player in enumerate([player1, player2]):
+      player_ppr_df = ppr_df[(ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == player)]
+      att12 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 1) | 
+                             (player_ppr_df['att_src_zone_net'] == 2)) & 
+        (player_ppr_df['tactic'] != 'behind')].shape[0]
+      att45 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 4) | 
+                             (player_ppr_df['att_src_zone_net'] == 5)) & 
+        (player_ppr_df['tactic'] != 'behind')].shape[0]
+      total_front = att12 + att45
+      if total_front > 0:
+        percentage = round((att12 if att_front == '12' else att45) / total_front * 100, 1)
+        recommendation_data[player][1] = f"{percentage}% ({'Left' if att_front == '12' else 'Right'})"
+      else:
+        recommendation_data[player][1] = 'N/A'
+
+    # On 2 Tendency (placeholder - assuming similar logic to front attacks)
+    for i, player in enumerate([player1, player2]):
+      recommendation_data[player][2] = 'N/A'  # To be implemented later
+
+    recommendation_df = pd.DataFrame(recommendation_data)
+    df_list[1] = recommendation_df.to_dict('records')
+    df_desc_list[1] = f"Player Recommendations and Tendencies: {pair_a}"
+
+    # Third Table: Serving Recommendations
+    serving_data = {'Metric': ['Optimal Serve From', 'Serve From-To 1', 'Serve From-To 2', 'Serve From-To 3'], 
+                    player1: ['', '', '', ''], 
+                    player2: ['', '', '', '']}
+
+    for i, player in enumerate([player1, player2]):
+      # Calculate FBHE for serve zones 1, 3, 5
+      serve_zones = [1, 3, 5]
+      fbhe_scores = []
+      for zone in serve_zones:
+        zone_df = ppr_df[(ppr_df['serve_player'] == player) & (ppr_df['serve_src_zone_net'] == zone)]
+        if not zone_df.empty:
+          fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
+          fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
+          fbhe_scores.append((zone, fbhe))
+
+      # Optimal serve zone
+      if fbhe_scores:
+        optimal_zone = min(fbhe_scores, key=lambda x: x[1])[0]
+        serving_data[player][0] = f"Zone {optimal_zone}"
+      else:
+        serving_data[player][0] = 'N/A'
+
+      # Calculate lowest FBHE for serve from-to combinations
+      serve_combinations = []
+      for from_zone in serve_zones:
+        for to_zone in [1, 2, 3, 4, 5]:
+          zone_df = ppr_df[(ppr_df['serve_player'] == player) & 
+            (ppr_df['serve_src_zone_net'] == from_zone) & 
+            (ppr_df['serve_dest_zone_net'] == to_zone)]
+          if not zone_df.empty:
+            fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
+            fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
+            serve_combinations.append((from_zone, to_zone, fbhe))
+
+      # Sort by FBHE and take top 3
+      serve_combinations = sorted(serve_combinations, key=lambda x: x[2])[:3]
+      for idx, (from_zone, to_zone, fbhe) in enumerate(serve_combinations, 1):
+        serving_data[player][idx] = f"From Zone {from_zone} to Zone {to_zone} (FBHE: {fbhe})"
+
+    serving_df = pd.DataFrame(serving_data)
+    df_list[2] = serving_df.to_dict('records')
+    df_desc_list[2] = f"Serving Recommendations: {pair_a}"
+
+    # Update title and labels
+    if title_list and len(title_list) > 0:
+      title_list[0] = f"Scouting Overview: {pair_a}"
+    if label_list and len(label_list) > 0:
+      label_list[0] = f"Individual Pair Analysis Report"
+      if len(label_list) > 1:
+        label_list[1] = f"League: {disp_league}, Gender: {disp_gender}, Year: {disp_year}"
+      if len(label_list) > 2:
+        label_list[2] = f"Team: {team}"
+
+  except Exception as e:
+    error_df = pd.DataFrame({'Error': [f"Error generating scouting report: {str(e)}"]})
+    df_list[0] = error_df.to_dict('records')
+    df_desc_list[0] = "Report Generation Error"
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year: str, pair_name: str, disp_team: str, ppr_df: pd.DataFrame) -> Union[pd.DataFrame, str]:
+  """
+    Generate individual player performance analysis for a single pair.
+    
+    This function creates a detailed breakdown of each player's statistics including
+    serving percentages, receiving effectiveness, and overall performance metrics, calculated from the ppr_df.
+    
+    Args:
+        disp_league (str): League identifier
+        disp_gender (str): Gender category (e.g., 'M', 'F')
+        disp_year (str): Year of competition
+        pair_name (str): Pair identifier (format: unique pair ID)
+        disp_team (str): Team identifier (not used for filtering in this version)
+        ppr_df (pd.DataFrame): Point-by-point rally data
+        
+    Returns:
+        pd.DataFrame: Player performance analysis with columns:
+            - Player: Player name
+            - Total Serves: Total number of serves
+            - Serve %: Percentage of pair's serves
+            - Ace %: Service ace percentage
+            - Err %: Service error percentage
+            - Knockout%: Knockout percentage
+            - Total Receives: Total number of receives
+            - FBHE: First Ball Hit Efficiency
+            - FBSO: First Ball Side Out
+            - Expected: Expected value
+            - Receive %: Percentage of pair's receives
+            
+        dict: Error message as a DataFrame converted to dict if data cannot be found
+    """
+  # Input validation
+  if not all(isinstance(x, str) for x in [disp_league, disp_gender, disp_year, pair_name, disp_team]):
+    error_df = pd.DataFrame({'Error': ["All string parameters must be strings"]})
+    return error_df.to_dict('records')
+
+  if not isinstance(ppr_df, pd.DataFrame):
+    error_df = pd.DataFrame({'Error': ["ppr_df must be a pandas DataFrame"]})
+    return error_df.to_dict('records')
+
+  if not all([disp_league.strip(), disp_gender.strip(), disp_year.strip(), pair_name.strip()]):
+    error_df = pd.DataFrame({'Error': ["Missing required parameters for performance analysis"]})
+    return error_df.to_dict('records')
+
+  try:
+    if ppr_df.empty:
+      error_df = pd.DataFrame({'Error': [f"No data found for {disp_league}-{disp_gender}-{disp_year}"]})
+      return error_df.to_dict('records')
+
+      # Extract player names
+    try:
+      player1, player2 = pair_players(pair_name)
+    except ValueError as e:
+      error_df = pd.DataFrame({'Error': [f"Error retrieving players for pair {pair_name}: {str(e)}"]})
+      return error_df.to_dict('records')
+
+    players = [player1.strip(), player2.strip()]
+
+    performance_data = []
+
+    for player in players:
+      # Serve stats
+      serve_df = ppr_df[ppr_df['serve_player'] == player]
+      total_serves = len(serve_df)
+      aces = len(serve_df[serve_df['point_outcome'] == 'TSA'])
+      errors = len(serve_df[serve_df['point_outcome'] == 'TSE'])
+      ace_per = round(aces / total_serves * 100, 2) if total_serves > 0 else 0.0
+      err_per = round(errors / total_serves * 100, 2) if total_serves > 0 else 0.0
+
+      # Receive stats
+      receive_df = ppr_df[ppr_df['pass_player'] == player]
+      total_receives = len(receive_df)
+
+      # Calculate Knockout%
+      knockout_result = calc_knockout_obj(ppr_df, player)
+      knockout = round(knockout_result.get('knock_out_rate', 0.0) * 100, 2)
+
+      # Calculate FBHE and FBSO
+      fbhe_result = fbhe_obj(ppr_df, player, 'pass', False)
+      fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
+      fbso = round(fbhe_result.fbso, 2) if hasattr(fbhe_result, 'fbso') else 0.0
+
+      # Calculate Expected
+      ev_result = calc_ev_obj(ppr_df, player)
+      expected = round(ev_result.get('expected_value', 0.0), 2)
+
+      player_stats = {
+        'Player': player,
+        'Total Serves': total_serves,
+        'Serve %': ace_per,
+        'Ace %': ace_per,
+        'Err %': err_per,
+        'Knockout%': knockout,
+        'Total Receives': total_receives,
+        'FBHE': fbhe,
+        'FBSO': fbso,
+        'Expected': expected,
+      }
+
+      performance_data.append(player_stats)
+
+      # Calculate pair-level percentages
+    total_serves_pair = sum(p['Total Serves'] for p in performance_data)
+    total_receives_pair = sum(p['Total Receives'] for p in performance_data)
+
+    for player_stats in performance_data:
+      player_stats['Serve %'] = round(player_stats['Total Serves'] / total_serves_pair * 100, 1) if total_serves_pair > 0 else 0.0
+      player_stats['Receive %'] = round(player_stats['Total Receives'] / total_receives_pair * 100, 1) if total_receives_pair > 0 else 0.0
+
+      # Create DataFrame
+    performance_df = pd.DataFrame(performance_data)
+
+    # Add pair summary row
+    if total_serves_pair > 0:
+      ace_per_pair = round(sum((p['Ace %'] / 100 * p['Total Serves']) for p in performance_data) / total_serves_pair * 100, 2)
+      err_per_pair = round(sum((p['Err %'] / 100 * p['Total Serves']) for p in performance_data) / total_serves_pair * 100, 2)
+    else:
+      ace_per_pair = 0.0
+      err_per_pair = 0.0
+
+    pair_summary = {
+      'Player': f"{pair_name} (Pair Total)",
+      'Total Serves': total_serves_pair,
+      'Serve %': 100.0,
+      'Ace %': ace_per_pair,
+      'Err %': err_per_pair,
+      'Knockout%': round(performance_df['Knockout%'].mean(), 2),
+      'Total Receives': total_receives_pair,
+      'FBHE': round(performance_df['FBHE'].mean(), 2),
+      'FBSO': round(performance_df['FBSO'].mean(), 2),
+      'Expected': round(performance_df['Expected'].mean(), 2),
+      'Receive %': 100.0
+    }
+
+    # Add summary as the last row
+    performance_df = pd.concat([performance_df, pd.DataFrame([pair_summary])], ignore_index=True)
+
+    # Reorder columns
+    columns = ['Player', 'Total Serves', 'Serve %', 'Ace %', 'Err %', 'Knockout%', 'Total Receives', 'FBHE', 'FBSO', 'Expected', 'Receive %']
+    performance_df = performance_df[columns]
+
+    return performance_df.to_dict('records')
+
+  except Exception as e:
+    error_df = pd.DataFrame({'Error': [f"Error generating pair performance analysis: {str(e)}"]})
+    return error_df.to_dict('records')
+    
+
 def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team):
   """
     Generate a comprehensive matchup analysis DataFrame for two pairs.
@@ -575,287 +940,7 @@ def validate_net_data_requirements(pair_data_df, pair_stats_df):
   except Exception as e:
     return False, f"Validation error: {str(e)}"
 
-
-def report_scouting_overview(lgy, team, **rpt_filters):
-  """
-    Scouting overview report function - provides detailed analysis for a single pair.
-    
-    This function generates comprehensive performance analysis for one pair including
-    individual player statistics, serving/receiving breakdowns, and zone-specific
-    performance metrics for tactical planning.
-    
-    Args:
-        lgy (str): League+gender+year string (format: "LEAGUE_GENDER_YEAR")
-        team (str): Team identifier
-        **rpt_filters: Additional report filters including:
-            - pair: Pair identifier for analysis (format: "Player1/Player2")
-        
-    Returns:
-        tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
-            - df_list[0]: Individual player performance statistics
-            - df_list[1]: Net position analysis across zones 1-5
-            - df_list[2]: 45-degree serves analysis (if available)
-            - df_list[3]: Additional serving analysis sorted by FBHE
-    """
-
-  # Get basic title and label setup from database
-  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
-
-  # Initialize the calculated lists
-  image_list = ['','','','','','','','','','']
-  df_list = ['','','','','','','','','','']
-
-  # Unpack lgy into league, gender, year
-  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
   
-  # get the ppr data
-  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
-  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
-
-  # Get required filter parameters
-  pair_a = rpt_filters.get('pair')
-
-  # Validate that pair is provided
-  if not pair_a:
-    # Return empty report if pair not specified
-    print("report_scouting_overview, Pair_a not found")
-    df_list[0] = "No pair specified for analysis"
-    df_desc_list[0] = "Error: Missing Pair Parameter"
-    return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-
-    # =============================================================================
-    # REPORT-SPECIFIC LOGIC STARTS HERE
-    # Generate single pair analysis using existing functions
-    # =============================================================================
-
-  try:
-    # Generate individual player performance analysis
-    player_performance_df = get_pair_performance_analysis(
-      disp_league, disp_gender, disp_year, pair_a, team, ppr_df
-    )
-
-    print(f" report_scouting_overview , player perforamcne df: \n {player_performance_df}")
-    # Check if player performance data was found successfully
-    if isinstance(player_performance_df, str):
-      # Error occurred - pair not found
-      df_list[0] = "Error: Pair Performance Data Not Found"  # Store error message
-      df_desc_list[0] = "Error: Pair Performance Data Not Found"
-    else:
-      # Convert to markdown and store
-      df_list[0] = player_performance_df.to_dict('records')
-      df_desc_list[0] = f"Individual Player Performance Analysis: {pair_a}"
-
-      # Generate net position analysis (modified to work with single pair)
-    net_analysis_df = get_single_pair_net_analysis(
-      disp_league, disp_gender, disp_year, pair_a, team
-    )
-
-    print(f" report_scouting_overview , net analysis df: \n {net_analysis_df}")
-    # Check if net analysis data was found successfully
-    if isinstance(net_analysis_df, str):
-      # Error occurred - pair not found
-      df_list[1] = "Error: Net Position Data Not Found"  # Store error message
-      df_desc_list[1] = "Error: Net Position Data Not Found"
-    else:
-      # Convert to markdown and store
-      df_list[1] = net_analysis_df.to_dict('records')
-      df_desc_list[1] = f"Net Position Analysis by Zone: {pair_a}"
-
-      # Generate serving analysis (if function exists)
-    try:
-      serving_analysis_df = get_pair_serving_analysis(
-        disp_league, disp_gender, disp_year, pair_a, team
-      )
-
-      print(f" report_scouting_overview , serve analysis df: \n {serving_analysis_df}")
-      # Check if serving analysis data was found successfully
-      if isinstance(serving_analysis_df, str):
-        # Error occurred
-        df_list[2] = "Error: Serving Analysis Data Not Found"  # Store error message
-        df_desc_list[2] = "Error: Serving Analysis Data Not Found"
-      else:
-        # Convert to markdown and store (top 15 results)
-        df_list[2] = serving_analysis_df.head(15).to_dict('records')
-        df_desc_list[2] = f"Serving Analysis (Top 15): {pair_a}"
-
-        # Also create FBHE sorted version if data exists
-        if len(serving_analysis_df) > 0 and 'fbhe' in serving_analysis_df.columns:
-          serving_fbhe_df = serving_analysis_df.sort_values(by='fbhe', ascending=True)
-          df_list[3] = serving_fbhe_df.head(15).to_dict('records')
-          df_desc_list[3] = f"Serving Analysis by FBHE (Top 15): {pair_a}"
-
-    except NameError:
-      # Function doesn't exist, skip serving analysis
-      df_list[2] = "Serving analysis function not available"
-      df_desc_list[2] = "Note: Advanced Serving Analysis Unavailable"
-
-      # Update title and labels for the specific pair
-    if title_list and len(title_list) > 0:
-      title_list[0] = f"Scouting Overview: {pair_a}"
-    if label_list and len(label_list) > 0:
-      label_list[0] = f"Individual Pair Analysis Report"
-      if len(label_list) > 1:
-        label_list[1] = f"League: {disp_league}, Gender: {disp_gender}, Year: {disp_year}"
-      if len(label_list) > 2:
-        label_list[2] = f"Team: {team}"
-
-  except Exception as e:
-    # Handle any unexpected errors
-    df_list[0] = f"Error generating scouting report: {str(e)}"
-    df_desc_list[0] = "Report Generation Error"
-
-    # =============================================================================
-    # END REPORT-SPECIFIC LOGIC
-    # =============================================================================
-
-  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-
-
-def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year: str, pair_name: str, disp_team: str, ppr_df: pd.DataFrame) -> Union[pd.DataFrame, str]:
-  """
-    Generate individual player performance analysis for a single pair.
-    
-    This function creates a detailed breakdown of each player's statistics including
-    serving percentages, receiving effectiveness, and overall performance metrics, calculated from the ppr_df.
-    
-    Args:
-        disp_league (str): League identifier
-        disp_gender (str): Gender category (e.g., 'M', 'F')
-        disp_year (str): Year of competition
-        pair_name (str): Pair identifier (format: unique pair ID)
-        disp_team (str): Team identifier (not used for filtering in this version)
-        ppr_df (pd.DataFrame): Point-by-point rally data
-        
-    Returns:
-        pd.DataFrame: Player performance analysis with columns:
-            - Player: Player name
-            - Total Serves: Total number of serves
-            - Serve %: Percentage of pair's serves
-            - Ace %: Service ace percentage
-            - Err %: Service error percentage
-            - Knockout%: Knockout percentage
-            - Total Receives: Total number of receives
-            - FBHE: First Ball Hit Efficiency
-            - FBSO: First Ball Side Out
-            - Expected: Expected value
-            - Receive %: Percentage of pair's receives
-            
-        str: Error message if data cannot be found
-    """
-  # Input validation
-  if not all(isinstance(x, str) for x in [disp_league, disp_gender, disp_year, pair_name, disp_team]):
-    return "Error: All string parameters must be strings"
-
-  if not isinstance(ppr_df, pd.DataFrame):
-    return "Error: ppr_df must be a pandas DataFrame"
-
-  if not all([disp_league.strip(), disp_gender.strip(), disp_year.strip(), pair_name.strip()]):
-    return "Error: Missing required parameters for performance analysis"
-
-  try:
-    if ppr_df.empty:
-      return f"No data found for {disp_league}-{disp_gender}-{disp_year}"
-
-      # Extract player names
-    try:
-      player1, player2 = pair_players(pair_name)
-    except ValueError as e:
-      return f"Error retrieving players for pair {pair_name}: {str(e)}"
-
-    players = [player1.strip(), player2.strip()]
-
-    performance_data = []
-
-    for player in players:
-      # Serve stats
-      serve_df = ppr_df[ppr_df['serve_player'] == player]
-      total_serves = len(serve_df)
-      aces = len(serve_df[serve_df['point_outcome'] == 'TSA'])
-      errors = len(serve_df[serve_df['point_outcome'] == 'TSE'])
-      ace_per = round(aces / total_serves * 100, 2) if total_serves > 0 else 0.0
-      err_per = round(errors / total_serves * 100, 2) if total_serves > 0 else 0.0
-
-      # Receive stats
-      receive_df = ppr_df[ppr_df['pass_player'] == player]
-      total_receives = len(receive_df)
-
-      # Calculate Knockout%
-      knockout_result = calc_knockout_obj(ppr_df, player)
-      knockout = round(knockout_result.get('knock_out_rate', 0.0) * 100, 2)
-
-      # Calculate FBHE and FBSO
-      fbhe_result = fbhe_obj(ppr_df, player, 'pass', False)
-      fbhe = round(fbhe_result.fbhe, 2)
-      fbso = round(fbhe_result.fbso, 2)
-
-      # Calculate Expected
-      ev_result = calc_ev_obj(ppr_df, player)
-      expected = round(ev_result.get('expected_value', 0.0), 2)
-
-      player_stats = {
-        'Player': player,
-        'Total Serves': total_serves,
-        'Ace %': ace_per,
-        'Err %': err_per,
-        'Knockout%': knockout,
-        'Total Receives': total_receives,
-        'FBHE': fbhe,
-        'FBSO': fbso,
-        'Expected': expected,
-      }
-
-      performance_data.append(player_stats)
-
-      # Calculate pair-level percentages
-    total_serves_pair = sum(p['Total Serves'] for p in performance_data)
-    total_receives_pair = sum(p['Total Receives'] for p in performance_data)
-
-    for player_stats in performance_data:
-      player_stats['Serve %'] = round(player_stats['Total Serves'] / total_serves_pair * 100, 1) if total_serves_pair > 0 else 0.0
-      player_stats['Receive %'] = round(player_stats['Total Receives'] / total_receives_pair * 100, 1) if total_receives_pair > 0 else 0.0
-
-      # Create DataFrame
-    performance_df = pd.DataFrame(performance_data)
-
-    # Add pair summary row
-    if total_serves_pair > 0:
-      ace_per_pair = round(sum((p['Ace %'] / 100 * p['Total Serves']) for p in performance_data) / total_serves_pair * 100, 2)
-      err_per_pair = round(sum((p['Err %'] / 100 * p['Total Serves']) for p in performance_data) / total_serves_pair * 100, 2)
-    else:
-      ace_per_pair = 0.0
-      err_per_pair = 0.0
-
-    pair_summary = {
-      'Player': f"{pair_name} (Pair Total)",
-      'Total Serves': total_serves_pair,
-      'Serve %': 100.0,
-      'Ace %': ace_per_pair,
-      'Err %': err_per_pair,
-      'Knockout%': round(performance_df['Knockout%'].mean(), 2),
-      'Total Receives': total_receives_pair,
-      'FBHE': round(performance_df['FBHE'].mean(), 2),
-      'FBSO': round(performance_df['FBSO'].mean(), 2),
-      'Expected': round(performance_df['Expected'].mean(), 2),
-      'Receive %': 100.0
-    }
-
-    # Add summary as the last row
-    performance_df = pd.concat([performance_df, pd.DataFrame([pair_summary])], ignore_index=True)
-
-    # Reorder columns
-    columns = ['Player', 'Total Serves', 'Serve %', 'Ace %', 'Err %', 'Knockout%', 'Total Receives', 'FBHE', 'FBSO', 'Expected', 'Receive %']
-    performance_df = performance_df[columns]
-
-    return performance_df
-
-  except Exception as e:
-    return f"Error generating pair performance analysis: {str(e)}"
-
-    
-
-
-
-
 
 def get_single_pair_net_analysis(disp_league, disp_gender, disp_year, pair_name, disp_team):
   """
