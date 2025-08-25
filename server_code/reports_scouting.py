@@ -33,8 +33,8 @@ def report_scouting_overview(lgy, team, **rpt_filters):
         
     Returns:
         tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
-            - df_list[0]: Player performance statistics (fullname, hit side, FBHE, Expected Value, Serve Receive %)
-            - df_list[1]: Player recommendations based on FBHE/Expected Value and attack tendencies
+            - df_list[0]: Player performance statistics (fullname, hit side, FBHE, Expected Value, Serve Recommendation)
+            - df_list[1]: Player tendencies (Attack Tendency in Front, On 2 Tendency)
             - df_list[2]: Serving recommendations based on optimal serve zones
     """
 
@@ -106,25 +106,11 @@ def report_scouting_overview(lgy, team, **rpt_filters):
         'Hit Side': hit_side,
         'FBHE': fbhe,
         'Expected Value': expected,
-        'Serve Receive %': player_receives  # Temporary value, will be converted to % later
+        'Serve Receive %': player_receives,  # Temporary value, will be converted to % later
+        'Serve Recommendation': ''  # Placeholder, will be filled after both players are processed
       })
 
-    # Convert Serve Receive to percentage
-    for data in performance_data:
-      data['Serve Receive %'] = round(data['Serve Receive %'] / total_receives * 100, 1) if total_receives > 0 else 0.0
-
-    performance_df = pd.DataFrame(performance_data, index=[player1, player2])
-    df_list[0] = performance_df.to_dict('records')
-    df_desc_list[0] = f"Player Performance Statistics: {pair_a}"
-
-    # Second Table: Player Recommendations and Attack Tendencies
-    recommendation_data = {
-      'Metric': ['Serve Recommendation', 'Attack Tendency in Front', 'On 2 Tendency'],
-      player1: ['', '', ''],
-      player2: ['', '', '']
-    }
-
-    # Serve Recommendation
+    # Convert Serve Receive to percentage and compute Serve Recommendation
     fbhe1, fbhe2 = performance_data[0]['FBHE'], performance_data[1]['FBHE']
     ev1, ev2 = performance_data[0]['Expected Value'], performance_data[1]['Expected Value']
 
@@ -133,20 +119,34 @@ def report_scouting_overview(lgy, team, **rpt_filters):
 
     if metric1 != 0 and metric2 != 0:
       if metric1 < metric2 * 0.75:  # 25% lower
-        recommendation_data[player1][0] = 'Strongly Recommended'
-        recommendation_data[player2][0] = ''
+        performance_data[0]['Serve Recommendation'] = 'Strongly Recommended'
+        performance_data[1]['Serve Recommendation'] = ''
       elif metric1 < metric2 * 0.85:  # 15% lower
-        recommendation_data[player1][0] = 'Recommended'
-        recommendation_data[player2][0] = ''
+        performance_data[0]['Serve Recommendation'] = 'Recommended'
+        performance_data[1]['Serve Recommendation'] = ''
       elif metric2 < metric1 * 0.75:
-        recommendation_data[player2][0] = 'Strongly Recommended'
-        recommendation_data[player1][0] = ''
+        performance_data[1]['Serve Recommendation'] = 'Strongly Recommended'
+        performance_data[0]['Serve Recommendation'] = ''
       elif metric2 < metric1 * 0.85:
-        recommendation_data[player2][0] = 'Recommended'
-        recommendation_data[player1][0] = ''
+        performance_data[1]['Serve Recommendation'] = 'Recommended'
+        performance_data[0]['Serve Recommendation'] = ''
       else:
-        recommendation_data[player1][0] = 'Neutral'
-        recommendation_data[player2][0] = 'Neutral'
+        performance_data[0]['Serve Recommendation'] = 'Neutral'
+        performance_data[1]['Serve Recommendation'] = 'Neutral'
+
+    for data in performance_data:
+      data['Serve Receive %'] = round(data['Serve Receive %'] / total_receives * 100, 1) if total_receives > 0 else 0.0
+
+    performance_df = pd.DataFrame(performance_data, index=[player1, player2])
+    df_list[0] = performance_df.to_dict('records')
+    df_desc_list[0] = f"Player Performance Statistics: {pair_a}"
+
+    # Second Table: Player Tendencies
+    recommendation_data = {
+      'Metric': ['Attack Tendency in Front', 'On 2 Tendency'],
+      player1: ['', ''],
+      player2: ['', '']
+    }
 
     # Attack Tendency in Front
     att_front = '12' if performance_data[0]['Hit Side'] == 'Left' else '45'
@@ -161,22 +161,23 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       total_front = att12 + att45
       if total_front > 0:
         percentage = round((att12 if att_front == '12' else att45) / total_front * 100, 1)
-        recommendation_data[player][1] = f"{percentage}% ({'Left' if att_front == '12' else 'Right'})"
+        recommendation_data[player][0] = f"{percentage}% ({'Left' if att_front == '12' else 'Right'})"
       else:
-        recommendation_data[player][1] = 'N/A'
+        recommendation_data[player][0] = 'N/A'
 
-    # On 2 Tendency (placeholder - assuming similar logic to front attacks)
-    for i, player in enumerate([player1, player2]):
-      recommendation_data[player][2] = 'N/A'  # To be implemented later
+      # On 2 Tendency (placeholder)
+      recommendation_data[player][1] = 'N/A'  # To be implemented later
 
     recommendation_df = pd.DataFrame(recommendation_data)
     df_list[1] = recommendation_df.to_dict('records')
-    df_desc_list[1] = f"Player Recommendations and Tendencies: {pair_a}"
+    df_desc_list[1] = f"Player Tendencies: {pair_a}"
 
     # Third Table: Serving Recommendations
     serving_data = {'Metric': ['Optimal Serve From', 'Serve From-To 1', 'Serve From-To 2', 'Serve From-To 3'], 
                     player1: ['', '', '', ''], 
                     player2: ['', '', '', '']}
+
+    zone_labels = {1: 'Left', 3: 'Middle', 5: 'Right'}
 
     for i, player in enumerate([player1, player2]):
       # Calculate FBHE for serve zones 1, 3, 5
@@ -188,11 +189,11 @@ def report_scouting_overview(lgy, team, **rpt_filters):
           fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
           fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
           fbhe_scores.append((zone, fbhe))
-
-      # Optimal serve zone
+      
+      # Optimal serve zone with FBHE
       if fbhe_scores:
-        optimal_zone = min(fbhe_scores, key=lambda x: x[1])[0]
-        serving_data[player][0] = f"Zone {optimal_zone}"
+        optimal_zone, optimal_fbhe = min(fbhe_scores, key=lambda x: x[1])
+        serving_data[player][0] = f"{zone_labels[optimal_zone]} (FBHE: {optimal_fbhe})"
       else:
         serving_data[player][0] = 'N/A'
 
@@ -201,8 +202,8 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       for from_zone in serve_zones:
         for to_zone in [1, 2, 3, 4, 5]:
           zone_df = ppr_df[(ppr_df['serve_player'] == player) & 
-            (ppr_df['serve_src_zone_net'] == from_zone) & 
-            (ppr_df['serve_dest_zone_net'] == to_zone)]
+                          (ppr_df['serve_src_zone_net'] == from_zone) & 
+                          (ppr_df['serve_dest_zone_net'] == to_zone)]
           if not zone_df.empty:
             fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
             fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
@@ -250,7 +251,7 @@ def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year:
         ppr_df (pd.DataFrame): Point-by-point rally data
         
     Returns:
-        pd.DataFrame: Player performance analysis with columns:
+        dict: Player performance analysis as a dict of records with columns:
             - Player: Player name
             - Total Serves: Total number of serves
             - Serve %: Percentage of pair's serves
@@ -262,7 +263,6 @@ def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year:
             - FBSO: First Ball Side Out
             - Expected: Expected value
             - Receive %: Percentage of pair's receives
-            
         dict: Error message as a DataFrame converted to dict if data cannot be found
     """
   # Input validation
@@ -283,7 +283,7 @@ def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year:
       error_df = pd.DataFrame({'Error': [f"No data found for {disp_league}-{disp_gender}-{disp_year}"]})
       return error_df.to_dict('records')
 
-      # Extract player names
+    # Extract player names
     try:
       player1, player2 = pair_players(pair_name)
     except ValueError as e:
@@ -331,11 +331,12 @@ def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year:
         'FBHE': fbhe,
         'FBSO': fbso,
         'Expected': expected,
+        'Receive %': 0.0,  # Will be calculated later
       }
 
       performance_data.append(player_stats)
 
-      # Calculate pair-level percentages
+    # Calculate pair-level percentages
     total_serves_pair = sum(p['Total Serves'] for p in performance_data)
     total_receives_pair = sum(p['Total Receives'] for p in performance_data)
 
@@ -343,7 +344,7 @@ def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year:
       player_stats['Serve %'] = round(player_stats['Total Serves'] / total_serves_pair * 100, 1) if total_serves_pair > 0 else 0.0
       player_stats['Receive %'] = round(player_stats['Total Receives'] / total_receives_pair * 100, 1) if total_receives_pair > 0 else 0.0
 
-      # Create DataFrame
+    # Create DataFrame
     performance_df = pd.DataFrame(performance_data)
 
     # Add pair summary row
@@ -380,7 +381,9 @@ def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year:
   except Exception as e:
     error_df = pd.DataFrame({'Error': [f"Error generating pair performance analysis: {str(e)}"]})
     return error_df.to_dict('records')
+
     
+
 
 def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team):
   """
