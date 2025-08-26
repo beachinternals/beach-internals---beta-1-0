@@ -17,6 +17,8 @@ import numpy as np
 from typing import Union
 from server_functions import *
 
+
+
 def report_scouting_overview(lgy, team, **rpt_filters):
   """
     Scouting overview report function - provides detailed analysis for a single pair.
@@ -34,7 +36,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     Returns:
         tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
             - df_list[0]: Player performance statistics (fullname, hit side, FBHE, Expected Value, Serve Recommendation)
-            - df_list[1]: Player tendencies (Attack Tendency in Front, On 2 Tendency)
+            - df_list[1]: Player tendencies (Attack Area, Top Angular Attack for each player)
             - df_list[2]: Serving recommendations based on optimal serve zones
     """
 
@@ -144,30 +146,57 @@ def report_scouting_overview(lgy, team, **rpt_filters):
 
     # Second Table: Player Tendencies
     recommendation_data = {
-      'Metric': ['Attack Tendency in Front', 'On 2 Tendency'],
-      player1: ['', ''],
-      player2: ['', '']
+      'Attack Area': ['Front - Pin', 'Front - Slot', 'Behind', 'Middle'],
+      player1: ['', '', '', ''],
+      player2: ['', '', '', '']
     }
 
-    # Attack Tendency in Front
-    att_front = '12' if performance_data[0]['Hit Side'] == 'Left' else '45'
+    # Define attack area mappings based on att_src_zone_net and tactic
+    attack_area_mappings = {
+      'Front - Pin': [(1, 'not behind'), (5, 'not behind')],
+      'Front - Slot': [(2, 'not behind'), (4, 'not behind')],
+      'Behind': [(1, 'behind'), (2, 'behind'), (4, 'behind'), (5, 'behind')],
+      'Middle': [(3, 'any')]
+    }
+
     for i, player in enumerate([player1, player2]):
       player_ppr_df = ppr_df[(ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == player)]
-      att12 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 1) | 
-                             (player_ppr_df['att_src_zone_net'] == 2)) & 
-        (player_ppr_df['tactic'] != 'behind')].shape[0]
-      att45 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 4) | 
-                             (player_ppr_df['att_src_zone_net'] == 5)) & 
-        (player_ppr_df['tactic'] != 'behind')].shape[0]
-      total_front = att12 + att45
-      if total_front > 0:
-        percentage = round((att12 if att_front == '12' else att45) / total_front * 100, 1)
-        recommendation_data[player][0] = f"{percentage}% ({'Left' if att_front == '12' else 'Right'})"
-      else:
-        recommendation_data[player][0] = 'N/A'
 
-      # On 2 Tendency (placeholder)
-      recommendation_data[player][1] = 'N/A'  # To be implemented later
+      # Process each attack area
+      for idx, area in enumerate(['Front - Pin', 'Front - Slot', 'Behind', 'Middle']):
+        zones_tactics = attack_area_mappings[area]
+        area_df = pd.DataFrame()
+        for zone, tactic in zones_tactics:
+          if tactic == 'any':
+            temp_df = player_ppr_df[player_ppr_df['att_src_zone_net'] == zone]
+          else:
+            temp_df = player_ppr_df[(player_ppr_df['att_src_zone_net'] == zone) & 
+              (player_ppr_df['tactic'] == tactic if tactic == 'behind' else player_ppr_df['tactic'] != 'behind')]
+          area_df = pd.concat([area_df, temp_df])
+
+        if not area_df.empty:
+          # Get angular attack data for the filtered area
+          area_angle_table = get_player_angular_attack_table(area_df, None, player)
+          ang_labels = ['Cut-Left', 'Angle-Left', 'Over-Middle', 'Angle-Right', 'Cut-Right']
+          # Find the angle with the highest number of attempts
+          max_attempts = 0
+          top_angle = 'N/A'
+          top_pct = '0%'
+          top_fbhe = 0.0
+
+          for ang_label in ang_labels:
+            attempts = area_angle_table.loc[area_angle_table[' '] == 'Attempts', ang_label].iloc[0]
+            if isinstance(attempts, str):
+              attempts = float(attempts.replace('%', '')) if '%' in attempts else float(attempts)
+            if attempts > max_attempts:
+              max_attempts = attempts
+              top_angle = ang_label
+              top_pct = area_angle_table.loc[area_angle_table[' '] == '% of Attempts', ang_label].iloc[0]
+              top_fbhe = area_angle_table.loc[area_angle_table[' '] == 'FBHE', ang_label].iloc[0]
+
+          recommendation_data[player][idx] = f"{top_angle} ({top_pct}, FBHE: {top_fbhe})"
+        else:
+          recommendation_data[player][idx] = 'N/A'
 
     recommendation_df = pd.DataFrame(recommendation_data)
     df_list[1] = recommendation_df.to_dict('records')
@@ -239,6 +268,9 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_desc_list[0] = "Report Generation Error"
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+
 
   
 
