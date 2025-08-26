@@ -117,8 +117,7 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
     fbhe_list[4] = fbhe_list[1] / fbhe_list[3] if fbhe_list[3] != 0 else 0.0
     fbhe_list[4] = float("{:.3f}".format(fbhe_list[4]))    
     fbhe_list[5] = video_link
-    print(f"fbhe Funct: fbhe_list:{fbhe_list}")
-
+    #print(f"fbhe Funct: fbhe_list:{fbhe_list}")
   
   return fbhe_list
 
@@ -2319,9 +2318,18 @@ def get_player_row(disp_player):
   return player_row
 
 def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
+  '''
+  Generates the dataframe for the player angular attack table
+  INPUTS:
+    - new_df: DataFrame, limited as desired before calling
+    - player_data_stats_df: DataFrame containing player statistics
+    - disp_player: String, player name for the dataframe
+  RETURNS
+    - DataFrame containing the player angular attack statistics
+  '''
   # Define the structure of the DataFrame
   df_dict = {
-    ' ': ['FBHE', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts','% In System', 'URL'],
+    ' ': ['FBHE', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts', '% In System', 'URL'],
     'Cut-Left': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A1
     'Angle-Left': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A2
     'Over-Middle': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A3
@@ -2345,33 +2353,32 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
     print(f"in Loop for i:{i}, ang_label: {ang_labels[i]}, angles: {angles[i]}, # of rows: {tmp_df.shape[0]}")
 
     # Compute metrics
-    fbhe_vector = fbhe(tmp_df, disp_player, 'att', False)
+    fbhe_result = fbhe_obj(tmp_df, disp_player, 'both', False)
     oos_vector = count_out_of_system(tmp_df, disp_player, 'att')
 
     # Update the DataFrame using row index (integer) and column (ang_labels[i])
-    angle_table.loc[angle_table[' '] == 'FBHE', ang_labels[i]] = fbhe_vector[0]
-    angle_table.loc[angle_table[' '] == 'FBSO', ang_labels[i]] = fbhe_vector[4]
-    angle_table.loc[angle_table[' '] == 'Kills', ang_labels[i]] = fbhe_vector[1]
-    angle_table.loc[angle_table[' '] == 'Errors', ang_labels[i]] = fbhe_vector[2]
-    angle_table.loc[angle_table[' '] == 'Attempts', ang_labels[i]] = fbhe_vector[3]
-    #angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = 1 - oos_vector[1]  # Keep as float  
-    # Optionally format as percentage for display later
+    angle_table.loc[angle_table[' '] == 'FBHE', ang_labels[i]] = fbhe_result.fbhe
+    angle_table.loc[angle_table[' '] == 'FBSO', ang_labels[i]] = fbhe_result.fbso
+    angle_table.loc[angle_table[' '] == 'Kills', ang_labels[i]] = fbhe_result.kills
+    angle_table.loc[angle_table[' '] == 'Errors', ang_labels[i]] = fbhe_result.errors
+    angle_table.loc[angle_table[' '] == 'Attempts', ang_labels[i]] = fbhe_result.attempts
     angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = f"{(1 - oos_vector[1]):.1%}"
-    attempts = fbhe_vector[3] + attempts
+    angle_table.loc[angle_table[' '] == 'URL', ang_labels[i]] = fbhe_result.video_link
+    attempts = fbhe_result.attempts + attempts
     print(f"Attempts: {attempts}")
 
-  # calcualte percent of attempts
+  # Calculate percent of attempts
   for i in range(5):
-    value = angle_table.loc[4, ang_labels[i]]
+    value = angle_table.loc[angle_table[' '] == 'Attempts', ang_labels[i]]
     print(f"Value: {value}")
     value = float(value)
     if attempts != 0:
-      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = str('{:.0%}').format( value/attempts )
+      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = str('{:.0%}').format(value / attempts)
     else:
-      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = 0
-    print(f" number of attempts: { value }, attempts: {attempts}, percent of attempts: { angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]]}")
-    #angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = str('{:.1%}').format(angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]])
+      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = '0%'
+    print(f"number of attempts: {value}, attempts: {attempts}, percent of attempts: {angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]]}")
 
   print(f"angular table (formatted for display):\n{angle_table}")
 
   return angle_table
+  

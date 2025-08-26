@@ -142,18 +142,17 @@ def report_player_att_along_net( lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
-
 def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
   '''
-  geenrates the dataframe for the player attacking table
+  Generates the dataframe for the player attacking table
   INPUTS:
-    - ppr dataframe, limited as desired before calling
-    - player for the dataframe
+    - ppr_df: DataFrame, limited as desired before calling
+    - player_data_stats_df: DataFrame containing player statistics
+    - disp_player: String, player name for the dataframe
   RETURNS
-    - the dataframe
-    
+    - DataFrame containing the player attack statistics
   '''
-  # create the output dataframe
+  # Create the output dataframe
   df_dict = {' ':['FBHE','Percentile','FBSO','Kills','Errors','Attempts','Percent Errors','URL'],
              'All':[0,0,0,0,0,0,0,' '],
              'Area 1':[0,0,0,0,0,0,0,' '],
@@ -163,54 +162,53 @@ def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
              'Area 5':[0,0,0,0,0,0,0,' '],
              'No Area':[0,0,0,0,0,0,0,' ']
             }
-  fbhe_table = pd.DataFrame.from_dict( df_dict )
+  fbhe_table = pd.DataFrame.from_dict(df_dict)
   var_mean = 'fbhe'+'_mean'
   var_stdev = 'fbhe'+'_stdev'
-  # if the eata is not empty, create my df, populate it, and return it
+  # If the data is not empty, create the dataframe, populate it, and return it
   if ppr_df.shape[0] > 0:
-    # calculate fbhe for all attacks
-    #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( ppr_df, disp_player, 'att', True )
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[3,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[4,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[5,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[2,'All'] = fbhe_vector[4]  # fbso
-    fbhe_table.at[7,'All'] = fbhe_vector[5]  # URL
-    # calculate percent errors
-    if fbhe_vector[3] > 0:  # attempts
-      fbhe_table.at[6,'All'] = str('{:.0%}').format(fbhe_vector[2] / fbhe_vector[3])  # errors / attempts
+    # Calculate fbhe for all attacks
+    fbhe_result = fbhe_obj(ppr_df, disp_player, 'both', True)
+    fbhe_table.at[0,'All'] = fbhe_result.fbhe  # fbhe
+    fbhe_table.at[3,'All'] = fbhe_result.kills  # kills
+    fbhe_table.at[4,'All'] = fbhe_result.errors  # errors
+    fbhe_table.at[5,'All'] = fbhe_result.attempts  # attempts
+    fbhe_table.at[2,'All'] = fbhe_result.fbso  # fbso
+    fbhe_table.at[7,'All'] = fbhe_result.video_link  # URL
+    # Calculate percent errors
+    if fbhe_result.attempts > 0:
+      fbhe_table.at[6,'All'] = str('{:.0%}').format(fbhe_result.errors / fbhe_result.attempts)  # errors / attempts
     else:
       fbhe_table.at[6,'All'] = '0%'
-    # calucalte percentile
-    fbhe_table.at[1,'All'] = round( stats.norm.cdf((((fbhe_vector[0])- player_data_stats_df.at[0,var_mean])/(player_data_stats_df.at[0,var_stdev]))) , 3)
+    # Calculate percentile
+    fbhe_table.at[1,'All'] = round(stats.norm.cdf(((fbhe_result.fbhe - player_data_stats_df.at[0,var_mean]) / player_data_stats_df.at[0,var_stdev])), 3)
     fbhe_table.at[1,'All'] = str('{:.0%}').format(fbhe_table.at[1,'All'])
-    # calculate for areas 1 - 5
+    # Calculate for areas 1 - 5 and No Area
     column = ['Area 1','Area 2','Area 3','Area 4','Area 5','No Area']
     for i in [1,2,3,4,5,6]:
       zone = 0 if i == 6 else i
       if i != 6:
-        var_mean = 'fbhe'+ str(zone)+'_mean'
+        var_mean = 'fbhe'+str(zone)+'_mean'
         var_stdev = 'fbhe'+str(zone)+'_stdev'
-      fbhe_vector = fbhe( ppr_df[ppr_df['att_src_zone_net']==zone], disp_player, 'att', True )
-      fbhe_table.at[0,column[i-1]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[3,column[i-1]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[4,column[i-1]] = fbhe_vector[2]  # errors
-      fbhe_table.at[5,column[i-1]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[2,column[i-1]] = fbhe_vector[4]  # confidence interval
-      fbhe_table.at[7,column[i-1]] = fbhe_vector[5]  # URL
-      # calculate percent errors
-      if fbhe_vector[3] > 0:  # attempts
-        fbhe_table.at[6,column[i-1]] = str('{:.0%}').format(fbhe_vector[2] / fbhe_vector[3])  # errors / attempts
+      fbhe_result = fbhe_obj(ppr_df[ppr_df['att_src_zone_net']==zone], disp_player, 'both', True)
+      fbhe_table.at[0,column[i-1]] = fbhe_result.fbhe  # fbhe
+      fbhe_table.at[3,column[i-1]] = fbhe_result.kills  # kills
+      fbhe_table.at[4,column[i-1]] = fbhe_result.errors  # errors
+      fbhe_table.at[5,column[i-1]] = fbhe_result.attempts  # attempts
+      fbhe_table.at[2,column[i-1]] = fbhe_result.fbso  # fbso
+      fbhe_table.at[7,column[i-1]] = fbhe_result.video_link  # URL
+      # Calculate percent errors
+      if fbhe_result.attempts > 0:
+        fbhe_table.at[6,column[i-1]] = str('{:.0%}').format(fbhe_result.errors / fbhe_result.attempts)  # errors / attempts
       else:
         fbhe_table.at[6,column[i-1]] = '0%'
-      fbhe_table.at[1,column[i-1]] = round( stats.norm.cdf((((fbhe_vector[0])- player_data_stats_df.at[0,var_mean])/(player_data_stats_df.at[0,var_stdev]))) , 3)
+      fbhe_table.at[1,column[i-1]] = round(stats.norm.cdf(((fbhe_result.fbhe - player_data_stats_df.at[0,var_mean]) / player_data_stats_df.at[0,var_stdev])), 3)
       fbhe_table.at[1,column[i-1]] = str('{:.0%}').format(fbhe_table.at[1,column[i-1]])
     return fbhe_table
   else:
     fbhe_table.at[0,'Area 1'] = 'No Data Found'
     return fbhe_table
-
+    
   
 
 def get_player_attack_plots( ppr_df, disp_player):
@@ -799,66 +797,7 @@ def report_player_att_expected(lgy, team, **rpt_filters):
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-  
 
-
-def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
-  # Define the structure of the DataFrame
-  df_dict = {
-    ' ': ['FBHE', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts','% In System', 'URL'],
-    'Cut-Left': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A1
-    'Angle-Left': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A2
-    'Over-Middle': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A3
-    'Angle-Right': [0, 0, 0, 0, 0, 0, 0, ' '],   # Zone A4
-    'Cut-Right': [0, 0, 0, 0, 0, 0, 0, ' ']      # Zone A5
-  }
-
-  # Create DataFrame without setting an index
-  angle_table = pd.DataFrame.from_dict(df_dict)
-
-  print(f"get player angular attack table: df passed in: {new_df.shape[0]}, player: {disp_player}")
-  print(f"angle table (initial):\n{angle_table}")
-
-  angles = ['A1', 'A2', 'A3', 'A4', 'A5']
-  ang_labels = ['Cut-Left', 'Angle-Left', 'Over-Middle', 'Angle-Right', 'Cut-Right']
-  attempts = 0
-
-  for i in range(5):
-    # Filter the DataFrame for the current angular zone
-    tmp_df = new_df[new_df['att_angular_zone'] == angles[i]]
-    print(f"in Loop for i:{i}, ang_label: {ang_labels[i]}, angles: {angles[i]}, # of rows: {tmp_df.shape[0]}")
-
-    # Compute metrics
-    fbhe_vector = fbhe(tmp_df, disp_player, 'att', False)
-    oos_vector = count_out_of_system(tmp_df, disp_player, 'att')
-
-    # Update the DataFrame using row index (integer) and column (ang_labels[i])
-    angle_table.loc[angle_table[' '] == 'FBHE', ang_labels[i]] = fbhe_vector[0]
-    angle_table.loc[angle_table[' '] == 'FBSO', ang_labels[i]] = fbhe_vector[4]
-    angle_table.loc[angle_table[' '] == 'Kills', ang_labels[i]] = fbhe_vector[1]
-    angle_table.loc[angle_table[' '] == 'Errors', ang_labels[i]] = fbhe_vector[2]
-    angle_table.loc[angle_table[' '] == 'Attempts', ang_labels[i]] = fbhe_vector[3]
-    #angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = 1 - oos_vector[1]  # Keep as float  
-    # Optionally format as percentage for display later
-    angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = f"{(1 - oos_vector[1]):.1%}"
-    attempts = fbhe_vector[3] + attempts
-    print(f"Attempts: {attempts}")
-
-  # calcualte percent of attempts
-  for i in range(5):
-    value = angle_table.loc[4, ang_labels[i]]
-    print(f"Value: {value}")
-    value = float(value)
-    if attempts != 0:
-      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = str('{:.0%}').format( value/attempts )
-    else:
-      angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = 0
-    print(f" number of attempts: { value }, attempts: {attempts}, percent of attempts: { angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]]}")
-    #angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = str('{:.1%}').format(angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]])
-
-  print(f"angular table (formatted for display):\n{angle_table}")
-
-  return angle_table
 
 
 
