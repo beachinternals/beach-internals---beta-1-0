@@ -232,6 +232,8 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
     ppr_df = ppr_df[ppr_df['serve_player'].str.strip() == disp_player]
   elif play_type == "pass":
     ppr_df = ppr_df[ppr_df['pass_player'].str.strip() == disp_player]
+  elif play_type == "both":
+    ppr_df = ppr_df[ (ppr_df['pass_player'].str.strip() == disp_player) & (ppr_df['att_player'].str.strip() == disp_player) ]
   else:
     raise ValueError("Invalid play_type. Must be 'att', 'srv', or 'pass'.")
 

@@ -93,7 +93,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       hit_side = 'Left' if att12 >= att45 else 'Right'
 
       # Calculate FBHE and Expected Value
-      fbhe_result = fbhe_obj(ppr_df[ppr_df['att_player'] == player], player, 'pass', False)
+      fbhe_result = fbhe_obj(ppr_df, player, 'both', False)
       fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
       ev_result = calc_ev_obj(ppr_df, player)
       expected = round(ev_result.get('expected_value', 0.0), 2)
@@ -174,9 +174,9 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_desc_list[1] = f"Player Tendencies: {pair_a}"
 
     # Third Table: Serving Recommendations
-    serving_data = {'Metric': ['Optimal Serve From', 'Serve From-To 1', 'Serve From-To 2', 'Serve From-To 3'], 
-                    player1: ['', '', '', ''], 
-                    player2: ['', '', '', '']}
+    serving_data = {'Metric': ['Optimal Serve From', 'Serve From-To 1', 'Serve From-To 2', 'Serve From-To 3', 'Serve From-To 4', 'Serve From-To 5'], 
+                    player1: ['', '', '', '', '', ''], 
+                    player2: ['', '', '', '', '', '']}
 
     zone_labels = {1: 'Left', 3: 'Middle', 5: 'Right'}
 
@@ -187,14 +187,15 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       for zone in serve_zones:
         zone_df = ppr_df[(ppr_df['pass_player'] == player) & (ppr_df['serve_src_zone_net'] == zone)]
         if not zone_df.empty:
-          fbhe_result = fbhe_obj(zone_df, player, 'att', False)
+          fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
           fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
-          fbhe_scores.append((zone, fbhe))
+          att = len(zone_df)
+          fbhe_scores.append((zone, fbhe, att))
 
       # Optimal serve zone with FBHE
       if fbhe_scores:
-        optimal_zone, optimal_fbhe = min(fbhe_scores, key=lambda x: x[1])
-        serving_data[player][0] = f"{zone_labels[optimal_zone]} (FBHE: {optimal_fbhe})"
+        optimal_zone, optimal_fbhe, optimal_att = min(fbhe_scores, key=lambda x: x[1])
+        serving_data[player][0] = f"{zone_labels[optimal_zone]} (FBHE: {optimal_fbhe}, att: {optimal_att})"
       else:
         serving_data[player][0] = 'N/A'
 
@@ -210,12 +211,13 @@ def report_scouting_overview(lgy, team, **rpt_filters):
             if not zone_df.empty:
               fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
               fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
-              serve_combinations.append((from_zone, str(to_zone)+str(to_zone_depth), fbhe))
+              att = len(zone_df)
+              serve_combinations.append((from_zone, str(to_zone)+str(to_zone_depth), fbhe, att))
 
-      # Sort by FBHE and take top 3
-      serve_combinations = sorted(serve_combinations, key=lambda x: x[2])[:3]
-      for idx, (from_zone, to_zone, fbhe) in enumerate(serve_combinations, 1):
-        serving_data[player][idx] = f"From Zone {from_zone} to Zone {to_zone} (FBHE: {fbhe})"
+      # Sort by FBHE and take top 5
+      serve_combinations = sorted(serve_combinations, key=lambda x: x[2])[:5]
+      for idx, (from_zone, to_zone, fbhe, att) in enumerate(serve_combinations, 1):
+        serving_data[player][idx] = f"From {zone_labels.get(from_zone, f'Zone {from_zone}')} to Zone {to_zone} (FBHE: {fbhe}, att: {att})"
 
     serving_df = pd.DataFrame(serving_data)
     df_list[2] = serving_df.to_dict('records')
@@ -237,6 +239,8 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_desc_list[0] = "Report Generation Error"
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+  
 
 def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year: str, pair_name: str, disp_team: str, ppr_df: pd.DataFrame) -> Union[pd.DataFrame, str]:
   """
@@ -315,7 +319,7 @@ def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year:
       knockout = round(knockout_result.get('knock_out_rate', 0.0) * 100, 2)
 
       # Calculate FBHE and FBSO
-      fbhe_result = fbhe_obj(ppr_df, player, 'pass', False)
+      fbhe_result = fbhe_obj(ppr_df, player, 'both', False)
       fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
       fbso = round(fbhe_result.fbso, 2) if hasattr(fbhe_result, 'fbso') else 0.0
 
@@ -384,10 +388,6 @@ def get_pair_performance_analysis(disp_league: str, disp_gender: str, disp_year:
   except Exception as e:
     error_df = pd.DataFrame({'Error': [f"Error generating pair performance analysis: {str(e)}"]})
     return error_df.to_dict('records')
-
-    
-
-    
 
 
 def matchup_outcome_df(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team):
