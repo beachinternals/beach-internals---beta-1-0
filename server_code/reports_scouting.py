@@ -184,6 +184,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
           top_pct = '0%'
           top_fbhe = 0.0
 
+          print(f" Angular Table: \n{area_angle_table}")
           for ang_label in ang_labels:
             attempts = area_angle_table.loc[area_angle_table[' '] == 'Attempts', ang_label].iloc[0]
             if isinstance(attempts, str):
@@ -195,6 +196,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
               top_fbhe = area_angle_table.loc[area_angle_table[' '] == 'FBHE', ang_label].iloc[0]
 
           recommendation_data[player][idx] = f"{top_angle} ({top_pct}, FBHE: {top_fbhe})"
+          print(f"recommendation:m {recommendation_data}")
         else:
           recommendation_data[player][idx] = 'N/A'
 
