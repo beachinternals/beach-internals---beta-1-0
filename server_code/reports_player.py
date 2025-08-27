@@ -29,6 +29,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import anvil.media
 from io import BytesIO
+from collections import namedtuple
 
 
 from tabulate import tabulate
@@ -3099,6 +3100,184 @@ def report_player_profile(lgy, team, **rpt_filters):
   # Store the dataframe as a list of dicts in df_list
   df_list[0] = sum_df.to_dict('records')
   df_desc_list[0] = f"Player profile for {disp_player} in {disp_league} {disp_gender} {disp_year}"
+
+  # =============================================================================
+  # END REPORT-SPECIFIC LOGIC
+  # =============================================================================
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+def report_player_tournament_summary(lgy, team, **rpt_filters):
+  """
+  Player tournament summary report function.
+  
+  Args:
+    lgy: League+gender+year string
+    team: Team identifier
+    **rpt_filters: Additional report filters (must include 'player', optional 'start_date', 'end_date')
+    
+  Returns:
+    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+  """
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  # Initialize the calculated lists
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch the ppr dataframe, player stats, and tri-data
+  full_ppr = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+
+  # Get display player
+  disp_player = rpt_filters.get('player')
+
+  # Set default dates if not provided
+  end_date = pd.to_datetime(rpt_filters.get('end_date', pd.Timestamp.today())).date()
+  start_date = pd.to_datetime(rpt_filters.get('start_date', end_date - pd.Timedelta(days=7))).date()
+
+  # Fetch tri-data with date range
+  tri_df, tri_df_found = get_tri_data(disp_league, disp_gender, disp_year, True, start_date, end_date)
+
+  # Limit full_ppr to plays involving this player
+  full_ppr = full_ppr[
+    (full_ppr['player_a1'] == disp_player) | 
+    (full_ppr['player_a2'] == disp_player) |
+    (full_ppr['player_b1'] == disp_player) |
+    (full_ppr['player_b2'] == disp_player)
+    ]
+
+  # Convert game_date to date if necessary
+  full_ppr['game_date'] = pd.to_datetime(full_ppr['game_date']).dt.date
+
+  # Split into season (before start_date) and tournament (within dates)
+  season_ppr = full_ppr[full_ppr['game_date'] < start_date]
+  tour_ppr = full_ppr[(full_ppr['game_date'] >= start_date) & (full_ppr['game_date'] <= end_date)]
+
+  # =============================================================================
+  # REPORT-SPECIFIC LOGIC STARTS HERE
+  # =============================================================================
+
+  # Helper function to get metric value
+  def get_metric_value(ppr_df, disp_player, metric):
+    if ppr_df.empty:
+      return 0.0
+    if metric == 'FBHE':
+      obj = fbhe_obj(ppr_df, disp_player, 'pass', False)
+      return obj.fbhe
+    elif metric == 'FBSO':
+      obj = fbhe_obj(ppr_df, disp_player, 'pass', False)
+      return obj.fbso
+    elif metric == 'Transition':
+      obj = calc_trans_obj(ppr_df, disp_player, '')
+      return obj.get('tcr', 0.0)
+    elif metric == 'Expected Value':
+      obj = calc_ev_obj(ppr_df, disp_player)
+      return obj.get('expected_value', 0.0)
+    elif metric == 'Ace / Error Ratio':
+      knock_obj = calc_knock_out_obj(ppr_df, disp_player)
+      err_obj = calc_error_density_obj(ppr_df, disp_player)
+      aces = knock_obj.get('service_aces', 0)
+      errors = err_obj.get('service_errors', 0)
+      return aces / errors if errors > 0 else 0.0
+    elif metric == 'Knockout':
+      obj = calc_knock_out_obj(ppr_df, disp_player)
+      return obj.get('knock_out_rate', 0.0)
+    elif metric == 'Good Pass Percent':
+      obj = count_good_passes_obj(ppr_df, disp_player, 'pass')
+      return obj.get('percent', 0.0)
+    return 0.0
+
+  # Metrics list
+  metrics = ['FBHE', 'FBSO', 'Transition', 'Expected Value', 'Ace / Error Ratio', 'Knockout', 'Good Pass Percent']
+
+  # Calculate values
+  season_values = [get_metric_value(season_ppr, disp_player, m) for m in metrics]
+  tour_values = [get_metric_value(tour_ppr, disp_player, m) for m in metrics]
+
+  # Calculate percent changes
+  pct_changes = []
+  for s, t in zip(season_values, tour_values):
+    if s != 0:
+      pct = ((t - s) / abs(s)) * 100  # Use abs to handle negative values properly
+      pct_changes.append(pct)
+    else:
+      pct_changes.append(None)
+
+  # First dataframe
+  df1 = pd.DataFrame({
+    'Metric': metrics,
+    'Season': season_values,
+    'Tournament': tour_values,
+    '% Change': pct_changes
+  })
+
+  # Format % Change
+  df1['% Change'] = df1['% Change'].apply(lambda x: f"{x:.1f}%" if pd.notnull(x) else None)
+
+  # Second dataframe from tri_df
+  data_rows = []
+  if tri_df_found:
+    for _, row in tri_df.iterrows():
+      teama = row['teama'].strip()
+      teamb = row['teamb'].strip()
+      if disp_player in teama or disp_player in teamb:
+        if disp_player in teama:
+          player_team = teama
+          suffix = '_a'
+          opponent = teamb
+          point_diff = row.get('pts_a', 0) - row.get('pts_b', 0)
+        else:
+          player_team = teamb
+          suffix = '_b'
+          opponent = teama
+          point_diff = row.get('pts_b', 0) - row.get('pts_a', 0)
+        winning_team = row.get('winning_team', '')
+        wl = 'Won' if winning_team == player_team else 'Loss'
+        new_row = {
+          'date': row['game_date'],
+          'opponent': opponent,
+          'set': row.get('set', ''),
+          'Won/Loss': wl,
+          'Point Diff': point_diff,
+          'fbhe': row.get(f'fbhe_noace{suffix}', 0.0),
+          'fbso': row.get(f'fbso_noace{suffix}', 0.0),
+          'eso': row.get(f'eso{suffix}', 0.0),
+          'tcr': row.get(f'tcr{suffix}', 0.0),
+          'err_den': row.get(f'err_den{suffix}', 0.0),
+          'ace_err': row.get(f'ace_err{suffix}', 0.0),
+          'goodpass': row.get(f'goodpass{suffix}', 0.0),
+          'knockout': row.get(f'knockout{suffix}', 0.0)
+        }
+        data_rows.append(new_row)
+
+  df2 = pd.DataFrame(data_rows)
+
+  # Sort df2
+  if not df2.empty:
+    df2 = df2.sort_values(by=['date', 'opponent', 'set'])
+
+  # Format columns in df2
+  if not df2.empty:
+    # 3 decimals
+    for col in ['fbhe', 'fbso', 'eso']:
+      df2[col] = df2[col].apply(lambda x: f"{x:.3f}")
+
+    # Percentages no decimals
+    for col in ['goodpass', 'knockout', 'err_den', 'tcr']:
+      df2[col] = df2[col].apply(lambda x: f"{x*100:.0f}%" if pd.notnull(x) else None)
+
+  # Save dataframes as list of dicts
+  df_list[0] = df1.to_dict('records')
+  df_list[1] = df2.to_dict('records')
+
+  # Update descriptions if needed
+  df_desc_list[0] = "Player Metrics Summary: Season vs Tournament"
+  df_desc_list[1] = "Tournament Game Details"
 
   # =============================================================================
   # END REPORT-SPECIFIC LOGIC
