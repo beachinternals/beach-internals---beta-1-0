@@ -3107,7 +3107,6 @@ def report_player_profile(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
-
 def report_player_tournament_summary(lgy, team, **rpt_filters):
   """
   Player tournament summary report function.
@@ -3130,7 +3129,7 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   # Unpack lgy into league, gender, year
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
-  # Fetch the ppr dataframe, player stats, and tri-data
+  # Fetch the ppr dataframe, player stats
   full_ppr = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
 
@@ -3141,12 +3140,6 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   end_date = pd.to_datetime(rpt_filters.get('end_date', pd.Timestamp.today())).date()
   start_date = pd.to_datetime(rpt_filters.get('start_date', end_date - pd.Timedelta(days=7))).date()
 
-  # Fetch tri-data with date range
-  tri_df, tri_df_found = get_tri_data(disp_league, disp_gender, disp_year, True, start_date, end_date)
-
-  # Debugging: Check if full_ppr contains data
-  print(f"Full PPR rows: {len(full_ppr)}")
-
   # Limit full_ppr to plays involving this player, handling case and whitespace
   full_ppr = full_ppr[
     (full_ppr['player_a1'].str.strip() == disp_player) | 
@@ -3155,19 +3148,12 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
     (full_ppr['player_b2'].str.strip() == disp_player)
     ]
 
-  # Debugging: Check filtered full_ppr
-  print(f"Filtered PPR rows for player {disp_player}: {len(full_ppr)}")
-
   # Convert game_date to date if necessary
   full_ppr['game_date'] = pd.to_datetime(full_ppr['game_date']).dt.date
 
   # Split into season (before start_date) and tournament (within dates)
   season_ppr = full_ppr[full_ppr['game_date'] < start_date]
   tour_ppr = full_ppr[(full_ppr['game_date'] >= start_date) & (full_ppr['game_date'] <= end_date)]
-
-  # Debugging: Check sizes of split DataFrames
-  print(f"Season PPR rows: {len(season_ppr)}")
-  print(f"Tournament PPR rows: {len(tour_ppr)}")
 
   # =============================================================================
   # REPORT-SPECIFIC LOGIC STARTS HERE
@@ -3176,15 +3162,12 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   # Helper function to get metric value
   def get_metric_value(ppr_df, disp_player, metric):
     if ppr_df.empty:
-      print(f"No data for {metric} in DataFrame")
       return 0.0
     if metric == 'FBHE':
       obj = fbhe_obj(ppr_df, disp_player, 'pass', False)
-      print(f"FBHE for {disp_player}: kills={obj.kills}, errors={obj.errors}, attempts={obj.attempts}, fbhe={obj.fbhe}")
       return obj.fbhe
     elif metric == 'FBSO':
       obj = fbhe_obj(ppr_df, disp_player, 'pass', False)
-      print(f"FBSO for {disp_player}: kills={obj.kills}, attempts={obj.attempts}, fbso={obj.fbso}")
       return obj.fbso
     elif metric == 'Transition':
       obj = calc_trans_obj(ppr_df, disp_player, '')
@@ -3196,8 +3179,8 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
       knock_obj = calc_knock_out_obj(ppr_df, disp_player)
       err_obj = calc_error_density_obj(ppr_df, disp_player)
       aces = knock_obj.get('service_aces', 0)
-      errors = err_obj.get('service_errors', 0)
-      return aces / errors if errors > 0 else 0.0
+      errors = err_obj.get('total_errors', 0)  # Use total_errors for display
+      return f"{aces} Ace / {errors:.1f} Errors"
     elif metric == 'Knockout':
       obj = calc_knock_out_obj(ppr_df, disp_player)
       return obj.get('knock_out_rate', 0.0)
@@ -3215,8 +3198,10 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
 
   # Format values for display
   def format_value(value, metric):
-    if pd.isna(value):
+    if pd.isna(value) or value is None:
       return None
+    if metric == 'Ace / Error Ratio':
+      return value  # Already formatted as string
     if metric in ['Transition', 'Knockout', 'Good Pass Percent']:
       return f"{value*100:.0f}%"
     elif metric == 'Expected Value':
@@ -3229,8 +3214,11 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   # Calculate percent changes
   pct_changes = []
   for s, t in zip(season_values, tour_values):
+    if isinstance(s, str) or isinstance(t, str):  # Skip Ace / Error Ratio for % change
+      pct_changes.append(None)
+      continue
     if s != 0:
-      pct = ((t - s) / abs(s)) * 100  # Use abs to handle negative values properly
+      pct = ((t - s) / abs(s)) * 100
       pct_changes.append(pct)
     else:
       pct_changes.append(None)
@@ -3246,41 +3234,66 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   # Format % Change
   df1['% Change'] = df1['% Change'].apply(lambda x: f"{x:.1f}%" if pd.notnull(x) else None)
 
-  # Second dataframe from tri_df
+  # Second dataframe from ppr_df
   data_rows = []
-  if tri_df_found:
-    for _, row in tri_df.iterrows():
-      teama = row['teama'].strip()
-      teamb = row['teamb'].strip()
-      if disp_player in teama or disp_player in teamb:
-        if disp_player in teama:
-          player_team = teama
-          suffix = '_a'
-          opponent = teamb
-          point_diff = row.get('point_diff', 0)
-        else:
-          player_team = teamb
-          suffix = '_b'
-          opponent = teama
-          point_diff = row.get('point_diff', 0) * -1  # Reverse for team b
-        winning_team = row.get('winning_team', '')
-        wl = 'Won' if winning_team == player_team else 'Loss'
-        new_row = {
-          'date': row['game_date'],
-          'opponent': opponent,
-          'set': row.get('set', ''),
-          'Won/Loss': wl,
-          'Point Diff': point_diff,
-          'fbhe': row.get(f'fbhe{suffix}_noace', 0.0),
-          'fbso': row.get(f'fbso{suffix}_noace', 0.0),
-          'eso': row.get(f'eso{suffix}', 0.0),
-          'tcr': row.get(f'tcr{suffix}', 0.0),
-          'err_den': row.get(f'err_den{suffix}', 0.0),
-          'ace_err': row.get(f'ace_err{suffix}', 0.0),
-          'goodpass': row.get(f'goodpass{suffix}', 0.0),
-          'knockout': row.get(f'knockout{suffix}', 0.0)
-        }
-        data_rows.append(new_row)
+  if not tour_ppr.empty:
+    # Get unique video_id and set combinations within date range
+    unique_sets = tour_ppr[['video_id', 'set', 'game_date']].drop_duplicates()
+
+    for _, row in unique_sets.iterrows():
+      video_id = row['video_id']
+      set_num = row['set']
+      game_date = row['game_date']
+
+      # Filter ppr_df for this video_id and set
+      set_df = tour_ppr[(tour_ppr['video_id'] == video_id) & (tour_ppr['set'] == set_num)]
+
+      # Skip if fewer than 5 points
+      if len(set_df) < 5:
+        continue
+
+      # Determine player's team and opponent
+      teama_players = set(set_df[['player_a1', 'player_a2']].values.flatten())
+      teamb_players = set(set_df[['player_b1', 'player_b2']].values.flatten())
+      if disp_player in teama_players:
+        player_team = 'teama'
+        opponent = set_df['player_b1'].iloc[0].strip() if not set_df['player_b1'].empty else 'Unknown'
+      else:
+        player_team = 'teamb'
+        opponent = set_df['player_a1'].iloc[0].strip() if not set_df['player_a1'].empty else 'Unknown'
+
+      # Calculate points won and lost
+      points_won = set_df[set_df['point_outcome_team'].str.contains(disp_player[:-1], na=False)].shape[0]
+      points_lost = set_df[~set_df['point_outcome_team'].str.contains(disp_player[:-1], na=False)].shape[0]
+      point_diff = points_won - points_lost
+      wl = 'Won' if points_won > points_lost else 'Loss' if points_won < points_lost else 'Tie'
+
+      # Calculate metrics for this set
+      fbhe = get_metric_value(set_df, disp_player, 'FBHE')
+      fbso = get_metric_value(set_df, disp_player, 'FBSO')
+      eso = count_oos_obj(set_df, disp_player, 'pass').get('percent', 0.0)
+      tcr = get_metric_value(set_df, disp_player, 'Transition')
+      err_den = calc_error_density_obj(set_df, disp_player).get('error_density_raw', 0.0)
+      ace_err = get_metric_value(set_df, disp_player, 'Ace / Error Ratio')
+      goodpass = get_metric_value(set_df, disp_player, 'Good Pass Percent')
+      knockout = get_metric_value(set_df, disp_player, 'Knockout')
+
+      new_row = {
+        'date': game_date,
+        'opponent': opponent,
+        'set': set_num,
+        'Won/Loss': wl,
+        'Point Diff': point_diff,
+        'fbhe': fbhe,
+        'fbso': fbso,
+        'eso': eso,
+        'tcr': tcr,
+        'err_den': err_den,
+        'ace_err': ace_err,
+        'goodpass': goodpass,
+        'knockout': knockout
+      }
+      data_rows.append(new_row)
 
   df2 = pd.DataFrame(data_rows)
 
@@ -3292,11 +3305,14 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   if not df2.empty:
     # 3 decimals
     for col in ['fbhe', 'fbso', 'eso']:
-      df2[col] = df2[col].apply(lambda x: f"{x:.3f}")
+      df2[col] = df2[col].apply(lambda x: f"{x:.3f}" if pd.notnull(x) else None)
 
     # Percentages no decimals
     for col in ['goodpass', 'knockout', 'err_den', 'tcr']:
       df2[col] = df2[col].apply(lambda x: f"{x*100:.0f}%" if pd.notnull(x) else None)
+
+    # Ace / Error Ratio already formatted as string
+    df2['ace_err'] = df2['ace_err'].apply(lambda x: x if pd.notnull(x) else None)
 
   # Save dataframes as list of dicts
   df_list[0] = df1.to_dict('records')
@@ -3311,5 +3327,4 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-
-
+  
