@@ -3107,6 +3107,7 @@ def report_player_profile(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+
 def report_player_tournament_summary(lgy, team, **rpt_filters):
   """
   Player tournament summary report function.
@@ -3133,8 +3134,8 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   full_ppr = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
 
-  # Get display player
-  disp_player = rpt_filters.get('player')
+  # Get display player and clean it
+  disp_player = rpt_filters.get('player', '').strip()
 
   # Set default dates if not provided
   end_date = pd.to_datetime(rpt_filters.get('end_date', pd.Timestamp.today())).date()
@@ -3143,13 +3144,19 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   # Fetch tri-data with date range
   tri_df, tri_df_found = get_tri_data(disp_league, disp_gender, disp_year, True, start_date, end_date)
 
-  # Limit full_ppr to plays involving this player
+  # Debugging: Check if full_ppr contains data
+  print(f"Full PPR rows: {len(full_ppr)}")
+
+  # Limit full_ppr to plays involving this player, handling case and whitespace
   full_ppr = full_ppr[
-    (full_ppr['player_a1'] == disp_player) | 
-    (full_ppr['player_a2'] == disp_player) |
-    (full_ppr['player_b1'] == disp_player) |
-    (full_ppr['player_b2'] == disp_player)
+    (full_ppr['player_a1'].str.strip() == disp_player) | 
+    (full_ppr['player_a2'].str.strip() == disp_player) |
+    (full_ppr['player_b1'].str.strip() == disp_player) |
+    (full_ppr['player_b2'].str.strip() == disp_player)
     ]
+
+  # Debugging: Check filtered full_ppr
+  print(f"Filtered PPR rows for player {disp_player}: {len(full_ppr)}")
 
   # Convert game_date to date if necessary
   full_ppr['game_date'] = pd.to_datetime(full_ppr['game_date']).dt.date
@@ -3158,6 +3165,10 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   season_ppr = full_ppr[full_ppr['game_date'] < start_date]
   tour_ppr = full_ppr[(full_ppr['game_date'] >= start_date) & (full_ppr['game_date'] <= end_date)]
 
+  # Debugging: Check sizes of split DataFrames
+  print(f"Season PPR rows: {len(season_ppr)}")
+  print(f"Tournament PPR rows: {len(tour_ppr)}")
+
   # =============================================================================
   # REPORT-SPECIFIC LOGIC STARTS HERE
   # =============================================================================
@@ -3165,12 +3176,15 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   # Helper function to get metric value
   def get_metric_value(ppr_df, disp_player, metric):
     if ppr_df.empty:
+      print(f"No data for {metric} in DataFrame")
       return 0.0
     if metric == 'FBHE':
       obj = fbhe_obj(ppr_df, disp_player, 'pass', False)
+      print(f"FBHE for {disp_player}: kills={obj.kills}, errors={obj.errors}, attempts={obj.attempts}, fbhe={obj.fbhe}")
       return obj.fbhe
     elif metric == 'FBSO':
       obj = fbhe_obj(ppr_df, disp_player, 'pass', False)
+      print(f"FBSO for {disp_player}: kills={obj.kills}, attempts={obj.attempts}, fbso={obj.fbso}")
       return obj.fbso
     elif metric == 'Transition':
       obj = calc_trans_obj(ppr_df, disp_player, '')
@@ -3199,6 +3213,19 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   season_values = [get_metric_value(season_ppr, disp_player, m) for m in metrics]
   tour_values = [get_metric_value(tour_ppr, disp_player, m) for m in metrics]
 
+  # Format values for display
+  def format_value(value, metric):
+    if pd.isna(value):
+      return None
+    if metric in ['Transition', 'Knockout', 'Good Pass Percent']:
+      return f"{value*100:.0f}%"
+    elif metric == 'Expected Value':
+      return f"{value:.3f}"
+    return value
+
+  season_values_formatted = [format_value(v, m) for v, m in zip(season_values, metrics)]
+  tour_values_formatted = [format_value(v, m) for v, m in zip(tour_values, metrics)]
+
   # Calculate percent changes
   pct_changes = []
   for s, t in zip(season_values, tour_values):
@@ -3211,8 +3238,8 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   # First dataframe
   df1 = pd.DataFrame({
     'Metric': metrics,
-    'Season': season_values,
-    'Tournament': tour_values,
+    'Season': season_values_formatted,
+    'Tournament': tour_values_formatted,
     '% Change': pct_changes
   })
 
@@ -3230,12 +3257,12 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
           player_team = teama
           suffix = '_a'
           opponent = teamb
-          point_diff = row.get('pts_a', 0) - row.get('pts_b', 0)
+          point_diff = row.get('point_diff', 0)
         else:
           player_team = teamb
           suffix = '_b'
           opponent = teama
-          point_diff = row.get('pts_b', 0) - row.get('pts_a', 0)
+          point_diff = row.get('point_diff', 0) * -1  # Reverse for team b
         winning_team = row.get('winning_team', '')
         wl = 'Won' if winning_team == player_team else 'Loss'
         new_row = {
@@ -3244,8 +3271,8 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
           'set': row.get('set', ''),
           'Won/Loss': wl,
           'Point Diff': point_diff,
-          'fbhe': row.get(f'fbhe_noace{suffix}', 0.0),
-          'fbso': row.get(f'fbso_noace{suffix}', 0.0),
+          'fbhe': row.get(f'fbhe{suffix}_noace', 0.0),
+          'fbso': row.get(f'fbso{suffix}_noace', 0.0),
           'eso': row.get(f'eso{suffix}', 0.0),
           'tcr': row.get(f'tcr{suffix}', 0.0),
           'err_den': row.get(f'err_den{suffix}', 0.0),
@@ -3284,4 +3311,5 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-  
+
+
