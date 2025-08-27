@@ -424,9 +424,6 @@ class Reports_main(Reports_mainTemplate):
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     #rpt_filters['player'] = self.player_drop_down.selected_value['player']
 
-    if self.opp_pair_drop_down.selected_value:
-      rpt_filters['opp_pair'] == self.opp_pair_drop_down.selected_value
-
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     rpt_filters['player'] = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
 

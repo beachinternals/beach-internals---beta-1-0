@@ -2378,7 +2378,7 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
       angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]] = '0%'
     #print(f"number of attempts: {value}, attempts: {attempts}, percent of attempts: {angle_table.loc[angle_table[' '] == '% of Attempts', ang_labels[i]]}")
 
-  print(f"returning angular table for {disp_player} (formatted for display):\n{angle_table}")
+  #print(f"returning angular table for {disp_player} (formatted for display):\n{angle_table}")
 
   return angle_table
   
