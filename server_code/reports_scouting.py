@@ -18,7 +18,6 @@ from typing import Union
 from server_functions import *
 
 
-
 def report_scouting_overview(lgy, team, **rpt_filters):
   """
     Scouting overview report function - provides detailed analysis for a single pair.
@@ -38,7 +37,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
             - df_list[0]: Player performance statistics (fullname, hit side, FBHE, Expected Value, Serve Recommendation)
             - df_list[1]: Player tendencies (Attack Area, Top Angular Attack for each player)
             - df_list[2]: Serving recommendations based on optimal serve zones
-    """
+  """
 
   # Get basic title and label setup from database
   title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
@@ -77,7 +76,6 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     for player in [player1, player2]:
       # Get full name from master_player table using team + ' ' + number + ' ' + shortname
       try:
-        # Assuming player ID is in format "team number shortname"
         player_row = get_player_row(player)
         full_name = player_row['fullname'] if player_row and 'fullname' in player_row else player
       except Exception as e:
@@ -92,7 +90,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       att45 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 4) | 
                              (player_ppr_df['att_src_zone_net'] == 5)) & 
         (player_ppr_df['tactic'] != 'behind')].shape[0]
-      hit_side = 'Left' if att12 >= att45 else 'Right'
+      hit_side = 'Left' if att12 > att45 else 'Right'
 
       # Calculate FBHE and Expected Value
       fbhe_result = fbhe_obj(ppr_df, player, 'both', False)
@@ -146,27 +144,36 @@ def report_scouting_overview(lgy, team, **rpt_filters):
 
     # Second Table: Player Tendencies
     recommendation_data = {
-      'Attack Area': ['Front - Pin', 'Front - Slot', 'Behind', 'Middle'],
+      'Attack Area': ['Front - Pin', 'Front - Slot', 'Middle', 'Behind'],
       player1: ['', '', '', ''],
       player2: ['', '', '', '']
     }
 
-    # Define attack area mappings based on att_src_zone_net and tactic
-    attack_area_mappings = {
-      'Front - Pin': [(1, 'not behind'), (5, 'not behind')],
-      'Front - Slot': [(2, 'not behind'), (4, 'not behind')],
-      'Behind': [(1, 'behind'), (2, 'behind'), (4, 'behind'), (5, 'behind')],
-      'Middle': [(3, 'any')]
-    }
-
+    # Define attack area mappings based on hit side
     for i, player in enumerate([player1, player2]):
       player_ppr_df = ppr_df[(ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == player)]
+      att12 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 1) | 
+                             (player_ppr_df['att_src_zone_net'] == 2)) & 
+        (player_ppr_df['tactic'] != 'behind')].shape[0]
+      att45 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 4) | 
+                             (player_ppr_df['att_src_zone_net'] == 5)) & 
+        (player_ppr_df['tactic'] != 'behind')].shape[0]
+      hit_side = 'Left' if att12 > att45 else 'Right'
+
+      # Define attack area mappings based on hit side
+      attack_area_mappings = {
+        'Front - Pin': [(1, 'not behind')] if hit_side == 'Left' else [(5, 'not behind')],
+        'Front - Slot': [(2, 'not behind')] if hit_side == 'Left' else [(3, 'not behind')],
+        'Middle': [(3, 'not behind')] if hit_side == 'Left' else [(1, 'not behind'), (2, 'not behind'), (3, 'not behind')],
+        'Behind': [(1, 'behind'), (2, 'behind'), (3, 'behind'), (4, 'behind'), (5, 'behind')]
+      }
 
       # Process each attack area
-      for idx, area in enumerate(['Front - Pin', 'Front - Slot', 'Behind', 'Middle']):
+      for idx, area in enumerate(['Front - Pin', 'Front - Slot', 'Middle', 'Behind']):
         zones_tactics = attack_area_mappings[area]
         area_df = pd.DataFrame()
         for zone, tactic in zones_tactics:
+          print(f" filtering for zone {zone} and tactic {tactic}")
           if tactic == 'any':
             temp_df = player_ppr_df[player_ppr_df['att_src_zone_net'] == zone]
           else:
@@ -175,16 +182,15 @@ def report_scouting_overview(lgy, team, **rpt_filters):
           area_df = pd.concat([area_df, temp_df])
 
         if not area_df.empty:
-          # Get angular attack data for the filtered area
+          print(f"Size of area_df passed to angular attack table {area_df.shape[0]}")
           area_angle_table = get_player_angular_attack_table(area_df, None, player)
           ang_labels = ['Cut-Left', 'Angle-Left', 'Over-Middle', 'Angle-Right', 'Cut-Right']
-          # Find the angle with the highest number of attempts
           max_attempts = 0
           top_angle = 'N/A'
           top_pct = '0%'
           top_fbhe = 0.0
 
-          print(f" Angular Table: \n{area_angle_table}")
+          print(f" Angular Table: for player {player}, for {area} \n{area_angle_table}")
           for ang_label in ang_labels:
             attempts = area_angle_table.loc[area_angle_table[' '] == 'Attempts', ang_label].iloc[0]
             if isinstance(attempts, str):
@@ -196,7 +202,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
               top_fbhe = area_angle_table.loc[area_angle_table[' '] == 'FBHE', ang_label].iloc[0]
 
           recommendation_data[player][idx] = f"{top_angle} ({top_pct}, FBHE: {top_fbhe})"
-          print(f"recommendation:m {recommendation_data}")
+          print(f"recommendation: {recommendation_data}")
         else:
           recommendation_data[player][idx] = 'N/A'
 
@@ -212,7 +218,6 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     zone_labels = {1: 'Left', 3: 'Middle', 5: 'Right'}
 
     for i, player in enumerate([player1, player2]):
-      # Calculate FBHE for serve zones 1, 3, 5
       serve_zones = [1, 3, 5]
       fbhe_scores = []
       for zone in serve_zones:
@@ -223,14 +228,12 @@ def report_scouting_overview(lgy, team, **rpt_filters):
           att = len(zone_df)
           fbhe_scores.append((zone, fbhe, att))
 
-      # Optimal serve zone with FBHE
       if fbhe_scores:
         optimal_zone, optimal_fbhe, optimal_att = min(fbhe_scores, key=lambda x: x[1])
         serving_data[player][0] = f"{zone_labels[optimal_zone]} (FBHE: {optimal_fbhe}, att: {optimal_att})"
       else:
         serving_data[player][0] = 'N/A'
 
-      # Calculate lowest FBHE for serve from-to combinations
       serve_combinations = []
       for from_zone in serve_zones:
         for to_zone in [1, 2, 3, 4, 5]:
@@ -245,7 +248,6 @@ def report_scouting_overview(lgy, team, **rpt_filters):
               att = len(zone_df)
               serve_combinations.append((from_zone, str(to_zone)+str(to_zone_depth), fbhe, att))
 
-      # Sort by FBHE and take top 5
       serve_combinations = sorted(serve_combinations, key=lambda x: x[2])[:5]
       for idx, (from_zone, to_zone, fbhe, att) in enumerate(serve_combinations, 1):
         serving_data[player][idx] = f"From {zone_labels.get(from_zone, f'Zone {from_zone}')} to Zone {to_zone} (FBHE: {fbhe}, att: {att})"
@@ -254,7 +256,6 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_list[2] = serving_df.to_dict('records')
     df_desc_list[2] = f"Serving Recommendations: {pair_a}"
 
-    # Update title and labels
     if title_list and len(title_list) > 0:
       title_list[0] = f"Scouting Overview: {pair_a}"
     if label_list and len(label_list) > 0:
@@ -270,7 +271,6 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_desc_list[0] = "Report Generation Error"
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-
 
 
 
