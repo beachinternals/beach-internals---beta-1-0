@@ -3107,7 +3107,6 @@ def report_player_profile(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
-
 def report_player_tournament_summary(lgy, team, **rpt_filters):
   """
   Player tournament summary report function.
@@ -3182,7 +3181,7 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
       aces = knock_obj.get('service_aces', 0)
       errors = err_obj.get('total_errors', 0)
       if aces == 0:
-        return "0 Ace / 0 Errors"
+        return f"0 Ace / {errors:.1f} Errors"
       errors_per_ace = errors / aces
       return f"1 Ace / {errors_per_ace:.1f} Errors"
     elif metric == 'Knockout':
@@ -3267,10 +3266,24 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
         opponent = set_df['player_a1'].iloc[0].strip() if not set_df['player_a1'].empty else 'Unknown'
 
       # Calculate points won and lost
-      points_won = set_df[set_df['point_outcome_team'].str.contains(disp_player[:-1], na=False)].shape[0]
-      points_lost = set_df[~set_df['point_outcome_team'].str.contains(disp_player[:-1], na=False)].shape[0]
-      point_diff = points_won - points_lost
-      total_points = len(set_df)  # Total points is number of rows in set_df
+      points_won = set_df[
+        (
+          (set_df['point_outcome_team'].str.contains(disp_player[:-1], na=False) & 
+           set_df['point_outcome'].isin(['TSA', 'FBK', 'TK']))
+        ) | (
+          (~set_df['point_outcome_team'].str.contains(disp_player[:-1], na=False)) & 
+          set_df['point_outcome'].isin(['TSE', 'FBE', 'TE'])
+        )
+      ].shape[0]
+      points_lost = set_df[
+        (
+          (set_df['point_outcome_team'].str.contains(disp_player[:-1], na=False) & 
+           set_df['point_outcome'].isin(['TSE', 'FBE', 'TE']))
+        ) | (
+          (~set_df['point_outcome_team'].str.contains(disp_player[:-1], na=False)) & 
+          set_df['point_outcome'].isin(['TSA', 'FBK', 'TK'])
+        )
+      ].shape[0]
       wl = 'Won' if points_won > points_lost else 'Loss' if points_won < points_lost else 'Tie'
 
       # Calculate metrics for this set
@@ -3288,8 +3301,8 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
         'opponent': opponent,
         'set': set_num,
         'Won/Loss': wl,
-        'Point Diff': point_diff,
-        'Total Points': total_points,
+        'Points Won': points_won,
+        'Points Lost': points_lost,
         'fbhe': fbhe,
         'fbso': fbso,
         'eso': eso,
@@ -3334,4 +3347,7 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+  
+  
+  
   
