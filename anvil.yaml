@@ -707,7 +707,7 @@ db_schema:
     - admin_ui: {order: 10, width: 200}
       name: comp3
       type: string
-    - admin_ui: {order: 11, width: 200}
+    - admin_ui: {order: 10.25, width: 200}
       name: days_hist
       type: number
     - admin_ui: {order: 12, width: 200}
@@ -725,6 +725,54 @@ db_schema:
       type: link_single
     - admin_ui: {order: 1.5, width: 200}
       name: Report Description
+      type: string
+    - admin_ui: {order: 10.5, width: 200}
+      name: start_date
+      type: date
+    - admin_ui: {order: 10.75, width: 200}
+      name: end_date
+      type: date
+    - admin_ui: {order: 12.25, width: 200}
+      name: att_height
+      type: number
+    - admin_ui: {order: 11.6875, width: 200}
+      name: set
+      type: number
+    - admin_ui: {order: 11.84375, width: 200}
+      name: set_touch_type
+      type: string
+    - admin_ui: {order: 11.921875, width: 200}
+      name: pass_oos
+      type: number
+    - admin_ui: {order: 11.9609375, width: 200}
+      name: att_ht_low
+      type: string
+    - admin_ui: {order: 11.98046875, width: 200}
+      name: att_ht_high
+      type: string
+    - admin_ui: {order: 11.990234375, width: 200}
+      name: set_ht_low
+      type: string
+    - admin_ui: {order: 11.9951171875, width: 200}
+      name: set_ht_high
+      type: string
+    - admin_ui: {order: 11.99755859375, width: 200}
+      name: att_speed_low
+      type: string
+    - admin_ui: {order: 11.998779296875, width: 200}
+      name: att_speed_high
+      type: string
+    - admin_ui: {order: 11.9993896484375, width: 200}
+      name: pass_ht_low
+      type: string
+    - admin_ui: {order: 11.99969482421875, width: 200}
+      name: pass_ht_high
+      type: string
+    - admin_ui: {order: 12.4375, width: 200}
+      name: serve_speed_low
+      type: string
+    - admin_ui: {order: 12.34375, width: 200}
+      name: serve_speed_high
       type: string
     server: full
     title: rpt_mgr

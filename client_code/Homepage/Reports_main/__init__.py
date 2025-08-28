@@ -420,10 +420,7 @@ class Reports_main(Reports_mainTemplate):
     # builld the rpt_filter 
     rpt_filters = {}
 
-    #pair, player, opp pair
-    rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
-    #rpt_filters['player'] = self.player_drop_down.selected_value['player']
-
+    #pair, player
     rpt_filters['pair'] = self.pair_drop_down.selected_value['pair']
     rpt_filters['player'] = self.player_drop_down.selected_value['team'] + " "+self.player_drop_down.selected_value['number']+' '+self.player_drop_down.selected_value['shortname']
 

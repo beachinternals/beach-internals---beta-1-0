@@ -555,7 +555,7 @@ def render_all_rpts_pdf_callable(
 
   return return_value
   
-@anvil.server.background_task
+
 def  render_all_rpts_pdf_background(
                     disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, disp_player,
@@ -606,26 +606,71 @@ def  render_all_rpts_pdf_background(
   return return_value
 
 
-def merge_pdfs( file1, file2, pdf_name):
-  # initialize PdfMerger
+def merge_pdfs(*files, pdf_name: str) -> anvil.BlobMedia:
+  """
+    Merge multiple PDF files into a single PDF.
+
+    Args:
+        *files: Variable number of anvil.BlobMedia or anvil._serialise.StreamingMedia objects representing PDFs.
+        pdf_name (str): Name for the resulting merged PDF file.
+
+    Returns:
+        anvil.BlobMedia: Merged PDF as a BlobMedia object.
+
+    Raises:
+        ValueError: If fewer than two PDFs are provided or if inputs are not valid PDF media objects.
+        Exception: For PDF merging errors (e.g., corrupted files).
+    """
+  # Input validation
+  if len(files) < 2:
+    raise ValueError("At least two PDF files are required for merging.")
+
+    # Configure logging
+  logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+  validated_files = []
+  for file in files:
+    # Log the type and content type of each file
+    logging.info(f"Processing file: type={type(file)}, content_type={getattr(file, 'content_type', 'Unknown')}")
+
+    # Handle StreamingMedia or BlobMedia
+    if isinstance(file, (anvil.BlobMedia, anvil._serialise.StreamingMedia)):
+      content_type = getattr(file, 'content_type', None)
+      if content_type != 'application/pdf':
+        logging.warning(f"File has incorrect content_type: {content_type}. Attempting to treat as PDF.")
+      validated_files.append(file)
+    else:
+      raise ValueError(f"Invalid input: {file} is not a valid PDF media object (type={type(file)}).")
+
+    # Initialize PdfMerger
   merger = PdfMerger()
-
-  # print out key elements
-  #print(f' Before io.Bytes(): file1: {file1}, File2: {file2}')
-  
-  # merge PDFs
-  pdf1 = io.BytesIO(file1.get_bytes())
-  pdf2 = io.BytesIO(file2.get_bytes())
-  #print(f' After io.Bytes(): file1: {file1}, File2: {file2}')
-  merger.append(pdf1)
-  merger.append(pdf2)
   merged_pdf = io.BytesIO()
-  merger.write(merged_pdf)
-  merger.close()
-  
-  return anvil.BlobMedia('application/pdf',merged_pdf.getvalue(), name=pdf_name)
 
-@anvil.server.callable
+  try:
+    # Append each PDF to the merger
+    for file in validated_files:
+      pdf_bytes = file.get_bytes() if hasattr(file, 'get_bytes') else file.read()
+      pdf_stream = io.BytesIO(pdf_bytes)
+      merger.append(pdf_stream)
+
+      # Write the merged PDF to the output stream
+    merger.write(merged_pdf)
+    merged_pdf.seek(0)  # Reset stream position for reading
+
+    # Create and return BlobMedia object
+    return anvil.BlobMedia('application/pdf', merged_pdf.getvalue(), name=pdf_name)
+
+  except Exception as e:
+    logging.error(f"Error merging PDFs: {str(e)}")
+    raise Exception(f"Failed to merge PDFs: {str(e)}")
+
+  finally:
+    merger.close()
+    merged_pdf.close()
+    
+
+
+
 def save_to_google_drive(file):
    # Ensure the input is an Anvil Media object
    if not isinstance(file, anvil.Media):
@@ -641,7 +686,7 @@ def save_to_google_drive(file):
 #          Render Player Reports as PDF Files
 #
 #----------------------------------------------------------------------
-@anvil.server.callable
+
 def create_pair_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year, 
                     disp_team, disp_pair, disp_player,
                     comp_l1_checked, disp_comp_l1,
