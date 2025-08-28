@@ -23,22 +23,25 @@ from player_reports import *
 # rather than in the user's browser.
 
 
-@anvil.server.callable
 def generate_pdf_report(rpt_form, report_id):
   """
-    Generate a PDF report and save all report data as JSON to Google Drive.
+    Generate a PDF report and return it as a BlobMedia object.
     Args:
         rpt_form: Anvil form or string identifier to render as PDF
         report_id: ID of the report in app_tables.report_data
     Returns:
-        dict: {'pdf': BlobMedia, 'json_file_name': str, 'error': str or None}
+        dict: {'pdf': BlobMedia, 'json_file_name': str or None, 'error': str or None}
     """
+  # Configure logging
+  logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
   # Get report data row
   rpt_data_row = app_tables.report_data.get(report_id=report_id)
   if not rpt_data_row:
-    return {'error': f'Report ID {report_id} not found'}
+    logging.error(f"Report ID {report_id} not found")
+    return {'pdf': None, 'json_file_name': None, 'error': f'Report ID {report_id} not found'}
 
-  # Determine file names for PDF 
+    # Determine file names for PDF
   if rpt_data_row['title_6'] == 'pair':
     base_name = f"{rpt_data_row['title_10'] or 'Pair'} {rpt_data_row['title_1'] or 'Report'}"
     pdf_file = f"{base_name}.pdf"
@@ -61,11 +64,23 @@ def generate_pdf_report(rpt_form, report_id):
     base_name = report_id
     pdf_file = f"{base_name}.pdf"
 
-  # Generate PDF
-  rpt_pdf = PDFRenderer(filename=pdf_file, landscape=False).render_form(rpt_form, report_id)
+    # Generate PDF
+  try:
+    rpt_pdf = PDFRenderer(filename=pdf_file, landscape=False).render_form(rpt_form, report_id)
+    logging.info(f"PDF generated: type={type(rpt_pdf)}, content_type={getattr(rpt_pdf, 'content_type', 'Unknown')}")
 
-  return rpt_pdf
+    # Convert StreamingMedia to BlobMedia if necessary
+    if isinstance(rpt_pdf, anvil._serialise.StreamingMedia):
+      logging.info(f"Converting StreamingMedia to BlobMedia for report_id {report_id}")
+      rpt_pdf = anvil.BlobMedia('application/pdf', rpt_pdf.get_bytes(), name=pdf_file)
 
+    return {'pdf': rpt_pdf, 'json_file_name': None, 'error': None}
+
+  except Exception as e:
+    logging.error(f"Error generating PDF for report_id {report_id}: {str(e)}")
+    return {'pdf': None, 'json_file_name': None, 'error': f'Failed to generate PDF: {str(e)}'}
+
+    
 
 @anvil.server.callable
 def generate_json_report(rpt_form, report_id):
