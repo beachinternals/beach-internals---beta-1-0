@@ -279,10 +279,10 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
 #-------------------------------------------------------------------------------------------------------
 def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team, return_pdfs=False):
   """
-    Generate scouting reports and optionally return BlobMedia objects for the merged PDFs.
+    Generate scouting reports and player reports, merging them appropriately, and optionally return BlobMedia objects.
     
     Args:
-        rpt_r: Report configuration
+        rpt_r: Report configuration with rpts_inc containing report definitions
         pair_list: List of player pairs
         disp_team: Team name
         return_pdfs (bool): If True, include BlobMedia objects in the return value
@@ -295,42 +295,37 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team, return_pdfs=False):
   report_infos = []
   pdfs = [] if return_pdfs else None
 
-  # Configure logging
-  logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
-  )
-
   for p in pair_list:
     disp_pair = p['pair']
     player1, player2 = pair_players(disp_pair)
-    print(f" Pairs in Scouting Report: {disp_pair}, Team: {disp_team}")
+    logging.info(f"Processing pair: {disp_pair}, Team: {disp_team}")
 
     # Calculate the folder we will store these into
     pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y%m%d")]
     json_folder = pdf_folder + ['json']
-
     lgy = p['league'] + ' | ' + p['gender'] + ' | ' + p['year']
 
     # Convert LiveObjectProxy objects to DataTableRow objects
     rptname_rows = [app_tables.report_list.get(id=rptname1['id']) for rptname1 in rpt_r['rpts_inc'] if rptname1]
-
-    # Sort by the desired column (e.g., 'order')
     sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
 
-    # Generate reports once for the pair
-    pair_pdf = None
-    pdf_files_created = []
-    attack_tendency_merged = False
+    # Segment reports into scouting and non-scouting
+    scouting_rptnames = [rptname for rptname in sorted_rptnames if rptname['rpt_type'] == 'scouting']
+    player_rptnames = [rptname for rptname in sorted_rptnames if rptname['rpt_type'] != 'scouting']
 
+    # Generate scouting reports for the pair
+    pair_pdf = None
+    scouting_pdf_files = []
+    attack_tendency_merged = False
     rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
     rpt_filters['pair'] = disp_pair
 
-    for rptname in sorted_rptnames:
+    for rptname in scouting_rptnames:
+      logging.info(f"Processing scouting report: name={rptname['report_name']}, function={rptname['function_name']}")
       report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
       pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
 
-      # Handle StreamingMedia (fallback for older generate_pdf_report)
+      # Handle StreamingMedia (fallback)
       if isinstance(pdf_result, anvil._serialise.StreamingMedia):
         logging.info(f"Converting unexpected StreamingMedia to BlobMedia for report {rptname['report_name']}")
         pdf1 = anvil.BlobMedia('application/pdf', pdf_result.get_bytes(), name=f"{rptname['report_name']}.pdf")
@@ -343,27 +338,27 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team, return_pdfs=False):
         logging.error(f"Unexpected return type from generate_pdf_report: {type(pdf_result)}")
         continue
 
-      logging.info(f"Generated pdf1: type={type(pdf1)}, content_type={getattr(pdf1, 'content_type', 'Unknown')}")
+      logging.info(f"Generated scouting pdf: type={type(pdf1)}, content_type={getattr(pdf1, 'content_type', 'Unknown')}")
 
       # Generate JSON
       try:
         json_media = generate_json_report(rptname['rpt_form'], report_id)
         if isinstance(json_media, anvil._serialise.StreamingMedia):
           logging.info(f"Converting JSON StreamingMedia to BlobMedia for report {rptname['report_name']}")
-          json_media = anvil.BlobMedia('application/json', json_media.get_bytes(), name=f"{rptname['report_name']}_{disp_pair}.json")
-        if json_media and not isinstance(json_media, dict) or not json_media.get('error'):
-          json_name = f"{rptname['report_name']}_{disp_pair}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+          json_media = anvil.BlobMedia('application/json', json_media.get_bytes(), name=f"scouting_{rptname['report_name']}_{disp_pair}.json")
+        if json_media and (not isinstance(json_media, dict) or not json_media.get('error')):
+          json_name = f"scouting_{rptname['report_name']}_{disp_pair}_{today.strftime('%Y%m%d_%H%M%S')}.json"
           json_result = write_to_nested_folder(json_folder, json_name, json_media)
           logging.info(f"JSON file created: {json_result}")
-          pdf_files_created.append({'name': json_name, 'result': json_result})
+          scouting_pdf_files.append({'name': json_name, 'result': json_result})
         else:
           error_msg = json_media.get('error') if isinstance(json_media, dict) else 'Unknown error'
           logging.error(f"Failed to generate JSON for report {rptname['report_name']}: {error_msg}")
       except Exception as e:
         logging.error(f"Error generating JSON for report {rptname['report_name']}: {str(e)}")
 
-      # Merge to pair_pdf
-      pair_pdf_name = f"combined_{disp_pair}_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
+        # Merge to pair_pdf, skipping attack tendency if already merged
+      pair_pdf_name = f"scouting_combined_{disp_pair}_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
       if rptname['report_name'] == 'attack_tendency' and attack_tendency_merged:
         logging.info(f"Skipping attack tendency report for {disp_pair} as it was already merged")
         continue
@@ -375,29 +370,89 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team, return_pdfs=False):
       else:
         pair_pdf = pdf1
 
-    # Now create separate final PDFs for each player (using the same combined report)
+        # Generate player reports for each player
     for disp_player in [player1, player2]:
-      pdf_name = rpt_r['Report Description'] + ' ' + disp_pair + ' - ' + disp_player + '.pdf'
+      player_pdf = None
+      player_pdf_files = []
+      attack_tendency_merged = False
+      player_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
+      player_filters['player'] = disp_player
 
-      # Write combined PDF for each player
-      combined_result = write_to_nested_folder(pdf_folder, pdf_name, pair_pdf)
-      return_text = return_text + '\n' + combined_result
+      for rptname in player_rptnames:
+        logging.info(f"Processing player report for {disp_player}: name={rptname['report_name']}, function={rptname['function_name']}")
+        report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **player_filters)
+        pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
 
-      # Collect report info (no duplicates)
+        # Handle StreamingMedia (fallback)
+        if isinstance(pdf_result, anvil._serialise.StreamingMedia):
+          logging.info(f"Converting unexpected StreamingMedia to BlobMedia for report {rptname['report_name']} (player)")
+          pdf1 = anvil.BlobMedia('application/pdf', pdf_result.get_bytes(), name=f"{rptname['report_name']}.pdf")
+        elif isinstance(pdf_result, dict):
+          if pdf_result.get('error'):
+            logging.error(f"Failed to generate PDF for report {rptname['report_name']}: {pdf_result['error']}")
+            continue
+          pdf1 = pdf_result['pdf']
+        else:
+          logging.error(f"Unexpected return type from generate_pdf_report: {type(pdf_result)}")
+          continue
+
+        logging.info(f"Generated player pdf for {disp_player}: type={type(pdf1)}, content_type={getattr(pdf1, 'content_type', 'Unknown')}")
+
+        # Generate JSON
+        try:
+          json_media = generate_json_report(rptname['rpt_form'], report_id)
+          if isinstance(json_media, anvil._serialise.StreamingMedia):
+            logging.info(f"Converting JSON StreamingMedia to BlobMedia for report {rptname['report_name']} (player)")
+            json_media = anvil.BlobMedia('application/json', json_media.get_bytes(), name=f"player_{rptname['report_name']}_{disp_player}.json")
+          if json_media and (not isinstance(json_media, dict) or not json_media.get('error')):
+            json_name = f"player_{rptname['report_name']}_{disp_player}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+            json_result = write_to_nested_folder(json_folder, json_name, json_media)
+            logging.info(f"JSON file created: {json_result}")
+            player_pdf_files.append({'name': json_name, 'result': json_result})
+          else:
+            error_msg = json_media.get('error') if isinstance(json_media, dict) else 'Unknown error'
+            logging.error(f"Failed to generate JSON for report {rptname['report_name']}: {error_msg}")
+        except Exception as e:
+          logging.error(f"Error generating JSON for report {rptname['report_name']}: {str(e)}")
+
+          # Merge to player_pdf, skipping attack tendency if already merged
+        player_pdf_name = f"player_combined_{disp_player}_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
+        if rptname['report_name'] == 'attack_tendency' and attack_tendency_merged:
+          logging.info(f"Skipping attack tendency report for {disp_player} as it was already merged")
+          continue
+        if player_pdf:
+          logging.info(f"Merging player_pdf: type={type(player_pdf)}, content_type={getattr(player_pdf, 'content_type', 'Unknown')}")
+          player_pdf = merge_pdfs(player_pdf, pdf1, pdf_name=player_pdf_name)
+          if rptname['report_name'] == 'attack_tendency':
+            attack_tendency_merged = True
+        else:
+          player_pdf = pdf1
+
+          # Combine pair_pdf and player_pdf into final PDF
+      final_pdf_name = f"{rpt_r['Report Description']} {disp_pair} - {disp_player}.pdf"
+      logging.info(f"Merging final PDF for {disp_player}: pair_pdf type={type(pair_pdf)}, player_pdf type={type(player_pdf)}")
+      final_pdf = merge_pdfs(pair_pdf, player_pdf, pdf_name=final_pdf_name) if pair_pdf and player_pdf else (pair_pdf or player_pdf)
+
+      # Write combined PDF
+      combined_result = write_to_nested_folder(pdf_folder, final_pdf_name, final_pdf)
+      return_text += '\n' + combined_result
+
+      # Collect report info
+      all_individuals = scouting_pdf_files + player_pdf_files
       report_infos.append({
         'player_pair': disp_pair + ' - ' + disp_player,
         'description': rpt_r['Report Description'],
         'combined': combined_result,
-        'individuals': pdf_files_created  # Same files for both players since reports are the same
+        'individuals': all_individuals
       })
 
       # Store PDF if requested
-      if return_pdfs:
-        pdfs.append({'player_pair': disp_pair + ' - ' + disp_player, 'pdf': pair_pdf})
+      if return_pdfs and final_pdf:
+        pdfs.append({'player_pair': disp_pair + ' - ' + disp_player, 'pdf': final_pdf})
 
   return return_text, report_infos, pdfs
-  
 
+  
      
 
 def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
