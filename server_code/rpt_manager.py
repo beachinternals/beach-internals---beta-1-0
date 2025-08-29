@@ -27,35 +27,13 @@ from collections import defaultdict
 #. Report Manager - Generate reports based on the rpt_mgr data file
 #
 #---------------------------------------------------------------
-
-@anvil.server.callable
-def rpt_mgr_generate():
-  # client callable functiom to call the background function to generate reports
-  logger.info(" Report Manager  - Generate Called")
-  return anvil.server.launch_background_task('rpt_mgr_generate_background')
-
-
-@anvil.server.callable
+@anvil.server.background_task
 def rpt_mgr_generate_background():
   # generate reports from the report mgt data file
 
   now = datetime.now()
   email_text = 'Report Manager Started at' + str(now) + ' \n \n'
 
-  '''
-  # items needed to limit/compatible with report function calls
-  comp_l1_checked = False
-  disp_comp_l1 = ''
-  comp_l2_checked = False
-  disp_comp_l2= ''
-  comp_l3_checked = False
-  disp_comp_l3 = ''
-  date_checked = False
-  disp_start_date = ' '
-  disp_end_date = ' '
-  scout = True
-  explain_text = ' '
-  '''
   rpt_rows = app_tables.rpt_mgr.search(active="Yes")
   for rpt_r in rpt_rows:
     print(type(rpt_r['rpts_inc']), rpt_r['rpts_inc'])  # Check type and content
@@ -77,107 +55,6 @@ def rpt_mgr_generate_background():
 
     # get and store the team of the user asking for hte report
     disp_team = rpt_r['team']
-
-    '''
-    # items needed to limit/compatible with report function calls
-    if rpt_r['comp1']:
-      comp_l1_checked = True
-      disp_comp_l1 = rpt_r['comp1']
-    else:
-      comp_l1_checked = False
-      disp_comp_l1 = ''
-
-    if rpt_r['comp2']:
-      comp_l2_checked = True
-      disp_comp_l2 = rpt_r['comp2']
-    else:
-      comp_l2_checked = False
-      disp_comp_l2 =''
-
-    if rpt_r['comp3']:
-      comp_l3_checked = True
-      disp_comp_l3 = rpt_r['comp3']    
-    else:
-      comp_l3_checked = False 
-      disp_comp_l3 = ''
-
-    if (rpt_r['days_hist'] != 0) and (rpt_r['days_hist']):
-      disp_end_date = date.today()
-      disp_start_date = disp_end_date - timedelta(days = rpt_r['days_hist'])
-      date_checked = True
-    else:
-      date_checked = False
-      disp_end_date = date.today()
-      disp_start_date = disp_end_date - timedelta(days = 365)
-    #print(f"rpt_mgr_generate_background: report row, days_history: {rpt_r['days_hist']}, Date Checked: {date_checked}, {disp_start_date}, {disp_end_date}")
-    #print(f"rpt_mgr_generate_background: From the rpt_mgr DB - Serve From: {rpt_r['srv_fr']}, Serve to: {rpt_r['srv_to']}")
-    # now look for scouting report serve to and from arrays\
-    srv_fr = [False, False, False ]
-
-    # test for no srv_fr or srv_to text
-    if rpt_r['srv_fr'] is None:
-      rpt_r['srv_fr'] = '3'
-    if rpt_r['srv_to'] is None:
-      rpt_r['srv_to'] = '3D'
-    if len(rpt_r['srv_fr'].strip())  == 0:
-      rpt_r['srv_fr'] = '3'
-    if len(rpt_r['srv_to'].strip()) == 0:
-      rpt_r['srv_to'] = '3D'
-
-    #print(f"rpt_mgr_generate_background: serve From: {rpt_r['srv_fr']}, Serve to: {rpt_r['srv_to']}")
-    if (len(rpt_r['srv_fr'])) != 0:
-      # split the string into 3 parts ( looking for 1,3,5)
-      srv_from_txt = rpt_r['srv_fr'].split(',')
-      for fr in srv_from_txt:
-        #print(f"rpt_mgr_generate_background: fr: {fr}")
-        match fr:
-          case '1':
-            srv_fr[0] = True ## serve from zone 1
-          case '3':
-            srv_fr[1] = True ## serve from zone 3
-          case '5':
-            srv_fr[2] = True ## serve from zone 5
-    #print(f"rpt_mgr_generate_background: serve from: {srv_fr[0]}, {srv_fr[1]}, {srv_fr[2]}")
-
-    # serve to zone will be for 3,e would have True at srv_to_zone.at[2,0] (3 and 1 but 0 based)
-    srv_to_1 = [False, False, False] # E, D, C
-    srv_to_2 = [False, False, False] # E, D, C
-    srv_to_3 = [False, False, False] # E, D, C
-    srv_to_4 = [False, False, False] # E, D, C
-    srv_to_5 = [False, False, False] # E, D, C
-    srv_to_txt = rpt_r['srv_to'].split(',')
-    for stt in srv_to_txt:
-      stt = stt.strip()
-      # parse this into a number and a letter
-      net_zone = str(stt[0]).upper()
-      depth_zone = str(stt[1]).upper()
-      #print(f" net zone: {net_zone}, depth_zone : {depth_zone}")
-      match depth_zone:
-        case 'E':
-          index = 0
-        case 'D':
-          index = 1
-        case 'C':
-          index = 2
-
-      match net_zone:
-        case '1':
-          srv_to_1[index] = True
-        case '2':
-          srv_to_2[index] = True
-        case '3':
-          srv_to_3[index] = True
-        case '4':
-          srv_to_4[index] = True
-        case '5':
-          srv_to_5[index] = True
-
-    #print(f"rpt_mgr_generate_background : Serve Parameters: srv_fr : {srv_fr}, serve to 1 {srv_to_1}, serve to 2 {srv_to_2}, serve to 3 {srv_to_3}, serve to 4 {srv_to_4}, serve to 5 {srv_to_5}")
-    # should now have srv_to_ and srv_fr arrays ready
-    '''
-    #scout = True
-    #explain_text = ' '
-    #print(f"Report Filters: {comp_l1_checked}, {disp_comp_l1},{comp_l2_checked},{disp_comp_l2},{comp_l3_checked},{comp_l3_checked},{date_checked},{disp_start_date},{disp_end_date}")
 
     # check if this report should be run today
     today = datetime.now()
@@ -217,7 +94,7 @@ def rpt_mgr_generate_background():
 
       elif rpt_r['rpt_type'] == 'scouting':
         email_text = email_text + '\n Processing scouting Reports \n'
-        ret_val, report_infos = rpt_mgr_scouting_rpts(rpt_r, rpt_r['pair_list'], disp_team)
+        ret_val, report_infos, _ = rpt_mgr_scouting_rpts(rpt_r, rpt_r['pair_list'], disp_team)
         if not ret_val:
           print(f"Report Manager : rpt_mgr_scouting_rpts Failed, {rpt_r['rpt_type']}")
         else:
@@ -396,7 +273,6 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
     })
 
   return return_text, report_infos
-
 
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - Scouting Reports
@@ -585,59 +461,6 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team, return_pdfs=False):
     return return_text, report_infos, pdfs
      
 
-#--------------------
-#.  Function to read serve receive ingo (45 total) into a matrix
-#-------------------------
-def make_sr_matrix(pair_yn, disp_league, disp_gender, disp_year, disp_pair, disp_player):
-  # make a dataframe to store this informationin
-  sr_matrix_dict = {'sr_fr':[0],
-                    'sr_to_net':[0],
-                    'sr_to_depth':[' '],
-                    'att':[0],
-                    'fbhe':[0],
-                    'pass_area':[0]
-                   }
-  sr_matrix = pd.DataFrame.from_dict(sr_matrix_dict)
-  
-  # open and read the row for this  pair
-  if pair_yn:
-    # for pairs
-    p_df, pstat_df = get_pair_data( disp_league, disp_gender, disp_year)
-    p_row = p_df.loc[ (p_df['pair'] == disp_pair) & (p_df['player'] == disp_player ) ].iloc[0]
-  else:
-    # for the player
-    p_df, pstat_df = get_player_data ( disp_league, disp_gender, disp_year )
-    p_row = p_df.loc[ p_df['player'] == disp_player ].iloc[0]
-
-  # p_df should now be 1 row
-  #print(f"make_sr_matrix: p_df size = {p_df.shape[0]}")
-  #print(f"make_sr_matrix: player/pair row: row: {type(p_row)}, {p_row.shape[0]}")
-  #print(f"make)_sr_matrix: p row : {p_row}")
-  #print(f"player : {p_row['player']}")
-
-  #now I need to loop thru the different 
-  num_saved = 0
-  for i in [1,3,5]:
-    for j in [1,2,3,4,5]:
-      for k in ['c','d','e']:
-        var_base = 'fbhe_'+str(i)+'_'+str(j)+k
-        att_var = var_base+'_n'
-        #print(f"make_sr_matrix: attemtps veriable: {att_var}")
-        #print(f" make_sr_matrix: attempts: {p_row[att_var]}")
-        if (p_row[att_var] > 4) :
-          # save this record
-          sr_matrix.at[num_saved,'sr_fr'] = i
-          sr_matrix.at[num_saved,'sr_to_net'] = j
-          sr_matrix.at[num_saved,'sr_to_depth'] = k
-          sr_matrix.at[num_saved,'att'] = p_row[att_var]
-          sr_matrix.at[num_saved,'fbhe'] = p_row[var_base]
-          sr_matrix.at[num_saved,'pass_area'] = p_row[var_base+'_ea']
-          num_saved = num_saved + 1
-          
-  #print(f"make_sr_matrix : serve receive matrix: {sr_matrix}")
-  return sr_matrix
-
-
 def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
   '''
   
@@ -707,4 +530,12 @@ def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
       rpt_filters['end_date'] = rpt_r['end_date']
 
   return rpt_filters
+
+@anvil.server.callable
+def rpt_mgr_generate():
+  # client callable functiom to call the background function to generate reports
+  #logger.info(" Report Manager  - Generate Called")
+  #test = rpt_mgr_generate_background()
+  anvil.server.launch_background_task('rpt_mgr_generate_background')
+  return
 
