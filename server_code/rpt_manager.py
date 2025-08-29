@@ -31,17 +31,18 @@ from collections import defaultdict
 @anvil.server.callable
 def rpt_mgr_generate():
   # client callable functiom to call the background function to generate reports
+  logger.info(" Report Manager  - Generate Called")
   return anvil.server.launch_background_task('rpt_mgr_generate_background')
 
 
-
-
+@anvil.server.callable
 def rpt_mgr_generate_background():
   # generate reports from the report mgt data file
 
   now = datetime.now()
   email_text = 'Report Manager Started at' + str(now) + ' \n \n'
 
+  '''
   # items needed to limit/compatible with report function calls
   comp_l1_checked = False
   disp_comp_l1 = ''
@@ -54,7 +55,7 @@ def rpt_mgr_generate_background():
   disp_end_date = ' '
   scout = True
   explain_text = ' '
-
+  '''
   rpt_rows = app_tables.rpt_mgr.search(active="Yes")
   for rpt_r in rpt_rows:
     print(type(rpt_r['rpts_inc']), rpt_r['rpts_inc'])  # Check type and content
@@ -77,6 +78,7 @@ def rpt_mgr_generate_background():
     # get and store the team of the user asking for hte report
     disp_team = rpt_r['team']
 
+    '''
     # items needed to limit/compatible with report function calls
     if rpt_r['comp1']:
       comp_l1_checked = True
@@ -172,9 +174,9 @@ def rpt_mgr_generate_background():
 
     #print(f"rpt_mgr_generate_background : Serve Parameters: srv_fr : {srv_fr}, serve to 1 {srv_to_1}, serve to 2 {srv_to_2}, serve to 3 {srv_to_3}, serve to 4 {srv_to_4}, serve to 5 {srv_to_5}")
     # should now have srv_to_ and srv_fr arrays ready
-
-    scout = True
-    explain_text = ' '
+    '''
+    #scout = True
+    #explain_text = ' '
     #print(f"Report Filters: {comp_l1_checked}, {disp_comp_l1},{comp_l2_checked},{disp_comp_l2},{comp_l3_checked},{comp_l3_checked},{date_checked},{disp_start_date},{disp_end_date}")
 
     # check if this report should be run today
@@ -418,7 +420,10 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team, return_pdfs=False):
   pdfs = [] if return_pdfs else None  # Store BlobMedia objects if requested
 
   # Configure logging
-  logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+  logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
+  )
 
   for p in pair_list:
     disp_pair = p['pair']

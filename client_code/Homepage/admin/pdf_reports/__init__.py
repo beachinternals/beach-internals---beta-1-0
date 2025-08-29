@@ -122,9 +122,14 @@ class pdf_reports(pdf_reportsTemplate):
 
   def rpt_mgr_button_click(self, **event_args):
     """This method is called when the button is clicked"""
-    anvil.server.call('rpt_mgr_generate')
+    try:
+      task = anvil.server.call('rpt_mgr_generate')
+      alert(f"Background task launched: {task.get_id()}")
+    except Exception as e:
+      self.status_label.text = f"Error: {str(e)}"
+      alert(f"Client-side error launching rpt_mgr_generate: {str(e)}")
     pass
-
+    
   def player_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
     pass
