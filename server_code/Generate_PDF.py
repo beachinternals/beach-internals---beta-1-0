@@ -605,7 +605,7 @@ def  render_all_rpts_pdf_background(
     #print(pdf1)
     if pdf1 and full_rpt_pdf:
       #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-      full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+      full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name=pdf_name)
     else:
       #print('no original pdf file, setting to pdf1')
       full_rpt_pdf = pdf1
@@ -620,8 +620,7 @@ def  render_all_rpts_pdf_background(
   
   return return_value
 
-
-def merge_pdfs(*files, pdf_name: str) -> anvil.BlobMedia:
+def merge_pdfs(*files, pdf_name: str = None) -> anvil.BlobMedia:
   """
     Merge multiple PDF files into a single PDF.
 

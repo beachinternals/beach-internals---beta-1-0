@@ -159,6 +159,9 @@ Beach Internals Report Manager
 
   return True
 
+
+
+
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - All Types of Reports
 #-------------------------------------------------------------------------------------------------------
@@ -219,21 +222,31 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
 
     # If you want to access rpt_r['rpts_inc'], do it here
     #print(f"rpts_inc from rpt_r: {rpt_r['rpts_inc']}")
-
     for rptname in sorted_rptnames:
       print(f" Report name: {rptname['report_name']}, {rptname['function_name']}\n\n")
 
-      # call the report function and save the report id
-      #print(f"rpt mgr: lgy: {lgy}, disp team {disp_team}, rpt filters {rpt_filters}")
-      report_id = generate_and_store_report( rptname['function_name'], lgy, disp_team, **rpt_filters )
+      # Call the report function and save the report ID
+      report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
 
-      # generate the PDF file
-      pdf1 = generate_pdf_report( rptname['rpt_form'], report_id)
+      # Generate the PDF file
+      pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
+      if isinstance(pdf_result, dict):
+        if pdf_result.get('error'):
+          print(f"Failed to generate PDF for report {rptname['report_name']}: {pdf_result['error']}")
+          continue
+        pdf1 = pdf_result['pdf']
+      else:
+        print(f"Unexpected return type from generate_pdf_report: {type(pdf_result)}")
+        continue
 
-      # NEW: Generate JSON file for individual report
+      if pdf1 is None:
+        print(f"No PDF generated for report {rptname['report_name']}")
+        continue
+
+        # Generate JSON file for individual report
       try:
         json_media = generate_json_report(rptname['rpt_form'], report_id)
-        if json_media and not isinstance(json_media, dict) or not json_media.get('error'):
+        if json_media and (not isinstance(json_media, dict) or not json_media.get('error')):
           json_name = f"{rptname['report_name']}_{player_pair}_{today.strftime('%Y%m%d_%H%M%S')}.json"
           json_result = write_to_nested_folder(json_folder, json_name, json_media)
           print(f"JSON file created: {json_result}")
@@ -243,21 +256,23 @@ def rpt_mgr_new_rpts( rpt_r, p_list, disp_team ):
       except Exception as e:
         print(f"Error generating JSON for report {rptname['report_name']}: {str(e)}")
 
-      # Store individual PDF info for email links
+        # Store individual PDF info for email links
       individual_pdf_name = f"{rptname['report_name']}_{player_pair}.pdf"
-      individual_pdf_result = write_to_nested_folder(pdf_folder, individual_pdf_name, pdf1)
-      if individual_pdf_result:
-        pdf_files_created.append({
-          'name': individual_pdf_name,
-          'result': individual_pdf_result
-        })
+      try:
+        individual_pdf_result = write_to_nested_folder(pdf_folder, individual_pdf_name, pdf1)
+        if individual_pdf_result:
+          pdf_files_created.append({
+            'name': individual_pdf_name,
+            'result': individual_pdf_result
+          })
+      except Exception as e:
+        print(f"Error writing PDF for report {rptname['report_name']}: {str(e)}")
+        continue
 
-      # now, need to merge this report with the next one
+        # Merge PDFs
       if full_rpt_pdf:
-        #print(f'merging pdf files {full_rpt_pdf}, {pdf1}')
-        full_rpt_pdf = merge_pdfs( full_rpt_pdf, pdf1, pdf_name)
+        full_rpt_pdf = merge_pdfs(full_rpt_pdf, pdf1, pdf_name=pdf_name )
       else:
-        #print('no original pdf file, setting to pdf1')
         full_rpt_pdf = pdf1
 
     # now write this to the google drive (combined PDF)
