@@ -40,15 +40,11 @@ import logging
 logger = Logger()
 formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
 
-
-
-
-
 # Use it in your code
-logger.info("Application started")
-logger.debug("Debug information")
-logger.warning("This is a warning")
-logger.error("An error occurred")
+logger.info("Application started, Report Generate and Store")
+#logger.debug("Debug information")
+#logger.warning("This is a warning")
+#logger.error("An error occurred")
 
 
 # Cache for valid function names

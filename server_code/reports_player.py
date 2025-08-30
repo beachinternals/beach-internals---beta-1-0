@@ -1312,7 +1312,7 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
   # from zone 1
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
-  print(f"Attemtps values 1 {att1_val}")
+  #print(f"Attemtps values 1 {att1_val}")
   ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att1_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
   ax.set_title("Attempts from Zone 1, Left", fontsize=35)
@@ -1321,7 +1321,7 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
   # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
-  print(f"Attemtps values 3 {att3_val}")
+  #print(f"Attemtps values 3 {att3_val}")
   ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
   ax.set_title("Attempts from Zone 3, Middle", fontsize=35)
@@ -1330,7 +1330,7 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
   # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
-  print(f"Attemtps values 5 {att5_val}")
+  #print(f"Attemtps values 5 {att5_val}")
   ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
   fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='Attempts')
@@ -1576,7 +1576,7 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                                     disp_player, 'pass', min_att=5
                                    )
-      print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
         area1_val[index] = el_result.get('area')
         a1_table.loc[a1_table_index,'Dest Zone'] = str(i)+j.capitalize()
@@ -1815,11 +1815,11 @@ def report_player_passing_cluster(lgy, team, **rpt_filters):
   ############### Third Populate the dataframe, assuming we have data returned
   if ppr_df.shape[0] > 0:
     plot1_return = plot_pass_clusters(ppr_df, disp_player, 'FBK')
-    print(f" Return from plot 1: {plot1_return}")
-    print(f" Return from plot 1, stat text: {plot1_return.get('stat_text')}, media list: {plot1_return.get('media_list')}")
+    #print(f" Return from plot 1: {plot1_return}")
+    #print(f" Return from plot 1, stat text: {plot1_return.get('stat_text')}, media list: {plot1_return.get('media_list')}")
     plot2_return = plot_pass_clusters(ppr_df, disp_player, 'FBE')
-    print(f" Return from plot 2: {plot2_return}")
-    print(f" Return from plot 2, stat text: {plot2_return.get('stat_text')}, media list: {plot2_return.get('media_list')}")
+    #print(f" Return from plot 2: {plot2_return}")
+    #print(f" Return from plot 2, stat text: {plot2_return.get('stat_text')}, media list: {plot2_return.get('media_list')}")
   else:
     plot1_return  = { 
       'stat_text':'Error: No data piointsin PPR_DF \n',
@@ -2385,7 +2385,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
         (ppr_df['serve_player'] == disp_player) ],
                                     disp_player, 'pass', min_att=5
                                    )
-      print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
         area1_val[index] = el_result.get('area')
         a1_table.loc[a1_table_index,'Dest Zone'] = str(i)+j.capitalize()

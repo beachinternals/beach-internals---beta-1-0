@@ -468,7 +468,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Option 2: Fill missing values (e.g., with mean)
   numeric_df = numeric_df.fillna(numeric_df.mean())
 
-  print(f"numberi df size {numeric_df.shape[0]}\n{numeric_df}")
+  #print(f"numberi df size {numeric_df.shape[0]}\n{numeric_df}")
   # Calculate Pearson correlation of all numeric columns with 'point_diff'
   correlations = numeric_df.corrwith(numeric_df['point_diff'])
 
@@ -482,7 +482,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   correlations = correlations.dropna()
 
   top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
-  print(f" correlations size: {len(correlations)}\n {correlations}")
+  #print(f" correlations size: {len(correlations)}\n {correlations}")
 
   fig_size = [15,15]
   # Create a bar chart
@@ -564,7 +564,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   # Round the 'Correlation' and 'P-value' columns to 3 decimal places
   correlations = correlations.round(3)
 
-  print(f" correlations size: {len(correlations)}\n {correlations}")
+  #print(f" correlations size: {len(correlations)}\n {correlations}")
 
   # Select top 10 positive and negative correlations
   top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
@@ -650,12 +650,12 @@ def league_tri_corr(lgy, team, **rpt_filters):
   ppr_df['point_outcome'] = ppr_df['point_outcome'].astype('int64')
 
   # Verify replacement
-  print("Updated point_outcome values FBK & FBE:")
-  print(ppr_df['point_outcome'].value_counts())
+  #print("Updated point_outcome values FBK & FBE:")
+  #print(ppr_df['point_outcome'].value_counts())
 
   # Step 3: Limit ppr_df to numerical columns
   ppr_df = ppr_df.select_dtypes(include=['int64', 'float64'])
-  print("\nColumns in ppr_df after limiting to numerical:")
+  #print("\nColumns in ppr_df after limiting to numerical:")
   #print(ppr_df.columns.tolist())
 
   # Step 4: Define desired columns (numerical only)
@@ -904,235 +904,7 @@ def league_tri_corr(lgy, team, **rpt_filters):
   corr_results_df = corr_results_df[ corr_results_df['P-Value'] < 0.05]
   corr_results_df = pd.concat([corr_results_df.head(10), corr_results_df.tail(10)])
   corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
-  df_list[3] = corr_results_df.to_dict('records')
-
-
-  
-  '''
-  ##-----------------------------------------------------------------------------------------
-  ##
-  ## Third step ... correlation analysis of the ppr file when pointoutcome is FBK
-  ##
-  ##----------------------------------------------------------------------------------------
-
-  # Assuming ppr_df is your dataframe
-  # Step 1: Clean column names
-  # Replace special characters (e.g., periods, spaces, colons) with underscores
-  ppr_df.columns = [col.replace(' ', '_').replace('.', '_').replace(':', '_') for col in ppr_df.columns]
-
-  # Drop any 'Unnamed' columns (e.g., Unnamed: 0_1)
-  ppr_df = ppr_df.loc[:, ~ppr_df.columns.str.contains('^Unnamed')]
-
-  # Step 2: Identify numerical columns
-  numerical_cols = ppr_df.select_dtypes(include=['int64', 'float64']).columns
-
-  # instead, we will list explicitly which columns to cinlude in the analysis
-  desired_cols = {
-    'serve_src_x',
-    'serve_src_y',
-    #'serve_src_zone_net',
-    'serve_dest_x',
-    'serve_dest_y',
-    #'serve_dest_zone_depth',
-    #'serve_dest_zone_net',
-    'serve_dist',
-    'serve_dur',
-    'serve_speed',
-    'serve_angle',
-    'serve_height',
-    'pass_src_x',
-    'pass_src_y',
-    #'pass_src_zone_depth',
-    #'pass_src_zone_net',
-    'pass_dest_x',
-    'pass_dest_y',
-    #'pass_dest_zone_depth',
-    #'pass_dest_zone_net',
-    'pass_dist',
-    'pass_dur',
-    'pass_speed',
-    'pass_angle',
-    'pass_height',
-    #'pass_rtg_btd',
-    'pass_oos',
-    #pass_touch_position
-    #pass_touch_type
-    'set_src_x',
-    'set_src_y',
-    #'set_src_zone_depth',
-    #'set_src_zone_net',
-    'set_dest_x',
-    'set_dest_y',
-    #'set_dest_zone_depth',
-    #'set_dest_zone_net',
-    'set_dist',
-    'set_dur',
-    'set_speed',
-    'set_angle',
-    'set_height',
-    #set_touch_type
-    'att_src_x',
-    'att_src_y',
-    #'att_src_zone_depth',
-    #'att_src_zone_net',
-    'att_dest_x',
-    'att_dest_y',
-    #'att_dest_zone_depth',
-    #'att_dest_zone_net',
-    'att_dist',
-    'att_dur',
-    'att_speed',
-    'att_angle',
-    'att_height',
-    'att_touch_height',
-    'dig_src_x',
-    'dig_src_y',
-    #'dig_src_zone_depth',
-    #'dig_src_zone_net',
-    'dig_dest_x',
-    'dig_dest_y',
-    #'dig_dest_zone_depth',
-    #'dig_dest_zone_net',
-    'dig_dist',
-    'dig_dur',
-    'dig_speed',
-    'dig_angle',
-    'dig_height'
-    #'point_outcome',
-    #'point_outcome_team',
-    #tactic
-  }
-  
-  # Step 3: Diagnose infinite/large values and clean data
-  print("Checking for infinite or large values in numerical columns:")
-  ppr_df_clean = ppr_df.copy()
-  for col in desired_cols:
-    print(f"Desired Column: {col}")
-    inf_count = np.isinf(ppr_df_clean[col]).sum()
-    large_count = (np.abs(ppr_df_clean[col]) > 1e308).sum()
-    nan_count = ppr_df_clean[col].isna().sum()
-    print(f"{col}: {inf_count} infinite, {large_count} too large, {nan_count} NaN")
-    # Replace inf/-inf with NaN
-    ppr_df_clean[col] = ppr_df_clean[col].replace([np.inf, -np.inf], np.nan)
-    # Cap values at 99th percentile (of non-NaN values)
-    if not ppr_df_clean[col].isna().all():
-      max_val = ppr_df_clean[col].quantile(0.99, interpolation='nearest')
-      ppr_df_clean[col] = ppr_df_clean[col].clip(upper=max_val, lower=-max_val)
-    
-  # Step 4: Kruskal-Wallis test for each numerical column vs. point_outcome
-  results = []
-  for col in desired_cols:
-    # Group data by point_outcome
-    groups = [ppr_df[ppr_df['point_outcome'] == outcome][col].dropna() 
-              for outcome in ppr_df['point_outcome'].unique()]
-    
-    # Diagnose group sizes and variance
-    group_sizes = [len(g) for g in groups]
-    group_variances = [g.var() if len(g) > 1 else 0 for g in groups]
-    note = ""
-    if len(groups) < 2:
-      note = "Only one group (need multiple categories)"
-    elif any(len(g) == 0 for g in groups):
-      note = f"Empty group(s): {group_sizes}"
-    elif any(len(g) == 1 for g in groups):
-      note = f"Single-value group(s): {group_sizes}"
-    elif any(v == 0 for g, v in zip(groups, group_variances) if len(g) > 1):
-      note = f"No variance in group(s): {group_variances}"
-
-    # Perform Kruskal-Wallis if valid
-    if not note and all(len(g) > 0 for g in groups) and len(groups) > 1:
-      try:
-        h_stat, p_value = stats.kruskal(*groups)
-        n_total = sum(len(g) for g in groups)
-        k = len(groups)
-        epsilon_squared = (h_stat - k + 1) / (n_total - k) if n_total > k else 0
-        results.append({
-          'Metric': col,
-          'H-Statistic': h_stat,
-          'P-Value': p_value,
-          'Epsilon-Squared': epsilon_squared,
-          'Note': ''
-        })
-      except ValueError as e:
-        results.append({
-          'Metric': col,
-          'H-Statistic': None,
-          'P-Value': None,
-          'Epsilon-Squared': None,
-          'Note': f'Error: {str(e)}'
-        })
-    else:
-      results.append({
-        'Metric': col,
-        'H-Statistic': None,
-        'P-Value': None,
-        'Epsilon-Squared': None,
-        'Note': note
-      })
-
-  # Create and display results
-  kw_results = pd.DataFrame(results)
-  print("\nKruskal-Wallis Results for metrics vs. point_outcome:")
-  print(kw_results.sort_values(by='P-Value', ascending=True))
-
-  # Step 5: Point-Biserial Correlation for 'FBK' vs. others
-  if 'FBE' in ppr_df_clean['point_outcome'].values:
-    ppr_df_clean['is_FBK'] = (ppr_df_clean['point_outcome'] == 'FBK').astype(int)
-    pb_results = []
-    for col in desired_cols:
-      valid_data = ppr_df_clean[[col, 'is_FBK']].dropna()
-      if len(valid_data) > 1 and len(valid_data['is_FBK'].unique()) > 1:
-        corr, p_value = stats.pointbiserialr(valid_data['is_FBK'], valid_data[col])
-        pb_results.append({'Metric': col, 'Correlation': corr, 'P-Value': p_value, 'Note': ''})
-      else:
-        pb_results.append({
-          'Metric': col,
-          'Correlation': None,
-          'P-Value': None,
-          'Note': 'Insufficient data or single category'
-        })
-
-    pb_results_df = pd.DataFrame(pb_results)
-    print("\nPoint-Biserial Correlation for 'FBK' vs. others:")
-    print(pb_results_df.sort_values(by='P-Value', ascending=True))
-
-  # Step 6: Mutual Information (if scikit-learn is available)
-  le = LabelEncoder()
-  y_encoded = le.fit_transform(ppr_df_clean['point_outcome'])
-  # Impute NaN with median for mutual information
-  mi_data = ppr_df_clean[numerical_cols].copy()
-  for col in numerical_cols:
-    if not mi_data[col].isna().all():
-      mi_data[col] = mi_data[col].fillna(mi_data[col].median())
-    else:
-      mi_data[col] = mi_data[col].fillna(0)  # Fallback for all-NaN columns
-  mi_scores = mutual_info_classif(mi_data, y_encoded, random_state=42)
-  mi_results = pd.DataFrame({
-    'Metric': numerical_cols,
-    'Mutual Information': mi_scores,
-    'Note': ''
-  })
-  print("\nMutual Information Scores:")
-  print(mi_results.sort_values(by='Mutual Information', ascending=False))
-  # store thus to display
-  mi_results = mi_results.sort_values(by='Mutual Information', ascending=False)
-  return_results = mi_results.head(20)
-  df_list[3] = return_results.to_dict('records')
-
-
-  # Step 7: Visualize significant metrics (box plots)
-  plt_num = 4
-  significant_metrics = kw_results[kw_results['P-Value'] < 0.05]['Metric']
-  for metric in significant_metrics:
-    plt.figure(figsize=(8, 6))
-    sns.boxplot(x='point_outcome', y=metric, data=ppr_df_clean)
-    plt.title(f'Box Plot of {metric} by point_outcome')
-    plt.show()
-    if plt_num < 10:
-      image_list[plt_num] = anvil.mpl_util.plot_image()
-    plt_num = plt_num + 1
-  '''
-  
+  df_list[3] = corr_results_df.to_dict('records')  
   
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
