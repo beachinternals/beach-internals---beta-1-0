@@ -22,7 +22,7 @@ from player_reports import *
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
-
+@anvil.server.callable
 def generate_pdf_report(rpt_form, report_id):
   """
     Generate a PDF report and return it as a BlobMedia object.
