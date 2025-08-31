@@ -186,6 +186,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   return_text = ''
   report_infos = []
 
+  logger.info(f"in rpt_mgr_new_rpts, Report Type: {rpt_r['rpt_type']}, Team: {disp_team}")
   for p in p_list:
     full_rpt_pdf = None
     pdf_files_created = []  # Track individual PDF files for email links
@@ -196,6 +197,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
     # Calculate the folder we will store these into
     pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d")]
     json_folder = pdf_folder + ['json']  # JSON subfolder
+    logger.info(f"in rpt_mgr_new_rpts: pdf folder :{pdf_folder}, JSON folder: {json_folder}")
 
     lgy = p['league'] + ' | ' + p['gender'] + ' | ' + p['year']
     if rpt_r['rpt_type'] == 'player':
@@ -210,7 +212,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       player_pair = 'Unknown'
 
     pdf_name = f"{player_pair} {rpt_r['Report Description']}.pdf"
-    logging.info(f"Creating combined PDF: {pdf_name}")
+    logger.info(f"Creating combined PDF: {pdf_name}")
 
     # Convert LiveObjectProxy objects to DataTableRow objects
     rptname_rows = []
@@ -227,6 +229,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
         # Sort by the desired column (e.g., 'order')
     sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
+    logger.info(f"in rpt_mgr_new_rpts: Sortend reports:\n{sorted_rptnames}")
 
     for rptname in sorted_rptnames:
       logging.info(f"Report name: {rptname['report_name']}, function_name: {rptname['function_name']}")
