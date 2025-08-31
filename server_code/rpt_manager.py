@@ -92,6 +92,16 @@ def rpt_mgr_generate_background():
         if rpt_r['email']:
           user_reports[rpt_r['email']].extend(report_infos)
 
+      elif rpt_r['rpt_type'] == 'dashboard':
+        email_text = email_text + '\n Processing '+rpt_r['rpt_type']+' Reports \n'
+        ret_val, report_infos = rpt_mgr_new_rpts(rpt_r, rpt_r['player_list'], disp_team)
+        if not ret_val:
+          print(f"Report Manager : rpt_mgr_new_rpts Failed, {rpt_r['rpt_type']}")
+        else:
+          email_text = email_text + ret_val + '\n'
+        if rpt_r['email']:
+          user_reports[rpt_r['email']].extend(report_infos)
+        
       elif rpt_r['rpt_type'] == 'scouting':
         email_text = email_text + '\n Processing scouting Reports \n'
         ret_val, report_infos, _ = rpt_mgr_scouting_rpts(rpt_r, rpt_r['pair_list'], disp_team)
@@ -187,19 +197,17 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
     pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d")]
     json_folder = pdf_folder + ['json']  # JSON subfolder
 
+    lgy = p['league'] + ' | ' + p['gender'] + ' | ' + p['year']
     if rpt_r['rpt_type'] == 'player':
       # Then this is a player
       player_pair = p['team'] + " " + p['number'] + ' ' + p['shortname']
     elif rpt_r['rpt_type'] == 'pair':
       # Then this is a pair table row
       player_pair = p['pair']
+    elif rpt_r['rpt_type'] == 'league':
+      player_pair = lgy
     else:
       player_pair = 'Unknown'
-
-    lgy = p['league'] + ' | ' + p['gender'] + ' | ' + p['year']
-
-    if rpt_r['rpt_type'] == 'league':
-      player_pair = lgy
 
     pdf_name = f"{player_pair} {rpt_r['Report Description']}.pdf"
     logging.info(f"Creating combined PDF: {pdf_name}")

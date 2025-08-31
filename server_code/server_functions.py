@@ -1322,17 +1322,30 @@ def write_to_drive(filename, directory, content):
 # Example usage from client code
 # anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
 
-
 def write_to_nested_folder(folder_path, filename, content):
-  from anvil.google.drive import app_files
-  current_folder = app_files.reports  # Replace with your folder name
+  """
+    Write content to a file in a nested folder structure in Google Drive.
     
+    Args:
+        folder_path: List of subfolder names
+        filename: Name of the file to write
+        content: Content to write (string or object with get_bytes method)
+    
+    Returns:
+        str: Success message or warning if content is invalid
+    """
+  current_folder = app_files.reports  # Replace with your folder name
+
   for subfolder_name in folder_path:
     next_folder = current_folder.get(subfolder_name)
     if next_folder is None:
       next_folder = current_folder.create_folder(subfolder_name)
     current_folder = next_folder
-    
+
+  if content is None:
+    logging.warning(f"Cannot write file {filename} to {'/'.join(folder_path)}: Content is None")
+    return f"Skipped writing {filename} to {'/'.join(folder_path)}: Content is None"
+
   file = current_folder.get(filename)
   if isinstance(content, str):
     content_bytes = content.encode()
@@ -1346,10 +1359,12 @@ def write_to_nested_folder(folder_path, filename, content):
     else:
       file.set_media(content)
   else:
+    logging.error(f"Unsupported content type for {filename}: {type(content)}")
     raise Exception(f"Unsupported content type: {type(content)}")
 
-
   return f"File {filename} written to {'/'.join(folder_path)}"
+
+  
 
 
 '''
