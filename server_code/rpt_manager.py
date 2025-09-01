@@ -3,7 +3,6 @@ import anvil.google.auth, anvil.google.drive, anvil.google.mail
 from anvil.google.drive import app_files
 import anvil.users
 import anvil.tables as tables
-from anvil.tables import app_tables
 import anvil.tables.query as q
 import anvil.server
 from Generate_PDF import *
@@ -42,20 +41,48 @@ def rpt_mgr_generate_background():
   email_text = 'Report Manager Started at ' + str(now) + ' \n \n'
   print(f"Report Manager Started at {now}")
 
+  print("Checking table access...")
   try:
+    # Access app_tables through the tables module
+    app_tables = tables.app_tables
+    print(f"app_tables type: {type(app_tables)}")
+    print(f"app_tables dir: {dir(app_tables)}")
+
+    # Try to access rpt_mgr table
     rpt_rows = app_tables.rpt_mgr.search(active="Yes")
-    rpt_rows_list = list(rpt_rows)  # Convert to list to avoid multiple iterations
-    print(f"Found {len(rpt_rows_list)} active reports in rpt_mgr table")
+    rpt_rows_list = list(rpt_rows)
+    print(f"SUCCESS: Found {len(rpt_rows_list)} active reports in rpt_mgr table")
 
-    if not rpt_rows_list:
-      print("No active reports found in rpt_mgr table")
-      email_text += "No active reports found in rpt_mgr table\n"
+  except AttributeError as e:
+    print(f"AttributeError: {e}")
+    # Try alternative access method
+    try:
+      print("Trying alternative access...")
+      rpt_mgr_table = getattr(tables.app_tables, 'rpt_mgr', None)
+      if rpt_mgr_table:
+        rpt_rows = rpt_mgr_table.search(active="Yes")
+        rpt_rows_list = list(rpt_rows)
+        print(f"SUCCESS via getattr: Found {len(rpt_rows_list)} active reports")
+      else:
+        print("rpt_mgr table not found via getattr either")
+        # List all available tables
+        print("Available app tables:")
+        for attr in dir(tables.app_tables):
+          if not attr.startswith('_'):
+            print(f"  - {attr}")
+        return False
+    except Exception as e2:
+      print(f"Alternative access also failed: {e2}")
       return False
-
   except Exception as e:
-    print(f"Error querying rpt_mgr table: {str(e)}")
-    email_text += f"Error querying rpt_mgr table: {str(e)}\n"
+    print(f"Other error: {e}")
     return False
+
+  if not rpt_rows_list:
+    print("No active reports found in rpt_mgr table")
+    email_text += "No active reports found in rpt_mgr table\n"
+    return False
+    
 
     # Debug: Print first report structure for verification
   if rpt_rows_list:
@@ -304,11 +331,6 @@ Beach Internals Report Manager
 #-------------------------------------------------------------------------------------------------------
 #  Report Manager - All Types of Reports
 #-------------------------------------------------------------------------------------------------------
-import anvil.server
-from datetime import datetime
-import anvil.tables as app_tables
-
-@anvil.server.callable
 def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   '''
     Using the new format, where we store filters in **rpt_filters and then store the data in a file,
@@ -397,14 +419,14 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         # Determine player_pair based on report type
       try:
         if rpt_r['rpt_type'] == 'player':
-          if not all(k in p for k in ['team', 'number', 'shortname']):
-            print(f"ERROR: Invalid player entry, missing required keys: {list(p.keys()) if hasattr(p, 'keys') else 'unknown keys'}")
-            continue
+          #if not all(k in p for k in ['team', 'number', 'shortname']):
+          #  print(f"ERROR: Invalid player entry, missing required keys: {list(p.keys()) if hasattr(p, 'keys') else 'unknown keys'}")
+          #  continue
           player_pair = p['team'] + " " + p['number'] + ' ' + p['shortname']
         elif rpt_r['rpt_type'] == 'pair':
-          if 'pair' not in p:
-            print(f"ERROR: Invalid pair entry, missing 'pair' key")
-            continue
+          #if 'pair' not in p:
+          #  print(f"ERROR: Invalid pair entry, missing 'pair' key")
+          #  continue
           player_pair = p['pair']
         elif rpt_r['rpt_type'] in ['league', 'dashboard']:
           player_pair = lgy
@@ -422,11 +444,11 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Process rpts_inc
       print(f"Processing rpts_inc...")
-      print(f"rpts_inc type: {type(rpt_r.get('rpts_inc'))}")
-      print(f"rpts_inc value: {rpt_r.get('rpts_inc')}")
+      print(f"rpts_inc type: {type(rpt_r['rpts_inc'])}")
+      print(f"rpts_inc value: {rpt_r['rpts_inc']}")
 
       rptname_rows = []
-      rpts_inc = rpt_r.get('rpts_inc', []) or []
+      rpts_inc = rpt_r['rpts_inc'] or []
 
       if rpts_inc:
         print(f"rpts_inc has {len(list(rpts_inc))} items")
@@ -466,7 +488,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Sort reports by order
       try:
-        sorted_rptnames = sorted(rptname_rows, key=lambda r: r.get('order', 0) or 0)
+        sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
         print(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
       except Exception as e:
         print(f"ERROR: Failed to sort reports: {str(e)}")
@@ -639,7 +661,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
         continue
 
         # Calculate the folder we will store these into
-      pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y%m%d")]
+      pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d")]
       json_folder = pdf_folder + ['json']
       lgy = p['league'] + ' | ' + p['gender'] + ' | ' + p['year']
       logging.info(f"PDF folder: {pdf_folder}, JSON folder: {json_folder}, lgy={lgy}")
