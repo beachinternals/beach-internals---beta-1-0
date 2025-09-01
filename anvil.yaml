@@ -665,7 +665,7 @@ db_schema:
       type: string
     server: full
     title: report_list
-  rpt_mgr:
+  rpt_mgr1:
     client: none
     columns:
     - admin_ui: {order: 0, width: 152}
@@ -775,7 +775,7 @@ db_schema:
       name: serve_speed_high
       type: string
     server: full
-    title: rpt_mgr
+    title: rpt_mgr1
   strength_weakness_criteria:
     client: none
     columns:
@@ -908,7 +908,7 @@ renamed: true
 runtime_options:
   client_version: '3'
   legacy_features: {__dict__: true, bootstrap3: true, class_names: true, root_container: true}
-  server_persist: false
+  server_persist: true
   server_spec: {base: python310-datascience}
   server_spec_disabled: {base: python310-standard, requirements: ''}
   server_version: python3-full

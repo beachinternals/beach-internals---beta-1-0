@@ -22,6 +22,14 @@ from collections import defaultdict
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
+@anvil.server.callable
+def rpt_mgr_generate():
+  # client callable functiom to call the background function to generate reports
+  #logger.info(" Report Manager  - Generate Called")
+  #test = rpt_mgr_generate_background()
+  anvil.server.launch_background_task('rpt_mgr_generate_background')
+  return
+  
 #--------------------------------------------------------------
 #
 #. Report Manager - Generate reports based on the rpt_mgr data file
@@ -35,7 +43,7 @@ def rpt_mgr_generate_background():
   print(f"Report Manager Started at {now}")
 
   try:
-    rpt_rows = app_tables.rpt_mgr.search(active="Yes")
+    rpt_rows = app_tables.rpt_mgr1.search(active="Yes")
     rpt_rows_list = list(rpt_rows)  # Convert to list to avoid multiple iterations
     print(f"Found {len(rpt_rows_list)} active reports in rpt_mgr table")
 
@@ -1045,11 +1053,5 @@ def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
 
   return rpt_filters
 
-@anvil.server.callable
-def rpt_mgr_generate():
-  # client callable functiom to call the background function to generate reports
-  #logger.info(" Report Manager  - Generate Called")
-  #test = rpt_mgr_generate_background()
-  anvil.server.launch_background_task('rpt_mgr_generate_background')
-  return
+
 
