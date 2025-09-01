@@ -267,7 +267,6 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         logging.error(f"Error generating JSON for report {rptname['report_name']}: {str(e)}")
 
         # for now, not storing individual pdf files
-      pdf_files_created = []
       '''  
         # Store individual PDF info for email links
       individual_pdf_name = f"{player_pair} {rptname['report_name']}.pdf"
