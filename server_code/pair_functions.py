@@ -130,7 +130,7 @@ def pair_players(disp_pair: str) -> Tuple[str, str]:
     raise ValueError("Pair identifier must be a non-empty string")
 
   #disp_pair = disp_pair.strip()
-  print(f"Pair Players: disp pair = {disp_pair}")
+  #print(f"Pair Players: disp pair = {disp_pair}")
   for pair_row in app_tables.master_pair.search(pair=disp_pair):
     return pair_row['player1'], pair_row['player2']
 

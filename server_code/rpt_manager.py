@@ -105,6 +105,7 @@ def rpt_mgr_generate_background():
       elif rpt_r['rpt_type'] == 'scouting':
         email_text = email_text + '\n Processing scouting Reports \n'
         ret_val, report_infos, _ = rpt_mgr_scouting_rpts(rpt_r, rpt_r['pair_list'], disp_team)
+        logger.info(f"Return from rpt_mgr_scouting_rpts, return value {ret_val}, report_infos {report_infos}, other {_}")
         if not ret_val:
           print(f"Report Manager : rpt_mgr_scouting_rpts Failed, {rpt_r['rpt_type']}")
         else:
@@ -351,17 +352,15 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team, return_pdfs=False):
     # Convert LiveObjectProxy objects to DataTableRow objects
     rptname_rows = []
     for rptname1 in rpt_r['rpts_inc']:
-      if rptname1 and 'id' in rptname1:
-        try:
-          row = app_tables.report_list.get(id=rptname1['id'])
-          rptname_rows.append(row)
-        except anvil.tables.TableError as e:
-          logging.error(f"Skipping deleted report_list row with id {rptname1['id']}: {str(e)}")
-          continue
-      else:
-        logging.warning(f"Skipping invalid rptname1: {rptname1}")
-
+      try:
+        row = app_tables.report_list.get(id=rptname1['id'])
+        rptname_rows.append(row)
+      except anvil.tables.TableError as e:
+        logging.error(f"Skipping deleted report_list row with id {rptname1['id']}: {str(e)}")
+        continue
+      
     sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
+    logger.info(f"rpt_mgr_scouting_new: List of sorted repors: {sorted_rptnames}")
 
     # Segment reports into scouting and non-scouting
     scouting_rptnames = [rptname for rptname in sorted_rptnames if rptname['rpt_type'] == 'scouting']
