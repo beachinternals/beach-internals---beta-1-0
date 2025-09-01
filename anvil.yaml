@@ -665,8 +665,8 @@ db_schema:
       type: string
     server: full
     title: report_list
-  rpt_mgr1:
-    client: none
+  rpt_mgr:
+    client: full
     columns:
     - admin_ui: {order: 0, width: 152}
       name: email
@@ -775,7 +775,7 @@ db_schema:
       name: serve_speed_high
       type: string
     server: full
-    title: rpt_mgr1
+    title: rpt_mgr
   strength_weakness_criteria:
     client: none
     columns:

@@ -3,8 +3,8 @@ import anvil.google.auth, anvil.google.drive, anvil.google.mail
 from anvil.google.drive import app_files
 import anvil.users
 import anvil.tables as tables
-import anvil.tables.query as q
 from anvil.tables import app_tables
+import anvil.tables.query as q
 import anvil.server
 from Generate_PDF import *
 from pair_functions import *
@@ -43,7 +43,7 @@ def rpt_mgr_generate_background():
   print(f"Report Manager Started at {now}")
 
   try:
-    rpt_rows = app_tables.rpt_mgr1.search(active="Yes")
+    rpt_rows = app_tables.rpt_mgr.search(active="Yes")
     rpt_rows_list = list(rpt_rows)  # Convert to list to avoid multiple iterations
     print(f"Found {len(rpt_rows_list)} active reports in rpt_mgr table")
 
