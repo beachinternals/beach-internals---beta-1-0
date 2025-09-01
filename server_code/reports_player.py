@@ -2129,7 +2129,7 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
   # from zone 1
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
-  print(f"Serves values 1 {srv1_val}")
+  #print(f"Serves values 1 {srv1_val}")
   ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=srv1_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
   ax.set_title("Serves from Zone 1, Left", fontsize=35)
@@ -2138,7 +2138,7 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
   # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
-  print(f"Serves values 3 {srv3_val}")
+  #print(f"Serves values 3 {srv3_val}")
   ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=srv3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
   ax.set_title("Serves from Zone 3, Middle", fontsize=35)
@@ -2147,7 +2147,7 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
   # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)
-  print(f"Serves values 5 {srv5_val}")
+  #print(f"Serves values 5 {srv5_val}")
   ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=srv5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
   fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='Serves')
@@ -2761,7 +2761,7 @@ def report_player_trends(lgy, team, **rpt_filters):
       if matching_subscription and len(matching_subscription) > 0:
         start_date = matching_subscription[0]['start_date']
         end_date = matching_subscription[0]['end_date']
-        print(f"Found subscription dates: {start_date} to {end_date}")
+        #print(f"Found subscription dates: {start_date} to {end_date}")
       else:
         print(f"No matching subscription found for team={team}, league={disp_league}, gender={disp_gender}, year={disp_year}")
         # Fallback to default dates if no matching subscription found
@@ -2918,8 +2918,8 @@ def report_player_profile(lgy, team, **rpt_filters):
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
 
   # Debug: Check player_data_stats_df
-  print(f"player_data_stats_df shape: {player_data_stats_df.shape}")
-  print(f"player_data_stats_df columns: {player_data_stats_df.columns.tolist()}")
+  #print(f"player_data_stats_df shape: {player_data_stats_df.shape}")
+  #print(f"player_data_stats_df columns: {player_data_stats_df.columns.tolist()}")
 
   # Filter the ppr dataframe
   ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
@@ -2933,7 +2933,7 @@ def report_player_profile(lgy, team, **rpt_filters):
     ]
 
   # Debug: Print the size of ppr_df after filtering
-  print(f"Size of ppr_df after filtering for player '{disp_player}': {ppr_df.shape[0]} rows")
+  #print(f"Size of ppr_df after filtering for player '{disp_player}': {ppr_df.shape[0]} rows")
 
   # =============================================================================
   # REPORT-SPECIFIC LOGIC STARTS HERE

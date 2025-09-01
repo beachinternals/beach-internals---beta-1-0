@@ -539,7 +539,7 @@ class Reports_main(Reports_mainTemplate):
     '''
 
     #alert(("PDF report emailed" + str(result)))
-    anvil.media.download(pdf_rpt)
+    anvil.media.download(pdf_rpt.get('pdf'))
     
     pass
 

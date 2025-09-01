@@ -217,15 +217,15 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
     # Convert LiveObjectProxy objects to DataTableRow objects
     rptname_rows = []
     for rptname1 in rpt_r['rpts_inc']:
-      if rptname1 and 'id' in rptname1:
-        try:
-          row = app_tables.report_list.get(id=rptname1['id'])
-          rptname_rows.append(row)
-        except anvil.tables.TableError as e:
-          logging.error(f"Skipping deleted report_list row with id {rptname1['id']}: {str(e)}")
-          continue
-      else:
-        logging.warning(f"Skipping invalid rptname1: {rptname1}")
+      logger.info(f"Getting lsit of reports, rpt name: {rptname1['report_name']}, id: {rptname1['id']} ")
+      try:
+        row = app_tables.report_list.get(id=rptname1['id'])
+        rptname_rows.append(row)
+        logger.info(f" Adding Row to report names, total number {len(rptname_rows)} ")
+      except anvil.tables.TableError as e:
+        logging.error(f"Skipping deleted report_list row with id {rptname1['id']}: {str(e)}")
+        continue
+
 
         # Sort by the desired column (e.g., 'order')
     sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
@@ -266,6 +266,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       except Exception as e:
         logging.error(f"Error generating JSON for report {rptname['report_name']}: {str(e)}")
 
+        # for now, not storing individual pdf files
+      pdf_files_created = []
+      '''  
         # Store individual PDF info for email links
       individual_pdf_name = f"{player_pair} {rptname['report_name']}.pdf"
       logging.info(f"Creating individual PDF: {individual_pdf_name}")
@@ -279,6 +282,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       except Exception as e:
         logging.error(f"Error writing PDF for report {rptname['report_name']}: {str(e)}")
         continue
+      '''
 
         # Merge PDFs
       if full_rpt_pdf:
