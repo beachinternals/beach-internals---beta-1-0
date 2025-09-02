@@ -45,8 +45,8 @@ def rpt_mgr_generate_background():
   try:
     # Access app_tables through the tables module
     app_tables = tables.app_tables
-    print(f"app_tables type: {type(app_tables)}")
-    print(f"app_tables dir: {dir(app_tables)}")
+    #print(f"app_tables type: {type(app_tables)}")
+    #print(f"app_tables dir: {dir(app_tables)}")
 
     # Try to access rpt_mgr table
     rpt_rows = app_tables.rpt_mgr.search(active="Yes")
@@ -85,6 +85,7 @@ def rpt_mgr_generate_background():
     
 
     # Debug: Print first report structure for verification
+  '''
   if rpt_rows_list:
     first_report = rpt_rows_list[0]
     print(f"First report structure check:")
@@ -103,6 +104,7 @@ def rpt_mgr_generate_background():
         print(f"  First rpts_inc keys: {list(first_rpt_inc.keys()) if hasattr(first_rpt_inc, 'keys') else 'Not a dict-like object'}")
     else:
       print(f"  rpts_inc is empty or None")
+
 
     # Collect user report infos for batched emails
   user_reports = defaultdict(list)
@@ -241,13 +243,13 @@ def rpt_mgr_generate_background():
       print(f"rpt_mgr_generate_background: Error processing report: {str(e)}")
       email_text += f"Error processing report {rpt_r.get('Report Description', 'Unknown')}: {str(e)}\n"
 
-    print(f"\n=== SUMMARY ===")
-    print(f"Total reports found: {total_reports}")
-    print(f"Reports processed successfully: {processed_count}")
-    print(f"Users to receive emails: {len(user_reports)}")
+  print(f"\n=== SUMMARY ===")
+  print(f"Total reports found: {total_reports}")
+  print(f"Reports processed successfully: {processed_count}")
+  print(f"Users to receive emails: {len(user_reports)}")
 
-    # Send batched user emails
-    for user_email, reports in user_reports.items():
+  # Send batched user emails
+  for user_email, reports in user_reports.items():
         try:
             print(f"Sending email to {user_email} with {len(reports)} reports")
             email_subject = "Beach Internals - Your Generated Reports"
@@ -288,35 +290,35 @@ Beach Internals Report Manager
         except Exception as e:
             print(f"ERROR: Failed to send email to {user_email}: {str(e)}")
 
-    # Last thing, empty the report_data table when we are done
-    print("Clearing report_data table...")
-    email_text += '\nDeleting all rows from report_data table \n\n'
-    try:
-        app_tables.report_data.delete_all_rows()
-        print("Successfully cleared report_data table")
-    except Exception as e:
-        print(f"ERROR: Failed to clear report_data table: {str(e)}")
+  # Last thing, empty the report_data table when we are done
+  print("Clearing report_data table...")
+  email_text += '\nDeleting all rows from report_data table \n\n'
+  try:
+    app_tables.report_data.delete_all_rows()
+    print("Successfully cleared report_data table")
+  except Exception as e:
+    print(f"ERROR: Failed to clear report_data table: {str(e)}")
 
-    # Send summary email
-    internals_email = 'info@beachinternals.com'
-    now1 = datetime.now()
-    compute_time = now1 - now
-    email_message = email_text + f"Report Manager Completed at: {now1}\nCompute time: {compute_time}\n"
+  # Send summary email
+  internals_email = 'info@beachinternals.com'
+  now1 = datetime.now()
+  compute_time = now1 - now
+  email_message = email_text + f"Report Manager Completed at: {now1}\nCompute time: {compute_time}\n"
     
-    print(f"Sending summary email to {internals_email}")
-    try:
-        email_status = anvil.email.send(
-            to=internals_email,
-            from_address="no-reply",
-            subject='Beach Internals - Report Manager',
-            text=email_message
-        )
-        print(f"Summary email sent successfully: {email_status}")
-    except Exception as e:
-        print(f"ERROR: Failed to send summary email: {str(e)}")
+  print(f"Sending summary email to {internals_email}")
+  try:
+    email_status = anvil.email.send(
+        to=internals_email,
+        from_address="no-reply",
+        subject='Beach Internals - Report Manager',
+        text=email_message
+    )
+    print(f"Summary email sent successfully: {email_status}")
+  except Exception as e:
+    print(f"ERROR: Failed to send summary email: {str(e)}")
 
-    print(f"Report Manager completed. Total runtime: {compute_time}")
-    return True
+  print(f"Report Manager completed. Total runtime: {compute_time}")
+  return True
 
   
 
