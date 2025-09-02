@@ -104,7 +104,7 @@ def rpt_mgr_generate_background():
         print(f"  First rpts_inc keys: {list(first_rpt_inc.keys()) if hasattr(first_rpt_inc, 'keys') else 'Not a dict-like object'}")
     else:
       print(f"  rpts_inc is empty or None")
-
+  '''
 
     # Collect user report infos for batched emails
   user_reports = defaultdict(list)
@@ -117,22 +117,22 @@ def rpt_mgr_generate_background():
 
     try:
       disp_team = rpt_r['team']
-      print(f"Report Description: {rpt_r['Report Description']}")
-      print(f"Report type: {rpt_r['rpt_type']}")
-      print(f"Team: {disp_team}")
+      #print(f"Report Description: {rpt_r['Report Description']}")
+      #print(f"Report type: {rpt_r['rpt_type']}")
+      #print(f"Team: {disp_team}")
 
       # Check if this report should be run today
       today = datetime.now()
       day_of_week = today.strftime("%A")
-      print(f"Today is: {day_of_week}")
-      print(f"Report scheduled for: {rpt_r['dow']}")
+      #print(f"Today is: {day_of_week}")
+      #print(f"Report scheduled for: {rpt_r['dow']}")
 
       if rpt_r['dow'] not in [day_of_week, 'Everyday']:
         print(f"SKIPPING: Report not scheduled for {day_of_week}")
         print(f"rpt_mgr_generate_background: Report {rpt_r['rpt_type']} not scheduled for {day_of_week}")
         continue
 
-      print(f"Report IS scheduled to run today")
+      #print(f"Report IS scheduled to run today")
 
       # Process different report types
       if rpt_r['rpt_type'] in ['player', 'pair', 'league', 'dashboard']:
@@ -141,7 +141,7 @@ def rpt_mgr_generate_background():
         print(f"Input list type: {type(input_list)}")
         if input_list:
           input_list_items = list(input_list)
-          print(f"Input list count: {len(input_list_items)}")
+          #print(f"Input list count: {len(input_list_items)}")
           if input_list_items:
             print(f"First input item keys: {list(input_list_items[0].keys()) if hasattr(input_list_items[0], 'keys') else 'Not dict-like'}")
         else:
@@ -163,8 +163,8 @@ def rpt_mgr_generate_background():
 
           ret_val, report_infos = result
           print(f"rpt_mgr_new_rpts returned successfully")
-          print(f"  ret_val: '{ret_val}'")
-          print(f"  report_infos count: {len(report_infos) if report_infos else 0}")
+          #print(f"  ret_val: '{ret_val}'")
+          #print(f"  report_infos count: {len(report_infos) if report_infos else 0}")
 
           if not ret_val and not report_infos:
             print(f"ERROR: rpt_mgr_new_rpts failed for {rpt_r['rpt_type']} - no output")
@@ -177,7 +177,7 @@ def rpt_mgr_generate_background():
 
           if rpt_r['email'] and report_infos:
             user_reports[rpt_r['email']].extend(report_infos)
-            print(f"Added {len(report_infos)} reports to email queue for {rpt_r['email']}")
+            #print(f"Added {len(report_infos)} reports to email queue for {rpt_r['email']}")
 
         except Exception as e:
           print(f"ERROR: Exception in rpt_mgr_new_rpts: {str(e)}")
@@ -186,11 +186,13 @@ def rpt_mgr_generate_background():
 
       elif rpt_r['rpt_type'] == 'scouting':
         pair_list = rpt_r['pair_list']
+        
 
-        print(f"Pair list type: {type(pair_list)}")
+        print(f"Scoting Reports, Pair list type: {type(pair_list)} pair_list :  \n {pair_list}")
         if pair_list:
-          pair_list_items = list(pair_list)
-          print(f"Pair list count: {len(pair_list_items)}")
+          #pair_list_items = list(pair_list)
+          pair_list_items = [row['pair'] for row in pair_list]
+          print(f"Pair list count: {len(pair_list_items)}, Pair List Items: {pair_list_items}")
           if pair_list_items:
             print(f"First pair item keys: {list(pair_list_items[0].keys()) if hasattr(pair_list_items[0], 'keys') else 'Not dict-like'}")
         else:
@@ -226,7 +228,7 @@ def rpt_mgr_generate_background():
 
           if rpt_r['email'] and report_infos:
             user_reports[rpt_r['email']].extend(report_infos)
-            print(f"Added {len(report_infos)} reports to email queue for {rpt_r['email']}")
+            #print(f"Added {len(report_infos)} reports to email queue for {rpt_r['email']}")
 
         except Exception as e:
           print(f"ERROR: Exception in rpt_mgr_scouting_rpts: {str(e)}")
@@ -643,51 +645,65 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
   return_text = ''
   report_infos = []
 
-  logging.info(f"rpt_mgr_scouting_rpts: pair_list={pair_list}, disp_team={disp_team}, rpt_r={dict(rpt_r)}")
+  print(f"rpt_mgr_scouting_rpts: pair_list={pair_list}, disp_team={disp_team}, rpt_r={dict(rpt_r)}")
   if not pair_list:
     logging.warning(f"No pairs provided for scouting report: {rpt_r.get('Report Description', 'Unknown')}")
     return return_text, report_infos
 
   try:
     for p in pair_list:
-      logging.info(f"Processing pair entry: {p}")
-      disp_pair = p.get('pair') if isinstance(p, dict) else None
+      print(f"Processing pair entry: {p}")
+      disp_pair = p['pair']
+      print(f"Display Pair: {disp_pair}")
       if not disp_pair:
-        logging.error(f"Invalid pair entry: {p}")
+        print(f"Invalid pair entry: {p}")
         continue
       try:
         player1, player2 = pair_players(disp_pair)
-        logging.info(f"Parsed pair: {disp_pair} -> player1={player1}, player2={player2}")
+        print(f"Parsed pair: {disp_pair} -> player1={player1}, player2={player2}")
       except Exception as e:
-        logging.error(f"Failed to parse pair {disp_pair}: {str(e)}")
+        print(f"Failed to parse pair {disp_pair}: {str(e)}")
         continue
 
         # Calculate the folder we will store these into
       pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d")]
       json_folder = pdf_folder + ['json']
       lgy = p['league'] + ' | ' + p['gender'] + ' | ' + p['year']
-      logging.info(f"PDF folder: {pdf_folder}, JSON folder: {json_folder}, lgy={lgy}")
+      print(f"PDF folder: {pdf_folder}, JSON folder: {json_folder}, lgy={lgy}")
 
       # Use rpts_inc directly as DataTableRow objects
       rptname_rows = []
-      for rptname1 in rpt_r.get('rpts_inc', []) or []:
-        if rptname1 and 'id' in rptname1 and 'report_name' in rptname1 and 'rpt_type' in rptname1 and 'rpt_form' in rptname1 and 'function_name' in rptname1:
-          rptname_rows.append(rptname1)
-          logging.info(f"Added report: id={rptname1['id']}, name={rptname1['report_name']}, type={rptname1['rpt_type']}")
-        else:
-          logging.warning(f"Skipping invalid rptname1: {dict(rptname1) if rptname1 else rptname1}")
+      for rptname1 in rpt_r['rpts_inc']:
+        #if rptname1 and 'id' in rptname1 and 'report_name' in rptname1 and 'rpt_type' in rptname1 and 'rpt_form' in rptname1 and 'function_name' in rptname1:
+        #print(f"rptname1, report name: {rptname1['report_name']}")
+        #print(f"rptname1, report type: {rptname1['rpt_type']}")
+        #print(f"rptname1, report form: {rptname1['rpt_form']}")
+        #print(f"rptname1, function name: {rptname1['function_name']}")
+        #print(f"rptname1, order: {rptname1['order']}")  
+        #rptname_rows.append((rptname1['report_name'], rptname1['rpt_type'], rptname1['order'], rptname1['function_name'], rptname1['rpt_form']))
+        rptname_rows.append({
+          'report_name': rptname1['report_name'],
+          'rpt_type': rptname1['rpt_type'], 
+          'order': rptname1['order'],
+          'function_name': rptname1['function_name'],
+          'rpt_form': rptname1['rpt_form']
+        })
+        #rptname_rows.append(rptname1['report_name','rpt_type','order','function_name','rpt_form'])
+        #print(f"Added report: id={rptname1['id']}, name={rptname1['report_name']}, type={rptname1['rpt_type']}")
+        #else:
+        #  print(f"Skipping invalid rptname1: {rptname1['report_name']}")
 
-      if not rptname_rows:
-        logging.error(f"No valid reports in rpts_inc for {rpt_r['Report Description']}")
-        continue
-
+      #if len(rptname_rows) == 0:
+      #  print(f"No valid reports in rpts_inc for {rpt_r['Report Description']}")
+      #  continue
+      print(f"Reports: {rptname_rows}")
       sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
-      logging.info(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
+      print(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
 
       # Segment reports into scouting and non-scouting
       scouting_rptnames = [rptname for rptname in sorted_rptnames if rptname['rpt_type'] == 'scouting']
       player_rptnames = [rptname for rptname in sorted_rptnames if rptname['rpt_type'] != 'scouting']
-      logging.info(f"Scouting reports: {[r['report_name'] for r in scouting_rptnames]}, Player reports: {[r['report_name'] for r in player_rptnames]}")
+      print(f"Scouting reports: {[r['report_name'] for r in scouting_rptnames]}, Player reports: {[r['report_name'] for r in player_rptnames]}")
 
       # Generate scouting reports for the pair
       pair_pdf = None
@@ -695,10 +711,10 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
       attack_tendency_merged = False
       rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
       rpt_filters['pair'] = disp_pair
-      logging.info(f"Scouting report filters: {rpt_filters}")
+      print(f"Scouting report filters: {rpt_filters}")
 
       for rptname in scouting_rptnames:
-        logging.info(f"Processing scouting report: name={rptname['report_name']}, function={rptname['function_name']}, form={rptname['rpt_form']}")
+        print(f"Processing scouting report: name={rptname['report_name']}, function={rptname['function_name']}, form={rptname['rpt_form']}")
         try:
           report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
           if not report_id:
@@ -785,7 +801,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
       logging.info(f"Player1 report filters: {player_filters}")
 
       for rptname in player_rptnames:
-        logging.info(f"Processing player report for {player1}: name={rptname['report_name']}, function={rptname['function_name']}, form={rptname['rpt_form']}")
+        print(f"Processing player report for {player1}: name={rptname['report_name']}, function={rptname['function_name']}, form={rptname['rpt_form']}")
         try:
           report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **player_filters)
           if not report_id:
