@@ -192,7 +192,7 @@ def rpt_mgr_generate_background():
         if pair_list:
           #pair_list_items = list(pair_list)
           pair_list_items = [row['pair'] for row in pair_list]
-          print(f"Pair list count: {len(pair_list_items)}, Pair List Items: {pair_list_items}")
+          #print(f"Pair list count: {len(pair_list_items)}, Pair List Items: {pair_list_items}")
           if pair_list_items:
             print(f"First pair item keys: {list(pair_list_items[0].keys()) if hasattr(pair_list_items[0], 'keys') else 'Not dict-like'}")
         else:
@@ -214,8 +214,8 @@ def rpt_mgr_generate_background():
 
           ret_val, report_infos = result
           print(f"rpt_mgr_scouting_rpts returned successfully")
-          print(f"  ret_val: '{ret_val}'")
-          print(f"  report_infos count: {len(report_infos) if report_infos else 0}")
+          #print(f"  ret_val: '{ret_val}'")
+          #print(f"  report_infos count: {len(report_infos) if report_infos else 0}")
 
           if not ret_val and not report_infos:
             print(f"ERROR: rpt_mgr_scouting_rpts failed - no output")
@@ -347,9 +347,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
   print(f"=== ENTERING rpt_mgr_new_rpts ===")
   print(f"rpt_type: {rpt_r['rpt_type']}")
-  print(f"disp_team: {disp_team}")
-  print(f"p_list type: {type(p_list)}")
-  print(f"p_list length: {len(p_list) if p_list else 'None'}")
+  #print(f"disp_team: {disp_team}")
+  #print(f"p_list type: {type(p_list)}")
+  #print(f"p_list length: {len(p_list) if p_list else 'None'}")
 
   if not p_list:
     print("ERROR: No players/pairs provided")
@@ -358,19 +358,19 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   try:
     for i, p in enumerate(p_list):
       print(f"\n--- Processing item {i+1} of {len(p_list)} ---")
-      print(f"Item type: {type(p)}")
+      #print(f"Item type: {type(p)}")
 
       # Try to convert to dict to see the structure
       try:
         p_dict = dict(p)
-        print(f"Item as dict: {p_dict}")
-        print(f"Available keys: {list(p_dict.keys())}")
+        #print(f"Item as dict: {p_dict}")
+        #print(f"Available keys: {list(p_dict.keys())}")
       except Exception as e:
         print(f"Could not convert item to dict: {str(e)}")
 
         # Try to access individual fields we expect
         try:
-          print(f"Trying to access expected fields:")
+          #print(f"Trying to access expected fields:")
           if hasattr(p, '__getitem__'):
             try:
               league = p['league']
@@ -406,9 +406,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
                       disp_team.strip(), today.strftime("%Y-%m-%d")]
         json_folder = pdf_folder + ['json']
         lgy = p['league'] + ' | ' + p['gender'] + ' | ' + p['year']
-        print(f"PDF folder: {pdf_folder}")
-        print(f"JSON folder: {json_folder}")
-        print(f"lgy: {lgy}")
+        #print(f"PDF folder: {pdf_folder}")
+        #print(f"JSON folder: {json_folder}")
+        #print(f"lgy: {lgy}")
       except Exception as e:
         print(f"ERROR: Failed to create folder paths: {str(e)}")
         continue
@@ -441,8 +441,8 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Process rpts_inc
       print(f"Processing rpts_inc...")
-      print(f"rpts_inc type: {type(rpt_r['rpts_inc'])}")
-      print(f"rpts_inc value: {rpt_r['rpts_inc']}")
+      #print(f"rpts_inc type: {type(rpt_r['rpts_inc'])}")
+      #print(f"rpts_inc value: {rpt_r['rpts_inc']}")
 
       rptname_rows = []
       rpts_inc = rpt_r['rpts_inc'] or []
@@ -450,13 +450,13 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       if rpts_inc:
         print(f"rpts_inc has {len(list(rpts_inc))} items")
         for j, rptname1 in enumerate(rpts_inc):
-          print(f"  Processing rpts_inc item {j+1}:")
-          print(f"    Type: {type(rptname1)}")
+          #print(f"  Processing rpts_inc item {j+1}:")
+          #print(f"    Type: {type(rptname1)}")
 
           try:
             rptname1_dict = dict(rptname1) if rptname1 else {}
-            print(f"    As dict: {rptname1_dict}")
-            print(f"    Keys: {list(rptname1_dict.keys())}")
+            #print(f"    As dict: {rptname1_dict}")
+            #print(f"    Keys: {list(rptname1_dict.keys())}")
           except Exception as e:
             print(f"    Could not convert to dict: {str(e)}")
             continue
