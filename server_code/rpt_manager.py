@@ -264,15 +264,14 @@ Generated on: {today.strftime('%Y-%m-%d %H:%M:%S')}
 
 """
             for info in reports:
-                email_body += f"""
-Player/Pair: {info['player_pair']}
+                email_body += f"""Player/Pair: {info['player_pair']}
 Report Description: {info['description']}
 Combined PDF: {info['combined']}
 """
-
-                email_body +="""
+            email_body +="""
 Best regards,
 Beach Internals
+info@BeachInternals.com
 """
 
             email_status = anvil.email.send(
