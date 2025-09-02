@@ -256,7 +256,7 @@ def rpt_mgr_generate_background():
             print(f"Sending email to {user_email} with {len(reports)} reports")
             email_subject = "Beach Internals - Your Generated Reports"
             email_body = f"""
-Dear User,
+Dear Coach,
 
 The following reports have been generated and are available on Google Drive:
 
@@ -269,16 +269,8 @@ Player/Pair: {info['player_pair']}
 Report Description: {info['description']}
 Combined PDF: {info['combined']}
 
-Individual Reports:
-"""
-                for pdf_info in info['individuals']:
-                    email_body += f"- {pdf_info['name']}: {pdf_info['result']}\n"
-
-            email_body += f"""
-JSON data files have also been created in the 'json' subdirectories for data analysis purposes.
-
 Best regards,
-Beach Internals Report Manager
+Beach Internals
 """
 
             email_status = anvil.email.send(
@@ -674,13 +666,6 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
       # Use rpts_inc directly as DataTableRow objects
       rptname_rows = []
       for rptname1 in rpt_r['rpts_inc']:
-        #if rptname1 and 'id' in rptname1 and 'report_name' in rptname1 and 'rpt_type' in rptname1 and 'rpt_form' in rptname1 and 'function_name' in rptname1:
-        #print(f"rptname1, report name: {rptname1['report_name']}")
-        #print(f"rptname1, report type: {rptname1['rpt_type']}")
-        #print(f"rptname1, report form: {rptname1['rpt_form']}")
-        #print(f"rptname1, function name: {rptname1['function_name']}")
-        #print(f"rptname1, order: {rptname1['order']}")  
-        #rptname_rows.append((rptname1['report_name'], rptname1['rpt_type'], rptname1['order'], rptname1['function_name'], rptname1['rpt_form']))
         rptname_rows.append({
           'report_name': rptname1['report_name'],
           'rpt_type': rptname1['rpt_type'], 
@@ -688,10 +673,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           'function_name': rptname1['function_name'],
           'rpt_form': rptname1['rpt_form']
         })
-        #rptname_rows.append(rptname1['report_name','rpt_type','order','function_name','rpt_form'])
-        #print(f"Added report: id={rptname1['id']}, name={rptname1['report_name']}, type={rptname1['rpt_type']}")
-        #else:
-        #  print(f"Skipping invalid rptname1: {rptname1['report_name']}")
+
 
       #if len(rptname_rows) == 0:
       #  print(f"No valid reports in rpts_inc for {rpt_r['Report Description']}")
