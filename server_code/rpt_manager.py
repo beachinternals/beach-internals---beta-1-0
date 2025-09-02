@@ -268,7 +268,9 @@ Generated on: {today.strftime('%Y-%m-%d %H:%M:%S')}
 Player/Pair: {info['player_pair']}
 Report Description: {info['description']}
 Combined PDF: {info['combined']}
+"""
 
+                email_body +="""
 Best regards,
 Beach Internals
 """
