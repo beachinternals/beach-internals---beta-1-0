@@ -264,9 +264,7 @@ Generated on: {today.strftime('%Y-%m-%d %H:%M:%S')}
 
 """
             for info in reports:
-                email_body += f"""Player/Pair: {info['player_pair']}
-Report Description: {info['description']}
-Combined PDF: {info['combined']}
+                email_body += f"""{info['combined']}
 """
             email_body +="""
 Best regards,
