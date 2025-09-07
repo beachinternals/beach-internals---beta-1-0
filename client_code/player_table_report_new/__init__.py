@@ -59,8 +59,18 @@ class player_table_report_new(player_table_report_newTemplate):
       # populate the titles
       if isinstance(title_list[0], str):
         self.rpt_title.text = title_list[0]
+      # populate the subtitle with ... 'Player : FSU 02'
       if isinstance(title_list[1],str) and isinstance(title_list[8], str):
-        self.rpt_subtitle.text = title_list[1] + title_list[8]
+        if title_list[1] == 'Team :':
+          self.rpt_subtitle.text = title_list[1] + ' ' + title_list[4]   
+        elif title_list[1] == 'Player :':
+          self.rpt_subtitle.text = title_list[1] + ' ' + title_list[8]
+        elif title_list[1] == 'Pair :':
+          self.rpt_subtitle.text = title_list[1] + ' ' + title_list[9]
+        elif title_list[1] == 'League :':
+          self.rpt_subtitle.text = title_list[1] + ' ' + title_list[3]
+        else:
+          self.rpt_subtitle.text = title_list[1] + title_list[8]
       if isinstance(title_list[7], str):
         self.explain_text.content = title_list[7]
       if isinstance(title_list[8], str):

@@ -181,7 +181,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
     # Calculate metrics for each player
   for player in team_players:
-    print(f"Processing player: {player}")
+    #print(f"Processing player: {player}")
     try:
       # Add player name
       metrics_data['Player'].append(player)
@@ -206,12 +206,12 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       # Get Good Pass percentage from count_good_passes_obj function
       good_pass_result = count_good_passes_obj(ppr_df, player, 'pass')
       good_pass_value = good_pass_result.get('percent') 
-      #print(f"Raw Good_Pass_Pct for {player}: {good_pass_value}")
+      #print(f"Raw Good_Pass_Pct for {player}: {good_pass_value} Type {type(good_pass_value)}")
       metrics_data['Good_Pass_Pct'].append(to_python_type(good_pass_value))
 
       # Get Knockout Ratio from calc_knockout_obj function
       knockout_result = calc_knock_out_obj(ppr_df, player)
-      metrics_data['Knockout'].append(to_python_type(knockout_result.get('ratio', 0)))
+      metrics_data['Knockout'].append(to_python_type(knockout_result.get('knock_out_rate', 0)))
 
       # Get Ace Error Ratio
       ace_error_result = calc_ace_error_ratio_from_ppr(ppr_df, player)
@@ -224,7 +224,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       # Get Error Density from calc_error_density_obj function
       error_density_result = calc_error_density_obj(ppr_df, player)
       error_density_value = error_density_result.get('error_density') 
-      #print(f"Raw Error_Density for {player}: {error_density_value}")
+      #print(f"Raw Error_Density for {player}: {error_density_value}, Type : {type(error_density_value)}")
       metrics_data['Error_Density'].append(parse_percentage(error_density_value, player, 'Error_Density'))
 
       #print(f"Metrics Data Row:{metrics_data}")
@@ -237,6 +237,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
     # Create the main metrics DataFrame
   metrics_df = pd.DataFrame(metrics_data)
+  #print(metrics_df.dtypes)
 
   # Sort by player name
   metrics_df = metrics_df.sort_values('Player').reset_index(drop=True)
@@ -298,28 +299,35 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
   # format the metrics df:
   # Create a mask for rows where Player is not 'TEAM AVERAGE'
-  mask = metrics_df['Player'] != 'TEAM AVERAGE'
 
-  # Convert the object columns to float64 only for rows where the mask is True
-  metrics_df.loc[mask, 'Good_Pass_Pct'] = pd.to_numeric(metrics_df.loc[mask, 'Good_Pass_Pct'], errors='coerce').astype('float64')
-  metrics_df.loc[mask, 'Error_Density'] = pd.to_numeric(metrics_df.loc[mask, 'Error_Density'], errors='coerce').astype('float64')
-  
-  print(metrics_df.dtypes)
+  # After concatenating the summary row
+  metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].apply(lambda x: float(x.strip('%')) / 100 if isinstance(x, str) else x)
+  metrics_df['Error_Density'] = metrics_df['Error_Density'].apply(lambda x: float(x.strip('%')) / 100 if isinstance(x, str) else x)
+
+  # Ensure float64 type
+  metrics_df['Good_Pass_Pct'] = pd.to_numeric(metrics_df['Good_Pass_Pct'], errors='coerce').astype('float64')
+  metrics_df['Error_Density'] = pd.to_numeric(metrics_df['Error_Density'], errors='coerce').astype('float64')
+
+  # Verify types
+  #print(metrics_df.dtypes)
+
   metrics_df['FBHE'] = metrics_df['FBHE'].round(3).astype(str)
   metrics_df['FBSO'] = metrics_df['FBSO'].round(3).astype(str)
   metrics_df['TCR'] = metrics_df['TCR'].round(3).astype(str)
   metrics_df['ESO'] = metrics_df['ESO'].round(3).astype(str)
   metrics_df['Expected'] = metrics_df['Expected'].round(3).astype(str)
-  metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3)
+  #metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3)
+  metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].apply(lambda x: f"{x * 100:02.0f}%" if pd.notnull(x) else x)
   metrics_df['Knockout'] = metrics_df['Knockout'].round(3).astype(str)
   metrics_df['Ace/Error'] = metrics_df['Ace/Error'].round(3).astype(str)
-  metrics_df['Consistency_Errors'] = metrics_df['Consistency_Errors'].round(3).astype(str)
-  metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3)
+  metrics_df['Consistency_Errors'] = metrics_df['Consistency_Errors'].round(2).astype(str)
+  #metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3)
+  metrics_df['Error_Density'] = metrics_df['Error_Density'].apply(lambda x: f"{x * 100:02.0f}%" if pd.notnull(x) else x)
 
   
       # Store the main metrics table
   df_list[0] = metrics_df.to_dict('records')
-  print(f"Metrics df:{metrics_data}")
+  #print(f"Metrics df:{metrics_data}")
   #df_desc_list[0] = f"Key Performance Metrics - Team {team}"
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
