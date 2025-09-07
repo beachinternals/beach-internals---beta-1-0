@@ -133,12 +133,13 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   # Get list of all players for this team from master_player or from ppr_df
   team_players = get_team_players(disp_league, disp_gender, disp_year, team)
 
-  if not team_players:
-    # Fallback: get unique players from ppr_df
-    team_players = set()
-    for col in ['player_a1', 'player_a2', 'player_b1', 'player_b2']:
-      team_players.update(ppr_df[col].dropna().unique())
-    team_players = list(team_players)
+  # do not want to do this, as this will give you all players int he db!
+  #if not team_players:
+  #  # Fallback: get unique players from ppr_df
+  #  team_players = set()
+  #  for col in ['player_a1', 'player_a2', 'player_b1', 'player_b2']:
+  #    team_players.update(ppr_df[col].dropna().unique())
+  #  team_players = list(team_players)
 
   print(f"Generating dashboard for {len(team_players)} players on team {team}")
 
@@ -257,11 +258,10 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       # Convert percentage columns back to string format for display
     summary_row['Good_Pass_Pct'] = f"{summary_row['Good_Pass_Pct'] * 100:.0f}%"
     summary_row['Error_Density'] = f"{summary_row['Error_Density'] * 100:.1f}%"
-
+    
     # Add summary row
     summary_df = pd.DataFrame([summary_row])
     metrics_df = pd.concat([metrics_df, summary_df], ignore_index=True)
-
 
   # Top performers table (top 5 in each category)
   if len(metrics_df) > 6:  # More than just team average + 5 players
@@ -297,17 +297,24 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       print(f"Top Performers: {top_performers}")
 
   # format the metrics df:
+  # Create a mask for rows where Player is not 'TEAM AVERAGE'
+  mask = metrics_df['Player'] != 'TEAM AVERAGE'
+
+  # Convert the object columns to float64 only for rows where the mask is True
+  metrics_df.loc[mask, 'Good_Pass_Pct'] = pd.to_numeric(metrics_df.loc[mask, 'Good_Pass_Pct'], errors='coerce').astype('float64')
+  metrics_df.loc[mask, 'Error_Density'] = pd.to_numeric(metrics_df.loc[mask, 'Error_Density'], errors='coerce').astype('float64')
+  
   print(metrics_df.dtypes)
   metrics_df['FBHE'] = metrics_df['FBHE'].round(3).astype(str)
   metrics_df['FBSO'] = metrics_df['FBSO'].round(3).astype(str)
   metrics_df['TCR'] = metrics_df['TCR'].round(3).astype(str)
   metrics_df['ESO'] = metrics_df['ESO'].round(3).astype(str)
   metrics_df['Expected'] = metrics_df['Expected'].round(3).astype(str)
-  #metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3).astype(str)
+  metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3)
   metrics_df['Knockout'] = metrics_df['Knockout'].round(3).astype(str)
   metrics_df['Ace/Error'] = metrics_df['Ace/Error'].round(3).astype(str)
   metrics_df['Consistency_Errors'] = metrics_df['Consistency_Errors'].round(3).astype(str)
-  #metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3).astype(str)
+  metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3)
 
   
       # Store the main metrics table

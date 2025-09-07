@@ -82,29 +82,7 @@ def rpt_mgr_generate_background():
     print("No active reports found in rpt_mgr table")
     email_text += "No active reports found in rpt_mgr table\n"
     return False
-    
 
-    # Debug: Print first report structure for verification
-  '''
-  if rpt_rows_list:
-    first_report = rpt_rows_list[0]
-    print(f"First report structure check:")
-    print(f"  Description: {first_report['Report Description']}")
-    print(f"  Type: {first_report['rpt_type']}")
-    print(f"  Team: {first_report['team']}")
-    print(f"  DOW: {first_report['dow']}")
-    print(f"  Email: {first_report['email']}")
-
-    # Check rpts_inc structure
-    if first_report['rpts_inc']:
-      rpts_inc_list = list(first_report['rpts_inc'])
-      print(f"  rpts_inc count: {len(rpts_inc_list)}")
-      if rpts_inc_list:
-        first_rpt_inc = rpts_inc_list[0]
-        print(f"  First rpts_inc keys: {list(first_rpt_inc.keys()) if hasattr(first_rpt_inc, 'keys') else 'Not a dict-like object'}")
-    else:
-      print(f"  rpts_inc is empty or None")
-  '''
 
     # Collect user report infos for batched emails
   user_reports = defaultdict(list)
@@ -435,6 +413,8 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         continue
 
       pdf_name = f"{player_pair} {rpt_r['Report Description']}.pdf"
+      if rpt_r['rpt_type'] == 'dashboard':
+        pdf_name = f"{player_pair} {disp_team} {rpt_r['Report Description']}.pdf"
       print(f"PDF name: {pdf_name}")
 
       # Process rpts_inc
