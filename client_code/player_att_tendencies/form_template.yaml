@@ -28,7 +28,11 @@ components:
     type: Label
   - layout_properties: {grid_position: 'GIFGRC,GPJLOE'}
     name: box2_title
-    properties: {align: center}
+    properties:
+      align: center
+      bold: true
+      spacing:
+        margin: ['0', null, '0', null]
     type: Label
   - layout_properties: {grid_position: 'NDAMRE,DOXELF'}
     name: box_1

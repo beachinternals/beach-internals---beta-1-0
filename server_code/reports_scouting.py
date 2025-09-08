@@ -260,6 +260,8 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_list[2] = serving_df.to_dict('records')
     df_desc_list[2] = f"Serving Recommendations: {pair_a}"
 
+    '''
+    # we don't do this here, these fields come from the report_list table
     if title_list and len(title_list) > 0:
       title_list[0] = f"Scouting Overview: {pair_a}"
     if label_list and len(label_list) > 0:
@@ -268,6 +270,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
         label_list[1] = f"League: {disp_league}, Gender: {disp_gender}, Year: {disp_year}"
       if len(label_list) > 2:
         label_list[2] = f"Team: {team}"
+    '''
 
   except Exception as e:
     error_df = pd.DataFrame({'Error': [f"Error generating scouting report: {str(e)}"]})
