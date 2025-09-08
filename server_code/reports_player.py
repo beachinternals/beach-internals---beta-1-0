@@ -1088,21 +1088,21 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
   if ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( ppr_df, disp_player, 'pass', True )
+    fbhe_result = fbhe_obj( ppr_df, disp_player, 'both', True )
     eso_obj = calc_player_eso(ppr_df,disp_player)
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[4,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[5,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[6,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[2,'All'] = fbhe_vector[4]  # FBSO
-    fbhe_table.at[9,'All'] = fbhe_vector[5]  # URL
+    fbhe_table.at[0,'All'] = fbhe_result.fbhe  # fbhe
+    fbhe_table.at[4,'All'] = fbhe_result.kills  # attacks
+    fbhe_table.at[5,'All'] = fbhe_result.errors  # errors
+    fbhe_table.at[6,'All'] = fbhe_result.attempts  # attempts
+    fbhe_table.at[2,'All'] = fbhe_result.fbso  # FBSO
+    fbhe_table.at[9,'All'] = fbhe_result.video_link  # URL
     fbhe_table.at[3,'All'] = eso_obj.get('eso')  # ESO
     #fbhe_table.at[3,'All'] = float("{:.3f}").format(fbhe_table.at[2,'All'])    
     oos_vector = count_out_of_system( ppr_df, disp_player, 'pass' )
     fbhe_table.at[7,'All'] = 1 - oos_vector[1]  # Good Pass
     fbhe_table.at[7,'All'] = str('{:.1%}').format(fbhe_table.at[7,'All'])
     # FBHE Percentile
-    fbhe_table.at[1,'All'] =  round( stats.norm.cdf( (fbhe_vector[0] - player_data_stats_df.at[0,'fbhe_mean'])/ player_data_stats_df.at[0,'fbhe_stdev'] ), 3)
+    fbhe_table.at[1,'All'] =  round( stats.norm.cdf( (fbhe_result.fbhe - player_data_stats_df.at[0,'fbhe_mean'])/ player_data_stats_df.at[0,'fbhe_stdev'] ), 3)
     fbhe_table.at[1,'All'] = str('{:.0%}').format(fbhe_table.at[1,'All'])
     value = fbhe_table.at[7, 'All']  # '89.3%'
     float_value = float(value.replace('%', ''))/100  # 89.3
@@ -1113,20 +1113,20 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
     column = ['Zone 1','Zone 3','Zone 5','No Zone']
     for i in [0,1,2,3]:
       zone = 0 if i == 3 else (i*2)+1
-      fbhe_vector = fbhe( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', True )
+      fbhe_result = fbhe_obj( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'both', True )
       eso_obj = calc_player_eso(ppr_df[ppr_df['serve_src_zone_net']==zone],disp_player)
-      fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[4,column[i]] = fbhe_vector[1]  # attacks
-      fbhe_table.at[5,column[i]] = fbhe_vector[2]  # errors
-      fbhe_table.at[6,column[i]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[2,column[i]] = fbhe_vector[4]  # fbso
-      fbhe_table.at[9,column[i]] = fbhe_vector[5]  # URL
+      fbhe_table.at[0,column[i]] = fbhe_result.fbhe  # fbhe
+      fbhe_table.at[4,column[i]] = fbhe_result.kills  # attacks
+      fbhe_table.at[5,column[i]] = fbhe_result.errors  # errors
+      fbhe_table.at[6,column[i]] = fbhe_result.attempts  # attempts
+      fbhe_table.at[2,column[i]] = fbhe_result.fbso  # fbso
+      fbhe_table.at[9,column[i]] = fbhe_result.video_link  # URL
       fbhe_table.at[3,column[i]] = eso_obj.get('eso')  # ESO
       #fbhe_table.at[3,column[i]] = float('{:.3f}').format(fbhe_table.at[2,column[i]])
       oos_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass' )
       fbhe_table.at[7,column[i]] = 1 - oos_vector[1]  # Good Pass
       fbhe_table.at[7,column[i]] = str('{:.1%}').format(fbhe_table.at[7,column[i]])
-      fbhe_table.at[1,column[i]] =  round( stats.norm.cdf( (fbhe_vector[0] - player_data_stats_df.at[0,'fbhe_mean'])/ player_data_stats_df.at[0,'fbhe_stdev'] ), 3)
+      fbhe_table.at[1,column[i]] =  round( stats.norm.cdf( (fbhe_result.fbhe - player_data_stats_df.at[0,'fbhe_mean'])/ player_data_stats_df.at[0,'fbhe_stdev'] ), 3)
       fbhe_table.at[1,column[i]] = str('{:.0%}').format(fbhe_table.at[1,column[i]])
       value = fbhe_table.at[7,column[i]]  # '89.3%'
       float_value = float(value.replace('%', ''))/100  # 89.3
@@ -1195,50 +1195,50 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
       #print(f"size of ppr_df, srv src = 1, dest = {i}{j}: {ppr_df[(ppr_df['serve_src_zone_net'] == 1)&(ppr_df['serve_dest_zone_net'] == i)&(ppr_df['serve_dest_zone_depth'] == j.capitalize() )].shape[0]}")
 
       # Zone 1
-      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
+      fbhe_vector = fbhe_obj(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                         disp_player, 'pass', True
+                         disp_player, 'both', True
                         )
       #print(f"FBHE vector for 1, {i}{j}, {fbhe_vector}")
-      if fbhe_vector[3] >= 5:
-        pass1_val[index] = fbhe_vector[0]
-        att1_val[index] = fbhe_vector[3]
+      if fbhe_vector.attempts >= 5:
+        pass1_val[index] = fbhe_vector.fbhe
+        att1_val[index] = fbhe_vector.attempts
         z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
-        z1_table.loc[z1_table_index,'FBHE'] = fbhe_vector[0]
-        z1_table.loc[z1_table_index,'Att'] = fbhe_vector[3]
-        z1_table.loc[z1_table_index,'URL'] = fbhe_vector[5]
+        z1_table.loc[z1_table_index,'FBHE'] = fbhe_vector.fbhe
+        z1_table.loc[z1_table_index,'Att'] = fbhe_vector.attempts
+        z1_table.loc[z1_table_index,'URL'] = fbhe_vector.video_link
         z1_table_index = z1_table_index + 1
 
 
       # Zone 3
-      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
+      fbhe_vector = fbhe_obj(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize())],
-                         disp_player, 'pass', True
+                         disp_player, 'both', True
                         )
-      if fbhe_vector[3] >= 5:        
-        pass3_val[index] = fbhe_vector[0]
-        att3_val[index] = fbhe_vector[3]
+      if fbhe_vector.attempts >= 5:        
+        pass3_val[index] = fbhe_vector.fbhe
+        att3_val[index] = fbhe_vector.attempts
         z3_table.loc[z3_table_index,'Dest Zone'] = str(i)+j.capitalize()
-        z3_table.loc[z3_table_index,'FBHE'] = fbhe_vector[0]
-        z3_table.loc[z3_table_index,'Att'] = fbhe_vector[3]
-        z3_table.loc[z3_table_index,'URL'] = fbhe_vector[5]
+        z3_table.loc[z3_table_index,'FBHE'] = fbhe_vector.fbhe
+        z3_table.loc[z3_table_index,'Att'] = fbhe_vector.attempts
+        z3_table.loc[z3_table_index,'URL'] = fbhe_vector.video_link
         z3_table_index = z3_table_index + 1
 
       # Zone 5
-      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
+      fbhe_vector = fbhe_obj(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                         disp_player, 'pass', True
+                         disp_player, 'both', True
                         )
-      if fbhe_vector[3] >= 5:      
-        pass5_val[index] = fbhe_vector[0]
-        att5_val[index] = fbhe_vector[3]
+      if fbhe_vector.attempts >= 5:      
+        pass5_val[index] = fbhe_vector.fbhe
+        att5_val[index] = fbhe_vector.attempts
         z5_table.loc[z5_table_index,'Dest Zone'] = str(i)+j.capitalize()
-        z5_table.loc[z5_table_index,'FBHE'] = fbhe_vector[0]
-        z5_table.loc[z5_table_index,'Att'] = fbhe_vector[3]
-        z5_table.loc[z5_table_index,'URL'] = fbhe_vector[5]
+        z5_table.loc[z5_table_index,'FBHE'] = fbhe_vector.fbhe
+        z5_table.loc[z5_table_index,'Att'] = fbhe_vector.attempts
+        z5_table.loc[z5_table_index,'URL'] = fbhe_vector.video_link
         z5_table_index = z5_table_index + 1
 
       index = index + 1
@@ -1451,17 +1451,17 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
   if ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = count_out_of_system(ppr_df, disp_player, 'pass')
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  #number out of system,
-    fbhe_table.at[1,'All'] = str('{:.1%}').format(fbhe_vector[1])  # percent out of system
-    fbhe_table.at[2,'All'] = round( stats.norm.cdf((((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
+    fbhe_vector = count_oos_obj(ppr_df, disp_player, 'pass', True)
+    fbhe_table.at[0,'All'] = fbhe_vector.get('count')  #number out of system,
+    fbhe_table.at[1,'All'] = fbhe_vector.get('percent_str')  # percent out of system
+    fbhe_table.at[2,'All'] = round( stats.norm.cdf((((1-fbhe_vector.get('percent'))- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
     fbhe_table.at[2,'All'] = str('{:.0%}').format(fbhe_table.at[2,'All'])
-    fbhe_table.at[3,'All'] = fbhe_vector[2]  # attempts
-    #fbhe_table.at[3,'All'] = fbhe_vector[3]  # URL (someday?)
+    fbhe_table.at[3,'All'] = fbhe_vector.get('attempts')  # attempts
+    fbhe_table.at[4,'All'] = fbhe_vector.get('URL')  # URL (someday? Today!)
 
-    el_result = find_ellipse_area(ppr_df, disp_player, 'pass', min_att=5)
+    el_result = find_ellipse_area(ppr_df, disp_player, 'pass', min_att=5, video_yn=True)
     if el_result.get('attempts') >= 5:
-      area_table.at[0,'All'] = str('{:.1f}').format(el_result.get('area'))
+      area_table.at[0,'All'] = el_result.get('area')
       area_table.at[2,'All'] = el_result.get('attempts')
       #_, area_table.at[1,'All'] = calculate_percentile(el_result.get('area'),player_data_stats_df.at[0,'pass_ea_mean'],player_data_stats_df.at[0,'pass_ea_stdev'])
       area_table.at[3,'All'] = el_result.get('URL')  
@@ -1473,17 +1473,17 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
     column = ['Zone 1','Zone 3','Zone 5','No Zone']
     for i in [0,1,2,3]:
       zone = 0 if i == 3 else (i*2)+1
-      fbhe_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass')
-      fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[1,column[i]] = str('{:.1%}').format(fbhe_vector[1])  # attacks
-      fbhe_table.at[2,column[i]] = round( stats.norm.cdf((((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
+      fbhe_vector = count_oos_obj( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', True)
+      fbhe_table.at[0,column[i]] = fbhe_vector.get('count') # fbhe
+      fbhe_table.at[1,column[i]] = fbhe_vector.get('percent_str')  # attacks
+      fbhe_table.at[2,column[i]] = round( stats.norm.cdf((((1-fbhe_vector.get('percent'))- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
       fbhe_table.at[2,column[i]] = str('{:.0%}').format(fbhe_table.at[2,column[i]])
-      fbhe_table.at[3,column[i]] = fbhe_vector[2]  # errors
-      #fbhe_table.at[3,column[i]] = fbhe_vector[3]  # URL someday
+      fbhe_table.at[3,column[i]] = fbhe_vector.get('attempts')  # errors
+      fbhe_table.at[4,column[i]] = fbhe_vector.get('URL')  # URL someday Today!
 
-      el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', min_att=5)
+      el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', min_att=5, video_yn=True)
       if el_result.get('attempts') >= 5:
-        area_table.at[0,column[i]] = str('{:.1f}').format(el_result.get('area'))
+        area_table.at[0,column[i]] = el_result.get('area')
         #_, area_table.at[1,column[i]] = calculate_percentile(el_result.get('area'),player_data_stats_df.at[0,'pass_ea_mean'],player_data_stats_df.at[0,'pass_ea_stdev'])
         #area_table.at[1,column[i]] = round( ((el_result.get('area')- player_data_stats_df.at[0,'pass_ea_mean'])/(player_data_stats_df.at[0,'pass_es_stdev'])) , 3)
         area_table.at[2,column[i]] = el_result.get('attempts')
@@ -2276,15 +2276,16 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
   if ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = count_out_of_system(ppr_df, disp_player, 'srv')
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  #number out of system,
-    fbhe_table.at[1,'All'] = str('{:.1%}').format(fbhe_vector[1])  # percent out of system
-    fbhe_table.at[2,'All'] = round( stats.norm.cdf((((1-fbhe_vector[1])- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
+    fbhe_vector = count_oos_obj(ppr_df, disp_player, 'srv', True)
+    print(f"Return from count_oos_obj, count = {fbhe_vector.get('count')}, URL= {fbhe_vector.get('URL')}")
+    fbhe_table.at[0,'All'] = fbhe_vector.get('count')  #number out of system,
+    fbhe_table.at[1,'All'] = fbhe_vector.get('percent_str')  # percent out of system
+    fbhe_table.at[2,'All'] = round( stats.norm.cdf((((1-fbhe_vector.get('percent'))- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
     fbhe_table.at[2,'All'] = str('{:.0%}').format(fbhe_table.at[2,'All'])
-    fbhe_table.at[3,'All'] = fbhe_vector[2]  # attempts
-    #fbhe_table.at[3,'All'] = fbhe_vector[3]  # URL (someday?)
+    fbhe_table.at[3,'All'] = fbhe_vector.get('attempts')  # attempts
+    fbhe_table.at[4,'All'] = fbhe_vector.get('URL')  # URL (someday?)
 
-    el_result = find_ellipse_area(ppr_df, disp_player, 'srv', min_att=5)
+    el_result = find_ellipse_area(ppr_df, disp_player, 'srv', min_att=5, video_yn=True)
     if el_result.get('attempts') >= 5:
       area_table.at[0,'All'] = str('{:.1f}').format(el_result.get('area'))
       area_table.at[2,'All'] = el_result.get('attempts')
@@ -2300,13 +2301,13 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
     zone_goodpass_stdev = ['goodpass_stdev', 'goodpass_stdev', 'goodpass_stdev', 'goodpass_stdev']
     for i in [0,1,2,3]:
       zone = 0 if i == 3 else (i*2)+1
-      fbhe_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv')
-      fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[1,column[i]] = str('{:.1%}').format(fbhe_vector[1])  # attacks
-      fbhe_table.at[2,column[i]] = round( stats.norm.cdf((((1-fbhe_vector[1])- player_data_stats_df.at[0,zone_goodpass_stats[i]])/(player_data_stats_df.at[0,zone_goodpass_stdev[i]]))) , 3)
+      fbhe_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv', True)
+      fbhe_table.at[0,column[i]] = fbhe_vector.get('count')  # fbhe
+      fbhe_table.at[1,column[i]] = fbhe_vector.get('percent_str')  # attacks
+      fbhe_table.at[2,column[i]] = round( stats.norm.cdf((((1-fbhe_vector.get('percent'))- player_data_stats_df.at[0,zone_goodpass_stats[i]])/(player_data_stats_df.at[0,zone_goodpass_stdev[i]]))) , 3)
       fbhe_table.at[2,column[i]] = str('{:.0%}').format(fbhe_table.at[2,column[i]])
-      fbhe_table.at[3,column[i]] = fbhe_vector[2]  # errors
-      #fbhe_table.at[3,column[i]] = fbhe_vector[3]  # URL someday
+      fbhe_table.at[3,column[i]] = fbhe_vector.get('attempts') # errors
+      fbhe_table.at[4,column[i]] = fbhe_vector.get('URL')  # URL someday
 
       el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv', min_att=5)
       if el_result.get('attempts') >= 5:
@@ -3076,7 +3077,7 @@ def report_player_profile(lgy, team, **rpt_filters):
         metrics_dict['League Percentile'][7] = "{:.0%}".format(norm.cdf(z_score))
 
       # Goodpass from count_good_passes_obj
-      goodpass_result = count_good_passes_obj(ppr_df, disp_player, 'pass')
+      goodpass_result = count_good_passes_obj(ppr_df, disp_player, 'pass', False)
       #print(f"Goodpass result: {goodpass_result}")
       metrics_dict['Value'][8] = "{:.0%}".format(goodpass_result['percent'] if goodpass_result['attempts'] > 0 else 0)
       metrics_dict['League Average'][8] = "{:.0%}".format(player_data_stats_df.at[0,'goodpass_mean'] if 'goodpass_mean' in player_data_stats_df.columns else 0)
@@ -3132,6 +3133,8 @@ def report_player_profile(lgy, team, **rpt_filters):
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
 
 def report_player_tournament_summary(lgy, team, **rpt_filters):
   """

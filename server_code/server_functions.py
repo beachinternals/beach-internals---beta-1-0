@@ -1150,7 +1150,7 @@ def count_out_of_system(ppr_df,disp_player,action):
 
   
 #=============----------------===============---------------==============----------
-def count_oos_obj(ppr_df, disp_player, action):
+def count_oos_obj(ppr_df, disp_player, action, video_yn=False):
   """
     Count out-of-system statistics for a player's actions.
     
@@ -1185,7 +1185,8 @@ def count_oos_obj(ppr_df, disp_player, action):
     'count': 0,           # number out of system
     'percent': 0.0,       # percent out of system (decimal)
     'percent_str': '0%',  # percent out of system (formatted string)
-    'attempts': 0         # total attempts
+    'attempts': 0 ,       # total attempts
+    'URL':''              # Video Links
   }
 
   # Check if DataFrame is empty
@@ -1208,10 +1209,14 @@ def count_oos_obj(ppr_df, disp_player, action):
     # Format percentage string with no decimals
     result['percent_str'] = f"{result['percent']:.0%}"
 
+    # Get video links if video_yn is True, else return empty string
+    print(f"In count_oos_obj, calling bulid video, number = {len(player_data[player_data['pass_oos'] > 0])}")
+    result['URL'] = build_video_links(player_data[player_data['pass_oos'] > 0]) if video_yn else ''
+  
   return result
 
 #=============----------------===============---------------==============----------
-def count_good_passes_obj(ppr_df, disp_player, action='pass'):
+def count_good_passes_obj(ppr_df, disp_player, action='pass', video_yn=False):
   """
     Count good passes (in-system) statistics for a player's actions.
     This is the inverse of out-of-system passes.
@@ -1220,17 +1225,19 @@ def count_good_passes_obj(ppr_df, disp_player, action='pass'):
         ppr_df: DataFrame containing player performance data
         disp_player: Player name to analyze
         action: Action type ('pass', 'att', 'srv'), defaults to 'pass'
+        video_yn: Boolean to include video links, defaults to False
     
     Returns:
-        dict: Dictionary with keys 'count', 'percent', 'percent_str', 'attempts'
+        dict: Dictionary with keys 'count', 'percent', 'percent_str', 'attempts', 'URL'
               Use .get() method to safely access values with defaults
         'count' - number of good passes (in-system)
         'percent' - decimal percentage of good passes (e.g., 0.85 for 85%)
         'percent_str' - formatted percentage string with no decimals (e.g., '85%')
         'attempts' - total attempts for the action
+        'URL' - string of video links from build_video_links if video_yn is True, else empty string
     """
   # Get out-of-system statistics first
-  oos_stats = count_oos_obj(ppr_df, disp_player, action)
+  oos_stats = count_oos_obj(ppr_df, disp_player, action, video_yn)
 
   # Calculate good passes as the inverse of out-of-system
   total_attempts = oos_stats.get('attempts', 0)
@@ -1243,12 +1250,18 @@ def count_good_passes_obj(ppr_df, disp_player, action='pass'):
   # Format percentage string with no decimals
   good_percent_str = f"{good_percent:.0%}"
 
+  # Get video links if video_yn is True, else return empty string
+  video_links = oos_stats.get('URL')
+
   return {
     'count': good_count,           # number of good passes
     'percent': good_percent,       # percent of good passes (decimal)
     'percent_str': good_percent_str,  # percent of good passes (formatted string)
-    'attempts': total_attempts     # total attempts
+    'attempts': total_attempts,    # total attempts
+    'URL': video_links            # video links or empty string
   }
+
+  
 
 
  
@@ -2229,7 +2242,7 @@ def setup_report_basics(lgy, team, function_name=None):
 #       This is a bit differenct, calc_player_data uses similar code, but not this function (yet)
 #
 #--------------------------------------------------------------------------------------------------
-def find_ellipse_area(tmp1_df, disp_player, type, min_att=5):
+def find_ellipse_area(tmp1_df, disp_player, type, min_att=5, video_yn=False):
   '''
   tmp1_df is the ppr dataframe with the data in one of the touch dest x,y to calculate ellipse for
   type can be:
@@ -2239,11 +2252,27 @@ def find_ellipse_area(tmp1_df, disp_player, type, min_att=5):
     - 'att'
     - 'dig'
 
-    This always uses the desitnation coordinate, defaults to pass of it does not recognize type
+    This always uses the destination coordinate, defaults to pass if it does not recognize type
 
-    min_att, pass the minimum number of attempts, defualt is 5
+    min_att, pass the minimum number of attempts, default is 5
 
     This calculates for all points in tmp1_df, so limit it to the point desired before calling
+
+    Args:
+        tmp1_df: DataFrame containing player performance data
+        disp_player: Player name to analyze
+        type: Action type ('srv', 'pass', 'set', 'att', 'dig')
+        min_att: Minimum number of attempts, defaults to 5
+        video_yn: Boolean to include video links, defaults to False
+
+    Returns:
+        dict: Dictionary with keys 'area', 'type', 'message', 'success', 'attempts', 'URL'
+        'area' - calculated ellipse area or None
+        'type' - action type
+        'message' - status message
+        'success' - boolean indicating if ellipse calculation was successful
+        'attempts' - number of data points used
+        'URL' - string of video links from build_video_links if video_yn is True, else empty string
   '''
 
   # default 
@@ -2255,50 +2284,52 @@ def find_ellipse_area(tmp1_df, disp_player, type, min_att=5):
   if type == 'srv':
     var_x = 'serve_dest_x'
     var_y = 'serve_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['serve_player'] == disp_player]
+    filtered_df = tmp1_df[tmp1_df['serve_player'] == disp_player]
   elif type == 'pass':
     var_x = 'pass_dest_x'
     var_y = 'pass_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['pass_player'] == disp_player]
+    filtered_df = tmp1_df[tmp1_df['pass_player'] == disp_player]
   elif type == 'set':
     var_x = 'set_dest_x'
     var_y = 'set_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['set_player'] == disp_player]
+    filtered_df = tmp1_df[tmp1_df['set_player'] == disp_player]
   elif type == 'att':
     var_x = 'att_dest_x'
     var_y = 'att_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['att_player'] == disp_player]
+    filtered_df = tmp1_df[tmp1_df['att_player'] == disp_player]
   elif type == 'dig':
     var_x = 'dig_dest_x'
     var_y = 'dig_dest_y'
-    tmp1_df = tmp1_df[tmp1_df['dig_player'] == disp_player]
+    filtered_df = tmp1_df[tmp1_df['dig_player'] == disp_player]
   else:
     # default to pass
     el_message = el_message + 'type mismatch, used pass.  type='+type
     var_x = 'pass_dest_x'
     var_y = 'pass_dest_y'
+    filtered_df = tmp1_df[tmp1_df['pass_player'] == disp_player]
 
-  el_points = pd.concat( [tmp1_df[var_x],tmp1_df[var_y]], axis = 1)
-  #print(f" el_points {el_points}")
+  el_points = pd.concat([filtered_df[var_x], filtered_df[var_y]], axis=1)
   el_points = el_points.dropna().values
   el_att = len(el_points)
   if el_att >= min_att:  # must have at least 5 points to calculate the ellipse
     el_message = el_message + ' Ellipse calculated, number of points ='+str(el_att)
-    el_mean, el_width, el_height, el_angle  = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
-
-    # not store the ellipse area
-    #print(f"Assigning Ellipse Area: points: {el_points}, variable: {fbhe_var_ea}, Height: {type(ellipse_height)}, {ellipse_height}, Width: {type(ellipse_width)}, {ellipse_width}")
+    el_mean, el_width, el_height, el_angle = calculate_standard_deviation_ellipse(el_points, confidence=1.0)
     el_area = math.pi*(el_width/2)*(el_height/2)
     el_success = True
 
+  # Get video links if video_yn is True, else return empty string
+  el_url = build_video_links(filtered_df) if video_yn else ''
+
   return {
-    'area':el_area, 
-    'type':type, 
-    'message':el_message, 
-    'success':el_success,
-    'attempts':el_att,
-    'URL':el_url
+    'area': round(el_area, 1) if el_area is not None else None,
+    'type': type,
+    'message': el_message,
+    'success': el_success,
+    'attempts': el_att,
+    'URL': el_url
   }
+  
+
 
 def calc_ace_error_ratio(ppr_df, disp_player):
   # Filter rows where the player is serving
