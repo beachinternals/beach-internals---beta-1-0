@@ -36,12 +36,14 @@ components:
   type: ColumnPanel
 - layout_properties: {grid_position: 'FLACQC,KBHHLM'}
   name: box2_title
-  properties: {align: center, spacing_above: none, spacing_below: none}
+  properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
   type: Label
 - components:
   - layout_properties: {grid_position: 'JLKKTE,UGBSQX'}
     name: image_1
-    properties: {height: '520'}
+    properties:
+      height: '520'
+      margin: ['0', null, '0', null]
     type: Image
   - layout_properties: {grid_position: 'JGQGUQ,ZENLLP'}
     name: box_2
@@ -54,7 +56,9 @@ components:
 - components:
   - layout_properties: {grid_position: 'AKMMHW,VUTMZI'}
     name: image_2
-    properties: {height: '520'}
+    properties:
+      height: '520'
+      margin: ['0', null, '0', null]
     type: Image
   - layout_properties: {grid_position: 'PPTASA,TTJEVN'}
     name: box_3
@@ -67,7 +71,9 @@ components:
 - components:
   - layout_properties: {grid_position: 'IFBFIT,HWAWFT'}
     name: image_3
-    properties: {height: '520'}
+    properties:
+      height: '520'
+      margin: ['0', null, o, null]
     type: Image
   - layout_properties: {grid_position: 'JSKXBU,LKPKKA'}
     name: box_4
@@ -79,7 +85,7 @@ components:
   type: ColumnPanel
 - layout_properties: {grid_position: 'JPIITM,ICGSQO'}
   name: box3_title
-  properties: {align: center, spacing_above: none, spacing_below: none}
+  properties: {align: center, bold: true, spacing_above: none, spacing_below: none}
   type: Label
 - layout_properties: {grid_position: 'FXBLZZ,KGFYCX'}
   name: box_5
@@ -88,7 +94,9 @@ components:
 - components:
   - layout_properties: {grid_position: 'ZIGNPY,VMCVPI NMGFEM,KLJPUF'}
     name: image_4
-    properties: {height: '520'}
+    properties:
+      height: '520'
+      margin: ['0', null, '0', null]
     type: Image
   - layout_properties: {grid_position: 'ZIGNPY,VMCVPI RAPTWN,VBAEVF'}
     name: box_6
@@ -96,7 +104,9 @@ components:
     type: RichText
   - layout_properties: {grid_position: 'ZIGNPY,RSUCQA LLEBHD,ZSUOVP'}
     name: image_5
-    properties: {height: '520'}
+    properties:
+      height: '520'
+      margin: ['0', null, '0', null]
     type: Image
   - layout_properties: {grid_position: 'ZIGNPY,RSUCQA QTQSEC,LPBNKG'}
     name: box_7
@@ -104,7 +114,9 @@ components:
     type: RichText
   - layout_properties: {grid_position: 'ZIGNPY,KEHNTW TKIXVB,AZCCRF'}
     name: image_6
-    properties: {height: '520'}
+    properties:
+      height: '520'
+      margin: [o, null, o, null]
     type: Image
   - layout_properties: {grid_position: 'ZIGNPY,KEHNTW PUBQAZ,GCOVYX'}
     name: box_8
@@ -121,7 +133,7 @@ components:
     type: Label
   - layout_properties: {grid_position: 'LZJFGY,MWSFPD'}
     name: explain_text
-    properties: {spacing_above: none, spacing_below: none}
+    properties: {font_size: 12, spacing_above: none, spacing_below: none}
     type: RichText
   layout_properties: {grid_position: 'OOTPFF,HFYQMS'}
   name: column_panel_4
@@ -132,13 +144,13 @@ components:
     name: label_2
     properties: {align: center, bold: true, spacing_above: none, spacing_below: none, text: Report Data Filters}
     type: Label
-  layout_properties: {grid_position: 'OOTPFF,DJDXGH IPTEDY,GBMEFE'}
+  - layout_properties: {grid_position: 'GTJNLG,DARWEP'}
+    name: filter_text
+    properties: {font_size: 12, spacing_above: none, spacing_below: none}
+    type: RichText
+  layout_properties: {grid_position: 'OOTPFF,DJDXGH'}
   name: column_panel_5
   properties: {}
   type: ColumnPanel
-- layout_properties: {grid_position: 'OOTPFF,DJDXGH DEXJPO,AJILEX'}
-  name: filter_text
-  properties: {spacing_above: none, spacing_below: none}
-  type: RichText
 container: {type: ColumnPanel}
 is_package: true

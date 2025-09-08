@@ -1296,6 +1296,13 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
   image_list[5] = z5_plt
   
   # put the DF's in the df_list
+
+  # before storing the first table, I want to change Zone 1,3,5 to Left, Middle, Right
+  fbhe_table = fbhe_table.rename(columns={
+    'Zone 1': 'Left',
+    'Zone 3': 'Middle',
+    'Zone 5': 'Right'
+  })
   df_list[0] = fbhe_table.to_dict('records')
   df_list[1] = z1_table.to_dict('records')
   df_list[2] = z3_table.to_dict('records')
@@ -1456,7 +1463,7 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
     if el_result.get('attempts') >= 5:
       area_table.at[0,'All'] = str('{:.1f}').format(el_result.get('area'))
       area_table.at[2,'All'] = el_result.get('attempts')
-      #area_table.at[1,'All'] = round( ((el_result.get('area')- player_data_stats_df.at[0,'pass_ea_mean'])/(player_data_stats_df.at[0,'pass_es_stdev'])) , 3)
+      #_, area_table.at[1,'All'] = calculate_percentile(el_result.get('area'),player_data_stats_df.at[0,'pass_ea_mean'],player_data_stats_df.at[0,'pass_ea_stdev'])
       area_table.at[3,'All'] = el_result.get('URL')  
       el_area.append(el_result.get('area'))
 
@@ -1477,6 +1484,7 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
       el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass', min_att=5)
       if el_result.get('attempts') >= 5:
         area_table.at[0,column[i]] = str('{:.1f}').format(el_result.get('area'))
+        #_, area_table.at[1,column[i]] = calculate_percentile(el_result.get('area'),player_data_stats_df.at[0,'pass_ea_mean'],player_data_stats_df.at[0,'pass_ea_stdev'])
         #area_table.at[1,column[i]] = round( ((el_result.get('area')- player_data_stats_df.at[0,'pass_ea_mean'])/(player_data_stats_df.at[0,'pass_es_stdev'])) , 3)
         area_table.at[2,column[i]] = el_result.get('attempts')
         area_table.at[3,column[i]] = el_result.get('URL')
@@ -1741,10 +1749,28 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
   image_list[5] = a5_plt
 
   # put the DF's in the df_list
+  # before storing the first table, I want to change Zone 1,3,5 to Left, Middle, Right
+  fbhe_table = fbhe_table.rename(columns={
+    'Zone 1': 'Left',
+    'Zone 3': 'Middle',
+    'Zone 5': 'Right'
+  })
   df_list[0] = fbhe_table.to_dict('records')
   df_list[1] = z1_table.to_dict('records')
   df_list[2] = z3_table.to_dict('records')
   df_list[3] = z5_table.to_dict('records')
+
+  # before storing the first table, I want to change Zone 1,3,5 to Left, Middle, Right
+  area_table = area_table.rename(columns={
+    'Zone 1': 'Left',
+    'Zone 3': 'Middle',
+    'Zone 5': 'Right'
+  })
+  # currenlty do not calcualte in player_data_stats pass area bu serve source, so delete this row
+  # Filter out the 'Percentile' row, handling whitespace and case
+  print(f" area table: \n {area_table}")
+  area_table = area_table.drop(index=1)
+  
   df_list[4] = area_table.to_dict('records')
   df_list[5] = a1_table.to_dict('records')
   df_list[6] = a3_table.to_dict('records')
