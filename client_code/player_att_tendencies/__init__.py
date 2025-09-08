@@ -96,8 +96,8 @@ class player_att_tendencies(player_att_tendenciesTemplate):
         self.box2_title.text = label_list[1]
       if isinstance(label_list[2], str):
         self.box3_title.text = label_list[2]
-      # if isinstance(label_list[3], str):
-      #  self.box4_title.text = label_list[3]
+      if isinstance(label_list[3], str):
+        self.box4_title.text = label_list[3]
       # if isinstance(label_list[4], str):
       #  self.box5_title.text = label_list[4]
       # if isinstance(label_list[5], str):
