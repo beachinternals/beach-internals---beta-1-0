@@ -11,11 +11,20 @@ components:
 - components:
   - layout_properties: {grid_position: 'BZLNEZ,XDOJAR'}
     name: rpt_title
-    properties: {align: center, bold: true, font_size: 18}
+    properties:
+      align: center
+      bold: true
+      font_size: 18
+      spacing:
+        margin: ['0', null, '0', null]
     type: Label
   - layout_properties: {grid_position: 'MQHUQU,RGYHZN'}
     name: rpt_subtitle
-    properties: {align: center, bold: true}
+    properties:
+      align: center
+      bold: true
+      spacing:
+        margin: ['0', null, '0', null]
     type: Label
   layout_properties: {grid_position: 'MHEOJM,LEROUB'}
   name: column_panel_1
@@ -24,11 +33,18 @@ components:
 - components:
   - layout_properties: {grid_position: 'XOPBDF,CDNBOB'}
     name: box1_title
-    properties: {align: center, bold: true}
+    properties:
+      align: center
+      bold: true
+      font_size: 12
+      spacing:
+        margin: ['0', null, '0', null]
     type: Label
   - layout_properties: {grid_position: 'PILCCT,WRRAHR'}
     name: box1
-    properties: {}
+    properties:
+      spacing:
+        margin: ['0', null, '0', null]
     type: RichText
   layout_properties: {grid_position: 'BGXTTM,IGUYGG'}
   name: column_panel_2
@@ -37,11 +53,18 @@ components:
 - components:
   - layout_properties: {grid_position: 'YSLQRS,QFKLMK'}
     name: box2_title
-    properties: {align: center, bold: true}
+    properties:
+      align: center
+      bold: true
+      spacing:
+        margin: ['0', null, '0', null]
     type: Label
   - layout_properties: {grid_position: 'DJLSZQ,CRMKWM'}
     name: box2
-    properties: {}
+    properties:
+      font_size: 12
+      spacing:
+        margin: ['0', null, '0', null]
     type: RichText
   layout_properties: {grid_position: 'DACOAC,AQCLMX'}
   name: column_panel_3
@@ -50,11 +73,17 @@ components:
 - components:
   - layout_properties: {grid_position: 'LXVMNB,IYVCFA'}
     name: box3_title
-    properties: {align: center}
+    properties:
+      align: center
+      spacing:
+        margin: ['0', null, '0', null]
     type: Label
   - layout_properties: {grid_position: 'BBCNKO,GFLSDF'}
     name: box3
-    properties: {}
+    properties:
+      font_size: 12
+      spacing:
+        margin: ['0', null, '0', null]
     type: RichText
   layout_properties: {grid_position: 'LUOKOA,TDPZOX'}
   name: column_panel_6
@@ -63,11 +92,17 @@ components:
 - components:
   - layout_properties: {grid_position: 'QMCWOL,ZXEUVK'}
     name: box4_title
-    properties: {align: center}
+    properties:
+      align: center
+      spacing:
+        margin: ['0', null, '0', null]
     type: Label
   - layout_properties: {grid_position: 'SEWRXB,VCMNOS'}
     name: box4
-    properties: {}
+    properties:
+      font_size: 12
+      spacing:
+        margin: ['0', null, '0', null]
     type: RichText
   layout_properties: {grid_position: 'MFHNVH,NCDAVN'}
   name: column_panel_7
@@ -76,11 +111,19 @@ components:
 - components:
   - layout_properties: {grid_position: 'IFOHDJ,SNQJLY'}
     name: label_1
-    properties: {align: center, bold: true, text: Report Description}
+    properties:
+      align: center
+      bold: true
+      spacing:
+        margin: ['0', null, '0', null]
+      text: Report Description
     type: Label
   - layout_properties: {grid_position: 'LZJFGY,MWSFPD'}
     name: explain_text
-    properties: {}
+    properties:
+      font_size: 12
+      spacing:
+        margin: ['0', null, '0', null]
     type: RichText
   layout_properties: {grid_position: 'OOTPFF,HFYQMS'}
   name: column_panel_4
@@ -89,15 +132,23 @@ components:
 - components:
   - layout_properties: {grid_position: 'ZHCBED,YHCGGG'}
     name: label_2
-    properties: {align: center, bold: true, text: Report Data Filters}
+    properties:
+      align: center
+      bold: true
+      spacing:
+        margin: ['0', null, '0', null]
+      text: Report Data Filters
     type: Label
-  layout_properties: {grid_position: 'OOTPFF,DJDXGH IPTEDY,GBMEFE'}
+  - layout_properties: {grid_position: 'BLUOKI,CHRESG'}
+    name: filter_text
+    properties:
+      font_size: 12
+      spacing:
+        margin: ['0', null, '0', null]
+    type: RichText
+  layout_properties: {grid_position: 'OOTPFF,DJDXGH'}
   name: column_panel_5
   properties: {}
   type: ColumnPanel
-- layout_properties: {grid_position: 'OOTPFF,DJDXGH DEXJPO,AJILEX'}
-  name: filter_text
-  properties: {}
-  type: RichText
 container: {type: ColumnPanel}
 is_package: true

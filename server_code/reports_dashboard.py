@@ -324,6 +324,12 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   #metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3)
   metrics_df['Error_Density'] = metrics_df['Error_Density'].apply(lambda x: f"{x * 100:02.0f}%" if pd.notnull(x) else x)
 
+  # change column names to fit into the display
+  metrics_df = metrics_df.rename(columns={
+    'Good_Pass_Pct': 'Good Pass',
+    'Consistency_Errors': 'Consistency',
+    'Error_Density': 'Error Density'
+  })
   
       # Store the main metrics table
   df_list[0] = metrics_df.to_dict('records')
