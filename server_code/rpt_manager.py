@@ -739,7 +739,9 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           continue
 
           # Save pair_pdf
-      if pair_pdf:
+          # no, we do not need to save this pdf, only the last combined one
+      if False:
+      #if pair_pdf:
         try:
           pair_pdf_result = write_to_nested_folder(pdf_folder, pair_pdf_name, pair_pdf)
           logging.info(f"Saved pair PDF: {pair_pdf_result}")
@@ -808,6 +810,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           if rptname['report_name'] == 'attack_tendency' and attack_tendency_merged:
             logging.info(f"Skipping attack tendency report for {player1} as it was already merged")
             continue
+            
           if player1_pdf:
             try:
               logging.info(f"Merging player1_pdf: type={type(player1_pdf)}, content_type={getattr(player1_pdf, 'content_type', 'Unknown')}")
@@ -826,7 +829,9 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           continue
 
           # Save player1_pdf
-      if player1_pdf:
+          # no, we do not need to save this pdf, only the last combined one
+      if False:
+      #if player1_pdf:
         try:
           player1_pdf_result = write_to_nested_folder(pdf_folder, player1_pdf_name, player1_pdf)
           logging.info(f"Saved player1 PDF: {player1_pdf_result}")
@@ -913,7 +918,9 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           continue
 
           # Save player2_pdf
-      if player2_pdf:
+          # no, we do not need to save this pdf, only the last combined one
+      if False:
+      #if player2_pdf:
         try:
           player2_pdf_result = write_to_nested_folder(pdf_folder, player2_pdf_name, player2_pdf)
           logging.info(f"Saved player2 PDF: {player2_pdf_result}")

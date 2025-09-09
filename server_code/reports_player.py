@@ -2139,6 +2139,11 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
   image_list[5] = z5_plt
   
   # put the DF's in the df_list
+  fbhe_table = fbhe_table.rename(columns={
+    'Zone 1': 'Left',
+    'Zone 3': 'Middle',
+    'Zone 5': 'Right'
+  })
   df_list[0] = fbhe_table.to_dict('records')
   df_list[1] = z1_table.to_dict('records')
   df_list[2] = z3_table.to_dict('records')
@@ -2277,10 +2282,10 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
     fbhe_vector = count_oos_obj(ppr_df, disp_player, 'srv', True)
-    print(f"Return from count_oos_obj, count = {fbhe_vector.get('count')}, URL= {fbhe_vector.get('URL')}")
+    #print(f"Return from count_oos_obj, count = {fbhe_vector.get('count')}, URL= {fbhe_vector.get('URL')}")
     fbhe_table.at[0,'All'] = fbhe_vector.get('count')  #number out of system,
     fbhe_table.at[1,'All'] = fbhe_vector.get('percent_str')  # percent out of system
-    fbhe_table.at[2,'All'] = round( stats.norm.cdf((((1-fbhe_vector.get('percent'))- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
+    fbhe_table.at[2,'All'] = 1- round( stats.norm.cdf((((1-fbhe_vector.get('percent'))- player_data_stats_df.at[0,'goodpass_mean'])/(player_data_stats_df.at[0,'goodpass_stdev']))) , 3)
     fbhe_table.at[2,'All'] = str('{:.0%}').format(fbhe_table.at[2,'All'])
     fbhe_table.at[3,'All'] = fbhe_vector.get('attempts')  # attempts
     fbhe_table.at[4,'All'] = fbhe_vector.get('URL')  # URL (someday?)
@@ -2301,7 +2306,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
     zone_goodpass_stdev = ['goodpass_stdev', 'goodpass_stdev', 'goodpass_stdev', 'goodpass_stdev']
     for i in [0,1,2,3]:
       zone = 0 if i == 3 else (i*2)+1
-      fbhe_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv', True)
+      fbhe_vector = count_oos_obj( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv', True)
       fbhe_table.at[0,column[i]] = fbhe_vector.get('count')  # fbhe
       fbhe_table.at[1,column[i]] = fbhe_vector.get('percent_str')  # attacks
       fbhe_table.at[2,column[i]] = round( stats.norm.cdf((((1-fbhe_vector.get('percent'))- player_data_stats_df.at[0,zone_goodpass_stats[i]])/(player_data_stats_df.at[0,zone_goodpass_stdev[i]]))) , 3)
@@ -2579,10 +2584,20 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
   image_list[5] = a5_plt
 
   # put the DF's in the df_list
+  fbhe_table = fbhe_table.rename(columns={
+    'Zone 1': 'Left',
+    'Zone 3': 'Middle',
+    'Zone 5': 'Right'
+  })
   df_list[0] = fbhe_table.to_dict('records')
   df_list[1] = z1_table.to_dict('records')
   df_list[2] = z3_table.to_dict('records')
   df_list[3] = z5_table.to_dict('records')
+  area_table = area_table.rename(columns={
+    'Zone 1': 'Left',
+    'Zone 3': 'Middle',
+    'Zone 5': 'Right'
+  })
   df_list[4] = area_table.to_dict('records')
   df_list[5] = a1_table.to_dict('records')
   df_list[6] = a3_table.to_dict('records')
