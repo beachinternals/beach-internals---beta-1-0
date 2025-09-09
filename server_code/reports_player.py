@@ -2524,7 +2524,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
   plot_court_background(fig,ax)
   ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass1_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
-  ax.set_title("Opponent Good Passes from Zone 1", fontsize=35)
+  ax.set_title("Opponent Out of System Passes from Left", fontsize=35)
   z1_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
@@ -2532,7 +2532,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
   plot_court_background(fig,ax)
   ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass3_val, vmin=cmin, vmax=cmax, cmap=custom_cmap ) 
-  ax.set_title("Opponent Good Passes from Zone 3", fontsize=35)
+  ax.set_title("Opponent Out of System Passes from Middle", fontsize=35)
   z3_plt = anvil.mpl_util.plot_image()
 
   # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
@@ -2541,7 +2541,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
   ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
   ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=pass5_val, vmin=cmin, vmax=cmax, cmap=custom_cmap )  
   fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap=custom_cmap),ax=ax, orientation='vertical', label='Percent Good Passes')
-  ax.set_title("Opponent Good Passes from Zone 5", fontsize=35)
+  ax.set_title("Opponent Out of System Passes from Right", fontsize=35)
   z5_plt = anvil.mpl_util.plot_image()
 
   cmin = min(el_area)
