@@ -638,13 +638,14 @@ def report_player_att_transition(lgy, team, **rpt_filters):
 
   # Calculate metrics for 'All'
   trans_obj_all = calc_trans_obj(ppr_df, disp_player, 'att')
+  #print(f"Transition object, attack, returnd: {trans_obj_all}")
   if trans_obj_all['status']:
     table_data['All'][0] = trans_obj_all['tcr_str']  # Transition Conversion
-    _, table_data['All'][1] = calculate_percentile(trans_obj_all['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])  # Percentile
+    _, table_data['All'][1] = calculate_percentile(trans_obj_all['tcr'], player_data_stats_df.at[0,'tcr_r_mean'], player_data_stats_df.at[0,'tcr_r_stdev'])  # Percentile
     table_data['All'][2] = trans_obj_all['t_eff_str']  # Transition Effectiveness
-    _, table_data['All'][3] = calculate_percentile(trans_obj_all['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])  # Percentile
+    _, table_data['All'][3] = calculate_percentile(trans_obj_all['t_eff'], player_data_stats_df.at[0,'t_eff_r_mean'], player_data_stats_df.at[0,'t_eff_r_stdev'])  # Percentile
     table_data['All'][4] = trans_obj_all['t_create_str']  # Transition Creates
-    percent, _ = calculate_percentile(trans_obj_all['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])  # Percentile
+    percent, _ = calculate_percentile(trans_obj_all['t_create'], player_data_stats_df.at[0,'t_create_r_mean'], player_data_stats_df.at[0,'t_create_r_stdev'])  # Percentile
     table_data['All'][5] =  f"{1-percent:.0%}"
     table_data['All'][6] = str(trans_obj_all['tran_total_pts'])  # Transition Points
 
@@ -654,11 +655,11 @@ def report_player_att_transition(lgy, team, **rpt_filters):
     trans_obj_area = calc_trans_obj(area_df, disp_player, 'att')
     if trans_obj_area['status']:
       table_data[f'Area {area}'][0] = trans_obj_area['tcr_str']
-      _, table_data[f'Area {area}'][1] = calculate_percentile(trans_obj_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
+      _, table_data[f'Area {area}'][1] = calculate_percentile(trans_obj_area['tcr'], player_data_stats_df.at[0,'tcr_r_mean'], player_data_stats_df.at[0,'tcr_r_stdev'])
       table_data[f'Area {area}'][2] = trans_obj_area['t_eff_str']
-      _, table_data[f'Area {area}'][3] = calculate_percentile(trans_obj_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
+      _, table_data[f'Area {area}'][3] = calculate_percentile(trans_obj_area['t_eff'], player_data_stats_df.at[0,'t_eff_r_mean'], player_data_stats_df.at[0,'t_eff_r_stdev'])
       table_data[f'Area {area}'][4] = trans_obj_area['t_create_str']
-      percent, _ = calculate_percentile(trans_obj_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+      percent, _ = calculate_percentile(trans_obj_area['t_create'], player_data_stats_df.at[0,'t_create_r_mean'], player_data_stats_df.at[0,'t_create_r_stdev'])
       table_data[f'Area {area}'][5] = f"{1-percent:.0%}"
       table_data[f'Area {area}'][6] = str(trans_obj_area['tran_total_pts'])
 
@@ -672,11 +673,11 @@ def report_player_att_transition(lgy, team, **rpt_filters):
   trans_obj_no_area = calc_trans_obj(no_area_df, disp_player, 'att')
   if trans_obj_no_area['status']:
     table_data['No Area'][0] = trans_obj_no_area['tcr_str']
-    _, table_data['No Area'][1] = calculate_percentile(trans_obj_no_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
+    _, table_data['No Area'][1] = calculate_percentile(trans_obj_no_area['tcr'], player_data_stats_df.at[0,'tcr_r_mean'], player_data_stats_df.at[0,'tcr_r_stdev'])
     table_data['No Area'][2] = trans_obj_no_area['t_eff_str']
-    _, table_data['No Area'][3] = calculate_percentile(trans_obj_no_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
+    _, table_data['No Area'][3] = calculate_percentile(trans_obj_no_area['t_eff'], player_data_stats_df.at[0,'t_eff_r_mean'], player_data_stats_df.at[0,'t_eff_r_stdev'])
     table_data['No Area'][4] = trans_obj_no_area['t_create_str']
-    percent, _ = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
+    percent, _ = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df.at[0,'t_create_r_mean'], player_data_stats_df.at[0,'t_create_r_stdev'])
     table_data['No Area'][5] = f"{1-percent:.0%}"
     table_data['No Area'][6] = str(trans_obj_no_area['tran_total_pts'])
 
@@ -684,6 +685,14 @@ def report_player_att_transition(lgy, team, **rpt_filters):
   df = pd.DataFrame(table_data)
 
   # Store the dataframe in df_list[0]
+  # change colulmn names right befreo we return
+  df = df.rename(columns={
+    'Area 1': 'Left Pin',
+    'Area 2': 'Left Slot',
+    'Area 3': 'Middle',
+    'Area 4': 'Right Slot',
+    'Area 5': 'Right Pin'
+  })
   df_list[0] = df.to_dict('records')
   # =============================================================================
   # END REPORT-SPECIFIC LOGIC
@@ -789,14 +798,11 @@ def report_player_att_expected(lgy, team, **rpt_filters):
 
     # Calculate Expected Value
     ev_result = calc_ev_obj(temp_df, disp_player)
-    table_data[area][6] = ev_result.get('expected_value', '0%')
-    # Convert percentage string to float for percentile calculation
-    ev_value = float(ev_result.get('expected_value', '0%').strip('%')) 
-    #print(f" ev_value {ev_value}, mean {player_data_stats_df.at[0, 'expected_mean']}, stdev {player_data_stats_df.at[0, 'expected_stdev']}")
+    table_data[area][6] = ev_result.get('expected_value_per')
     _, ev_percentile_str = calculate_percentile(
-      ev_value,
-      player_data_stats_df.at[0, 'expected_mean'],
-      player_data_stats_df.at[0, 'expected_stdev']
+      ev_result.get('expected_value'),
+      player_data_stats_df.at[0, 'expected_mean']/100,
+      player_data_stats_df.at[0, 'expected_stdev']/100
     )
     table_data[area][7] = ev_percentile_str if ev_percentile_str is not None else '0%'
 
@@ -805,6 +811,13 @@ def report_player_att_expected(lgy, team, **rpt_filters):
 
   # Convert to DataFrame
   df = pd.DataFrame(table_data)
+  df = df.rename(columns={
+    'Area 1':'Left Pin',
+    'Area 2':'Left Slot',
+    'Area 3':'Middle',
+    'Area 4':'Right Slot',
+    'Area 5':'Right Pin'
+  })
   df_list[0] = df.to_dict('records')
 
   # =============================================================================

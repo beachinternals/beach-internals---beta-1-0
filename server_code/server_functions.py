@@ -586,7 +586,7 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
 
   return_status = True
   error_msg = ''
-  print(f"ppr_df passed with {ppr_df.shape[0]} rows")
+  #print(f"ppr_df passed with {ppr_df.shape[0]} rows")
   # first, make sue we have point relating to this player
   #ppr_df = ppr_df[(( ppr_df['player_a1'].str.strip() == disp_player.strip() ) |
   #                 ( ppr_df['player_a2'].str.strip() == disp_player.strip() ) |
