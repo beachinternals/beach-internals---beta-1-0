@@ -118,6 +118,15 @@ def report_player_att_along_net( lgy, team, **rpt_filters):
         att_table[col] = att_table[col].astype(str).replace('nan', None)  # Handle NaN, None
       elif att_table[col].dtype in ['int64', 'float64']:
         att_table[col] = att_table[col].astype(object).where(att_table[col].notna(), None)  # Numpy to Python
+
+    # change the collumn names
+    att_table = att_table.rename(columns={
+      'Area 1': 'Left Pin',
+      'Area 2': 'Left Slot',
+      'Area 3': 'Middle',
+      'Area 4': 'Right Slot',
+      'Area 5': 'Right Pin'
+    })
     df_list[0] = att_table.to_dict('records')
 
     print(f"Player Attacking Along Net, df0 = {df_list[0]}")
@@ -134,10 +143,15 @@ def report_player_att_along_net( lgy, team, **rpt_filters):
   image_list[4] = z5_plt
 
   # put the DF's in the df_list
+  z1_df = z1_df.rename(columns={'Area 1':"Left Pin"})
   df_list[1] = z1_df.to_dict('records')
+  z2_df = z2_df.rename(columns={'Area 2':"Left Slot"})
   df_list[2] = z2_df.to_dict('records')
+  z3_df = z3_df.rename(columns={'Area 3':"Middle"})
   df_list[3] = z3_df.to_dict('records')
+  z4_df = z4_df.rename(columns={'Area 4':'Right Slot'})
   df_list[4] = z4_df.to_dict('records')
+  z5_df = z5_df.rename(columns={'Area 5':'Right Pin'})
   df_list[5] = z5_df.to_dict('records')
 
 
