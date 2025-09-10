@@ -586,14 +586,18 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
 
   return_status = True
   error_msg = ''
-  
+  print(f"ppr_df passed with {ppr_df.shape[0]} rows")
   # first, make sue we have point relating to this player
-  ppr_df = ppr_df[(( ppr_df['player_a1'].str.strip() == disp_player.strip() ) |
-                   ( ppr_df['player_a2'].str.strip() == disp_player.strip() ) |
-                   ( ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
-                   ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) ]
+  #ppr_df = ppr_df[(( ppr_df['player_a1'].str.strip() == disp_player.strip() ) |
+  #                 ( ppr_df['player_a2'].str.strip() == disp_player.strip() ) |
+  #                 ( ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
+  #                 ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) ]
 
   # if the flag is passes at srv or receive, limit the data
+  # for transition calculations, we need to take out the service errors and aces
+  ppr_df = ppr_df[ (ppr_df['point_outcome'] != 'TSA')]
+  ppr_df = ppr_df[ (ppr_df['point_outcome'] != 'TSE') ]
+  #print(f"ppr_df without service aces and errors {ppr_df.shape[0]} rows")
   if flag == 'srv':
     ppr_df = ppr_df[ ppr_df['serve_player'].str.strip() == disp_player.strip()]
   elif flag == 'rcv':
@@ -632,7 +636,7 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
   tran_errors_won = tmp_df[ (tmp_df['point_outcome'] == 'TE')].shape[0]      # errors given
 
   # total points earned
-  tran_pts_won = tran_errors_won + tran_errors_won
+  tran_pts_won = tran_kills_won + tran_errors_won
   tran_pts_lost = tran_kills_lost + tran_errors_lost
 
   # transition conversion rate, float and string

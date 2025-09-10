@@ -2680,19 +2680,20 @@ def report_player_srv_transition(lgy, team, **rpt_filters):
       return None, None
     z_score = (metric - mean) / std_dev
     percentile = stats.norm.cdf(z_score)
-    percentile_str = f"{percentile * 100:.1f}%"
+    percentile_str = f"{percentile * 100:.0f}%"
     return percentile, percentile_str
 
   # Calculate metrics for 'All'
   trans_obj_all = calc_trans_obj(ppr_df, disp_player, 'srv')
+  #print(f" Trans Object, All: {trans_obj_all}")
   if trans_obj_all['status']:
     table_data['All'][0] = trans_obj_all['tcr_str']  # Transition Conversion
-    _, table_data['All'][1] = calculate_percentile(trans_obj_all['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])  # Percentile
+    _, table_data['All'][1] = calculate_percentile(trans_obj_all['tcr'], player_data_stats_df.at[0,'tcr_s_mean'], player_data_stats_df.at[0,'tcr_s_stdev'])  # Percentile
     table_data['All'][2] = trans_obj_all['t_eff_str']  # Transition Effectiveness
-    _, table_data['All'][3] = calculate_percentile(trans_obj_all['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])  # Percentile
+    _, table_data['All'][3] = calculate_percentile(trans_obj_all['t_eff'], player_data_stats_df.at[0,'t_eff_s_mean'], player_data_stats_df.at[0,'t_eff_s_stdev'])  # Percentile
     table_data['All'][4] = trans_obj_all['t_create_str']  # Transition Creates
-    percent, _ = calculate_percentile(trans_obj_all['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])  # Percentile
-    table_data['All'][5] =  f"{1-percent:.0%}"
+    percent, _ = calculate_percentile(trans_obj_all['t_create'], player_data_stats_df.at[0,'t_create_s_mean'], player_data_stats_df.at[0,'t_create_s_stdev'])  # Percentile
+    table_data['All'][5] =  f"{percent:.0%}"
     table_data['All'][6] = str(trans_obj_all['tran_total_pts'])  # Transition Points
 
   # Calculate metrics for each area (1 to 5)
@@ -2701,12 +2702,12 @@ def report_player_srv_transition(lgy, team, **rpt_filters):
     trans_obj_area = calc_trans_obj(area_df, disp_player, 'srv')
     if trans_obj_area['status']:
       table_data[f'Area {area}'][0] = trans_obj_area['tcr_str']
-      _, table_data[f'Area {area}'][1] = calculate_percentile(trans_obj_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
+      _, table_data[f'Area {area}'][1] = calculate_percentile(trans_obj_area['tcr'], player_data_stats_df.at[0,'tcr_s_mean'], player_data_stats_df.at[0,'tcr_s_stdev'])
       table_data[f'Area {area}'][2] = trans_obj_area['t_eff_str']
-      _, table_data[f'Area {area}'][3] = calculate_percentile(trans_obj_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
+      _, table_data[f'Area {area}'][3] = calculate_percentile(trans_obj_area['t_eff'], player_data_stats_df.at[0,'t_eff_s_mean'], player_data_stats_df.at[0,'t_eff_s_stdev'])
       table_data[f'Area {area}'][4] = trans_obj_area['t_create_str']
-      percent, _ = calculate_percentile(trans_obj_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
-      table_data[f'Area {area}'][5] = f"{1-percent:.0%}"
+      percent, _ = calculate_percentile(trans_obj_area['t_create'], player_data_stats_df.at[0,'t_create_s_mean'], player_data_stats_df.at[0,'t_create_s_stdev'])
+      table_data[f'Area {area}'][5] = f"{percent:.0%}"
       table_data[f'Area {area}'][6] = str(trans_obj_area['tran_total_pts'])
 
   # Calculate metrics for 'No Area'
@@ -2719,12 +2720,12 @@ def report_player_srv_transition(lgy, team, **rpt_filters):
   trans_obj_no_area = calc_trans_obj(no_area_df, disp_player, 'srv')
   if trans_obj_no_area['status']:
     table_data['No Area'][0] = trans_obj_no_area['tcr_str']
-    _, table_data['No Area'][1] = calculate_percentile(trans_obj_no_area['tcr'], player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'])
+    _, table_data['No Area'][1] = calculate_percentile(trans_obj_no_area['tcr'], player_data_stats_df.at[0,'tcr_s_mean'], player_data_stats_df.at[0,'tcr_s_stdev'])
     table_data['No Area'][2] = trans_obj_no_area['t_eff_str']
-    _, table_data['No Area'][3] = calculate_percentile(trans_obj_no_area['t_eff'], player_data_stats_df.at[0,'t_eff_mean'], player_data_stats_df.at[0,'t_eff_stdev'])
+    _, table_data['No Area'][3] = calculate_percentile(trans_obj_no_area['t_eff'], player_data_stats_df.at[0,'t_eff_s_mean'], player_data_stats_df.at[0,'t_eff_s_stdev'])
     table_data['No Area'][4] = trans_obj_no_area['t_create_str']
-    percent, _ = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df.at[0,'t_create_mean'], player_data_stats_df.at[0,'t_create_stdev'])
-    table_data['No Area'][5] = f"{1-percent:.0%}"
+    percent, _ = calculate_percentile(trans_obj_no_area['t_create'], player_data_stats_df.at[0,'t_create_s_mean'], player_data_stats_df.at[0,'t_create_s_stdev'])
+    table_data['No Area'][5] = f"{percent:.0%}"
     table_data['No Area'][6] = str(trans_obj_no_area['tran_total_pts'])
 
   # Convert table_data to DataFrame
