@@ -2285,6 +2285,12 @@ def find_ellipse_area(tmp1_df, disp_player, type, min_att=5, video_yn=False):
     var_x = 'serve_dest_x'
     var_y = 'serve_dest_y'
     filtered_df = tmp1_df[tmp1_df['serve_player'] == disp_player]
+
+    # and a type, srv-pass shows the pass area for all serves bu the disp_player.  Used when looking for the opponenet's pass area
+  if type == 'srv-pass':
+    var_x = 'pass_dest_x'
+    var_y = 'pass_dest_y'
+    filtered_df = tmp1_df[tmp1_df['serve_player'] == disp_player]
   elif type == 'pass':
     var_x = 'pass_dest_x'
     var_y = 'pass_dest_y'
