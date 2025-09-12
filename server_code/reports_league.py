@@ -438,6 +438,9 @@ def league_tri_corr(lgy, team, **rpt_filters):
   note, this is a league report, so no team or disp_player in this report
   '''
 
+  # for this league report, we want to filter the tri_df by the rpt_filters, specifically comp_l1, and comp_l2, comp_l3, and game_date
+  tri_df = filter_ppr_df( tridf, **rpt_filters) # note that since filter_ppr_df tests if each column exitst first, this will work when passing hte tri_df
+  
   #=====================================================================================
   #-------------------------------------------------------------------------------------
   #

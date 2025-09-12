@@ -366,7 +366,7 @@ def calc_team_eso( ppr_df, disp_team ):
     eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & (ppr_df['point_outcome_team'] == disp_team ) ].shape[0]
     eso = (eso_fbk+eso_tk)/eso_attempts
 
-    print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
+    #print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
 
   return {
     'status':True,
@@ -1214,7 +1214,7 @@ def count_oos_obj(ppr_df, disp_player, action, video_yn=False):
     result['percent_str'] = f"{result['percent']:.0%}"
 
     # Get video links if video_yn is True, else return empty string
-    print(f"In count_oos_obj, calling bulid video, number = {len(player_data[player_data['pass_oos'] > 0])}")
+    #print(f"In count_oos_obj, calling bulid video, number = {len(player_data[player_data['pass_oos'] > 0])}")
     result['URL'] = build_video_links(player_data[player_data['pass_oos'] > 0]) if video_yn else ''
   
   return result
@@ -1856,7 +1856,6 @@ def initialize_report_lists( calling_function_name, **rpt_filters) :
   return title_list, label_list, image_list, df_list
 
 
-@anvil.server.callable
 def filter_ppr_df( dataframe, **kwargs):
   # given the dataframe, filter it by rpt_filters
   """

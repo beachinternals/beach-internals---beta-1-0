@@ -86,7 +86,7 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
   # build the ppr_dataframe out tpo the proper number of rows, equal total points,
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
 
-  tri_dict = {'video_id':[str()],'set':[int()],'game_date':None,
+  tri_dict = {'video_id':[str()],'set':[int()],'game_date':None, 'comp_l1':None, 'comp_l2':None, 'comp_l3':None,
               'teama':None, 'player_a1':None, 'player_a2':None, 
               'teamb':None, 'player_b1':None, 'player_b2':None,
               'total_pts':None, 'teama_pts':None, 'teamb_pts':None, 
@@ -247,6 +247,9 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         tri_df.at[tri_row,'set'] = s
         #print(f"tri_df: Saving the date, set_df date : {set_df['game_date']}")
         tri_df.at[tri_row,'game_date'] = set_df['game_date'].iloc[0]
+        tri_df.at[tri_row,'comp_l1'] = set_df['comp_l1'].iloc[0]
+        tri_df.at[tri_row,'comp_l2'] = set_df['comp_l2'].iloc[0]
+        tri_df.at[tri_row,'comp_l3'] = set_df['comp_l3'].iloc[0]
         tri_df.at[tri_row,'teama'] = teama
         tri_df.at[tri_row,'player_a1'] =  player_a1
         tri_df.at[tri_row,'player_a2'] =  player_a2
@@ -376,12 +379,12 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         # knockoout and goodpass
         tri_df.at[tri_row,'knockout_a'] = (calc_knock_out( set_df, player_a1) + calc_knock_out( set_df, player_a2))/2
         tri_df.at[tri_row,'knockout_b'] = (calc_knock_out(set_df, player_b1) + calc_knock_out( set_df, player_b2))/2
-        oos_vector_a1 = count_out_of_system( set_df, player_a1, 'pass')
-        oos_vector_a2 = count_out_of_system( set_df, player_a2, 'pass')
-        oos_vector_b1 = count_out_of_system( set_df, player_b1, 'pass')
-        oos_vector_b2 = count_out_of_system( set_df, player_b2, 'pass')
-        tri_df.at[tri_row,'goodpass_a'] = ( (1-oos_vector_a1[1]) + (1-oos_vector_a2) ) /2 
-        tri_df.at[tri_row,'goodpass_b'] = ( (1-oos_vector_a1[1]) + (1-oos_vector_a2) ) /2
+        oos_vector_a1 = count_oos_obj( set_df, player_a1, 'pass', False)
+        oos_vector_a2 = count_oos_obj( set_df, player_a2, 'pass', False)
+        oos_vector_b1 = count_oos_obj( set_df, player_b1, 'pass', False)
+        oos_vector_b2 = count_oos_obj( set_df, player_b2, 'pass', False)
+        tri_df.at[tri_row,'goodpass_a'] = ( (1-oos_vector_a1.get('percent')) + (1-oos_vector_a2.get('percent')) ) /2 
+        tri_df.at[tri_row,'goodpass_b'] = ( (1-oos_vector_b1.get('percent')) + (1-oos_vector_b2.get('percent')) ) /2
 
         # calcualte winning and losing team variables
         tri_df.at[tri_row,'win_fbhe_noace'] = tri_df.at[tri_row,'fbhe_a_noace'] if tri_df.at[tri_row,'winning_team'] == teama else tri_df.at[tri_row,'fbhe_b_noace']
