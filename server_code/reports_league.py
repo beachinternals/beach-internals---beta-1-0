@@ -374,30 +374,24 @@ def league_tri_corr(lgy, team, **rpt_filters):
 
   # Unpack lgy into league, gender, year
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
-
+  
+  # this is a player report, so limit the data to plays with this player
+  disp_player = rpt_filters.get('player')
+  
   # Fetch the ppr dataframe, and/or player stats, and/or tri-data
   # comment some in our out based on this reports needs.
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, 'League', True)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
-  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+  tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
 
   # Filter the ppr dataframe
   ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
 
-  # this is a player report, so limit the data to plays with this player
-  disp_player = rpt_filters.get('player')
+  # for this league report, we want to filter the tri_df by the rpt_filters, specifically comp_l1, and comp_l2, comp_l3, and game_date
+  tri_df = filter_ppr_df( tri_df, **rpt_filters) # note that since filter_ppr_df tests if each column exitst first, this will work when passing hte tri_df
 
-  # fetch the ppr dataframe and filter by all the report filters
-  #
-  # comment out the dataframe not needed for this report
-  #
   # for this report, only need the triangle scoring table
   ppr_save = ppr_df
-  #print(f"PPR DF size, new {ppr_df.shape[0]}")
-  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
-  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
-  #pair_data_df, pair_data_stats_df = get_pair_data(disp_league, disp_gender, disp_year)
-  tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
 
   # initiate return lists
   title_list = ['','','','','','','','','','']
