@@ -512,7 +512,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           # Generate JSON file
           print(f"    Generating JSON...")
           try:
-            json_media = generate_json_report(rptname['rpt_form'], report_id)
+            json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False)
             if isinstance(json_media, dict) and json_media.get('error'):
               print(f"    WARNING: JSON generation failed: {json_media['error']}")
             elif json_media:
@@ -698,7 +698,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
 
           # Generate JSON
           try:
-            json_media = generate_json_report(rptname['rpt_form'], report_id)
+            json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False)
             if isinstance(json_media, anvil._serialise.StreamingMedia):
               logging.info(f"Converting JSON StreamingMedia to BlobMedia for report {rptname['report_name']}")
               json_media = anvil.BlobMedia('application/json', json_media.get_bytes(), name=f"scouting_{disp_pair} {rptname['report_name']}.json")
@@ -787,7 +787,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
 
           # Generate JSON
           try:
-            json_media = generate_json_report(rptname['rpt_form'], report_id)
+            json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False)
             if isinstance(json_media, anvil._serialise.StreamingMedia):
               logging.info(f"Converting JSON StreamingMedia to BlobMedia for report {rptname['report_name']} (player)")
               json_media = anvil.BlobMedia('application/json', json_media.get_bytes(), name=f"player_{player1} {rptname['report_name']}.json")
@@ -877,7 +877,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
 
           # Generate JSON
           try:
-            json_media = generate_json_report(rptname['rpt_form'], report_id)
+            json_media = generate_json_report(rptname['rpt_form'], report_id, )
             if isinstance(json_media, anvil._serialise.StreamingMedia):
               logging.info(f"Converting JSON StreamingMedia to BlobMedia for report {rptname['report_name']} (player)")
               json_media = anvil.BlobMedia('application/json', json_media.get_bytes(), name=f"player_{player2} {rptname['report_name']}.json")

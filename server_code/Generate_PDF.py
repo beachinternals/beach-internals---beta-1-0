@@ -80,15 +80,15 @@ def generate_pdf_report(rpt_form, report_id):
     logging.error(f"Error generating PDF for report_id {report_id}: {str(e)}")
     return {'pdf': None, 'json_file_name': None, 'error': f'Failed to generate PDF: {str(e)}'}
 
-    
 
-@anvil.server.callable
-def generate_json_report(rpt_form, report_id):
+def generate_json_report(rpt_form, report_id, include_images=False, include_urls=False):
   """
     Generate a PDF report and save all report data as JSON to Google Drive.
     Args:
         rpt_form: Anvil form or string identifier to render as PDF
         report_id: ID of the report in app_tables.report_data
+        include_images: Boolean to include image data in JSON (default: False)
+        include_urls: Boolean to include URLs in dataframes in JSON (default: False)
     Returns:
         dict: {'pdf': BlobMedia, 'json_file_name': str, 'error': str or None}
     """
@@ -142,75 +142,99 @@ def generate_json_report(rpt_form, report_id):
     label_key = f'label_{i}'
     report_data['labels'][label_key] = rpt_data_row[label_key]
 
-    # Extract dataframes (df_1 to df_10)
-    for i in range(1, 11):
-      df_key = f'df_{i}'
-      try:
-        df_value = rpt_data_row[df_key]
-        if isinstance(df_value, anvil._server.LazyMedia):
-          # Get markdown content
-          content_type = df_value.content_type
-          if ('markdown' in content_type.lower()) or ('plain' in content_type.lower()):
-            markdown_bytes = df_value.get_bytes()
-            markdown_text = markdown_bytes.decode('utf-8')
-            # Try to parse markdown table
-            df = parse_markdown_table(markdown_text)
-            if df is not None:
-              report_data['dataframes'][df_key] = df.to_dict('records')
-            else:
-              report_data['dataframes'][df_key] = {'raw_markdown': markdown_text}
+  # Extract dataframes (df_1 to df_10)
+  for i in range(1, 11):
+    df_key = f'df_{i}'
+    try:
+      df_value = rpt_data_row[df_key]
+      if isinstance(df_value, anvil._server.LazyMedia):
+        # Get markdown content
+        content_type = df_value.content_type
+        if ('markdown' in content_type.lower()) or ('plain' in content_type.lower()):
+          markdown_bytes = df_value.get_bytes()
+          markdown_text = markdown_bytes.decode('utf-8')
+          # Try to parse markdown table
+          df = parse_markdown_table(markdown_text)
+          if df is not None:
+            # If include_urls is False, handle all URL formats
+            if not include_urls:
+              # Case 1: Check for a dedicated 'URL' column
+              if 'URL' in df.columns:
+                df['URL'] = None
+              # Case 2: Check for a row where the first column (unnamed) is 'URL'
+              if '' in df.columns and 'URL' in df[''].values:
+                df.loc[df[''] == 'URL', df.columns != ''] = None
+              # Case 3: Check for any row where any column has 'URL' and set 'Value' column to None
+              if 'Value' in df.columns:
+                for col in df.columns:
+                  if col != 'Value' and 'URL' in df[col].values:
+                    df.loc[df[col] == 'URL', 'Value'] = None
+            report_data['dataframes'][df_key] = df.to_dict('records')
           else:
-            report_data['dataframes'][df_key] = f"Unsupported content type: {content_type}"
-        elif isinstance(df_value, pd.DataFrame):
-          report_data['dataframes'][df_key] = df_value.to_dict('records')
-        elif isinstance(df_value, dict):
-          report_data['dataframes'][df_key] = df_value
-        elif df_value is not None:
-          report_data['dataframes'][df_key] = str(df_value)
+            report_data['dataframes'][df_key] = {'raw_markdown': markdown_text}
         else:
-          report_data['dataframes'][df_key] = None
-      except KeyError:
+          report_data['dataframes'][df_key] = f"Unsupported content type: {content_type}"
+      elif isinstance(df_value, pd.DataFrame):
+        # If include_urls is False, handle all URL formats
+        if not include_urls:
+          # Case 1: Check for a dedicated 'URL' column
+          if 'URL' in df_value.columns:
+            df_value['URL'] = None
+          # Case 2: Check for a row where the first column (unnamed) is 'URL'
+          if '' in df_value.columns and 'URL' in df_value[''].values:
+            df_value.loc[df_value[''] == 'URL', df_value.columns != ''] = None
+          # Case 3: Check for any row where any column has 'URL' and set 'Value' column to None
+          if 'Value' in df_value.columns:
+            for col in df_value.columns:
+              if col != 'Value' and 'URL' in df_value[col].values:
+                df_value.loc[df_value[col] == 'URL', 'Value'] = None
+        report_data['dataframes'][df_key] = df_value.to_dict('records')
+      elif isinstance(df_value, dict):
+        report_data['dataframes'][df_key] = df_value
+      elif df_value is not None:
+        report_data['dataframes'][df_key] = str(df_value)
+      else:
         report_data['dataframes'][df_key] = None
+    except KeyError:
+      report_data['dataframes'][df_key] = None
 
-    # Extract dataframe descriptions (df_desc_1 to df_desc_10)
-    for i in range(1, 11):
-      df_desc_key = f'df_desc_{i}'
-      try:
-        report_data['dataframe_descriptions'][df_desc_key] = rpt_data_row[df_desc_key]
-      except KeyError:
-        report_data['dataframe_descriptions'][df_desc_key] = None
+  # Extract dataframe descriptions (df_desc_1 to df_desc_10)
+  for i in range(1, 11):
+    df_desc_key = f'df_desc_{i}'
+    try:
+      report_data['dataframe_descriptions'][df_desc_key] = rpt_data_row[df_desc_key]
+    except KeyError:
+      report_data['dataframe_descriptions'][df_desc_key] = None
 
-    # Extract images (image_1 to image_10)
-    for i in range(1, 11):
-      img_key = f'image_{i}'
-      try:
-        img_value = rpt_data_row[img_key]
-        if isinstance(img_value, (anvil.BlobMedia, anvil._server.LazyMedia)):
-          # Get image bytes and content type
-          img_bytes = img_value.get_bytes()
-          content_type = img_value.content_type
-          # Encode as base64 with data URI
-          img_base64 = base64.b64encode(img_bytes).decode('utf-8')
-          data_uri = f"data:{content_type};base64,{img_base64}"
-          report_data['images'][img_key] = {
-            'name': img_value.name,
-            'content_type': content_type,
-            'data_uri': data_uri
-          }
-        elif isinstance(img_value, str):
-          report_data['images'][img_key] = {'url': img_value}
-        else:
-          report_data['images'][img_key] = None
-      except KeyError:
+  # Extract images (image_1 to image_10)
+  for i in range(1, 11):
+    img_key = f'image_{i}'
+    try:
+      img_value = rpt_data_row[img_key]
+      if isinstance(img_value, (anvil.BlobMedia, anvil._server.LazyMedia)) and include_images:
+        # Get image bytes and content type
+        img_bytes = img_value.get_bytes()
+        content_type = img_value.content_type
+        # Encode as base64 with data URI
+        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+        data_uri = f"data:{content_type};base64,{img_base64}"
+        report_data['images'][img_key] = {
+          'name': img_value.name,
+          'content_type': content_type,
+          'data_uri': data_uri
+        }
+      else:
         report_data['images'][img_key] = None
+    except KeyError:
+      report_data['images'][img_key] = None
 
-    # Extract image descriptions (image_desc_1 to image_desc_10)
-    for i in range(1, 11):
-      img_desc_key = f'image_desc_{i}'
-      try:
-        report_data['image_descriptions'][img_desc_key] = rpt_data_row[img_desc_key]
-      except KeyError:
-        report_data['image_descriptions'][img_desc_key] = None
+  # Extract image descriptions (image_desc_1 to image_desc_10)
+  for i in range(1, 11):
+    img_desc_key = f'image_desc_{i}'
+    try:
+      report_data['image_descriptions'][img_desc_key] = rpt_data_row[img_desc_key]
+    except KeyError:
+      report_data['image_descriptions'][img_desc_key] = None
 
   # Convert to JSON
   json_str = json.dumps(report_data, indent=2, default=str)
@@ -218,6 +242,11 @@ def generate_json_report(rpt_form, report_id):
   json_media = anvil.BlobMedia(content_type='application/json', content=json_bytes, name=json_file)
 
   return json_media
+  
+
+  
+
+
 
 def parse_markdown_table(markdown_text):
   """
