@@ -7,7 +7,7 @@ db_schema:
       name: prompt_id
       type: string
     - admin_ui: {order: 1, width: 200}
-      name: report_type
+      name: rpt_type
       type: string
     - admin_ui: {order: 2, width: 200}
       name: hierarchy_level
@@ -20,6 +20,12 @@ db_schema:
       type: string
     - admin_ui: {order: 5, width: 200}
       name: version
+      type: string
+    - admin_ui: {order: 0.5, width: 200}
+      name: report_id
+      type: string
+    - admin_ui: {order: 1.5, width: 200}
+      name: report_description
       type: string
     server: full
     title: ai_prompt_templates
@@ -643,7 +649,7 @@ db_schema:
     - admin_ui: {order: 4.625, width: 200}
       name: team_name
       type: string
-    - admin_ui: {order: -1.5, width: 74}
+    - admin_ui: {order: -1.5, width: 115}
       name: id
       type: string
     - admin_ui: {order: 10.19140625, width: 200}
