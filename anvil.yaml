@@ -1,5 +1,28 @@
 allow_embedding: false
 db_schema:
+  ai_prompt_templates:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: prompt_id
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: report_type
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: hierarchy_level
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: prompt_text
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      name: coach_id
+      type: string
+    - admin_ui: {order: 5, width: 200}
+      name: version
+      type: string
+    server: full
+    title: ai_prompt_templates
   btd_files:
     client: full
     columns:
@@ -101,6 +124,26 @@ db_schema:
       type: string
     server: full
     title: btd_files
+  coach_preferences:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: coach_id
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: report_type
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: depth_level
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: preferred_metrics
+      type: media
+    - admin_ui: {order: 4, width: 200}
+      name: style
+      type: string
+    server: full
+    title: coach_preferences
   league_comp_l1:
     client: search
     columns:
