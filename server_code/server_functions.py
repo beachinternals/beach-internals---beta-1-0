@@ -1,3 +1,4 @@
+import anvil.secrets
 import anvil
 import anvil.email
 import anvil.google.auth, anvil.google.mail
@@ -9,6 +10,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
 import anvil.media
+import anvil.secrets
 import pandas as pd
 import io
 import numpy as np
@@ -35,6 +37,18 @@ logger = Logger()
 # If the library supports standard Python logging formatting:
 formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
 
+
+
+import json
+import requests
+from faker import Faker
+import fitz  # pymupdf
+from PyPDF2 import PdfMerger
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+
+fake = Faker()
  
 def fbhe( ppr_df, disp_player, play_type, video_yn ):
   # pass this a query of rows, figures the FBHE for the display player as the attacker
@@ -2436,4 +2450,130 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
   #print(f"returning angular table for {disp_player} (formatted for display):\n{angle_table}")
 
   return angle_table
-  
+
+
+
+def anonymize_json(json_data, pii_fields=['title_9', 'title_10', 'title_4']):
+  """Anonymize JSON data by replacing PII with placeholders."""
+  try:
+    data = json.loads(json_data) if isinstance(json_data, str) else json_data
+    # Anonymize title fields
+    for field in pii_fields:
+      if field in data['titles'] and data['titles'][field]:
+        if field == 'title_9':
+          data['titles'][field] = f"Player {fake.random_uppercase_letter()}"
+        elif field == 'title_10':
+          data['titles'][field] = f"Pair {fake.random_uppercase_letter()}"
+        elif field == 'title_4':
+          data['titles'][field] = f"Team ABC"
+
+        # Anonymize dataframes
+    for df_key, df_list in data['dataframes'].items():
+      if isinstance(df_list, list):
+        for row in df_list:
+          for key, value in row.items():
+            if isinstance(value, str) and any(pii in key.lower() for pii in ['player', 'team', 'pair']):
+              row[key] = f"{key.capitalize()} {fake.random_uppercase_letter()}"
+
+    return json.dumps(data)
+  except Exception as e:
+    logging.error(f"Error anonymizing JSON: {str(e)}")
+    return json_data
+
+
+def anonymize_pdf(pdf_media, pii_terms):
+  """Anonymize PDF by redacting PII terms and save to anon folder."""
+  try:
+    doc = fitz.open(stream=pdf_media.get_bytes(), filetype="pdf")
+    for page in doc:
+      for term in pii_terms:
+        areas = page.search_for(term)
+        for rect in areas:
+          page.add_redact_annot(rect, fill=(0,0,0))
+      page.apply_redactions()
+
+    anon_bytes = doc.tobytes()
+    doc.close()
+
+    # Save to anon folder
+    folder_path = pdf_media.name.split('/')[:-1] + ['anon']
+    folder = app_files
+    for subfolder in folder_path:
+      folder = folder.get(subfolder) or folder.create_folder(subfolder)
+    anon_file = folder.create_file(pdf_media.name + '_anon.pdf', anon_bytes)
+    return anon_file.id
+  except Exception as e:
+    logging.error(f"Error anonymizing PDF: {str(e)}")
+    return None
+
+
+def generate_ai_summary(json_data, prompt_template, coach_id=None):
+  """Call Gemini API to generate a summary from JSON data and prompt."""
+  try:
+    api_key = anvil.secrets.get_secret('GEMINI_API_KEY')
+    if not api_key:
+      raise ValueError("Gemini API key not found")
+
+      # Anonymize JSON for AI
+    anon_json = anonymize_json(json_data)
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+      "contents": [{
+        "parts": [{
+          "text": prompt_template.format(
+            json_data=anon_json,
+            player_name="Anonymous Player",
+            preferred_metrics="key performance metrics"  # Customize as needed
+          )
+        }]
+      }]
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+    result = response.json()
+    summary = result['candidates'][0]['content']['parts'][0]['text']
+    return summary.strip()
+  except Exception as e:
+    logging.error(f"Error generating AI summary: {str(e)}")
+    return f"Error generating summary: {str(e)}"
+
+
+def insert_summary_into_pdf(pdf_media, summary_text):
+  """Insert AI summary into PDF below subtitle."""
+  try:
+    doc = fitz.open(stream=pdf_media.get_bytes(), filetype="pdf")
+    page = doc[0]  # First page
+    # Assume subtitle is at y=100 (adjust based on form layout)
+    insert_point = fitz.Point(50, 150)  # Below subtitle, left margin
+    page.insert_text(
+      insert_point,
+      summary_text,
+      fontsize=10,
+      fontname="helv",
+      color=(0,0,0)
+    )
+    updated_bytes = doc.tobytes()
+    doc.close()
+    return anvil.BlobMedia('application/pdf', updated_bytes, name=pdf_media.name)
+  except Exception as e:
+    logging.error(f"Error inserting summary into PDF: {str(e)}")
+    return pdf_media
+
+
+def create_summary_pdf(summary_text, pdf_name):
+  """Create a new PDF with the AI summary."""
+  try:
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    content = [Paragraph(summary_text, styles['Normal'])]
+    doc.build(content)
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    return anvil.BlobMedia('application/pdf', pdf_bytes, name=pdf_name)
+  except Exception as e:
+    logging.error(f"Error creating summary PDF: {str(e)}")
+    return None

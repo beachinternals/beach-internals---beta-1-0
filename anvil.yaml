@@ -3,9 +3,6 @@ db_schema:
   ai_prompt_templates:
     client: none
     columns:
-    - admin_ui: {order: 0, width: 200}
-      name: prompt_id
-      type: string
     - admin_ui: {order: 1, width: 200}
       name: rpt_type
       type: string
@@ -18,15 +15,18 @@ db_schema:
     - admin_ui: {order: 4, width: 200}
       name: coach_id
       type: string
-    - admin_ui: {order: 5, width: 200}
-      name: version
-      type: string
     - admin_ui: {order: 0.5, width: 200}
       name: report_id
       type: string
     - admin_ui: {order: 1.5, width: 200}
       name: report_description
       type: string
+    - admin_ui: {order: -0.5, width: 200}
+      name: prompt_id
+      type: number
+    - admin_ui: {order: 5, width: 200}
+      name: version
+      type: number
     server: full
     title: ai_prompt_templates
   btd_files:
@@ -147,6 +147,9 @@ db_schema:
       type: media
     - admin_ui: {order: 4, width: 200}
       name: style
+      type: string
+    - admin_ui: {order: 5, width: 200}
+      name: pii_terms
       type: string
     server: full
     title: coach_preferences
@@ -987,6 +990,10 @@ scheduled_tasks:
     at: {hour: 8, minute: 30}
     every: day
     n: 1
+secrets:
+  GEMINI_API_KEY:
+    type: secret
+    value: {SVRRFKWWHPM3FMVF: L6rUBSBsemYWq34lEjTVeCNdDYNyQ8hUdcLTPcCZ0fMGyldEPFxJPeCTAX0XTpChmxevVLS/9yq3H5PAoASFblqyJQv4CXmlMQmed/z6Af+DLHL/4My2/e/oqu/xsmckOdaAG1LGPcjqDklXWWy0PS7kcyctFarfaDAcIrHlMQGWTfh/0sQ=}
 services:
 - client_config: {}
   server_config: {}
@@ -1051,5 +1058,8 @@ services:
 - client_config: {}
   server_config: {test_mode: false}
   source: /runtime/services/anvil/email.yml
+- client_config: {}
+  server_config: {}
+  source: /runtime/services/anvil/secrets.yml
 startup: {module: StartupForm, type: form}
 startup_form: null
