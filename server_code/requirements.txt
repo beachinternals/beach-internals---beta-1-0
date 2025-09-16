@@ -7,3 +7,4 @@ statsmodels==0.14.5
 seaborn==0.13.2
 Faker==37.8.0
 PyMuPDF==1.26.4
+reportlab==4.4.3
