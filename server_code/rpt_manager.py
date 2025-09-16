@@ -413,7 +413,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           # Insert AI summary
           pdf1 = insert_summary_into_pdf(pdf1, summary)
           # Anonymize PDF
-          pii_terms = app_tables.coach_preferences.get(coach_id=rpt_r['email'])['pii_terms'] or []
+          coach_prefs = app_tables.coach_preferences.get(coach_id=rpt_r['email'])
+          pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else [] # fixed in case there is no row for this coach in coach_prefs
+          #pii_terms = app_tables.coach_preferences.get(coach_id=rpt_r['email'])['pii_terms'] or []
           anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
           pdf_files_created.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
         else:
@@ -426,13 +428,15 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         else:
           full_rpt_pdf = pdf1
 
-          # Generate roll-up summary
+      # Generate roll-up summary
       rollup_prompt_rows = app_tables.ai_prompt_templates.search(
-        report_description=rpt_r['Report Description'],
-        hierarchy_level='1',
-        coach_id=q.any_of(rpt_r['email'], '')
-      ).order_by('version', ascending=False)
+            report_description=rpt_r['Report Description'],
+            hierarchy_level='1',
+            coach_id=q.any_of(rpt_r['email'], '')
+      )
+      rollup_prompt_rows = rollup_prompt_rows.order_by('version', ascending=False)
       rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
+
       if rollup_prompt:
         rollup_summary = generate_ai_summary(json.dumps({'summaries': individual_summaries}), rollup_prompt['prompt_text'], rpt_r['email'])
         summary_pdf = create_summary_pdf(rollup_summary, f"{player_pair}_summary_{today.strftime('%Y%m%d_%H%M%S')}.pdf")
@@ -497,7 +501,9 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             pair_pdf = None
             scouting_pdf_files = []
             individual_summaries = []
-            pii_terms = app_tables.coach_preferences.get(coach_id=rpt_r['email'])['pii_terms'] or []
+            #pii_terms = app_tables.coach_preferences.get(coach_id=rpt_r['email'])['pii_terms'] or []
+            coach_prefs = app_tables.coach_preferences.get(coach_id=rpt_r['email'])
+            pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else []
 
             # Scouting reports
             rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
@@ -612,7 +618,8 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
                     report_description=rpt_r['Report Description'],
                     hierarchy_level='1',
                     coach_id=q.any_of(rpt_r['email'], '')
-                ).order_by('version', ascending=False)
+                )
+                rollup_prompt_rows = rollup_prompt_rows.order_by('version', ascending=False)
                 rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
                 if rollup_prompt:
                     rollup_summary = generate_ai_summary(json.dumps({'summaries': individual_summaries}), rollup_prompt['prompt_text'], rpt_r['email'])
