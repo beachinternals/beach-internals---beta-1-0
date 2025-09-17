@@ -393,12 +393,14 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           json_result = write_to_nested_folder(json_folder, json_name, json_media)
           pdf_files_created.append({'name': json_name, 'result': json_result})
 
-          # Generate AI summary
+        # Generate AI summary
+        print(f"      Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
         prompt_row = app_tables.ai_prompt_templates.get(
           report_id=rptname['id'],
           hierarchy_level='0',
           coach_id=q.any_of(rpt_r['email'], '')
         )
+        print(f"      Prompt Row Returned: {prompt_row}")
         if prompt_row:
           summary = generate_ai_summary(json_media.get_bytes().decode('utf-8'), prompt_row['prompt_text'], rpt_r['email'])
           individual_summaries.append(summary)
@@ -428,13 +430,17 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         else:
           full_rpt_pdf = pdf1
 
-      # Generate roll-up summary
-      rollup_prompt_rows = app_tables.ai_prompt_templates.search(
-            report_description=rpt_r['Report Description'],
-            hierarchy_level='1',
-            coach_id=q.any_of(rpt_r['email'], '')
+      # Generate roll-up summary .. using python to do the sort
+      rollup_prompt_rows = sorted(
+        app_tables.ai_prompt_templates.search(
+          report_description=rpt_r['Report Description'],
+          hierarchy_level='1',
+          coach_id=q.any_of(rpt_r['email'], '')
+        ),
+        key=lambda row: row['version'],
+        reverse=True
       )
-      rollup_prompt_rows = rollup_prompt_rows.order_by('version', ascending=False)
+
       rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
 
       if rollup_prompt:
