@@ -11,6 +11,7 @@ from anvil.tables import app_tables
 import anvil.server
 import anvil.media
 import anvil.secrets
+import anvil.http
 import pandas as pd
 import io
 import numpy as np
@@ -29,6 +30,8 @@ from sklearn.cluster import DBSCAN
 from plot_functions import *
 from dataclasses import dataclass
 import inspect
+import copy
+
 
 # Create logger with formatting
 from anvil_extras.logging import Logger
@@ -2452,33 +2455,44 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
   return angle_table
 
 
-
-def anonymize_json(json_data, pii_fields=['title_9', 'title_10', 'title_4']):
-  """Anonymize JSON data by replacing PII with placeholders."""
+def anonymize_json(json_data):
+  """
+    Anonymize JSON data, preserving volleyball metrics while removing sensitive fields.
+    """
   try:
-    data = json.loads(json_data) if isinstance(json_data, str) else json_data
-    # Anonymize title fields
-    for field in pii_fields:
-      if field in data['titles'] and data['titles'][field]:
-        if field == 'title_9':
-          data['titles'][field] = f"Player {fake.random_uppercase_letter()}"
-        elif field == 'title_10':
-          data['titles'][field] = f"Pair {fake.random_uppercase_letter()}"
-        elif field == 'title_4':
-          data['titles'][field] = f"Team ABC"
+    if json_data is None:
+      logger.warning("json_data is None in anonymize_json")
+      return {}
 
-        # Anonymize dataframes
-    for df_key, df_list in data['dataframes'].items():
-      if isinstance(df_list, list):
-        for row in df_list:
-          for key, value in row.items():
-            if isinstance(value, str) and any(pii in key.lower() for pii in ['player', 'team', 'pair']):
-              row[key] = f"{key.capitalize()} {fake.random_uppercase_letter()}"
+      # Deep copy to avoid modifying original
+    anon_data = copy.deepcopy(json_data)
 
-    return json.dumps(data)
+    # Define sensitive fields to remove
+    sensitive_fields = ['player_name', 'personal_id', 'name', 'id', 'email']
+
+    if isinstance(anon_data, dict):
+      for field in sensitive_fields:
+        anon_data.pop(field, None)
+    elif isinstance(anon_data, list):
+      for item in anon_data:
+        if isinstance(item, dict):
+          for field in sensitive_fields:
+            item.pop(field, None)
+    else:
+      logger.warning(f"json_data is neither dict nor list: {type(json_data)}")
+      return anon_data
+
+      # Validate that anon_data contains some data
+    if not anon_data or (isinstance(anon_data, dict) and not any(anon_data.values())):
+      logger.warning("Anonymized JSON is empty: %s", anon_data)
+      return {"error": "No valid data after anonymization"}
+
+    return anon_data
   except Exception as e:
-    logging.error(f"Error anonymizing JSON: {str(e)}")
-    return json_data
+    logger.error("Error in anonymize_json: %s", str(e), exc_info=True)
+    return {"error": f"Anonymization failed: {str(e)}"}
+
+
 
 
 def anonymize_pdf(pdf_media, pii_terms):
@@ -2506,45 +2520,92 @@ def anonymize_pdf(pdf_media, pii_terms):
     logging.error(f"Error anonymizing PDF: {str(e)}")
     return None
 
-
 def generate_ai_summary(json_data, prompt_template, coach_id=None):
-  """Call Gemini API to generate a summary from JSON data and prompt."""
-  print("#----------  Generate AI Summary ---------------#")
-  print(f"     Calling Arguments: \n json_data: {json_data} \n Prompt : {prompt_template}, \n Coach Id {coach_id}")
+  """
+    Call Gemini API to generate a summary from JSON data and prompt.
+    """
+  logger.info(f"Generate AI Summary for coach_id={coach_id}")
+  logger.info(f"Calling Arguments: json_data={json_data},\n Prompt={prompt_template},\n Coach Id={coach_id}")
+
   try:
+    # Get API key
     api_key = anvil.secrets.get_secret('GEMINI_API_KEY')
     if not api_key:
-      raise ValueError("Gemini API key not found")
+      logger.error("Gemini API key not found in Secrets")
+      return "Error: Gemini API key not found"
 
-      # Anonymize JSON for AI
+      # Validate json_data
+    if not json_data:
+      logger.error("json_data is empty or None")
+      return "Error: No input data provided"
+
+      # Anonymize JSON data
     anon_json = anonymize_json(json_data)
+    logger.debug(f"Anonymized JSON: {anon_json}")
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
+    # Check if anon_json is valid
+    if isinstance(anon_json, dict) and "error" in anon_json:
+      logger.error("Anonymization error: %s", anon_json["error"])
+      return f"Error: {anon_json['error']}"
+
+      # Default prompt template if none provided
+    if not prompt_template:
+      prompt_template = """
+            Summarize the volleyball performance metrics for {player_name}: {json_data}.
+            Focus on {preferred_metrics} and highlight key strengths and areas for improvement.
+            """
+
+      # Prepare request
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
     headers = {"Content-Type": "application/json"}
+    try:
+      formatted_prompt = prompt_template.format(
+        json_data=json.dumps(anon_json),
+        player_name="Anonymous Player",
+        preferred_metrics="key performance metrics"
+      )
+    except Exception as e:
+            logger.error("Error formatting prompt: %s", str(e))
+            return f"Error: Failed to format prompt - {str(e)}"
+
     payload = {
       "contents": [{
         "parts": [{
-          "text": prompt_template.format(
-            json_data=anon_json,
-            player_name="Anonymous Player",
-            preferred_metrics="key performance metrics"  # Customize as needed
-          )
+          "text": formatted_prompt
         }]
       }]
     }
 
-    # just to make sure we know what we are asking, we'll check the all contents
-    print("Gen AI Prompt and Data")
-    print(f"url: {url}, \n Headers: {headers}\n json {payload}")
-    response = requests.post(url, headers=headers, json=payload)
-    response.raise_for_status()
-    result = response.json()
-    summary = result['candidates'][0]['content']['parts'][0]['text']
-    print(f" Results, summary: {summary}")
+    # Log request details
+    logger.info("Gen AI Prompt and Data")
+    logger.info(f"URL: {url}\nHeaders: {headers}\nJSON: {payload}")
+
+    # Make HTTP request
+    response = anvil.http.request(
+            url=f"{url}?key={api_key}",
+            method="POST",
+            headers=headers,
+            json=payload
+        )
+
+    # Parse response
+    logger.debug(f"API response: {response}")
+    summary = response['candidates'][0]['content']['parts'][0]['text']
+    logger.info(f"Results, summary: {summary}")
     return summary.strip()
+
+  except anvil.http.HttpError as e:
+    logger.error(f"HTTP error from Gemini API: {str(e)}")
+    if e.status == 403:
+       return "Error: 403 Forbidden - API key is blocked or Generative Language API is not enabled. Check Google Cloud Console."
+    return f"Error generating summary: HTTP {e.status} - {str(e)}"
+  except KeyError as e:
+    logger.error(f"KeyError in response parsing: {str(e)}")
+    return f"Error: Invalid response format from Gemini API - {str(e)}"
   except Exception as e:
-    logging.error(f"Error generating AI summary: {str(e)}")
+    logger.error("Unexpected error in generate_ai_summary: %s", str(e), exc_info=True)
     return f"Error generating summary: {str(e)}"
+
 
 
 def insert_summary_into_pdf(pdf_media, summary_text):
