@@ -993,7 +993,10 @@ scheduled_tasks:
 secrets:
   GEMINI_API_KEY:
     type: secret
-    value: {SVRRFKWWHPM3FMVF: L6rUBSBsemYWq34lEjTVeCNdDYNyQ8hUdcLTPcCZ0fMGyldEPFxJPeCTAX0XTpChmxevVLS/9yq3H5PAoASFblqyJQv4CXmlMQmed/z6Af+DLHL/4My2/e/oqu/xsmckOdaAG1LGPcjqDklXWWy0PS7kcyctFarfaDAcIrHlMQGWTfh/0sQ=}
+    value: {SVRRFKWWHPM3FMVF: 6T3oObHV0XrJu7dBrLFKOl0t/FCzzDsRuqzH4YNcOp8NAaUGdvbJG+VfrcBa8rtfUFdNQaC9N/m7mrsTlSPjZBNS3mYkYByldSKoK0/GjsBSJpThXTCeTugv1si+nmvIItKlNxeNmJWVs5H6tW9S+6Z4wamgWnjf1NaDiXlsdbv6pTuAe1E=}
+  new_secret:
+    type: secret
+    value: {SVRRFKWWHPM3FMVF: ''}
 services:
 - client_config: {}
   server_config: {}

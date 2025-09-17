@@ -2531,10 +2531,14 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
       }]
     }
 
+    # just to make sure we know what we are asking, we'll check the all contents
+    print("Gen AI Prompt and Data")
+    print(f"url: {url}, \n Headers: {headers}\n json {payload}")
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
     result = response.json()
     summary = result['candidates'][0]['content']['parts'][0]['text']
+    print(f" Results, summary: {summary}")
     return summary.strip()
   except Exception as e:
     logging.error(f"Error generating AI summary: {str(e)}")
