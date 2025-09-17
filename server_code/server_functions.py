@@ -2509,6 +2509,8 @@ def anonymize_pdf(pdf_media, pii_terms):
 
 def generate_ai_summary(json_data, prompt_template, coach_id=None):
   """Call Gemini API to generate a summary from JSON data and prompt."""
+  print("#----------  Generate AI Summary ---------------#")
+  print(f"     Calling Arguments: \n json_data: {json_data} \n Prompt : {prompt_template}, \n Coach Id {coach_id}")
   try:
     api_key = anvil.secrets.get_secret('GEMINI_API_KEY')
     if not api_key:
