@@ -306,30 +306,34 @@ info@BeachInternals.com
 #  Report Manager - All Types of Reports
 #-------------------------------------------------------------------------------------------------------
 
+
 def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
+  """
+    Generate new reports for players or pairs, including JSON, PDFs, and AI summaries.
+    """
   today = datetime.now()
   return_text = ''
   report_infos = []
 
-  print(f"=== ENTERING rpt_mgr_new_rpts ===")
-  print(f"rpt_type: {rpt_r['rpt_type']}")
+  logger.info(f"=== ENTERING rpt_mgr_new_rpts ===")
+  logger.info(f"rpt_type: {rpt_r['rpt_type']}")
 
   if not p_list:
-    print("ERROR: No players/pairs provided")
+    logger.error("No players/pairs provided")
     return return_text, report_infos
 
   try:
     for i, p in enumerate(p_list):
-      print(f"\n--- Processing item {i+1} of {len(p_list)} ---")
+      logger.info(f"--- Processing item {i+1} of {len(p_list)} ---")
       try:
         p_dict = dict(p)
       except Exception as e:
-        print(f"Could not convert item to dict: {str(e)}")
+        logger.error(f"Could not convert item to dict: {str(e)}")
         continue
 
         # Build report filters
       rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, p)
-      print(f"Report filters: {rpt_filters}")
+      logger.info(f"Report filters: {rpt_filters}")
 
       # Calculate folder paths
       pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), 
@@ -345,13 +349,13 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       elif rpt_r['rpt_type'] in ['league', 'dashboard']:
         player_pair = lgy
       else:
-        print(f"ERROR: Unknown rpt_type: {rpt_r['rpt_type']}")
+        logger.error(f"Unknown rpt_type: {rpt_r['rpt_type']}")
         continue
 
       pdf_name = f"{player_pair} {rpt_r['Report Description']}.pdf"
       if rpt_r['rpt_type'] == 'dashboard':
         pdf_name = f"{player_pair} {disp_team} {rpt_r['Report Description']}.pdf"
-      print(f"PDF name: {pdf_name}")
+      logger.info(f"PDF name: {pdf_name}")
 
       # Process rpts_inc
       rptname_rows = []
@@ -363,11 +367,11 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           rptname_rows.append(rptname1)
 
       if not rptname_rows:
-        print(f"ERROR: No valid reports in rpts_inc for {rpt_r['Report Description']}")
+        logger.error(f"No valid reports in rpts_inc for {rpt_r['Report Description']}")
         continue
 
       sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
-      print(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
+      logger.info(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
 
       full_rpt_pdf = None
       pdf_files_created = []
@@ -375,40 +379,49 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Process each report
       for k, rptname in enumerate(sorted_rptnames):
-        print(f"\n  --- Processing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']} ---")
+        logger.info(f"Processing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']}")
 
         # Generate report
         report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
         if not report_id:
-          print(f"    ERROR: Failed to generate report ID")
+          logger.error("Failed to generate report ID")
           continue
 
           # Generate JSON
         json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False)
         if isinstance(json_media, dict) and json_media.get('error'):
-          print(f"    WARNING: JSON generation failed: {json_media['error']}")
+          logger.warning(f"JSON generation failed: {json_media['error']}")
           json_result = None
         else:
           json_name = f"{player_pair} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
           json_result = write_to_nested_folder(json_folder, json_name, json_media)
           pdf_files_created.append({'name': json_name, 'result': json_result})
 
-        # Generate AI summary
-        print(f"      Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
+          # Generate AI summary
+        logger.info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
         prompt_row = app_tables.ai_prompt_templates.get(
           report_id=rptname['id'],
           hierarchy_level='0',
           coach_id=q.any_of(rpt_r['email'], '')
         )
-        print(f"      Prompt Row Returned: {prompt_row}")
+        logger.info(f"Prompt Row Returned: {prompt_row}")
         if prompt_row:
-          summary = generate_ai_summary(json_media.get_bytes().decode('utf-8'), prompt_row['prompt_text'], rpt_r['email'])
+          # Parse json_media to dictionary
+          try:
+            json_data = json.loads(json_media.get_bytes().decode('utf-8'))
+          except (json.JSONDecodeError, AttributeError) as e:
+            logger.error(f"Failed to parse json_media: {str(e)}")
+            individual_summaries.append(f"Error: Failed to parse JSON - {str(e)}")
+            continue
+          # Clean prompt to remove problematic colon
+          prompt_text = prompt_row['prompt_text'].replace(": {json_data}", " {json_data}")
+          summary = generate_ai_summary(json_data, prompt_text, rpt_r['email'])
           individual_summaries.append(summary)
         else:
           summary = "No summary generated: Prompt not found"
           individual_summaries.append(summary)
 
-          # Generate PDF
+        # Generate PDF
         pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
         if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
           pdf1 = pdf_result['pdf']
@@ -416,35 +429,36 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           pdf1 = insert_summary_into_pdf(pdf1, summary)
           # Anonymize PDF
           coach_prefs = app_tables.coach_preferences.get(coach_id=rpt_r['email'])
-          pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else [] # fixed in case there is no row for this coach in coach_prefs
-          #pii_terms = app_tables.coach_preferences.get(coach_id=rpt_r['email'])['pii_terms'] or []
+          pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else []
           anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
           pdf_files_created.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
         else:
-          print(f"    ERROR: PDF generation failed")
+          logger.error("PDF generation failed")
           continue
 
-          # Merge PDFs
+        # Merge PDFs
         if full_rpt_pdf:
           full_rpt_pdf = merge_pdfs(full_rpt_pdf, pdf1, pdf_name=pdf_name)
         else:
           full_rpt_pdf = pdf1
 
-      # Generate roll-up summary .. using python to do the sort
+      # Generate roll-up summary
       rollup_prompt_rows = sorted(
-        app_tables.ai_prompt_templates.search(
-          report_description=rpt_r['Report Description'],
-          hierarchy_level='1',
-          coach_id=q.any_of(rpt_r['email'], '')
-        ),
-        key=lambda row: row['version'],
-        reverse=True
+          app_tables.ai_prompt_templates.search(
+              report_description=rpt_r['Report Description'],
+              hierarchy_level='1',
+              coach_id=q.any_of(rpt_r['email'], '')
+            ),
+            key=lambda row: row['version'],
+            reverse=True
       )
 
       rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
 
       if rollup_prompt:
-        rollup_summary = generate_ai_summary(json.dumps({'summaries': individual_summaries}), rollup_prompt['prompt_text'], rpt_r['email'])
+        # Clean rollup prompt to remove problematic colon
+        rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
+        rollup_summary = generate_ai_summary({'summaries': individual_summaries}, rollup_prompt_text, rpt_r['email'])
         summary_pdf = create_summary_pdf(rollup_summary, f"{player_pair}_summary_{today.strftime('%Y%m%d_%H%M%S')}.pdf")
         if summary_pdf:
           full_rpt_pdf = merge_pdfs(summary_pdf, full_rpt_pdf, pdf_name=pdf_name)
@@ -461,21 +475,19 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       else:
         combined_result = f"No combined PDF generated for {pdf_name}"
 
-        # Collect report info
-        report_infos.append({
-                'player_pair': player_pair,
-                'description': rpt_r['Report Description'],
-                'combined': combined_result,
-                'individuals': pdf_files_created
-        })
+      # Collect report info
+      report_infos.append({
+          'player_pair': player_pair,
+          'description': rpt_r['Report Description'],
+          'combined': combined_result,
+          'individuals': pdf_files_created
+      })
 
   except Exception as e:
-    print(f"CRITICAL ERROR in rpt_mgr_new_rpts: {str(e)}")
-    import traceback
-    print(f"Traceback: {traceback.format_exc()}")
+    logger.error(f"CRITICAL ERROR in rpt_mgr_new_rpts: {str(e)}", exc_info=True)
 
   return return_text, report_infos
-
+        
 
 def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
     today = datetime.now()

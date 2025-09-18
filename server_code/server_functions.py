@@ -2455,6 +2455,10 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
   return angle_table
 
 
+
+#----------------------------------------------------------------------------------
+
+
 def anonymize_json(json_data, player_replacement="Player A", pair_replacement="Pair A"):
   """
     Anonymize JSON data, preserving structure while anonymizing player/pair names in title_9, title_10, and strings.
@@ -2482,17 +2486,13 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
     # Extract original player and pair names from titles for string replacement
     player_name = None
     pair_name = None
-
     if isinstance(anon_data, dict) and 'titles' in anon_data and isinstance(anon_data['titles'], dict):
       # Get and clean player name (strip whitespace)
       raw_player_name = anon_data['titles'].get('title_9')
-
       if raw_player_name and isinstance(raw_player_name, str):
         player_name = raw_player_name.strip()
-
         # Get pair name (handle None case)
       raw_pair_name = anon_data['titles'].get('title_10')
-
       if raw_pair_name and isinstance(raw_pair_name, str):
         pair_name = raw_pair_name.strip()
 
@@ -2513,15 +2513,10 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
           elif isinstance(value, str) and value:  # Only process non-empty strings
             # Replace player/pair names in strings
             anonymized_value = value
-
-            # Replace player name if it exists and is not empty
             if player_name and player_name in anonymized_value:
               anonymized_value = anonymized_value.replace(player_name, player_replacement)
-
-              # Replace pair name if it exists and is not empty
             if pair_name and pair_name in anonymized_value:
               anonymized_value = anonymized_value.replace(pair_name, pair_replacement)
-
             new_data[key] = anonymized_value
           else:
             new_data[key] = value
@@ -2535,50 +2530,19 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
 
     # Validate that anon_data contains some data
     if not anon_data or (isinstance(anon_data, dict) and not any(anon_data.values())):
-      logger.warning("Anonymized JSON is empty: %s", anon_data)
+      logger.warning(f"Anonymized JSON is empty: {anon_data}")
       return {"error": "No valid data after anonymization"}
 
     logger.info("Anonymization completed successfully")
     return anon_data
 
   except Exception as e:
-    logger.error("Error in anonymize_json: %s", str(e), exc_info=True)
+    logger.error(f"Error in anonymize_json: {str(e)}", exc_info=True)
     return {"error": f"Anonymization failed: {str(e)}"}
- 
-    
-
-
-
-
-
-def anonymize_pdf(pdf_media, pii_terms):
-  """Anonymize PDF by redacting PII terms and save to anon folder."""
-  try:
-    doc = fitz.open(stream=pdf_media.get_bytes(), filetype="pdf")
-    for page in doc:
-      for term in pii_terms:
-        areas = page.search_for(term)
-        for rect in areas:
-          page.add_redact_annot(rect, fill=(0,0,0))
-      page.apply_redactions()
-
-    anon_bytes = doc.tobytes()
-    doc.close()
-
-    # Save to anon folder
-    folder_path = pdf_media.name.split('/')[:-1] + ['anon']
-    folder = app_files
-    for subfolder in folder_path:
-      folder = folder.get(subfolder) or folder.create_folder(subfolder)
-    anon_file = folder.create_file(pdf_media.name + '_anon.pdf', anon_bytes)
-    return anon_file.id
-  except Exception as e:
-    logging.error(f"Error anonymizing PDF: {str(e)}")
-    return None
 
 def remove_null_fields(data):
   """
-    Recursively remove all null fields, empty dictionaries, and invalid entries from JSON data to reduce size.
+    Recursively remove all null fields, empty dictionaries, and invalid entries (e.g., {"": "URL"}) from JSON data.
     """
   try:
     if isinstance(data, dict):
@@ -2587,9 +2551,12 @@ def remove_null_fields(data):
         cleaned_v = remove_null_fields(v)
         # Only include non-empty dictionaries, non-empty lists, or non-null values
         if cleaned_v is not None and (isinstance(cleaned_v, (dict, list)) and len(cleaned_v) > 0 or not isinstance(cleaned_v, (dict, list))):
-          # Skip dictionaries with only one key that is empty or 'URL'
-          if isinstance(cleaned_v, dict) and len(cleaned_v) == 1 and ("" in cleaned_v or "URL" in cleaned_v.get("", "")):
-            continue
+          # Skip dictionaries with only 'URL' or empty keys
+          if isinstance(cleaned_v, dict):
+            if len(cleaned_v) == 1 and ("" in cleaned_v or list(cleaned_v.values())[0] == "URL"):
+              continue
+            if all(value is None or value == "URL" for value in cleaned_v.values()):
+              continue
           cleaned_dict[k] = cleaned_v
       return cleaned_dict if cleaned_dict else None
     elif isinstance(data, list):
@@ -2597,7 +2564,7 @@ def remove_null_fields(data):
       cleaned_list = [item for item in cleaned_list if item is not None and (isinstance(item, (dict, list)) and len(item) > 0 or not isinstance(item, (dict, list)))]
       return cleaned_list if cleaned_list else None
     else:
-      return data if data is not None else None
+      return data if data is not None and data != "URL" else None
   except Exception as e:
     logger.error(f"Error in remove_null_fields: {str(e)}")
     return data
@@ -2608,7 +2575,7 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
     """
   try:
     # Log all arguments
-    logger.info(f"Generate AI Summary: coach_id={coach_id}, json_data={json_data}, prompt={prompt_template}")
+    logger.info(f"Generate AI Summary: coach_id={coach_id}, json_data_type={type(json_data)}, prompt={prompt_template}")
 
     # Get API key
     api_key = anvil.secrets.get_secret('GEMINI_API_KEY')
@@ -2621,7 +2588,15 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
       logger.error("json_data is empty or None")
       return "Error: No input data provided"
 
-      # Anonymize JSON data
+      # Ensure json_data is a dictionary
+    if isinstance(json_data, str):
+      try:
+        json_data = json.loads(json_data)
+      except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON string: {str(e)}")
+        return f"Error: Invalid JSON input - {str(e)}"
+
+        # Anonymize JSON data
     anon_json = anonymize_json(json_data)
     logger.debug(f"Anonymized JSON: {anon_json}")
 
@@ -2641,19 +2616,21 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
     # Default prompt template if none provided
     if not prompt_template:
       prompt_template = """
-            Summarize the volleyball performance metrics for {player_name}: {json_data}.
-            Focus on {preferred_metrics} and highlight key strengths and areas for improvement.
+            Summarize the volleyball performance metrics for {player_name}. Highlight key metrics: {preferred_metrics} from the data {json_data}.
             """
 
       # Prepare request
     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
     headers = {"Content-Type": "application/json"}
     try:
+      # Escape JSON data to avoid syntax issues
+      json_string = json.dumps(compact_json, ensure_ascii=False)
       formatted_prompt = prompt_template.format(
-        json_data=json.dumps(compact_json),
+        json_data=json_string,
         player_name="Anonymous Player",
         preferred_metrics="key performance metrics"
       )
+      logger.debug(f"Formatted prompt: {formatted_prompt}")
     except Exception as e:
       logger.error(f"Error formatting prompt: {str(e)}")
       return f"Error: Failed to format prompt - {str(e)}"
@@ -2705,23 +2682,13 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
   except Exception as e:
     logger.error(f"Unexpected error in generate_ai_summary: {str(e)}", exc_info=True)
     return f"Error generating summary: {str(e)}"
-    
-  except anvil.http.HttpError as e:
-    logger.error(f"Detailed HTTP error: {e.content}")
-    if e.status == 403:
-      return "Error: 403 Forbidden - API key is blocked or Generative Language API is not enabled. Check Google Cloud Console."
-    return f"Error generating summary: HTTP {e.status} - {e.content}"
-  except KeyError as e:
-    logger.error(f"KeyError in response parsing: {str(e)}")
-    return f"Error: Invalid response format from Gemini API - {str(e)}"
-  except Exception as e:
-    logger.error(f"Unexpected error in generate_ai_summary: {str(e)}", exc_info=True)
-    return f"Error generating summary: {str(e)}"
+
 
     
 
 
 
+#----------------------------------------------------------------------------------
 def insert_summary_into_pdf(pdf_media, summary_text):
   """Insert AI summary into PDF below subtitle."""
   try:
@@ -2743,7 +2710,7 @@ def insert_summary_into_pdf(pdf_media, summary_text):
     logging.error(f"Error inserting summary into PDF: {str(e)}")
     return pdf_media
 
-
+#----------------------------------------------------------------------------------
 def create_summary_pdf(summary_text, pdf_name):
   """Create a new PDF with the AI summary."""
   try:
