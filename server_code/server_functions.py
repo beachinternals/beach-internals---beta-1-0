@@ -2454,11 +2454,11 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
 
   return angle_table
 
-
-def anonymize_json(json_data):
+def anonymize_json(json_data, player_replacement="Player A", pair_replacement="Pair A"):
   """
-    Anonymize JSON data, preserving volleyball metrics while removing sensitive fields.
+    Anonymize JSON data, preserving structure while anonymizing player/pair names in title_9, title_10, and strings.
     """
+  logger.info("---------- Anonymize Json --------------")
   try:
     if json_data is None:
       logger.warning("json_data is None in anonymize_json")
@@ -2467,31 +2467,71 @@ def anonymize_json(json_data):
       # Deep copy to avoid modifying original
     anon_data = copy.deepcopy(json_data)
 
-    # Define sensitive fields to removeta, 
-    # in the JSON file, title_9 is player, and title_10 is pair, so anaoymize these
-    sensitive_fields = ['player_name', 'personal_id', 'name', 'id', 'email','title_9','title_10']
+    # Extract original player and pair names from titles for string replacement
+    player_name = None
+    pair_name = None
 
-    if isinstance(anon_data, dict):
-      for field in sensitive_fields:
-        anon_data.pop(field, None)
-    elif isinstance(anon_data, list):
-      for item in anon_data:
-        if isinstance(item, dict):
-          for field in sensitive_fields:
-            item.pop(field, None)
-    else:
-      logger.warning(f"json_data is neither dict nor list: {type(json_data)}")
-      return anon_data
+    if isinstance(anon_data, dict) and 'titles' in anon_data and isinstance(anon_data['titles'], dict):
+      # Get and clean player name (strip whitespace)
+      raw_player_name = anon_data['titles'].get('title_9')
+      if raw_player_name and isinstance(raw_player_name, str):
+        player_name = raw_player_name.strip()
 
-      # Validate that anon_data contains some data
+        # Get pair name (handle None case)
+      raw_pair_name = anon_data['titles'].get('title_10')
+      if raw_pair_name and isinstance(raw_pair_name, str):
+        pair_name = raw_pair_name.strip()
+
+      logger.info(f"Anonymize json: player_name: '{player_name}', pair_name: '{pair_name}'")
+
+    def recursive_anonymize(data):
+      if isinstance(data, dict):
+        new_data = {}
+        for key, value in data.items():
+          if key in ['title_9', 'title_10']:
+            # Anonymize title_9 and title_10
+            if key == 'title_9':
+              new_data[key] = player_replacement
+            elif key == 'title_10':
+              new_data[key] = pair_replacement if value is not None else None
+          elif isinstance(value, (dict, list)):
+            new_data[key] = recursive_anonymize(value)
+          elif isinstance(value, str) and value:  # Only process non-empty strings
+            # Replace player/pair names in strings
+            anonymized_value = value
+
+            # Replace player name if it exists and is not empty
+            if player_name:
+              anonymized_value = anonymized_value.replace(player_name, player_replacement)
+
+              # Replace pair name if it exists and is not empty
+            if pair_name:
+              anonymized_value = anonymized_value.replace(pair_name, pair_replacement)
+
+            new_data[key] = anonymized_value
+          else:
+            new_data[key] = value
+        return new_data
+      elif isinstance(data, list):
+        return [recursive_anonymize(item) for item in data]
+      else:
+        return data
+
+    anon_data = recursive_anonymize(anon_data)
+
+    # Validate that anon_data contains some data
     if not anon_data or (isinstance(anon_data, dict) and not any(anon_data.values())):
       logger.warning("Anonymized JSON is empty: %s", anon_data)
       return {"error": "No valid data after anonymization"}
 
+    logger.info("Anonymization completed successfully")
     return anon_data
+
   except Exception as e:
     logger.error("Error in anonymize_json: %s", str(e), exc_info=True)
     return {"error": f"Anonymization failed: {str(e)}"}
+    
+
 
 
 
@@ -2526,7 +2566,7 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
     Call Gemini API to generate a summary from JSON data and prompt.
     """
   logger.info(f"Generate AI Summary for coach_id={coach_id}")
-  logger.info(f"Calling Arguments: json_data={json_data},\n Prompt={prompt_template},\n Coach Id={coach_id}")
+  #logger.info(f"Calling Arguments: json_data={json_data},\n Prompt={prompt_template},\n Coach Id={coach_id}")
 
   try:
     # Get API key
