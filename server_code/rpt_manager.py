@@ -351,7 +351,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       else:
         logger.error(f"Unknown rpt_type: {rpt_r['rpt_type']}")
         continue
-
+        get
       pdf_name = f"{player_pair} {rpt_r['Report Description']}.pdf"
       if rpt_r['rpt_type'] == 'dashboard':
         pdf_name = f"{player_pair} {disp_team} {rpt_r['Report Description']}.pdf"
@@ -388,7 +388,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           continue
 
           # Generate JSON
-        json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False)
+        logging.info(f"Geneaerting JSON for {rptname['rpt_form']}")
+        json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
+        logging.info(f"Json medi returned: {json_media}")
         if isinstance(json_media, dict) and json_media.get('error'):
           logger.warning(f"JSON generation failed: {json_media['error']}")
           json_result = None
@@ -409,13 +411,14 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           # Parse json_media to dictionary
           try:
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
+            human_summary = prompt_row['desc_beach_volleyball']
           except (json.JSONDecodeError, AttributeError) as e:
             logger.error(f"Failed to parse json_media: {str(e)}")
             individual_summaries.append(f"Error: Failed to parse JSON - {str(e)}")
             continue
           # Clean prompt to remove problematic colon
           prompt_text = prompt_row['prompt_text'].replace(": {json_data}", " {json_data}")
-          summary = generate_ai_summary(json_data, prompt_text, rpt_r['email'])
+          summary = generate_ai_summary(json_data, prompt_text, rpt_r['email'], human_summary)
           individual_summaries.append(summary)
         else:
           summary = "No summary generated: Prompt not found"

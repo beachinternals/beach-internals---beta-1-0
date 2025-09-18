@@ -82,168 +82,119 @@ def generate_pdf_report(rpt_form, report_id):
     return {'pdf': None, 'json_file_name': None, 'error': f'Failed to generate PDF: {str(e)}'}
 
 
-def generate_json_report(rpt_form, report_id, include_images=False, include_urls=False):
+def generate_json_report(rpt_form, report_id, include_images=False, include_urls=False, include_nulls=True):
   """
     Generate a PDF report and save all report data as JSON to Google Drive.
+    
     Args:
         rpt_form: Anvil form or string identifier to render as PDF
         report_id: ID of the report in app_tables.report_data
         include_images: Boolean to include image data in JSON (default: False)
         include_urls: Boolean to include URLs in dataframes in JSON (default: False)
+        include_nulls: Boolean to include fields that are None or empty string (default: True)
+        
     Returns:
         dict: {'pdf': BlobMedia, 'json_file_name': str, 'error': str or None}
     """
-  # Get report data row
+
+  # Helper to recursively remove None or empty string values
+  def strip_nulls_safe(obj, path="root"):
+    if isinstance(obj, dict):
+      new_obj = {}
+      for k, v in obj.items():
+        full_path = f"{path}.{k}"
+        if v is None or (isinstance(v, str) and v.strip() == ""):
+          print(f"Skipping null/empty at {full_path}")
+          # Keep the key but set value to None
+          new_obj[k] = None
+        else:
+          new_obj[k] = strip_nulls_safe(v, full_path)
+      return new_obj
+    elif isinstance(obj, list):
+      # Process list items recursively, keep their positions
+      return [strip_nulls_safe(item, f"{path}[{i}]") for i, item in enumerate(obj)]
+    else:
+      return obj
+
+    # Get report data row
   rpt_data_row = app_tables.report_data.get(report_id=report_id)
   if not rpt_data_row:
     return {'error': f'Report ID {report_id} not found'}
 
-  # Determine file names for JSON
-  if rpt_data_row['title_6'] == 'pair':
-    base_name = f"{rpt_data_row['title_10'] or 'Pair'} {rpt_data_row['title_1'] or 'Report'}"
-    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-  elif rpt_data_row['title_6'] == 'player':
-    base_name = f"{rpt_data_row['title_9'] or 'Player'} {rpt_data_row['title_1'] or 'Report'}"
-    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-  elif rpt_data_row['title_6'] == 'league':
-    base_name = f"{rpt_data_row['title_4'] or 'League'} {rpt_data_row['title_1'] or 'Report'}"
-    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-  elif rpt_data_row['title_6'] == 'dashboard':
-    base_name = f"{rpt_data_row['title_9'] or 'Dashboard'} {rpt_data_row['title_1'] or 'Report'}"
-    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-  elif rpt_data_row['title_6'] == 'scouting':
-    base_name = f"{rpt_data_row['title_9'] or 'Scouting'} {rpt_data_row['title_1'] or 'Report'}"
-    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-  elif rpt_data_row['title_6'] == 'diagnostic':
-    base_name = f"{rpt_data_row['title_9'] or 'Diagnostic'} {rpt_data_row['title_1'] or 'Report'}"
-    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-  else:
-    base_name = report_id
-    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    # Determine file name for JSON
+  base_name_map = {
+    'pair': rpt_data_row.get('title_10', 'Pair'),
+    'player': rpt_data_row.get('title_9', 'Player'),
+    'league': rpt_data_row.get('title_4', 'League'),
+    'dashboard': rpt_data_row.get('title_9', 'Dashboard'),
+    'scouting': rpt_data_row.get('title_9', 'Scouting'),
+    'diagnostic': rpt_data_row.get('title_9', 'Diagnostic')
+  }
+  base_name = base_name_map.get(rpt_data_row.get('title_6'), report_id)
+  json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
   # Prepare report data for JSON
   report_data = {
     'report_id': report_id,
     'timestamp': datetime.now().isoformat(),
-    'titles': {},
-    'labels': {},
+    'titles': {f'title_{i}': rpt_data_row.get(f'title_{i}') for i in range(1, 11)},
+    'labels': {f'label_{i}': rpt_data_row.get(f'label_{i}') for i in range(1, 11)},
     'dataframes': {},
-    'dataframe_descriptions': {},
+    'dataframe_descriptions': {f'df_desc_{i}': rpt_data_row.get(f'df_desc_{i}') for i in range(1, 11)},
     'images': {},
-    'image_descriptions': {}
+    'image_descriptions': {f'image_desc_{i}': rpt_data_row.get(f'image_desc_{i}') for i in range(1, 11)}
   }
 
-  # Extract titles (title_1 to title_10)
-  for i in range(1, 11):
-    title_key = f'title_{i}'
-    report_data['titles'][title_key] = rpt_data_row[title_key]
-
-  # Extract labels (label_1 to label_10)
-  for i in range(1, 11):
-    label_key = f'label_{i}'
-    report_data['labels'][label_key] = rpt_data_row[label_key]
-
-  # Extract dataframes (df_1 to df_10)
+  # Extract dataframes
   for i in range(1, 11):
     df_key = f'df_{i}'
-    try:
-      df_value = rpt_data_row[df_key]
-      if isinstance(df_value, anvil._server.LazyMedia):
-        # Get markdown content
-        content_type = df_value.content_type
-        if ('markdown' in content_type.lower()) or ('plain' in content_type.lower()):
-          markdown_bytes = df_value.get_bytes()
-          markdown_text = markdown_bytes.decode('utf-8')
-          # Try to parse markdown table
-          df = parse_markdown_table(markdown_text)
-          if df is not None:
-            # If include_urls is False, handle all URL formats
-            if not include_urls:
-              # Case 1: Check for a dedicated 'URL' column
-              if 'URL' in df.columns:
-                df['URL'] = None
-              # Case 2: Check for a row where the first column (unnamed) is 'URL'
-              if '' in df.columns and 'URL' in df[''].values:
-                df.loc[df[''] == 'URL', df.columns != ''] = None
-              # Case 3: Check for any row where any column has 'URL' and set 'Value' column to None
-              if 'Value' in df.columns:
-                for col in df.columns:
-                  if col != 'Value' and 'URL' in df[col].values:
-                    df.loc[df[col] == 'URL', 'Value'] = None
-            report_data['dataframes'][df_key] = df.to_dict('records')
-          else:
-            report_data['dataframes'][df_key] = {'raw_markdown': markdown_text}
-        else:
-          report_data['dataframes'][df_key] = f"Unsupported content type: {content_type}"
-      elif isinstance(df_value, pd.DataFrame):
-        # If include_urls is False, handle all URL formats
-        if not include_urls:
-          # Case 1: Check for a dedicated 'URL' column
-          if 'URL' in df_value.columns:
-            df_value['URL'] = None
-          # Case 2: Check for a row where the first column (unnamed) is 'URL'
-          if '' in df_value.columns and 'URL' in df_value[''].values:
-            df_value.loc[df_value[''] == 'URL', df_value.columns != ''] = None
-          # Case 3: Check for any row where any column has 'URL' and set 'Value' column to None
-          if 'Value' in df_value.columns:
-            for col in df_value.columns:
-              if col != 'Value' and 'URL' in df_value[col].values:
-                df_value.loc[df_value[col] == 'URL', 'Value'] = None
-        report_data['dataframes'][df_key] = df_value.to_dict('records')
-      elif isinstance(df_value, dict):
-        report_data['dataframes'][df_key] = df_value
-      elif df_value is not None:
-        report_data['dataframes'][df_key] = str(df_value)
-      else:
-        report_data['dataframes'][df_key] = None
-    except KeyError:
+    df_value = rpt_data_row.get(df_key)
+    if df_value is None:
       report_data['dataframes'][df_key] = None
+    elif isinstance(df_value, pd.DataFrame):
+      if not include_urls:
+        if 'URL' in df_value.columns:
+          df_value['URL'] = None
+      report_data['dataframes'][df_key] = df_value.to_dict('records')
+    elif isinstance(df_value, dict):
+      report_data['dataframes'][df_key] = df_value
+    else:
+      report_data['dataframes'][df_key] = str(df_value)
 
-  # Extract dataframe descriptions (df_desc_1 to df_desc_10)
-  for i in range(1, 11):
-    df_desc_key = f'df_desc_{i}'
-    try:
-      report_data['dataframe_descriptions'][df_desc_key] = rpt_data_row[df_desc_key]
-    except KeyError:
-      report_data['dataframe_descriptions'][df_desc_key] = None
-
-  # Extract images (image_1 to image_10)
+    # Extract images
   for i in range(1, 11):
     img_key = f'image_{i}'
-    try:
-      img_value = rpt_data_row[img_key]
-      if isinstance(img_value, (anvil.BlobMedia, anvil._server.LazyMedia)) and include_images:
-        # Get image bytes and content type
-        img_bytes = img_value.get_bytes()
-        content_type = img_value.content_type
-        # Encode as base64 with data URI
-        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
-        data_uri = f"data:{content_type};base64,{img_base64}"
-        report_data['images'][img_key] = {
-          'name': img_value.name,
-          'content_type': content_type,
-          'data_uri': data_uri
-        }
-      else:
-        report_data['images'][img_key] = None
-    except KeyError:
+    img_value = rpt_data_row.get(img_key)
+    if include_images and isinstance(img_value, (anvil.BlobMedia, anvil._server.LazyMedia)):
+      img_bytes = img_value.get_bytes()
+      content_type = img_value.content_type
+      img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+      data_uri = f"data:{content_type};base64,{img_base64}"
+      report_data['images'][img_key] = {
+        'name': img_value.name,
+        'content_type': content_type,
+        'data_uri': data_uri
+      }
+    else:
       report_data['images'][img_key] = None
 
-  # Extract image descriptions (image_desc_1 to image_desc_10)
-  for i in range(1, 11):
-    img_desc_key = f'image_desc_{i}'
-    try:
-      report_data['image_descriptions'][img_desc_key] = rpt_data_row[img_desc_key]
-    except KeyError:
-      report_data['image_descriptions'][img_desc_key] = None
+    # Strip nulls if requested
+  if not include_nulls:
+    print("=== Starting safe null-stripping ===")
+    report_data = strip_nulls_safe(report_data)
+    print("=== Finished safe null-stripping ===")
 
-  # Convert to JSON
+
+    # Convert to JSON
   json_str = json.dumps(report_data, indent=2, default=str)
   json_bytes = json_str.encode('utf-8')
   json_media = anvil.BlobMedia(content_type='application/json', content=json_bytes, name=json_file)
 
   return json_media
-  
+
+
+
+
 
   
 

@@ -27,6 +27,9 @@ db_schema:
     - admin_ui: {order: 5, width: 200}
       name: version
       type: number
+    - admin_ui: {order: 3.5, width: 200}
+      name: desc_beach_volleyball
+      type: string
     server: full
     title: ai_prompt_templates
   btd_files:
