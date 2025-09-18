@@ -2454,6 +2454,7 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
 
   return angle_table
 
+
 def anonymize_json(json_data, player_replacement="Player A", pair_replacement="Pair A"):
   """
     Anonymize JSON data, preserving structure while anonymizing player/pair names in title_9, title_10, and strings.
@@ -2464,8 +2465,19 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
       logger.warning("json_data is None in anonymize_json")
       return {}
 
+      # Parse JSON string if necessary
+    if isinstance(json_data, str):
+      logger.info("Parsing JSON string")
+      try:
+        parsed_data = json.loads(json_data)
+      except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse JSON string: {e}")
+        return {"error": f"Invalid JSON string: {str(e)}"}
+    else:
+      parsed_data = json_data
+
       # Deep copy to avoid modifying original
-    anon_data = copy.deepcopy(json_data)
+    anon_data = copy.deepcopy(parsed_data)
 
     # Extract original player and pair names from titles for string replacement
     player_name = None
@@ -2474,15 +2486,17 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
     if isinstance(anon_data, dict) and 'titles' in anon_data and isinstance(anon_data['titles'], dict):
       # Get and clean player name (strip whitespace)
       raw_player_name = anon_data['titles'].get('title_9')
+
       if raw_player_name and isinstance(raw_player_name, str):
         player_name = raw_player_name.strip()
 
         # Get pair name (handle None case)
       raw_pair_name = anon_data['titles'].get('title_10')
+
       if raw_pair_name and isinstance(raw_pair_name, str):
         pair_name = raw_pair_name.strip()
 
-      logger.info(f"Anonymize json: player_name: '{player_name}', pair_name: '{pair_name}'")
+    logger.info(f"Anonymizing - Player: '{player_name}' -> '{player_replacement}', Pair: '{pair_name}' -> '{pair_replacement}'")
 
     def recursive_anonymize(data):
       if isinstance(data, dict):
@@ -2501,11 +2515,11 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
             anonymized_value = value
 
             # Replace player name if it exists and is not empty
-            if player_name:
+            if player_name and player_name in anonymized_value:
               anonymized_value = anonymized_value.replace(player_name, player_replacement)
 
               # Replace pair name if it exists and is not empty
-            if pair_name:
+            if pair_name and pair_name in anonymized_value:
               anonymized_value = anonymized_value.replace(pair_name, pair_replacement)
 
             new_data[key] = anonymized_value
@@ -2530,6 +2544,7 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
   except Exception as e:
     logger.error("Error in anonymize_json: %s", str(e), exc_info=True)
     return {"error": f"Anonymization failed: {str(e)}"}
+ 
     
 
 
@@ -2618,8 +2633,11 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
     }
 
     # Log request details
+    logger.info(f"Final Payload before sending: {json.dumps(payload, indent=2)}") # <-- Add this line
+    # Log request details
     logger.info("Gen AI Prompt and Data")
-    logger.info(f"URL: {url}\nHeaders: {headers}\nJSON: {payload}")
+    logger.info(f"URL: {url}?key={api_key}\nHeaders: {headers}\nJSON: {payload}")
+
 
     # Make HTTP request
     response = anvil.http.request(
