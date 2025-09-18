@@ -2467,8 +2467,9 @@ def anonymize_json(json_data):
       # Deep copy to avoid modifying original
     anon_data = copy.deepcopy(json_data)
 
-    # Define sensitive fields to remove
-    sensitive_fields = ['player_name', 'personal_id', 'name', 'id', 'email']
+    # Define sensitive fields to removeta, 
+    # in the JSON file, title_9 is player, and title_10 is pair, so anaoymize these
+    sensitive_fields = ['player_name', 'personal_id', 'name', 'id', 'email','title_9','title_10']
 
     if isinstance(anon_data, dict):
       for field in sensitive_fields:
