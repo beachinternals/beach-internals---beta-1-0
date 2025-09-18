@@ -2576,14 +2576,40 @@ def anonymize_pdf(pdf_media, pii_terms):
     logging.error(f"Error anonymizing PDF: {str(e)}")
     return None
 
+def remove_null_fields(data):
+  """
+    Recursively remove all null fields, empty dictionaries, and invalid entries from JSON data to reduce size.
+    """
+  try:
+    if isinstance(data, dict):
+      cleaned_dict = {}
+      for k, v in data.items():
+        cleaned_v = remove_null_fields(v)
+        # Only include non-empty dictionaries, non-empty lists, or non-null values
+        if cleaned_v is not None and (isinstance(cleaned_v, (dict, list)) and len(cleaned_v) > 0 or not isinstance(cleaned_v, (dict, list))):
+          # Skip dictionaries with only one key that is empty or 'URL'
+          if isinstance(cleaned_v, dict) and len(cleaned_v) == 1 and ("" in cleaned_v or "URL" in cleaned_v.get("", "")):
+            continue
+          cleaned_dict[k] = cleaned_v
+      return cleaned_dict if cleaned_dict else None
+    elif isinstance(data, list):
+      cleaned_list = [remove_null_fields(item) for item in data if item is not None]
+      cleaned_list = [item for item in cleaned_list if item is not None and (isinstance(item, (dict, list)) and len(item) > 0 or not isinstance(item, (dict, list)))]
+      return cleaned_list if cleaned_list else None
+    else:
+      return data if data is not None else None
+  except Exception as e:
+    logger.error(f"Error in remove_null_fields: {str(e)}")
+    return data
+
 def generate_ai_summary(json_data, prompt_template, coach_id=None):
   """
     Call Gemini API to generate a summary from JSON data and prompt.
     """
-  logger.info(f"Generate AI Summary for coach_id={coach_id}")
-  #logger.info(f"Calling Arguments: json_data={json_data},\n Prompt={prompt_template},\n Coach Id={coach_id}")
-
   try:
+    # Log all arguments
+    logger.info(f"Generate AI Summary: coach_id={coach_id}, json_data={json_data}, prompt={prompt_template}")
+
     # Get API key
     api_key = anvil.secrets.get_secret('GEMINI_API_KEY')
     if not api_key:
@@ -2601,10 +2627,18 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
 
     # Check if anon_json is valid
     if isinstance(anon_json, dict) and "error" in anon_json:
-      logger.error("Anonymization error: %s", anon_json["error"])
+      logger.error(f"Anonymization error: {anon_json['error']}")
       return f"Error: {anon_json['error']}"
 
-      # Default prompt template if none provided
+      # Remove null fields to reduce JSON size
+    compact_json = remove_null_fields(anon_json)
+    if compact_json is None:
+      logger.error("Compact JSON is empty after removing null fields")
+      return "Error: No valid data after removing null fields"
+    logger.debug(f"Compact JSON (null fields removed): {compact_json}")
+    logger.debug(f"Compact JSON size: {len(json.dumps(compact_json))} characters")
+
+    # Default prompt template if none provided
     if not prompt_template:
       prompt_template = """
             Summarize the volleyball performance metrics for {player_name}: {json_data}.
@@ -2616,54 +2650,75 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
     headers = {"Content-Type": "application/json"}
     try:
       formatted_prompt = prompt_template.format(
-        json_data=json.dumps(anon_json),
+        json_data=json.dumps(compact_json),
         player_name="Anonymous Player",
         preferred_metrics="key performance metrics"
       )
     except Exception as e:
-            logger.error("Error formatting prompt: %s", str(e))
-            return f"Error: Failed to format prompt - {str(e)}"
+      logger.error(f"Error formatting prompt: {str(e)}")
+      return f"Error: Failed to format prompt - {str(e)}"
 
     payload = {
       "contents": [{
         "parts": [{
           "text": formatted_prompt
         }]
-      }]
+      }],
+      "generationConfig": {
+        "temperature": 0.7,
+        "topP": 0.9,
+        "maxOutputTokens": 512
+      }
     }
 
     # Log request details
-    logger.info(f"Final Payload before sending: {json.dumps(payload, indent=2)}") # <-- Add this line
-    # Log request details
-    logger.info("Gen AI Prompt and Data")
-    logger.info(f"URL: {url}?key={api_key}\nHeaders: {headers}\nJSON: {payload}")
-
+    logger.info(f"Gen AI Prompt and Data: URL={url}, Headers={headers}, JSON={json.dumps(payload, indent=2)}")
 
     # Make HTTP request
-    response = anvil.http.request(
-            url=f"{url}?key={api_key}",
-            method="POST",
-            headers=headers,
-            json=payload
-        )
+    try:
+      response = anvil.http.request(
+        url=f"{url}?key={api_key}",
+        method="POST",
+        headers=headers,
+        json=payload
+      )
+    except anvil.http.HttpError as e:
+      logger.error(f"Detailed HTTP error: {e.content}")
+      if e.status == 403:
+        return "Error: 403 Forbidden - API key is blocked or Generative Language API is not enabled. Check Google Cloud Console."
+      return f"Error generating summary: HTTP {e.status} - {e.content}"
 
-    # Parse response
+      # Parse response
     logger.debug(f"API response: {response}")
     summary = response['candidates'][0]['content']['parts'][0]['text']
     logger.info(f"Results, summary: {summary}")
     return summary.strip()
 
   except anvil.http.HttpError as e:
-    logger.error(f"HTTP error from Gemini API: {str(e)}")
+    logger.error(f"Detailed HTTP error: {e.content}")
     if e.status == 403:
-       return "Error: 403 Forbidden - API key is blocked or Generative Language API is not enabled. Check Google Cloud Console."
-    return f"Error generating summary: HTTP {e.status} - {str(e)}"
+      return "Error: 403 Forbidden - API key is blocked or Generative Language API is not enabled. Check Google Cloud Console."
+    return f"Error generating summary: HTTP {e.status} - {e.content}"
   except KeyError as e:
     logger.error(f"KeyError in response parsing: {str(e)}")
     return f"Error: Invalid response format from Gemini API - {str(e)}"
   except Exception as e:
-    logger.error("Unexpected error in generate_ai_summary: %s", str(e), exc_info=True)
+    logger.error(f"Unexpected error in generate_ai_summary: {str(e)}", exc_info=True)
     return f"Error generating summary: {str(e)}"
+    
+  except anvil.http.HttpError as e:
+    logger.error(f"Detailed HTTP error: {e.content}")
+    if e.status == 403:
+      return "Error: 403 Forbidden - API key is blocked or Generative Language API is not enabled. Check Google Cloud Console."
+    return f"Error generating summary: HTTP {e.status} - {e.content}"
+  except KeyError as e:
+    logger.error(f"KeyError in response parsing: {str(e)}")
+    return f"Error: Invalid response format from Gemini API - {str(e)}"
+  except Exception as e:
+    logger.error(f"Unexpected error in generate_ai_summary: {str(e)}", exc_info=True)
+    return f"Error generating summary: {str(e)}"
+
+    
 
 
 
