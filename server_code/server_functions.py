@@ -2458,7 +2458,6 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
 
 #----------------------------------------------------------------------------------
 
-
 def anonymize_json(json_data, player_replacement="Player A", pair_replacement="Pair A"):
   """
     Anonymize JSON data, preserving structure while anonymizing player/pair names in title_9, title_10, and strings.
@@ -2571,7 +2570,7 @@ def remove_null_fields(data):
 
 def generate_ai_summary(json_data, prompt_template, coach_id=None):
   """
-    Call Gemini API to generate a summary from JSON data and prompt.
+    Call Gemini API to generate a summary, trying text-based metrics first, then JSON, avoiding double-encoding.
     """
   try:
     # Log all arguments
@@ -2590,86 +2589,140 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
 
       # Ensure json_data is a dictionary
     if isinstance(json_data, str):
+      logger.info("Input json_data is a string, attempting to parse")
       try:
         json_data = json.loads(json_data)
       except json.JSONDecodeError as e:
         logger.error(f"Invalid JSON string: {str(e)}")
         return f"Error: Invalid JSON input - {str(e)}"
+    logger.debug(f"Parsed json_data: {json_data}")
 
-        # Anonymize JSON data
-    anon_json = anonymize_json(json_data)
-    logger.debug(f"Anonymized JSON: {anon_json}")
+    # Handle roll-up summary case
+    if isinstance(json_data, dict) and 'summaries' in json_data:
+      compact_json = json_data
+    else:
+      # Anonymize JSON data
+      anon_json = anonymize_json(json_data)
+      logger.debug(f"Anonymized JSON: {anon_json}")
 
-    # Check if anon_json is valid
-    if isinstance(anon_json, dict) and "error" in anon_json:
-      logger.error(f"Anonymization error: {anon_json['error']}")
-      return f"Error: {anon_json['error']}"
+      # Check if anon_json is valid
+      if isinstance(anon_json, dict) and "error" in anon_json:
+        logger.error(f"Anonymization error: {anon_json['error']}")
+        return f"Error: {anon_json['error']}"
 
-      # Remove null fields to reduce JSON size
-    compact_json = remove_null_fields(anon_json)
-    if compact_json is None:
-      logger.error("Compact JSON is empty after removing null fields")
-      return "Error: No valid data after removing null fields"
-    logger.debug(f"Compact JSON (null fields removed): {compact_json}")
-    logger.debug(f"Compact JSON size: {len(json.dumps(compact_json))} characters")
+        # Filter to essential fields
+      compact_json = remove_null_fields(anon_json)
+      if compact_json is None:
+        logger.error("Compact JSON is empty after removing null fields")
+        return "Error: No valid data after removing null fields"
 
-    # Default prompt template if none provided
+        # Further filter to key metrics
+      if 'dataframes' in compact_json and 'df_1' in compact_json['dataframes']:
+        filtered_json = {
+          "dataframes": {
+            "df_1": [
+              row for row in compact_json['dataframes']['df_1']
+              if row.get('') in ['FBHE', 'Kills', 'Attempts', 'Errors', 'Percentile', 'FBSO']
+            ]
+          }
+        }
+        compact_json = filtered_json
+      logger.debug(f"Compact JSON (filtered): {compact_json}")
+      logger.debug(f"Compact JSON size: {len(json.dumps(compact_json))} characters")
+
+      # Default prompt template
     if not prompt_template:
-      prompt_template = """
-            Summarize the volleyball performance metrics for {player_name}. Highlight key metrics: {preferred_metrics} from the data {json_data}.
-            """
+      prompt_template = "Summarize: {json_data}"
 
-      # Prepare request
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
-    headers = {"Content-Type": "application/json"}
+      # Try text-based summary first
+    if 'dataframes' in compact_json:
+      text_metrics = []
+      for row in compact_json['dataframes']['df_1']:
+        metric = row.get('')
+        if metric in ['FBHE', 'Kills', 'Attempts', 'Errors', 'Percentile', 'FBSO']:
+          text_metrics.append(f"{metric}: {row.get('All')} (Right Slot: {row.get('Right Slot', 'N/A')}, Left Pin: {row.get('Left Pin', 'N/A')})")
+      text_data = "; ".join(text_metrics)
+      fallback_prompt = prompt_template.format(json_data=text_data).strip()
+      logger.debug(f"Text-based prompt: {fallback_prompt}")
+      payload = {
+        "contents": [{"parts": [{"text": fallback_prompt}]}],
+        "generationConfig": {"temperature": 0.7, "topP": 0.9, "maxOutputTokens": 512}
+      }
+      logger.info(f"Text-based request: URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent, Headers={'Content-Type': 'application/json'}, JSON={json.dumps(payload, indent=2)}")
+      try:
+        response = anvil.http.request(
+          url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}",
+          method="POST",
+          headers={"Content-Type": "application/json"},
+          json=payload
+        )
+        summary = response['candidates'][0]['content']['parts'][0]['text']
+        logger.info(f"Text-based summary: {summary}")
+        return summary.strip()
+      except anvil.http.HttpError as e:
+        logger.error(f"Detailed HTTP error in text-based request: {e.content}")
+
+        # Fallback to JSON-based summary
     try:
-      # Escape JSON data to avoid syntax issues
-      json_string = json.dumps(compact_json, ensure_ascii=False)
-      formatted_prompt = prompt_template.format(
-        json_data=json_string,
-        player_name="Anonymous Player",
-        preferred_metrics="key performance metrics"
-      )
-      logger.debug(f"Formatted prompt: {formatted_prompt}")
+      # Ensure compact_json is a dictionary, not a string
+      if isinstance(compact_json, str):
+        logger.warning("compact_json is a string, attempting to parse")
+        try:
+          compact_json = json.loads(compact_json)
+        except json.JSONDecodeError as e:
+          logger.error(f"Invalid compact_json string: {str(e)}")
+          return f"Error: Invalid compact_json - {str(e)}"
+      json_string = json.dumps(compact_json, ensure_ascii=False, separators=(',', ':'))
+      json_string = re.sub(r'\n+', ' ', json_string)  # Replace newlines
+      json_string = re.sub(r'\*+', '', json_string)   # Remove markdown
+      formatted_prompt = prompt_template.format(json_data=json_string).strip()
+      logger.debug(f"JSON-based prompt: {formatted_prompt}")
     except Exception as e:
-      logger.error(f"Error formatting prompt: {str(e)}")
+      logger.error(f"Error formatting JSON prompt: {str(e)}")
       return f"Error: Failed to format prompt - {str(e)}"
 
     payload = {
-      "contents": [{
-        "parts": [{
-          "text": formatted_prompt
-        }]
-      }],
-      "generationConfig": {
-        "temperature": 0.7,
-        "topP": 0.9,
-        "maxOutputTokens": 512
-      }
+      "contents": [{"parts": [{"text": formatted_prompt}]}],
+      "generationConfig": {"temperature": 0.7, "topP": 0.9, "maxOutputTokens": 512}
     }
 
-    # Log request details
-    logger.info(f"Gen AI Prompt and Data: URL={url}, Headers={headers}, JSON={json.dumps(payload, indent=2)}")
+    # Try with requests library if available
+    if requests:
+      logger.info("Trying JSON-based request with requests library")
+      try:
+        response = requests.post(
+          f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}",
+          headers={"Content-Type": "application/json"},
+          json=payload
+        )
+        response.raise_for_status()
+        response_data = response.json()
+        logger.debug(f"Requests API response: {response_data}")
+        summary = response_data['candidates'][0]['content']['parts'][0]['text']
+        logger.info(f"JSON-based summary (requests): {summary}")
+        return summary.strip()
+      except requests.exceptions.RequestException as e:
+        logger.error(f"Requests library error: {str(e)}")
 
-    # Make HTTP request
+        # Fallback to anvil.http.request
+    logger.info(f"JSON-based request: URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent, Headers={'Content-Type': 'application/json'}, JSON={json.dumps(payload, indent=2)}")
     try:
       response = anvil.http.request(
-        url=f"{url}?key={api_key}",
+        url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}",
         method="POST",
-        headers=headers,
+        headers={"Content-Type": "application/json"},
         json=payload
       )
+      logger.debug(f"API response: {response}")
+      summary = response['candidates'][0]['content']['parts'][0]['text']
+      logger.info(f"JSON-based summary: {summary}")
+      return summary.strip()
+
     except anvil.http.HttpError as e:
-      logger.error(f"Detailed HTTP error: {e.content}")
+      logger.error(f"Detailed HTTP error in JSON-based request: {e.content}")
       if e.status == 403:
         return "Error: 403 Forbidden - API key is blocked or Generative Language API is not enabled. Check Google Cloud Console."
       return f"Error generating summary: HTTP {e.status} - {e.content}"
-
-      # Parse response
-    logger.debug(f"API response: {response}")
-    summary = response['candidates'][0]['content']['parts'][0]['text']
-    logger.info(f"Results, summary: {summary}")
-    return summary.strip()
 
   except anvil.http.HttpError as e:
     logger.error(f"Detailed HTTP error: {e.content}")
@@ -2680,8 +2733,34 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None):
     logger.error(f"KeyError in response parsing: {str(e)}")
     return f"Error: Invalid response format from Gemini API - {str(e)}"
   except Exception as e:
-    logger.error(f"Unexpected error in generate_ai_summary: {str(e)}", exc_info=True)
+    logger.error(f"Unexpected error in generate_ai_summary: {str(e)}")
     return f"Error generating summary: {str(e)}"
+
+@anvil.server.callable
+def test_gemini_api():
+  """
+    Test function to verify Gemini API connectivity.
+    """
+  test_data = {
+    "dataframes": {
+      "df_1": [
+        {"": "FBHE", "All": "0.292", "Right Slot": "0.6", "Left Pin": "-0.5"},
+        {"": "Kills", "All": "23", "Right Slot": "10", "Left Pin": "0"},
+        {"": "Attempts", "All": "48", "Right Slot": "15", "Left Pin": "2"},
+        {"": "Errors", "All": "9", "Right Slot": "1", "Left Pin": "1"},
+        {"": "Percentile", "All": "67%", "Right Slot": "95%", "Left Pin": "0%"},
+        {"": "FBSO", "All": "0.479", "Right Slot": "0.667", "Left Pin": "0.0"}
+      ]
+    }
+  }
+  test_prompt = "Summarize: {json_data}"
+  logger.info(f"Testing Gemini API with test_data={test_data}, prompt={test_prompt}")
+  return generate_ai_summary(test_data, test_prompt, coach_id="test_coach")
+
+  
+
+
+
 
 
     

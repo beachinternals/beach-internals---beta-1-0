@@ -139,6 +139,16 @@ class pdf_reports(pdf_reportsTemplate):
     print(anvil.server.call('test_now'))
     pass
 
+  def outlined_button_2_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    anvil.server.call('test_gemini_api')
+    pass
+
+  def outlined_button_3_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    anvil.server.call('test_rpt_mgr_new_rpts')
+    pass
+
 
 
 

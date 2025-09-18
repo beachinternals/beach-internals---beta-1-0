@@ -484,7 +484,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       })
 
   except Exception as e:
-    logger.error(f"CRITICAL ERROR in rpt_mgr_new_rpts: {str(e)}", exc_info=True)
+    logger.error(f"CRITICAL ERROR in rpt_mgr_new_rpts: {str(e)}")
 
   return return_text, report_infos
         
@@ -701,8 +701,8 @@ def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
       rpt_filters['pair'] = p_r['pair']
     
   #pair_b list, opponent pair
-  if rpt_r['pair_b_list'] is not None:
-    rpt_filters['opp_pair'] = rpt_r['pair_b_list']['pair']
+  #if rpt_r['pair_b_list'] is not None:
+  #  rpt_filters['opp_pair'] = rpt_r['pair_b_list']['pair']
 
   if rpt_r['comp1'] is not None:
     rpt_filters['comp_l1'] = rpt_r['comp1']
@@ -748,5 +748,20 @@ def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
 
   return rpt_filters
 
-
+@anvil.server.callable
+def test_rpt_mgr_new_rpts():
+  rpt_r = {
+    'rpt_type': 'player',
+    'Report Description': 'Attacking Summary',
+    'email': 'scott@beachinternals.com',
+    'rpts_inc': [{'id': 'test_id', 'report_name': 'Test Report', 'rpt_type': 'player', 'rpt_form': 'form1', 'function_name': 'fn1', 'order': 1}]
+  }
+  p_list = [{
+    'league': 'NCAA', 'gender': 'W', 'year': '2025',
+    'team': 'UCLA', 'number': '12', 'shortname': '',
+    'pair': 'UCLA 11'
+  }]
+  disp_team = 'UCLA'
+  logger.info(f"Testing rpt_mgr_new_rpts with rpt_r={rpt_r}, p_list={p_list}, disp_team={disp_team}")
+  return rpt_mgr_new_rpts(rpt_r, p_list, disp_team)
 
