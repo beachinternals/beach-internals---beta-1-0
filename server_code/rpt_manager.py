@@ -253,7 +253,7 @@ info@BeachInternals.com
   print("Clearing report_data table...")
   email_text += '\nDeleting all rows from report_data table \n\n'
   try:
-    app_tables.report_data.delete_all_rows()
+    #app_tables.report_data.delete_all_rows()
     print("Successfully cleared report_data table")
   except Exception as e:
     print(f"ERROR: Failed to clear report_data table: {str(e)}")

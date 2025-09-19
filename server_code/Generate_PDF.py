@@ -99,11 +99,16 @@ from datetime import datetime
 def safe_get(obj, key, default=None):
   """Safely get a key from a dict or attribute from Anvil Row/LiveObjectProxy."""
   if isinstance(obj, dict):
+    log_debug(f'safe_get dict: object={obj}, key={key}, value={obj.get(key, default)}')
     return obj.get(key, default)
   try:
-    return getattr(obj, key, default)
+    value = obj[key]
+    #value = getattr(obj, key, default)  # ✅ correct
+    log_debug(f'safe_get getattr: object={obj}, key={key}, value={value}')
+    return value
   except Exception:
     return default
+
 
 def strip_nulls_safe(obj, path="root"):
   """Recursively set None for null/empty strings, keeping structure."""
@@ -135,9 +140,11 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
       return {'error': f'Report ID {report_id} not found'}
 
       # Log row content safely
-    log_debug(f"Report Data row: {dict(rpt_data_row)}")
+    print(f"type of report_data_row : {type(rpt_data_row)}")
 
-    # Determine file name
+    #log_debug(f"Report Data row: {dict(rpt_data_row)}")
+
+    # Determine file name for JSON safely from report_data_row
     base_name_map = {
       'pair': safe_get(rpt_data_row, 'title_10', 'Pair'),
       'player': safe_get(rpt_data_row, 'title_9', 'Player'),
@@ -146,9 +153,16 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
       'scouting': safe_get(rpt_data_row, 'title_9', 'Scouting'),
       'diagnostic': safe_get(rpt_data_row, 'title_9', 'Diagnostic')
     }
-    tmp_title6 = safe_get(rpt_data_row, 'title_6')
-    log_debug(f"Base name map: {base_name_map}, title_6: {tmp_title6}")
+
+    # Get tmp_title6 safely (fallback to 'Default' if missing)
+    print(f"title_6 is :{rpt_data_row['title_6']}")
+    tmp_title6 = safe_get(rpt_data_row, 'title_6', 'Default')
+    log_debug(f"base_name_map: {base_name_map}, tmp_title6: {tmp_title6}")
+
+    # Pick base name from map, fallback to report_id if key missing
     base_name = safe_get(base_name_map, tmp_title6, report_id)
+
+    # Construct JSON file name
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
     # Prepare report_data dictionary
