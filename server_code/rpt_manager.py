@@ -488,6 +488,8 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
   except Exception as e:
     logger.error(f"CRITICAL ERROR in rpt_mgr_new_rpts: {str(e)}")
+    logger.exception("Critical error with traceback in rpt_mgr_new_rpts")
+    logger.critical("Critical error in rpt_mgr_new_rpts with exc_info", exc_info=True)
 
   return return_text, report_infos
         
