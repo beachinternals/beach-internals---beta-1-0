@@ -53,11 +53,13 @@ def log_critical(msg: str):
 
 # Test the logger
 try:
+  x = 1 / 0
+
+except Exception as e:
   log_debug("Logger debug test message")
   log_info("Logger info test message")
   log_error("Test error test message")
   log_critical("Logger test message, critical")
-except Exception as e:
   print(f"Logger test failed: {e}")
   
 # This is a server module. It runs on the Anvil server,
