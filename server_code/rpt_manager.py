@@ -19,38 +19,10 @@ from typing import Tuple
 from collections import defaultdict
 from anvil_extras.logging import Logger, DEBUG
 import traceback
+from logger_utils import log_info, log_error, log_critical, log_debug, log_row
 
-# -----------------------------------------------------------------------------
-# Logger setup
-# -----------------------------------------------------------------------------
-critical_logger = Logger(
-  name="critical",
-  level=DEBUG,
-  format="{name}-{level} {datetime:%Y-%m-%d %H:%M:%S}: {msg}"
-)
 
-# -----------------------------------------------------------------------------
-# Helper: log exception with traceback
-# -----------------------------------------------------------------------------
-def log_debug(msg: str):
-  tb_str = traceback.format_exc()
-  critical_logger.debug(f"{msg}\n{tb_str}")
-
-def log_info(msg: str):
-  # No traceback for info-level
-  critical_logger.info(msg)
-
-def log_error(msg: str, with_traceback=True):
-  if with_traceback:
-    tb_str = traceback.format_exc()
-    critical_logger.error(f"{msg}\n{tb_str}")
-  else:
-    critical_logger.error(msg)
-
-def log_critical(msg: str):
-  tb_str = traceback.format_exc()
-  critical_logger.error(f"CRITICAL: {msg}\n{tb_str}")
-
+'''
 # Test the logger
 try:
   x = 1 / 0
@@ -61,6 +33,7 @@ except Exception as e:
   log_error("Test error test message")
   log_critical("Logger test message, critical")
   print(f"Logger test failed: {e}")
+''' 
   
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -110,11 +83,11 @@ def rpt_mgr_generate_background():
         return False
     except Exception as e2:
       print(f"Alternative access also failed: {e2}")
-      critical_logger.exception(f"Alternative access to rpt_mgr table failed: {e2}")
+      log_critical(f"Alternative access to rpt_mgr table failed: {e2}")
       return False
   except Exception as e:
     print(f"Other error: {e}")
-    critical_logger.exception(f"Error accessing rpt_mgr table: {e}")
+    log_critical(f"Error accessing rpt_mgr table: {e}")
     return False
 
   if not rpt_rows_list:
@@ -138,7 +111,7 @@ def rpt_mgr_generate_background():
       day_of_week = today.strftime("%A")
       if rpt_r['dow'] not in [day_of_week, 'Everyday']:
         print(f"SKIPPING: Report not scheduled for {day_of_week}")
-        critical_logger.critical(f"Report {rpt_r['rpt_type']} not scheduled for {day_of_week}")
+        log_info(f"Report {rpt_r['rpt_type']} not scheduled for {day_of_week}")
         continue
 
         # Process different report types
@@ -151,7 +124,7 @@ def rpt_mgr_generate_background():
         else:
           print(f"Input list is None or empty")
           email_text += f"No input list for {rpt_r['rpt_type']} report: {rpt_r['Report Description']}\n"
-          critical_logger.critical(f"No input list for {rpt_r['rpt_type']} report: {rpt_r['Report Description']}")
+          log_info(f"No input list for {rpt_r['rpt_type']} report: {rpt_r['Report Description']}")
           continue
 
         print(f"Calling rpt_mgr_new_rpts with rpt_type={rpt_r['rpt_type']}")
@@ -161,7 +134,7 @@ def rpt_mgr_generate_background():
           result = rpt_mgr_new_rpts(rpt_r, input_list, disp_team)
           if result is None:
             print(f"ERROR: rpt_mgr_new_rpts returned None for {rpt_r['rpt_type']}")
-            critical_logger.critical(f"rpt_mgr_new_rpts returned None for {rpt_r['rpt_type']}")
+            log_info(f"rpt_mgr_new_rpts returned None for {rpt_r['rpt_type']}")
             email_text += f"Failed to process {rpt_r['rpt_type']} reports: returned None\n"
             continue
 
@@ -169,7 +142,7 @@ def rpt_mgr_generate_background():
           print(f"rpt_mgr_new_rpts returned successfully")
           if not ret_val and not report_infos:
             print(f"ERROR: rpt_mgr_new_rpts failed for {rpt_r['rpt_type']} - no output")
-            critical_logger.critical(f"rpt_mgr_new_rpts failed for {rpt_r['rpt_type']} - no output")
+            log_info(f"rpt_mgr_new_rpts failed for {rpt_r['rpt_type']} - no output")
             email_text += f"Failed to process {rpt_r['rpt_type']} reports: no output generated\n"
           else:
             email_text += ret_val + '\n'
@@ -181,7 +154,7 @@ def rpt_mgr_generate_background():
 
         except Exception as e:
           print(f"ERROR: Exception in rpt_mgr_new_rpts: {str(e)}")
-          critical_logger.exception(f"Exception in rpt_mgr_new_rpts for {rpt_r['rpt_type']}: {e}")
+          log_critical(f"Exception in rpt_mgr_new_rpts for {rpt_r['rpt_type']}: {e}")
           email_text += f"Error processing {rpt_r['rpt_type']} reports: {str(e)}\n"
 
       elif rpt_r['rpt_type'] == 'scouting':
@@ -194,7 +167,7 @@ def rpt_mgr_generate_background():
         else:
           print(f"Pair list is None or empty")
           email_text += f"No pair list for scouting report: {rpt_r['Report Description']}\n"
-          critical_logger.critical(f"No pair list for scouting report: {rpt_r['Report Description']}")
+          log_info(f"No pair list for scouting report: {rpt_r['Report Description']}")
           continue
 
         print(f"Calling rpt_mgr_scouting_rpts with pair_list")
@@ -204,7 +177,7 @@ def rpt_mgr_generate_background():
           result = rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team)
           if result is None:
             print(f"ERROR: rpt_mgr_scouting_rpts returned None")
-            critical_logger.critical(f"rpt_mgr_scouting_rpts returned None")
+            log_info(f"rpt_mgr_scouting_rpts returned None")
             email_text += f"Failed to process scouting reports: returned None\n"
             continue
 
@@ -212,7 +185,7 @@ def rpt_mgr_generate_background():
           print(f"rpt_mgr_scouting_rpts returned successfully")
           if not ret_val and not report_infos:
             print(f"ERROR: rpt_mgr_scouting_rpts failed - no output")
-            critical_logger.critical(f"rpt_mgr_scouting_rpts failed - no output")
+            log_info(f"rpt_mgr_scouting_rpts failed - no output")
             email_text += f"Failed to process scouting reports: no output generated\n"
           else:
             email_text += ret_val + '\n'
@@ -224,17 +197,17 @@ def rpt_mgr_generate_background():
 
         except Exception as e:
           print(f"ERROR: Exception in rpt_mgr_scouting_rpts: {str(e)}")
-          critical_logger.exception(f"Exception in rpt_mgr_scouting_rpts: {e}")
+          log_critical(f"Exception in rpt_mgr_scouting_rpts: {e}")
           email_text += f"Error processing scouting reports: {str(e)}\n"
 
       else:
         print(f"ERROR: Invalid Report Type: {rpt_r['rpt_type']}")
-        critical_logger.critical(f"Invalid Report Type: {rpt_r['rpt_type']}")
+        log_info(f"Invalid Report Type: {rpt_r['rpt_type']}")
         email_text += f"Invalid Report Type: {rpt_r['rpt_type']}\n"
 
     except Exception as e:
       print(f"ERROR: Exception processing report {report_index + 1}: {str(e)}")
-      critical_logger.exception(f"Exception processing report {rpt_r.get('Report Description', 'Unknown')}: {e}")
+      log_critical(f"Exception processing report {rpt_r.get('Report Description', 'Unknown')}: {e}")
       email_text += f"Error processing report {rpt_r.get('Report Description', 'Unknown')}: {str(e)}\n"
 
   print(f"\n=== SUMMARY ===")
@@ -274,7 +247,7 @@ info@BeachInternals.com
 
     except Exception as e:
       print(f"ERROR: Failed to send email to {user_email}: {str(e)}")
-      critical_logger.exception(f"Failed to send email to {user_email}: {e}")
+      log_critical(f"Failed to send email to {user_email}: {e}")
 
     # Last thing, empty the report_data table when we are done
   print("Clearing report_data table...")
@@ -284,7 +257,7 @@ info@BeachInternals.com
     print("Successfully cleared report_data table")
   except Exception as e:
     print(f"ERROR: Failed to clear report_data table: {str(e)}")
-    critical_logger.exception(f"Failed to clear report_data table: {e}")
+    log_critical(f"Failed to clear report_data table: {e}")
 
     # Send summary email
   internals_email = 'info@beachinternals.com'
@@ -303,7 +276,7 @@ info@BeachInternals.com
     print(f"Summary email sent successfully: {email_status}")
   except Exception as e:
     print(f"ERROR: Failed to send summary email: {str(e)}")
-    critical_logger.exception(f"Failed to send summary email: {e}")
+    log_critical(f"Failed to send summary email: {e}")
 
   print(f"Report Manager completed. Total runtime: {compute_time}")
   return True
@@ -320,25 +293,25 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   return_text = ''
   report_infos = []
 
-  critical_logger.critical(f"=== ENTERING rpt_mgr_new_rpts ===")
-  critical_logger.critical(f"rpt_type: {rpt_r['rpt_type']}")
+  log_info(f"=== ENTERING rpt_mgr_new_rpts ===")
+  log_info(f"rpt_type: {rpt_r['rpt_type']}")
 
   if not p_list:
-    critical_logger.critical(f"No players/pairs provided")
+    log_info(f"No players/pairs provided")
     return return_text, report_infos
 
   try:
     for i, p in enumerate(p_list):
-      critical_logger.critical(f"--- Processing item {i+1} of {len(p_list)} ---")
+      log_info(f"--- Processing item {i+1} of {len(p_list)} ---")
       try:
         p_dict = dict(p)
       except Exception as e:
-        critical_logger.exception(f"Could not convert item to dict: {e}")
+        log_critical(f"Could not convert item to dict: {e}")
         continue
 
         # Build report filters
       rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, p)
-      critical_logger.critical(f"Report filters: {rpt_filters}")
+      log_info(f"Report filters: {rpt_filters}")
 
       # Calculate folder paths
       pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), 
@@ -354,13 +327,13 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       elif rpt_r['rpt_type'] in ['league', 'dashboard']:
         player_pair = lgy
       else:
-        critical_logger.critical(f"Unknown rpt_type: {rpt_r['rpt_type']}")
+        log_info(f"Unknown rpt_type: {rpt_r['rpt_type']}")
         continue
 
       pdf_name = f"{player_pair} {rpt_r['Report Description']}.pdf"
       if rpt_r['rpt_type'] == 'dashboard':
         pdf_name = f"{player_pair} {disp_team} {rpt_r['Report Description']}.pdf"
-      critical_logger.critical(f"PDF name: {pdf_name}")
+      log_info(f"PDF name: {pdf_name}")
 
       # Process rpts_inc
       rptname_rows = []
@@ -372,11 +345,11 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           rptname_rows.append(rptname1)
 
       if not rptname_rows:
-        critical_logger.critical(f"No valid reports in rpts_inc for {rpt_r['Report Description']}")
+        log_info(f"No valid reports in rpts_inc for {rpt_r['Report Description']}")
         continue
 
       sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
-      critical_logger.critical(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
+      log_info(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
 
       full_rpt_pdf = None
       pdf_files_created = []
@@ -384,20 +357,20 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Process each report
       for k, rptname in enumerate(sorted_rptnames):
-        critical_logger.critical(f"Processing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']}")
+        log_info(f"Processing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']}")
 
         # Generate report
         report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
         if not report_id:
-          critical_logger.critical(f"Failed to generate report ID")
+          log_info(f"Failed to generate report ID")
           continue
 
           # Generate JSON
-        critical_logger.critical(f"Generating JSON for {rptname['rpt_form']}")
+        log_info(f"Generating JSON for {rptname['rpt_form']}")
         json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
-        critical_logger.critical(f"Json media returned: {json_media}")
+        log_info(f"Json media returned: {json_media}")
         if isinstance(json_media, dict) and json_media.get('error'):
-          critical_logger.critical(f"JSON generation failed: {json_media['error']}")
+          log_info(f"JSON generation failed: {json_media['error']}")
           json_result = None
         else:
           json_name = f"{player_pair} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
@@ -405,20 +378,20 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           pdf_files_created.append({'name': json_name, 'result': json_result})
 
           # Generate AI summary
-        critical_logger.critical(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
+        log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
         prompt_row = app_tables.ai_prompt_templates.get(
           report_id=rptname['id'],
           hierarchy_level='0',
           coach_id=q.any_of(rpt_r['email'], '')
         )
-        critical_logger.critical(f"Prompt Row Returned: {prompt_row}")
+        log_info(f"Prompt Row Returned: {prompt_row}")
         if prompt_row:
           # Parse json_media to dictionary
           try:
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
             human_summary = prompt_row['desc_beach_volleyball']
           except (json.JSONDecodeError, AttributeError) as e:
-            critical_logger.exception(f"Failed to parse json_media: {e}")
+            log_critical(f"Failed to parse json_media: {e}")
             individual_summaries.append(f"Error: Failed to parse JSON - {str(e)}")
             continue
             # Clean prompt to remove problematic colon
@@ -441,7 +414,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
           pdf_files_created.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
         else:
-          critical_logger.critical(f"PDF generation failed")
+          log_info(f"PDF generation failed")
           continue
 
         # Merge PDFs
@@ -492,7 +465,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       })
 
   except Exception as e:
-    critical_logger.exception(f"CRITICAL ERROR in rpt_mgr_new_rpts: {e}")
+    log_critical(f"CRITICAL ERROR in rpt_mgr_new_rpts: {e}")
     return return_text, report_infos
 
   return return_text, report_infos

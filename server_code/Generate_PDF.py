@@ -19,6 +19,8 @@ from pair_reports import *
 from server_functions import *
 from scouting_reports import *
 from player_reports import *
+from logger_utils import log_info, log_error, log_critical, log_debug, log_row
+
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -82,115 +84,133 @@ def generate_pdf_report(rpt_form, report_id):
     return {'pdf': None, 'json_file_name': None, 'error': f'Failed to generate PDF: {str(e)}'}
 
 
+import anvil
+import anvil.tables as tables
+import pandas as pd
+import base64
+import json
+from datetime import datetime
+
+# -----------------------------------------------------------------------------
+# Logging helpers (assume these are imported from your shared logger module)
+# -----------------------------------------------------------------------------
+# from logger_module import log_debug, log_info, log_error, log_critical
+
+def safe_get(obj, key, default=None):
+  """Safely get a key from a dict or attribute from Anvil Row/LiveObjectProxy."""
+  if isinstance(obj, dict):
+    return obj.get(key, default)
+  try:
+    return getattr(obj, key, default)
+  except Exception:
+    return default
+
+def strip_nulls_safe(obj, path="root"):
+  """Recursively set None for null/empty strings, keeping structure."""
+  if isinstance(obj, dict):
+    new_obj = {}
+    for k, v in obj.items():
+      full_path = f"{path}.{k}"
+      if v is None or (isinstance(v, str) and v.strip() == ""):
+        new_obj[k] = None
+      else:
+        new_obj[k] = strip_nulls_safe(v, full_path)
+    return new_obj
+  elif isinstance(obj, list):
+    return [strip_nulls_safe(item, f"{path}[{i}]") for i, item in enumerate(obj)]
+  else:
+    return obj
+
+# -----------------------------------------------------------------------------
+# Generate JSON from report_data_row
+# -----------------------------------------------------------------------------
 def generate_json_report(rpt_form, report_id, include_images=False, include_urls=False, include_nulls=True):
-  """
-    Generate a PDF report and save all report data as JSON to Google Drive.
-    
-    Args:
-        rpt_form: Anvil form or string identifier to render as PDF
-        report_id: ID of the report in app_tables.report_data
-        include_images: Boolean to include image data in JSON (default: False)
-        include_urls: Boolean to include URLs in dataframes in JSON (default: False)
-        include_nulls: Boolean to include fields that are None or empty string (default: True)
-        
-    Returns:
-        dict: {'pdf': BlobMedia, 'json_file_name': str, 'error': str or None}
-    """
+  """Generate a PDF report and save all report data as JSON to Google Drive."""
 
-  # Helper to recursively remove None or empty string values
-  def strip_nulls_safe(obj, path="root"):
-    if isinstance(obj, dict):
-      new_obj = {}
-      for k, v in obj.items():
-        full_path = f"{path}.{k}"
-        if v is None or (isinstance(v, str) and v.strip() == ""):
-          print(f"Skipping null/empty at {full_path}")
-          # Keep the key but set value to None
-          new_obj[k] = None
-        else:
-          new_obj[k] = strip_nulls_safe(v, full_path)
-      return new_obj
-    elif isinstance(obj, list):
-      # Process list items recursively, keep their positions
-      return [strip_nulls_safe(item, f"{path}[{i}]") for i, item in enumerate(obj)]
-    else:
-      return obj
+  try:
+    # Get report row
+    rpt_data_row = tables.app_tables.report_data.get(report_id=report_id)
+    if not rpt_data_row:
+      log_error(f"Report ID {report_id} not found", with_traceback=False)
+      return {'error': f'Report ID {report_id} not found'}
 
-    # Get report data row
-  rpt_data_row = app_tables.report_data.get(report_id=report_id)
-  if not rpt_data_row:
-    return {'error': f'Report ID {report_id} not found'}
+      # Log row content safely
+    log_debug(f"Report Data row: {dict(rpt_data_row)}")
 
-    # Determine file name for JSON
-  base_name_map = {
-    'pair': rpt_data_row.get('title_10', 'Pair'),
-    'player': rpt_data_row.get('title_9', 'Player'),
-    'league': rpt_data_row.get('title_4', 'League'),
-    'dashboard': rpt_data_row.get('title_9', 'Dashboard'),
-    'scouting': rpt_data_row.get('title_9', 'Scouting'),
-    'diagnostic': rpt_data_row.get('title_9', 'Diagnostic')
-  }
-  base_name = base_name_map.get(rpt_data_row.get('title_6'), report_id)
-  json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    # Determine file name
+    base_name_map = {
+      'pair': safe_get(rpt_data_row, 'title_10', 'Pair'),
+      'player': safe_get(rpt_data_row, 'title_9', 'Player'),
+      'league': safe_get(rpt_data_row, 'title_4', 'League'),
+      'dashboard': safe_get(rpt_data_row, 'title_9', 'Dashboard'),
+      'scouting': safe_get(rpt_data_row, 'title_9', 'Scouting'),
+      'diagnostic': safe_get(rpt_data_row, 'title_9', 'Diagnostic')
+    }
+    tmp_title6 = safe_get(rpt_data_row, 'title_6')
+    log_debug(f"Base name map: {base_name_map}, title_6: {tmp_title6}")
+    base_name = safe_get(base_name_map, tmp_title6, report_id)
+    json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
-  # Prepare report data for JSON
-  report_data = {
-    'report_id': report_id,
-    'timestamp': datetime.now().isoformat(),
-    'titles': {f'title_{i}': rpt_data_row.get(f'title_{i}') for i in range(1, 11)},
-    'labels': {f'label_{i}': rpt_data_row.get(f'label_{i}') for i in range(1, 11)},
-    'dataframes': {},
-    'dataframe_descriptions': {f'df_desc_{i}': rpt_data_row.get(f'df_desc_{i}') for i in range(1, 11)},
-    'images': {},
-    'image_descriptions': {f'image_desc_{i}': rpt_data_row.get(f'image_desc_{i}') for i in range(1, 11)}
-  }
+    # Prepare report_data dictionary
+    report_data = {
+      'report_id': report_id,
+      'timestamp': datetime.now().isoformat(),
+      'titles': {f'title_{i}': safe_get(rpt_data_row, f'title_{i}') for i in range(1, 11)},
+      'labels': {f'label_{i}': safe_get(rpt_data_row, f'label_{i}') for i in range(1, 11)},
+      'dataframes': {},
+      'dataframe_descriptions': {f'df_desc_{i}': safe_get(rpt_data_row, f'df_desc_{i}') for i in range(1, 11)},
+      'images': {},
+      'image_descriptions': {f'image_desc_{i}': safe_get(rpt_data_row, f'image_desc_{i}') for i in range(1, 11)}
+    }
 
-  # Extract dataframes
-  for i in range(1, 11):
-    df_key = f'df_{i}'
-    df_value = rpt_data_row.get(df_key)
-    if df_value is None:
-      report_data['dataframes'][df_key] = None
-    elif isinstance(df_value, pd.DataFrame):
-      if not include_urls:
-        if 'URL' in df_value.columns:
+    # Extract dataframes
+    for i in range(1, 11):
+      df_key = f'df_{i}'
+      df_value = safe_get(rpt_data_row, df_key)
+      if df_value is None:
+        report_data['dataframes'][df_key] = None
+      elif isinstance(df_value, pd.DataFrame):
+        if not include_urls and 'URL' in df_value.columns:
+          df_value = df_value.copy()
           df_value['URL'] = None
-      report_data['dataframes'][df_key] = df_value.to_dict('records')
-    elif isinstance(df_value, dict):
-      report_data['dataframes'][df_key] = df_value
-    else:
-      report_data['dataframes'][df_key] = str(df_value)
+        report_data['dataframes'][df_key] = df_value.to_dict('records')
+      elif isinstance(df_value, dict):
+        report_data['dataframes'][df_key] = df_value
+      else:
+        report_data['dataframes'][df_key] = str(df_value)
 
-    # Extract images
-  for i in range(1, 11):
-    img_key = f'image_{i}'
-    img_value = rpt_data_row.get(img_key)
-    if include_images and isinstance(img_value, (anvil.BlobMedia, anvil._server.LazyMedia)):
-      img_bytes = img_value.get_bytes()
-      content_type = img_value.content_type
-      img_base64 = base64.b64encode(img_bytes).decode('utf-8')
-      data_uri = f"data:{content_type};base64,{img_base64}"
-      report_data['images'][img_key] = {
-        'name': img_value.name,
-        'content_type': content_type,
-        'data_uri': data_uri
-      }
-    else:
-      report_data['images'][img_key] = None
+        # Extract images
+    for i in range(1, 11):
+      img_key = f'image_{i}'
+      img_value = safe_get(rpt_data_row, img_key)
+      if include_images and isinstance(img_value, (anvil.BlobMedia, anvil._server.LazyMedia)):
+        img_bytes = img_value.get_bytes()
+        content_type = img_value.content_type
+        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+        report_data['images'][img_key] = {
+          'name': img_value.name,
+          'content_type': content_type,
+          'data_uri': f"data:{content_type};base64,{img_base64}"
+        }
+      else:
+        report_data['images'][img_key] = None
 
-    # Strip nulls if requested
-  if not include_nulls:
-    print("=== Starting safe null-stripping ===")
-    report_data = strip_nulls_safe(report_data)
-    print("=== Finished safe null-stripping ===")
+        # Optionally strip nulls
+    if not include_nulls:
+      log_debug("Stripping nulls from report_data")
+      report_data = strip_nulls_safe(report_data)
+
+      # Convert to JSON media
+    json_str = json.dumps(report_data, indent=2, default=str)
+    json_bytes = json_str.encode('utf-8')
+    json_media = anvil.BlobMedia(content_type='application/json', content=json_bytes, name=json_file)
+    return json_media
+
+  except Exception as e:
+    log_critical(f"CRITICAL ERROR in generate_json_report: {e}")
+    return {'error': str(e)}
 
 
-    # Convert to JSON
-  json_str = json.dumps(report_data, indent=2, default=str)
-  json_bytes = json_str.encode('utf-8')
-  json_media = anvil.BlobMedia(content_type='application/json', content=json_bytes, name=json_file)
-
-  return json_media
 
 
 
