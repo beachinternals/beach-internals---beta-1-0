@@ -10,6 +10,7 @@ from Generate_PDF import *
 from pair_functions import *
 from server_functions import *
 import pandas as pd
+#from matchup_reports import *
 from report_generate_and_store import *
 from datetime import datetime, timedelta, date
 import json
@@ -17,74 +18,38 @@ import base64
 import re
 from typing import Tuple
 from collections import defaultdict
-from anvil_extras.logging import Logger, DEBUG
-import traceback
 
-# -----------------------------------------------------------------------------
-# Logger setup
-# -----------------------------------------------------------------------------
-critical_logger = Logger(
-  name="critical",
-  level=DEBUG,
-  format="{name}-{level} {datetime:%Y-%m-%d %H:%M:%S}: {msg}"
-)
-
-# -----------------------------------------------------------------------------
-# Helper: log exception with traceback
-# -----------------------------------------------------------------------------
-def log_debug(msg: str):
-  tb_str = traceback.format_exc()
-  critical_logger.debug(f"{msg}\n{tb_str}")
-
-def log_info(msg: str):
-  # No traceback for info-level
-  critical_logger.info(msg)
-
-def log_error(msg: str, with_traceback=True):
-  if with_traceback:
-    tb_str = traceback.format_exc()
-    critical_logger.error(f"{msg}\n{tb_str}")
-  else:
-    critical_logger.error(msg)
-
-def log_critical(msg: str):
-  tb_str = traceback.format_exc()
-  critical_logger.error(f"CRITICAL: {msg}\n{tb_str}")
-
-# Test the logger
-try:
-  log_debug("Logger debug test message")
-  log_info("Logger info test message")
-  log_error("Test error test message")
-  log_critical("Logger test message, critical")
-except Exception as e:
-  print(f"Logger test failed: {e}")
-  
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
 @anvil.server.callable
 def rpt_mgr_generate():
-  # Client callable function to call the background function to generate reports
+  # client callable functiom to call the background function to generate reports
+  #logger.info(" Report Manager  - Generate Called")
+  #test = rpt_mgr_generate_background()
   anvil.server.launch_background_task('rpt_mgr_generate_background')
   return
-
+  
 #--------------------------------------------------------------
 #
-# Report Manager - Generate reports based on the rpt_mgr data file
+#. Report Manager - Generate reports based on the rpt_mgr data file
 #
 #---------------------------------------------------------------
 @anvil.server.background_task
 def rpt_mgr_generate_background():
   # Generate reports from the report mgt data file
   now = datetime.now()
-  email_text = f'Report Manager Started at {now} \n \n'
+  email_text = 'Report Manager Started at ' + str(now) + ' \n \n'
   print(f"Report Manager Started at {now}")
 
   print("Checking table access...")
   try:
     # Access app_tables through the tables module
     app_tables = tables.app_tables
+    #print(f"app_tables type: {type(app_tables)}")
+    #print(f"app_tables dir: {dir(app_tables)}")
+
+    # Try to access rpt_mgr table
     rpt_rows = app_tables.rpt_mgr.search(active="Yes")
     rpt_rows_list = list(rpt_rows)
     print(f"SUCCESS: Found {len(rpt_rows_list)} active reports in rpt_mgr table")
@@ -101,6 +66,7 @@ def rpt_mgr_generate_background():
         print(f"SUCCESS via getattr: Found {len(rpt_rows_list)} active reports")
       else:
         print("rpt_mgr table not found via getattr either")
+        # List all available tables
         print("Available app tables:")
         for attr in dir(tables.app_tables):
           if not attr.startswith('_'):
@@ -108,17 +74,16 @@ def rpt_mgr_generate_background():
         return False
     except Exception as e2:
       print(f"Alternative access also failed: {e2}")
-      critical_logger.exception(f"Alternative access to rpt_mgr table failed: {e2}")
       return False
   except Exception as e:
     print(f"Other error: {e}")
-    critical_logger.exception(f"Error accessing rpt_mgr table: {e}")
     return False
 
   if not rpt_rows_list:
     print("No active reports found in rpt_mgr table")
     email_text += "No active reports found in rpt_mgr table\n"
     return False
+
 
     # Collect user report infos for batched emails
   user_reports = defaultdict(list)
@@ -131,25 +96,36 @@ def rpt_mgr_generate_background():
 
     try:
       disp_team = rpt_r['team']
+      #print(f"Report Description: {rpt_r['Report Description']}")
+      #print(f"Report type: {rpt_r['rpt_type']}")
+      #print(f"Team: {disp_team}")
+
       # Check if this report should be run today
       today = datetime.now()
       day_of_week = today.strftime("%A")
+      #print(f"Today is: {day_of_week}")
+      #print(f"Report scheduled for: {rpt_r['dow']}")
+
       if rpt_r['dow'] not in [day_of_week, 'Everyday']:
         print(f"SKIPPING: Report not scheduled for {day_of_week}")
-        critical_logger.critical(f"Report {rpt_r['rpt_type']} not scheduled for {day_of_week}")
+        print(f"rpt_mgr_generate_background: Report {rpt_r['rpt_type']} not scheduled for {day_of_week}")
         continue
 
-        # Process different report types
+      #print(f"Report IS scheduled to run today")
+
+      # Process different report types
       if rpt_r['rpt_type'] in ['player', 'pair', 'league', 'dashboard']:
         input_list = rpt_r['player_list'] if rpt_r['rpt_type'] != 'pair' else rpt_r['pair_list']
+
         print(f"Input list type: {type(input_list)}")
         if input_list:
           input_list_items = list(input_list)
-          print(f"First input item keys: {list(input_list_items[0].keys()) if hasattr(input_list_items[0], 'keys') else 'Not dict-like'}")
+          #print(f"Input list count: {len(input_list_items)}")
+          if input_list_items:
+            print(f"First input item keys: {list(input_list_items[0].keys()) if hasattr(input_list_items[0], 'keys') else 'Not dict-like'}")
         else:
           print(f"Input list is None or empty")
           email_text += f"No input list for {rpt_r['rpt_type']} report: {rpt_r['Report Description']}\n"
-          critical_logger.critical(f"No input list for {rpt_r['rpt_type']} report: {rpt_r['Report Description']}")
           continue
 
         print(f"Calling rpt_mgr_new_rpts with rpt_type={rpt_r['rpt_type']}")
@@ -157,17 +133,21 @@ def rpt_mgr_generate_background():
 
         try:
           result = rpt_mgr_new_rpts(rpt_r, input_list, disp_team)
+
           if result is None:
             print(f"ERROR: rpt_mgr_new_rpts returned None for {rpt_r['rpt_type']}")
-            critical_logger.critical(f"rpt_mgr_new_rpts returned None for {rpt_r['rpt_type']}")
+            print(f"Report Manager: rpt_mgr_new_rpts Failed, {rpt_r['rpt_type']}, ret_val=None, report_infos=[]")
             email_text += f"Failed to process {rpt_r['rpt_type']} reports: returned None\n"
             continue
 
           ret_val, report_infos = result
           print(f"rpt_mgr_new_rpts returned successfully")
+          #print(f"  ret_val: '{ret_val}'")
+          #print(f"  report_infos count: {len(report_infos) if report_infos else 0}")
+
           if not ret_val and not report_infos:
             print(f"ERROR: rpt_mgr_new_rpts failed for {rpt_r['rpt_type']} - no output")
-            critical_logger.critical(f"rpt_mgr_new_rpts failed for {rpt_r['rpt_type']} - no output")
+            print(f"Report Manager: rpt_mgr_new_rpts Failed, {rpt_r['rpt_type']}, ret_val={ret_val}, report_infos={report_infos}")
             email_text += f"Failed to process {rpt_r['rpt_type']} reports: no output generated\n"
           else:
             email_text += ret_val + '\n'
@@ -176,23 +156,27 @@ def rpt_mgr_generate_background():
 
           if rpt_r['email'] and report_infos:
             user_reports[rpt_r['email']].extend(report_infos)
+            #print(f"Added {len(report_infos)} reports to email queue for {rpt_r['email']}")
 
         except Exception as e:
           print(f"ERROR: Exception in rpt_mgr_new_rpts: {str(e)}")
-          critical_logger.exception(f"Exception in rpt_mgr_new_rpts for {rpt_r['rpt_type']}: {e}")
+          print(f"rpt_mgr_generate_background: Error processing {rpt_r['rpt_type']}: {str(e)}")
           email_text += f"Error processing {rpt_r['rpt_type']} reports: {str(e)}\n"
 
       elif rpt_r['rpt_type'] == 'scouting':
         pair_list = rpt_r['pair_list']
-        print(f"Scouting Reports, Pair list type: {type(pair_list)} pair_list: \n {pair_list}")
+        
+
+        print(f"Scoting Reports, Pair list type: {type(pair_list)} pair_list :  \n {pair_list}")
         if pair_list:
+          #pair_list_items = list(pair_list)
           pair_list_items = [row['pair'] for row in pair_list]
+          #print(f"Pair list count: {len(pair_list_items)}, Pair List Items: {pair_list_items}")
           if pair_list_items:
             print(f"First pair item keys: {list(pair_list_items[0].keys()) if hasattr(pair_list_items[0], 'keys') else 'Not dict-like'}")
         else:
           print(f"Pair list is None or empty")
           email_text += f"No pair list for scouting report: {rpt_r['Report Description']}\n"
-          critical_logger.critical(f"No pair list for scouting report: {rpt_r['Report Description']}")
           continue
 
         print(f"Calling rpt_mgr_scouting_rpts with pair_list")
@@ -200,17 +184,21 @@ def rpt_mgr_generate_background():
 
         try:
           result = rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team)
+
           if result is None:
             print(f"ERROR: rpt_mgr_scouting_rpts returned None")
-            critical_logger.critical(f"rpt_mgr_scouting_rpts returned None")
+            print(f"Report Manager: rpt_mgr_scouting_rpts Failed, ret_val=None, report_infos=[]")
             email_text += f"Failed to process scouting reports: returned None\n"
             continue
 
           ret_val, report_infos = result
           print(f"rpt_mgr_scouting_rpts returned successfully")
+          #print(f"  ret_val: '{ret_val}'")
+          #print(f"  report_infos count: {len(report_infos) if report_infos else 0}")
+
           if not ret_val and not report_infos:
             print(f"ERROR: rpt_mgr_scouting_rpts failed - no output")
-            critical_logger.critical(f"rpt_mgr_scouting_rpts failed - no output")
+            print(f"Report Manager: rpt_mgr_scouting_rpts Failed, ret_val={ret_val}, report_infos={report_infos}")
             email_text += f"Failed to process scouting reports: no output generated\n"
           else:
             email_text += ret_val + '\n'
@@ -219,20 +207,21 @@ def rpt_mgr_generate_background():
 
           if rpt_r['email'] and report_infos:
             user_reports[rpt_r['email']].extend(report_infos)
+            #print(f"Added {len(report_infos)} reports to email queue for {rpt_r['email']}")
 
         except Exception as e:
           print(f"ERROR: Exception in rpt_mgr_scouting_rpts: {str(e)}")
-          critical_logger.exception(f"Exception in rpt_mgr_scouting_rpts: {e}")
+          print(f"rpt_mgr_generate_background: Error processing scouting: {str(e)}")
           email_text += f"Error processing scouting reports: {str(e)}\n"
 
       else:
         print(f"ERROR: Invalid Report Type: {rpt_r['rpt_type']}")
-        critical_logger.critical(f"Invalid Report Type: {rpt_r['rpt_type']}")
+        print(f"rpt_mgr_generate_background: Invalid Report Type: {rpt_r['rpt_type']}")
         email_text += f"Invalid Report Type: {rpt_r['rpt_type']}\n"
 
     except Exception as e:
       print(f"ERROR: Exception processing report {report_index + 1}: {str(e)}")
-      critical_logger.exception(f"Exception processing report {rpt_r.get('Report Description', 'Unknown')}: {e}")
+      print(f"rpt_mgr_generate_background: Error processing report: {str(e)}")
       email_text += f"Error processing report {rpt_r.get('Report Description', 'Unknown')}: {str(e)}\n"
 
   print(f"\n=== SUMMARY ===")
@@ -242,10 +231,10 @@ def rpt_mgr_generate_background():
 
   # Send batched user emails
   for user_email, reports in user_reports.items():
-    try:
-      print(f"Sending email to {user_email} with {len(reports)} reports")
-      email_subject = "Beach Internals - Your Generated Reports"
-      email_body = f"""
+        try:
+            print(f"Sending email to {user_email} with {len(reports)} reports")
+            email_subject = "Beach Internals - Your Generated Reports"
+            email_body = f"""
 Dear Coach,
 
 The following reports have been generated and are available on Google Drive:
@@ -253,28 +242,27 @@ The following reports have been generated and are available on Google Drive:
 Generated on: {today.strftime('%Y-%m-%d %H:%M:%S')}
 
 """
-      for info in reports:
-        email_body += f"""{info['combined']}
+            for info in reports:
+                email_body += f"""{info['combined']}
 """
-      email_body += """
+            email_body +="""
 Best regards,
 Beach Internals
 info@BeachInternals.com
 """
 
-      email_status = anvil.email.send(
-        to=user_email,
-        from_address="no-reply",
-        subject=email_subject,
-        text=email_body
-      )
-      print(f"Email sent to {user_email}: {email_status}")
+            email_status = anvil.email.send(
+                to=user_email,
+                from_address="no-reply",
+                subject=email_subject,
+                text=email_body
+            )
+            print(f"Email sent to {user_email}: {email_status}")
+            
+        except Exception as e:
+            print(f"ERROR: Failed to send email to {user_email}: {str(e)}")
 
-    except Exception as e:
-      print(f"ERROR: Failed to send email to {user_email}: {str(e)}")
-      critical_logger.exception(f"Failed to send email to {user_email}: {e}")
-
-    # Last thing, empty the report_data table when we are done
+  # Last thing, empty the report_data table when we are done
   print("Clearing report_data table...")
   email_text += '\nDeleting all rows from report_data table \n\n'
   try:
@@ -282,33 +270,42 @@ info@BeachInternals.com
     print("Successfully cleared report_data table")
   except Exception as e:
     print(f"ERROR: Failed to clear report_data table: {str(e)}")
-    critical_logger.exception(f"Failed to clear report_data table: {e}")
 
-    # Send summary email
+  # Send summary email
   internals_email = 'info@beachinternals.com'
   now1 = datetime.now()
   compute_time = now1 - now
   email_message = email_text + f"Report Manager Completed at: {now1}\nCompute time: {compute_time}\n"
-
+    
   print(f"Sending summary email to {internals_email}")
   try:
     email_status = anvil.email.send(
-      to=internals_email,
-      from_address="no-reply",
-      subject='Beach Internals - Report Manager',
-      text=email_message
+        to=internals_email,
+        from_address="no-reply",
+        subject='Beach Internals - Report Manager',
+        text=email_message
     )
     print(f"Summary email sent successfully: {email_status}")
   except Exception as e:
     print(f"ERROR: Failed to send summary email: {str(e)}")
-    critical_logger.exception(f"Failed to send summary email: {e}")
 
   print(f"Report Manager completed. Total runtime: {compute_time}")
   return True
 
+  
+
+  
+
+
+
+
+
+
+
 #-------------------------------------------------------------------------------------------------------
-# Report Manager - All Types of Reports
+#  Report Manager - All Types of Reports
 #-------------------------------------------------------------------------------------------------------
+
 
 def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   """
@@ -318,25 +315,25 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   return_text = ''
   report_infos = []
 
-  critical_logger.critical(f"=== ENTERING rpt_mgr_new_rpts ===")
-  critical_logger.critical(f"rpt_type: {rpt_r['rpt_type']}")
+  logger.info(f"=== ENTERING rpt_mgr_new_rpts ===")
+  logger.info(f"rpt_type: {rpt_r['rpt_type']}")
 
   if not p_list:
-    critical_logger.critical(f"No players/pairs provided")
+    logger.error("No players/pairs provided")
     return return_text, report_infos
 
   try:
     for i, p in enumerate(p_list):
-      critical_logger.critical(f"--- Processing item {i+1} of {len(p_list)} ---")
+      logger.info(f"--- Processing item {i+1} of {len(p_list)} ---")
       try:
         p_dict = dict(p)
       except Exception as e:
-        critical_logger.exception(f"Could not convert item to dict: {e}")
+        logger.error(f"Could not convert item to dict: {str(e)}")
         continue
 
         # Build report filters
       rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, p)
-      critical_logger.critical(f"Report filters: {rpt_filters}")
+      logger.info(f"Report filters: {rpt_filters}")
 
       # Calculate folder paths
       pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), 
@@ -352,13 +349,13 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       elif rpt_r['rpt_type'] in ['league', 'dashboard']:
         player_pair = lgy
       else:
-        critical_logger.critical(f"Unknown rpt_type: {rpt_r['rpt_type']}")
+        logger.error(f"Unknown rpt_type: {rpt_r['rpt_type']}")
         continue
-
+        get
       pdf_name = f"{player_pair} {rpt_r['Report Description']}.pdf"
       if rpt_r['rpt_type'] == 'dashboard':
         pdf_name = f"{player_pair} {disp_team} {rpt_r['Report Description']}.pdf"
-      critical_logger.critical(f"PDF name: {pdf_name}")
+      logger.info(f"PDF name: {pdf_name}")
 
       # Process rpts_inc
       rptname_rows = []
@@ -370,11 +367,11 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           rptname_rows.append(rptname1)
 
       if not rptname_rows:
-        critical_logger.critical(f"No valid reports in rpts_inc for {rpt_r['Report Description']}")
+        logger.error(f"No valid reports in rpts_inc for {rpt_r['Report Description']}")
         continue
 
       sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
-      critical_logger.critical(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
+      logger.info(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
 
       full_rpt_pdf = None
       pdf_files_created = []
@@ -382,20 +379,20 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Process each report
       for k, rptname in enumerate(sorted_rptnames):
-        critical_logger.critical(f"Processing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']}")
+        logger.info(f"Processing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']}")
 
         # Generate report
         report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
         if not report_id:
-          critical_logger.critical(f"Failed to generate report ID")
+          logger.error("Failed to generate report ID")
           continue
 
           # Generate JSON
-        critical_logger.critical(f"Generating JSON for {rptname['rpt_form']}")
+        logging.info(f"Geneaerting JSON for {rptname['rpt_form']}")
         json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
-        critical_logger.critical(f"Json media returned: {json_media}")
+        logging.info(f"Json medi returned: {json_media}")
         if isinstance(json_media, dict) and json_media.get('error'):
-          critical_logger.critical(f"JSON generation failed: {json_media['error']}")
+          logger.warning(f"JSON generation failed: {json_media['error']}")
           json_result = None
         else:
           json_name = f"{player_pair} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
@@ -403,23 +400,23 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           pdf_files_created.append({'name': json_name, 'result': json_result})
 
           # Generate AI summary
-        critical_logger.critical(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
+        logger.info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
         prompt_row = app_tables.ai_prompt_templates.get(
           report_id=rptname['id'],
           hierarchy_level='0',
           coach_id=q.any_of(rpt_r['email'], '')
         )
-        critical_logger.critical(f"Prompt Row Returned: {prompt_row}")
+        logger.info(f"Prompt Row Returned: {prompt_row}")
         if prompt_row:
           # Parse json_media to dictionary
           try:
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
             human_summary = prompt_row['desc_beach_volleyball']
           except (json.JSONDecodeError, AttributeError) as e:
-            critical_logger.exception(f"Failed to parse json_media: {e}")
+            logger.error(f"Failed to parse json_media: {str(e)}")
             individual_summaries.append(f"Error: Failed to parse JSON - {str(e)}")
             continue
-            # Clean prompt to remove problematic colon
+          # Clean prompt to remove problematic colon
           prompt_text = prompt_row['prompt_text'].replace(": {json_data}", " {json_data}")
           summary = generate_ai_summary(json_data, prompt_text, rpt_r['email'], human_summary)
           individual_summaries.append(summary)
@@ -427,7 +424,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           summary = "No summary generated: Prompt not found"
           individual_summaries.append(summary)
 
-          # Generate PDF
+        # Generate PDF
         pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
         if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
           pdf1 = pdf_result['pdf']
@@ -439,7 +436,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
           pdf_files_created.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
         else:
-          critical_logger.critical(f"PDF generation failed")
+          logger.error("PDF generation failed")
           continue
 
         # Merge PDFs
@@ -454,9 +451,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
               report_description=rpt_r['Report Description'],
               hierarchy_level='1',
               coach_id=q.any_of(rpt_r['email'], '')
-          ),
-          key=lambda row: row['version'],
-          reverse=True
+            ),
+            key=lambda row: row['version'],
+            reverse=True
       )
 
       rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
@@ -490,10 +487,12 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       })
 
   except Exception as e:
-    critical_logger.exception(f"CRITICAL ERROR in rpt_mgr_new_rpts: {e}")
-    return return_text, report_infos
+    logger.error(f"CRITICAL ERROR in rpt_mgr_new_rpts: {str(e)}")
+    logger.exception("Critical error with traceback in rpt_mgr_new_rpts")
+    logger.critical("Critical error in rpt_mgr_new_rpts with exc_info", exc_info=True)
 
   return return_text, report_infos
+        
 
 def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
     today = datetime.now()
@@ -501,7 +500,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
     report_infos = []
 
     if not pair_list:
-        critical_logger.critical(f"No pairs provided for scouting report: {rpt_r.get('Report Description', 'Unknown')}")
+        logging.warning(f"No pairs provided for scouting report: {rpt_r.get('Report Description', 'Unknown')}")
         return return_text, report_infos
 
     try:
@@ -525,6 +524,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             pair_pdf = None
             scouting_pdf_files = []
             individual_summaries = []
+            #pii_terms = app_tables.coach_preferences.get(coach_id=rpt_r['email'])['pii_terms'] or []
             coach_prefs = app_tables.coach_preferences.get(coach_id=rpt_r['email'])
             pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else []
 
@@ -671,79 +671,102 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             })
 
     except Exception as e:
-        critical_logger.exception(f"Critical error in rpt_mgr_scouting_rpts: {e}")
+        logging.error(f"Critical error in rpt_mgr_scouting_rpts: {str(e)}")
         return return_text, report_infos
 
     return return_text, report_infos
 
-def populate_filters_from_rpt_mgr_table(rpt_r, p_r):
-    '''
-    Use the data in the report row, a row from rpt_mgr data table, to make the rpt_filters list that is used to filter the data
-    for player, pair, opp_pair, only set if the row is passed, otherwise passed as False
-    '''
-    rpt_filters = {}
-    rpt_type = rpt_r['rpt_type']
-    if p_r is not None:
-        if rpt_type == 'player':
-            rpt_filters['player'] = p_r['team'] + " " + p_r['number'] + ' ' + p_r['shortname']
-        elif rpt_type == 'pair':
-            rpt_filters['pair'] = p_r['pair']
+
+
+
+
+
+
+  
+def populate_filters_from_rpt_mgr_table( rpt_r, p_r ):
+  '''
+  
+  use the data in the report row, a row from rpt_mgr data table, to make the rpt_filters list that is used to filter the data
+
+  for playe, pair, opp_pair, only set if the row is passed, otherwise passed as False
+  '''
+
+  rpt_filters = {}
+
+  #print(f" in populate filters form rpt mgr table. rpt_r: \m{rpt_r} \n pair/player rot \n{p_r}")
+  
+  # first, we need to tellif this is a pair or a player table row:
+  rpt_type = rpt_r['rpt_type']
+  if p_r is not None:
+    if rpt_type == 'player':
+      # then this is a player
+      rpt_filters['player'] = p_r['team'] + " "+p_r['number']+' '+p_r['shortname']
+    elif rpt_type == 'pair':
+      # then this is a pair table row
+      rpt_filters['pair'] = p_r['pair']
     
-    if rpt_r['comp1'] is not None:
-        rpt_filters['comp_l1'] = rpt_r['comp1']
-    if rpt_r['comp2'] is not None:
-        rpt_filters['comp_l2'] = rpt_r['comp2']
-    if rpt_r['comp3'] is not None:
-        rpt_filters['comp_l3'] = rpt_r['comp3']
+  #pair_b list, opponent pair
+  #if rpt_r['pair_b_list'] is not None:
+  #  rpt_filters['opp_pair'] = rpt_r['pair_b_list']['pair']
 
-    if rpt_r['set'] is not None:
-        rpt_filters['set'] = rpt_r['set']
-    if rpt_r['att_ht_low'] is not None:
-        rpt_filters['att_ht_low'] = rpt_r['att_ht_low']
-    if rpt_r['att_ht_high'] is not None:
-        rpt_filters['att_ht_high'] = rpt_r['att_ht_high']
-    if rpt_r['pass_ht_low'] is not None:
-        rpt_filters['pass_ht_low'] = rpt_r['pass_ht_low']
-    if rpt_r['pass_ht_high'] is not None:
-        rpt_filters['pass_ht_high'] = rpt_r['pass_ht_high']
-    if rpt_r['set_ht_low'] is not None:
-        rpt_filters['set_ht_low'] = rpt_r['set_ht_low']
-    if rpt_r['set_ht_high'] is not None:
-        rpt_filters['set_ht_high'] = rpt_r['set_ht_high']
-    if rpt_r['set_touch_type'] is not None:
-        rpt_filters['set_touch_type'] = rpt_r['set_touch_type']
-    if rpt_r['pass_oos'] is not None:
-        rpt_filters['pass_oos'] = rpt_r['pass_oos']
-    if rpt_r['serve_speed_high'] is not None:
-        rpt_filters['serve_speed_high'] = rpt_r['serve_speed_high']
-    if rpt_r['serve_speed_low'] is not None:
-        rpt_filters['serve_speed_low'] = rpt_r['serve_speed_low']
+  if rpt_r['comp1'] is not None:
+    rpt_filters['comp_l1'] = rpt_r['comp1']
+  if rpt_r['comp2'] is not None:
+    rpt_filters['comp_l2'] = rpt_r['comp2']
+  if rpt_r['comp3'] is not None:
+    rpt_filters['comp_l3'] = rpt_r['comp3']
 
-    today_date = date.today()
-    if rpt_r['days_hist'] and rpt_r['days_hist'] != 0:
-        rpt_filters['start_date'] = today_date - timedelta(days=rpt_r['days_hist'])
-        rpt_filters['end_date'] = today_date
-    else:
-        if rpt_r['start_date'] is not None:
-            rpt_filters['start_date'] = rpt_r['start_date']
-        if rpt_r['end_date'] is not None:
-            rpt_filters['end_date'] = rpt_r['end_date']
+  # Additional parameters
+  if rpt_r['set'] is not None:
+    rpt_filters['set'] = rpt_r['set']
+  if rpt_r['att_ht_low'] is not None:
+    rpt_filters['att_ht_low'] = rpt_r['att_ht_low']
+  if rpt_r['att_ht_high'] is not None:
+    rpt_filters['att_ht_high'] = rpt_r['att_ht_high']
+  if rpt_r['pass_ht_low'] is not None:
+    rpt_filters['pass_ht_low'] = rpt_r['pass_ht_low']
+  if rpt_r['pass_ht_high'] is not None:
+    rpt_filters['pass_ht_high'] = rpt_r['pass_ht_high']
+  if rpt_r['set_ht_low'] is not None:
+    rpt_filters['set_ht_low'] = rpt_r['set_ht_low']
+  if rpt_r['set_ht_high'] is not None:
+    rpt_filters['set_ht_high'] = rpt_r['set_ht_high']
+  if rpt_r['set_touch_type'] is not None:
+    rpt_filters['set_touch_type'] = rpt_r['set_touch_type']
+  if rpt_r['pass_oos'] is not None:
+    rpt_filters['pass_oos'] = rpt_r['pass_oos']
+  if rpt_r['serve_speed_high'] is not None:
+    rpt_filters['serve_speed_high'] = rpt_r['serve_speed_high']
+  if rpt_r['serve_speed_low'] is not None:
+    rpt_filters['serve_speed_low'] = rpt_r['serve_speed_low']
 
-    return rpt_filters
+  # Handle dates
+  today_date = date.today()
+  if rpt_r['days_hist'] and rpt_r['days_hist'] != 0:
+    rpt_filters['start_date'] = today_date - timedelta(days=rpt_r['days_hist'])
+    rpt_filters['end_date'] = today_date
+  else:
+    if rpt_r['start_date'] is not None:
+      rpt_filters['start_date'] = rpt_r['start_date']
+    if rpt_r['end_date'] is not None:
+      rpt_filters['end_date'] = rpt_r['end_date']
+
+  return rpt_filters
 
 @anvil.server.callable
 def test_rpt_mgr_new_rpts():
-    rpt_r = {
-        'rpt_type': 'player',
-        'Report Description': 'Attacking Summary',
-        'email': 'scott@beachinternals.com',
-        'rpts_inc': [{'id': 'test_id', 'report_name': 'Test Report', 'rpt_type': 'player', 'rpt_form': 'form1', 'function_name': 'fn1', 'order': 1}]
-    }
-    p_list = [{
-        'league': 'NCAA', 'gender': 'W', 'year': '2025',
-        'team': 'UCLA', 'number': '12', 'shortname': '',
-        'pair': 'UCLA 11'
-    }]
-    disp_team = 'UCLA'
-    critical_logger.critical(f"Testing rpt_mgr_new_rpts with rpt_r={rpt_r}, p_list={p_list}, disp_team={disp_team}")
-    return rpt_mgr_new_rpts(rpt_r, p_list, disp_team)
+  rpt_r = {
+    'rpt_type': 'player',
+    'Report Description': 'Attacking Summary',
+    'email': 'scott@beachinternals.com',
+    'rpts_inc': [{'id': 'test_id', 'report_name': 'Test Report', 'rpt_type': 'player', 'rpt_form': 'form1', 'function_name': 'fn1', 'order': 1}]
+  }
+  p_list = [{
+    'league': 'NCAA', 'gender': 'W', 'year': '2025',
+    'team': 'UCLA', 'number': '12', 'shortname': '',
+    'pair': 'UCLA 11'
+  }]
+  disp_team = 'UCLA'
+  logger.info(f"Testing rpt_mgr_new_rpts with rpt_r={rpt_r}, p_list={p_list}, disp_team={disp_team}")
+  return rpt_mgr_new_rpts(rpt_r, p_list, disp_team)
+
