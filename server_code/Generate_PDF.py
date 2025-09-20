@@ -181,6 +181,7 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     for i in range(1, 11):
       df_key = f'df_{i}'
       df_value = safe_get(rpt_data_row, df_key)
+      log_debug(f'df_value type: {type(df_value)}, df_value: {df_value}')
       if df_value is None:
         report_data['dataframes'][df_key] = None
       elif isinstance(df_value, pd.DataFrame):
