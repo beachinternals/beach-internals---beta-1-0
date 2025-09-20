@@ -98,13 +98,23 @@ from datetime import datetime
 
 def safe_get(obj, key, default=None):
   """Safely get a key from a dict or attribute from Anvil Row/LiveObjectProxy."""
+  log_debug(f"Safe Get Called, obj type = {type(obj)}, obj = {obj}, key={key} type obj[key] {type(obj[key])}")
   if isinstance(obj, dict):
     log_debug(f'safe_get dict: object={obj}, key={key}, value={obj.get(key, default)}')
     return obj.get(key, default)
   try:
-    value = obj[key]
-    #value = getattr(obj, key, default)  # ✅ correct
-    log_debug(f'safe_get getattr: object={obj}, key={key}, value={value}')
+    if isinstance(obj[key], anvil.media.LazyMedia ):
+      log_debug(f'safe_get table row: object={obj}, key={key}, value={obj.get(key, default)}')
+      # this is a dataframe (not sure where the images go??)
+      tmp = obj[key].get_bytes()
+      log_debug(f"tmp value type {type(tmp)}, tmp value {tmp}")
+      value = pd.DataFrame(tmp)
+      log_debug(f"returned value type {type(value)}, value : {value}")
+      #value = obj[key].getbytes().decode('utf-8')
+    else:
+      value = obj[key]
+      #value = getattr(obj, key, default)  # ✅ correct
+      log_debug(f'safe_get getattr: object={obj}, key={key}, value={value}')
     return value
   except Exception:
     return default
