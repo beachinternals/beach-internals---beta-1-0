@@ -96,27 +96,73 @@ from datetime import datetime
 # -----------------------------------------------------------------------------
 # from logger_module import log_debug, log_info, log_error, log_critical
 
+
+
+
 def safe_get(obj, key, default=None):
   """Safely get a key from a dict or attribute from Anvil Row/LiveObjectProxy."""
-  log_debug(f"Safe Get Called, obj type = {type(obj)}, obj = {obj}, key={key} type obj[key] {type(obj[key])}")
-  if isinstance(obj, dict):
-    log_debug(f'safe_get dict: object={obj}, key={key}, value={obj.get(key, default)}')
-    return obj.get(key, default)
+  log_msg = f"Safe Get Called, obj type={type(obj)}, key={key}"
   try:
-    if isinstance(obj[key], anvil.media.LazyMedia ):
-      log_debug(f'safe_get table row: object={obj}, key={key}, value={obj.get(key, default)}')
-      # this is a dataframe (not sure where the images go??)
-      tmp = obj[key].get_bytes()
-      log_debug(f"tmp value type {type(tmp)}, tmp value {tmp}")
-      value = pd.DataFrame(tmp)
-      log_debug(f"returned value type {type(value)}, value : {value}")
-      #value = obj[key].getbytes().decode('utf-8')
-    else:
-      value = obj[key]
-      #value = getattr(obj, key, default)  # ✅ correct
-      log_debug(f'safe_get getattr: object={obj}, key={key}, value={value}')
+    log_msg += f", obj[key] type={type(obj[key])}"
+  except KeyError:
+    log_msg += f", KeyError (key not found)"
+  log_debug(log_msg)
+
+  # Handle dict objects
+  if isinstance(obj, dict):
+    value = obj.get(key, default)
+    log_debug(f"safe_get dict: key={key}, value={value} (type: {type(value)})")
     return value
-  except Exception:
+
+    # Handle tables.Row (or LiveObjectProxy wrapping a Row)
+  try:
+    # Check if obj is a tables.Row or LiveObjectProxy
+    is_row = isinstance(obj, tables.Row) or str(type(obj)).find('LiveObjectProxy') != -1
+    if is_row:
+      try:
+        raw_value = obj[key]  # Access like a dict for tables.Row
+        log_debug(f"safe_get Row: key={key}, raw_value type={type(raw_value)}")
+
+        if raw_value is None:
+          log_debug(f"NoneType: key={key}, value=None")
+          value = None
+        elif isinstance(raw_value, str):
+          log_debug(f"String: key={key}, value={raw_value[:50]}...")
+          value = raw_value
+        elif isinstance(raw_value, float):
+          log_debug(f"Float: key={key}, value={raw_value}")
+          value = raw_value
+        elif isinstance(raw_value, anvil.media.LazyMedia):
+          log_debug(f"LazyMedia: key={key}, content_type={raw_value.content_type}")
+          if 'json' in raw_value.content_type.lower() or 'text' in raw_value.content_type.lower():
+            try:
+              json_str = raw_value.get_str()
+              log_debug(f"JSON preview: {json_str[:100]}...")
+              data = json.loads(json_str)
+              if not isinstance(data, list):
+                raise ValueError(f"JSON for {key} is not a list of records: {type(data)}")
+              value = pd.DataFrame(data)
+              log_debug(f"Converted LazyMedia to DataFrame: shape={value.shape}")
+            except json.JSONDecodeError as e:
+              log_debug(f"JSON decode error for {key}: {e}")
+              raise ValueError(f"Failed to parse JSON for {key}: {e}")
+          else:
+            raise ValueError(f"Unsupported LazyMedia content_type for {key}: {raw_value.content_type}")
+        else:
+          log_debug(f"Other type: key={key}, type={type(raw_value)}")
+          value = raw_value
+
+        return value
+      except KeyError:
+        log_debug(f"KeyError: key={key} not found in Row")
+        return default
+    else:
+      # Non-Row objects
+      value = getattr(obj, key, default)
+      log_debug(f"safe_get getattr: key={key}, value={value} (type: {type(value)})")
+      return value
+  except Exception as e:
+    log_debug(f"safe_get error: key={key}, error={e}")
     return default
 
 
@@ -150,75 +196,78 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
       return {'error': f'Report ID {report_id} not found'}
 
       # Log row content safely
-    print(f"type of report_data_row : {type(rpt_data_row)}")
-
-    #log_debug(f"Report Data row: {dict(rpt_data_row)}")
+    log_debug(f"type of report_data_row : {type(rpt_data_row)}")
+    log_debug(f"Report Data row: {dict(rpt_data_row)}")
 
     # Determine file name for JSON safely from report_data_row
-    base_name_map = {
-      'pair': safe_get(rpt_data_row, 'title_10', 'Pair'),
-      'player': safe_get(rpt_data_row, 'title_9', 'Player'),
-      'league': safe_get(rpt_data_row, 'title_4', 'League'),
-      'dashboard': safe_get(rpt_data_row, 'title_9', 'Dashboard'),
-      'scouting': safe_get(rpt_data_row, 'title_9', 'Scouting'),
-      'diagnostic': safe_get(rpt_data_row, 'title_9', 'Diagnostic')
-    }
-
-    # Get tmp_title6 safely (fallback to 'Default' if missing)
-    print(f"title_6 is :{rpt_data_row['title_6']}")
-    tmp_title6 = safe_get(rpt_data_row, 'title_6', 'Default')
-    log_debug(f"base_name_map: {base_name_map}, tmp_title6: {tmp_title6}")
-
-    # Pick base name from map, fallback to report_id if key missing
-    base_name = safe_get(base_name_map, tmp_title6, report_id)
+    rpt_type = rpt_data_row['title_6'].strip()
+    if rpt_type == 'player':
+      base_name = rpt_data_row['title_9']
+    elif rpt_type == 'league':
+      base_name = rpt_data_row['title_4']
+    elif rpt_type == 'pair':
+      base_name = rpt_data_row['title_10']
+    elif rpt_type == 'dashboard':
+      base_name = rpt_data_row['title_9']
+    elif rpt_type == 'scouting':
+      base_name = rpt_data_row['title_9']
+    else:
+      base_name = 'Unknown'
+    base_name = base_name.strip()
 
     # Construct JSON file name
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    log_debug(f"JSON file name: {json_file}")
 
     # Prepare report_data dictionary
     report_data = {
       'report_id': report_id,
       'timestamp': datetime.now().isoformat(),
-      'titles': {f'title_{i}': safe_get(rpt_data_row, f'title_{i}') for i in range(1, 11)},
-      'labels': {f'label_{i}': safe_get(rpt_data_row, f'label_{i}') for i in range(1, 11)},
+      'titles': {f'title_{i}': rpt_data_row[f'title_{i}'] for i in range(1, 11)},
+      'labels': {f'label_{i}': rpt_data_row[f'label_{i}'] for i in range(1, 11)},
       'dataframes': {},
-      'dataframe_descriptions': {f'df_desc_{i}': safe_get(rpt_data_row, f'df_desc_{i}') for i in range(1, 11)},
+      'dataframe_descriptions': {f'df_desc_{i}': rpt_data_row[f'df_desc_{i}'] for i in range(1, 11)},
       'images': {},
-      'image_descriptions': {f'image_desc_{i}': safe_get(rpt_data_row, f'image_desc_{i}') for i in range(1, 11)}
+      'image_descriptions': {f'image_desc_{i}': rpt_data_row[f'image_desc_{i}'] for i in range(1, 11)}
     }
 
     # Extract dataframes
     for i in range(1, 11):
       df_key = f'df_{i}'
-      df_value = safe_get(rpt_data_row, df_key)
-      log_debug(f'df_value type: {type(df_value)}, df_value: {df_value}')
-      if df_value is None:
+      log_debug(f"type of df key: {df_key}, {type(rpt_data_row[df_key])}")
+      if isinstance(rpt_data_row[df_key], type(None)):
         report_data['dataframes'][df_key] = None
-      elif isinstance(df_value, pd.DataFrame):
-        if not include_urls and 'URL' in df_value.columns:
-          df_value = df_value.copy()
-          df_value['URL'] = None
-        report_data['dataframes'][df_key] = df_value.to_dict('records')
-      elif isinstance(df_value, dict):
-        report_data['dataframes'][df_key] = df_value
       else:
-        report_data['dataframes'][df_key] = str(df_value)
+        df_value = rpt_data_row[df_key].get_bytes().decode('utf-8')  # the df_value is a media object that is the df_1 dataframe, so we need to get bytes
+        df_value = pd.DataFrame(df_value)
+        log_debug(f'df_value type: {type(df_value)}, df_value: {df_value}')
+        if isinstance(df_value, pd.DataFrame):
+          if not include_urls and 'URL' in df_value.columns:
+            df_value = df_value.copy()
+            df_value['URL'] = None
+          report_data['dataframes'][df_key] = df_value.to_dict('records')
+        elif isinstance(df_value, dict):
+          report_data['dataframes'][df_key] = df_value
+        else:
+          report_data['dataframes'][df_key] = str(df_value)
 
         # Extract images
     for i in range(1, 11):
       img_key = f'image_{i}'
-      img_value = safe_get(rpt_data_row, img_key)
-      if include_images and isinstance(img_value, (anvil.BlobMedia, anvil._server.LazyMedia)):
-        img_bytes = img_value.get_bytes()
-        content_type = img_value.content_type
-        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
-        report_data['images'][img_key] = {
-          'name': img_value.name,
-          'content_type': content_type,
-          'data_uri': f"data:{content_type};base64,{img_base64}"
-        }
-      else:
+      if isinstance(rpt_data_row[img_key], type(None)):
         report_data['images'][img_key] = None
+      else:
+        img_value = rpt_data_row[img_key]
+        if include_images and isinstance(img_value, (anvil.BlobMedia, anvil._server.LazyMedia)):
+          img_bytes = img_value.get_bytes()
+          content_type = img_value.content_type
+          img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+          report_data['images'][img_key] = {
+            'name': img_value.name,
+            'content_type': content_type,
+            'data_uri': f"data:{content_type};base64,{img_base64}"
+          }
+
 
         # Optionally strip nulls
     if not include_nulls:
