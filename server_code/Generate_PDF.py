@@ -238,7 +238,33 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
       if isinstance(rpt_data_row[df_key], type(None)):
         report_data['dataframes'][df_key] = None
       else:
-        df_value = rpt_data_row[df_key].get_bytes().decode('utf-8')  # the df_value is a media object that is the df_1 dataframe, so we need to get bytes
+        df_bytes = rpt_data_row[df_key].get_bytes()
+        df_str = df_bytes.decode("utf-8")
+
+        # Pandas can parse it as pipe-delimited text
+        df = pd.read_csv(
+          io.StringIO(df_str),
+          sep="|",
+          engine="python"
+        )
+
+        # Cleanup: strip whitespace from col names + values
+        df = df.rename(columns=lambda c: c.strip())
+        df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+
+        # Drop empty cols
+        df = df.dropna(axis=1, how="all")
+
+        # Drop markdown alignment rows like ":---", "---", ":---:"
+        mask = df.applymap(lambda x: bool(re.fullmatch(r":?-+?:?", str(x).strip())))
+        df = df[~mask.all(axis=1)].reset_index(drop=True)
+
+        log_debug(f'Dataframe : {df_key}, the dataframe: {df}')
+
+        # Now you can convert to JSON
+        report_data['dataframes'][df_key] = df.to_dict(orient="records")
+        '''
+        df_value = rpt_data_row[df_key].get_bytes()  # the df_value is a media object that is the df_1 dataframe, so we need to get bytes
         df_value = pd.DataFrame(df_value)
         log_debug(f'df_value type: {type(df_value)}, df_value: {df_value}')
         if isinstance(df_value, pd.DataFrame):
@@ -250,6 +276,7 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
           report_data['dataframes'][df_key] = df_value
         else:
           report_data['dataframes'][df_key] = str(df_value)
+        '''
 
         # Extract images
     for i in range(1, 11):
