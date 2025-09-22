@@ -2744,3 +2744,14 @@ def create_summary_pdf(summary_text, pdf_name):
   except Exception as e:
     log_error(f"Error creating summary PDF: {str(e)}")
     return None
+
+def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
+  '''
+  Make a quickk one page PDF file with the AI summary, as markdown, using hte title, and labels from the report_id
+  '''
+  # store ai summary as df_0 in report_data
+
+  # generate PDF file
+  
+
+  return {'pdf': rpt_pdf, 'json_file_name': None, 'error': None}

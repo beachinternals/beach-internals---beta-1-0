@@ -390,13 +390,16 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
           # Generate PDF
         pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
+        pdf_summary = generate_ai_pdf_summary(report_id, summary, ai_form)
         if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
-          pdf1 = pdf_result['pdf']
+          pdf2 = pdf_result['pdf']
+          pdf_ai = pdf_summary['pdf']
+          pdf1 = merge_pdfs(pdf_ai, pdf2, pdf_name=pdf_name)
           # Insert AI summary
-          pdf1 = insert_summary_into_pdf(pdf1, summary)
+          #pdf1 = insert_summary_into_pdf(pdf1, summary)
           # Anonymize PDF
-          coach_prefs = app_tables.coach_preferences.get(coach_id=rpt_r['email'])
-          pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else []
+          #coach_prefs = app_tables.coach_preferences.get(coach_id=rpt_r['email'])
+          #pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else []
           #anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
           #pdf_files_created.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
         else:
