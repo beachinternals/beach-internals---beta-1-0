@@ -390,7 +390,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
           # Generate PDF
         pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
-        pdf_summary = generate_ai_pdf_summary(report_id, summary, ai_form)
+        pdf_summary = generate_ai_pdf_summary(report_id, summary, 'player_ai_summary')
         if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
           pdf2 = pdf_result['pdf']
           pdf_ai = pdf_summary['pdf']

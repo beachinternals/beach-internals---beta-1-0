@@ -39,6 +39,7 @@ import json
 import requests
 from faker import Faker
 import fitz  # pymupdf
+from anvil.pdf import PDFRenderer
 from PyPDF2 import PdfMerger
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph
@@ -2746,12 +2747,57 @@ def create_summary_pdf(summary_text, pdf_name):
     return None
 
 def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
-  '''
-  Make a quickk one page PDF file with the AI summary, as markdown, using hte title, and labels from the report_id
-  '''
-  # store ai summary as df_0 in report_data
+  """
+    Generate a one-page PDF file containing an AI summary in markdown format.
+    
+    Args:
+        report_id (str): The unique identifier for the report
+        summary (str): The AI-generated summary content
+        ai_form (str): The form template to use for PDF generation
+        
+    Returns:
+        dict: Contains 'pdf', 'json_file_name', and 'error' keys
+              - pdf: The generated PDF file or None if error
+              - json_file_name: Always None in current implementation
+              - error: Error message string or None if successful
+    """
+  try:
+    # Validate inputs
+    if not report_id:
+      error_msg = "Report ID cannot be empty"
+      log_error(error_msg)
+      return {'pdf': None, 'json_file_name': None, 'error': error_msg}
 
-  # generate PDF file
-  
+    if not summary:
+      error_msg = "Summary cannot be empty"
+      log_error(error_msg)
+      return {'pdf': None, 'json_file_name': None, 'error': error_msg}
 
-  return {'pdf': rpt_pdf, 'json_file_name': None, 'error': None}
+      # Retrieve report data
+    rpt_data_row = app_tables.report_data.get(report_id=report_id)
+    if not rpt_data_row:
+      error_msg = f"Report ID {report_id} not found"
+      log_error(error_msg)
+      return {'pdf': None, 'json_file_name': None, 'error': error_msg}
+
+      # Store the AI summary in the database
+    summary_media = anvil.BlobMedia('text/plain', summary.encode('utf-8'), name=f'ai_summary_{report_id}.txt')
+    rpt_data_row['df_1'] = summary_media
+
+    # Generate PDF using the specified form template
+    ai_pdf = PDFRenderer(
+      filename=f'AI_Summary_{report_id}', 
+      landscape=False
+    ).render_form(ai_form, report_id)
+
+    if not ai_pdf:
+      error_msg = "PDF generation failed - renderer returned None"
+      log_error(error_msg)
+      return {'pdf': None, 'json_file_name': None, 'error': error_msg}
+
+    return {'pdf': ai_pdf, 'json_file_name': None, 'error': None}
+
+  except Exception as e:
+    error_msg = f"generate_ai_pdf_summary error: {str(e)}"
+    log_error(error_msg)
+    return {'pdf': None, 'json_file_name': None, 'error': error_msg}
