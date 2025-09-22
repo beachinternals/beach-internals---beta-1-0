@@ -22,7 +22,7 @@ import matplotlib.colors as mcolors
 import math
 from pair_functions import *
 from datetime import datetime, timedelta, date
-import logging
+#import logging
 import re
 import scipy.stats as stats
 from matplotlib.colors import LinearSegmentedColormap
@@ -32,15 +32,8 @@ from dataclasses import dataclass
 import inspect
 import copy
 
-
 # Create logger with formatting
-from anvil_extras.logging import Logger
-import logging
-logger = Logger()
-# If the library supports standard Python logging formatting:
-formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
-
-
+from logger_utils import log_info, log_error, log_critical, log_debug, log_row
 
 import json
 import requests
@@ -1377,7 +1370,7 @@ def write_to_nested_folder(folder_path, filename, content):
     current_folder = next_folder
 
   if content is None:
-    logging.warning(f"Cannot write file {filename} to {'/'.join(folder_path)}: Content is None")
+    log_info(f"Cannot write file {filename} to {'/'.join(folder_path)}: Content is None")
     return f"Skipped writing {filename} to {'/'.join(folder_path)}: Content is None"
 
   file = current_folder.get(filename)
@@ -1393,7 +1386,7 @@ def write_to_nested_folder(folder_path, filename, content):
     else:
       file.set_media(content)
   else:
-    logging.error(f"Unsupported content type for {filename}: {type(content)}")
+    log_error(f"Unsupported content type for {filename}: {type(content)}")
     raise Exception(f"Unsupported content type: {type(content)}")
 
   return f"File {filename} written to {'/'.join(folder_path)}"
@@ -2028,7 +2021,7 @@ def find_clusters(ppr_df, disp_player, category):
   #print("Entered find kill error clusters")
   #print(f"size of ppr_df passed:{ppr_df.shape[0]}")
   try:
-    logger.info(f"Finding {category} clusters for player: {disp_player}")
+    log_info(f"Finding {category} clusters for player: {disp_player}")
     # Fetch data from ppr_df, limit to only pass by disp_player
     ppr_df = ppr_df[ ppr_df['pass_player'] == disp_player]
     #print(f"ppr df size {ppr_df.shape[0]}")
@@ -2062,7 +2055,7 @@ def find_clusters(ppr_df, disp_player, category):
     df_category = df[df['value'] == category]
     #print(f" category total: {df_category.shape[0]}")
     if df_category.empty:
-      logger.warning(f"No {category} data found for report_id: {report_id}")
+      log_info(f"No {category} data found for report_id: {report_id}")
       return {'error': f'No {category} data found'}
 
       # Extract coordinates
@@ -2093,7 +2086,7 @@ def find_clusters(ppr_df, disp_player, category):
       'n_clusters': len(set(labels)) - (1 if -1 in labels else 0)
     }
   except Exception as e:
-    logger.error(f"Error in find_kill_error_clusters: {str(e)}")
+    log_error(f"Error in find_kill_error_clusters: {str(e)}")
     return {'error': str(e)}
 
 
@@ -2462,19 +2455,19 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
   """
     Anonymize JSON data, preserving structure while anonymizing player/pair names in title_9, title_10, and strings.
     """
-  logger.info("---------- Anonymize Json --------------")
+  log_info("---------- Anonymize Json --------------")
   try:
     if json_data is None:
-      logger.warning("json_data is None in anonymize_json")
+      log_info("json_data is None in anonymize_json")
       return {}
 
       # Parse JSON string if necessary
     if isinstance(json_data, str):
-      logger.info("Parsing JSON string")
+      log_info("Parsing JSON string")
       try:
         parsed_data = json.loads(json_data)
       except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse JSON string: {e}")
+        log_error(f"Failed to parse JSON string: {e}")
         return {"error": f"Invalid JSON string: {str(e)}"}
     else:
       parsed_data = json_data
@@ -2495,7 +2488,7 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
       if raw_pair_name and isinstance(raw_pair_name, str):
         pair_name = raw_pair_name.strip()
 
-    logger.info(f"Anonymizing - Player: '{player_name}' -> '{player_replacement}', Pair: '{pair_name}' -> '{pair_replacement}'")
+    log_info(f"Anonymizing - Player: '{player_name}' -> '{player_replacement}', Pair: '{pair_name}' -> '{pair_replacement}'")
 
     def recursive_anonymize(data):
       if isinstance(data, dict):
@@ -2529,44 +2522,61 @@ def anonymize_json(json_data, player_replacement="Player A", pair_replacement="P
 
     # Validate that anon_data contains some data
     if not anon_data or (isinstance(anon_data, dict) and not any(anon_data.values())):
-      logger.warning(f"Anonymized JSON is empty: {anon_data}")
+      log_info(f"Anonymized JSON is empty: {anon_data}")
       return {"error": "No valid data after anonymization"}
 
-    logger.info("Anonymization completed successfully")
+    log_info("Anonymization completed successfully")
     return anon_data
 
   except Exception as e:
-    logger.error(f"Error in anonymize_json: {str(e)}", exc_info=True)
+    log_error(f"Error in anonymize_json: {str(e)}")
     return {"error": f"Anonymization failed: {str(e)}"}
+
+
 
 def remove_null_fields(data):
   """
-    Recursively remove all null fields, empty dictionaries, and invalid entries (e.g., {"": "URL"}) from JSON data.
+    Recursively clean JSON data by:
+    - Removing null fields
+    - Removing empty dictionaries/lists
+    - Replacing URL-like strings with ''
     """
   try:
     if isinstance(data, dict):
       cleaned_dict = {}
       for k, v in data.items():
         cleaned_v = remove_null_fields(v)
-        # Only include non-empty dictionaries, non-empty lists, or non-null values
-        if cleaned_v is not None and (isinstance(cleaned_v, (dict, list)) and len(cleaned_v) > 0 or not isinstance(cleaned_v, (dict, list))):
-          # Skip dictionaries with only 'URL' or empty keys
-          if isinstance(cleaned_v, dict):
-            if len(cleaned_v) == 1 and ("" in cleaned_v or list(cleaned_v.values())[0] == "URL"):
-              continue
-            if all(value is None or value == "URL" for value in cleaned_v.values()):
-              continue
-          cleaned_dict[k] = cleaned_v
+
+        # Skip null or empty values
+        if cleaned_v is None:
+          continue
+        if isinstance(cleaned_v, (dict, list)) and not cleaned_v:
+          continue
+
+        cleaned_dict[k] = cleaned_v
       return cleaned_dict if cleaned_dict else None
+
     elif isinstance(data, list):
-      cleaned_list = [remove_null_fields(item) for item in data if item is not None]
-      cleaned_list = [item for item in cleaned_list if item is not None and (isinstance(item, (dict, list)) and len(item) > 0 or not isinstance(item, (dict, list)))]
+      cleaned_list = [remove_null_fields(item) for item in data]
+      cleaned_list = [item for item in cleaned_list if item is not None and (not isinstance(item, (dict, list)) or item)]
       return cleaned_list if cleaned_list else None
+
+    elif isinstance(data, str):
+      # Detect and replace URLs
+      if re.search(r"https?://", data):
+        return ''
+      if data.strip() == "URL":
+        return None
+      return data
+
     else:
-      return data if data is not None and data != "URL" else None
+      return data if data is not None else None
+
   except Exception as e:
-    logger.error(f"Error in remove_null_fields: {str(e)}")
+    print(f"Error in remove_null_fields: {str(e)}")
     return data
+
+
 
 def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary=None):
   """
@@ -2576,12 +2586,12 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
   - Sends multiple JSON parts: prompt, data, and optional human-readable summary
   """
   try:
-    logger.info(f"Generate AI Summary: coach_id={coach_id}, json_data_type={type(json_data)}, prompt={prompt_template}")
+    log_debug(f"Generate AI Summary: coach_id={coach_id}, json_data_type={type(json_data)}, prompt={prompt_template}")
 
     # --- Get API key ---
     api_key = anvil.secrets.get_secret('GEMINI_API_KEY')
     if not api_key:
-      logger.error("Gemini API key not found in Secrets")
+      log_error("Gemini API key not found in Secrets")
       return "Error: Gemini API key not found"
 
     # --- Ensure JSON is parsed ---
@@ -2593,6 +2603,9 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
       except json.JSONDecodeError as e:
         return f"Error: Invalid JSON input - {str(e)}"
 
+    # --- Remmove Null fields and URLs ---
+    json_data = remove_null_fields(json_data)
+    
     # --- Anonymize sensitive fields ---
     anon_json = anonymize_json(json_data)
     if isinstance(anon_json, dict) and "error" in anon_json:
@@ -2602,21 +2615,33 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     if not prompt_template:
       prompt_template = "Please summarize the following data:"
 
-    logging.info(f"anonymous json data, {anon_json}")
-    # --- Build parts for Gemini request ---
-    parts = [
-      {"text": prompt_template},                  # instructions
-      {"json": anon_json}   # raw JSON data
-    ]
-    if human_summary:                             # add if provided
-      parts.append({"text": human_summary})
+    log_info(f"anonymous json data, {anon_json}")
 
-    # --- Build payload ---
+    # --- Build the combined prompt string ---
+    # ---                                  ---
+    # Serialize the JSON data to a string
+    # --- Build the combined prompt string ---
+    anon_json_string = json.dumps(anon_json, indent=2)
+
+    prompt_text = (
+      f"{prompt_template}\n\n"
+      f"The following data is provided in JSON format:\n"
+      f"```json\n{anon_json_string}\n```"
+    )
+
+    if human_summary:
+      prompt_text += f"\n\nAdditional context: {human_summary}"
+
+    # --- Build payload with a single text part ---
     payload = {
       "contents": [
         {
           "role": "user",
-          "parts": parts
+          "parts": [
+            {
+              "text": prompt_text
+            }
+          ]
         }
       ],
       "generationConfig": {
@@ -2626,47 +2651,40 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
       }
     }
 
-    logger.info(f"Sending request to Gemini API: {json.dumps(payload, indent=2)}")
+    # --- Send request with manual data serialization ---
+    # Serialize the entire payload dictionary to a JSON string
+    json_payload = json.dumps(payload)
 
-    # --- Send request ---
     response = anvil.http.request(
       url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}",
       method="POST",
       headers={"Content-Type": "application/json"},
-      json=payload
+      data=json_payload  # Send the pre-serialized string as `data`
     )
 
-    # --- Parse response ---
-    summary = response['candidates'][0]['content']['parts'][0]['text']
+    # --- Parse the streamed response into a JSON object ---
+    # The `content` attribute holds the raw streamed data.
+    json_response = json.loads(response._content)
+
+    # --- Now parse the JSON object ---
+    summary = json_response['candidates'][0]['content']['parts'][0]['text']
     return summary.strip()
 
   except anvil.http.HttpError as e:
-    logger.error(f"HTTP error: {e.content}")
+    log_error(f"HTTP error: {e.content}")
     if e.status == 403:
       return "Error: 403 Forbidden - API key blocked or API not enabled. Check Google Cloud Console."
     return f"Error generating summary: HTTP {e.status} - {e.content}"
   except KeyError as e:
-    logger.error(f"Response parsing error: {str(e)}")
+    log_error(f"Response parsing error: {str(e)}")
     return f"Error: Invalid response format from Gemini API - {str(e)}"
   except Exception as e:
-    logger.error(f"Unexpected error in generate_ai_summary: {str(e)}", exc_info=True)
+    log_error(f"Unexpected error in generate_ai_summary: {str(e)}")
     return f"Error generating summary: {str(e)}"
 
 
 
-
-  except anvil.http.HttpError as e:
-    logger.error(f"Detailed HTTP error: {e.content}")
-    if e.status == 403:
-      return "Error: 403 Forbidden - API key is blocked or Generative Language API is not enabled. Check Google Cloud Console."
-    return f"Error generating summary: HTTP {e.status} - {e.content}"
-  except KeyError as e:
-    logger.error(f"KeyError in response parsing: {str(e)}")
-    return f"Error: Invalid response format from Gemini API - {str(e)}"
-  except Exception as e:
-    logger.error(f"Unexpected error in generate_ai_summary: {str(e)}")
-    return f"Error generating summary: {str(e)}"
-
+#----------------------------------------------------------------------------------
 @anvil.server.callable
 def test_gemini_api():
   """
@@ -2685,17 +2703,8 @@ def test_gemini_api():
     }
   }
   test_prompt = "Summarize: {json_data}"
-  logger.info(f"Testing Gemini API with test_data={test_data}, prompt={test_prompt}")
+  log_info(f"Testing Gemini API with test_data={test_data}, prompt={test_prompt}")
   return generate_ai_summary(test_data, test_prompt, coach_id="test_coach")
-
-  
-
-
-
-
-
-    
-
 
 
 #----------------------------------------------------------------------------------
@@ -2717,7 +2726,7 @@ def insert_summary_into_pdf(pdf_media, summary_text):
     doc.close()
     return anvil.BlobMedia('application/pdf', updated_bytes, name=pdf_media.name)
   except Exception as e:
-    logging.error(f"Error inserting summary into PDF: {str(e)}")
+    log_error(f"Error inserting summary into PDF: {str(e)}")
     return pdf_media
 
 #----------------------------------------------------------------------------------
@@ -2733,5 +2742,5 @@ def create_summary_pdf(summary_text, pdf_name):
     buffer.close()
     return anvil.BlobMedia('application/pdf', pdf_bytes, name=pdf_name)
   except Exception as e:
-    logging.error(f"Error creating summary PDF: {str(e)}")
+    log_error(f"Error creating summary PDF: {str(e)}")
     return None

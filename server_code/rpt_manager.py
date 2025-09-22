@@ -17,23 +17,9 @@ import base64
 import re
 from typing import Tuple
 from collections import defaultdict
-from anvil_extras.logging import Logger, DEBUG
 import traceback
 from logger_utils import log_info, log_error, log_critical, log_debug, log_row
 
-
-'''
-# Test the logger
-try:
-  x = 1 / 0
-
-except Exception as e:
-  log_debug("Logger debug test message")
-  log_info("Logger info test message")
-  log_error("Test error test message")
-  log_critical("Logger test message, critical")
-  print(f"Logger test failed: {e}")
-''' 
   
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -411,8 +397,8 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           # Anonymize PDF
           coach_prefs = app_tables.coach_preferences.get(coach_id=rpt_r['email'])
           pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else []
-          anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
-          pdf_files_created.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
+          #anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
+          #pdf_files_created.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
         else:
           log_info(f"PDF generation failed")
           continue
@@ -444,14 +430,14 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         if summary_pdf:
           full_rpt_pdf = merge_pdfs(summary_pdf, full_rpt_pdf, pdf_name=pdf_name)
           # Anonymize summary PDF
-          anon_summary_id = anonymize_pdf(summary_pdf, pii_terms)
+          #anon_summary_id = anonymize_pdf(summary_pdf, pii_terms)
           pdf_files_created.append({'name': summary_pdf.name + '_anon.pdf', 'result': anon_summary_id or 'Failed to anonymize'})
 
       # Save combined PDF
       if full_rpt_pdf:
         combined_result = write_to_nested_folder(pdf_folder, pdf_name, full_rpt_pdf)
-        anon_pdf_id = anonymize_pdf(full_rpt_pdf, pii_terms)
-        pdf_files_created.append({'name': pdf_name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
+        #anon_pdf_id = anonymize_pdf(full_rpt_pdf, pii_terms)
+        #pdf_files_created.append({'name': pdf_name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
         return_text += '\n' + combined_result
       else:
         combined_result = f"No combined PDF generated for {pdf_name}"
@@ -476,7 +462,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
     report_infos = []
 
     if not pair_list:
-        critical_logger.critical(f"No pairs provided for scouting report: {rpt_r.get('Report Description', 'Unknown')}")
+        log_critical(f"No pairs provided for scouting report: {rpt_r.get('Report Description', 'Unknown')}")
         return return_text, report_infos
 
     try:
@@ -531,8 +517,8 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
                 if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
                     pdf1 = pdf_result['pdf']
                     pdf1 = insert_summary_into_pdf(pdf1, summary)
-                    anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
-                    scouting_pdf_files.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
+                    #anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
+                    #scouting_pdf_files.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
                     pair_pdf = merge_pdfs(pair_pdf, pdf1, pdf_name=f"{disp_pair} scouting_combined_{rpt_r['Report Description']}.pdf") if pair_pdf else pdf1
 
             # Player reports for player1
@@ -565,8 +551,8 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
                 if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
                     pdf1 = pdf_result['pdf']
                     pdf1 = insert_summary_into_pdf(pdf1, summary)
-                    anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
-                    player1_pdf_files.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
+                    #anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
+                    #player1_pdf_files.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
                     player1_pdf = merge_pdfs(player1_pdf, pdf1, pdf_name=f"{player1} player_combined_{rpt_r['Report Description']}.pdf") if player1_pdf else pdf1
 
             # Player reports for player2
@@ -598,8 +584,8 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
                 if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
                     pdf1 = pdf_result['pdf']
                     pdf1 = insert_summary_into_pdf(pdf1, summary)
-                    anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
-                    player2_pdf_files.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
+                    #anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
+                    #player2_pdf_files.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
                     player2_pdf = merge_pdfs(player2_pdf, pdf1, pdf_name=f"{player2} player_combined_{rpt_r['Report Description']}.pdf") if player2_pdf else pdf1
 
             # Combine all PDFs
@@ -624,14 +610,14 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
                     summary_pdf = create_summary_pdf(rollup_summary, f"{disp_pair}_summary_{today.strftime('%Y%m%d_%H%M%S')}.pdf")
                     if summary_pdf:
                         final_pdf = merge_pdfs(summary_pdf, final_pdf, pdf_name=final_pdf_name)
-                        anon_summary_id = anonymize_pdf(summary_pdf, pii_terms)
+                        #anon_summary_id = anonymize_pdf(summary_pdf, pii_terms)
                         scouting_pdf_files.append({'name': summary_pdf.name + '_anon.pdf', 'result': anon_summary_id or 'Failed to anonymize'})
 
             # Save final PDF
             if final_pdf:
                 combined_result = write_to_nested_folder(pdf_folder, final_pdf_name, final_pdf)
-                anon_pdf_id = anonymize_pdf(final_pdf, pii_terms)
-                scouting_pdf_files.append({'name': final_pdf_name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
+                #anon_pdf_id = anonymize_pdf(final_pdf, pii_terms)
+                #scouting_pdf_files.append({'name': final_pdf_name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
                 return_text += '\n' + combined_result
             else:
                 combined_result = f"No final PDF generated for {final_pdf_name}"
@@ -646,7 +632,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             })
 
     except Exception as e:
-        critical_logger.exception(f"Critical error in rpt_mgr_scouting_rpts: {e}")
+        log_critical(f"Critical error in rpt_mgr_scouting_rpts: {e}")
         return return_text, report_infos
 
     return return_text, report_infos
@@ -720,5 +706,5 @@ def test_rpt_mgr_new_rpts():
         'pair': 'UCLA 11'
     }]
     disp_team = 'UCLA'
-    critical_logger.critical(f"Testing rpt_mgr_new_rpts with rpt_r={rpt_r}, p_list={p_list}, disp_team={disp_team}")
+    log_critical(f"Testing rpt_mgr_new_rpts with rpt_r={rpt_r}, p_list={p_list}, disp_team={disp_team}")
     return rpt_mgr_new_rpts(rpt_r, p_list, disp_team)

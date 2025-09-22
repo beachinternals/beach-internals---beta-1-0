@@ -84,20 +84,6 @@ def generate_pdf_report(rpt_form, report_id):
     return {'pdf': None, 'json_file_name': None, 'error': f'Failed to generate PDF: {str(e)}'}
 
 
-import anvil
-import anvil.tables as tables
-import pandas as pd
-import base64
-import json
-from datetime import datetime
-
-# -----------------------------------------------------------------------------
-# Logging helpers (assume these are imported from your shared logger module)
-# -----------------------------------------------------------------------------
-# from logger_module import log_debug, log_info, log_error, log_critical
-
-
-
 
 def safe_get(obj, key, default=None):
   """Safely get a key from a dict or attribute from Anvil Row/LiveObjectProxy."""
@@ -263,20 +249,6 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
 
         # Now you can convert to JSON
         report_data['dataframes'][df_key] = df.to_dict(orient="records")
-        '''
-        df_value = rpt_data_row[df_key].get_bytes()  # the df_value is a media object that is the df_1 dataframe, so we need to get bytes
-        df_value = pd.DataFrame(df_value)
-        log_debug(f'df_value type: {type(df_value)}, df_value: {df_value}')
-        if isinstance(df_value, pd.DataFrame):
-          if not include_urls and 'URL' in df_value.columns:
-            df_value = df_value.copy()
-            df_value['URL'] = None
-          report_data['dataframes'][df_key] = df_value.to_dict('records')
-        elif isinstance(df_value, dict):
-          report_data['dataframes'][df_key] = df_value
-        else:
-          report_data['dataframes'][df_key] = str(df_value)
-        '''
 
         # Extract images
     for i in range(1, 11):
