@@ -270,10 +270,12 @@ info@BeachInternals.com
 #-------------------------------------------------------------------------------------------------------
 # Report Manager - All Types of Reports
 #-------------------------------------------------------------------------------------------------------
-
 def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   """
     Generate new reports for players or pairs, including JSON, PDFs, and AI summaries.
+    
+    UPDATED: Now generates a single rollup AI summary based on all report JSONs,
+    instead of individual AI summaries for each report.
     """
   today = datetime.now()
   return_text = ''
@@ -295,7 +297,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         log_critical(f"Could not convert item to dict: {e}")
         continue
 
-        # Build report filters
+      # Build report filters
       rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, p)
       log_info(f"Report filters: {rpt_filters}")
 
@@ -339,7 +341,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       full_rpt_pdf = None
       pdf_files_created = []
-      individual_summaries = []
+      report_data_collection = []  # NEW: Collect all report data for rollup AI summary
 
       # Process each report
       for k, rptname in enumerate(sorted_rptnames):
@@ -351,7 +353,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           log_info(f"Failed to generate report ID")
           continue
 
-          # Generate JSON
+        # Generate JSON
         log_info(f"Generating JSON for {rptname['rpt_form']}")
         json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
         log_info(f"Json media returned: {json_media}")
@@ -363,45 +365,72 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           json_result = write_to_nested_folder(json_folder, json_name, json_media)
           pdf_files_created.append({'name': json_name, 'result': json_result})
 
-          # Generate AI summary
-        log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
-        prompt_row = app_tables.ai_prompt_templates.get(
-          report_id=rptname['id'],
-          hierarchy_level='0',
-          coach_id=q.any_of(rpt_r['email'], '')
-        )
-        log_info(f"Prompt Row Returned: {prompt_row}")
-        if prompt_row:
-          # Parse json_media to dictionary
+          # NEW: Collect report data for rollup summary instead of generating individual summaries
           try:
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
-            human_summary = prompt_row['desc_beach_volleyball']
+
+            # Get description from ai_prompt_templates
+            log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
+            prompt_row = app_tables.ai_prompt_templates.get(
+              report_id=rptname['id'],
+              hierarchy_level='0',
+              coach_id=q.any_of(rpt_r['email'], '')
+            )
+            log_info(f"Prompt Row Returned: {prompt_row}")
+
+            report_data_collection.append({
+              'report_name': rptname['report_name'],
+              'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
+              'json_data': json_data
+            })
           except (json.JSONDecodeError, AttributeError) as e:
             log_critical(f"Failed to parse json_media: {e}")
-            individual_summaries.append(f"Error: Failed to parse JSON - {str(e)}")
             continue
-            # Clean prompt to remove problematic colon
-          prompt_text = prompt_row['prompt_text'].replace(": {json_data}", " {json_data}")
-          summary = generate_ai_summary(json_data, prompt_text, rpt_r['email'], human_summary)
-          individual_summaries.append(summary)
-        else:
-          summary = "No summary generated: Prompt not found"
-          individual_summaries.append(summary)
 
-          # Generate PDF
+        # COMMENTED OUT: Individual AI summaries no longer generated per report
+        # This code is preserved in case we want to restore individual summaries in the future
+        # ==================================================================================
+        # # Generate AI summary
+        # log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
+        # prompt_row = app_tables.ai_prompt_templates.get(
+        #   report_id=rptname['id'],
+        #   hierarchy_level='0',
+        #   coach_id=q.any_of(rpt_r['email'], '')
+        # )
+        # log_info(f"Prompt Row Returned: {prompt_row}")
+        # if prompt_row:
+        #   # Parse json_media to dictionary
+        #   try:
+        #     json_data = json.loads(json_media.get_bytes().decode('utf-8'))
+        #     human_summary = prompt_row['desc_beach_volleyball']
+        #   except (json.JSONDecodeError, AttributeError) as e:
+        #     log_critical(f"Failed to parse json_media: {e}")
+        #     individual_summaries.append(f"Error: Failed to parse JSON - {str(e)}")
+        #     continue
+        #   # Clean prompt to remove problematic colon
+        #   prompt_text = prompt_row['prompt_text'].replace(": {json_data}", " {json_data}")
+        #   summary = generate_ai_summary(json_data, prompt_text, rpt_r['email'], human_summary)
+        #   individual_summaries.append(summary)
+        # else:
+        #   summary = "No summary generated: Prompt not found"
+        #   individual_summaries.append(summary)
+        # ==================================================================================
+
+        # Generate PDF
         pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
-        pdf_summary = generate_ai_pdf_summary(report_id, summary, 'player_ai_summary')
+
+        # COMMENTED OUT: No longer prepending individual AI summaries to each PDF
+        # ==================================================================================
+        # pdf_summary = generate_ai_pdf_summary(report_id, summary, 'player_ai_summary')
+        # if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
+        #   pdf2 = pdf_result['pdf']
+        #   pdf_ai = pdf_summary['pdf']
+        #   pdf1 = merge_pdfs(pdf_ai, pdf2, pdf_name=pdf_name)
+        # ==================================================================================
+
+        # NEW: Use raw PDF without AI summary prepended
         if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
-          pdf2 = pdf_result['pdf']
-          pdf_ai = pdf_summary['pdf']
-          pdf1 = merge_pdfs(pdf_ai, pdf2, pdf_name=pdf_name)
-          # Insert AI summary
-          #pdf1 = insert_summary_into_pdf(pdf1, summary)
-          # Anonymize PDF
-          #coach_prefs = app_tables.coach_preferences.get(coach_id=rpt_r['email'])
-          #pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else []
-          #anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
-          #pdf_files_created.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
+          pdf1 = pdf_result['pdf']  # Use raw PDF without AI summary
         else:
           log_info(f"PDF generation failed")
           continue
@@ -412,29 +441,94 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         else:
           full_rpt_pdf = pdf1
 
-      # Generate roll-up summary
-      rollup_prompt_rows = sorted(
+      # NEW: Get coach's preferred AI summary level
+      log_info(f"Getting coach AI summary level for {rpt_r['email']}")
+      coach_user = app_tables.users.get(email=rpt_r['email'])
+      ai_summary_level = coach_user['ai_summary_level'] if coach_user and coach_user['ai_summary_level'] else 'Summary'
+      log_info(f"Coach AI summary level: {ai_summary_level}")
+
+      # NEW: Generate single rollup AI summary based on all report JSONs
+      if report_data_collection:
+        log_info(f"Searching for rollup prompt: description={rpt_r['Report Description']}, hierarchy=1, level={ai_summary_level}")
+        rollup_prompt_rows = sorted(
           app_tables.ai_prompt_templates.search(
-              report_description=rpt_r['Report Description'],
-              hierarchy_level='1',
-              coach_id=q.any_of(rpt_r['email'], '')
+            report_description=rpt_r['Report Description'],
+            hierarchy_level='1',
+            ai_summary_level=ai_summary_level,  # Filter by coach's preference
+            coach_id=q.any_of(rpt_r['email'], '')
           ),
-          key=lambda row: row['version'],
+          key=lambda row: (
+            1 if row['coach_id'] == rpt_r['email'] else 0,  # Coach-specific first
+            row['version']  # Then by version
+          ),
           reverse=True
-      )
+        )
 
-      rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
+        rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
+        log_info(f"Rollup prompt found: {rollup_prompt is not None}")
 
-      if rollup_prompt:
-        # Clean rollup prompt to remove problematic colon
-        rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
-        rollup_summary = generate_ai_summary({'summaries': individual_summaries}, rollup_prompt_text, rpt_r['email'])
-        summary_pdf = create_summary_pdf(rollup_summary, f"{player_pair}_summary_{today.strftime('%Y%m%d_%H%M%S')}.pdf")
-        if summary_pdf:
-          full_rpt_pdf = merge_pdfs(summary_pdf, full_rpt_pdf, pdf_name=pdf_name)
-          # Anonymize summary PDF
-          #anon_summary_id = anonymize_pdf(summary_pdf, pii_terms)
-          pdf_files_created.append({'name': summary_pdf.name + '_anon.pdf', 'result': anon_summary_id or 'Failed to anonymize'})
+        if rollup_prompt:
+          # Prepare comprehensive data for AI summary
+          rollup_data = {
+            'report_description': rpt_r['Report Description'],
+            'player_pair': player_pair,
+            'reports': report_data_collection  # All JSONs with descriptions
+          }
+
+          log_info(f"Generating rollup AI summary with {len(report_data_collection)} reports")
+          rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
+          rollup_summary = generate_ai_summary(
+            rollup_data, 
+            rollup_prompt_text, 
+            rpt_r['email'],
+            rollup_prompt['desc_beach_volleyball']  # Human-readable context
+          )
+
+          # Generate PDF for the rollup summary
+          log_info(f"Generating rollup summary PDF")
+          rollup_pdf_summary = generate_ai_pdf_summary(
+            report_id=f"{player_pair}_rollup_{today.strftime('%Y%m%d_%H%M%S')}", 
+            summary=rollup_summary, 
+            ai_form='player_ai_summary'
+          )
+
+          if rollup_pdf_summary.get('pdf') and full_rpt_pdf:
+            log_info(f"Prepending rollup AI summary to combined PDF")
+            full_rpt_pdf = merge_pdfs(rollup_pdf_summary['pdf'], full_rpt_pdf, pdf_name=pdf_name)
+            pdf_files_created.append({'name': f"{player_pair}_rollup_summary.pdf", 'result': 'Generated'})
+          else:
+            log_info(f"Rollup PDF summary generation failed or no combined PDF available")
+        else:
+          log_info(f"No rollup prompt found for {rpt_r['Report Description']} with level {ai_summary_level}")
+      else:
+        log_info(f"No report data collected for rollup summary")
+
+      # REMOVED: Old rollup summary code that combined individual summaries
+      # ==================================================================================
+      # # Generate roll-up summary
+      # rollup_prompt_rows = sorted(
+      #     app_tables.ai_prompt_templates.search(
+      #         report_description=rpt_r['Report Description'],
+      #         hierarchy_level='1',
+      #         coach_id=q.any_of(rpt_r['email'], '')
+      #     ),
+      #     key=lambda row: row['version'],
+      #     reverse=True
+      # )
+      # 
+      # rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
+      # 
+      # if rollup_prompt:
+      #   # Clean rollup prompt to remove problematic colon
+      #   rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
+      #   rollup_summary = generate_ai_summary({'summaries': individual_summaries}, rollup_prompt_text, rpt_r['email'])
+      #   summary_pdf = create_summary_pdf(rollup_summary, f"{player_pair}_summary_{today.strftime('%Y%m%d_%H%M%S')}.pdf")
+      #   if summary_pdf:
+      #     full_rpt_pdf = merge_pdfs(summary_pdf, full_rpt_pdf, pdf_name=pdf_name)
+      #     # Anonymize summary PDF
+      #     #anon_summary_id = anonymize_pdf(summary_pdf, pii_terms)
+      #     pdf_files_created.append({'name': summary_pdf.name + '_anon.pdf', 'result': anon_summary_id or 'Failed to anonymize'})
+      # ==================================================================================
 
       # Save combined PDF
       if full_rpt_pdf:
@@ -447,10 +541,10 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Collect report info
       report_infos.append({
-          'player_pair': player_pair,
-          'description': rpt_r['Report Description'],
-          'combined': combined_result,
-          'individuals': pdf_files_created
+        'player_pair': player_pair,
+        'description': rpt_r['Report Description'],
+        'combined': combined_result,
+        'individuals': pdf_files_created
       })
 
   except Exception as e:
@@ -458,6 +552,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
     return return_text, report_infos
 
   return return_text, report_infos
+
+
+
 
 def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
     today = datetime.now()
