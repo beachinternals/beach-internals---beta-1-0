@@ -2656,8 +2656,16 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     # Serialize the entire payload dictionary to a JSON string
     json_payload = json.dumps(payload)
 
+    # different piotential gemini m0odels to use:
+    # Gemini 1.5 pro
+    #gemini_url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
+    #  gemini-pro
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
+    #  gemini-1.5-flash
+    #gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+
     response = anvil.http.request(
-      url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}",
+      url=gemini_url,
       method="POST",
       headers={"Content-Type": "application/json"},
       data=json_payload  # Send the pre-serialized string as `data`
