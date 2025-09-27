@@ -2657,10 +2657,11 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     json_payload = json.dumps(payload)
 
     # different piotential gemini m0odels to use:
-    # Gemini 1.5 pro
-    #gemini_url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
+ 
+    # Gemini 1.5 pro: Oroginal URL that worked once:-)
+    gemini_url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
     #  gemini-pro
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
+    #gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
     #  gemini-1.5-flash
     #gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
 
