@@ -726,10 +726,10 @@ db_schema:
   rpt_mgr:
     client: full
     columns:
-    - admin_ui: {order: 0, width: 152}
+    - admin_ui: {order: 0, width: 201}
       name: email
       type: string
-    - admin_ui: {order: 1, width: 156}
+    - admin_ui: {order: 1, width: 190}
       name: emailto
       type: string
     - admin_ui: {order: 2, width: 98}
@@ -1002,7 +1002,7 @@ scheduled_tasks:
 secrets:
   GEMINI_API_KEY:
     type: secret
-    value: {SVRRFKWWHPM3FMVF: 6T3oObHV0XrJu7dBrLFKOl0t/FCzzDsRuqzH4YNcOp8NAaUGdvbJG+VfrcBa8rtfUFdNQaC9N/m7mrsTlSPjZBNS3mYkYByldSKoK0/GjsBSJpThXTCeTugv1si+nmvIItKlNxeNmJWVs5H6tW9S+6Z4wamgWnjf1NaDiXlsdbv6pTuAe1E=}
+    value: {SVRRFKWWHPM3FMVF: ItJX4uS1AdPDprE+w1R+OkyZxtmtbMZHB+ecIcTkRcy0nB+oFeWVnhUxtfu7Zh8LIaEgRrsvLT65b/wwHnUu3I3Yrizt/FGdajB1WcJa7c80A5fjPWi6DXCUDcVKRCw/nYSDfJBeTk5uSpgN5pRvuasA2eXuMVmPPlZoix71vc4f4rpT3DA=}
   new_secret:
     type: secret
     value: {SVRRFKWWHPM3FMVF: ''}

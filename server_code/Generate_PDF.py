@@ -35,13 +35,12 @@ def generate_pdf_report(rpt_form, report_id):
     Returns:
         dict: {'pdf': BlobMedia, 'json_file_name': str or None, 'error': str or None}
     """
-  # Configure logging
-  logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
   # Get report data row
   rpt_data_row = app_tables.report_data.get(report_id=report_id)
   if not rpt_data_row:
-    logging.error(f"Report ID {report_id} not found")
+    log_error(f"Report ID {report_id} not found")
     return {'pdf': None, 'json_file_name': None, 'error': f'Report ID {report_id} not found'}
 
     # Determine file names for PDF
@@ -70,17 +69,17 @@ def generate_pdf_report(rpt_form, report_id):
     # Generate PDF
   try:
     rpt_pdf = PDFRenderer(filename=pdf_file, landscape=False).render_form(rpt_form, report_id)
-    logging.info(f"PDF generated: type={type(rpt_pdf)}, content_type={getattr(rpt_pdf, 'content_type', 'Unknown')}")
+    log_info(f"PDF generated: type={type(rpt_pdf)}, content_type={getattr(rpt_pdf, 'content_type', 'Unknown')}")
 
     # Convert StreamingMedia to BlobMedia if necessary
     if isinstance(rpt_pdf, anvil._serialise.StreamingMedia):
-      logging.info(f"Converting StreamingMedia to BlobMedia for report_id {report_id}")
+      log_info(f"Converting StreamingMedia to BlobMedia for report_id {report_id}")
       rpt_pdf = anvil.BlobMedia('application/pdf', rpt_pdf.get_bytes(), name=pdf_file)
 
     return {'pdf': rpt_pdf, 'json_file_name': None, 'error': None}
 
   except Exception as e:
-    logging.error(f"Error generating PDF for report_id {report_id}: {str(e)}")
+    log_error(f"Error generating PDF for report_id {report_id}: {str(e)}")
     return {'pdf': None, 'json_file_name': None, 'error': f'Failed to generate PDF: {str(e)}'}
 
 

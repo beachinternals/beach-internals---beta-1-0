@@ -370,10 +370,10 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
 
             # Get description from ai_prompt_templates
-            log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 0, coach id {rpt_r['email']}")
+            log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 1, coach id {rpt_r['email']}")
             prompt_row = app_tables.ai_prompt_templates.get(
               report_id=rptname['id'],
-              hierarchy_level='0',
+              hierarchy_level='1',
               coach_id=q.any_of(rpt_r['email'], '')
             )
             log_info(f"Prompt Row Returned: {prompt_row}")
@@ -444,6 +444,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       # NEW: Get coach's preferred AI summary level
       log_info(f"Getting coach AI summary level for {rpt_r['email']}")
       coach_user = app_tables.users.get(email=rpt_r['email'])
+      if not coach_user:
+        log_error(f"Coach not found in Uers table, email: {rpt_r['email']}")
+        
       ai_summary_level = coach_user['ai_summary_level'] if coach_user and coach_user['ai_summary_level'] else 'Summary'
       log_info(f"Coach AI summary level: {ai_summary_level}")
 
@@ -487,7 +490,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           # Generate PDF for the rollup summary
           log_info(f"Generating rollup summary PDF")
           rollup_pdf_summary = generate_ai_pdf_summary(
-            report_id=f"{player_pair}_rollup_{today.strftime('%Y%m%d_%H%M%S')}", 
+            report_id=report_id, 
             summary=rollup_summary, 
             ai_form='player_ai_summary'
           )
@@ -607,7 +610,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
 
                 prompt_row = app_tables.ai_prompt_templates.get(
                     report_id=rptname['id'],
-                    hierarchy_level='0',
+                    hierarchy_level='1',
                     coach_id=q.any_of(rpt_r['email'], '')
                 )
                 summary = generate_ai_summary(json_media.get_bytes().decode('utf-8'), prompt_row['prompt_text'], rpt_r['email']) if prompt_row else "No summary generated"
@@ -641,7 +644,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
 
                 prompt_row = app_tables.ai_prompt_templates.get(
                     report_id=rptname['id'],
-                    hierarchy_level='0',
+                    hierarchy_level='1',
                     coach_id=q.any_of(rpt_r['email'], '')
                 )
                 summary = generate_ai_summary(json_media.get_bytes().decode('utf-8'), prompt_row['prompt_text'], rpt_r['email']) if prompt_row else "No summary generated"
@@ -674,7 +677,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
 
                 prompt_row = app_tables.ai_prompt_templates.get(
                     report_id=rptname['id'],
-                    hierarchy_level='0',
+                    hierarchy_level='1',
                     coach_id=q.any_of(rpt_r['email'], '')
                 )
                 summary = generate_ai_summary(json_media.get_bytes().decode('utf-8'), prompt_row['prompt_text'], rpt_r['email']) if prompt_row else "No summary generated"

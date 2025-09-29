@@ -2648,7 +2648,7 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
       "generationConfig": {
         "temperature": 0.7,
         "topP": 0.9,
-        "maxOutputTokens": 1024
+        "maxOutputTokens": 8192 # increased from 1024
       }
     }
 
@@ -2659,7 +2659,10 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     # different piotential gemini m0odels to use:
  
     # Gemini 1.5 pro: Oroginal URL that worked once:-)
-    gemini_url=f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key={api_key}"
+    # Use Gemini 2.5 Flash - stable and fast with huge context window
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    
+    #gemini_url=f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro-latest:generateContent?key={api_key}"
     #  gemini-pro
     #gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
     #  gemini-1.5-flash
@@ -2678,6 +2681,7 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
 
     # --- Now parse the JSON object ---
     summary = json_response['candidates'][0]['content']['parts'][0]['text']
+  
     return summary.strip()
 
   except anvil.http.HttpError as e:
