@@ -457,13 +457,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           app_tables.ai_prompt_templates.search(
             report_description=rpt_r['Report Description'],
             hierarchy_level='1',
-            ai_summary_level=ai_summary_level,  # Filter by coach's preference
-            coach_id=q.any_of(rpt_r['email'], '')
+            ai_summary_level=ai_summary_level  # Filter by coach's preference
           ),
-          key=lambda row: (
-            1 if row['coach_id'] == rpt_r['email'] else 0,  # Coach-specific first
-            row['version']  # Then by version
-          ),
+          key=lambda row: row['version'],
           reverse=True
         )
 
