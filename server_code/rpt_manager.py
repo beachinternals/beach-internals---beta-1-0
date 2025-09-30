@@ -369,26 +369,33 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           # This code is preserved in case we want to restore individual summaries in the future
           # ==================================================================================
           # NEW: Collect report data for rollup summary instead of generating individual summaries
-          #try:
-          #  json_data = json.loads(json_media.get_bytes().decode('utf-8'))
+          try:
+            json_data = json.loads(json_media.get_bytes().decode('utf-8'))
 
             # Get description from ai_prompt_templates
-          #  log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 1, coach id {rpt_r['email']}")
-          #  prompt_row = app_tables.ai_prompt_templates.get(
-          #    report_id=rptname['id'],
-          #    hierarchy_level='1',
-          #    coach_id=q.any_of(rpt_r['email'], '')
-          #  )
-          #  log_info(f"Prompt Row Returned: {prompt_row}")
+            log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 1, coach id {rpt_r['email']}")
+            
+            # NEW: Get coach's preferred AI summary level
+            log_info(f"Getting coach AI summary level for {rpt_r['email']}")
+            coach_user = app_tables.users.get(email=rpt_r['email'])
+            if not coach_user:
+              log_error(f"Coach not found in Uers table, email: {rpt_r['email']}")
+            
+            prompt_row = app_tables.ai_prompt_templates.get(
+              report_id=rptname['id'],
+              hierarchy_level='1',
+              ai_summary_level=coach_user['ai_summary_level']
+            )
+            log_info(f"Prompt Row Returned: {prompt_row}")
 
-          #  report_data_collection.append({
-          #    'report_name': rptname['report_name'],
-          #    'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
-          #    'json_data': json_data
-          #  })
-          #except (json.JSONDecodeError, AttributeError) as e:
-          #  log_critical(f"Failed to parse json_media: {e}")
-          #  continue
+            report_data_collection.append({
+              'report_name': rptname['report_name'],
+              'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
+              'json_data': json_data
+            })
+          except (json.JSONDecodeError, AttributeError) as e:
+            log_critical(f"Failed to parse json_media: {e}")
+            continue
 
 
         # # Generate AI summary
