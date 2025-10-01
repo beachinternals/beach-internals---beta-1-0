@@ -2756,9 +2756,20 @@ def report_player_srv_transition(lgy, team, **rpt_filters):
     table_data['No Area'][5] = f"{percent:.0%}"
     table_data['No Area'][6] = str(trans_obj_no_area['tran_total_pts'])
 
+
+  
   # Convert table_data to DataFrame
   df = pd.DataFrame(table_data)
 
+  # first, we'll swap back the column names to human readable
+  df = df.rename(columns={
+    'Area 1': 'Left Pin',
+    'Area 2': 'Left Slot',
+    'Area 3': 'Middle',
+    'Area 4': 'Right Slot',
+    'Area 5': 'Right Pin'
+  })
+  
   # Store the dataframe in df_list[0]
   df_list[0] = df.to_dict('records')
   # =============================================================================
