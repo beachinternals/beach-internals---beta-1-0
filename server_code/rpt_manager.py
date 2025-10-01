@@ -376,13 +376,13 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
             log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 1, coach id {rpt_r['email']}")
             
             # NEW: Get coach's preferred AI summary level
-            log_info(f"Getting coach AI summary level for {rpt_r['email']}")
             coach_user = app_tables.users.get(email=rpt_r['email'])
             if not coach_user:
               log_error(f"Coach not found in Uers table, email: {rpt_r['email']}")
-            
+
+            log_info(f"Getting coach AI summary level for {rpt_r['email']}, report descirption = {rpt_r['Report Description']}, ai summary level ={coach_user['ai_summary_level']}")
             prompt_row = app_tables.ai_prompt_templates.get(
-              report_id=rptname['id'],
+              report_description=rpt_r['Report Description'],
               hierarchy_level='1',
               ai_summary_level=coach_user['ai_summary_level']
             )
