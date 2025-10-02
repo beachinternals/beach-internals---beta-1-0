@@ -3,34 +3,34 @@ db_schema:
   ai_prompt_templates:
     client: none
     columns:
-    - admin_ui: {order: 1, width: 200}
+    - admin_ui: {order: 1, width: 95}
       name: rpt_type
       type: string
-    - admin_ui: {order: 2, width: 200}
+    - admin_ui: {order: 3.1875, width: 200}
       name: hierarchy_level
       type: string
-    - admin_ui: {order: 3, width: 585}
+    - admin_ui: {order: 3, width: 474}
       name: prompt_text
       type: string
     - admin_ui: {order: 4, width: 200}
       name: coach_id
       type: string
-    - admin_ui: {order: 0.5, width: 200}
+    - admin_ui: {order: 3.25, width: 200}
       name: report_id
       type: string
-    - admin_ui: {order: 1.5, width: 200}
+    - admin_ui: {order: 1.5, width: 170}
       name: report_description
       type: string
-    - admin_ui: {order: -0.5, width: 200}
+    - admin_ui: {order: 3.375, width: 200}
       name: prompt_id
       type: number
     - admin_ui: {order: 5, width: 200}
       name: version
       type: number
-    - admin_ui: {order: 3.5, width: 200}
+    - admin_ui: {order: 3.15625, width: 192}
       name: desc_beach_volleyball
       type: string
-    - admin_ui: {order: 6, width: 200}
+    - admin_ui: {order: 3.125, width: 200}
       name: ai_summary_level
       type: string
     server: full
