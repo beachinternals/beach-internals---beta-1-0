@@ -303,143 +303,205 @@ def get_player_attack_plots( ppr_df, disp_player):
   return attack_z1_plot_object, attack_z2_plot_object, attack_z3_plot_object, attack_z4_plot_object, attack_z5_plot_object, z1_df, z2_df, z3_df, z4_df, z5_df
 
 
-
+import pandas as pd
+import numpy as np
+from scipy import stats
 
 def report_player_att_tendencies(lgy, team, **rpt_filters):
   """
-  Test report function - serves as a stub/template for other report functions.
-  
-  Args:
-    lgy: League+gender+year string
-    team: Team identifier
-    **rpt_filters: Additional report filters
+    Test report function - serves as a stub/template for other report functions.
     
-  Returns:
-    tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
-  """
+    Args:
+        lgy: League+gender+year string
+        team: Team identifier
+        **rpt_filters: Additional report filters
+        
+    Returns:
+        tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
+    """
   # Get basic title and label setup from database
   title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
 
   # Initialize the calculated lists
-  image_list = ['','','','','','','','','','']
-  df_list = ['','','','','','','','','','']
+  image_list = [''] * 10
+  df_list = [''] * 10
 
   # Unpack lgy into league, gender, year
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
   # Fetch the ppr dataframe, and/or player stats, and/or tri-data
-  # comment some in our out based on this reports needs.
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
-  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+  # tri_df, tri_df_found = get_tri_data(disp_league, disp_gender, disp_year, False, None, None)
 
   # Filter the ppr dataframe
   ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
 
   # =============================================================================
   # REPORT-SPECIFIC LOGIC STARTS HERE
-  # This is where you would customize for each different report function
   # =============================================================================
 
-  #------------------------------------------------------------------------------------------------------
-  #
-  #            Create the images and dataframes with filtered ppr data for report
-  #
-  #-----------------------------------------------------------------------------------------------------
-
-  # this is a player report, so limit the data to plays with this player
+  # Limit data to plays with this player
   disp_player = rpt_filters.get('player')
-  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+  ppr_df = ppr_df[(ppr_df['player_a1'] == disp_player) | 
     (ppr_df['player_a2'] == disp_player) |
     (ppr_df['player_b1'] == disp_player) |
-    (ppr_df['player_b2'] == disp_player) 
-    ]
-  #print(f"ppr size after filter for the player: {disp_player}, {ppr_df.shape[0]}")
+    (ppr_df['player_b2'] == disp_player)]
 
-  # break disp_player into team, number, and shortname
-  # unpack player into team, number and short name
+  # Break disp_player into team, number, and shortname
   str_loc = disp_player.index(' ')
-  p_team = disp_player[:str_loc].strip() # player team
+  p_team = disp_player[:str_loc].strip()  # player team
   p_player = disp_player[str_loc+1:]
   str_loc = p_player.index(' ')
-  p_num = p_player[:str_loc].strip() # player number
-  p_sname = p_player[str_loc+1:].strip() # player short name
+  p_num = p_player[:str_loc].strip()  # player number
+  p_sname = p_player[str_loc+1:].strip()  # player short name
 
-
-  #------------------------------------------------------------------------------------
-  #
-  #     Report is 'set up', not calcualte acorss the 3 zones, then the 45 serves
-  #
-  #-------------------------------------------------------------------------------------
-
-
-  ############### Third Populate the dataframe, assuming we have data returned
-
-  # count zone 1 and 2 attacks
-
-  ppr_df = ppr_df[ (ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == disp_player )]
-  att12 = ppr_df[ ( (ppr_df['att_src_zone_net'] == 1) | 
-                    (ppr_df['att_src_zone_net'] == 2) ) &
-    (ppr_df['tactic'] != 'behind') ].shape[0]
-  att45 = ppr_df[ ( (ppr_df['att_src_zone_net'] == 4) | 
-                    (ppr_df['att_src_zone_net'] == 5) ) &
-    (ppr_df['tactic'] != 'behind') ].shape[0]
-
+  # Calculate attacks from zones
+  ppr_df = ppr_df[(ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == disp_player)]
+  att12 = ppr_df[((ppr_df['att_src_zone_net'] == 1) | 
+                    (ppr_df['att_src_zone_net'] == 2)) &
+                   (ppr_df['tactic'] != 'behind')].shape[0]
+  att45 = ppr_df[((ppr_df['att_src_zone_net'] == 4) | 
+                    (ppr_df['att_src_zone_net'] == 5)) &
+                   (ppr_df['tactic'] != 'behind')].shape[0]
 
   att_front = '12' if att12 >= att45 else '45'
-  att_posn = ['front','behind','middle']
-  #angles = ['A1','A2','A3','A4','A5']
-  print(f" attacks, from 1 and 2: {att12}, from 4 & 5: {att45}, att_front is {att_front}")
+  print(f"attacks, from 1 and 2: {att12}, from 4 & 5: {att45}, att_front is {att_front}")
 
+  # Create the new table with specified columns, including 'Metric'
+  table_data = {
+        'Metric': ['FBHE', 'Percentile', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts', '% In System', 'URL'],
+        'Front-Pin': [0, 0, 0, 0, 0, 0, '0%', '0%', ''],
+        'Front-Slot': [0, 0, 0, 0, 0, 0, '0%', '0%', ''],
+        'Behind': [0, 0, 0, 0, 0, 0, '0%', '0%', ''],
+        'Middle': [0, 0, 0, 0, 0, 0, '0%', '0%', '']
+  }
+  new_table_df = pd.DataFrame(table_data)
+
+  # Calculate total attempts for % calculations (exclude point_outcome == 'TSA')
+  ppr_df = ppr_df[ppr_df['point_outcome'] != 'TSA']
+  total_attempts = 0  # Will sum attempts from fbhe_obj across positions
+
+  # Define zone mappings based on att_front
+  if att_front == '12':
+        front_pin_zones = [1]
+        front_slot_zones = [2]
+        middle_zones = [3, 4, 5]
+  else:  # att_front == '45'
+        front_pin_zones = [5]
+        front_slot_zones = [4]
+        middle_zones = [1, 2, 3]
+
+  # Calculate metrics for each position
+  for pos, zones in [('Front-Pin', front_pin_zones), ('Front-Slot', front_slot_zones), ('Middle', middle_zones)]:
+        pos_df = ppr_df[(ppr_df['att_src_zone_net'].isin(zones)) & (ppr_df['tactic'] != 'behind')]
+        
+        # Get FBHE, Kills, Errors, Attempts, FBSO, URL from fbhe_obj
+        fbhe_result = fbhe_obj(pos_df, disp_player, play_type='att', video_yn=True)
+        new_table_df.loc[new_table_df['Metric'] == 'FBHE', pos] = fbhe_result.fbhe
+        new_table_df.loc[new_table_df['Metric'] == 'Kills', pos] = fbhe_result.kills
+        new_table_df.loc[new_table_df['Metric'] == 'Errors', pos] = fbhe_result.errors
+        new_table_df.loc[new_table_df['Metric'] == 'Attempts', pos] = fbhe_result.attempts
+        new_table_df.loc[new_table_df['Metric'] == 'FBSO', pos] = round(fbhe_result.fbso, 3)  # Format as x.xxx
+        new_table_df.loc[new_table_df['Metric'] == 'URL', pos] = fbhe_result.video_link
+        
+        # Accumulate total attempts
+        total_attempts += fbhe_result.attempts
+        
+        # Percentile: Using stats.norm.cdf
+        fbhe_mean = player_data_stats_df.get('fbhe_mean', pd.Series([0])).iloc[0]
+        fbhe_stdev = player_data_stats_df.get('fbhe_stdev', pd.Series([1])).iloc[0]  # Avoid division by zero
+        percentile = stats.norm.cdf((fbhe_result.fbhe - fbhe_mean) / fbhe_stdev) * 100 if fbhe_stdev != 0 else 0
+        new_table_df.loc[new_table_df['Metric'] == 'Percentile', pos] = round(percentile, 1)
+        
+        # % In System: Get from count_good_passes_obj (use percent_str for xx% format)
+        good_passes = count_good_passes_obj(pos_df, disp_player, action='att', video_yn=True)
+        new_table_df.loc[new_table_df['Metric'] == '% In System', pos] = good_passes.get('percent_str', '0%')
+
+  # Behind position
+  behind_df = ppr_df[ppr_df['tactic'] == 'behind']
+  fbhe_result = fbhe_obj(behind_df, disp_player, play_type='att', video_yn=True)
+  new_table_df.loc[new_table_df['Metric'] == 'FBHE', 'Behind'] = fbhe_result.fbhe
+  new_table_df.loc[new_table_df['Metric'] == 'Kills', 'Behind'] = fbhe_result.kills
+  new_table_df.loc[new_table_df['Metric'] == 'Errors', 'Behind'] = fbhe_result.errors
+  new_table_df.loc[new_table_df['Metric'] == 'Attempts', 'Behind'] = fbhe_result.attempts
+  new_table_df.loc[new_table_df['Metric'] == 'FBSO', 'Behind'] = round(fbhe_result.fbso, 3)  # Format as x.xxx
+  new_table_df.loc[new_table_df['Metric'] == 'URL', 'Behind'] = fbhe_result.video_link
+  total_attempts += fbhe_result.attempts
+  fbhe_mean = player_data_stats_df.get('fbhe_mean', pd.Series([0])).iloc[0]
+  fbhe_stdev = player_data_stats_df.get('fbhe_stdev', pd.Series([1])).iloc[0]
+  percentile = stats.norm.cdf((fbhe_result.fbhe - fbhe_mean) / fbhe_stdev) * 100 if fbhe_stdev != 0 else 0
+  new_table_df.loc[new_table_df['Metric'] == 'Percentile', 'Behind'] = round(percentile, 1)
+  good_passes = count_good_passes_obj(behind_df, disp_player, action='att', video_yn=True)
+  new_table_df.loc[new_table_df['Metric'] == '% In System', 'Behind'] = good_passes.get('percent_str', '0%')
+
+  # Calculate % of Attempts for all positions (format as xx%)
+  for pos in ['Front-Pin', 'Front-Slot', 'Behind', 'Middle']:
+        attempts = new_table_df.loc[new_table_df['Metric'] == 'Attempts', pos].iloc[0]
+        percent_attempts = (attempts / total_attempts * 100) if total_attempts > 0 else 0
+        new_table_df.loc[new_table_df['Metric'] == '% of Attempts', pos] = f"{round(percent_attempts, 0):.0f}%"
+
+  # Shift existing df_list entries
+  df_list[1:5] = df_list[0:4]  # Shift original df_list[0-3] to df_list[1-4]
+  df_list[0] = new_table_df.to_dict('records')
+
+  # Update df_desc_list for the new table
+  #df_desc_list[0] = "Summary of player attack tendencies across Front-Pin, Front-Slot, Behind, and Middle positions, including First Ball Hitting Efficiency (FBHE), Percentile rank, First Ball Side Out (FBSO), Kills, Errors, Attempts, Percentage of Attempts, Percentage In System, and a URL to detailed stats."
+
+    # Existing plotting and DataFrame assignments
+  att_posn = ['front', 'behind', 'middle']
   for att in att_posn:
-    new_df = ppr_df
-    if att_front == '12' and att == 'front':
-      angular_att_table1 = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 1) ) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
-      angular_att_table2 = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 2) ) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
-      df_list[0] = angular_att_table1.to_dict('records')
-      df_list[1] = angular_att_table2.to_dict('records')
-      plt_image1 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 1) ) & (ppr_df['tactic'] != 'behind')],'Pin Attacks in Front')
-      plt_image2 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 2) ) & (ppr_df['tactic'] != 'behind')], 'Slot Attacks in Front')
-      image_list[0] = plt_image1
-      image_list[1] = plt_image2
-    elif att_front == '12' and att == 'behind':
-      angular_att_table = get_player_angular_attack_table(ppr_df[ (ppr_df['tactic'] == 'behind') ], player_data_stats_df, disp_player)
-      df_list[2] = angular_att_table.to_dict('records')
-      plt_image = plot_volleyball_attacks(ppr_df[ (ppr_df['tactic'] == 'behind') ],'Attacks Behind Setter')
-      image_list[2] = plt_image
-    elif att_front == '12' and att == 'middle':
-      new_df = new_df[ ( (new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 4) | (new_df['att_src_zone_net'] == 5) ) & (new_df['tactic'] != 'behind')]  
-      angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
-      df_list[3] = angular_att_table.to_dict('records')
-      plt_image = plot_volleyball_attacks(new_df,'Attacks from the Middle')
-      image_list[3] = plt_image
+        new_df = ppr_df
+        if att_front == '12' and att == 'front':
+            angular_att_table1 = get_player_angular_attack_table(ppr_df[((ppr_df['att_src_zone_net'] == 1)) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
+            angular_att_table2 = get_player_angular_attack_table(ppr_df[((ppr_df['att_src_zone_net'] == 2)) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
+            df_list[1] = angular_att_table1.to_dict('records')
+            df_list[2] = angular_att_table2.to_dict('records')
+            plt_image1 = plot_volleyball_attacks(ppr_df[((ppr_df['att_src_zone_net'] == 1)) & (ppr_df['tactic'] != 'behind')], 'Pin Attacks in Front')
+            plt_image2 = plot_volleyball_attacks(ppr_df[((ppr_df['att_src_zone_net'] == 2)) & (ppr_df['tactic'] != 'behind')], 'Slot Attacks in Front')
+            image_list[0] = plt_image1
+            image_list[1] = plt_image2
+        elif att_front == '12' and att == 'behind':
+            angular_att_table = get_player_angular_attack_table(ppr_df[(ppr_df['tactic'] == 'behind')], player_data_stats_df, disp_player)
+            df_list[3] = angular_att_table.to_dict('records')
+            plt_image = plot_volleyball_attacks(ppr_df[(ppr_df['tactic'] == 'behind')], 'Attacks Behind Setter')
+            image_list[2] = plt_image
+        elif att_front == '12' and att == 'middle':
+            new_df = new_df[((new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 4) | (new_df['att_src_zone_net'] == 5)) & (new_df['tactic'] != 'behind')]  
+            angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
+            df_list[4] = angular_att_table.to_dict('records')
+            plt_image = plot_volleyball_attacks(new_df, 'Attacks from the Middle')
+            image_list[3] = plt_image
+        elif att_front == '45' and att == 'front':
+            angular_att_table1 = get_player_angular_attack_table(ppr_df[((ppr_df['att_src_zone_net'] == 5)) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
+            angular_att_table2 = get_player_angular_attack_table(ppr_df[((ppr_df['att_src_zone_net'] == 4)) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
+            df_list[1] = angular_att_table1.to_dict('records')
+            df_list[2] = angular_att_table2.to_dict('records')
+            plt_image1 = plot_volleyball_attacks(ppr_df[((ppr_df['att_src_zone_net'] == 5)) & (ppr_df['tactic'] != 'behind')], 'Pin Attacks in Front')
+            plt_image2 = plot_volleyball_attacks(ppr_df[((ppr_df['att_src_zone_net'] == 4)) & (ppr_df['tactic'] != 'behind')], 'Slot Attacks in Front')
+            image_list[0] = plt_image1
+            image_list[1] = plt_image2
+        elif att_front == '45' and att == 'behind':
+            angular_att_table = get_player_angular_attack_table(ppr_df[(ppr_df['tactic'] == 'behind')], player_data_stats_df, disp_player)
+            df_list[3] = angular_att_table.to_dict('records')
+            plt_image = plot_volleyball_attacks(ppr_df[(ppr_df['tactic'] == 'behind')], 'Attacks Behind Setter')
+            image_list[2] = plt_image
+        elif att_front == '45' and att == 'middle':
+            new_df = new_df[((new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 1) | (new_df['att_src_zone_net'] == 2)) & (new_df['tactic'] != 'behind')]   
+            angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
+            df_list[4] = angular_att_table.to_dict('records')
+            plt_image = plot_volleyball_attacks(new_df, 'Attacks from the Middle')
+            image_list[3] = plt_image
 
-    elif att_front == '45' and att == 'front':
-      angular_att_table1 = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 5) ) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
-      angular_att_table2 = get_player_angular_attack_table(ppr_df[ ((ppr_df['att_src_zone_net'] == 4) ) & (ppr_df['tactic'] != 'behind')], player_data_stats_df, disp_player)
-      df_list[0] = angular_att_table1.to_dict('records')
-      df_list[1] = angular_att_table2.to_dict('records')
-      plt_image1 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 5) ) & (ppr_df['tactic'] != 'behind')],'Pin Attacks in Front')
-      plt_image2 = plot_volleyball_attacks( ppr_df[ ((ppr_df['att_src_zone_net'] == 4) ) & (ppr_df['tactic'] != 'behind')],'Slot Attacks in Front')
-      image_list[0] = plt_image1
-      image_list[1] = plt_image2
-    elif att_front == '45' and att == 'behind':
-      angular_att_table = get_player_angular_attack_table(ppr_df[ (ppr_df['tactic'] == 'behind') ] , player_data_stats_df, disp_player)
-      df_list[2] = angular_att_table.to_dict('records')
-      plt_image = plot_volleyball_attacks(ppr_df[ (ppr_df['tactic'] == 'behind') ],'Attacks Behind Setter')
-      image_list[2] = plt_image
-    elif att_front == '45' and att == 'middle':
-      new_df = new_df[ ( (new_df['att_src_zone_net'] == 3) | (new_df['att_src_zone_net'] == 1) | (new_df['att_src_zone_net'] == 2) ) & (new_df['tactic'] != 'behind')]   
-      angular_att_table = get_player_angular_attack_table(new_df, player_data_stats_df, disp_player)
-      df_list[3] = angular_att_table.to_dict('records')
-      plt_image = plot_volleyball_attacks(new_df,'Attacks from the Middle')
-      image_list[3] = plt_image
-
-  # =============================================================================
-  # END REPORT-SPECIFIC LOGIC
-  # =============================================================================
+    # =============================================================================
+    # END REPORT-SPECIFIC LOGIC
+    # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+  
+
 
 
 
