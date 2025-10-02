@@ -442,9 +442,17 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
+
+
 #---------------------------------------------------------------------------
-#              player report player 
+#              player report player SETS
 #---------------------------------------------------------------------------
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
+import numpy as np
+import pandas as pd
+
 def report_player_att_set(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -468,104 +476,115 @@ def report_player_att_set(lgy, team, **rpt_filters):
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
   # Fetch the ppr dataframe, and/or player stats, and/or tri-data
-  # comment some in our out based on this reports needs.
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
-  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
 
   # Filter the ppr dataframe
   ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
 
   # =============================================================================
   # REPORT-SPECIFIC LOGIC STARTS HERE
-  # This is where you would customize for each different report function
   # =============================================================================
-
-  #------------------------------------------------------------------------------------------------------
-  #
-  #            Create the images and dataframes with filtered ppr data for report
-  #
-  #-----------------------------------------------------------------------------------------------------
 
   # this is a player report, so limit the data to plays with this player
   disp_player = rpt_filters.get('player')
-  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+  ppr_df = ppr_df[(ppr_df['player_a1'] == disp_player) | 
     (ppr_df['player_a2'] == disp_player) |
     (ppr_df['player_b1'] == disp_player) |
-    (ppr_df['player_b2'] == disp_player) 
-    ]
+    (ppr_df['player_b2'] == disp_player)]
+  log_debug(f"      Sets: ppr_df after player filter, records: {ppr_df.shape[0]}")
 
   # For FBHE, filter to attacks by the player
   ppr_df = ppr_df[ppr_df['att_player'] == disp_player]
+  log_debug(f"      Sets: ppr_df after att_player filter, records: {ppr_df.shape[0]}")
 
-  # Bin the set_distance and set_height into 0.5 meter increments
-  distance_bins = np.arange(0, 10.5, 0.5)
-  height_bins = np.arange(0, 6.5, 0.5)
+  # Clean invalid data
+  log_debug(f"      Sets: set_dist nulls: {ppr_df['set_dist'].isna().sum()}, set_height nulls: {ppr_df['set_height'].isna().sum()}")
+  ppr_df = ppr_df[ppr_df['set_dist'].notna() & ppr_df['set_height'].notna() & (ppr_df['set_dist'] >= 0) & (ppr_df['set_height'] >= 0)]
+  log_debug(f"      Sets: ppr_df after cleaning, records: {ppr_df.shape[0]}")
+
+  # Bin the set_distance and set_height into 1.0 meter increments
+  distance_bins = np.arange(0, 11, 1.0)
+  height_bins = np.arange(0, 7, 1.0)
   ppr_df['distance_bin'] = pd.cut(ppr_df['set_dist'], bins=distance_bins, labels=(distance_bins[:-1] + distance_bins[1:]) / 2)
   ppr_df['height_bin'] = pd.cut(ppr_df['set_height'], bins=height_bins, labels=(height_bins[:-1] + height_bins[1:]) / 2)
+  log_debug(f"      Sets: Binned data, records: {ppr_df.shape[0]}")
 
   # Define function to calculate FBHE and attempts using fbhe_obj
   def calculate_fbhe(group):
+    log_debug(f"      Sets: calculate_fbhe group size: {len(group)}")
     if group.empty:
       return pd.Series({'attempts': 0, 'fbhe': 0.0})
     result = fbhe_obj(group, disp_player, 'att', True)
-    return pd.Series({'attempts': result.attempts, 'fbhe': result.fbhe,'URL':result.video_link})
+    log_debug(f"      Sets: calculate_fbhe result - attempts: {result.attempts}, fbhe: {result.fbhe}")
+    return pd.Series({'attempts': result.attempts, 'fbhe': result.fbhe, 'URL': result.video_link})
 
   # Group by bins and apply the calculation
   grouped = ppr_df.groupby(['distance_bin', 'height_bin'], as_index=False).apply(calculate_fbhe)
-  grouped = grouped[grouped['attempts'] > 4]
+  log_debug(f"      Sets: Grouped, pre filter: {grouped}")
+  log_debug(f"      Sets: Attempts distribution: {grouped['attempts'].value_counts().to_dict()}")
+  grouped = grouped[grouped['attempts'] > 0]  # Lowered threshold for debugging
+  log_debug(f"      Sets: Grouped, post > 0 filter: {grouped}")
 
   # Table of attempts for df_list[0]
-  attempts_table = grouped[['distance_bin', 'height_bin', 'attempts','fbhe','URL']].rename(columns={'distance_bin': 'set_dist', 'height_bin': 'set_height'})
+  attempts_table = grouped[['distance_bin', 'height_bin', 'attempts', 'fbhe', 'URL']].rename(columns={'distance_bin': 'set_dist', 'height_bin': 'set_height'})
+  log_debug(f"      Sets: attempts table: {attempts_table}")
   df_list[0] = attempts_table.to_dict('records')
-
-  ## Table of fbhe for df_list[1]
-  #fbhe_table = grouped[['distance_bin', 'height_bin', 'fbhe']].rename(columns={'distance_bin': 'set_dist', 'height_bin': 'set_height'})
-  #df_list[1] = fbhe_table.to_dict('records')
 
   # Get mean and stdev for color scaling
   fbhe_mean = player_data_stats_df['fbhe_mean']
   fbhe_stdev = player_data_stats_df['fbhe_stdev']
   vmin = fbhe_mean - fbhe_stdev
   vmax = fbhe_mean + fbhe_stdev
-  xmin = 0
-  xmax = 8
-  ymin = 1
-  ymax = 4
-  attmin = 5
-  attmax = 20
 
-  # FBHE scatter plot
-  fig1, ax1 = plt.subplots()
-  scatter1 = ax1.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['fbhe'], cmap='RdYlGn', vmin=vmin, vmax=vmax, s=80)
-  fig1.colorbar(scatter1)
-  ax1.set_xlim(xmin, xmax)
-  ax1.set_ylim(ymin, ymax)
-  ax1.set_xticks(np.arange(xmin, xmax+0.5, 0.5))
-  ax1.set_yticks(np.arange(ymin, ymax+0.5, 0.5))
-  ax1.set_xlabel('Set Distance (m)')
-  ax1.set_ylabel('Set Height (m)')
-  ax1.set_title(f'{disp_player} FBHE by Set Position')
+  # Create a single plot with parabolas
+  fig, ax = plt.subplots()
+  norm = Normalize(vmin=vmin, vmax=vmax)
+  cmap = plt.cm.RdYlGn
+  max_att = attempts_table['attempts'].max() if attempts_table['attempts'].max() > 0 else 1
+  min_lw, max_lw = 1, 10
+
+  if not attempts_table.empty:
+    for _, row in attempts_table.iterrows():
+      set_dist = row['set_dist']
+      set_height = row['set_height']
+      attempts = row['attempts']
+      fbhe = row['fbhe']
+      # Skip invalid parabolas
+      if set_dist <= 0 or set_height <= 0:
+        continue
+      # Calculate parabola: y = a*x^2 + b*x, starts at (0,0), peaks at (set_dist/2, set_height), ends at (set_dist, 0)
+      a = -4 * set_height / (set_dist ** 2)
+      b = 4 * set_height / set_dist
+      x = np.linspace(0, set_dist, 100)
+      y = a * x**2 + b * x
+      # Scale linewidth based on attempts
+      lw = (attempts / max_att) * (max_lw - min_lw) + min_lw
+      color = cmap(norm(fbhe))
+      # Plot parabola with opacity
+      ax.plot(x, y, color=color, linewidth=lw, alpha=0.6)
+
+  # Add colorbar
+  cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax)
+  cb.set_label('FBHE')
+  # Set axes
+  ax.set_xlim(0, 8)
+  ax.set_ylim(0, 5)
+  ax.set_xlabel('Distance (m)')
+  ax.set_ylabel('Height (m)')
+  ax.set_title(f'{disp_player} Set Parabolas')
+  # Set image_list[0]
   image_list[0] = anvil.mpl_util.plot_image()
-
-  # Attempts scatter plot
-  fig2, ax2 = plt.subplots()
-  scatter2 = ax2.scatter(grouped['distance_bin'], grouped['height_bin'], c=grouped['attempts'], cmap='RdYlGn', vmin=attmin, vmax=attmax, s=80)
-  fig2.colorbar(scatter2)
-  ax2.set_xlim(xmin, xmax)
-  ax2.set_ylim(ymin, ymax)
-  ax2.set_xticks(np.arange(xmin, xmax+0.5, 0.5))
-  ax2.set_yticks(np.arange(ymin, ymax+0.5, 0.5))
-  ax2.set_xlabel('Set Distance (m)')
-  ax2.set_ylabel('Set Height (m)')
-  ax2.set_title(f'{disp_player} Attempts by Set Position (colored by Attempts)')
-  image_list[1] = anvil.mpl_util.plot_image()
 
   # =============================================================================
   # END REPORT-SPECIFIC LOGIC
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+  
+  
+
+
 
 
 def report_player_att_transition(lgy, team, **rpt_filters):
