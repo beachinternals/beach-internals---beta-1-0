@@ -624,7 +624,7 @@ def report_player_att_set(lgy, team, **rpt_filters):
       lw = (attempts / max_att) * (max_lw - min_lw) + min_lw
       color = cmap(norm(fbhe))
       # Plot parabola with opacity
-      ax.plot(x, y, color=color, linewidth=lw, alpha=0.6)
+      ax.plot(x, y, color=color, linewidth=lw, alpha=0.5)
 
   # Add colorbar
   cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax)
