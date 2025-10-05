@@ -492,7 +492,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           )
 
           # Generate PDF for the rollup summary
-          log_info(f"Generating rollup summary PDF")
+          log_info(f"Generating rollup summary PDF, Gen AI Summary lenght={len(rollup_summary)}")
           rollup_pdf_summary = generate_ai_pdf_summary(
             report_id=report_id, 
             summary=rollup_summary, 
