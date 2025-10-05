@@ -2798,6 +2798,7 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
       # Store the AI summary in the database
     summary_media = anvil.BlobMedia('text/plain', summary.encode('utf-8'), name=f'ai_summary_{report_id}.txt')
     rpt_data_row['df_1'] = summary_media
+    rpt_data_row['no_df'] = 1
 
     # Generate PDF using the specified form template
     ai_pdf = PDFRenderer(
