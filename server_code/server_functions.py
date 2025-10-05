@@ -2681,7 +2681,9 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
 
     # --- Now parse the JSON object ---
     summary = json_response['candidates'][0]['content']['parts'][0]['text']
-  
+
+    log_info(f"AI Summary Returned: {summary}")
+
     return summary.strip()
 
   except anvil.http.HttpError as e:
