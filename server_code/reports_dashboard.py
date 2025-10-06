@@ -970,7 +970,7 @@ def report_integrated_player_profile(lgy, team, **rpt_filters):
     """
     
     # Initialize lists
-    from report_utils import setup_report_basics, unpack_lgy, get_ppr_data, filter_ppr_df
+    from server_functions import setup_report_basics, unpack_lgy, get_ppr_data, filter_ppr_df
     
     title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
     image_list = ['','','','','','','','','','']
