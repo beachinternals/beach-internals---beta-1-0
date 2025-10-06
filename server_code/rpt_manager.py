@@ -563,186 +563,191 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
 
 
+
 def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
-    today = datetime.now()
-    return_text = ''
-    report_infos = []
+  today = datetime.now()
+  return_text = ''
+  report_infos = []
 
-    if not pair_list:
-        log_critical(f"No pairs provided for scouting report: {rpt_r.get('Report Description', 'Unknown')}")
-        return return_text, report_infos
-
-    try:
-        for p in pair_list:
-            disp_pair = p['pair']
-            if not disp_pair:
-                continue
-            player1, player2 = pair_players(disp_pair)
-
-            pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), disp_team.strip(), today.strftime("%Y-%m-%d")]
-            json_folder = pdf_folder + ['json']
-            lgy = p['league'] + ' | ' + p['gender'] + ' | ' + p['year']
-
-            rptname_rows = [{'report_name': r['report_name'], 'rpt_type': r['rpt_type'], 'order': r['order'], 
-                             'function_name': r['function_name'], 'rpt_form': r['rpt_form'], 'id': r['id']} 
-                            for r in rpt_r['rpts_inc'] or []]
-            sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
-            scouting_rptnames = [r for r in sorted_rptnames if r['rpt_type'] == 'scouting']
-            player_rptnames = [r for r in sorted_rptnames if r['rpt_type'] != 'scouting']
-
-            pair_pdf = None
-            scouting_pdf_files = []
-            individual_summaries = []
-            coach_prefs = app_tables.coach_preferences.get(coach_id=rpt_r['email'])
-            pii_terms = coach_prefs['pii_terms'] if coach_prefs and 'pii_terms' in coach_prefs else []
-
-            # Scouting reports
-            rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
-            rpt_filters['pair'] = disp_pair
-            for rptname in scouting_rptnames:
-                report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
-                if not report_id:
-                    continue
-
-                json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False)
-                if isinstance(json_media, dict) and json_media.get('error'):
-                    json_result = None
-                else:
-                    json_name = f"scouting_{disp_pair} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
-                    json_result = write_to_nested_folder(json_folder, json_name, json_media)
-                    scouting_pdf_files.append({'name': json_name, 'result': json_result})
-
-                prompt_row = app_tables.ai_prompt_templates.get(
-                    report_id=rptname['id'],
-                    hierarchy_level='1',
-                    coach_id=q.any_of(rpt_r['email'], '')
-                )
-                summary = generate_ai_summary(json_media.get_bytes().decode('utf-8'), prompt_row['prompt_text'], rpt_r['email']) if prompt_row else "No summary generated"
-                individual_summaries.append(summary)
-
-                pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
-                if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
-                    pdf1 = pdf_result['pdf']
-                    pdf1 = insert_summary_into_pdf(pdf1, summary)
-                    #anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
-                    #scouting_pdf_files.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
-                    pair_pdf = merge_pdfs(pair_pdf, pdf1, pdf_name=f"{disp_pair} scouting_combined_{rpt_r['Report Description']}.pdf") if pair_pdf else pdf1
-
-            # Player reports for player1
-            player1_pdf = None
-            player1_pdf_files = []
-            player_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
-            player_filters['player'] = player1
-            for rptname in player_rptnames:
-                report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **player_filters)
-                if not report_id:
-                    continue
-
-                json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False)
-                if isinstance(json_media, dict) and json_media.get('error'):
-                    json_result = None
-                else:
-                    json_name = f"player_{player1} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
-                    json_result = write_to_nested_folder(json_folder, json_name, json_media)
-                    player1_pdf_files.append({'name': json_name, 'result': json_result})
-
-                prompt_row = app_tables.ai_prompt_templates.get(
-                    report_id=rptname['id'],
-                    hierarchy_level='1',
-                    coach_id=q.any_of(rpt_r['email'], '')
-                )
-                summary = generate_ai_summary(json_media.get_bytes().decode('utf-8'), prompt_row['prompt_text'], rpt_r['email']) if prompt_row else "No summary generated"
-                individual_summaries.append(summary)
-
-                pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
-                if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
-                    pdf1 = pdf_result['pdf']
-                    pdf1 = insert_summary_into_pdf(pdf1, summary)
-                    #anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
-                    #player1_pdf_files.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
-                    player1_pdf = merge_pdfs(player1_pdf, pdf1, pdf_name=f"{player1} player_combined_{rpt_r['Report Description']}.pdf") if player1_pdf else pdf1
-
-            # Player reports for player2
-            player2_pdf = None
-            player2_pdf_files = []
-            player_filters['player'] = player2
-            for rptname in player_rptnames:
-                report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **player_filters)
-                if not report_id:
-                    continue
-
-                json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False)
-                if isinstance(json_media, dict) and json_media.get('error'):
-                    json_result = None
-                else:
-                    json_name = f"player_{player2} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
-                    json_result = write_to_nested_folder(json_folder, json_name, json_media)
-                    player2_pdf_files.append({'name': json_name, 'result': json_result})
-
-                prompt_row = app_tables.ai_prompt_templates.get(
-                    report_id=rptname['id'],
-                    hierarchy_level='1',
-                    coach_id=q.any_of(rpt_r['email'], '')
-                )
-                summary = generate_ai_summary(json_media.get_bytes().decode('utf-8'), prompt_row['prompt_text'], rpt_r['email']) if prompt_row else "No summary generated"
-                individual_summaries.append(summary)
-
-                pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
-                if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
-                    pdf1 = pdf_result['pdf']
-                    pdf1 = insert_summary_into_pdf(pdf1, summary)
-                    #anon_pdf_id = anonymize_pdf(pdf1, pii_terms)
-                    #player2_pdf_files.append({'name': pdf1.name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
-                    player2_pdf = merge_pdfs(player2_pdf, pdf1, pdf_name=f"{player2} player_combined_{rpt_r['Report Description']}.pdf") if player2_pdf else pdf1
-
-            # Combine all PDFs
-            final_pdf_name = f"{disp_pair} {rpt_r['Report Description']}_combined_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
-            final_pdf = None
-            pdf_list = [pdf for pdf in [pair_pdf, player1_pdf, player2_pdf] if pdf]
-            if pdf_list:
-                final_pdf = pdf_list[0]
-                for pdf in pdf_list[1:]:
-                    final_pdf = merge_pdfs(final_pdf, pdf, pdf_name=final_pdf_name)
-
-                # Generate roll-up summary
-                rollup_prompt_rows = app_tables.ai_prompt_templates.search(
-                    report_description=rpt_r['Report Description'],
-                    hierarchy_level='1',
-                    coach_id=q.any_of(rpt_r['email'], '')
-                )
-                rollup_prompt_rows = rollup_prompt_rows.order_by('version', ascending=False)
-                rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
-                if rollup_prompt:
-                    rollup_summary = generate_ai_summary(json.dumps({'summaries': individual_summaries}), rollup_prompt['prompt_text'], rpt_r['email'])
-                    summary_pdf = create_summary_pdf(rollup_summary, f"{disp_pair}_summary_{today.strftime('%Y%m%d_%H%M%S')}.pdf")
-                    if summary_pdf:
-                        final_pdf = merge_pdfs(summary_pdf, final_pdf, pdf_name=final_pdf_name)
-                        #anon_summary_id = anonymize_pdf(summary_pdf, pii_terms)
-                        scouting_pdf_files.append({'name': summary_pdf.name + '_anon.pdf', 'result': anon_summary_id or 'Failed to anonymize'})
-
-            # Save final PDF
-            if final_pdf:
-                combined_result = write_to_nested_folder(pdf_folder, final_pdf_name, final_pdf)
-                #anon_pdf_id = anonymize_pdf(final_pdf, pii_terms)
-                #scouting_pdf_files.append({'name': final_pdf_name + '_anon.pdf', 'result': anon_pdf_id or 'Failed to anonymize'})
-                return_text += '\n' + combined_result
-            else:
-                combined_result = f"No final PDF generated for {final_pdf_name}"
-
-            # Collect report info
-            all_individuals = scouting_pdf_files + player1_pdf_files + player2_pdf_files
-            report_infos.append({
-                'player_pair': disp_pair,
-                'description': rpt_r['Report Description'],
-                'combined': combined_result,
-                'individuals': all_individuals
-            })
-
-    except Exception as e:
-        log_critical(f"Critical error in rpt_mgr_scouting_rpts: {e}")
-        return return_text, report_infos
-
+  if not pair_list:
+    log_critical(f"No pairs provided for scouting report: {rpt_r.get('Report Description', 'Unknown')}")
     return return_text, report_infos
+
+  try:
+    for p in pair_list:
+      disp_pair = p['pair']
+      if not disp_pair:
+        continue
+      player1, player2 = pair_players(disp_pair)
+
+      pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(),
+                    disp_team.strip(), today.strftime("%Y-%m-%d")]
+      json_folder = pdf_folder + ['json']
+      lgy = f"{p['league']} | {p['gender']} | {p['year']}"
+
+      rptname_rows = [{'report_name': r['report_name'], 'rpt_type': r['rpt_type'], 'order': r['order'],
+                       'function_name': r['function_name'], 'rpt_form': r['rpt_form'], 'id': r['id']}
+                      for r in rpt_r['rpts_inc'] or []]
+      sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
+      scouting_rptnames = [r for r in sorted_rptnames if r['rpt_type'] == 'scouting']
+      player_rptnames = [r for r in sorted_rptnames if r['rpt_type'] != 'scouting']
+
+      pair_pdf, player1_pdf, player2_pdf = None, None, None
+      pdf_files_created = []
+      report_data_collection = []  # NEW: collect JSONs for rollup
+
+      # --- Process Scouting Reports ---
+      rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
+      rpt_filters['pair'] = disp_pair
+      for rptname in scouting_rptnames:
+        report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
+        if not report_id:
+          continue
+
+        json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
+        if not isinstance(json_media, dict) or not json_media.get('error'):
+          try:
+            json_data = json.loads(json_media.get_bytes().decode('utf-8'))
+            json_name = f"scouting_{disp_pair} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+            json_result = write_to_nested_folder(json_folder, json_name, json_media)
+            pdf_files_created.append({'name': json_name, 'result': json_result})
+
+            # lookup prompt description
+            coach_user = app_tables.users.get(email=rpt_r['email'])
+            ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
+            prompt_row = app_tables.ai_prompt_templates.get(
+              report_description=rpt_r['Report Description'],
+              hierarchy_level='1',
+              ai_summary_level=ai_summary_level
+            )
+
+            report_data_collection.append({
+              'report_name': rptname['report_name'],
+              'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
+              'json_data': json_data
+            })
+          except Exception as e:
+            log_critical(f"Failed to parse scouting json_media: {e}")
+
+            # Generate PDF
+        pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
+        if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
+          pair_pdf = merge_pdfs(pair_pdf, pdf_result['pdf'],
+                                pdf_name=f"{disp_pair} scouting_combined_{rpt_r['Report Description']}.pdf") if pair_pdf else pdf_result['pdf']
+
+          # --- Process Player Reports (Player 1 and Player 2) ---
+      for player, label in [(player1, "player1"), (player2, "player2")]:
+        player_pdf = None
+        player_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
+        player_filters['player'] = player
+        for rptname in player_rptnames:
+          report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **player_filters)
+          if not report_id:
+            continue
+
+          json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
+          if not isinstance(json_media, dict) or not json_media.get('error'):
+            try:
+              json_data = json.loads(json_media.get_bytes().decode('utf-8'))
+              json_name = f"{label}_{player} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+              json_result = write_to_nested_folder(json_folder, json_name, json_media)
+              pdf_files_created.append({'name': json_name, 'result': json_result})
+
+              coach_user = app_tables.users.get(email=rpt_r['email'])
+              ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
+              prompt_row = app_tables.ai_prompt_templates.get(
+                report_description=rpt_r['Report Description'],
+                hierarchy_level='1',
+                ai_summary_level=ai_summary_level
+              )
+
+              report_data_collection.append({
+                'report_name': rptname['report_name'],
+                'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
+                'json_data': json_data
+              })
+            except Exception as e:
+              log_critical(f"Failed to parse {label} json_media: {e}")
+
+          pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
+          if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
+            player_pdf = merge_pdfs(player_pdf, pdf_result['pdf'],
+                                    pdf_name=f"{player} {label}_combined_{rpt_r['Report Description']}.pdf") if player_pdf else pdf_result['pdf']
+
+        if label == "player1":
+          player1_pdf = player_pdf
+        else:
+          player2_pdf = player_pdf
+
+          # --- Combine PDFs in correct order ---
+      final_pdf_name = f"{disp_pair} {rpt_r['Report Description']}_combined_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
+      final_pdf = None
+      pdf_list = [pdf for pdf in [pair_pdf, player1_pdf, player2_pdf] if pdf]
+      if pdf_list:
+        final_pdf = pdf_list[0]
+        for pdf in pdf_list[1:]:
+          final_pdf = merge_pdfs(final_pdf, pdf, pdf_name=final_pdf_name)
+
+          # --- Rollup AI Summary (new style) ---
+      if report_data_collection:
+        coach_user = app_tables.users.get(email=rpt_r['email'])
+        ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
+        rollup_prompt_rows = sorted(
+          app_tables.ai_prompt_templates.search(
+            report_description=rpt_r['Report Description'],
+            hierarchy_level='1',
+            ai_summary_level=ai_summary_level
+          ),
+          key=lambda row: row['version'],
+          reverse=True
+        )
+        rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
+        if rollup_prompt:
+          rollup_data = {
+            'report_description': rpt_r['Report Description'],
+            'player_pair': disp_pair,
+            'reports': report_data_collection
+          }
+          rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
+          rollup_summary = generate_ai_summary(
+            rollup_data,
+            rollup_prompt_text,
+            rpt_r['email'],
+            rollup_prompt['desc_beach_volleyball']
+          )
+          rollup_pdf_summary = generate_ai_pdf_summary(
+            report_id=report_id,
+            summary=rollup_summary,
+            ai_form='player_ai_summary'
+          )
+          if rollup_pdf_summary.get('pdf') and final_pdf:
+            final_pdf = merge_pdfs(rollup_pdf_summary['pdf'], final_pdf, pdf_name=final_pdf_name)
+            pdf_files_created.append({'name': f"{disp_pair}_rollup_summary.pdf", 'result': 'Generated'})
+
+            # --- Save final PDF ---
+      if final_pdf:
+        combined_result = write_to_nested_folder(pdf_folder, final_pdf_name, final_pdf)
+        return_text += '\n' + combined_result
+      else:
+        combined_result = f"No final PDF generated for {final_pdf_name}"
+
+      report_infos.append({
+        'player_pair': disp_pair,
+        'description': rpt_r['Report Description'],
+        'combined': combined_result,
+        'individuals': pdf_files_created
+      })
+
+  except Exception as e:
+    log_critical(f"Critical error in rpt_mgr_scouting_rpts: {e}")
+    return return_text, report_infos
+
+  return return_text, report_infos
+
+
+
+
+
 
 def populate_filters_from_rpt_mgr_table(rpt_r, p_r):
     '''
