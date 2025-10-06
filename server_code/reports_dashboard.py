@@ -429,3 +429,618 @@ def get_consistency_errors_from_stats(player_data_df, player, var):
     return 0
   except Exception:
     return 0
+
+
+#-------------------------------------------------------------------------------------------
+#
+#  Claude generated Player Dashboard
+#
+#---------------------------------------------------------------------------------------------
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import anvil.mpl_util
+
+"""
+INTEGRATED BEACH VOLLEYBALL PLAYER ANALYSIS REPORT
+Combines: Player Profiles + Run Analysis + Struggle Sets + Partner Dynamics
+Compatible with existing report structure
+"""
+
+# ============================================
+# HELPER FUNCTIONS - DATA PREPARATION
+# ============================================
+
+def reshape_to_player_level(ppr_df):
+  """
+    Convert from point-per-row to player-per-row format
+    Each point creates 4 rows (one per player)
+    """
+
+  player_rows = []
+
+  for _, row in ppr_df.iterrows():
+    # Get set identifier
+    set_id = f"{row['video_id']}_set{row['set']}"
+
+    # Get point outcome team (which team won the point)
+    point_winner_team = row.get('point_outcome_team', '')
+
+    # Process home team (team a) players
+    for player_id in [row['player_a1'], row['player_a2']]:
+      if pd.isna(player_id):
+        continue
+
+      partner_id = row['player_a2'] if player_id == row['player_a1'] else row['player_a1']
+      team_id = row['teama']
+      team_scored = (point_winner_team == team_id)
+      opponent_team = row['teamb']
+
+      # Check if this player performed actions
+      served = (row.get('serve_player') == player_id)
+      passed = (row.get('pass_player') == player_id)
+      set_ball = (row.get('set_player') == player_id)
+      attacked = (row.get('att_player') == player_id)
+      dug = (row.get('dig_player') == player_id)
+
+      # Determine attack result
+      kill = False
+      error = False
+      if attacked:
+        outcome = row.get('point_outcome', '')
+        if outcome in ['FBK', 'TK']:  # First ball kill or transition kill
+          kill = True
+        elif outcome in ['FBE', 'TR']:  # First ball error or transition error
+          error = True
+
+      player_rows.append({
+        'player_id': player_id,
+        'partner_id': partner_id,
+        'team_id': team_id,
+        'opponent_team': opponent_team,
+        'set_id': set_id,
+        'video_id': row['video_id'],
+        'set_number': row['set'],
+        'point_num': row.get('point_no', 0),
+        'team_scored': team_scored,
+        'player_score': row['a_score'],
+        'opp_score': row['b_score'],
+        'comp_l2': row.get('comp_l2', ''),
+        'served': served,
+        'passed': passed,
+        'set_ball': set_ball,
+        'attacked': attacked,
+        'dug': dug,
+        'kill': kill,
+        'error': error,
+        'attempt': attacked,
+      })
+
+      # Process away team (team b) players
+    for player_id in [row['player_b1'], row['player_b2']]:
+      if pd.isna(player_id):
+        continue
+
+      partner_id = row['player_b2'] if player_id == row['player_b1'] else row['player_b1']
+      team_id = row['teamb']
+      team_scored = (point_winner_team == team_id)
+      opponent_team = row['teama']
+
+      served = (row.get('serve_player') == player_id)
+      passed = (row.get('pass_player') == player_id)
+      set_ball = (row.get('set_player') == player_id)
+      attacked = (row.get('att_player') == player_id)
+      dug = (row.get('dig_player') == player_id)
+
+      kill = False
+      error = False
+      if attacked:
+        outcome = row.get('point_outcome', '')
+        if outcome in ['FBK', 'TK']:
+          kill = True
+        elif outcome in ['FBE', 'TR']:
+          error = True
+
+      player_rows.append({
+        'player_id': player_id,
+        'partner_id': partner_id,
+        'team_id': team_id,
+        'opponent_team': opponent_team,
+        'set_id': set_id,
+        'video_id': row['video_id'],
+        'set_number': row['set'],
+        'point_num': row.get('point_no', 0),
+        'team_scored': team_scored,
+        'player_score': row['b_score'],
+        'opp_score': row['a_score'],
+        'comp_l2': row.get('comp_l2', ''),
+        'served': served,
+        'passed': passed,
+        'set_ball': set_ball,
+        'attacked': attacked,
+        'dug': dug,
+        'kill': kill,
+        'error': error,
+        'attempt': attacked,
+      })
+
+  return pd.DataFrame(player_rows)
+
+
+def calculate_runs(player_ppr):
+  """
+    Identify scoring runs and tag each point with run context
+    """
+
+  player_ppr = player_ppr.sort_values(['set_id', 'point_num']).copy()
+
+  # Calculate consecutive scores for each team
+  player_ppr['scored_change'] = (
+    (player_ppr['team_scored'] != player_ppr['team_scored'].shift()) |
+    (player_ppr['set_id'] != player_ppr['set_id'].shift())
+  )
+  player_ppr['run_id'] = player_ppr['scored_change'].cumsum()
+
+  # Calculate run length
+  player_ppr['run_length'] = player_ppr.groupby('run_id').cumcount() + 1
+
+  # Tag whether this is a team run or opponent run
+  player_ppr['opp_run_length'] = np.where(
+    ~player_ppr['team_scored'],
+    player_ppr['run_length'],
+    0
+  )
+
+  return player_ppr
+
+
+def calculate_set_stats(player_ppr):
+  """
+    Calculate per-set statistics for each player
+    """
+
+  set_stats = player_ppr.groupby(['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2']).agg({
+    'kill': 'sum',
+    'error': 'sum',
+    'attempt': 'sum',
+    'team_scored': 'sum',
+    'point_num': 'max',
+    'set_number': 'first',
+    'video_id': 'first',
+  }).reset_index()
+
+  set_stats.columns = ['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2',
+                       'kills', 'errors', 'attempts', 'team_points', 'total_points', 
+                       'set_number', 'video_id']
+
+  set_stats['efficiency'] = np.where(
+    set_stats['attempts'] > 0,
+    (set_stats['kills'] - set_stats['errors']) / set_stats['attempts'],
+    np.nan
+  )
+
+  return set_stats
+
+
+# ============================================
+# ANALYSIS FUNCTIONS
+# ============================================
+
+def calculate_player_profiles(player_ppr, set_stats, min_attempts=30):
+  """
+    Calculate core player profile metrics: Reliability, Clutch, Resilience
+    """
+
+  profiles = []
+
+  for player_id in set_stats['player_id'].unique():
+    player_sets = set_stats[set_stats['player_id'] == player_id].copy()
+    player_points = player_ppr[player_ppr['player_id'] == player_id].copy()
+    player_attacks = player_sets[player_sets['attempts'] > 0]
+
+    if len(player_attacks) < 3 or player_sets['attempts'].sum() < min_attempts:
+      continue
+
+      # BASELINE EFFICIENCY
+    total_kills = player_sets['kills'].sum()
+    total_errors = player_sets['errors'].sum()
+    total_attempts = player_sets['attempts'].sum()
+    baseline_eff = (total_kills - total_errors) / total_attempts if total_attempts > 0 else 0
+
+    # RELIABILITY (Coefficient of Variation)
+    cv = player_attacks['efficiency'].std() / baseline_eff if baseline_eff > 0 else 0
+    reliability_score = max(1, min(10, 10 - (cv - 0.10) * 25))
+
+    # RESILIENCE (Run Vulnerability)
+    after_run_attacks = player_points[(player_points['opp_run_length'] >= 3) & player_points['attacked']]
+    if len(after_run_attacks) >= 10:
+      after_run_eff = (after_run_attacks['kill'].sum() - after_run_attacks['error'].sum()) / len(after_run_attacks)
+      resilience_ratio = after_run_eff / baseline_eff if baseline_eff > 0 else 1
+    else:
+      resilience_ratio = 1.0
+    resilience_score = max(1, min(10, (resilience_ratio - 0.40) * 12))
+
+    # CLUTCH (Late & Close)
+    player_points['score_total'] = player_points['player_score'] + player_points['opp_score']
+    player_points['score_diff'] = abs(player_points['player_score'] - player_points['opp_score'])
+    player_points['late_close'] = (player_points['score_total'] >= 16) & (player_points['score_diff'] <= 2)
+
+    clutch_attacks = player_points[player_points['late_close'] & player_points['attacked']]
+    if len(clutch_attacks) >= 10:
+      clutch_eff = (clutch_attacks['kill'].sum() - clutch_attacks['error'].sum()) / len(clutch_attacks)
+      clutch_delta = clutch_eff - baseline_eff
+    else:
+      clutch_delta = 0
+    clutch_score = max(1, min(10, 5.5 + clutch_delta * 25))
+
+    # VS RANKED TEAMS
+    vs_top20 = player_sets[player_sets['comp_l2'].str.contains('Top 20', na=False)]
+    if len(vs_top20) >= 3 and vs_top20['attempts'].sum() >= 20:
+      top20_eff = (vs_top20['kills'].sum() - vs_top20['errors'].sum()) / vs_top20['attempts'].sum()
+    else:
+      top20_eff = baseline_eff
+
+      # STRUGGLE SETS
+    player_baseline = player_attacks['efficiency'].mean()
+    player_std = player_attacks['efficiency'].std()
+    struggle_threshold = player_baseline - player_std
+    struggle_sets = player_attacks[player_attacks['efficiency'] < struggle_threshold]
+    struggle_rate = len(struggle_sets) / len(player_attacks) if len(player_attacks) > 0 else 0
+
+    # SPECIAL NOTES
+    note = ""
+    if top20_eff < baseline_eff - 0.12:
+      note = "vs Ranked ↓"
+
+    profiles.append({
+      'Player': player_id,
+      'Eff%': f"{baseline_eff:.1%}",
+      'Reliability': round(reliability_score, 1),
+      'Clutch': round(clutch_score, 1),
+      'Resilience': round(resilience_score, 1),
+      'Note': note,
+      'attempts': int(total_attempts),
+      'eff_numeric': baseline_eff,
+      'cv': cv,
+      'struggle_rate': struggle_rate,
+      'vs_top20_eff': top20_eff,
+    })
+
+  return pd.DataFrame(profiles)
+
+
+def analyze_partner_dynamics(set_stats):
+  """
+    Calculate how each player performs with different partners
+    """
+
+  partner_results = []
+
+  for player_id in set_stats['player_id'].unique():
+    player_sets = set_stats[set_stats['player_id'] == player_id].copy()
+
+    # Overall baseline
+    overall_sets = player_sets[player_sets['attempts'] > 0]
+    if len(overall_sets) < 3:
+      continue
+
+    overall_eff = (overall_sets['kills'].sum() - overall_sets['errors'].sum()) / overall_sets['attempts'].sum()
+
+    # Performance with each partner
+    for partner_id in player_sets['partner_id'].unique():
+      with_partner = player_sets[player_sets['partner_id'] == partner_id]
+      with_partner_attacks = with_partner[with_partner['attempts'] > 0]
+
+      if len(with_partner_attacks) < 3:
+        continue
+
+      partner_eff = (with_partner_attacks['kills'].sum() - with_partner_attacks['errors'].sum()) / with_partner_attacks['attempts'].sum()
+      partner_delta = partner_eff - overall_eff
+
+      partner_results.append({
+        'Player': player_id,
+        'Partner': partner_id,
+        'Sets': len(with_partner),
+        'Efficiency': f"{partner_eff:.1%}",
+        'vs Baseline': f"{partner_delta:+.1%}",
+        'delta_numeric': partner_delta,
+        'eff_numeric': partner_eff,
+      })
+
+  df = pd.DataFrame(partner_results)
+  if len(df) > 0:
+    df = df.sort_values(['Player', 'delta_numeric'], ascending=[True, False])
+  return df
+
+
+def analyze_struggle_triggers(player_ppr, set_stats):
+  """
+    Identify what triggers struggle sets
+    """
+
+  # Add baseline and struggle flags to set_stats
+  for player_id in set_stats['player_id'].unique():
+    player_sets = set_stats[set_stats['player_id'] == player_id]
+    player_attacks = player_sets[player_sets['attempts'] > 0]
+
+    if len(player_attacks) < 3:
+      continue
+
+    baseline = player_attacks['efficiency'].mean()
+    std = player_attacks['efficiency'].std()
+
+    set_stats.loc[set_stats['player_id'] == player_id, 'player_baseline'] = baseline
+    set_stats.loc[set_stats['player_id'] == player_id, 'player_std'] = std
+
+  set_stats['is_struggle'] = (set_stats['efficiency'] < set_stats['player_baseline'] - set_stats['player_std']) & (set_stats['attempts'] >= 3)
+
+  struggle_analysis = []
+
+  for player_id in set_stats['player_id'].unique():
+    player_sets = set_stats[set_stats['player_id'] == player_id]
+    struggle_sets = player_sets[player_sets['is_struggle'] == True]
+
+    if len(player_sets) < 5:
+      continue
+
+      # Analyze triggers
+    total_sets = len(player_sets[player_sets['attempts'] > 0])
+    n_struggles = len(struggle_sets)
+
+    if n_struggles == 0:
+      continue
+
+      # Trigger: vs Top 20
+    top20_struggle_rate = struggle_sets['comp_l2'].str.contains('Top 20', na=False).sum() / n_struggles if n_struggles > 0 else 0
+
+    # Trigger: Set 3
+    set3_struggles = len(struggle_sets[struggle_sets['set_number'] == 3])
+    set3_total = len(player_sets[player_sets['set_number'] == 3])
+    set3_struggle_rate = set3_struggles / set3_total if set3_total > 0 else 0
+
+    # Get max opponent run in struggle sets
+    struggle_set_ids = struggle_sets['set_id'].tolist()
+    struggle_points = player_ppr[(player_ppr['player_id'] == player_id) & 
+      (player_ppr['set_id'].isin(struggle_set_ids))]
+    avg_max_opp_run = struggle_points.groupby('set_id')['opp_run_length'].max().mean() if len(struggle_points) > 0 else 0
+
+    struggle_analysis.append({
+      'Player': player_id,
+      'Total Sets': total_sets,
+      'Struggle Sets': n_struggles,
+      'Struggle Rate': f"{n_struggles/total_sets:.1%}",
+      'vs Top 20 Trigger': f"{top20_struggle_rate:.1%}",
+      'Set 3 Trigger': f"{set3_struggle_rate:.1%}",
+      'Avg Max Opp Run': f"{avg_max_opp_run:.1f}",
+    })
+
+  return pd.DataFrame(struggle_analysis)
+
+
+# ============================================
+# VISUALIZATION FUNCTIONS
+# ============================================
+
+def create_profile_plot(profiles_df):
+  """
+    Create scatter plot: Reliability vs Clutch, colored by Resilience, sized by Efficiency
+    """
+
+  if len(profiles_df) == 0:
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.text(0.5, 0.5, 'Insufficient data for visualization', 
+            ha='center', va='center', fontsize=14)
+    return fig
+
+  fig, ax = plt.subplots(figsize=(12, 10))
+
+  # Create scatter plot
+  scatter = ax.scatter(
+    profiles_df['Reliability'],
+    profiles_df['Clutch'],
+    s=profiles_df['eff_numeric'] * 3000,  # Size by efficiency
+    c=profiles_df['Resilience'],  # Color by resilience
+    cmap='RdYlGn',
+    alpha=0.6,
+    edgecolors='black',
+    linewidth=1.5,
+    vmin=1,
+    vmax=10
+  )
+
+  # Add player labels
+  for idx, row in profiles_df.iterrows():
+    name = str(row['Player'])
+    if len(name) > 15:
+      name = name[:12] + '...'
+    ax.annotate(
+      name,
+      (row['Reliability'], row['Clutch']),
+      xytext=(5, 5),
+      textcoords='offset points',
+      fontsize=8,
+      fontweight='bold'
+    )
+
+    # Add quadrant lines
+  ax.axhline(y=5.5, color='gray', linestyle='--', alpha=0.3, linewidth=1)
+  ax.axvline(x=5.5, color='gray', linestyle='--', alpha=0.3, linewidth=1)
+
+  # Add quadrant labels
+  ax.text(8.5, 9, 'STARS\n(Reliable & Clutch)', ha='center', fontsize=10, 
+          bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.3))
+  ax.text(2.5, 9, 'HIGH VARIANCE\n(Clutch but Inconsistent)', ha='center', fontsize=10,
+          bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.3))
+  ax.text(8.5, 2, 'GRINDERS\n(Consistent)', ha='center', fontsize=10,
+          bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
+  ax.text(2.5, 2, 'DEVELOPMENT\n(Needs Work)', ha='center', fontsize=10,
+          bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.3))
+
+  # Labels and title
+  ax.set_xlabel('Reliability (Consistency)', fontsize=12, fontweight='bold')
+  ax.set_ylabel('Clutch Factor', fontsize=12, fontweight='bold')
+  ax.set_title('Player Profile Matrix\n(Size = Efficiency, Color = Resilience)', 
+               fontsize=14, fontweight='bold', pad=20)
+
+  ax.set_xlim(0, 11)
+  ax.set_ylim(0, 11)
+
+  # Colorbar
+  cbar = plt.colorbar(scatter, ax=ax)
+  cbar.set_label('Resilience (Run Management)', fontsize=10, fontweight='bold')
+
+  # Legend for size
+  legend_sizes = [0.30, 0.40, 0.50]
+  legend_labels = ['30%', '40%', '50%']
+  legend_points = [plt.scatter([], [], s=s*3000, c='gray', alpha=0.6, 
+                               edgecolors='black', linewidth=1.5) 
+                   for s in legend_sizes]
+  ax.legend(legend_points, legend_labels, scatterpoints=1, title='Efficiency', 
+            loc='upper left', frameon=True, fontsize=9)
+
+  plt.tight_layout()
+  return fig
+
+
+def create_partner_heatmap(partner_df):
+  """
+    Create heatmap of partner chemistry
+    """
+
+  if len(partner_df) == 0:
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.text(0.5, 0.5, 'Insufficient data for partner analysis', 
+            ha='center', va='center', fontsize=14)
+    return fig
+
+    # Pivot to matrix format
+  matrix = partner_df.pivot_table(
+    index='Player',
+  columns='Partner',
+        values='delta_numeric',
+        aggfunc='mean'
+    )
+    
+  if matrix.empty or matrix.shape[0] < 2:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.text(0.5, 0.5, 'Insufficient partnerships for heatmap', 
+                ha='center', va='center', fontsize=14)
+        return fig
+    
+  fig, ax = plt.subplots(figsize=(10, 8))
+    
+  sns.heatmap(
+        matrix,
+        annot=True,
+        fmt='.1%',
+        cmap='RdYlGn',
+        center=0,
+        vmin=-0.15,
+        vmax=0.15,
+        cbar_kws={'label': 'Efficiency Delta vs Baseline'},
+        ax=ax
+    )
+    
+  ax.set_title('Partnership Chemistry Matrix\n(How much better/worse with each partner)', 
+                 fontsize=14, fontweight='bold', pad=15)
+  ax.set_xlabel('Partner', fontsize=11, fontweight='bold')
+  ax.set_ylabel('Player', fontsize=11, fontweight='bold')
+    
+  plt.tight_layout()
+  return fig
+
+
+# ============================================
+# MAIN REPORT FUNCTION
+# ============================================
+
+def report_integrated_player_profile(lgy, team, **rpt_filters):
+    """
+    Integrated Player Profile Report
+    Combines: Player Profiles + Run Analysis + Struggle Sets + Partner Dynamics
+    
+    OUTPUT:
+    - df_list[0]: Player Profile Summary (Reliability, Clutch, Resilience)
+    - df_list[1]: Partner Performance Analysis
+    - df_list[2]: Struggle Set Triggers
+    - df_list[3]: Detailed Player Metrics
+    - image_list[0]: Player Profile Matrix (scatter plot)
+    - image_list[1]: Partner Chemistry Heatmap
+    """
+    
+    # Initialize lists
+    from report_utils import setup_report_basics, unpack_lgy, get_ppr_data, filter_ppr_df
+    
+    title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+    image_list = ['','','','','','','','','','']
+    df_list = ['','','','','','','','','','']
+    
+    # Get data
+    disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+    ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+    ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+    
+    # Filter to specific player if requested
+    disp_player = rpt_filters.get('player')
+    if disp_player:
+        ppr_df = ppr_df[
+            (ppr_df['player_a1'] == disp_player) | 
+            (ppr_df['player_a2'] == disp_player) |
+            (ppr_df['player_b1'] == disp_player) |
+            (ppr_df['player_b2'] == disp_player)
+        ]
+    
+    # Check if we have data
+    if len(ppr_df) == 0:
+        df_list[0] = pd.DataFrame({'Message': ['No data available for selected filters']}).to_dict('records')
+        return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+    
+    # Reshape and analyze
+    try:
+        player_ppr = reshape_to_player_level(ppr_df)
+        player_ppr = calculate_runs(player_ppr)
+        set_stats = calculate_set_stats(player_ppr)
+        
+        # Calculate analyses
+        profiles_df = calculate_player_profiles(player_ppr, set_stats)
+        partner_df = analyze_partner_dynamics(set_stats)
+        struggle_df = analyze_struggle_triggers(player_ppr, set_stats)
+        
+        # Store dataframes
+        if len(profiles_df) > 0:
+            display_profiles = profiles_df[['Player', 'Eff%', 'Reliability', 'Clutch', 'Resilience', 'Note']].copy()
+            df_list[0] = display_profiles.to_dict('records')
+        
+        if len(partner_df) > 0:
+            display_partners = partner_df[['Player', 'Partner', 'Sets', 'Efficiency', 'vs Baseline']].copy()
+            df_list[1] = display_partners.head(20).to_dict('records')
+        
+        if len(struggle_df) > 0:
+            df_list[2] = struggle_df.to_dict('records')
+        
+        # Detailed metrics
+        if len(profiles_df) > 0:
+            detailed = profiles_df[['Player', 'Eff%', 'attempts', 'struggle_rate', 'vs_top20_eff']].copy()
+            detailed['Struggle Rate'] = detailed['struggle_rate'].apply(lambda x: f"{x:.1%}")
+            detailed['vs Top 20'] = detailed['vs_top20_eff'].apply(lambda x: f"{x:.1%}")
+            detailed = detailed[['Player', 'Eff%', 'attempts', 'Struggle Rate', 'vs Top 20']]
+            detailed.columns = ['Player', 'Efficiency', 'Attempts', 'Struggle Rate', 'vs Top 20']
+            df_list[3] = detailed.to_dict('records')
+        
+        # Create visualizations
+        if len(profiles_df) > 0:
+            fig1 = create_profile_plot(profiles_df)
+            image_list[0] = anvil.mpl_util.plot_image(fig1)
+            plt.close(fig1)
+        
+        if len(partner_df) > 0:
+            fig2 = create_partner_heatmap(partner_df)
+            image_list[1] = anvil.mpl_util.plot_image(fig2)
+            plt.close(fig2)
+        
+    except Exception as e:
+        error_df = pd.DataFrame({'Error': [f'Analysis error: {str(e)}']})
+        df_list[0] = error_df.to_dict('records')
+    
+    return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
