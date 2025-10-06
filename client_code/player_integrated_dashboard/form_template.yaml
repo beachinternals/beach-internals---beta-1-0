@@ -30,17 +30,9 @@ components:
     name: box_1
     properties: {font_size: 12}
     type: RichText
-  - layout_properties: {grid_position: 'ECJDNH,IAVHSY JGVXWO,MRHCOT'}
-    name: image_1
-    properties: {height: '350'}
-    type: Image
-  - layout_properties: {grid_position: 'ECJDNH,IAVHSY LQMWMA,AGRWFS'}
-    name: image_2
-    properties: {height: '350'}
-    type: Image
   layout_properties: {grid_position: 'CMNTXU,GNLTRL'}
   name: column_panel_6
-  properties: {col_widths: '{"IAVHSY":45,"GNSYXO":20}', visible: true}
+  properties: {col_widths: '{"GNSYXO":20}', visible: true}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'QXPKKP,DDJDSC'}
@@ -51,14 +43,6 @@ components:
     name: box_2
     properties: {font_size: 12}
     type: RichText
-  - layout_properties: {grid_position: 'GVKRYW,PPJSAQ SQBCWP,AOEYFT'}
-    name: image_3
-    properties: {height: '350'}
-    type: Image
-  - layout_properties: {grid_position: 'GVKRYW,PPJSAQ YCMFAS,OWTUED'}
-    name: image_4
-    properties: {height: '350'}
-    type: Image
   layout_properties: {grid_position: 'DACOAC,AQCLMX'}
   name: column_panel_3
   properties: {col_widths: '{"PPJSAQ":45,"WPDLUZ":20}'}
@@ -72,14 +56,6 @@ components:
     name: box_3
     properties: {font_size: 12}
     type: RichText
-  - layout_properties: {grid_position: 'ALBRYE,LAPBNQ UZPUGP,IEUHUW'}
-    name: image_5
-    properties: {height: '350'}
-    type: Image
-  - layout_properties: {grid_position: 'ALBRYE,LAPBNQ ZLZQLN,HFVVTX'}
-    name: image_6
-    properties: {height: '350'}
-    type: Image
   layout_properties: {grid_position: 'OILLVT,FLMAFZ'}
   name: column_panel_8
   properties: {col_widths: '{"LAPBNQ":45,"YKYYRS":20}'}
@@ -93,14 +69,6 @@ components:
     name: box_4
     properties: {font_size: 12}
     type: RichText
-  - layout_properties: {grid_position: 'PLBVWF,MEGWNK XCQIAK,KMOMSJ'}
-    name: image_7
-    properties: {height: '350'}
-    type: Image
-  - layout_properties: {grid_position: 'PLBVWF,MEGWNK IWJGAI,RSEDZN'}
-    name: image_8
-    properties: {height: '350'}
-    type: Image
   layout_properties: {grid_position: 'KNKHJH,XIYDUJ'}
   name: column_panel_10
   properties: {col_widths: '{"MEGWNK":37,"OJVRAC":15}'}
@@ -110,21 +78,17 @@ components:
     name: box5_title
     properties: {align: center}
     type: Label
-  - layout_properties: {grid_position: 'OUXZDS,BJVJQY'}
-    name: box_5
-    properties: {font_size: 12}
-    type: RichText
-  - layout_properties: {grid_position: 'OUXZDS,GNHABE WAMJFK,ZNFRLA'}
-    name: image_9
+  - layout_properties: {grid_position: 'ITCFBG,XMEHVD'}
+    name: image_1
     properties: {height: '350'}
     type: Image
-  - layout_properties: {grid_position: 'OUXZDS,GNHABE KONDPJ,TOOHQC'}
-    name: image_10
+  - layout_properties: {grid_position: 'WMFVNO,IGCEEK'}
+    name: image_2
     properties: {height: '350'}
     type: Image
   layout_properties: {grid_position: 'WEUFBK,RPPCTG'}
   name: column_panel_13
-  properties: {col_widths: '{"BJVJQY":10,"GNHABE":25}'}
+  properties: {col_widths: '{"BJVJQY":10}'}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'IFOHDJ,SNQJLY'}
