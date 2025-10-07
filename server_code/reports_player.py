@@ -34,7 +34,6 @@ from collections import namedtuple
 
 
 from tabulate import tabulate
-from server_functions import *
 from anvil import pdf
 from pair_functions import *
 #from matchup_reports import player_45_serves

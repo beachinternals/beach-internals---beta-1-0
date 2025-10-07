@@ -33,7 +33,6 @@ from io import BytesIO
 
 
 from tabulate import tabulate
-from server_functions import *
 from anvil import pdf
 from pair_functions import *
 #from matchup_reports import player_45_serves
@@ -436,11 +435,8 @@ def get_consistency_errors_from_stats(player_data_df, player, var):
 #  Claude generated Player Dashboard
 #
 #---------------------------------------------------------------------------------------------
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import anvil.mpl_util
+
+import server_functions
 
 """
 INTEGRATED BEACH VOLLEYBALL PLAYER ANALYSIS REPORT
@@ -621,10 +617,6 @@ def calculate_set_stats(player_ppr):
   )
 
   return set_stats
-
-  
-
-
 
 
 # ============================================
@@ -921,36 +913,36 @@ def create_partner_heatmap(partner_df):
     # Pivot to matrix format
   matrix = partner_df.pivot_table(
     index='Player',
-  columns='Partner',
-        values='delta_numeric',
-        aggfunc='mean'
-    )
-    
+    columns='Partner',
+    values='delta_numeric',
+    aggfunc='mean'
+  )
+
   if matrix.empty or matrix.shape[0] < 2:
-        fig, ax = plt.subplots(figsize=(8, 6))
-        ax.text(0.5, 0.5, 'Insufficient partnerships for heatmap', 
-                ha='center', va='center', fontsize=14)
-        return fig
-    
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.text(0.5, 0.5, 'Insufficient partnerships for heatmap', 
+            ha='center', va='center', fontsize=14)
+    return fig
+
   fig, ax = plt.subplots(figsize=(10, 8))
-    
+
   sns.heatmap(
-        matrix,
-        annot=True,
-        fmt='.1%',
-        cmap='RdYlGn',
-        center=0,
-        vmin=-0.15,
-        vmax=0.15,
-        cbar_kws={'label': 'Efficiency Delta vs Baseline'},
-        ax=ax
-    )
-    
+    matrix,
+    annot=True,
+    fmt='.1%',
+    cmap='RdYlGn',
+    center=0,
+    vmin=-0.15,
+    vmax=0.15,
+    cbar_kws={'label': 'Efficiency Delta vs Baseline'},
+    ax=ax
+  )
+
   ax.set_title('Partnership Chemistry Matrix\n(How much better/worse with each partner)', 
-                 fontsize=14, fontweight='bold', pad=15)
+               fontsize=14, fontweight='bold', pad=15)
   ax.set_xlabel('Partner', fontsize=11, fontweight='bold')
   ax.set_ylabel('Player', fontsize=11, fontweight='bold')
-    
+
   plt.tight_layout()
   return fig
 
@@ -960,7 +952,7 @@ def create_partner_heatmap(partner_df):
 # ============================================
 
 def report_integrated_player_profile(lgy, team, **rpt_filters):
-    """
+  """
     Integrated Player Profile Report
     Combines: Player Profiles + Run Analysis + Struggle Sets + Partner Dynamics
     
@@ -972,79 +964,124 @@ def report_integrated_player_profile(lgy, team, **rpt_filters):
     - image_list[0]: Player Profile Matrix (scatter plot)
     - image_list[1]: Partner Chemistry Heatmap
     """
-    
-    # Initialize lists
-    from server_functions import setup_report_basics, unpack_lgy, get_ppr_data, filter_ppr_df
-    
-    title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
-    image_list = ['','','','','','','','','','']
-    df_list = ['','','','','','','','','','']
-    
-    # Get data
+
+  # Initialize lists - do NOT call setup_report_basics to avoid conflicts
+  # Initialize manually
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  df_desc_list = ['','','','','','','','','','']
+  image_desc_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Set basic titles
+  title_list[0] = "Player Profile Summary"
+  title_list[1] = "Partner Performance Analysis"
+  title_list[2] = "Struggle Set Triggers"
+  title_list[3] = "Detailed Metrics"
+
+  try:
+    # Import functions (adjust import path as needed for your system)
+    # If these functions don't exist, comment them out
+    try:
+      from report_utils import unpack_lgy, get_ppr_data, filter_ppr_df
+    except ImportError:
+      # Fallback - these functions must be defined elsewhere in your system
+      pass
+
+      # Get data
     disp_league, disp_gender, disp_year = unpack_lgy(lgy)
     ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
     ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
-    
+
     # Filter to specific player if requested
     disp_player = rpt_filters.get('player')
     if disp_player:
-        ppr_df = ppr_df[
-            (ppr_df['player_a1'] == disp_player) | 
-            (ppr_df['player_a2'] == disp_player) |
-            (ppr_df['player_b1'] == disp_player) |
-            (ppr_df['player_b2'] == disp_player)
+      ppr_df = ppr_df[
+        (ppr_df['player_a1'] == disp_player) | 
+        (ppr_df['player_a2'] == disp_player) |
+        (ppr_df['player_b1'] == disp_player) |
+        (ppr_df['player_b2'] == disp_player)
         ]
-    
-    # Check if we have data
+
+      # Check if we have data
     if len(ppr_df) == 0:
-        df_list[0] = pd.DataFrame({'Message': ['No data available for selected filters']}).to_dict('records')
-        return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-    
-    # Reshape and analyze
-    try:
-        player_ppr = reshape_to_player_level(ppr_df)
-        player_ppr = calculate_runs(player_ppr)
-        set_stats = calculate_set_stats(player_ppr)
-        
-        # Calculate analyses
-        profiles_df = calculate_player_profiles(player_ppr, set_stats)
-        partner_df = analyze_partner_dynamics(set_stats)
-        struggle_df = analyze_struggle_triggers(player_ppr, set_stats)
-        
-        # Store dataframes
-        if len(profiles_df) > 0:
-            display_profiles = profiles_df[['Player', 'Eff%', 'Reliability', 'Clutch', 'Resilience', 'Note']].copy()
-            df_list[0] = display_profiles.to_dict('records')
-        
-        if len(partner_df) > 0:
-            display_partners = partner_df[['Player', 'Partner', 'Sets', 'Efficiency', 'vs Baseline']].copy()
-            df_list[1] = display_partners.head(20).to_dict('records')
-        
-        if len(struggle_df) > 0:
-            df_list[2] = struggle_df.to_dict('records')
-        
-        # Detailed metrics
-        if len(profiles_df) > 0:
-            detailed = profiles_df[['Player', 'Eff%', 'attempts', 'struggle_rate', 'vs_top20_eff']].copy()
-            detailed['Struggle Rate'] = detailed['struggle_rate'].apply(lambda x: f"{x:.1%}")
-            detailed['vs Top 20'] = detailed['vs_top20_eff'].apply(lambda x: f"{x:.1%}")
-            detailed = detailed[['Player', 'Eff%', 'attempts', 'Struggle Rate', 'vs Top 20']]
-            detailed.columns = ['Player', 'Efficiency', 'Attempts', 'Struggle Rate', 'vs Top 20']
-            df_list[3] = detailed.to_dict('records')
-        
-        # Create visualizations
-        if len(profiles_df) > 0:
-            fig1 = create_profile_plot(profiles_df)
-            image_list[0] = anvil.mpl_util.plot_image(fig1)
-            plt.close(fig1)
-        
-        if len(partner_df) > 0:
-            fig2 = create_partner_heatmap(partner_df)
-            image_list[1] = anvil.mpl_util.plot_image(fig2)
-            plt.close(fig2)
-        
-    except Exception as e:
-        error_df = pd.DataFrame({'Error': [f'Analysis error: {str(e)}']})
-        df_list[0] = error_df.to_dict('records')
-    
-    return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+      error_df = pd.DataFrame({'Message': ['No data available for selected filters']})
+      df_list[0] = error_df.to_dict('records')
+      return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+      # Reshape and analyze
+    player_ppr = reshape_to_player_level(ppr_df)
+
+    if len(player_ppr) == 0:
+      error_df = pd.DataFrame({'Message': ['No player data after reshaping']})
+      df_list[0] = error_df.to_dict('records')
+      return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+    player_ppr = calculate_runs(player_ppr)
+    set_stats = calculate_set_stats(player_ppr)
+
+    # Calculate analyses
+    profiles_df = calculate_player_profiles(player_ppr, set_stats)
+    partner_df = analyze_partner_dynamics(set_stats)
+    struggle_df = analyze_struggle_triggers(player_ppr, set_stats)
+
+    # Store dataframes - ensure we're working with DataFrames
+    if len(profiles_df) > 0:
+      # Make sure we're selecting the right columns
+      cols_to_display = ['Player', 'Eff%', 'Reliability', 'Clutch', 'Resilience', 'Note']
+      display_profiles = profiles_df[cols_to_display].copy()
+      # Convert to dict records
+      df_list[0] = display_profiles.to_dict('records')
+    else:
+      df_list[0] = pd.DataFrame({'Message': ['No players with sufficient data']}).to_dict('records')
+
+    if len(partner_df) > 0:
+      cols_to_display = ['Player', 'Partner', 'Sets', 'Efficiency', 'vs Baseline']
+      display_partners = partner_df[cols_to_display].copy()
+      df_list[1] = display_partners.head(20).to_dict('records')
+    else:
+      df_list[1] = pd.DataFrame({'Message': ['No partner data available']}).to_dict('records')
+
+    if len(struggle_df) > 0:
+      df_list[2] = struggle_df.to_dict('records')
+    else:
+      df_list[2] = pd.DataFrame({'Message': ['No struggle set data']}).to_dict('records')
+
+      # Detailed metrics
+    if len(profiles_df) > 0:
+      detailed = profiles_df[['Player', 'Eff%', 'attempts', 'struggle_rate', 'vs_top20_eff']].copy()
+      detailed['Struggle Rate'] = detailed['struggle_rate'].apply(lambda x: f"{x:.1%}")
+      detailed['vs Top 20'] = detailed['vs_top20_eff'].apply(lambda x: f"{x:.1%}")
+      detailed = detailed[['Player', 'Eff%', 'attempts', 'Struggle Rate', 'vs Top 20']]
+      detailed.columns = ['Player', 'Efficiency', 'Attempts', 'Struggle Rate', 'vs Top 20']
+      df_list[3] = detailed.to_dict('records')
+    else:
+      df_list[3] = pd.DataFrame({'Message': ['No detailed metrics']}).to_dict('records')
+
+      # Create visualizations
+    if len(profiles_df) > 0:
+      try:
+        create_profile_plot(profiles_df)  # This draws to the current plt figure
+        image_list[0] = anvil.mpl_util.plot_image()  # Capture current plot
+        plt.clf()  # Clear the figure for next plot
+      except Exception as plot_error:
+        print(f"Warning: Could not create profile plot: {plot_error}")
+
+    if len(partner_df) > 0:
+      try:
+        create_partner_heatmap(partner_df)  # This draws to the current plt figure
+        image_list[1] = anvil.mpl_util.plot_image()  # Capture current plot
+        plt.clf()  # Clear the figure
+      except Exception as plot_error:
+        print(f"Warning: Could not create partner heatmap: {plot_error}")
+
+  except Exception as e:
+    import traceback
+    error_msg = f'Analysis error: {str(e)}\n{traceback.format_exc()}'
+    print(error_msg)  # For debugging
+    error_df = pd.DataFrame({'Error': [str(e)]})
+    df_list[0] = error_df.to_dict('records')
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
