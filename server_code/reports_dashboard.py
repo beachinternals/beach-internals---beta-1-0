@@ -983,11 +983,7 @@ def report_integrated_player_profile(lgy, team, **rpt_filters):
   try:
     # Import functions (adjust import path as needed for your system)
     # If these functions don't exist, comment them out
-    try:
-      from report_utils import unpack_lgy, get_ppr_data, filter_ppr_df
-    except ImportError:
-      # Fallback - these functions must be defined elsewhere in your system
-      pass
+
 
       # Get data
     disp_league, disp_gender, disp_year = unpack_lgy(lgy)
