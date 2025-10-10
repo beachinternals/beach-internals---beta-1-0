@@ -372,14 +372,13 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           try:
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
 
-            # Get description from ai_prompt_templates
-            log_info(f"Searching ai prompt table for report id {rptname['id']}, Hierarchy 1, coach id {rpt_r['email']}")
-            
             # NEW: Get coach's preferred AI summary level
             coach_user = app_tables.users.get(email=rpt_r['email'])
             if not coach_user:
               log_error(f"Coach not found in Uers table, email: {rpt_r['email']}")
-
+            
+            # Get description from ai_prompt_templates
+            #log_info(f"Searching ai prompt table for report description {rpt_r['Report Description']}, Hierarchy 1, coach id {coach_user['ai_summary_level']}")
             log_info(f"Getting coach AI summary level for {rpt_r['email']}, report descirption = {rpt_r['Report Description']}, ai summary level ={coach_user['ai_summary_level']}")
             prompt_row = app_tables.ai_prompt_templates.get(
               report_description=rpt_r['Report Description'],
@@ -450,17 +449,17 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           full_rpt_pdf = pdf1
 
       # NEW: Get coach's preferred AI summary level
-      log_info(f"Getting coach AI summary level for {rpt_r['email']}")
+      #log_info(f"Getting coach AI summary level for {rpt_r['email']}")
       coach_user = app_tables.users.get(email=rpt_r['email'])
       if not coach_user:
-        log_error(f"Coach not found in Uers table, email: {rpt_r['email']}")
+        log_error(f"Coach not found in Users table, email: {rpt_r['email']}")
         
       ai_summary_level = coach_user['ai_summary_level'] if coach_user and coach_user['ai_summary_level'] else 'Summary'
-      log_info(f"Coach AI summary level: {ai_summary_level}")
+      log_info(f"          Coach AI summary level: {ai_summary_level}")
 
       # NEW: Generate single rollup AI summary based on all report JSONs
       if report_data_collection:
-        log_info(f"Searching for rollup prompt: description={rpt_r['Report Description']}, hierarchy=1, level={ai_summary_level}")
+        log_info(f"Searching for rollup prompt: report description={rpt_r['Report Description']}, hierarchy=1, level={ai_summary_level}")
         rollup_prompt_rows = sorted(
           app_tables.ai_prompt_templates.search(
             report_description=rpt_r['Report Description'],
