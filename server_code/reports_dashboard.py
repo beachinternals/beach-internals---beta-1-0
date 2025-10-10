@@ -963,8 +963,12 @@ def create_partner_heatmap(partner_df):
 
 # ============================================
 # MAIN REPORT FUNCTION
-# ============================================
+# ========================ilters====================
+def report_integratred_team_profile(lgy, team, **rpt_filters):
 
+  
+  return report_integrated_player_profile(lgy, team, **rpt_filters)
+  
 def report_integrated_player_profile(lgy, team, **rpt_filters):
     """
     Integrated Player Profile Report
