@@ -445,6 +445,21 @@ def get_consistency_errors_from_stats(player_data_df, player, var):
 #  Claude generated Player Dashboard
 #
 #---------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------
+#
+#  Claude generated Player Dashboard
+#
+#---------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------
+#
+#  Claude generated Player Dashboard
+#
+#---------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------
+#
+#  Claude generated Player Dashboard
+#
+#---------------------------------------------------------------------------------------------
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -552,46 +567,46 @@ def reshape_to_player_level(ppr_df):
 def calculate_runs(player_ppr):
   """Identify scoring runs and tag each point"""
   player_ppr = player_ppr.sort_values(['set_id', 'point_num']).copy()
-    
+
   player_ppr['scored_change'] = (
-        (player_ppr['team_scored'] != player_ppr['team_scored'].shift()) |
-        (player_ppr['set_id'] != player_ppr['set_id'].shift())
-    )
+    (player_ppr['team_scored'] != player_ppr['team_scored'].shift()) |
+    (player_ppr['set_id'] != player_ppr['set_id'].shift())
+  )
   player_ppr['run_id'] = player_ppr['scored_change'].cumsum()
   player_ppr['run_length'] = player_ppr.groupby('run_id').cumcount() + 1
-    
+
   player_ppr['opp_run_length'] = np.where(
-        ~player_ppr['team_scored'],
-        player_ppr['run_length'],
-        0
-    )
-    
+    ~player_ppr['team_scored'],
+    player_ppr['run_length'],
+    0
+  )
+
   return player_ppr
 
 
 def calculate_set_stats(player_ppr):
-    """Calculate per-set statistics for each player"""
-    set_stats = player_ppr.groupby(['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2']).agg({
-        'kill': 'sum',
-        'error': 'sum',
-        'attempt': 'sum',
-        'team_scored': 'sum',
-        'point_num': 'max',
-        'set_number': 'first',
-        'video_id': 'first',
-    }).reset_index()
-    
-    set_stats.columns = ['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2',
-                         'kills', 'errors', 'attempts', 'team_points', 'total_points', 
-                         'set_number', 'video_id']
-    
-    set_stats['efficiency'] = np.where(
-        set_stats['attempts'] > 0,
-        (set_stats['kills'] - set_stats['errors']) / set_stats['attempts'],
-        np.nan
-    )
-    
-    return set_stats
+  """Calculate per-set statistics for each player"""
+  set_stats = player_ppr.groupby(['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2']).agg({
+    'kill': 'sum',
+    'error': 'sum',
+    'attempt': 'sum',
+    'team_scored': 'sum',
+    'point_num': 'max',
+    'set_number': 'first',
+    'video_id': 'first',
+  }).reset_index()
+
+  set_stats.columns = ['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2',
+                       'kills', 'errors', 'attempts', 'team_points', 'total_points', 
+                       'set_number', 'video_id']
+
+  set_stats['efficiency'] = np.where(
+    set_stats['attempts'] > 0,
+    (set_stats['kills'] - set_stats['errors']) / set_stats['attempts'],
+    np.nan
+  )
+
+  return set_stats
 
 
 # ============================================
@@ -599,173 +614,179 @@ def calculate_set_stats(player_ppr):
 # ============================================
 
 def calculate_player_profiles(player_ppr, set_stats, min_attempts=30):
-    """Calculate core player profile metrics"""
-    profiles = []
-    
-    for player_id in set_stats['player_id'].unique():
-        player_sets = set_stats[set_stats['player_id'] == player_id].copy()
-        player_points = player_ppr[player_ppr['player_id'] == player_id].copy()
-        player_attacks = player_sets[player_sets['attempts'] > 0]
-        
-        if len(player_attacks) < 3 or player_sets['attempts'].sum() < min_attempts:
-            continue
-        
-        # BASELINE EFFICIENCY
-        total_kills = player_sets['kills'].sum()
-        total_errors = player_sets['errors'].sum()
-        total_attempts = player_sets['attempts'].sum()
-        baseline_eff = (total_kills - total_errors) / total_attempts if total_attempts > 0 else 0
-        
-        # RELIABILITY
-        cv = player_attacks['efficiency'].std() / baseline_eff if baseline_eff > 0 else 0
-        reliability_score = max(1, min(10, 10 - (cv - 0.10) * 25))
-        
-        # RESILIENCE
-        after_run_attacks = player_points[(player_points['opp_run_length'] >= 3) & player_points['attacked']]
-        if len(after_run_attacks) >= 10:
-            after_run_eff = (after_run_attacks['kill'].sum() - after_run_attacks['error'].sum()) / len(after_run_attacks)
-            resilience_ratio = after_run_eff / baseline_eff if baseline_eff > 0 else 1
-        else:
-            resilience_ratio = 1.0
-        resilience_score = max(1, min(10, (resilience_ratio - 0.40) * 12))
-        
-        # CLUTCH
-        player_points['score_total'] = player_points['player_score'] + player_points['opp_score']
-        player_points['score_diff'] = abs(player_points['player_score'] - player_points['opp_score'])
-        player_points['late_close'] = (player_points['score_total'] >= 16) & (player_points['score_diff'] <= 2)
-        
-        clutch_attacks = player_points[player_points['late_close'] & player_points['attacked']]
-        if len(clutch_attacks) >= 10:
-            clutch_eff = (clutch_attacks['kill'].sum() - clutch_attacks['error'].sum()) / len(clutch_attacks)
-            clutch_delta = clutch_eff - baseline_eff
-        else:
-            clutch_delta = 0
-        clutch_score = max(1, min(10, 5.5 + clutch_delta * 25))
-        
-        # VS RANKED
-        vs_top20 = player_sets[player_sets['comp_l2'].str.contains('Top 20', na=False)]
-        if len(vs_top20) >= 3 and vs_top20['attempts'].sum() >= 20:
-            top20_eff = (vs_top20['kills'].sum() - vs_top20['errors'].sum()) / vs_top20['attempts'].sum()
-        else:
-            top20_eff = baseline_eff
-        
-        # STRUGGLE SETS
-        player_baseline = player_attacks['efficiency'].mean()
-        player_std = player_attacks['efficiency'].std()
-        struggle_threshold = player_baseline - player_std
-        struggle_sets = player_attacks[player_attacks['efficiency'] < struggle_threshold]
-        struggle_rate = len(struggle_sets) / len(player_attacks) if len(player_attacks) > 0 else 0
-        
-        note = ""
-        if top20_eff < baseline_eff - 0.12:
-            note = "vs Ranked ↓"
-        
-        profiles.append({
-            'Player': player_id,
-            'Eff%': f"{baseline_eff:.1%}",
-            'Reliability': round(reliability_score, 1),
-            'Clutch': round(clutch_score, 1),
-            'Resilience': round(resilience_score, 1),
-            'Note': note,
-            'attempts': int(total_attempts),
-            'eff_numeric': baseline_eff,
-            'cv': cv,
-            'struggle_rate': struggle_rate,
-            'vs_top20_eff': top20_eff,
-        })
-    
-    return pd.DataFrame(profiles)
+  """Calculate core player profile metrics"""
+  profiles = []
+
+  for player_id in set_stats['player_id'].unique():
+    player_sets = set_stats[set_stats['player_id'] == player_id].copy()
+    player_points = player_ppr[player_ppr['player_id'] == player_id].copy()
+    player_attacks = player_sets[player_sets['attempts'] > 0]
+
+    if len(player_attacks) < 3 or player_sets['attempts'].sum() < min_attempts:
+      continue
+
+      # BASELINE EFFICIENCY
+    total_kills = player_sets['kills'].sum()
+    total_errors = player_sets['errors'].sum()
+    total_attempts = player_sets['attempts'].sum()
+    baseline_eff = (total_kills - total_errors) / total_attempts if total_attempts > 0 else 0
+
+    # RELIABILITY
+    cv = player_attacks['efficiency'].std() / baseline_eff if baseline_eff > 0 else 0
+
+    # DEBUG: Print CV values to see what's typical
+    # Remove this after diagnosis
+    if total_attempts > 50:  # Only print for players with good sample size
+      print(f"Player {player_id}: CV = {cv:.3f}, Mean Eff = {baseline_eff:.3f}")
+
+    reliability_score = max(1, min(10, 10 - (cv - 0.10) * 25))
+
+    # RESILIENCE
+    after_run_attacks = player_points[(player_points['opp_run_length'] >= 3) & player_points['attacked']]
+    if len(after_run_attacks) >= 10:
+      after_run_eff = (after_run_attacks['kill'].sum() - after_run_attacks['error'].sum()) / len(after_run_attacks)
+      resilience_ratio = after_run_eff / baseline_eff if baseline_eff > 0 else 1
+    else:
+      resilience_ratio = 1.0
+    resilience_score = max(1, min(10, (resilience_ratio - 0.40) * 12))
+
+    # CLUTCH
+    player_points['score_total'] = player_points['player_score'] + player_points['opp_score']
+    player_points['score_diff'] = abs(player_points['player_score'] - player_points['opp_score'])
+    player_points['late_close'] = (player_points['score_total'] >= 16) & (player_points['score_diff'] <= 2)
+
+    clutch_attacks = player_points[player_points['late_close'] & player_points['attacked']]
+    if len(clutch_attacks) >= 10:
+      clutch_eff = (clutch_attacks['kill'].sum() - clutch_attacks['error'].sum()) / len(clutch_attacks)
+      clutch_delta = clutch_eff - baseline_eff
+    else:
+      clutch_delta = 0
+    clutch_score = max(1, min(10, 5.5 + clutch_delta * 25))
+
+    # VS RANKED
+    vs_top20 = player_sets[player_sets['comp_l2'].str.contains('Top 20', na=False)]
+    if len(vs_top20) >= 3 and vs_top20['attempts'].sum() >= 20:
+      top20_eff = (vs_top20['kills'].sum() - vs_top20['errors'].sum()) / vs_top20['attempts'].sum()
+    else:
+      top20_eff = baseline_eff
+
+      # STRUGGLE SETS
+    player_baseline = player_attacks['efficiency'].mean()
+    player_std = player_attacks['efficiency'].std()
+    struggle_threshold = player_baseline - player_std
+    struggle_sets = player_attacks[player_attacks['efficiency'] < struggle_threshold]
+    struggle_rate = len(struggle_sets) / len(player_attacks) if len(player_attacks) > 0 else 0
+
+    note = ""
+    if top20_eff < baseline_eff - 0.12:
+      note = "vs Ranked ↓"
+
+    profiles.append({
+      'Player': player_id,
+      'Eff%': f"{baseline_eff:.1%}",
+      'Reliability': round(reliability_score, 1),
+      'Clutch': round(clutch_score, 1),
+      'Resilience': round(resilience_score, 1),
+      'Note': note,
+      'attempts': int(total_attempts),
+      'eff_numeric': baseline_eff,
+      'cv': cv,
+      'struggle_rate': struggle_rate,
+      'vs_top20_eff': top20_eff,
+    })
+
+  return pd.DataFrame(profiles)
 
 
 def analyze_partner_dynamics(set_stats):
-    """Calculate how each player performs with different partners"""
-    partner_results = []
-    processed_pairs = set()
-    
-    for player_id in set_stats['player_id'].unique():
-        player_sets = set_stats[set_stats['player_id'] == player_id].copy()
-        overall_sets = player_sets[player_sets['attempts'] > 0]
-        
-        if len(overall_sets) < 3:
-            continue
-        
-        overall_eff = (overall_sets['kills'].sum() - overall_sets['errors'].sum()) / overall_sets['attempts'].sum()
-        
-        for partner_id in player_sets['partner_id'].unique():
-            pair_key = tuple(sorted([player_id, partner_id]))
-            if pair_key in processed_pairs:
-                continue
-            processed_pairs.add(pair_key)
-            
-            with_partner = player_sets[player_sets['partner_id'] == partner_id]
-            with_partner_attacks = with_partner[with_partner['attempts'] > 0]
-            
-            if len(with_partner_attacks) < 3:
-                continue
-            
-            partner_eff = (with_partner_attacks['kills'].sum() - with_partner_attacks['errors'].sum()) / with_partner_attacks['attempts'].sum()
-            partner_delta = partner_eff - overall_eff
-            
-            partner_results.append({
-                'Player': player_id,
-                'Partner': partner_id,
-                'Sets': len(with_partner),
-                'Efficiency': f"{partner_eff:.1%}",
-                'vs Baseline': f"{partner_delta:+.1%}",
-                'delta_numeric': partner_delta,
-                'eff_numeric': partner_eff,
-            })
-    
-    df = pd.DataFrame(partner_results)
-    if len(df) > 0:
-        df = df.sort_values(['Player', 'delta_numeric'], ascending=[True, False])
-    return df
+  """Calculate how each player performs with different partners"""
+  partner_results = []
+  processed_pairs = set()
+
+  for player_id in set_stats['player_id'].unique():
+    player_sets = set_stats[set_stats['player_id'] == player_id].copy()
+    overall_sets = player_sets[player_sets['attempts'] > 0]
+
+    if len(overall_sets) < 3:
+      continue
+
+    overall_eff = (overall_sets['kills'].sum() - overall_sets['errors'].sum()) / overall_sets['attempts'].sum()
+
+    for partner_id in player_sets['partner_id'].unique():
+      pair_key = tuple(sorted([player_id, partner_id]))
+      if pair_key in processed_pairs:
+        continue
+      processed_pairs.add(pair_key)
+
+      with_partner = player_sets[player_sets['partner_id'] == partner_id]
+      with_partner_attacks = with_partner[with_partner['attempts'] > 0]
+
+      if len(with_partner_attacks) < 3:
+        continue
+
+      partner_eff = (with_partner_attacks['kills'].sum() - with_partner_attacks['errors'].sum()) / with_partner_attacks['attempts'].sum()
+      partner_delta = partner_eff - overall_eff
+
+      partner_results.append({
+        'Player': player_id,
+        'Partner': partner_id,
+        'Sets': len(with_partner),
+        'Efficiency': f"{partner_eff:.1%}",
+        'vs Baseline': f"{partner_delta:+.1%}",
+        'delta_numeric': partner_delta,
+        'eff_numeric': partner_eff,
+      })
+
+  df = pd.DataFrame(partner_results)
+  if len(df) > 0:
+    df = df.sort_values(['Player', 'delta_numeric'], ascending=[True, False])
+  return df
 
 
 def analyze_struggle_triggers(player_ppr, set_stats):
-    """Identify what triggers struggle sets"""
-    for player_id in set_stats['player_id'].unique():
-        player_sets = set_stats[set_stats['player_id'] == player_id]
-        player_attacks = player_sets[player_sets['attempts'] > 0]
+  """Identify what triggers struggle sets"""
+  for player_id in set_stats['player_id'].unique():
+    player_sets = set_stats[set_stats['player_id'] == player_id]
+    player_attacks = player_sets[player_sets['attempts'] > 0]
+
+    if len(player_attacks) < 3:
+      continue
+
+    baseline = player_attacks['efficiency'].mean()
+    std = player_attacks['efficiency'].std()
+
+    set_stats.loc[set_stats['player_id'] == player_id, 'player_baseline'] = baseline
+    set_stats.loc[set_stats['player_id'] == player_id, 'player_std'] = std
+
+  set_stats['is_struggle'] = (set_stats['efficiency'] < set_stats['player_baseline'] - set_stats['player_std']) & (set_stats['attempts'] >= 3)
+
+  struggle_analysis = []
+
+  for player_id in set_stats['player_id'].unique():
+    player_sets = set_stats[set_stats['player_id'] == player_id]
+    struggle_sets = player_sets[player_sets['is_struggle'] == True]
+
+    if len(player_sets) < 5:
+      continue
+
+    total_sets = len(player_sets[player_sets['attempts'] > 0])
+    n_struggles = len(struggle_sets)
+
+    if n_struggles == 0:
+      continue
+
+    top20_struggle_rate = struggle_sets['comp_l2'].str.contains('Top 20', na=False).sum() / n_struggles if n_struggles > 0 else 0
+
+    set3_struggles = len(struggle_sets[struggle_sets['set_number'] == 3])
+    set3_total = len(player_sets[player_sets['set_number'] == 3])
+    set3_struggle_rate = set3_struggles / set3_total if set3_total > 0 else 0
+
+    struggle_set_ids = struggle_sets['set_id'].tolist()
+    struggle_points = player_ppr[(player_ppr['player_id'] == player_id) & 
+      (player_ppr['set_id'].isin(struggle_set_ids))]
+    avg_max_opp_run = struggle_points.groupby('set_id')['opp_run_length'].max().mean() if len(struggle_points) > 0 else 0
         
-        if len(player_attacks) < 3:
-            continue
-        
-        baseline = player_attacks['efficiency'].mean()
-        std = player_attacks['efficiency'].std()
-        
-        set_stats.loc[set_stats['player_id'] == player_id, 'player_baseline'] = baseline
-        set_stats.loc[set_stats['player_id'] == player_id, 'player_std'] = std
-    
-    set_stats['is_struggle'] = (set_stats['efficiency'] < set_stats['player_baseline'] - set_stats['player_std']) & (set_stats['attempts'] >= 3)
-    
-    struggle_analysis = []
-    
-    for player_id in set_stats['player_id'].unique():
-        player_sets = set_stats[set_stats['player_id'] == player_id]
-        struggle_sets = player_sets[player_sets['is_struggle'] == True]
-        
-        if len(player_sets) < 5:
-            continue
-        
-        total_sets = len(player_sets[player_sets['attempts'] > 0])
-        n_struggles = len(struggle_sets)
-        
-        if n_struggles == 0:
-            continue
-        
-        top20_struggle_rate = struggle_sets['comp_l2'].str.contains('Top 20', na=False).sum() / n_struggles if n_struggles > 0 else 0
-        
-        set3_struggles = len(struggle_sets[struggle_sets['set_number'] == 3])
-        set3_total = len(player_sets[player_sets['set_number'] == 3])
-        set3_struggle_rate = set3_struggles / set3_total if set3_total > 0 else 0
-        
-        struggle_set_ids = struggle_sets['set_id'].tolist()
-        struggle_points = player_ppr[(player_ppr['player_id'] == player_id) & 
-                                      (player_ppr['set_id'].isin(struggle_set_ids))]
-        avg_max_opp_run = struggle_points.groupby('set_id')['opp_run_length'].max().mean() if len(struggle_points) > 0 else 0
-        
-        struggle_analysis.append({
+    struggle_analysis.append({
             'Player': player_id,
             'Total Sets': total_sets,
             'Struggle Sets': n_struggles,
@@ -1011,4 +1032,5 @@ def report_integrated_player_profile(lgy, team, **rpt_filters):
         return report_player_profile(lgy, team, **rpt_filters)
     else:
         return report_team_profile(lgy, team, **rpt_filters)
+
       
