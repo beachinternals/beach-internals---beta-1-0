@@ -633,11 +633,6 @@ def calculate_player_profiles(player_ppr, set_stats, min_attempts=30):
 
     # RELIABILITY
     cv = player_attacks['efficiency'].std() / baseline_eff if baseline_eff > 0 else 0
-    
-    # DEBUG: Print CV values to see what's typical
-    # Remove this after diagnosis
-    if total_attempts > 50:  # Only print for players with good sample size
-      print(f"Player {player_id}: CV = {cv:.3f}, Mean Eff = {baseline_eff:.3f}")
 
     # Recalibrated for beach volleyball (typical CV range: 0.45 to 1.05)
     # CV of 0.45 = score of 10 (most consistent)
@@ -673,12 +668,19 @@ def calculate_player_profiles(player_ppr, set_stats, min_attempts=30):
     else:
       top20_eff = baseline_eff
 
-      # STRUGGLE SETS
+      # STRUGGLE SETS - Calculate and store for use in detailed metrics
     player_baseline = player_attacks['efficiency'].mean()
     player_std = player_attacks['efficiency'].std()
     struggle_threshold = player_baseline - player_std
-    struggle_sets = player_attacks[player_attacks['efficiency'] < struggle_threshold]
-    struggle_rate = len(struggle_sets) / len(player_attacks) if len(player_attacks) > 0 else 0
+
+    # Count struggle sets (efficiency < mean - 1 std dev)
+    # This MUST match analyze_struggle_triggers() logic exactly
+    struggle_sets_list = player_attacks[player_attacks['efficiency'] < struggle_threshold]
+    struggle_rate = len(struggle_sets_list) / len(player_attacks) if len(player_attacks) > 0 else 0
+
+    # DEBUG - enable temporarily to compare
+    if player_id.startswith('FSU'):  # Only for your team
+      print(f"PROFILE: {player_id}: Total={len(player_attacks)}, Struggles={len(struggle_sets_list)}, Rate={struggle_rate:.3f}")
 
     note = ""
     if top20_eff < baseline_eff - 0.12:
@@ -748,58 +750,63 @@ def analyze_partner_dynamics(set_stats):
 
 def analyze_struggle_triggers(player_ppr, set_stats):
   """Identify what triggers struggle sets"""
-  for player_id in set_stats['player_id'].unique():
-    player_sets = set_stats[set_stats['player_id'] == player_id]
-    player_attacks = player_sets[player_sets['attempts'] > 0]
-
-    if len(player_attacks) < 3:
-      continue
-
-    baseline = player_attacks['efficiency'].mean()
-    std = player_attacks['efficiency'].std()
-
-    set_stats.loc[set_stats['player_id'] == player_id, 'player_baseline'] = baseline
-    set_stats.loc[set_stats['player_id'] == player_id, 'player_std'] = std
-
-  set_stats['is_struggle'] = (set_stats['efficiency'] < set_stats['player_baseline'] - set_stats['player_std']) & (set_stats['attempts'] >= 3)
 
   struggle_analysis = []
 
   for player_id in set_stats['player_id'].unique():
     player_sets = set_stats[set_stats['player_id'] == player_id]
-    struggle_sets = player_sets[player_sets['is_struggle'] == True]
+    player_attacks = player_sets[player_sets['attempts'] > 0]  # Only sets with attacks
 
-    if len(player_sets) < 5:
+    # Minimum 3 sets to analyze
+    total_sets = len(player_attacks)
+    if total_sets < 3:
       continue
 
-    total_sets = len(player_sets[player_sets['attempts'] > 0])
+      # Calculate baseline and threshold - SAME as calculate_player_profiles()
+    baseline = player_attacks['efficiency'].mean()
+    std = player_attacks['efficiency'].std()
+    threshold = baseline - std
+
+    # Count struggle sets - SAME logic as calculate_player_profiles()
+    struggle_sets = player_attacks[player_attacks['efficiency'] < threshold]
     n_struggles = len(struggle_sets)
 
-    if n_struggles == 0:
-      continue
+    # Calculate struggle rate
+    struggle_rate_value = n_struggles / total_sets if total_sets > 0 else 0
 
-    top20_struggle_rate = struggle_sets['comp_l2'].str.contains('Top 20', na=False).sum() / n_struggles if n_struggles > 0 else 0
+    # DEBUG - enable temporarily to compare
+    if player_id.startswith('FSU'):
+      print(f"TRIGGER: {player_id}: Total={total_sets}, Struggles={n_struggles}, Rate={struggle_rate_value:.3f}")
 
-    set3_struggles = len(struggle_sets[struggle_sets['set_number'] == 3])
-    set3_total = len(player_sets[player_sets['set_number'] == 3])
-    set3_struggle_rate = set3_struggles / set3_total if set3_total > 0 else 0
+      # Calculate triggers only if there are struggle sets
+    if n_struggles > 0:
+      top20_struggle_rate = struggle_sets['comp_l2'].str.contains('Top 20', na=False).sum() / n_struggles
 
-    struggle_set_ids = struggle_sets['set_id'].tolist()
-    struggle_points = player_ppr[(player_ppr['player_id'] == player_id) & 
-      (player_ppr['set_id'].isin(struggle_set_ids))]
-    avg_max_opp_run = struggle_points.groupby('set_id')['opp_run_length'].max().mean() if len(struggle_points) > 0 else 0
-        
+      set3_struggles = len(struggle_sets[struggle_sets['set_number'] == 3])
+      set3_total = len(player_attacks[player_attacks['set_number'] == 3])
+      set3_struggle_rate = set3_struggles / set3_total if set3_total > 0 else 0
+
+      struggle_set_ids = struggle_sets['set_id'].tolist()
+      struggle_points = player_ppr[(player_ppr['player_id'] == player_id) & 
+        (player_ppr['set_id'].isin(struggle_set_ids))]
+      avg_max_opp_run = struggle_points.groupby('set_id')['opp_run_length'].max().mean() if len(struggle_points) > 0 else 0
+    else:
+      # No struggle sets
+      top20_struggle_rate = 0
+      set3_struggle_rate = 0
+      avg_max_opp_run = 0
+
     struggle_analysis.append({
-            'Player': player_id,
-            'Total Sets': total_sets,
-            'Struggle Sets': n_struggles,
-            'Struggle Rate': f"{n_struggles/total_sets:.1%}",
-            'vs Top 20 Trigger': f"{top20_struggle_rate:.1%}",
-            'Set 3 Trigger': f"{set3_struggle_rate:.1%}",
-            'Avg Max Opp Run': f"{avg_max_opp_run:.1f}",
-        })
-    
-    return pd.DataFrame(struggle_analysis)
+      'Player': player_id,
+      'Total Sets': total_sets,
+      'Struggle Sets': n_struggles,
+      'Struggle Rate': f"{struggle_rate_value:.1%}",
+      'vs Top 20 Trigger': f"{top20_struggle_rate:.1%}",
+      'Set 3 Trigger': f"{set3_struggle_rate:.1%}",
+      'Avg Max Opp Run': f"{avg_max_opp_run:.1f}",
+    })
+
+  return pd.DataFrame(struggle_analysis)
 
 
 # ============================================
@@ -807,87 +814,90 @@ def analyze_struggle_triggers(player_ppr, set_stats):
 # ============================================
 
 def create_profile_plot(profiles_df):
-    """Create scatter plot"""
-    if len(profiles_df) == 0:
-        fig, ax = plt.subplots(figsize=(10, 8))
-        ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center')
-        return fig
-    
-    fig, ax = plt.subplots(figsize=(12, 10))
-    
-    scatter = ax.scatter(
-        profiles_df['Reliability'],
-        profiles_df['Clutch'],
-        s=profiles_df['eff_numeric'] * 3000,
-        c=profiles_df['Resilience'],
-        cmap='RdYlGn',
-        alpha=0.6,
-        edgecolors='black',
-        linewidth=1.5,
-        vmin=1,
-        vmax=10
-    )
-    
-    for idx, row in profiles_df.iterrows():
-        name = str(row['Player'])[:15]
-        ax.annotate(name, (row['Reliability'], row['Clutch']),
-                   xytext=(5, 5), textcoords='offset points',
-                   fontsize=8, fontweight='bold')
-    
-    ax.axhline(y=5.5, color='gray', linestyle='--', alpha=0.3)
-    ax.axvline(x=5.5, color='gray', linestyle='--', alpha=0.3)
-    
-    ax.text(8.5, 9, 'STARS', ha='center', fontsize=10,
-            bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.3))
-    ax.text(2.5, 9, 'HIGH VARIANCE', ha='center', fontsize=10,
-            bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.3))
-    ax.text(8.5, 2, 'GRINDERS', ha='center', fontsize=10,
-            bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
-    ax.text(2.5, 2, 'DEVELOPMENT', ha='center', fontsize=10,
-            bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.3))
-    
-    ax.set_xlabel('Reliability', fontsize=12, fontweight='bold')
-    ax.set_ylabel('Clutch Factor', fontsize=12, fontweight='bold')
-    ax.set_title('Player Profile Matrix', fontsize=14, fontweight='bold')
-    ax.set_xlim(0, 11)
-    ax.set_ylim(0, 11)
-    
-    plt.colorbar(scatter, ax=ax, label='Resilience')
-    plt.tight_layout()
+  """Create scatter plot"""
+  if len(profiles_df) == 0:
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center')
     return fig
+
+  fig, ax = plt.subplots(figsize=(12, 10))
+
+  scatter = ax.scatter(
+    profiles_df['Reliability'],
+    profiles_df['Clutch'],
+    s=profiles_df['eff_numeric'] * 3000,
+    c=profiles_df['Resilience'],
+    cmap='RdYlGn',
+    alpha=0.6,
+    edgecolors='black',
+    linewidth=1.5,
+    vmin=1,
+    vmax=10
+  )
+
+  for idx, row in profiles_df.iterrows():
+    name = str(row['Player'])[:15]
+    ax.annotate(name, (row['Reliability'], row['Clutch']),
+                xytext=(5, 5), textcoords='offset points',
+                fontsize=8, fontweight='bold')
+
+  ax.axhline(y=5.5, color='gray', linestyle='--', alpha=0.3)
+  ax.axvline(x=5.5, color='gray', linestyle='--', alpha=0.3)
+
+  ax.text(8.5, 9, 'STARS', ha='center', fontsize=10,
+          bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.3))
+  ax.text(2.5, 9, 'HIGH VARIANCE', ha='center', fontsize=10,
+          bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.3))
+  ax.text(8.5, 2, 'GRINDERS', ha='center', fontsize=10,
+          bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
+  ax.text(2.5, 2, 'DEVELOPMENT', ha='center', fontsize=10,
+          bbox=dict(boxstyle='round', facecolor='lightcoral', alpha=0.3))
+
+  ax.set_xlabel('Reliability', fontsize=12, fontweight='bold')
+  ax.set_ylabel('Clutch Factor', fontsize=12, fontweight='bold')
+  ax.set_title('Player Profile Matrix', fontsize=14, fontweight='bold')
+  ax.set_xlim(0, 11)
+  ax.set_ylim(0, 11)
+
+  plt.colorbar(scatter, ax=ax, label='Resilience')
+  plt.tight_layout()
+  return fig
 
 
 def create_partner_heatmap(partner_df):
-    """Create heatmap of partner chemistry"""
-    if len(partner_df) == 0:
-        fig, ax = plt.subplots(figsize=(8, 6))
-        ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center')
-        return fig
-    
-    matrix = partner_df.pivot_table(
-        index='Player',
-        columns='Partner',
-        values='delta_numeric',
-        aggfunc='mean'
-    )
-    
-    if matrix.empty or matrix.shape[0] < 2:
-        fig, ax = plt.subplots(figsize=(8, 6))
-        ax.text(0.5, 0.5, 'Insufficient partnerships', ha='center', va='center')
-        return fig
-    
-    fig, ax = plt.subplots(figsize=(10, 8))
-    
-    sns.heatmap(matrix, annot=True, fmt='.1%', cmap='RdYlGn', center=0,
-                vmin=-0.15, vmax=0.15,
-                cbar_kws={'label': 'Efficiency Delta'}, ax=ax)
-    
-    ax.set_title('Partnership Chemistry Matrix', fontsize=14, fontweight='bold')
-    ax.set_xlabel('Partner', fontsize=11)
-    ax.set_ylabel('Player', fontsize=11)
-    
-    plt.tight_layout()
+  """Create heatmap of partner chemistry"""
+  if len(partner_df) == 0:
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center')
     return fig
+
+  matrix = partner_df.pivot_table(
+    index='Player',
+    columns='Partner',
+    values='delta_numeric',
+    aggfunc='mean'
+  )
+
+  if matrix.empty or matrix.shape[0] < 2:
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.text(0.5, 0.5, 'Insufficient partnerships', ha='center', va='center')
+    return fig
+
+  fig, ax = plt.subplots(figsize=(10, 8))
+
+  sns.heatmap(matrix, annot=True, fmt='.1%', cmap='RdYlGn', center=0,
+              vmin=-0.15, vmax=0.15,
+              cbar_kws={'label': 'Efficiency Delta'}, 
+              linewidths=0.5,  # Add gridlines
+              linecolor='gray',  # Gridline color
+              ax=ax)
+
+  ax.set_title('Partnership Chemistry Matrix', fontsize=14, fontweight='bold')
+  ax.set_xlabel('Partner', fontsize=11)
+  ax.set_ylabel('Player', fontsize=11)
+
+  plt.tight_layout()
+  return fig
 
 
 # ============================================
@@ -895,112 +905,120 @@ def create_partner_heatmap(partner_df):
 # ============================================
 
 def _report_integrated_player_profile_internal(lgy, team, **rpt_filters):
-    """Internal function - use report_team_profile() or report_player_profile()"""
-    
-    # Initialize outputs
-    title_list = ['','','','','','','','','','']
-    label_list = ['','','','','','','','','','']
-    df_desc_list = ['','','','','','','','','','']
-    image_desc_list = ['','','','','','','','','','']
-    image_list = ['','','','','','','','','','']
-    df_list = ['','','','','','','','','','']
-    
-    title_list[0] = "Player Profile Summary"
-    title_list[1] = "Partner Performance Analysis"
-    title_list[2] = "Struggle Set Triggers"
-    title_list[3] = "Detailed Metrics"
-    
-    try:
-        # Get data
-        disp_league, disp_gender, disp_year = unpack_lgy(lgy)
-        ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
-        ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
-        
-        # Handle player filter
-        disp_player = rpt_filters.get('player', '')
-        if disp_player and disp_player.strip() != '':
-            ppr_df = ppr_df[
-                (ppr_df['player_a1'] == disp_player) | 
-                (ppr_df['player_a2'] == disp_player) |
-                (ppr_df['player_b1'] == disp_player) |
-                (ppr_df['player_b2'] == disp_player)
-            ]
-            team_prefix = disp_player.split()[0] if ' ' in disp_player else team
-        else:
-            disp_player = None
-            team_prefix = team
-        
-        if len(ppr_df) == 0:
-            df_list[0] = pd.DataFrame({'Message': ['No data available']}).to_dict('records')
-            return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-        
-        # Process data
-        player_ppr = reshape_to_player_level(ppr_df)
-        player_ppr = player_ppr[player_ppr['player_id'].str.startswith(team_prefix, na=False)]
-        
-        if len(player_ppr) == 0:
-            df_list[0] = pd.DataFrame({'Message': [f'No {team_prefix} players']}).to_dict('records')
-            return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-        
-        player_ppr = calculate_runs(player_ppr)
-        set_stats = calculate_set_stats(player_ppr)
-        
-        # Analyze
-        profiles_df = calculate_player_profiles(player_ppr, set_stats)
-        partner_df = analyze_partner_dynamics(set_stats)
-        struggle_df = analyze_struggle_triggers(player_ppr, set_stats)
-        
-        # Store dataframes
-        if len(profiles_df) > 0:
-            display_profiles = profiles_df[['Player', 'Eff%', 'Reliability', 'Clutch', 'Resilience', 'Note']].copy()
-            df_list[0] = display_profiles.to_dict('records')
-        else:
-            df_list[0] = pd.DataFrame({'Message': ['No players with sufficient data']}).to_dict('records')
-        
-        if len(partner_df) > 0:
-            display_partners = partner_df[['Player', 'Partner', 'Sets', 'Efficiency', 'vs Baseline']].copy()
-            df_list[1] = display_partners.head(20).to_dict('records')
-        else:
-            df_list[1] = pd.DataFrame({'Message': ['No partner data']}).to_dict('records')
-        
-        if len(struggle_df) > 0:
-            df_list[2] = struggle_df.to_dict('records')
-        else:
-            df_list[2] = pd.DataFrame({'Message': ['No struggle data']}).to_dict('records')
-        
-        if len(profiles_df) > 0:
-            detailed = profiles_df[['Player', 'Eff%', 'attempts', 'struggle_rate', 'vs_top20_eff']].copy()
-            detailed['Struggle Rate'] = detailed['struggle_rate'].apply(lambda x: f"{x:.1%}")
-            detailed['vs Top 20'] = detailed['vs_top20_eff'].apply(lambda x: f"{x:.1%}")
-            detailed = detailed[['Player', 'Eff%', 'attempts', 'Struggle Rate', 'vs Top 20']]
-            detailed.columns = ['Player', 'Efficiency', 'Attempts', 'Struggle Rate', 'vs Top 20']
-            df_list[3] = detailed.to_dict('records')
-        else:
-            df_list[3] = pd.DataFrame({'Message': ['No detailed metrics']}).to_dict('records')
-        
-        # Create visualizations
-        if len(profiles_df) > 0:
-            try:
-                create_profile_plot(profiles_df)
-                image_list[0] = anvil.mpl_util.plot_image()
-                plt.clf()
-            except Exception as e:
-                print(f"Plot error: {e}")
-        
-        if len(partner_df) > 0:
-            try:
-                create_partner_heatmap(partner_df)
-                image_list[1] = anvil.mpl_util.plot_image()
-                plt.clf()
-            except Exception as e:
-                print(f"Heatmap error: {e}")
-        
-    except Exception as e:
-        import traceback
-        print(f"Error: {e}\n{traceback.format_exc()}")
-        df_list[0] = pd.DataFrame({'Error': [str(e)]}).to_dict('records')
-    
-    return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+  """Internal function - use report_team_profile() or report_player_profile()"""
+
+  # Initialize outputs
+  #title_list = ['','','','','','','','','','']
+  #label_list = ['','','','','','','','','','']
+  #df_desc_list = ['','','','','','','','','','']
+  #image_desc_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+
+  # Get basic title and label setup from database
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+
+  try:
+    # Get data
+    disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+    ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+    ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+    # Handle player filter
+    disp_player = rpt_filters.get('player', '')
+    if disp_player and disp_player.strip() != '':
+      ppr_df = ppr_df[
+        (ppr_df['player_a1'] == disp_player) | 
+        (ppr_df['player_a2'] == disp_player) |
+        (ppr_df['player_b1'] == disp_player) |
+        (ppr_df['player_b2'] == disp_player)
+        ]
+      team_prefix = disp_player.split()[0] if ' ' in disp_player else team
+    else:
+      disp_player = None
+      team_prefix = team
+
+    if len(ppr_df) == 0:
+      df_list[0] = pd.DataFrame({'Message': ['No data available']}).to_dict('records')
+      return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+      # Process data
+    player_ppr = reshape_to_player_level(ppr_df)
+    player_ppr = player_ppr[player_ppr['player_id'].str.startswith(team_prefix, na=False)]
+
+    if len(player_ppr) == 0:
+      df_list[0] = pd.DataFrame({'Message': [f'No {team_prefix} players']}).to_dict('records')
+      return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+    player_ppr = calculate_runs(player_ppr)
+    set_stats = calculate_set_stats(player_ppr)
+
+    # Analyze
+    profiles_df = calculate_player_profiles(player_ppr, set_stats)
+    partner_df = analyze_partner_dynamics(set_stats)
+
+    # Make a copy of set_stats before passing to struggle analysis to avoid modification issues
+    set_stats_copy = set_stats.copy()
+    struggle_df = analyze_struggle_triggers(player_ppr, set_stats_copy)
+
+    # DEBUG - remove after fixing
+    print(f"Number of players in profiles: {len(profiles_df)}")
+    print(f"Number of players in struggle_df: {len(struggle_df)}")
+    if len(struggle_df) > 0:
+      print(f"Struggle df columns: {struggle_df.columns.tolist()}")
+      print(f"First few rows:\n{struggle_df.head()}")
+
+      # Store dataframes
+    if len(profiles_df) > 0:
+      display_profiles = profiles_df[['Player', 'Eff%', 'Reliability', 'Clutch', 'Resilience', 'Note']].copy()
+      df_list[0] = display_profiles.to_dict('records')
+    else:
+      df_list[0] = pd.DataFrame({'Message': ['No players with sufficient data']}).to_dict('records')
+
+    if len(partner_df) > 0:
+      display_partners = partner_df[['Player', 'Partner', 'Sets', 'Efficiency', 'vs Baseline']].copy()
+      df_list[1] = display_partners.to_dict('records')  # All partnerships
+    else:
+      df_list[1] = pd.DataFrame({'Message': ['No partner data']}).to_dict('records')
+
+    if len(struggle_df) > 0:
+      df_list[2] = struggle_df.to_dict('records')
+    else:
+      df_list[2] = pd.DataFrame({'Message': ['No struggle data']}).to_dict('records')
+
+    if len(profiles_df) > 0:
+      detailed = profiles_df[['Player', 'Eff%', 'attempts', 'struggle_rate', 'vs_top20_eff']].copy()
+      detailed['Struggle Rate'] = detailed['struggle_rate'].apply(lambda x: f"{x:.1%}")
+      detailed['vs Top 20'] = detailed['vs_top20_eff'].apply(lambda x: f"{x:.1%}")
+      detailed = detailed[['Player', 'Eff%', 'attempts', 'Struggle Rate', 'vs Top 20']]
+      detailed.columns = ['Player', 'Efficiency', 'Attempts', 'Struggle Rate', 'vs Top 20']
+      df_list[3] = detailed.to_dict('records')
+    else:
+      df_list[3] = pd.DataFrame({'Message': ['No detailed metrics']}).to_dict('records')
+
+      # Create visualizations
+    if len(profiles_df) > 0:
+      try:
+        create_profile_plot(profiles_df)
+        image_list[0] = anvil.mpl_util.plot_image()
+        plt.clf()
+      except Exception as e:
+        print(f"Plot error: {e}")
+
+    if len(partner_df) > 0:
+      try:
+        create_partner_heatmap(partner_df)
+        image_list[1] = anvil.mpl_util.plot_image()
+        plt.clf()
+      except Exception as e:
+        print(f"Heatmap error: {e}")
+
+  except Exception as e:
+    import traceback
+    print(f"Error: {e}\n{traceback.format_exc()}")
+    df_list[0] = pd.DataFrame({'Error': [str(e)]}).to_dict('records')
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
 # ============================================
@@ -1008,32 +1026,32 @@ def _report_integrated_player_profile_internal(lgy, team, **rpt_filters):
 # ============================================
 
 def report_team_profile(lgy, team, **rpt_filters):
-    """Team-Wide Player Profile Report - analyzes all players on team"""
-    rpt_filters['player'] = ''
-    return _report_integrated_player_profile_internal(lgy, team, **rpt_filters)
+  """Team-Wide Player Profile Report - analyzes all players on team"""
+  rpt_filters['player'] = ''
+  return _report_integrated_player_profile_internal(lgy, team, **rpt_filters)
 
 
 def report_player_profile(lgy, team, **rpt_filters):
-    """Individual Player Profile Report - must include 'player' in rpt_filters"""
-    if 'player' not in rpt_filters or not rpt_filters['player'] or rpt_filters['player'].strip() == '':
-        title_list = ['','','','','','','','','','']
-        label_list = ['','','','','','','','','','']
-        df_desc_list = ['','','','','','','','','','']
-        image_desc_list = ['','','','','','','','','','']
-        image_list = ['','','','','','','','','','']
-        df_list = ['','','','','','','','','','']
-        df_list[0] = pd.DataFrame({'Error': ['player required in rpt_filters']}).to_dict('records')
-        return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-    
-    return _report_integrated_player_profile_internal(lgy, team, **rpt_filters)
+  """Individual Player Profile Report - must include 'player' in rpt_filters"""
+  if 'player' not in rpt_filters or not rpt_filters['player'] or rpt_filters['player'].strip() == '':
+    title_list = ['','','','','','','','','','']
+    label_list = ['','','','','','','','','','']
+    df_desc_list = ['','','','','','','','','','']
+    image_desc_list = ['','','','','','','','','','']
+    image_list = ['','','','','','','','','','']
+    df_list = ['','','','','','','','','','']
+    df_list[0] = pd.DataFrame({'Error': ['player required in rpt_filters']}).to_dict('records')
+    return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+  return _report_integrated_player_profile_internal(lgy, team, **rpt_filters)
 
 
 def report_integrated_player_profile(lgy, team, **rpt_filters):
-    """Legacy function - auto-detects team vs player report"""
-    player = rpt_filters.get('player', '')
-    if player and player.strip() != '':
-        return report_player_profile(lgy, team, **rpt_filters)
-    else:
-        return report_team_profile(lgy, team, **rpt_filters)
+  """Legacy function - auto-detects team vs player report"""
+  player = rpt_filters.get('player', '')
+  if player and player.strip() != '':
+    return report_player_profile(lgy, team, **rpt_filters)
+  else:
+    return report_team_profile(lgy, team, **rpt_filters)
 
-      
+    
