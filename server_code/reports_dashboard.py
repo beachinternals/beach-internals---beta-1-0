@@ -633,13 +633,16 @@ def calculate_player_profiles(player_ppr, set_stats, min_attempts=30):
 
     # RELIABILITY
     cv = player_attacks['efficiency'].std() / baseline_eff if baseline_eff > 0 else 0
-
+    
     # DEBUG: Print CV values to see what's typical
     # Remove this after diagnosis
     if total_attempts > 50:  # Only print for players with good sample size
       print(f"Player {player_id}: CV = {cv:.3f}, Mean Eff = {baseline_eff:.3f}")
 
-    reliability_score = max(1, min(10, 10 - (cv - 0.10) * 25))
+    # Recalibrated for beach volleyball (typical CV range: 0.45 to 1.05)
+    # CV of 0.45 = score of 10 (most consistent)
+    # CV of 1.05 = score of 1 (least consistent)
+    reliability_score = max(1, min(10, 10 - (cv - 0.45) * 15))
 
     # RESILIENCE
     after_run_attacks = player_points[(player_points['opp_run_length'] >= 3) & player_points['attacked']]
