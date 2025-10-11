@@ -553,43 +553,43 @@ def report_player_att_set(lgy, team, **rpt_filters):
     (ppr_df['player_a2'] == disp_player) |
     (ppr_df['player_b1'] == disp_player) |
     (ppr_df['player_b2'] == disp_player)]
-  log_debug(f"      Sets: ppr_df after player filter, records: {ppr_df.shape[0]}")
+  #log_debug(f"      Sets: ppr_df after player filter, records: {ppr_df.shape[0]}")
 
   # For FBHE, filter to attacks by the player
   ppr_df = ppr_df[ppr_df['att_player'] == disp_player]
-  log_debug(f"      Sets: ppr_df after att_player filter, records: {ppr_df.shape[0]}")
+  #log_debug(f"      Sets: ppr_df after att_player filter, records: {ppr_df.shape[0]}")
 
   # Clean invalid data
-  log_debug(f"      Sets: set_dist nulls: {ppr_df['set_dist'].isna().sum()}, set_height nulls: {ppr_df['set_height'].isna().sum()}")
+  #log_debug(f"      Sets: set_dist nulls: {ppr_df['set_dist'].isna().sum()}, set_height nulls: {ppr_df['set_height'].isna().sum()}")
   ppr_df = ppr_df[ppr_df['set_dist'].notna() & ppr_df['set_height'].notna() & (ppr_df['set_dist'] >= 0) & (ppr_df['set_height'] >= 0)]
-  log_debug(f"      Sets: ppr_df after cleaning, records: {ppr_df.shape[0]}")
+  #log_debug(f"      Sets: ppr_df after cleaning, records: {ppr_df.shape[0]}")
 
   # Bin the set_distance and set_height into 1.0 meter increments
   distance_bins = np.arange(0, 11, 1.0)
   height_bins = np.arange(0, 7, 1.0)
   ppr_df['distance_bin'] = pd.cut(ppr_df['set_dist'], bins=distance_bins, labels=(distance_bins[:-1] + distance_bins[1:]) / 2)
   ppr_df['height_bin'] = pd.cut(ppr_df['set_height'], bins=height_bins, labels=(height_bins[:-1] + height_bins[1:]) / 2)
-  log_debug(f"      Sets: Binned data, records: {ppr_df.shape[0]}")
+  #log_debug(f"      Sets: Binned data, records: {ppr_df.shape[0]}")
 
   # Define function to calculate FBHE and attempts using fbhe_obj
   def calculate_fbhe(group):
-    log_debug(f"      Sets: calculate_fbhe group size: {len(group)}")
+    #log_debug(f"      Sets: calculate_fbhe group size: {len(group)}")
     if group.empty:
       return pd.Series({'attempts': 0, 'fbhe': 0.0})
     result = fbhe_obj(group, disp_player, 'att', True)
-    log_debug(f"      Sets: calculate_fbhe result - attempts: {result.attempts}, fbhe: {result.fbhe}")
+    #log_debug(f"      Sets: calculate_fbhe result - attempts: {result.attempts}, fbhe: {result.fbhe}")
     return pd.Series({'attempts': result.attempts, 'fbhe': result.fbhe, 'URL': result.video_link})
 
   # Group by bins and apply the calculation
   grouped = ppr_df.groupby(['distance_bin', 'height_bin'], as_index=False).apply(calculate_fbhe)
-  log_debug(f"      Sets: Grouped, pre filter: {grouped}")
-  log_debug(f"      Sets: Attempts distribution: {grouped['attempts'].value_counts().to_dict()}")
+  #log_debug(f"      Sets: Grouped, pre filter: {grouped}")
+  #log_debug(f"      Sets: Attempts distribution: {grouped['attempts'].value_counts().to_dict()}")
   grouped = grouped[grouped['attempts'] > 0]  # Lowered threshold for debugging
-  log_debug(f"      Sets: Grouped, post > 0 filter: {grouped}")
+  #log_debug(f"      Sets: Grouped, post > 0 filter: {grouped}")
 
   # Table of attempts for df_list[0]
   attempts_table = grouped[['distance_bin', 'height_bin', 'attempts', 'fbhe', 'URL']].rename(columns={'distance_bin': 'set_dist', 'height_bin': 'set_height'})
-  log_debug(f"      Sets: attempts table: {attempts_table}")
+  #log_debug(f"      Sets: attempts table: {attempts_table}")
   df_list[0] = attempts_table.to_dict('records')
 
   # Get mean and stdev for color scaling

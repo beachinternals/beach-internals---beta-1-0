@@ -299,7 +299,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Build report filters
       rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, p)
-      log_info(f"Report filters: {rpt_filters}")
+      #log_info(f"Report filters: {rpt_filters}")
 
       # Calculate folder paths
       pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(), 
@@ -321,7 +321,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       pdf_name = f"{player_pair} {rpt_r['Report Description']}.pdf"
       if rpt_r['rpt_type'] == 'dashboard':
         pdf_name = f"{player_pair} {disp_team} {rpt_r['Report Description']}.pdf"
-      log_info(f"PDF name: {pdf_name}")
+      #log_info(f"PDF name: {pdf_name}")
 
       # Process rpts_inc
       rptname_rows = []
@@ -337,7 +337,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         continue
 
       sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
-      log_info(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
+      #log_info(f"Sorted reports: {[r['report_name'] for r in sorted_rptnames]}")
 
       full_rpt_pdf = None
       pdf_files_created = []
@@ -345,7 +345,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Process each report
       for k, rptname in enumerate(sorted_rptnames):
-        log_info(f"Processing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']}")
+        log_info(f"\nProcessing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']}")
 
         # Generate report
         report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
@@ -354,9 +354,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           continue
 
         # Generate JSON
-        log_info(f"Generating JSON for {rptname['rpt_form']}")
+        #log_info(f"Generating JSON for {rptname['rpt_form']}")
         json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
-        log_info(f"Json media returned: {json_media}")
+        #log_info(f"Json media returned: {json_media}")
         if isinstance(json_media, dict) and json_media.get('error'):
           log_info(f"JSON generation failed: {json_media['error']}")
           json_result = None
@@ -379,17 +379,17 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
             
             # Get description from ai_prompt_templates
             #log_info(f"Searching ai prompt table for report description {rpt_r['Report Description']}, Hierarchy 1, coach id {coach_user['ai_summary_level']}")
-            log_info(f"Getting coach AI summary level for {rpt_r['email']}, report descirption = {rpt_r['Report Description']}, ai summary level ={coach_user['ai_summary_level']}")
-            prompt_row = app_tables.ai_prompt_templates.get(
-              report_description=rpt_r['Report Description'],
-              hierarchy_level='1',
-              ai_summary_level=coach_user['ai_summary_level']
-            )
-            log_info(f"Prompt Row Returned: {prompt_row}")
+            #log_info(f"Getting coach AI summary level for {rpt_r['email']}, report descirption = {rpt_r['Report Description']}, ai summary level ={coach_user['ai_summary_level']}")
+            #prompt_row = app_tables.ai_prompt_templates.get(
+            #  report_description=rpt_r['Report Description'],
+            #  hierarchy_level='1',
+            #  ai_summary_level=coach_user['ai_summary_level']
+            #)
+            #log_info(f"Prompt Row Returned: {prompt_row}")
 
             report_data_collection.append({
               'report_name': rptname['report_name'],
-              'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
+              #'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
               'json_data': json_data
             })
           except (json.JSONDecodeError, AttributeError) as e:

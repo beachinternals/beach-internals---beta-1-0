@@ -181,8 +181,8 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
       return {'error': f'Report ID {report_id} not found'}
 
       # Log row content safely
-    log_debug(f"type of report_data_row : {type(rpt_data_row)}")
-    log_debug(f"Report Data row: {dict(rpt_data_row)}")
+    #log_debug(f"type of report_data_row : {type(rpt_data_row)}")
+    #log_debug(f"Report Data row: {dict(rpt_data_row)}")
 
     # Determine file name for JSON safely from report_data_row
     rpt_type = rpt_data_row['title_6'].strip()
@@ -202,7 +202,7 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
 
     # Construct JSON file name
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    log_debug(f"JSON file name: {json_file}")
+    #log_debug(f"JSON file name: {json_file}")
 
     # Prepare report_data dictionary
     report_data = {
@@ -219,7 +219,7 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     # Extract dataframes
     for i in range(1, 11):
       df_key = f'df_{i}'
-      log_debug(f"type of df key: {df_key}, {type(rpt_data_row[df_key])}")
+      #log_debug(f"type of df key: {df_key}, {type(rpt_data_row[df_key])}")
       if isinstance(rpt_data_row[df_key], type(None)):
         report_data['dataframes'][df_key] = None
       else:
@@ -244,7 +244,7 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
         mask = df.applymap(lambda x: bool(re.fullmatch(r":?-+?:?", str(x).strip())))
         df = df[~mask.all(axis=1)].reset_index(drop=True)
 
-        log_debug(f'Dataframe : {df_key}, the dataframe: {df}')
+        #log_debug(f'Dataframe : {df_key}, the dataframe: {df}')
 
         # Now you can convert to JSON
         report_data['dataframes'][df_key] = df.to_dict(orient="records")
