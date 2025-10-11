@@ -916,8 +916,9 @@ def _report_integrated_player_profile_internal(lgy, team, **rpt_filters):
   df_list = ['','','','','','','','','','']
 
   # Get basic title and label setup from database
-  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team, function_name='report_team_profile')
 
+  log_debug(f"Title List from setup_report_basic {title_list} \nLabel_list: {label_list}")
   try:
     # Get data
     disp_league, disp_gender, disp_year = unpack_lgy(lgy)

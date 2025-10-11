@@ -79,6 +79,10 @@ class player_integrated_dashboard(player_integrated_dashboardTemplate):
             self.rpt_subtitle.text = (
               title_list[1] + title_list[3]
             )  # for a league report
+          elif title_list[5] == "dashboard":
+            self.rpt_subtitle.text = (
+            title_list[1] + title_list[4]
+          )  # for a league report
           else:
             self.rpt_subtitle.text = title_list[1]
 
