@@ -714,6 +714,14 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             rpt_r['email'],
             rollup_prompt['desc_beach_volleyball']
           )
+
+          # ADD THIS: Save rollup summary as JSON
+          rollup_json_name = f"rollup_{disp_pair} {rpt_r['Report Description']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+          rollup_json_media = anvil.BlobMedia('application/json', 
+                                    json.dumps(rollup_data, indent=2).encode('utf-8'))
+          rollup_json_result = write_to_nested_folder(json_folder, rollup_json_name, rollup_json_media)
+          pdf_files_created.append({'name': rollup_json_name, 'result': rollup_json_result})
+
           rollup_pdf_summary = generate_ai_pdf_summary(
             report_id=report_id,
             summary=rollup_summary,
