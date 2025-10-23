@@ -483,12 +483,31 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
           log_info(f"Generating rollup AI summary with {len(report_data_collection)} reports")
           rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
+          # Check rpt_mgr flag for images
+          send_images = rpt_r.get('send_ai_images', False)
+          log_info(f"rpt_mgr.send_ai_images = {send_images}")
+
+          # Collect images if enabled
+          image_list = []
+          if send_images and report_id:
+            rpt_data_row = app_tables.report_data.get(report_id=report_id)
+            if rpt_data_row:
+              for i in range(1, 11):
+                img = getattr(rpt_data_row, f'image_{i}', None)
+                if img:
+                  image_list.append(img)
+              log_info(f"Collected {len(image_list)} images for AI summary")
+
+          # Generate AI summary
           rollup_summary = generate_ai_summary(
-            rollup_data, 
-            rollup_prompt_text, 
+            rollup_data,
+            rollup_prompt_text,
             rpt_r['email'],
-            rollup_prompt['desc_beach_volleyball']  # Human-readable context
+            rollup_prompt['desc_beach_volleyball'],
+            images=image_list,
+            include_images=send_images
           )
+
 
           # Generate PDF for the rollup summary
           log_info(f"Generating rollup summary PDF, Gen AI Summary lenght={len(rollup_summary)}")
@@ -744,12 +763,45 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             'reports': report_data_collection
           }
           rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
+
+          # Check if we should send images (from rpt_mgr.send_ai_images flag)
+          send_images = rpt_r.get('send_ai_images', False)
+          log_info(f"rpt_mgr.send_ai_images = {send_images}")
+
+          # Collect images if flag is enabled
+          image_list = []
+          if send_images:
+            # Get images from the scouting overview report (has the shot charts)
+            # The report_id should be available from when you generated the scouting reports
+            # Look for it in the loop where you process scouting_rptnames
+
+            # Option: Store the first scouting report_id in a variable during generation
+            # For example, after this line in your scouting reports loop:
+            #   report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
+            # Add:
+            #   if not hasattr(locals(), 'scouting_overview_report_id'):
+            #       scouting_overview_report_id = report_id
+
+            # Then use it here to get images:
+            if 'scouting_overview_report_id' in locals():
+              scouting_rpt_data = app_tables.report_data.get(report_id=scouting_overview_report_id)
+              if scouting_rpt_data:
+                for i in range(1, 11):
+                  img = getattr(scouting_rpt_data, f'image_{i}', None)
+                  if img:
+                    image_list.append(img)
+                log_info(f"Collected {len(image_list)} images from scouting overview report")
+
+          # Generate AI summary
           rollup_summary = generate_ai_summary(
             rollup_data,
             rollup_prompt_text,
             rpt_r['email'],
-            rollup_prompt['desc_beach_volleyball']
+            rollup_prompt['desc_beach_volleyball'],
+            images=image_list,
+            include_images=send_images
           )
+
 
           # ADD THIS: Save rollup summary as JSON
           rollup_json_name = f"rollup_{disp_pair} {rpt_r['Report Description']}_{today.strftime('%Y%m%d_%H%M%S')}.json"

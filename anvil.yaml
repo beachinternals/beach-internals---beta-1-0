@@ -33,6 +33,9 @@ db_schema:
     - admin_ui: {order: 3.125, width: 200}
       name: ai_summary_level
       type: string
+    - admin_ui: {order: 3.21875, width: 200}
+      name: send_ai_images
+      type: bool
     server: full
     title: ai_prompt_templates
   btd_files:

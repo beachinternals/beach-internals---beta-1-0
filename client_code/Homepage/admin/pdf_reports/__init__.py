@@ -149,6 +149,11 @@ class pdf_reports(pdf_reportsTemplate):
     anvil.server.call('test_rpt_mgr_new_rpts')
     pass
 
+  def button_1_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    anvil.server.call('test_ai_images_flag')
+    pass
+
 
 
 

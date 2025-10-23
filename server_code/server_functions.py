@@ -2581,14 +2581,16 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
   """
   Call Gemini API to generate a summary.
   
-  NEW PARAMETERS:
+  Args:
+    json_data: Performance data (dict or JSON string)
+    prompt_template: Instructions for AI (from ai_prompt_templates table)
+    coach_id: Coach email
+    human_summary: Optional additional context
     images: List of BlobMedia image objects (optional)
-    include_images: Boolean flag - only send images if True (default False)
+    include_images: Boolean - send images to API (controlled by rpt_mgr.send_ai_images)
   
-  EXISTING BEHAVIOR PRESERVED:
-  - Uses prompt from ai_prompt_templates table
-  - Accepts multiple JSONs in report_data_collection
-  - Returns text summary (or structured JSON if images included)
+  Returns:
+    str: AI-generated markdown summary
   """
   try:
     log_debug(f"Generate AI Summary: coach_id={coach_id}, include_images={include_images}, num_images={len(images) if images else 0}")
@@ -2632,19 +2634,22 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     if human_summary:
       prompt_text += f"\n\nAdditional context: {human_summary}"
 
-    # --- Build payload ---
+    # --- Build payload parts ---
     parts = [{"text": prompt_text}]
 
-    # --- ONLY add images if include_images=True ---
+    # --- ONLY add images if include_images=True (set by rpt_mgr.send_ai_images) ---
     if include_images and images and len(images) > 0:
       import base64
-      log_info(f"Including {len(images)} images in API request (cost impact)")
+      log_info(f"Including {len(images)} images in API request (rpt_mgr.send_ai_images=True)")
 
-      # Add instruction to prompt about images
+      # Add instruction about images to prompt
       image_instruction = f"""
 
-You have access to {len(images)} visual charts. When appropriate, reference these in your summary.
-Format: "as shown in Figure [number]" where number is 1-{len(images)}.
+IMPORTANT: You have access to {len(images)} visual charts showing shot distributions and attack patterns.
+- Reference these charts when discussing specific zones or patterns
+- Use format: "as shown in Figure [number]" where number is 1-{len(images)}
+- Image 1: Overall shot chart
+- Images 2-{len(images)}: Zone-specific charts
 """
       parts[0]["text"] += image_instruction
 
@@ -2663,7 +2668,12 @@ Format: "as shown in Figure [number]" where number is 1-{len(images)}.
           })
           log_debug(f"Added image {idx+1} to API request")
         except Exception as e:
-          log_error(f"Failed to add image {idx}: {e}")
+          log_error(f"Failed to add image {idx+1}: {e}")
+    else:
+      if include_images:
+        log_info("include_images=True but no images provided")
+      else:
+        log_info("include_images=False, not sending images (cost savings)")
 
     # --- Build payload ---
     payload = {
@@ -2684,7 +2694,7 @@ Format: "as shown in Figure [number]" where number is 1-{len(images)}.
     # Use Gemini 2.5 Flash
     gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
 
-    log_info(f"Sending request to Gemini API with {len(parts)} parts")
+    log_info(f"Sending request to Gemini API with {len(parts)} parts (1 text + {len(parts)-1} images)")
 
     response = anvil.http.request(
       url=gemini_url,
@@ -2697,7 +2707,7 @@ Format: "as shown in Figure [number]" where number is 1-{len(images)}.
     json_response = json.loads(response._content)
     summary = json_response['candidates'][0]['content']['parts'][0]['text']
 
-    log_info(f"AI Summary Returned: {summary[:200]}...")
+    log_info(f"AI Summary Returned ({len(summary)} chars)")
 
     return summary.strip()
 
@@ -2711,8 +2721,11 @@ Format: "as shown in Figure [number]" where number is 1-{len(images)}.
     return f"Error: Invalid response format from Gemini API - {str(e)}"
   except Exception as e:
     log_critical(f"Unexpected error in generate_ai_summary: {str(e)}")
+    import traceback
+    log_critical(traceback.format_exc())
     return f"Error generating summary: {str(e)}"
     
+
 
 
 #----------------------------------------------------------------------------------
@@ -2832,3 +2845,46 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
     error_msg = f"generate_ai_pdf_summary error: {str(e)}"
     log_error(error_msg)
     return {'pdf': None, 'json_file_name': None, 'error': error_msg}
+
+@anvil.server.callable
+def test_ai_images_flag():
+  """Test the rpt_mgr.send_ai_images flag."""
+
+  # Test 1: With images
+  test_data_1 = {"player": "Test Player", "fbhe": 0.450}
+  prompt_1 = "Analyze this player's performance. Reference shot charts when discussing patterns."
+
+  # Get a real report with images
+  test_report = app_tables.report_data.search()[0]  # Get first report
+  images = []
+  for i in range(1, 6):
+    img = getattr(test_report, f'image_{i}', None)
+    if img:
+      images.append(img)
+
+  result_with_images = generate_ai_summary(
+    test_data_1,
+    prompt_1,
+    coach_id="test@test.com",
+    include_images=True,
+    images=images
+  )
+
+  log_info(f"WITH IMAGES: {result_with_images[:300]}")
+
+  # Test 2: Without images
+  result_without_images = generate_ai_summary(
+    test_data_1,
+    prompt_1,
+    coach_id="test@test.com",
+    include_images=False,
+    images=images  # Images provided but flag is False
+  )
+
+  log_info(f"WITHOUT IMAGES: {result_without_images[:300]}")
+
+  return {
+    "with_images": result_with_images,
+    "without_images": result_without_images,
+    "images_collected": len(images)
+  }

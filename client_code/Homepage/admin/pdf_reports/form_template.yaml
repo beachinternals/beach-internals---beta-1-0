@@ -66,6 +66,11 @@ components:
       name: outlined_button_3
       properties: {role: outlined-button, text: Test Rpt Mgr}
       type: Button
+    - event_bindings: {click: button_1_click}
+      layout_properties: {grid_position: 'MTYNVN,IPVCJM'}
+      name: button_1
+      properties: {text: Test AI w/Images}
+      type: Button
     layout_properties: {grid_position: 'ZNKRMX,ICQEGD'}
     name: column_panel_1
     properties: {}
