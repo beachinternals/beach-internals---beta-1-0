@@ -1065,7 +1065,60 @@ services:
       userPermission: {etag: '"jf1hYjbPZJZ8ZSH-fdVdI1nVR_k"', id: me, kind: drive#permission, pendingOwner: false, role: owner, selfLink: 'https://www.googleapis.com/drive/v2/files/1cU4JKkAqK1gPQIxg7wFSQ0w0FOFhVpUg/permissions/me', type: user}
       version: '1'
       writersCanShare: true
-  server_config: {enc_delegation_refresh_token: /606+GkLWiiQTuUveG2/TuykzLAvR8xArx4SMOvIJG2eZabGnjxXVf/l8tKN7JMnUPB6l1+Sn3XEHlgNilLR5n3My7HFPmpwuhyxffYRIbz+2YowarI3VSsVKGwDyMEMNZaE3tS59fHjE62hbGaWMtPrOjnb275zIRf+glZPU+U/97ZQdIdI2xtQlA484doL/zyWtEFXllirojLN5emrEPJExlEhnaC+If3pXOJQ6WmcXt5SHdNMX8wLB1O2mZ8szoJAlkgJiNxEqlkZwoGZinmWUVc62435E28e8j0qXmN2Mx8nyBalZMAtSezmDw==}
+    - alternateLink: https://drive.google.com/file/d/1fciY1ZrlyhGuxtJwoI_dN6QE2krMahwM/view?usp=drivesdk
+      appDataContents: false
+      capabilities: {canCopy: true, canEdit: true}
+      copyRequiresWriterPermission: false
+      copyable: true
+      createdDate: '2025-10-22T14:02:22.425Z'
+      downloadUrl: https://www.googleapis.com/drive/v2/files/1fciY1ZrlyhGuxtJwoI_dN6QE2krMahwM?alt=media&source=downloadUrl
+      editable: true
+      embedLink: https://drive.google.com/file/d/1fciY1ZrlyhGuxtJwoI_dN6QE2krMahwM/preview?usp=drivesdk
+      etag: '"MTc2MTE0MTgyMjg3Mg"'
+      explicitlyTrashed: false
+      fileExtension: json
+      fileSize: '5769'
+      headRevisionId: 0B5FfLJIkDJdLMXVnOGRRWTBEelEwLzlrMzFMOHlUL1pnQWhFPQ
+      iconLink: https://drive-thirdparty.googleusercontent.com/16/type/application/json
+      id: 1fciY1ZrlyhGuxtJwoI_dN6QE2krMahwM
+      kind: drive#file
+      labels: {hidden: false, restricted: false, starred: false, trashed: false, viewed: true}
+      lastModifyingUser:
+        displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      lastModifyingUserName: Scott White
+      lastViewedByMeDate: '2025-10-22T14:13:28.226Z'
+      markedViewedByMeDate: '1970-01-01T00:00:00.000Z'
+      md5Checksum: e384e84f679838dbabefd77a275abc5e
+      mimeType: application/json
+      modifiedByMeDate: '2025-10-22T14:03:42.872Z'
+      modifiedDate: '2025-10-22T14:03:42.872Z'
+      originalFilename: FSU 02 Gella Serving - Transition after Serve_20251002_090813.json
+      ownerNames: [Scott White]
+      owners:
+      - displayName: Scott White
+        emailAddress: beachinternals@gmail.com
+        isAuthenticatedUser: true
+        kind: drive#user
+        permissionId: '12728020138126228324'
+        picture: {url: 'https://lh3.googleusercontent.com/a/ACg8ocJyl8akwcoasl8d5iMMu1dEWLKAmNseEGpBdYeVV88suuxpAA=s64'}
+      parents:
+      - {id: 1AcleWIHUbKnQFAgL_Ii7Ze7WePabyNND, isRoot: false, kind: drive#parentReference, parentLink: 'https://www.googleapis.com/drive/v2/files/1AcleWIHUbKnQFAgL_Ii7Ze7WePabyNND', selfLink: 'https://www.googleapis.com/drive/v2/files/1fciY1ZrlyhGuxtJwoI_dN6QE2krMahwM/parents/1AcleWIHUbKnQFAgL_Ii7Ze7WePabyNND'}
+      python_name: serving___transition_after_serve_20251002_090813_json
+      quotaBytesUsed: '5769'
+      selfLink: https://www.googleapis.com/drive/v2/files/1fciY1ZrlyhGuxtJwoI_dN6QE2krMahwM
+      shared: false
+      spaces: [drive]
+      title: Serving - Transition after Serve_20251002_090813.json
+      userPermission: {etag: '"ISFYdJ1yoBVHU2SV8w9O0Mj6b2I"', id: me, kind: drive#permission, pendingOwner: false, role: owner, selfLink: 'https://www.googleapis.com/drive/v2/files/1fciY1ZrlyhGuxtJwoI_dN6QE2krMahwM/permissions/me', type: user}
+      version: '6'
+      webContentLink: https://drive.google.com/uc?id=1fciY1ZrlyhGuxtJwoI_dN6QE2krMahwM&export=download
+      writersCanShare: true
+  server_config: {enc_delegation_refresh_token: EuwKZk6GgO4HHizcKm1wRU7DRdz2nt29GwhxmxRtst4k2BbAMntjj5cyrJBLyuAcw/kiAGVjGxL7NMWxzGH3MbGFBAqtpEu//hfwxPe9IQpQodBmpf8lZiSCgcsocwpgmENSQIVTSSIsechMKnw4GlMkYc8C4uP5pbROb36OOzPcCDk3BWB0VbNt+hY8uNU1JoitgLFs7Wi9ew23+ijl+3OjYlV717DsP1JRT9o26svtPR0V/bn9V317LRDAhtMN6tXA5/uWTrcaZ+PhKUiqjfB2/rUPsZtvbgA4EyZog1nsWp4oqeStOJj9P7UiNg==}
   source: /runtime/services/google.yml
 - client_config: {}
   server_config: {test_mode: false}

@@ -168,10 +168,73 @@ def strip_nulls_safe(obj, path="root"):
     return obj
 
 # -----------------------------------------------------------------------------
+# NEW FUNCTION: Add this after the strip_nulls_safe function (around line 168)
+# -----------------------------------------------------------------------------
+
+def strip_urls_safe(obj, path="root"):
+  """
+  Recursively strip URLs from strings in a data structure.
+  Replaces URL-like strings with empty string or removes them entirely.
+  
+  Args:
+    obj: The object to process (dict, list, or primitive)
+    path: Current path for debugging (default: "root")
+    
+  Returns:
+    The processed object with URLs removed
+  """
+  import re
+
+  # URL detection pattern - matches http://, https://, and www. URLs
+  url_pattern = r'https?://[^\s]+|www\.[^\s]+'
+
+  if isinstance(obj, dict):
+    new_obj = {}
+    for k, v in obj.items():
+      full_path = f"{path}.{k}"
+      new_obj[k] = strip_urls_safe(v, full_path)
+    return new_obj
+
+  elif isinstance(obj, list):
+    return [strip_urls_safe(item, f"{path}[{i}]") for i, item in enumerate(obj)]
+
+  elif isinstance(obj, str):
+    # Check if the string contains a URL
+    if re.search(url_pattern, obj):
+      # Option 1: Replace URL with empty string (keeps the field)
+      cleaned = re.sub(url_pattern, '', obj).strip()
+      return cleaned if cleaned else None
+
+      # Option 2: Return None to remove the field entirely (uncomment to use)
+      # return None
+    return obj
+
+  else:
+    return obj
+    
+# -----------------------------------------------------------------------------
 # Generate JSON from report_data_row
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# UPDATED FUNCTION: Replace the existing generate_json_report function
+# Starting at line 173
+# -----------------------------------------------------------------------------
+
 def generate_json_report(rpt_form, report_id, include_images=False, include_urls=False, include_nulls=True):
-  """Generate a PDF report and save all report data as JSON to Google Drive."""
+  """
+  Generate a JSON report from report_data table.
+  
+  Args:
+    rpt_form: Report form identifier
+    report_id: ID of the report in app_tables.report_data
+    include_images: If True, include base64-encoded images (default: False)
+    include_urls: If True, keep URLs in the data; if False, strip them (default: False)
+    include_nulls: If True, keep null/empty values; if False, strip them (default: True)
+    
+  Returns:
+    anvil.BlobMedia: JSON file as BlobMedia object
+    dict: {'error': str} if an error occurs
+  """
 
   try:
     # Get report row
@@ -179,10 +242,6 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     if not rpt_data_row:
       log_error(f"Report ID {report_id} not found", with_traceback=False)
       return {'error': f'Report ID {report_id} not found'}
-
-      # Log row content safely
-    #log_debug(f"type of report_data_row : {type(rpt_data_row)}")
-    #log_debug(f"Report Data row: {dict(rpt_data_row)}")
 
     # Determine file name for JSON safely from report_data_row
     rpt_type = rpt_data_row['title_6'].strip()
@@ -202,7 +261,6 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
 
     # Construct JSON file name
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    #log_debug(f"JSON file name: {json_file}")
 
     # Prepare report_data dictionary
     report_data = {
@@ -219,7 +277,6 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     # Extract dataframes
     for i in range(1, 11):
       df_key = f'df_{i}'
-      #log_debug(f"type of df key: {df_key}, {type(rpt_data_row[df_key])}")
       if isinstance(rpt_data_row[df_key], type(None)):
         report_data['dataframes'][df_key] = None
       else:
@@ -244,12 +301,10 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
         mask = df.applymap(lambda x: bool(re.fullmatch(r":?-+?:?", str(x).strip())))
         df = df[~mask.all(axis=1)].reset_index(drop=True)
 
-        #log_debug(f'Dataframe : {df_key}, the dataframe: {df}')
-
         # Now you can convert to JSON
         report_data['dataframes'][df_key] = df.to_dict(orient="records")
 
-        # Extract images
+    # Extract images
     for i in range(1, 11):
       img_key = f'image_{i}'
       if isinstance(rpt_data_row[img_key], type(None)):
@@ -266,13 +321,17 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
             'data_uri': f"data:{content_type};base64,{img_base64}"
           }
 
+    # NEW: Strip URLs if include_urls is False
+    if not include_urls:
+      log_debug("Stripping URLs from report_data")
+      report_data = strip_urls_safe(report_data)
 
-        # Optionally strip nulls
+    # Optionally strip nulls (this was already here)
     if not include_nulls:
       log_debug("Stripping nulls from report_data")
       report_data = strip_nulls_safe(report_data)
 
-      # Convert to JSON media
+    # Convert to JSON media
     json_str = json.dumps(report_data, indent=2, default=str)
     json_bytes = json_str.encode('utf-8')
     json_media = anvil.BlobMedia(content_type='application/json', content=json_bytes, name=json_file)
