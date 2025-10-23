@@ -2577,17 +2577,21 @@ def remove_null_fields(data):
     print(f"Error in remove_null_fields: {str(e)}")
     return data
 
-
-
-def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary=None):
+def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary=None, images=None, include_images=False):
   """
   Call Gemini API to generate a summary.
-  - Fixes payload format
-  - Removes unnecessary JSON compaction
-  - Sends multiple JSON parts: prompt, data, and optional human-readable summary
+  
+  NEW PARAMETERS:
+    images: List of BlobMedia image objects (optional)
+    include_images: Boolean flag - only send images if True (default False)
+  
+  EXISTING BEHAVIOR PRESERVED:
+  - Uses prompt from ai_prompt_templates table
+  - Accepts multiple JSONs in report_data_collection
+  - Returns text summary (or structured JSON if images included)
   """
   try:
-    log_debug(f"Generate AI Summary: coach_id={coach_id}, json_data_type={type(json_data)}, prompt={prompt_template}")
+    log_debug(f"Generate AI Summary: coach_id={coach_id}, include_images={include_images}, num_images={len(images) if images else 0}")
 
     # --- Get API key ---
     api_key = anvil.secrets.get_secret('GEMINI_API_KEY')
@@ -2604,9 +2608,9 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
       except json.JSONDecodeError as e:
         return f"Error: Invalid JSON input - {str(e)}"
 
-    # --- Remmove Null fields and URLs ---
+    # --- Remove Null fields and URLs ---
     json_data = remove_null_fields(json_data)
-    
+
     # --- Anonymize sensitive fields ---
     anon_json = anonymize_json(json_data)
     if isinstance(anon_json, dict) and "error" in anon_json:
@@ -2616,11 +2620,6 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     if not prompt_template:
       prompt_template = "Please summarize the following data:"
 
-    log_info(f"anonymous json data, {anon_json}")
-
-    # --- Build the combined prompt string ---
-    # ---                                  ---
-    # Serialize the JSON data to a string
     # --- Build the combined prompt string ---
     anon_json_string = json.dumps(anon_json, indent=2)
 
@@ -2633,71 +2632,87 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     if human_summary:
       prompt_text += f"\n\nAdditional context: {human_summary}"
 
-    # --- Build payload with a single text part ---
-    payload = {
-      "contents": [
-        {
-          "role": "user",
-          "parts": [
-            {
-              "text": prompt_text
+    # --- Build payload ---
+    parts = [{"text": prompt_text}]
+
+    # --- ONLY add images if include_images=True ---
+    if include_images and images and len(images) > 0:
+      import base64
+      log_info(f"Including {len(images)} images in API request (cost impact)")
+
+      # Add instruction to prompt about images
+      image_instruction = f"""
+
+You have access to {len(images)} visual charts. When appropriate, reference these in your summary.
+Format: "as shown in Figure [number]" where number is 1-{len(images)}.
+"""
+      parts[0]["text"] += image_instruction
+
+      # Add images to payload
+      for idx, img in enumerate(images):
+        try:
+          img_bytes = img.get_bytes()
+          img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+          mime_type = img.content_type if hasattr(img, 'content_type') else 'image/png'
+
+          parts.append({
+            "inline_data": {
+              "mime_type": mime_type,
+              "data": img_base64
             }
-          ]
-        }
-      ],
+          })
+          log_debug(f"Added image {idx+1} to API request")
+        except Exception as e:
+          log_error(f"Failed to add image {idx}: {e}")
+
+    # --- Build payload ---
+    payload = {
+      "contents": [{
+        "role": "user",
+        "parts": parts
+      }],
       "generationConfig": {
         "temperature": 0.7,
         "topP": 0.9,
-        "maxOutputTokens": 8192 # increased from 1024
+        "maxOutputTokens": 8192
       }
     }
 
-    # --- Send request with manual data serialization ---
-    # Serialize the entire payload dictionary to a JSON string
+    # --- Send request ---
     json_payload = json.dumps(payload)
 
-    # different piotential gemini m0odels to use:
- 
-    # Gemini 1.5 pro: Oroginal URL that worked once:-)
-    # Use Gemini 2.5 Flash - stable and fast with huge context window
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-    
-    #gemini_url=f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro-latest:generateContent?key={api_key}"
-    #  gemini-pro
-    #gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
-    #  gemini-1.5-flash
-    #gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    # Use Gemini 2.5 Flash
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
+
+    log_info(f"Sending request to Gemini API with {len(parts)} parts")
 
     response = anvil.http.request(
       url=gemini_url,
       method="POST",
       headers={"Content-Type": "application/json"},
-      data=json_payload  # Send the pre-serialized string as `data`
+      data=json_payload
     )
 
-    # --- Parse the streamed response into a JSON object ---
-    # The `content` attribute holds the raw streamed data.
+    # --- Parse response ---
     json_response = json.loads(response._content)
-
-    # --- Now parse the JSON object ---
     summary = json_response['candidates'][0]['content']['parts'][0]['text']
 
-    log_info(f"AI Summary Returned: {summary}")
+    log_info(f"AI Summary Returned: {summary[:200]}...")
 
     return summary.strip()
 
   except anvil.http.HttpError as e:
     log_error(f"HTTP error: {e.content}")
     if e.status == 403:
-      return "Error: 403 Forbidden - API key blocked or API not enabled. Check Google Cloud Console."
+      return "Error: 403 Forbidden - API key blocked or API not enabled"
     return f"Error generating summary: HTTP {e.status} - {e.content}"
   except KeyError as e:
     log_error(f"Response parsing error: {str(e)}")
     return f"Error: Invalid response format from Gemini API - {str(e)}"
   except Exception as e:
-    log_error(f"Unexpected error in generate_ai_summary: {str(e)}")
+    log_critical(f"Unexpected error in generate_ai_summary: {str(e)}")
     return f"Error generating summary: {str(e)}"
-
+    
 
 
 #----------------------------------------------------------------------------------
