@@ -254,10 +254,11 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     elif rpt_type == 'dashboard':
       base_name = rpt_data_row['title_9']
     elif rpt_type == 'scouting':
-      base_name = rpt_data_row['title_9']
+      base_name = rpt_data_row['title_9'] or rpt_data_row['title_10'] or 'Scouting'
     else:
       base_name = 'Unknown'
-    base_name = base_name.strip()
+    base_name = base_name.strip() if base_name else 'Unknown'
+
 
     # Construct JSON file name
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
