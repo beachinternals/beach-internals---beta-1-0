@@ -598,12 +598,29 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
       # --- Process Scouting Reports ---
       rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
       rpt_filters['pair'] = disp_pair
-      for rptname in scouting_rptnames:
+
+      for k, rptname in enumerate(scouting_rptnames):
+        log_info(f"\n{'='*60}")
+        log_info(f"SCOUTING REPORT {k+1}/{len(scouting_rptnames)}")
+        log_info(f"Report Name: {rptname['report_name']}")
+        log_info(f"Function: {rptname['function_name']}")
+        log_info(f"{'='*60}")
+
+        log_info(f"STEP 1: Generating scouting report")
         report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
+        log_info(f"STEP 1 RESULT: report_id = {report_id}")
+
         if not report_id:
+          log_error(f"STEP 1 FAILED: No report_id for {rptname['report_name']}")
           continue
 
+        log_info(f"STEP 2: Generating JSON")
         json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
+        log_info(f"STEP 2 RESULT: json_media type = {type(json_media)}")
+        log_info(f"  - Is dict: {isinstance(json_media, dict)}")
+        if isinstance(json_media, dict):
+          log_info(f"  - Has error: {json_media.get('error')}")
+        
         if not isinstance(json_media, dict) or not json_media.get('error'):
           try:
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
@@ -639,12 +656,31 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
         player_pdf = None
         player_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
         player_filters['player'] = player
-        for rptname in player_rptnames:
+
+        for k, rptname in enumerate(player_rptnames):
+          log_info(f"\n{'='*60}")
+          log_info(f"PLAYER {label.upper()} REPORT {k+1}/{len(player_rptnames)}")
+          log_info(f"Report Name: {rptname['report_name']}")
+          log_info(f"Function: {rptname['function_name']}")
+          log_info(f"Player: {player}")
+          log_info(f"{'='*60}")
+
+          log_info(f"STEP 1: Generating player report")
           report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **player_filters)
+          log_info(f"STEP 1 RESULT: report_id = {report_id}")
+
           if not report_id:
+            log_error(f"STEP 1 FAILED: No report_id for {rptname['report_name']}")
             continue
 
+          log_info(f"STEP 2: Generating JSON")
           json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
+          log_info(f"STEP 2 RESULT: json_media type = {type(json_media)}")
+          log_info(f"  - Is dict: {isinstance(json_media, dict)}")
+          if isinstance(json_media, dict):
+            log_info(f"  - Has error: {json_media.get('error')}")
+        
+          
           if not isinstance(json_media, dict) or not json_media.get('error'):
             try:
               json_data = json.loads(json_media.get_bytes().decode('utf-8'))
