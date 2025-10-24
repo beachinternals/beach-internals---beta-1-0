@@ -2642,24 +2642,33 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
       import base64
       log_info(f"Including {len(images)} images in API request (rpt_mgr.send_ai_images=True)")
 
-      # Add instruction about images to prompt
-      image_instruction = f"""
-
-IMPORTANT: You have access to {len(images)} visual charts showing shot distributions and attack patterns.
-- Reference these charts when discussing specific zones or patterns
-- Use format: "as shown in Figure [number]" where number is 1-{len(images)}
-- Image 1: Overall shot chart
-- Images 2-{len(images)}: Zone-specific charts
-"""
-      parts[0]["text"] += image_instruction
+      # ... image instruction code ...
 
       # Add images to payload
       for idx, img in enumerate(images):
         try:
-          img_bytes = img.get_bytes()
-          img_base64 = base64.b64encode(img_bytes).decode('utf-8')
-          mime_type = img.content_type if hasattr(img, 'content_type') else 'image/png'
+          # Handle LazyMedia - convert to BlobMedia first
+          if hasattr(img, 'get_bytes'):
+            img_bytes = img.get_bytes()
+          else:
+            # For LazyMedia, read the content
+            img_bytes = img.get_bytes() if callable(getattr(img, 'get_bytes', None)) else bytes(img)
 
+            # Convert to base64
+          img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+
+          # Get mime type - LazyMedia may not have content_type
+          if hasattr(img, 'content_type') and img.content_type:
+            mime_type = img.content_type
+          elif hasattr(img, 'mime_type') and img.mime_type:
+            mime_type = img.mime_type
+          else:
+            mime_type = 'image/png'  # Default assumption
+
+          log_debug(f"Processing image {idx+1}: type={type(img).__name__}, mime={mime_type}, size={len(img_bytes)} bytes")
+    
+
+          
           parts.append({
             "inline_data": {
               "mime_type": mime_type,
@@ -2846,6 +2855,7 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
     log_error(error_msg)
     return {'pdf': None, 'json_file_name': None, 'error': error_msg}
 
+
 @anvil.server.callable
 def test_ai_images_flag():
   """Test the rpt_mgr.send_ai_images flag with real report data."""
@@ -2870,23 +2880,30 @@ def test_ai_images_flag():
       log_error("No reports found with images!")
       return {"error": "No reports with images found. Generate a scouting report first."}
 
-      # Collect images from this report
+      # Collect images from this report - FIXED VERSION
     images = []
     for i in range(1, 11):
-      img = getattr(report_with_images, f'image_{i}', None)
-      if img:
-        images.append(img)
-        log_info(f"Collected image_{i}")
+      img_field = f'image_{i}'
+      try:
+        img = report_with_images[img_field]  # Dictionary-style access
+        if img:
+          images.append(img)
+          log_info(f"✓ Collected {img_field}: {type(img).__name__}, size: {len(img.get_bytes())} bytes")
+      except Exception as e:
+        log_debug(f"No image at {img_field} or error: {e}")
 
     log_info(f"Total images collected: {len(images)}")
 
     if len(images) == 0:
+      log_error("Report found but no images could be extracted!")
+      # Debug: print what fields the report HAS
+      log_info(f"Report fields: {list(report_with_images.keys())}")
       return {"error": "Report found but no images could be extracted"}
 
       # Get some real data from the report
     test_data = {
       "report_id": report_with_images['report_id'],
-      "title": report_with_images.get('title_1', 'Test Report'),
+      "title": report_with_images['title_1'] if report_with_images['title_1'] else 'Test Report',
       "player": "Test Player",
       "fbhe": 0.450,
       "attacks": 100,
@@ -2903,8 +2920,8 @@ Key metrics:
 - Errors: 10
 
 You have access to shot charts showing attack distribution across the court.
-Reference these charts when discussing attack patterns and zone effectiveness.
-Format: "as shown in Figure [number]"
+When discussing attack patterns, reference these visual charts using "as shown in Figure [number]".
+Provide insights based on both the statistics and the visual patterns you observe.
 """
 
     # Test 1: WITH images
@@ -2932,25 +2949,30 @@ Format: "as shown in Figure [number]"
     log_info(f"WITHOUT IMAGES Result: {result_without_images[:300]}...")
 
     # Compare results
-    with_images_mentions_figures = "Figure" in result_with_images or "figure" in result_with_images
-    without_images_mentions_figures = "Figure" in result_without_images or "figure" in result_without_images
+    with_images_mentions_figures = "Figure" in result_with_images or "figure" in result_with_images or "chart" in result_with_images.lower()
+    without_images_mentions_figures = "Figure" in result_without_images or "figure" in result_without_images or "chart" in result_without_images.lower()
 
     return {
       "success": True,
+      "report_id": report_with_images['report_id'],
       "images_collected": len(images),
       "with_images": {
         "length": len(result_with_images),
         "preview": result_with_images[:500],
-        "mentions_figures": with_images_mentions_figures
+        "mentions_figures": with_images_mentions_figures,
+        "full": result_with_images
       },
       "without_images": {
         "length": len(result_without_images),
         "preview": result_without_images[:500],
-        "mentions_figures": without_images_mentions_figures
+        "mentions_figures": without_images_mentions_figures,
+        "full": result_without_images
       },
       "comparison": {
         "with_images_longer": len(result_with_images) > len(result_without_images),
-        "difference_chars": len(result_with_images) - len(result_without_images)
+        "difference_chars": len(result_with_images) - len(result_without_images),
+        "both_mention_figures": with_images_mentions_figures and without_images_mentions_figures,
+        "only_with_images_mentions": with_images_mentions_figures and not without_images_mentions_figures
       }
     }
 
@@ -2959,4 +2981,5 @@ Format: "as shown in Figure [number]"
     import traceback
     log_critical(traceback.format_exc())
     return {"error": str(e), "traceback": traceback.format_exc()}
+
     
