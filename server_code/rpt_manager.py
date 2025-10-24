@@ -764,43 +764,54 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           }
           rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
 
+          # ========== AI SUMMARY GENERATION ==========
+          log_info("=== GENERATING AI SUMMARY ===")
+          
           # Check if we should send images (from rpt_mgr.send_ai_images flag)
-          send_images = rpt_r.get('send_ai_images', False)
+          try:
+            send_images = rpt_r['send_ai_images']
+          except (KeyError, TypeError):
+            send_images = False
+            
           log_info(f"rpt_mgr.send_ai_images = {send_images}")
 
           # Collect images if flag is enabled
+          # Collect images if flag is enabled
           image_list = []
           if send_images:
-            # Get images from the scouting overview report (has the shot charts)
-            # The report_id should be available from when you generated the scouting reports
-            # Look for it in the loop where you process scouting_rptnames
+            log_info("Collecting images for AI summary from player reports...")
 
-            # Option: Store the first scouting report_id in a variable during generation
-            # For example, after this line in your scouting reports loop:
-            #   report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
-            # Add:
-            #   if not hasattr(locals(), 'scouting_overview_report_id'):
-            #       scouting_overview_report_id = report_id
+            # Get images from PLAYER reports (they have shot charts)
+            # Player reports are stored with IDs we need to track
 
-            # Then use it here to get images:
-            if 'scouting_overview_report_id' in locals():
-              scouting_rpt_data = app_tables.report_data.get(report_id=scouting_overview_report_id)
-              if scouting_rpt_data:
+            # Option 1: Get from most recent player reports
+            # Find player reports that were just generated
+            player_report_ids = []
+
+            # If you track generated_reports during the loop:
+            for report_name, report_id in generated_reports:
+              if 'Attacking - Tendencies' in report_name or 'Attack' in report_name:
+                player_report_ids.append(report_id)
+
+            # Collect images from these player reports
+            for report_id in player_report_ids[:2]:  # Limit to first 2 players
+              player_rpt_data = app_tables.report_data.get(report_id=report_id)
+              if player_rpt_data:
                 for i in range(1, 11):
-                  img = getattr(scouting_rpt_data, f'image_{i}', None)
-                  if img:
-                    image_list.append(img)
-                log_info(f"Collected {len(image_list)} images from scouting overview report")
+                  try:
+                    img = player_rpt_data[f'image_{i}']
+                    if img:
+                      image_list.append(img)
+                      log_info(f"✓ Collected image_{i} from player report {report_id[:8]}")
+                  except:
+                    pass
 
-          # Generate AI summary
-          rollup_summary = generate_ai_summary(
-            rollup_data,
-            rollup_prompt_text,
-            rpt_r['email'],
-            rollup_prompt['desc_beach_volleyball'],
-            images=image_list,
-            include_images=send_images
-          )
+            log_info(f"Total images collected: {len(image_list)}")
+
+            if len(image_list) == 0:
+              log_info("WARNING: send_ai_images=True but no images found in player reports")
+    
+        
 
 
           # ADD THIS: Save rollup summary as JSON
