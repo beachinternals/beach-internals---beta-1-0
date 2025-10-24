@@ -2848,43 +2848,115 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
 
 @anvil.server.callable
 def test_ai_images_flag():
-  """Test the rpt_mgr.send_ai_images flag."""
+  """Test the rpt_mgr.send_ai_images flag with real report data."""
 
-  # Test 1: With images
-  test_data_1 = {"player": "Test Player", "fbhe": 0.450}
-  prompt_1 = "Analyze this player's performance. Reference shot charts when discussing patterns."
+  try:
+    log_info("=== Starting AI Images Flag Test ===")
 
-  # Get a real report with images
-  test_report = app_tables.report_data.search()[0]  # Get first report
-  images = []
-  for i in range(1, 6):
-    img = getattr(test_report, f'image_{i}', None)
-    if img:
-      images.append(img)
+    # Find a report that actually HAS images
+    all_reports = app_tables.report_data.search(
+      tables.order_by("created_at", ascending=False)
+    )
 
-  result_with_images = generate_ai_summary(
-    test_data_1,
-    prompt_1,
-    coach_id="test@test.com",
-    include_images=True,
-    images=images
-  )
+    report_with_images = None
+    for report in all_reports:
+      # Check if this report has at least one image
+      if report['image_1']:
+        report_with_images = report
+        log_info(f"Found report with images: {report['report_id']}")
+        break
 
-  log_info(f"WITH IMAGES: {result_with_images[:300]}")
+    if not report_with_images:
+      log_error("No reports found with images!")
+      return {"error": "No reports with images found. Generate a scouting report first."}
 
-  # Test 2: Without images
-  result_without_images = generate_ai_summary(
-    test_data_1,
-    prompt_1,
-    coach_id="test@test.com",
-    include_images=False,
-    images=images  # Images provided but flag is False
-  )
+      # Collect images from this report
+    images = []
+    for i in range(1, 11):
+      img = getattr(report_with_images, f'image_{i}', None)
+      if img:
+        images.append(img)
+        log_info(f"Collected image_{i}")
 
-  log_info(f"WITHOUT IMAGES: {result_without_images[:300]}")
+    log_info(f"Total images collected: {len(images)}")
 
-  return {
-    "with_images": result_with_images,
-    "without_images": result_without_images,
-    "images_collected": len(images)
-  }
+    if len(images) == 0:
+      return {"error": "Report found but no images could be extracted"}
+
+      # Get some real data from the report
+    test_data = {
+      "report_id": report_with_images['report_id'],
+      "title": report_with_images.get('title_1', 'Test Report'),
+      "player": "Test Player",
+      "fbhe": 0.450,
+      "attacks": 100,
+      "kills": 45,
+      "errors": 10
+    }
+
+    prompt = """Analyze this beach volleyball player's attacking performance. 
+        
+Key metrics:
+- FBHE (First Ball Hitting Efficiency): 0.450
+- Total Attacks: 100
+- Kills: 45
+- Errors: 10
+
+You have access to shot charts showing attack distribution across the court.
+Reference these charts when discussing attack patterns and zone effectiveness.
+Format: "as shown in Figure [number]"
+"""
+
+    # Test 1: WITH images
+    log_info("=== Test 1: WITH IMAGES ===")
+    result_with_images = generate_ai_summary(
+      test_data,
+      prompt,
+      coach_id="test@test.com",
+      include_images=True,
+      images=images
+    )
+
+    log_info(f"WITH IMAGES Result: {result_with_images[:300]}...")
+
+    # Test 2: WITHOUT images (same data, just flag=False)
+    log_info("=== Test 2: WITHOUT IMAGES ===")
+    result_without_images = generate_ai_summary(
+      test_data,
+      prompt,
+      coach_id="test@test.com",
+      include_images=False,
+      images=images  # Images available but not sent
+    )
+
+    log_info(f"WITHOUT IMAGES Result: {result_without_images[:300]}...")
+
+    # Compare results
+    with_images_mentions_figures = "Figure" in result_with_images or "figure" in result_with_images
+    without_images_mentions_figures = "Figure" in result_without_images or "figure" in result_without_images
+
+    return {
+      "success": True,
+      "images_collected": len(images),
+      "with_images": {
+        "length": len(result_with_images),
+        "preview": result_with_images[:500],
+        "mentions_figures": with_images_mentions_figures
+      },
+      "without_images": {
+        "length": len(result_without_images),
+        "preview": result_without_images[:500],
+        "mentions_figures": without_images_mentions_figures
+      },
+      "comparison": {
+        "with_images_longer": len(result_with_images) > len(result_without_images),
+        "difference_chars": len(result_with_images) - len(result_without_images)
+      }
+    }
+
+  except Exception as e:
+    log_critical(f"Test failed: {e}")
+    import traceback
+    log_critical(traceback.format_exc())
+    return {"error": str(e), "traceback": traceback.format_exc()}
+    
