@@ -581,8 +581,38 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
 
 
-
 def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
+  """
+  Generate scouting reports for pairs, including both pair-level and individual player reports.
+  
+  This function processes scouting reports by:
+  1. Generating pair-level scouting reports (e.g., opponent analysis)
+  2. Generating individual player reports for both players in the pair
+  3. Creating JSON files for all reports for data analysis
+  4. Merging PDFs in the correct order (pair report, player1 reports, player2 reports)
+  5. Generating a rollup AI summary based on all collected report data
+  6. Saving all files to appropriate Google Drive folders
+  
+  Args:
+      rpt_r (dict): Report row from rpt_mgr table containing:
+          - Report Description: Name of the report
+          - email: Coach email for AI summary level lookup
+          - rpts_inc: List of report specifications to generate
+      pair_list (list): List of pair dictionaries containing:
+          - pair: Pair identifier (format: "Player1/Player2")
+          - league, gender, year: Competition identifiers
+          - team: Team name
+      disp_team (str): Team name for folder organization
+      
+  Returns:
+      tuple: (return_text, report_infos)
+          - return_text (str): Status messages for logging/email
+          - report_infos (list): List of dicts containing report metadata:
+              - player_pair: Pair identifier
+              - description: Report description
+              - combined: Status of combined PDF generation
+              - individuals: List of individual file creation results
+  """
   today = datetime.now()
   return_text = ''
   report_infos = []
@@ -596,50 +626,46 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
       disp_pair = p['pair']
       if not disp_pair:
         continue
+
+      # Get individual player names from the pair
       player1, player2 = pair_players(disp_pair)
 
+      # Set up folder structure for PDFs and JSONs
       pdf_folder = [p['league'].strip() + p['gender'].strip() + p['year'].strip(),
                     disp_team.strip(), today.strftime("%Y-%m-%d")]
       json_folder = pdf_folder + ['json']
       lgy = f"{p['league']} | {p['gender']} | {p['year']}"
 
+      # Parse the reports to generate from rpts_inc
       rptname_rows = [{'report_name': r['report_name'], 'rpt_type': r['rpt_type'], 'order': r['order'],
                        'function_name': r['function_name'], 'rpt_form': r['rpt_form'], 'id': r['id']}
                       for r in rpt_r['rpts_inc'] or []]
       sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
+
+      # Separate scouting reports (pair-level) from player reports
       scouting_rptnames = [r for r in sorted_rptnames if r['rpt_type'] == 'scouting']
       player_rptnames = [r for r in sorted_rptnames if r['rpt_type'] != 'scouting']
 
+      # Initialize PDF holders
       pair_pdf, player1_pdf, player2_pdf = None, None, None
       pdf_files_created = []
-      report_data_collection = []  # NEW: collect JSONs for rollup
+      report_data_collection = []  # Collect all JSONs for rollup AI summary
 
-      # --- Process Scouting Reports ---
+      # ===================================================================
+      # SECTION 1: Process Scouting Reports (Pair-Level Analysis)
+      # ===================================================================
       rpt_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
       rpt_filters['pair'] = disp_pair
 
-      for k, rptname in enumerate(scouting_rptnames):
-        log_info(f"\n{'='*60}")
-        log_info(f"SCOUTING REPORT {k+1}/{len(scouting_rptnames)}")
-        log_info(f"Report Name: {rptname['report_name']}")
-        log_info(f"Function: {rptname['function_name']}")
-        log_info(f"{'='*60}")
-
-        log_info(f"STEP 1: Generating scouting report")
+      for rptname in scouting_rptnames:
+        # Generate the report data
         report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)
-        log_info(f"STEP 1 RESULT: report_id = {report_id}")
-
         if not report_id:
-          log_error(f"STEP 1 FAILED: No report_id for {rptname['report_name']}")
           continue
 
-        log_info(f"STEP 2: Generating JSON")
-        json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
-        log_info(f"STEP 2 RESULT: json_media type = {type(json_media)}")
-        log_info(f"  - Is dict: {isinstance(json_media, dict)}")
-        if isinstance(json_media, dict):
-          log_info(f"  - Has error: {json_media.get('error')}")
-        
+        # Generate JSON version for data analysis
+        json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, 
+                                          include_urls=False, include_nulls=False)
         if not isinstance(json_media, dict) or not json_media.get('error'):
           try:
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
@@ -647,7 +673,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             json_result = write_to_nested_folder(json_folder, json_name, json_media)
             pdf_files_created.append({'name': json_name, 'result': json_result})
 
-            # lookup prompt description
+            # Get coach's AI summary level preference and prompt description
             coach_user = app_tables.users.get(email=rpt_r['email'])
             ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
             prompt_row = app_tables.ai_prompt_templates.get(
@@ -656,6 +682,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
               ai_summary_level=ai_summary_level
             )
 
+            # Collect data for AI summary
             report_data_collection.append({
               'report_name': rptname['report_name'],
               'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
@@ -664,42 +691,29 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           except Exception as e:
             log_critical(f"Failed to parse scouting json_media: {e}")
 
-            # Generate PDF
+        # Generate PDF version
         pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
         if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
           pair_pdf = merge_pdfs(pair_pdf, pdf_result['pdf'],
                                 pdf_name=f"{disp_pair} scouting_combined_{rpt_r['Report Description']}.pdf") if pair_pdf else pdf_result['pdf']
 
-          # --- Process Player Reports (Player 1 and Player 2) ---
+      # ===================================================================
+      # SECTION 2: Process Player Reports (Individual Player Analysis)
+      # ===================================================================
       for player, label in [(player1, "player1"), (player2, "player2")]:
         player_pdf = None
         player_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
         player_filters['player'] = player
-
-        for k, rptname in enumerate(player_rptnames):
-          log_info(f"\n{'='*60}")
-          log_info(f"PLAYER {label.upper()} REPORT {k+1}/{len(player_rptnames)}")
-          log_info(f"Report Name: {rptname['report_name']}")
-          log_info(f"Function: {rptname['function_name']}")
-          log_info(f"Player: {player}")
-          log_info(f"{'='*60}")
-
-          log_info(f"STEP 1: Generating player report")
+        
+        for rptname in player_rptnames:
+          # Generate the report data
           report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **player_filters)
-          log_info(f"STEP 1 RESULT: report_id = {report_id}")
-
           if not report_id:
-            log_error(f"STEP 1 FAILED: No report_id for {rptname['report_name']}")
             continue
 
-          log_info(f"STEP 2: Generating JSON")
-          json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
-          log_info(f"STEP 2 RESULT: json_media type = {type(json_media)}")
-          log_info(f"  - Is dict: {isinstance(json_media, dict)}")
-          if isinstance(json_media, dict):
-            log_info(f"  - Has error: {json_media.get('error')}")
-        
-          
+          # Generate JSON version for data analysis
+          json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, 
+                                           include_urls=False, include_nulls=False)
           if not isinstance(json_media, dict) or not json_media.get('error'):
             try:
               json_data = json.loads(json_media.get_bytes().decode('utf-8'))
@@ -707,6 +721,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
               json_result = write_to_nested_folder(json_folder, json_name, json_media)
               pdf_files_created.append({'name': json_name, 'result': json_result})
 
+              # Get coach's AI summary level preference and prompt description
               coach_user = app_tables.users.get(email=rpt_r['email'])
               ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
               prompt_row = app_tables.ai_prompt_templates.get(
@@ -715,6 +730,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
                 ai_summary_level=ai_summary_level
               )
 
+              # Collect data for AI summary
               report_data_collection.append({
                 'report_name': rptname['report_name'],
                 'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
@@ -723,29 +739,39 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             except Exception as e:
               log_critical(f"Failed to parse {label} json_media: {e}")
 
+          # Generate PDF version
           pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
           if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
             player_pdf = merge_pdfs(player_pdf, pdf_result['pdf'],
                                     pdf_name=f"{player} {label}_combined_{rpt_r['Report Description']}.pdf") if player_pdf else pdf_result['pdf']
 
+        # Store the completed player PDF
         if label == "player1":
           player1_pdf = player_pdf
         else:
           player2_pdf = player_pdf
 
-          # --- Combine PDFs in correct order ---
+      # ===================================================================
+      # SECTION 3: Combine All PDFs in Correct Order
+      # ===================================================================
       final_pdf_name = f"{disp_pair} {rpt_r['Report Description']}_combined_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
       final_pdf = None
+      
+      # Merge in order: pair report, player1 reports, player2 reports
       pdf_list = [pdf for pdf in [pair_pdf, player1_pdf, player2_pdf] if pdf]
       if pdf_list:
         final_pdf = pdf_list[0]
         for pdf in pdf_list[1:]:
           final_pdf = merge_pdfs(final_pdf, pdf, pdf_name=final_pdf_name)
 
-          # --- Rollup AI Summary (new style) ---
+      # ===================================================================
+      # SECTION 4: Generate Rollup AI Summary
+      # ===================================================================
       if report_data_collection:
         coach_user = app_tables.users.get(email=rpt_r['email'])
         ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
+        
+        # Find the appropriate AI prompt template
         rollup_prompt_rows = sorted(
           app_tables.ai_prompt_templates.search(
             report_description=rpt_r['Report Description'],
@@ -756,87 +782,55 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           reverse=True
         )
         rollup_prompt = rollup_prompt_rows[0] if rollup_prompt_rows else None
+        
         if rollup_prompt:
+          # Prepare comprehensive data for AI summary
           rollup_data = {
             'report_description': rpt_r['Report Description'],
             'player_pair': disp_pair,
-            'reports': report_data_collection
+            'reports': report_data_collection  # All JSONs with descriptions
           }
-          rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
-
-          # ========== AI SUMMARY GENERATION ==========
-          log_info("=== GENERATING AI SUMMARY ===")
           
-          # Check if we should send images (from rpt_mgr.send_ai_images flag)
-          try:
-            send_images = rpt_r['send_ai_images']
-          except (KeyError, TypeError):
-            send_images = False
-            
-          log_info(f"rpt_mgr.send_ai_images = {send_images}")
+          # Clean up the prompt text (remove problematic formatting)
+          rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
+          
+          # Generate AI summary
+          rollup_summary = generate_ai_summary(
+            rollup_data,
+            rollup_prompt_text,
+            rpt_r['email'],
+            rollup_prompt['desc_beach_volleyball']  # Human-readable context
+          )
 
-          # Collect images if flag is enabled
-          # Collect images if flag is enabled
-          image_list = []
-          if send_images:
-            log_info("Collecting images for AI summary from player reports...")
-
-            # Get images from PLAYER reports (they have shot charts)
-            # Player reports are stored with IDs we need to track
-
-            # Option 1: Get from most recent player reports
-            # Find player reports that were just generated
-            player_report_ids = []
-
-            # If you track generated_reports during the loop:
-            for report_name, report_id in generated_reports:
-              if 'Attacking - Tendencies' in report_name or 'Attack' in report_name:
-                player_report_ids.append(report_id)
-
-            # Collect images from these player reports
-            for report_id in player_report_ids[:2]:  # Limit to first 2 players
-              player_rpt_data = app_tables.report_data.get(report_id=report_id)
-              if player_rpt_data:
-                for i in range(1, 11):
-                  try:
-                    img = player_rpt_data[f'image_{i}']
-                    if img:
-                      image_list.append(img)
-                      log_info(f"✓ Collected image_{i} from player report {report_id[:8]}")
-                  except:
-                    pass
-
-            log_info(f"Total images collected: {len(image_list)}")
-
-            if len(image_list) == 0:
-              log_info("WARNING: send_ai_images=True but no images found in player reports")
-    
-        
-
-
-          # ADD THIS: Save rollup summary as JSON
+          # Save rollup summary as JSON for data analysis
           rollup_json_name = f"rollup_{disp_pair} {rpt_r['Report Description']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
           rollup_json_media = anvil.BlobMedia('application/json', 
                                     json.dumps(rollup_data, indent=2).encode('utf-8'))
           rollup_json_result = write_to_nested_folder(json_folder, rollup_json_name, rollup_json_media)
           pdf_files_created.append({'name': rollup_json_name, 'result': rollup_json_result})
 
+          # Generate PDF for the rollup summary
           rollup_pdf_summary = generate_ai_pdf_summary(
             report_id=report_id,
             summary=rollup_summary,
             ai_form='player_ai_summary'
           )
+          
+          # Prepend AI summary to the beginning of the final PDF
           if rollup_pdf_summary.get('pdf') and final_pdf:
             final_pdf = merge_pdfs(rollup_pdf_summary['pdf'], final_pdf, pdf_name=final_pdf_name)
             pdf_files_created.append({'name': f"{disp_pair}_rollup_summary.pdf", 'result': 'Generated'})
 
-            # --- Save final PDF ---
+      # ===================================================================
+      # SECTION 5: Save Final Combined PDF to Google Drive
+      # ===================================================================
       if final_pdf:
         combined_result = write_to_nested_folder(pdf_folder, final_pdf_name, final_pdf)
         return_text += '\n' + combined_result
       else:
         combined_result = f"No final PDF generated for {final_pdf_name}"
 
+      # Collect report information for email/logging
       report_infos.append({
         'player_pair': disp_pair,
         'description': rpt_r['Report Description'],
@@ -849,6 +843,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
     return return_text, report_infos
 
   return return_text, report_infos
+  
 
 
 
