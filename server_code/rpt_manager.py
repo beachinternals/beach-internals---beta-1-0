@@ -666,7 +666,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
         # Generate JSON version for data analysis
         json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, 
                                           include_urls=False, include_nulls=False)
-        if not isinstance(json_media, dict) or not json_media.get('error'):
+        if not isinstance(json_media, dict) and json_media.get('error'):
           try:
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
             json_name = f"scouting_{disp_pair} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
@@ -714,7 +714,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           # Generate JSON version for data analysis
           json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, 
                                            include_urls=False, include_nulls=False)
-          if not isinstance(json_media, dict) or not json_media.get('error'):
+          if not isinstance(json_media, dict) and json_media.get('error'):
             try:
               json_data = json.loads(json_media.get_bytes().decode('utf-8'))
               json_name = f"{label}_{player} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
