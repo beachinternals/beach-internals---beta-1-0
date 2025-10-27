@@ -2829,16 +2829,32 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
     # Convert markdown to ReportLab-compatible HTML ( no need to convert to HTML when displaying using Anvil PDf Rendered)
     formatted_summary = summary
     #formatted_summary = markdown_to_reportlab_html(summary)
+    
+    # Clean the summary - remove markdown code fence tags
+    cleaned_summary = formatted_summary.strip()
+
+    # Remove opening ```markdown or ``` tag
+    if cleaned_summary.startswith('```markdown'):
+      cleaned_summary = cleaned_summary[11:].strip()
+    elif cleaned_summary.startswith('```'):
+      cleaned_summary = cleaned_summary[3:].strip()
+
+    # Remove closing ``` tag
+    if cleaned_summary.endswith('```'):
+      cleaned_summary = cleaned_summary[:-3].strip()
+
+    log_info("Cleaned summary, removed code fences")
 
     # Store in report_data table for form rendering
     report_data_row = app_tables.report_data.get(report_id=report_id)
     
     # Convert string to media object
     summary_media = anvil.BlobMedia(
-      'text/html',
-      formatted_summary.encode('utf-8'),
-      name=f'ai_summary_{report_id}.html'
+      'text/markdown',
+      cleaned_summary.encode('utf-8'),  # ← Use cleaned_summary
+      name=f'ai_summary_{report_id}.md'
     )
+
 
     if report_data_row:
       report_data_row['df_1'] = summary_media
