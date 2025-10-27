@@ -484,7 +484,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           log_info(f"Generating rollup AI summary with {len(report_data_collection)} reports")
           rollup_prompt_text = rollup_prompt['prompt_text'].replace(": {json_data}", " {json_data}")
           # Check rpt_mgr flag for images
-          send_images = rpt_r.get('send_ai_images', False)
+          send_images = getattr(rollup_prompt, 'send_ai_images', False)
           log_info(f"rpt_mgr.send_ai_images = {send_images}")
 
           # Collect images if enabled
@@ -517,7 +517,8 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
             ai_form='player_ai_summary'
           )
 
-          if rollup_pdf_summary.get('pdf') and full_rpt_pdf:
+          #if rollup_pdf_summary.get('pdf') and full_rpt_pdf:
+          if isinstance(rollup_pdf_summary, dict) and rollup_pdf_summary.get('pdf') and full_rpt_pdf:
             log_info(f"Prepending rollup AI summary to combined PDF")
             full_rpt_pdf = merge_pdfs(rollup_pdf_summary['pdf'], full_rpt_pdf, pdf_name=pdf_name)
             pdf_files_created.append({'name': f"{player_pair}_rollup_summary.pdf", 'result': 'Generated'})
