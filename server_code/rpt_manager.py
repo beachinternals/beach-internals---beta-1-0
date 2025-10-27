@@ -345,7 +345,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # Process each report
       for k, rptname in enumerate(sorted_rptnames):
-        log_info(f"\nProcessing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']}")
+        log_info(f"\n\nProcessing report {k+1}/{len(sorted_rptnames)}: {rptname['report_name']}")
 
         # Generate report
         report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **rpt_filters)

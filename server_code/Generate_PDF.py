@@ -324,12 +324,12 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
 
     # NEW: Strip URLs if include_urls is False
     if not include_urls:
-      log_debug("Stripping URLs from report_data")
+      #log_debug("Stripping URLs from report_data")
       report_data = strip_urls_safe(report_data)
 
     # Optionally strip nulls (this was already here)
     if not include_nulls:
-      log_debug("Stripping nulls from report_data")
+      #log_debug("Stripping nulls from report_data")
       report_data = strip_nulls_safe(report_data)
 
     # Convert to JSON media

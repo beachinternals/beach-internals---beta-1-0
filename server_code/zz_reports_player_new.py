@@ -187,7 +187,7 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
 
   #------------------------------------------------------------------------------------------------------
-  #            Set ot a Player or Pair Report
+  #            Set to a Player or Pair Report
   #------------------------------------------------------------------------------------------------------
   disp_player = rpt_filters.get('player')
   disp_pair = rpt_filters.get('pair')

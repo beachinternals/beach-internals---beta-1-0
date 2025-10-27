@@ -1876,7 +1876,7 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
   })
   # currenlty do not calcualte in player_data_stats pass area bu serve source, so delete this row
   # Filter out the 'Percentile' row, handling whitespace and case
-  print(f" area table: \n {area_table}")
+  #print(f" area table: \n {area_table}")
   area_table = area_table.drop(index=1)
   
   df_list[4] = area_table.to_dict('records')
@@ -2399,7 +2399,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
     fbhe_table.at[4,'All'] = fbhe_vector.get('URL')  # URL (someday?)
 
     el_result = find_ellipse_area(ppr_df, disp_player, 'srv-pass', min_att=5, video_yn=True)
-    print(f"el result for All: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+    #print(f"el result for All: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
     if el_result.get('attempts') >= 5:
       area_table.at[0,'All'] = str('{:.1f}').format(el_result.get('area'))
       area_table.at[2,'All'] = el_result.get('attempts')
@@ -2424,7 +2424,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
       fbhe_table.at[4,column[i]] = fbhe_vector.get('URL')  # URL someday
 
       el_result = find_ellipse_area(ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv-pass', min_att=5)
-      print(f"el result for zone {zone} All: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      #print(f"el result for zone {zone} All: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
         area_table.at[0,column[i]] = str('{:.1f}').format(el_result.get('area'))
         #area_table.at[1,column[i]] = round( ((el_result.get('area')- player_data_stats_df.at[0,'pass_ea_mean'])/(player_data_stats_df.at[0,'pass_es_stdev'])) , 3)
@@ -2526,7 +2526,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )  ],
                                     disp_player, 'srv-pass', min_att=5
                                    )
-      print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      #print(f"el result for zone 1: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
         area1_val[index] = el_result.get('area')
         a1_table.loc[a1_table_index,'Dest Zone'] = str(i)+j.capitalize()
@@ -2556,7 +2556,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )  ],
                                     disp_player, 'srv-pass', min_att=5
                                    )
-      print(f"el result for zone 3: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      #print(f"el result for zone 3: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
         area3_val[index] = el_result.get('area')
         a3_table.loc[a3_table_index,'Dest Zone'] = str(i)+j.capitalize()
@@ -2587,7 +2587,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                                     disp_player, 'srv-pass', min_att=5
                                    )
-      print(f"el result for zone 5: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
+      #print(f"el result for zone 5: attempts: {el_result.get('attempts')}, area: {el_result.get('area')}")
       if el_result.get('attempts') >= 5:
         area5_val[index] = el_result.get('area')
         a5_table.loc[a5_table_index,'Dest Zone'] = str(i)+j.capitalize()
@@ -3513,7 +3513,128 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+
+
+#---------------------------------------------------------------------------------------------------
+#
+#.  Player Consistency Report
+#
+#-------------------------------------------------------------------------------------------------
+
+
+def  player_consistency_report_new(lgy, team, **rpt_filters):
+  '''
+
+  Custom, per report code:
+  - set the True/False for pair or player
+  - create and store dataframes
+  - create and store images
   
+  Report Functions:
+
+  INPUT Parameters:
+    - lgy : league, gender, year combination (as in dropdowns)
+    - team : the team of the user calling the report
+    - rpt_filters : the list of filters to limit the data
+
+  OUTPUT Retrun Parameters:
+    - title_list : a list of up to 10 titles to display on the report.  These all map to elements int he report_list data table
+    - label_list : a list of up to 10 labels to display on the report, also coming from the report list data table 
+    - image_list : a list of up to 10 imiages to plot data on the report
+    - df_list : a list of up to 10 data frames to display talbles.  These are then converted to mkdn in the client
+    
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize all lists, get and filter the data, and fetch in information from report_list
+  #-----------------------------------------------------------------------------------------------------
+  # lgy is the legaue+gender+year string
+  # unpack lgy into league, gender, year
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
+  # Initialize the calculated lists
+  image_list = [''] * 10
+  df_list = [''] * 10
+
+  # fetch the ppr dataframe and filter by all the report filters
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = filter_ppr_df( ppr_df, **rpt_filters)
+  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
+
+  #------------------------------------------------------------------------------------------------------
+  #            Set to a Player or Pair Report
+  #------------------------------------------------------------------------------------------------------
+  disp_player = rpt_filters.get('player')
+  disp_pair = rpt_filters.get('pair')
+  # for a player report:
+  if True:  # set only one of these to True
+    ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+      (ppr_df['player_a2'] == disp_player) |
+      (ppr_df['player_b1'] == disp_player) |
+      (ppr_df['player_b2'] == disp_player) 
+      ]
+  # for a pair report:
+  if False:  # set only one of these to True
+    ppr_df = ppr_df[ (ppr_df['teama'] == disp_pair) | (ppr_df['teamb'] == disp_pair) ]
+
+  #------------------------------------------------------------------------------------------------------
+  #            Create and store DataFrames
+  #------------------------------------------------------------------------------------------------------
+  cons_table, no_data = calc_consistency_match_table( ppr_df, disp_player )
+  # now calculate percentile
+  cons_table.at[9,'FBHE'] = 1 - stats.norm.cdf( (cons_table.at[8,'FBHE'] - player_data_stats_df.at[0,'cons_fbhe_sd_match_mean'])/ player_data_stats_df.at[0,'cons_fbhe_sd_match_stdev'] )
+  cons_table.at[9,'Error Den'] = 1 - stats.norm.cdf( (cons_table.at[8,'Error Den'] - player_data_stats_df.at[0,'cons_ed_sd_match_mean'])/ player_data_stats_df.at[0,'cons_ed_sd_match_stdev'] )
+  cons_table.at[9,'Tran Conv'] = 1 - stats.norm.cdf( (cons_table.at[8,'Tran Conv'] - player_data_stats_df.at[0,'cons_tcr_sd_match_mean'])/ player_data_stats_df.at[0,'cons_tcr_sd_match_stdev'] )
+  cons_table.at[9,'Knockout %'] = 1 - stats.norm.cdf( (cons_table.at[8,'Knockout %'] - player_data_stats_df.at[0,'cons_ko_sd_match_mean'])/ player_data_stats_df.at[0,'cons_ko_sd_match_stdev'] )
+  cons_table.at[9,'Good Passes'] = 1 - stats.norm.cdf( (cons_table.at[8,'Good Passes'] - player_data_stats_df.at[0,'cons_pass_sd_match_mean'])/ player_data_stats_df.at[0,'cons_pass_sd_match_stdev'] )
+  cons_table.at[9,'Points Earned'] = 1 - stats.norm.cdf( (cons_table.at[8,'Points Earned'] - player_data_stats_df.at[0,'cons_pts_sd_match_mean'])/ player_data_stats_df.at[0,'cons_pts_sd_match_stdev'] )
+  cons_table.at[9,'Error Den'] = str('{:.1%}').format(cons_table.at[9,'Error Den'])
+  cons_table.at[9,'Tran Conv'] = str('{:.1%}').format(cons_table.at[9,'Tran Conv'])
+  cons_table.at[9,'Knockout %'] = str('{:.1%}').format(cons_table.at[9,'Knockout %'])
+  cons_table.at[9,'Good Passes'] = str('{:.1%}').format(cons_table.at[9,'Good Passes'])
+  cons_table.at[9,'Points Earned'] = str('{:.1%}').format(cons_table.at[9,'Points Earned'])
+  cons_table.at[9,'FBHE'] = str('{:.1%}').format(cons_table.at[9,'FBHE'])
+  cons_table.at[9,'Att'] = ''
+  cons_table.at[9,'Points'] = ''
+
+  # Define desired column order
+  column_order = [' ', 'Points', 'Att', 'FBHE', 'Tran Conv', 'Error Den', 'Knockout %', 'Good Passes', 'Points Earned']
+  cons_table = cons_table.reindex(columns = column_order)
+  df_list[0] = cons_table.to_dict('records')
+
+  cons2_table, no_data1 = calc_consistency_s2s_table( ppr_df, disp_player )
+  # now calculate percentile
+  index = cons2_table.shape[0]
+  cons2_table.at[index,'Set'] = 'Percentile'
+  cons2_table.at[index,'FBHE'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'FBHE'] - player_data_stats_df.at[0,'cons_fbhe_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_fbhe_sd_s2s_stdev'] )
+  cons2_table.at[index,'Error Den'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Error Den'] - player_data_stats_df.at[0,'cons_ed_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_ed_sd_s2s_stdev'] )
+  cons2_table.at[index,'Tran Conv'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Tran Conv'] - player_data_stats_df.at[0,'cons_tcr_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_tcr_sd_s2s_stdev'] )
+  cons2_table.at[index,'Knockout %'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Knockout %'] - player_data_stats_df.at[0,'cons_ko_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_ko_sd_s2s_stdev'] )
+  cons2_table.at[index,'Good Passes'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Good Passes'] - player_data_stats_df.at[0,'cons_pass_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_pass_sd_s2s_stdev'] )
+  cons2_table.at[index,'Points Earned'] = 1 - stats.norm.cdf( (cons2_table.at[index-1,'Points Earned'] - player_data_stats_df.at[0,'cons_pts_sd_s2s_mean'])/ player_data_stats_df.at[0,'cons_pts_sd_s2s_stdev'] )
+  cons2_table.at[index,'Att'] = ''
+  cons2_table.at[index,'Points'] = ''
+  cons2_table.at[index,'FBHE'] = str('{:.1%}').format(cons2_table.at[index,'FBHE'])
+  cons2_table.at[index,'Error Den'] = str('{:.1%}').format(cons2_table.at[index,'Error Den'])
+  cons2_table.at[index,'Tran Conv'] = str('{:.1%}').format(cons2_table.at[index,'Tran Conv'])
+  cons2_table.at[index,'Knockout %'] = str('{:.1%}').format(cons2_table.at[index,'Knockout %'])
+  cons2_table.at[index,'Good Passes'] = str('{:.1%}').format(cons2_table.at[index,'Good Passes'])
+  cons2_table.at[index,'Points Earned'] = str('{:.1%}').format(cons2_table.at[index,'Points Earned'])
+
+  # Define desired column order
+  column_order = ['Set', 'Points', 'Att', 'FBHE', 'Tran Conv', 'Error Den', 'Knockout %', 'Good Passes', 'Points Earned']
+  cons2_table = cons2_table.reindex(columns = column_order)
+
+  df_list[1] = cons2_table.to_dict('records')
+
+  #------------------------------------------------------------------------------------------------------
+  #            Create and store images
+  #------------------------------------------------------------------------------------------------------
+  # z1_plt = get_player_attack_plots(ppr_df, disp_player)
+  # image_list[0] = z1_plt
+
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
   
   
   
