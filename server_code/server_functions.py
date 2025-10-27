@@ -2826,13 +2826,22 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
       log_error(error_msg)
       return {'pdf': None, 'json_file_name': None, 'error': error_msg}
 
-    # Convert markdown to ReportLab-compatible HTML
-    formatted_summary = markdown_to_reportlab_html(summary)
+    # Convert markdown to ReportLab-compatible HTML ( no need to convert to HTML when displaying using Anvil PDf Rendered)
+    formatted_summary = summary
+    #formatted_summary = markdown_to_reportlab_html(summary)
 
     # Store in report_data table for form rendering
     report_data_row = app_tables.report_data.get(report_id=report_id)
+    
+    # Convert string to media object
+    summary_media = anvil.BlobMedia(
+      'text/html',
+      formatted_summary.encode('utf-8'),
+      name=f'ai_summary_{report_id}.html'
+    )
+
     if report_data_row:
-      report_data_row['df_1'] = formatted_summary
+      report_data_row['df_1'] = summary_media
       log_info(f"Stored AI summary in report_data for report_id: {report_id}")
     else:
       log_error(f"Report data row not found for report_id: {report_id}")
