@@ -14,6 +14,7 @@ import anvil.secrets
 import anvil.http
 import pandas as pd
 import io
+from io import BytesIO  # Add this line
 import numpy as np
 import matplotlib.pyplot as plt
 #from matplotlib.patches import Ellipse
@@ -2831,7 +2832,7 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
     # Store in report_data table for form rendering
     report_data_row = app_tables.report_data.get(report_id=report_id)
     if report_data_row:
-      report_data_row['label_1'] = formatted_summary
+      report_data_row['df_1'] = formatted_summary
       log_info(f"Stored AI summary in report_data for report_id: {report_id}")
     else:
       log_error(f"Report data row not found for report_id: {report_id}")
