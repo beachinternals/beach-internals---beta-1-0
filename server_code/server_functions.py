@@ -2804,13 +2804,13 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
     
     Args:
         report_id (str): The unique identifier for the report
-        summary (str): The AI-generated summary content
+        summary (str): The AI-generated summary content in markdown
         ai_form (str): The form template to use for PDF generation
         
     Returns:
         dict: Contains 'pdf', 'json_file_name', and 'error' keys
               - pdf: The generated PDF file or None if error
-              - json_file_name: Always None in current implementation
+              - json_file_name': Always None in current implementation
               - error: Error message string or None if successful
     """
   try:
@@ -2825,35 +2825,38 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
       log_error(error_msg)
       return {'pdf': None, 'json_file_name': None, 'error': error_msg}
 
-      # Retrieve report data
-    rpt_data_row = app_tables.report_data.get(report_id=report_id)
-    if not rpt_data_row:
-      error_msg = f"Report ID {report_id} not found"
-      log_error(error_msg)
-      return {'pdf': None, 'json_file_name': None, 'error': error_msg}
+    # Convert markdown to ReportLab-compatible HTML
+    formatted_summary = markdown_to_reportlab_html(summary)
 
-      # Store the AI summary in the database
-    summary_media = anvil.BlobMedia('text/plain', summary.encode('utf-8'), name=f'ai_summary_{report_id}.txt')
-    rpt_data_row['df_1'] = summary_media
-    rpt_data_row['no_df'] = 1
+    # Store in report_data table for form rendering
+    report_data_row = app_tables.report_data.get(report_id=report_id)
+    if report_data_row:
+      report_data_row['label_1'] = formatted_summary
+      log_info(f"Stored AI summary in report_data for report_id: {report_id}")
+    else:
+      log_error(f"Report data row not found for report_id: {report_id}")
+      return {'pdf': None, 'json_file_name': None, 'error': 'Report data not found'}
 
-    # Generate PDF using the specified form template
-    ai_pdf = PDFRenderer(
-      filename=f'AI_Summary_{report_id}', 
-      landscape=False
-    ).render_form(ai_form, report_id)
+    # Generate PDF using the specified form
+    try:
+      pdf_result = PDFRenderer().render_form(ai_form, report_id)
 
-    if not ai_pdf:
-      error_msg = "PDF generation failed - renderer returned None"
-      log_error(error_msg)
-      return {'pdf': None, 'json_file_name': None, 'error': error_msg}
+      # Convert StreamingMedia to BlobMedia if necessary
+      if isinstance(pdf_result, anvil._serialise.StreamingMedia):
+        pdf_result = anvil.BlobMedia('application/pdf', pdf_result.get_bytes(), 
+                                     name=f"ai_summary_{report_id}.pdf")
 
-    return {'pdf': ai_pdf, 'json_file_name': None, 'error': None}
+      log_info(f"Successfully generated AI summary PDF for report_id: {report_id}")
+      return {'pdf': pdf_result, 'json_file_name': None, 'error': None}
+
+    except Exception as e:
+      log_error(f"Error rendering PDF form: {str(e)}")
+      return {'pdf': None, 'json_file_name': None, 'error': f'PDF rendering failed: {str(e)}'}
 
   except Exception as e:
-    error_msg = f"generate_ai_pdf_summary error: {str(e)}"
-    log_error(error_msg)
-    return {'pdf': None, 'json_file_name': None, 'error': error_msg}
+    log_critical(f"Unexpected error in generate_ai_pdf_summary: {str(e)}")
+    return {'pdf': None, 'json_file_name': None, 'error': str(e)}
+
 
 
 @anvil.server.callable
@@ -2982,4 +2985,34 @@ Provide insights based on both the statistics and the visual patterns you observ
     log_critical(traceback.format_exc())
     return {"error": str(e), "traceback": traceback.format_exc()}
 
-    
+def markdown_to_reportlab_html(markdown_text):
+  """Convert markdown to ReportLab-compatible HTML"""
+  if not markdown_text:
+    return ""
+
+  html = markdown_text
+
+  # Headers
+  html = re.sub(r'^### (.+)$', r'<b>\1</b>', html, flags=re.MULTILINE)
+  html = re.sub(r'^## (.+)$', r'<b><font size="12">\1</font></b>', html, flags=re.MULTILINE)
+  html = re.sub(r'^# (.+)$', r'<b><font size="14">\1</font></b>', html, flags=re.MULTILINE)
+
+  # Bold
+  html = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', html)
+  html = re.sub(r'__(.+?)__', r'<b>\1</b>', html)
+
+  # Italic
+  html = re.sub(r'\*(.+?)\*', r'<i>\1</i>', html)
+  html = re.sub(r'_(.+?)_', r'<i>\1</i>', html)
+
+  # Bullets
+  html = re.sub(r'^[\*\-] (.+)$', r'• \1', html, flags=re.MULTILINE)
+
+  # Line breaks
+  html = html.replace('\n\n', '<br/><br/>')
+  html = html.replace('\n', '<br/>')
+
+  # Code
+  html = re.sub(r'`(.+?)`', r'<font face="Courier">\1</font>', html)
+
+  return html
