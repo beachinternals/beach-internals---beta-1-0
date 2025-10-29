@@ -19,6 +19,9 @@ from typing import Union
 from server_functions import *
 
 
+
+
+
 def report_scouting_overview(lgy, team, **rpt_filters):
   """
     Scouting overview report function - provides detailed analysis for a single pair.
@@ -206,7 +209,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
               top_pct = area_angle_table.loc[area_angle_table[' '] == '% of Attempts', ang_label].iloc[0]
               top_fbhe = area_angle_table.loc[area_angle_table[' '] == 'FBHE', ang_label].iloc[0]
 
-          recommendation_data[player][idx] = f"{top_angle} ({top_pct}, FBHE: {top_fbhe})"
+              recommendation_data[player][idx] = f"{top_angle} ({top_pct}, FBHE: {top_fbhe})"
           print(f"recommendation: {recommendation_data}")
         else:
           recommendation_data[player][idx] = 'N/A'
@@ -261,6 +264,114 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_list[2] = serving_df.to_dict('records')
     df_desc_list[2] = f"Serving Recommendations: {pair_a}"
 
+    # Generate serve recommendation charts for each player
+    for player_idx, player in enumerate([player1, player2]):
+      # Calculate player's average FBHE for serve receive
+      player_serve_df = ppr_df[ppr_df['pass_player'] == player]
+      if not player_serve_df.empty:
+        avg_fbhe_result = fbhe_obj(player_serve_df, player, 'pass', False)
+        avg_fbhe = avg_fbhe_result.fbhe if hasattr(avg_fbhe_result, 'fbhe') else 0.0
+      else:
+        avg_fbhe = 0.0
+      
+      # Get serve combinations for this player with at least 5 attempts
+      player_serve_combinations = []
+      for from_zone in [1, 3, 5]:
+        for to_zone in [1, 2, 3, 4, 5]:
+          for to_zone_depth in ['C', 'D', 'E']:
+            zone_df = ppr_df[(ppr_df['pass_player'] == player) & 
+              (ppr_df['serve_src_zone_net'] == from_zone) & 
+              (ppr_df['serve_dest_zone_net'] == to_zone) & 
+              (ppr_df['serve_dest_zone_depth'] == to_zone_depth)]
+            
+            if len(zone_df) >= 5:  # Minimum 5 attempts
+              fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
+              fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
+              att = len(zone_df)
+              
+              # Only include if FBHE is less than 75% of player's average (25% better)
+              if avg_fbhe > 0 and fbhe < avg_fbhe * 0.75:
+                player_serve_combinations.append({
+                  'from_zone': from_zone,
+                  'to_zone': to_zone,
+                  'to_depth': to_zone_depth,
+                  'fbhe': fbhe,
+                  'attempts': att
+                })
+      
+      # Sort by FBHE (best first) and take top 3
+      player_serve_combinations = sorted(player_serve_combinations, key=lambda x: x['fbhe'])[:3]
+      print(f" Scouting Summary - Player Serve Combinations: \n{player_serve_combinations}")
+      
+      # Create the court plot
+      if player_serve_combinations:
+        fig, ax = plt.subplots(figsize=(10, 18))
+        plot_court_background(fig, ax)
+        
+        # Define coordinate mappings
+        serve_from_coords = {1: (0, -8), 3: (4, -8), 5: (8, -8)}
+        serve_to_x = {1: 0.8, 2: 2.4, 3: 4, 4: 5.6, 5: 7.2}
+        serve_to_y = {'C': 4, 'D': 5.6, 'E': 7.2}
+        
+        # Normalize line widths (scale attempts to reasonable line widths)
+        max_attempts = max(combo['attempts'] for combo in player_serve_combinations)
+        min_attempts = min(combo['attempts'] for combo in player_serve_combinations)
+        
+        # Plot each serve combination
+        for combo in player_serve_combinations:
+          from_x, from_y = serve_from_coords[combo['from_zone']]
+          to_x = serve_to_x[combo['to_zone']]
+          to_y = serve_to_y[combo['to_depth']]
+          
+          # Calculate line width (scale between 2 and 8 based on attempts)
+          if max_attempts > min_attempts:
+            line_width = 2 + 6 * (combo['attempts'] - min_attempts) / (max_attempts - min_attempts)
+          else:
+            line_width = 5
+          
+          # Color based on FBHE (green for low FBHE, yellow/red for higher)
+          # FBHE typically ranges from 0 to 1+, we'll map 0-0.5 as good (green to yellow)
+          if combo['fbhe'] <= 0.2:
+            color = '#00AA00'  # Dark green
+          elif combo['fbhe'] <= 0.3:
+            color = '#88CC00'  # Yellow-green
+          elif combo['fbhe'] <= 0.4:
+            color = '#FFCC00'  # Yellow
+          else:
+            color = '#FF8800'  # Orange
+          
+          # Draw arrow from serve origin to destination
+          ax.annotate('', xy=(to_x, to_y), xytext=(from_x, from_y),
+                     arrowprops=dict(arrowstyle='->', lw=line_width, color=color, 
+                                   alpha=0.7, shrinkA=0, shrinkB=0))
+          
+          # Add label near the destination
+          label_text = f"FBHE: {combo['fbhe']}\n({combo['attempts']} att)"
+          ax.text(to_x + 0.3, to_y + 0.3, label_text, fontsize=18, 
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8))
+        
+        # Add title
+        player_name = performance_data[player_idx]['Full Name']
+        ax.set_title(f"Top Serve Recommendations: {player_name}", fontsize=24, fontweight='bold')
+        
+        # Add legend
+        legend_text = f"Player Avg FBHE: {avg_fbhe:.2f}\nShowing serves <{avg_fbhe*0.75:.2f} (≥5 attempts)"
+        ax.text(0.5, -9.5, legend_text, fontsize=18, ha='left',
+               bbox=dict(boxstyle='round,pad=0.5', facecolor='lightyellow', alpha=0.8))
+        
+        plt.tight_layout()
+        
+        # Convert to base64 string for storage
+        image_list[player_idx] = anvil.mpl_util.plot_image()   # this is from Claude, but does nto work fig_to_base64(fig)
+        image_desc_list[player_idx] = f"Serve Recommendations for {player_name}"
+        print(f" - Socutiing Summary, saving image :{player_idx}")
+        plt.close(fig)
+      else:
+        # No qualifying serve combinations found
+        image_list[player_idx] = ''
+        player_name = performance_data[player_idx]['Full Name']
+        image_desc_list[player_idx] = f"No qualifying serve recommendations found for {player_name} (need ≥5 attempts and FBHE <75% of average)"
+
     '''
     # we don't do this here, these fields come from the report_list table
     if title_list and len(title_list) > 0:
@@ -280,6 +391,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+  
 
 
   
