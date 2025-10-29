@@ -100,6 +100,14 @@ components:
   name: column_panel_6
   properties: {}
   type: ColumnPanel
+- layout_properties: {grid_position: 'XIFNQQ,ZRJPGF'}
+  name: image_3
+  properties: {}
+  type: Image
+- layout_properties: {grid_position: 'XIFNQQ,FCPFSF'}
+  name: image_4
+  properties: {}
+  type: Image
 - components:
   - layout_properties: {grid_position: 'QMCWOL,ZXEUVK'}
     name: box4_title

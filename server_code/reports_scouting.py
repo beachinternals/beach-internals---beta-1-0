@@ -22,6 +22,8 @@ from server_functions import *
 
 
 
+
+
 def report_scouting_overview(lgy, team, **rpt_filters):
   """
     Scouting overview report function - provides detailed analysis for a single pair.
@@ -40,7 +42,9 @@ def report_scouting_overview(lgy, team, **rpt_filters):
         tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
             - df_list[0]: Player performance statistics (fullname, hit side, FBHE, Expected Value, Serve Recommendation)
             - df_list[1]: Player tendencies (Attack Area, Top Angular Attack for each player)
-            - df_list[2]: Serving recommendations based on optimal serve zones
+            - df_list[2]: Serving recommendations based on optimal serve zones (≥5 attempts only)
+            - image_list[0-1]: Serve recommendation charts for each player
+            - image_list[2-3]: Shot charts showing attack tendencies for each player
   """
 
   # Get basic title and label setup from database
@@ -146,12 +150,15 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_list[0] = performance_df.to_dict('records')
     df_desc_list[0] = f"Player Performance Statistics: {pair_a}"
 
-    # Second Table: Player Tendencies
+    # Second Table: Player Tendencies - store detailed data for shot charts
     recommendation_data = {
       'Attack Area': ['Front - Pin', 'Front - Slot', 'Middle', 'Behind'],
       player1: ['', '', '', ''],
       player2: ['', '', '', '']
     }
+    
+    # Store detailed attack data for shot charts
+    player_attack_details = {player1: {}, player2: {}}
 
     # Define attack area mappings based on hit side
     for i, player in enumerate([player1, player2]):
@@ -163,6 +170,9 @@ def report_scouting_overview(lgy, team, **rpt_filters):
                              (player_ppr_df['att_src_zone_net'] == 5)) & 
         (player_ppr_df['tactic'] != 'behind')].shape[0]
       hit_side = 'Left' if att12 > att45 else 'Right'
+      
+      # Store hit side for later use in shot charts
+      player_attack_details[player]['hit_side'] = hit_side
 
       # Define attack area mappings based on hit side
       attack_area_mappings = {
@@ -197,28 +207,47 @@ def report_scouting_overview(lgy, team, **rpt_filters):
           top_angle = 'N/A'
           top_pct = '0%'
           top_fbhe = 0.0
+          
+          # Store all angular data for this attack area for shot charts
+          area_angular_data = []
 
           print(f" Angular Table: for player {player}, for {area} \n{area_angle_table}")
           for ang_label in ang_labels:
             attempts = area_angle_table.loc[area_angle_table[' '] == 'Attempts', ang_label].iloc[0]
             if isinstance(attempts, str):
               attempts = float(attempts.replace('%', '')) if '%' in attempts else float(attempts)
+            
+            # Store all angular zone data
+            if attempts > 0:
+              pct = area_angle_table.loc[area_angle_table[' '] == '% of Attempts', ang_label].iloc[0]
+              fbhe = area_angle_table.loc[area_angle_table[' '] == 'FBHE', ang_label].iloc[0]
+              area_angular_data.append({
+                'angle': ang_label,
+                'attempts': attempts,
+                'pct': pct,
+                'fbhe': fbhe
+              })
+            
             if attempts > max_attempts:
               max_attempts = attempts
               top_angle = ang_label
               top_pct = area_angle_table.loc[area_angle_table[' '] == '% of Attempts', ang_label].iloc[0]
               top_fbhe = area_angle_table.loc[area_angle_table[' '] == 'FBHE', ang_label].iloc[0]
 
-              recommendation_data[player][idx] = f"{top_angle} ({top_pct}, FBHE: {top_fbhe})"
+          recommendation_data[player][idx] = f"{top_angle} ({top_pct}, FBHE: {top_fbhe})"
+          
+          # Store detailed angular data for shot charts
+          player_attack_details[player][area] = area_angular_data
           print(f"recommendation: {recommendation_data}")
         else:
           recommendation_data[player][idx] = 'N/A'
+          player_attack_details[player][area] = []
 
     recommendation_df = pd.DataFrame(recommendation_data)
     df_list[1] = recommendation_df.to_dict('records')
     df_desc_list[1] = f"Player Tendencies: {pair_a}"
 
-    # Third Table: Serving Recommendations
+    # Third Table: Serving Recommendations (filtered for ≥5 attempts)
     serving_data = {'Metric': ['Optimal Serve From', 'Serve From-To 1', 'Serve From-To 2', 'Serve From-To 3', 'Serve From-To 4', 'Serve From-To 5'], 
                     player1: ['', '', '', '', '', ''], 
                     player2: ['', '', '', '', '', '']}
@@ -230,7 +259,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       fbhe_scores = []
       for zone in serve_zones:
         zone_df = ppr_df[(ppr_df['pass_player'] == player) & (ppr_df['serve_src_zone_net'] == zone)]
-        if not zone_df.empty:
+        if len(zone_df) >= 5:  # Filter for ≥5 attempts
           fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
           fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
           att = len(zone_df)
@@ -249,8 +278,8 @@ def report_scouting_overview(lgy, team, **rpt_filters):
             zone_df = ppr_df[(ppr_df['pass_player'] == player) & 
               (ppr_df['serve_src_zone_net'] == from_zone) & 
               (ppr_df['serve_dest_zone_net'] == to_zone) & 
-              (ppr_df['serve_dest_zone_depth'] == to_zone_depth) ]
-            if not zone_df.empty:
+              (ppr_df['serve_dest_zone_depth'] == to_zone_depth)]
+            if len(zone_df) >= 5:  # Filter for ≥5 attempts
               fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
               fbhe = round(fbhe_result.fbhe, 2) if hasattr(fbhe_result, 'fbhe') else 0.0
               att = len(zone_df)
@@ -262,9 +291,9 @@ def report_scouting_overview(lgy, team, **rpt_filters):
 
     serving_df = pd.DataFrame(serving_data)
     df_list[2] = serving_df.to_dict('records')
-    df_desc_list[2] = f"Serving Recommendations: {pair_a}"
+    df_desc_list[2] = f"Serving Recommendations: {pair_a} (≥5 attempts only)"
 
-    # Generate serve recommendation charts for each player
+    # Generate serve recommendation charts for each player (images 0-1)
     for player_idx, player in enumerate([player1, player2]):
       # Calculate player's average FBHE for serve receive
       player_serve_df = ppr_df[ppr_df['pass_player'] == player]
@@ -330,7 +359,6 @@ def report_scouting_overview(lgy, team, **rpt_filters):
             line_width = 5
           
           # Color based on FBHE (green for low FBHE, yellow/red for higher)
-          # FBHE typically ranges from 0 to 1+, we'll map 0-0.5 as good (green to yellow)
           if combo['fbhe'] <= 0.2:
             color = '#00AA00'  # Dark green
           elif combo['fbhe'] <= 0.3:
@@ -362,15 +390,171 @@ def report_scouting_overview(lgy, team, **rpt_filters):
         plt.tight_layout()
         
         # Convert to base64 string for storage
-        image_list[player_idx] = anvil.mpl_util.plot_image()   # this is from Claude, but does nto work fig_to_base64(fig)
+        image_list[player_idx] = anvil.mpl_util.plot_image()
         image_desc_list[player_idx] = f"Serve Recommendations for {player_name}"
-        print(f" - Socutiing Summary, saving image :{player_idx}")
+        print(f" - Scouting Summary, saving serve image :{player_idx}")
         plt.close(fig)
       else:
         # No qualifying serve combinations found
         image_list[player_idx] = ''
         player_name = performance_data[player_idx]['Full Name']
         image_desc_list[player_idx] = f"No qualifying serve recommendations found for {player_name} (need ≥5 attempts and FBHE <75% of average)"
+
+    # Generate shot charts for each player (images 2-3)
+    for player_idx, player in enumerate([player1, player2]):
+      player_name = performance_data[player_idx]['Full Name']
+      hit_side = player_attack_details[player]['hit_side']
+      
+      # Create the court plot for shot chart
+      fig, ax = plt.subplots(figsize=(10, 18))
+      plot_court_background(fig, ax)
+      
+      # Define coordinates based on hit side - exact coordinates from specification
+      if hit_side == 'Left':
+        position_coords = {
+          'Front - Pin': {'start': (0, 0), 'angles': {
+            'Cut-Right': (0, 4), 'Angle-Right': (0, 8), 'Over-Middle': (1, 7),
+            'Angle-Left': (6, 8.5), 'Cut-Left': (7, 1)
+          }},
+          'Front - Slot': {'start': (2, 0), 'angles': {
+            'Cut-Right': (0.5, 1.5), 'Angle-Right': (0.5, 6), 'Over-Middle': (2, 7),
+            'Angle-Left': (7, 6.67), 'Cut-Left': (7.5, 1.5)
+          }},
+          'Behind': {'start': (6, 0), 'angles': {
+            'Cut-Right': (0.5, 1.5), 'Angle-Right': (1, 6.67), 'Over-Middle': (6, 7),
+            'Angle-Left': (7.5, 6), 'Cut-Left': (7.5, 1.5)
+          }},
+          'Middle': {'start': (4, 0), 'angles': {
+            'Cut-Right': (1, 0.9), 'Angle-Right': (1, 6), 'Over-Middle': (4, 7),
+            'Angle-Left': (7, 6), 'Cut-Left': (7, 0.9)
+          }}
+        }
+      else:  # Right side
+        position_coords = {
+          'Front - Pin': {'start': (8, 0), 'angles': {
+            'Cut-Left': (1, 1), 'Angle-Left': (6.8, 3), 'Over-Middle': (8, 7),
+            'Angle-Right': (8, 7), 'Cut-Right': (8, 4)
+          }},
+          'Front - Slot': {'start': (6, 0), 'angles': {
+            'Cut-Left': (0.5, 1.5), 'Angle-Left': (1, 6.67), 'Over-Middle': (6, 7),
+            'Angle-Right': (7.5, 6), 'Cut-Right': (7.5, 1.5)
+          }},
+          'Behind': {'start': (2, 0), 'angles': {
+            'Cut-Left': (0.5, 1.5), 'Angle-Left': (1, 6.67), 'Over-Middle': (6, 7),
+            'Angle-Right': (7, 6.67), 'Cut-Right': (7.5, 1.5)
+          }},
+          'Middle': {'start': (4, 0), 'angles': {
+            'Cut-Right': (1, 0.9), 'Angle-Right': (1, 6), 'Over-Middle': (4, 7),
+            'Angle-Left': (7, 6), 'Cut-Left': (7, 0.9)
+          }}
+        }
+      
+      arrows_plotted = 0
+      
+      # Add position labels to the court
+      position_labels = {
+        'Front - Pin': 'Pin',
+        'Front - Slot': 'Slot',
+        'Behind': 'Behind',
+        'Middle': 'Middle'
+      }
+      
+      for area in ['Front - Pin', 'Front - Slot', 'Middle', 'Behind']:
+        start_coords = position_coords[area]['start']
+        # Add a small circle at the starting position
+        circle = plt.Circle(start_coords, 0.15, color='#dc2626', alpha=0.5, zorder=10)
+        ax.add_patch(circle)
+        # Add label above the starting position
+        ax.text(start_coords[0], start_coords[1] - 0.5, position_labels[area], 
+               fontsize=16, fontweight='bold', color='#1e40af', 
+               ha='center', va='top',
+               bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.9, edgecolor='#1e40af'))
+      
+      # Plot top 1-2 attacks from each position
+      for area in ['Front - Pin', 'Front - Slot', 'Middle', 'Behind']:
+        if area not in player_attack_details[player] or not player_attack_details[player][area]:
+          continue
+        
+        angular_data = player_attack_details[player][area]
+        # Sort by attempts (descending)
+        angular_data_sorted = sorted(angular_data, key=lambda x: x['attempts'], reverse=True)
+        
+        # Get top 1-2 (include 2nd if within 5% of first in attempt percentage)
+        attacks_to_plot = [angular_data_sorted[0]] if angular_data_sorted else []
+        if len(angular_data_sorted) > 1:
+          # Check if 2nd is within 5% of first
+          first_pct = float(angular_data_sorted[0]['pct'].replace('%', ''))
+          second_pct = float(angular_data_sorted[1]['pct'].replace('%', ''))
+          if abs(first_pct - second_pct) <= 5.0:
+            attacks_to_plot.append(angular_data_sorted[1])
+        
+        # Plot arrows for this position
+        for attack in attacks_to_plot:
+          angle_label = attack['angle']
+          attempts = attack['attempts']
+          fbhe = attack['fbhe']
+          
+          # Get coordinates
+          start_coords = position_coords[area]['start']
+          end_coords = position_coords[area]['angles'].get(angle_label)
+          
+          if end_coords:
+            # Calculate line width based on attempts
+            if isinstance(attempts, (int, float)):
+              line_width = 2 + min(attempts / 10, 6)  # Scale 2-8
+            else:
+              line_width = 3
+            
+            # Color based on FBHE
+            if isinstance(fbhe, (int, float)):
+              if fbhe <= 0.2:
+                color = '#16a34a'  # Green
+              elif fbhe <= 0.3:
+                color = '#84cc16'  # Light green
+              elif fbhe <= 0.4:
+                color = '#eab308'  # Yellow
+              elif fbhe <= 0.5:
+                color = '#f97316'  # Orange
+              else:
+                color = '#dc2626'  # Red
+            else:
+              color = '#3b82f6'  # Blue default
+            
+            # Draw arrow
+            ax.annotate('', xy=end_coords, xytext=start_coords,
+                       arrowprops=dict(arrowstyle='->', lw=line_width, color=color,
+                                     alpha=0.7, shrinkA=0, shrinkB=0))
+            
+            # Add label
+            mid_x = (start_coords[0] + end_coords[0]) / 2
+            mid_y = (start_coords[1] + end_coords[1]) / 2
+            label_text = f"{angle_label}\n{attack['pct']}"
+            ax.text(mid_x, mid_y, label_text, fontsize=14,
+                   bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8),
+                   ha='center')
+            
+            arrows_plotted += 1
+      
+      if arrows_plotted > 0:
+        # Add title
+        ax.set_title(f"Attack Tendencies: {player_name} ({hit_side} Side)", 
+                    fontsize=24, fontweight='bold')
+        
+        # Add legend
+        legend_text = f"Showing top 1-2 attacks from each position\n(2nd included if within 5% of top)"
+        ax.text(0.5, -9.5, legend_text, fontsize=16, ha='left',
+               bbox=dict(boxstyle='round,pad=0.5', facecolor='lightblue', alpha=0.8))
+        
+        plt.tight_layout()
+        
+        # Save to image list (indices 2-3 for the two players)
+        image_list[player_idx + 2] = anvil.mpl_util.plot_image()
+        image_desc_list[player_idx + 2] = f"Attack Tendencies for {player_name}"
+        print(f" - Scouting Summary, saving shot chart image :{player_idx + 2}")
+        plt.close(fig)
+      else:
+        image_list[player_idx + 2] = ''
+        image_desc_list[player_idx + 2] = f"No attack data available for {player_name}"
 
     '''
     # we don't do this here, these fields come from the report_list table
@@ -390,7 +574,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_desc_list[0] = "Report Generation Error"
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-
+  
   
 
 
