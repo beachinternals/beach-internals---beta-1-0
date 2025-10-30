@@ -152,10 +152,10 @@ class scouting_summary_report(scouting_summary_reportTemplate):
 
       if isinstance(image_list[3], str):
         if len(image_list[3]) != 0:
-          self.image_3.source = image_list[3]
+          self.image_4.source = image_list[3]
       elif isinstance(image_list[3], anvil.Media):
         if len(image_list[3].get_bytes()) != 0:
-          self.image_3.source = image_list[3]
+          self.image_4.source = image_list[3]
 
     else:
       self.label_1.text = "No Report Data Found"
