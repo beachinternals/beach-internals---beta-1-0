@@ -92,7 +92,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
         full_name = player
 
       # Determine hitting side
-      player_ppr_df = ppr_df[(ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == player)]
+      player_ppr_df = ppr_df[(ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == player) & (ppr_df['pass_player'] == player)]
       att12 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 1) | 
                              (player_ppr_df['att_src_zone_net'] == 2)) & 
         (player_ppr_df['tactic'] != 'behind')].shape[0]
@@ -127,25 +127,42 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     # Use FBHE if available, otherwise Expected Value
     metric1, metric2 = (fbhe1, fbhe2) if fbhe1 != 0.0 and fbhe2 != 0.0 else (ev1, ev2)
 
+    # Calculate serve receive percentages FIRST (we need them for the note)
+    for data in performance_data:
+      data['Serve Receive %'] = round(data['Serve Receive %'] / total_receives * 100, 1) if total_receives > 0 else 0.0
+
     if metric1 != 0 and metric2 != 0:
       if metric1 < metric2 * 0.75:  # 25% lower
-        performance_data[0]['Serve Recommendation'] = 'Strongly Recommended'
+        recommendation = 'Strongly Recommended'
+        # Check if player 0 receives < 45% of serves
+        if performance_data[0]['Serve Receive %'] < 45.0:
+          recommendation += '\nNote: Not typically served'
+        performance_data[0]['Serve Recommendation'] = recommendation
         performance_data[1]['Serve Recommendation'] = ''
       elif metric1 < metric2 * 0.85:  # 15% lower
-        performance_data[0]['Serve Recommendation'] = 'Recommended'
+        recommendation = 'Recommended'
+        # Check if player 0 receives < 45% of serves
+        if performance_data[0]['Serve Receive %'] < 45.0:
+          recommendation += '\nNote: Not typically served'
+        performance_data[0]['Serve Recommendation'] = recommendation
         performance_data[1]['Serve Recommendation'] = ''
       elif metric2 < metric1 * 0.75:
-        performance_data[1]['Serve Recommendation'] = 'Strongly Recommended'
+        recommendation = 'Strongly Recommended'
+        # Check if player 1 receives < 45% of serves
+        if performance_data[1]['Serve Receive %'] < 45.0:
+          recommendation += '\nNote: Not typically served'
+        performance_data[1]['Serve Recommendation'] = recommendation
         performance_data[0]['Serve Recommendation'] = ''
       elif metric2 < metric1 * 0.85:
-        performance_data[1]['Serve Recommendation'] = 'Recommended'
+        recommendation = 'Recommended'
+        # Check if player 1 receives < 45% of serves
+        if performance_data[1]['Serve Receive %'] < 45.0:
+          recommendation += '\nNote: Not typically served'
+        performance_data[1]['Serve Recommendation'] = recommendation
         performance_data[0]['Serve Recommendation'] = ''
       else:
         performance_data[0]['Serve Recommendation'] = 'Neutral'
         performance_data[1]['Serve Recommendation'] = 'Neutral'
-
-    for data in performance_data:
-      data['Serve Receive %'] = round(data['Serve Receive %'] / total_receives * 100, 1) if total_receives > 0 else 0.0
 
     performance_df = pd.DataFrame(performance_data, index=[player1, player2])
     df_list[0] = performance_df.to_dict('records')
@@ -170,7 +187,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       att45 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 4) | 
                              (player_ppr_df['att_src_zone_net'] == 5)) & 
         (player_ppr_df['tactic'] != 'behind')].shape[0]
-      hit_side = 'Left' if att12 < att45 else 'Right'
+      hit_side = 'Left' if att12 > att45 else 'Right'
 
       # Store hit side for later use in shot charts
       player_attack_details[player]['hit_side'] = hit_side
@@ -239,7 +256,30 @@ def report_scouting_overview(lgy, team, **rpt_filters):
               top_pct = area_angle_table.loc[area_angle_table[' '] == '% of Attempts', ang_label].iloc[0]
               top_fbhe = area_angle_table.loc[area_angle_table[' '] == 'FBHE', ang_label].iloc[0]
 
-          recommendation_data[player][idx] = f"{top_angle} ({top_pct}, FBHE: {top_fbhe})"
+            # Build recommendation string showing top 1-2 attacks (same logic as shot chart)
+            if len(area_angular_data) > 0:
+              # Sort by attempts descending
+              sorted_angles = sorted(area_angular_data, key=lambda x: x['attempts'], reverse=True)
+
+              # Get top 1
+              top_angle = sorted_angles[0]['angle']
+              top_pct = sorted_angles[0]['pct']
+              top_fbhe = sorted_angles[0]['fbhe']
+              recommendation_str = f"{top_angle} ({top_pct}, FBHE: {top_fbhe})"
+
+              # Check if we should include 2nd (within 5% of first)
+              if len(sorted_angles) > 1:
+                first_pct_val = float(sorted_angles[0]['pct'].replace('%', ''))
+                second_pct_val = float(sorted_angles[1]['pct'].replace('%', ''))
+                if abs(first_pct_val - second_pct_val) <= 5.0:
+                  second_angle = sorted_angles[1]['angle']
+                  second_pct = sorted_angles[1]['pct']
+                  second_fbhe = sorted_angles[1]['fbhe']
+                  recommendation_str += f" \n {second_angle} ({second_pct}, FBHE: {second_fbhe})"
+
+              recommendation_data[player][idx] = recommendation_str
+            else:
+              recommendation_data[player][idx] = 'N/A'
           
           # Store detailed angular data for shot charts
           player_attack_details[player][area] = area_angular_data
@@ -307,7 +347,22 @@ def report_scouting_overview(lgy, team, **rpt_filters):
         avg_fbhe = avg_fbhe_result.fbhe if hasattr(avg_fbhe_result, 'fbhe') else 0.0
       else:
         avg_fbhe = 0.0
-      
+
+      # Check each serve zone and mark with red X if FBHE > 125% of player average
+      weak_zones = []  # Track which zones to mark
+
+      if avg_fbhe > 0:  # Only check if we have a valid average
+        for serve_zone in [1, 3, 5]:
+          zone_df = ppr_df[(ppr_df['pass_player'] == player) & 
+            (ppr_df['serve_src_zone_net'] == serve_zone)]
+          if len(zone_df) >= 5:  # Only check zones with enough data
+            zone_fbhe_result = fbhe_obj(zone_df, player, 'pass', False)
+            zone_fbhe = zone_fbhe_result.fbhe if hasattr(zone_fbhe_result, 'fbhe') else 0.0
+
+            # If this zone's FBHE is > 125% of average, mark it as weak
+            if zone_fbhe > avg_fbhe * 1.25:
+              weak_zones.append(serve_zone)
+
       # Get serve combinations for this player with at least 5 attempts
       player_serve_combinations = []
       for from_zone in [1, 3, 5]:
@@ -341,7 +396,17 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       if player_serve_combinations:
         fig, ax = plt.subplots(figsize=(10, 18))
         plot_court_background(fig, ax)
-        
+
+        # Mark weak serve zones with red X
+        serve_zone_coords = {1: (0, -8), 3: (4, -8), 5: (8, -8)}
+        for zone in weak_zones:
+          x, y = serve_zone_coords[zone]
+          # Draw red X marker (1.5x label font size = 16 * 1.5 = 24)
+          ax.text(x, y, 'X', fontsize=24, color='red', fontweight='bold',
+                  ha='center', va='center', zorder=20,
+                  bbox=dict(boxstyle='circle,pad=0.3', facecolor='white', 
+                            edgecolor='red', linewidth=2, alpha=0.9))
+    
         # Define coordinate mappings
         serve_from_coords = {1: (0, -8), 3: (4, -8), 5: (8, -8)}
         serve_to_x = {1: 0.8, 2: 2.4, 3: 4, 4: 5.6, 5: 7.2}
@@ -379,16 +444,44 @@ def report_scouting_overview(lgy, team, **rpt_filters):
                                    alpha=0.7, shrinkA=0, shrinkB=0))
           
           # Add label near the destination
+          # Add label with smart positioning to avoid overlaps
+          # Calculate offset based on destination zone to spread labels out
+          offset_x = 0.5
+          offset_y = 0.5
+
+          # Adjust offsets based on destination to minimize overlaps
+          if combo['to_zone'] <= 2:  # Left side zones
+            offset_x = 1.2
+            offset_y = 0.4
+          elif combo['to_zone'] >= 4:  # Right side zones
+            offset_x = -1.2
+            offset_y = 0.4
+          else:  # Middle zone
+            offset_x = 0.3
+            offset_y = 1.0
+
+          # Adjust for depth to further separate overlapping labels
+          if combo['to_depth'] == 'C':  # Close
+            offset_y -= 0.5
+          elif combo['to_depth'] == 'E':  # Far
+            offset_y += 0.5
+
           label_text = f"FBHE: {combo['fbhe']}\n({combo['attempts']} att)"
-          ax.text(to_x + 0.3, to_y + 0.3, label_text, fontsize=18, 
-                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8))
-        
+          ax.text(to_x + offset_x, to_y + offset_y, label_text, fontsize=16, 
+                  bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.85,
+                            edgecolor='gray', linewidth=0.5),
+                  ha='center', va='center', zorder=15)
+          
         # Add title
         player_name = performance_data[player_idx]['Full Name']
         ax.set_title(f"Top Serve Recommendations: {player_name}", fontsize=24, fontweight='bold')
         
         # Add legend
         legend_text = f"Player Avg FBHE: {avg_fbhe:.2f}\nShowing serves <{avg_fbhe*0.75:.2f} (≥5 attempts)"
+        if weak_zones:
+          zone_names = {1: 'Left', 3: 'Middle', 5: 'Right'}
+          weak_zone_names = [zone_names[z] for z in weak_zones]
+          legend_text += f"\n❌ Avoid serving from: {', '.join(weak_zone_names)}"
         ax.text(0.5, -9.5, legend_text, fontsize=18, ha='left',
                bbox=dict(boxstyle='round,pad=0.5', facecolor='lightyellow', alpha=0.8))
         
@@ -416,7 +509,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       
       # Define coordinates based on hit side - exact coordinates from specification
       # NOTE: Y-coordinates are NEGATIVE (opponent's side of court)
-      if hit_side == 'Left':
+      if hit_side == 'Right':
         position_coords = {
           'Front - Pin': {'start': (.5, 0), 'angles': {
             'Cut-Right': (.1, -1.5), 'Angle-Right': (.1, -7), 'Over-Middle': (1, -7),
@@ -435,7 +528,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
             'Angle-Left': (7, -6), 'Cut-Left': (7, -1.5)
           }}
         }
-      else:  # Right side
+      else:  # Left side
         position_coords = {
           'Front - Pin': {'start': (7.5, 0), 'angles': {
             'Cut-Left': (7.9, -1.5), 'Angle-Left': (7.9, -7), 'Over-Middle': (7, -7),
@@ -471,7 +564,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
         circle = plt.Circle(start_coords, 0.15, color='#dc2626', alpha=0.5, zorder=10)
         ax.add_patch(circle)
         # Add label above the starting position
-        ax.text(start_coords[0], start_coords[1] - 0.5, position_labels[area], 
+        ax.text(start_coords[0], 0.5, position_labels[area], 
                fontsize=16, fontweight='bold', color='#1e40af', 
                ha='center', va='top',
                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.9, edgecolor='#1e40af'))
@@ -532,12 +625,23 @@ def report_scouting_overview(lgy, team, **rpt_filters):
                                      alpha=0.7, shrinkA=0, shrinkB=0))
             
             # Add label
-            mid_x = (start_coords[0] + end_coords[0]) / 2
-            mid_y = (start_coords[1] + end_coords[1]) / 2
+            # Add label with smart positioning to avoid overlaps
+            # Place label at 2/3 distance along the arrow (closer to endpoint)
+            label_x = start_coords[0] + 0.67 * (end_coords[0] - start_coords[0])
+            label_y = start_coords[1] + 0.67 * (end_coords[1] - start_coords[1])
+
+            # Adjust label position based on which angle to spread them out
+            if 'Left' in angle_label:
+              label_x += 0.5  # Shift left angles slightly right
+            elif 'Right' in angle_label:
+              label_x -= 0.5  # Shift right angles slightly left
+
             label_text = f"{angle_label}\n{attack['pct']}"
-            ax.text(mid_x, mid_y, label_text, fontsize=14,
-                   bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8),
-                   ha='center')
+            ax.text(label_x, label_y, label_text, fontsize=12,
+                    bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.85, 
+                              edgecolor='gray', linewidth=0.5),
+                    ha='center', va='center', zorder=15)
+
             
             arrows_plotted += 1
       
@@ -562,17 +666,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
         image_list[player_idx + 2] = ''
         image_desc_list[player_idx + 2] = f"No attack data available for {player_name}"
 
-    '''
-    # we don't do this here, these fields come from the report_list table
-    if title_list and len(title_list) > 0:
-      title_list[0] = f"Scouting Overview: {pair_a}"
-    if label_list and len(label_list) > 0:
-      label_list[0] = f"Individual Pair Analysis Report"
-      if len(label_list) > 1:
-        label_list[1] = f"League: {disp_league}, Gender: {disp_gender}, Year: {disp_year}"
-      if len(label_list) > 2:
-        label_list[2] = f"Team: {team}"
-    '''
+
 
   except Exception as e:
     error_df = pd.DataFrame({'Error': [f"Error generating scouting report: {str(e)}"]})
