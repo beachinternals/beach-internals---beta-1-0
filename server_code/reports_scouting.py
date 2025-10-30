@@ -184,21 +184,25 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       }
 
       # Process each attack area
-      area_df = pd.DataFrame()
-      for zone, tactic in zones_tactics:
-        print(f" filtering for zone {zone} and tactic {tactic}")
-        if tactic == 'any':
-          temp_df = player_ppr_df[player_ppr_df['att_src_zone_net'] == zone]
-          print(f"Size of temp_df after filter for zone: {zone}, size {temp_df.shape[0]}")
-        elif tactic == 'behind':
-          temp_df = player_ppr_df[(player_ppr_df['att_src_zone_net'] == zone) & 
-            (player_ppr_df['tactic'] == 'behind')]
-          print(f"Size of temp_df after filter for zone: {zone}, tactic {tactic}, df size: {temp_df.shape[0]}")
-        else:  # tactic == 'not behind'
-          temp_df = player_ppr_df[(player_ppr_df['att_src_zone_net'] == zone) & 
-            (player_ppr_df['tactic'] != 'behind')]
-          print(f"Size of temp_df after filter for zone: {zone}, tactic {tactic}, df size: {temp_df.shape[0]}")
-        area_df = pd.concat([area_df, temp_df])
+      for idx, area in enumerate(['Front - Pin', 'Front - Slot', 'Middle', 'Behind']):
+        print(f" in the loop to build the df, idx: {idx}, area {area}")
+        zones_tactics = attack_area_mappings[area]
+        print(f" Zone Tactics : {zones_tactics}")
+        area_df = pd.DataFrame()
+        for zone, tactic in zones_tactics:
+          print(f" filtering for zone {zone} and tactic {tactic}")
+          if tactic == 'any':
+            temp_df = player_ppr_df[player_ppr_df['att_src_zone_net'] == zone]
+            print(f"Size of temp_df after filter for zone: {zone}, size {temp_df.shape[0]}")
+          elif tactic == 'behind':
+            temp_df = player_ppr_df[(player_ppr_df['att_src_zone_net'] == zone) & 
+              (player_ppr_df['tactic'] == 'behind')]
+            print(f"Size of temp_df after filter for zone: {zone}, tactic {tactic}, df size: {temp_df.shape[0]}")
+          else:  # tactic == 'not behind'
+            temp_df = player_ppr_df[(player_ppr_df['att_src_zone_net'] == zone) & 
+              (player_ppr_df['tactic'] != 'behind')]
+            print(f"Size of temp_df after filter for zone: {zone}, tactic {tactic}, df size: {temp_df.shape[0]}")
+          area_df = pd.concat([area_df, temp_df])
   
         if not area_df.empty:
           print(f"Size of area_df passed to angular attack table {area_df.shape[0]}")
