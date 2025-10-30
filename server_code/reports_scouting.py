@@ -170,7 +170,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       att45 = player_ppr_df[((player_ppr_df['att_src_zone_net'] == 4) | 
                              (player_ppr_df['att_src_zone_net'] == 5)) & 
         (player_ppr_df['tactic'] != 'behind')].shape[0]
-      hit_side = 'Left' if att12 > att45 else 'Right'
+      hit_side = 'Left' if att12 < att45 else 'Right'
 
       # Store hit side for later use in shot charts
       player_attack_details[player]['hit_side'] = hit_side
@@ -414,40 +414,40 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       # NOTE: Y-coordinates are NEGATIVE (opponent's side of court)
       if hit_side == 'Left':
         position_coords = {
-          'Front - Pin': {'start': (0, 0), 'angles': {
-            'Cut-Right': (0, -4), 'Angle-Right': (0, -8), 'Over-Middle': (1, -7),
-            'Angle-Left': (6, -8.5), 'Cut-Left': (7, -1)
+          'Front - Pin': {'start': (.5, 0), 'angles': {
+            'Cut-Right': (.1, -1.5), 'Angle-Right': (.1, -7), 'Over-Middle': (1, -7),
+            'Angle-Left': (6, -7), 'Cut-Left': (7, -1.5)
           }},
           'Front - Slot': {'start': (2, 0), 'angles': {
-            'Cut-Right': (0.5, -1.5), 'Angle-Right': (0.5, -6), 'Over-Middle': (2, -7),
-            'Angle-Left': (7, -6.67), 'Cut-Left': (7.5, -1.5)
+            'Cut-Right': (0.5, -1.5), 'Angle-Right': (0.5, -7), 'Over-Middle': (2, -7),
+            'Angle-Left': (7, -6), 'Cut-Left': (7.5, -1.5)
           }},
           'Behind': {'start': (6, 0), 'angles': {
             'Cut-Right': (0.5, -1.5), 'Angle-Right': (1, -6.67), 'Over-Middle': (6, -7),
-            'Angle-Left': (7.5, -6), 'Cut-Left': (7.5, -1.5)
+            'Angle-Left': (7, -6), 'Cut-Left': (7.5, -1.5)
           }},
           'Middle': {'start': (4, 0), 'angles': {
-            'Cut-Right': (1, -0.9), 'Angle-Right': (1, -6), 'Over-Middle': (4, -7),
-            'Angle-Left': (7, -6), 'Cut-Left': (7, -0.9)
+            'Cut-Right': (1, -1.5), 'Angle-Right': (1, -6), 'Over-Middle': (4, -7),
+            'Angle-Left': (7, -6), 'Cut-Left': (7, -1.5)
           }}
         }
       else:  # Right side
         position_coords = {
-          'Front - Pin': {'start': (8, 0), 'angles': {
-            'Cut-Left': (1, -1), 'Angle-Left': (6.8, -3), 'Over-Middle': (7, -7),
-            'Angle-Right': (8, -8), 'Cut-Right': (8, -4)
+          'Front - Pin': {'start': (7.5, 0), 'angles': {
+            'Cut-Left': (7.9, -1.5), 'Angle-Left': (7.9, -7), 'Over-Middle': (7, -7),
+            'Angle-Right': (2, -7), 'Cut-Right': (1, -1.5)
           }},
           'Front - Slot': {'start': (6, 0), 'angles': {
-            'Cut-Left': (0.5, -1.5), 'Angle-Left': (1, -6.67), 'Over-Middle': (6, -7),
-            'Angle-Right': (7.5, -6), 'Cut-Right': (7.5, -1.5)
+            'Cut-Left': (7.5, -1.5), 'Angle-Left': (7.5, -7), 'Over-Middle': (6, -7),
+            'Angle-Right': (1, -6), 'Cut-Right': (1, -1.5)
           }},
           'Behind': {'start': (2, 0), 'angles': {
-            'Cut-Left': (0.5, -1.5), 'Angle-Left': (1, -6.67), 'Over-Middle': (6, -7),
-            'Angle-Right': (7, -6.67), 'Cut-Right': (7.5, -1.5)
+            'Cut-Left': (7.5, -1.5), 'Angle-Left': (7, -6), 'Over-Middle': (2, -7),
+            'Angle-Right': (0.5, -7), 'Cut-Right': (0.5, -1.5)
           }},
           'Middle': {'start': (4, 0), 'angles': {
-            'Cut-Right': (1, -0.9), 'Angle-Right': (1, -6), 'Over-Middle': (4, -7),
-            'Angle-Left': (7, -6), 'Cut-Left': (7, -0.9)
+            'Cut-Right': (1, -1.5), 'Angle-Right': (1, -6), 'Over-Middle': (4, -7),
+            'Angle-Left': (7, -6), 'Cut-Left': (7, -1.5)
           }}
         }
       
