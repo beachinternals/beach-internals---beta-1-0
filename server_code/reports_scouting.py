@@ -24,6 +24,7 @@ from server_functions import *
 
 
 
+
 def report_scouting_overview(lgy, team, **rpt_filters):
   """
     Scouting overview report function - provides detailed analysis for a single pair.
@@ -156,7 +157,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       player1: ['', '', '', ''],
       player2: ['', '', '', '']
     }
-    
+
     # Store detailed attack data for shot charts
     player_attack_details = {player1: {}, player2: {}}
 
@@ -170,7 +171,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
                              (player_ppr_df['att_src_zone_net'] == 5)) & 
         (player_ppr_df['tactic'] != 'behind')].shape[0]
       hit_side = 'Left' if att12 > att45 else 'Right'
-      
+
       # Store hit side for later use in shot charts
       player_attack_details[player]['hit_side'] = hit_side
 
@@ -410,42 +411,43 @@ def report_scouting_overview(lgy, team, **rpt_filters):
       plot_court_background(fig, ax)
       
       # Define coordinates based on hit side - exact coordinates from specification
+      # NOTE: Y-coordinates are NEGATIVE (opponent's side of court)
       if hit_side == 'Left':
         position_coords = {
           'Front - Pin': {'start': (0, 0), 'angles': {
-            'Cut-Right': (0, 4), 'Angle-Right': (0, 8), 'Over-Middle': (1, 7),
-            'Angle-Left': (6, 8.5), 'Cut-Left': (7, 1)
+            'Cut-Right': (0, -4), 'Angle-Right': (0, -8), 'Over-Middle': (1, -7),
+            'Angle-Left': (6, -8.5), 'Cut-Left': (7, -1)
           }},
           'Front - Slot': {'start': (2, 0), 'angles': {
-            'Cut-Right': (0.5, 1.5), 'Angle-Right': (0.5, 6), 'Over-Middle': (2, 7),
-            'Angle-Left': (7, 6.67), 'Cut-Left': (7.5, 1.5)
+            'Cut-Right': (0.5, -1.5), 'Angle-Right': (0.5, -6), 'Over-Middle': (2, -7),
+            'Angle-Left': (7, -6.67), 'Cut-Left': (7.5, -1.5)
           }},
           'Behind': {'start': (6, 0), 'angles': {
-            'Cut-Right': (0.5, 1.5), 'Angle-Right': (1, 6.67), 'Over-Middle': (6, 7),
-            'Angle-Left': (7.5, 6), 'Cut-Left': (7.5, 1.5)
+            'Cut-Right': (0.5, -1.5), 'Angle-Right': (1, -6.67), 'Over-Middle': (6, -7),
+            'Angle-Left': (7.5, -6), 'Cut-Left': (7.5, -1.5)
           }},
           'Middle': {'start': (4, 0), 'angles': {
-            'Cut-Right': (1, 0.9), 'Angle-Right': (1, 6), 'Over-Middle': (4, 7),
-            'Angle-Left': (7, 6), 'Cut-Left': (7, 0.9)
+            'Cut-Right': (1, -0.9), 'Angle-Right': (1, -6), 'Over-Middle': (4, -7),
+            'Angle-Left': (7, -6), 'Cut-Left': (7, -0.9)
           }}
         }
       else:  # Right side
         position_coords = {
           'Front - Pin': {'start': (8, 0), 'angles': {
-            'Cut-Left': (1, 1), 'Angle-Left': (6.8, 3), 'Over-Middle': (8, 7),
-            'Angle-Right': (8, 7), 'Cut-Right': (8, 4)
+            'Cut-Left': (1, -1), 'Angle-Left': (6.8, -3), 'Over-Middle': (7, -7),
+            'Angle-Right': (8, -8), 'Cut-Right': (8, -4)
           }},
           'Front - Slot': {'start': (6, 0), 'angles': {
-            'Cut-Left': (0.5, 1.5), 'Angle-Left': (1, 6.67), 'Over-Middle': (6, 7),
-            'Angle-Right': (7.5, 6), 'Cut-Right': (7.5, 1.5)
+            'Cut-Left': (0.5, -1.5), 'Angle-Left': (1, -6.67), 'Over-Middle': (6, -7),
+            'Angle-Right': (7.5, -6), 'Cut-Right': (7.5, -1.5)
           }},
           'Behind': {'start': (2, 0), 'angles': {
-            'Cut-Left': (0.5, 1.5), 'Angle-Left': (1, 6.67), 'Over-Middle': (6, 7),
-            'Angle-Right': (7, 6.67), 'Cut-Right': (7.5, 1.5)
+            'Cut-Left': (0.5, -1.5), 'Angle-Left': (1, -6.67), 'Over-Middle': (6, -7),
+            'Angle-Right': (7, -6.67), 'Cut-Right': (7.5, -1.5)
           }},
           'Middle': {'start': (4, 0), 'angles': {
-            'Cut-Right': (1, 0.9), 'Angle-Right': (1, 6), 'Over-Middle': (4, 7),
-            'Angle-Left': (7, 6), 'Cut-Left': (7, 0.9)
+            'Cut-Right': (1, -0.9), 'Angle-Right': (1, -6), 'Over-Middle': (4, -7),
+            'Angle-Left': (7, -6), 'Cut-Left': (7, -0.9)
           }}
         }
       
@@ -574,7 +576,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     df_desc_list[0] = "Report Generation Error"
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
-  
+
   
 
 
