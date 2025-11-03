@@ -580,8 +580,6 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   return return_text, report_infos
 
 
-
-
 def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
   """
   Generate scouting reports for pairs, including both pair-level and individual player reports.
@@ -665,12 +663,76 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           continue
 
         # Generate JSON version for data analysis
-        json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, 
-                                          include_urls=False, include_nulls=False)
-        if not isinstance(json_media, dict) and json_media.get('error'):
+        json_media = generate_json_report(rptname['rpt_form'], report_id, 
+                                          include_images=False, 
+                                          include_urls=False, 
+                                          include_nulls=False)
+
+        # Check if generation was successful
+        if json_media is None:
+          log_error(f"Error generating JSON report for {rptname['report_name']}")
+          continue
+
+        # Process the successful BlobMedia object
+        try:
+          json_data = json.loads(json_media.get_bytes().decode('utf-8'))
+          json_name = f"scouting_{disp_pair}_{rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+          json_result = write_to_nested_folder(json_folder, json_name, json_media)
+          pdf_files_created.append({'name': json_name, 'result': json_result})
+
+          # Get coach's AI summary level preference and prompt description
+          coach_user = app_tables.users.get(email=rpt_r['email'])
+          ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
+          prompt_row = app_tables.ai_prompt_templates.get(
+            report_description=rpt_r['Report Description'],
+            hierarchy_level='1',
+            ai_summary_level=ai_summary_level
+          )
+
+          # Collect data for AI summary
+          report_data_collection.append({
+            'report_name': rptname['report_name'],
+            'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
+            'json_data': json_data
+          })
+        except Exception as e:
+          log_error(f"Failed to parse scouting json_media for {rptname['report_name']}: {e}")
+
+        # Generate PDF version
+        pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
+        if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
+          pair_pdf = merge_pdfs(pair_pdf, pdf_result['pdf'],
+                                pdf_name=f"{disp_pair}_scouting_combined_{rpt_r['Report Description']}.pdf") if pair_pdf else pdf_result['pdf']
+
+      # ===================================================================
+      # SECTION 2: Process Player Reports (Individual Player Analysis)
+      # ===================================================================
+      for player, label in [(player1, "player1"), (player2, "player2")]:
+        player_pdf = None
+        player_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
+        player_filters['player'] = player
+
+        for rptname in player_rptnames:
+          # Generate the report data
+          report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **player_filters)
+          if not report_id:
+            continue
+
+          # Generate JSON version for data analysis
+          json_media = generate_json_report(rptname['rpt_form'], report_id, 
+                                            include_images=False, 
+                                            include_urls=False, 
+                                            include_nulls=False)
+
+          # Check if generation was successful
+          if json_media is None:
+            log_error(f"Error generating JSON report for {label} {player} - {rptname['report_name']}")
+            continue
+
+          # Process the successful BlobMedia object
           try:
             json_data = json.loads(json_media.get_bytes().decode('utf-8'))
-            json_name = f"scouting_{disp_pair} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+            json_name = f"{label}_{player}_{rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
             json_result = write_to_nested_folder(json_folder, json_name, json_media)
             pdf_files_created.append({'name': json_name, 'result': json_result})
 
@@ -690,61 +752,13 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
               'json_data': json_data
             })
           except Exception as e:
-            log_critical(f"Failed to parse scouting json_media: {e}")
-
-        # Generate PDF version
-        pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
-        if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
-          pair_pdf = merge_pdfs(pair_pdf, pdf_result['pdf'],
-                                pdf_name=f"{disp_pair} scouting_combined_{rpt_r['Report Description']}.pdf") if pair_pdf else pdf_result['pdf']
-
-      # ===================================================================
-      # SECTION 2: Process Player Reports (Individual Player Analysis)
-      # ===================================================================
-      for player, label in [(player1, "player1"), (player2, "player2")]:
-        player_pdf = None
-        player_filters = populate_filters_from_rpt_mgr_table(rpt_r, None)
-        player_filters['player'] = player
-        
-        for rptname in player_rptnames:
-          # Generate the report data
-          report_id = generate_and_store_report(rptname['function_name'], lgy, disp_team, **player_filters)
-          if not report_id:
-            continue
-
-          # Generate JSON version for data analysis
-          json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, 
-                                           include_urls=False, include_nulls=False)
-          if not isinstance(json_media, dict) and json_media.get('error'):
-            try:
-              json_data = json.loads(json_media.get_bytes().decode('utf-8'))
-              json_name = f"{label}_{player} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
-              json_result = write_to_nested_folder(json_folder, json_name, json_media)
-              pdf_files_created.append({'name': json_name, 'result': json_result})
-
-              # Get coach's AI summary level preference and prompt description
-              coach_user = app_tables.users.get(email=rpt_r['email'])
-              ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
-              prompt_row = app_tables.ai_prompt_templates.get(
-                report_description=rpt_r['Report Description'],
-                hierarchy_level='1',
-                ai_summary_level=ai_summary_level
-              )
-
-              # Collect data for AI summary
-              report_data_collection.append({
-                'report_name': rptname['report_name'],
-                'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
-                'json_data': json_data
-              })
-            except Exception as e:
-              log_critical(f"Failed to parse {label} json_media: {e}")
+            log_error(f"Failed to parse {label} json_media for {player} - {rptname['report_name']}: {e}")
 
           # Generate PDF version
           pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
           if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
             player_pdf = merge_pdfs(player_pdf, pdf_result['pdf'],
-                                    pdf_name=f"{player} {label}_combined_{rpt_r['Report Description']}.pdf") if player_pdf else pdf_result['pdf']
+                                    pdf_name=f"{player}_{label}_combined_{rpt_r['Report Description']}.pdf") if player_pdf else pdf_result['pdf']
 
         # Store the completed player PDF
         if label == "player1":
@@ -755,7 +769,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
       # ===================================================================
       # SECTION 3: Combine All PDFs in Correct Order
       # ===================================================================
-      final_pdf_name = f"{disp_pair} {rpt_r['Report Description']}_combined_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
+      final_pdf_name = f"{disp_pair}_{rpt_r['Report Description']}_combined_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
       final_pdf = None
       
       # Merge in order: pair report, player1 reports, player2 reports
@@ -804,7 +818,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           )
 
           # Save rollup summary as JSON for data analysis
-          rollup_json_name = f"rollup_{disp_pair} {rpt_r['Report Description']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+          rollup_json_name = f"rollup_{disp_pair}_{rpt_r['Report Description']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
           rollup_json_media = anvil.BlobMedia('application/json', 
                                     json.dumps(rollup_data, indent=2).encode('utf-8'))
           rollup_json_result = write_to_nested_folder(json_folder, rollup_json_name, rollup_json_media)
@@ -843,9 +857,8 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
     log_critical(f"Critical error in rpt_mgr_scouting_rpts: {e}")
     return return_text, report_infos
 
+  log_debug("rpt_mgr_scouting_rpts returned successfully")
   return return_text, report_infos
-  
-
 
 
 
