@@ -409,7 +409,7 @@ def report_scouting_overview(lgy, team, **rpt_filters):
     
         # Define coordinate mappings
         serve_from_coords = {1: (0, -8), 3: (4, -8), 5: (8, -8)}
-        serve_to_x = {1: 0.8, 2: 2.4, 3: 4, 4: 5.6, 5: 7.2}
+        serve_to_x = {1: 7.2, 2: 5.6, 3: 4, 4: 2.4, 5: 0.8}
         serve_to_y = {'C': 4, 'D': 5.6, 'E': 7.2}
         
         # Normalize line widths (scale attempts to reasonable line widths)
