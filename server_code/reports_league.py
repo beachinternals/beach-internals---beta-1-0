@@ -227,12 +227,12 @@ def report_league_new(lgy, team, **rpt_filters):
   image_list[3] = bar_plot
 
   # Image for the Bar Graph of TCR vs winning %
-  high = (player_data_stats_df.at[0,'tcr_mean']+2*player_data_stats_df.at[0,'tcr_stdev'])/100
-  low = (player_data_stats_df.at[0,'tcr_mean']-2*player_data_stats_df.at[0,'tcr_stdev'])/100
+  high = (player_data_stats_df.at[0,'tcr_mean']+2*player_data_stats_df.at[0,'tcr_stdev'])
+  low = (player_data_stats_df.at[0,'tcr_mean']-2*player_data_stats_df.at[0,'tcr_stdev'])
   bar_width = (high-low)/30
   plot_df, status = count_wins( tri_df['win_tcr'], tri_df['loser_tcr'], low, high )
   print(f"high:{high}, low:{low}, plot_df \n {plot_df}")
-  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Transition Conversion Rate', 'Transition Conversion Rate', 'Percent Wins', plt_size, '', 0, True, player_data_stats_df.at[0,'tcr_mean']/100, player_data_stats_df.at[0,'tcr_stdev']/100, bar_width)
+  bar_plot = plot_bar_graph( plot_df['MidPoint'], plot_df['Win Percent'], 'Winning Percent by Transition Conversion Rate', 'Transition Conversion Rate', 'Percent Wins', plt_size, '', 0, True, player_data_stats_df.at[0,'tcr_mean'], player_data_stats_df.at[0,'tcr_stdev'], bar_width)
   image_list[5] = bar_plot
 
   # Image for the Bar Graph of Knock Out vs winning %
