@@ -1890,7 +1890,6 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
-
 def report_player_passing_cluster(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -1957,11 +1956,13 @@ def report_player_passing_cluster(lgy, team, **rpt_filters):
   else:
     plot1_return  = { 
       'stat_text':'Error: No data piointsin PPR_DF \n',
-      'plot_image':''
+      'plot_image':'',
+      'cluster_info': []  # NEW: Empty list for cluster info
     }
     plot2_return  = { 
       'stat_text':'Error: No data piointsin PPR_DF \n',
-      'plot_image':''
+      'plot_image':'',
+      'cluster_info': []  # NEW: Empty list for cluster info
     }
 
   # put the Images in the image_list
@@ -1971,13 +1972,27 @@ def report_player_passing_cluster(lgy, team, **rpt_filters):
 
 
   # put the DF's in the df_list
-  #df_list[0] = fbhe_table.to_dict('records')
+  # NEW: Combine cluster information from both kills and errors
+  kill_cluster_info = plot1_return.get('cluster_info', [])
+  error_cluster_info = plot2_return.get('cluster_info', [])
+
+  # Combine both lists
+  all_cluster_info = kill_cluster_info + error_cluster_info
+
+  # Convert to the format expected by Anvil (list of dicts)
+  if all_cluster_info:
+    df_list[0] = all_cluster_info
+  else:
+    # If no clusters found, provide an empty structure or message
+    df_list[0] = [{'Message': 'No clusters found'}]
+
   # =============================================================================
   # END REPORT-SPECIFIC LOGIC
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+  
 
 def report_player_srv_fbhe(lgy, team, **rpt_filters):
   """

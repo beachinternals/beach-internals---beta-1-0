@@ -282,12 +282,12 @@ def plot_attack_zones( ppr_df, plt_num):
   return anvil.mpl_util.plot_image()
 
 
-
 def plot_pass_clusters(ppr_df, disp_player, category):
   """
     Generate a Matplotlib scatter plot of kill/error clusters with RdYlGn colormap.
 
     Modified this only plot one category (FBK/FBE) each time it is called
+    NOW ALSO RETURNS cluster information (center location and size)
     
     """
   #print("Entered Plot Pass Clusters")
@@ -341,6 +341,10 @@ def plot_pass_clusters(ppr_df, disp_player, category):
     ax.grid()
 
     dot_label = 'Kills - Outliers' if category == "FBK" else 'Errors - Outliers'
+
+    # NEW: Create a list to store cluster information
+    cluster_info_list = []
+
     if not df_kills.empty:
       # Plot scatter points
       kill_scatter = ax.scatter(
@@ -362,6 +366,23 @@ def plot_pass_clusters(ppr_df, disp_player, category):
           el_mean, el_width, el_height, el_angle = calculate_standard_deviation_ellipse(cluster_points, confidence=1.0)
           #print(f"Ellipse info: mean {el_mean}, width {el_width}, height {el_height}, angle {el_angle}")
           xy_center = (el_mean[0], el_mean[1])
+
+          # NEW: Calculate ellipse area and store cluster info
+          ellipse_area = calculate_ellipse_area(el_width, el_height)
+          num_points = cluster_points.shape[0]
+
+          cluster_info_list.append({
+            'Category': category,
+            'Cluster_ID': int(cluster_id),
+            'Center_X': round(el_mean[0], 2),
+            'Center_Y': round(el_mean[1], 2),
+            'Width': round(el_width, 2),
+            'Height': round(el_height, 2),
+            'Angle': round(el_angle, 2),
+            'Area': round(ellipse_area, 2),
+            'Num_Points': num_points
+          })
+
           # Add ellipse patch
           ellipse = patches.Ellipse(
             xy=xy_center,
@@ -400,12 +421,14 @@ def plot_pass_clusters(ppr_df, disp_player, category):
       f"Errors: {len(df_kills)} points, {category_result.get('n_clusters', 0)} clusters\n"
       f"Density: {density_info}",
       'plot_image': plot_media,
+      'cluster_info': cluster_info_list  # NEW: Return cluster information
     }
 
   except Exception as e:
     logger.error(f"Error in plot_weekly_counts_no_xlabels: {str(e)}")
     return {'error': str(e)}
 
+    
 
 
 
