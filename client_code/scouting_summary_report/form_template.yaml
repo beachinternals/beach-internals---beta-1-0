@@ -45,6 +45,7 @@ components:
     properties:
       spacing:
         margin: ['0', null, '0', null]
+      visible: false
     type: RichText
   layout_properties: {grid_position: 'BGXTTM,IGUYGG'}
   name: column_panel_2
@@ -74,6 +75,7 @@ components:
       font_size: 12
       spacing:
         margin: ['0', null, '0', null]
+      visible: false
     type: RichText
   layout_properties: {grid_position: 'DACOAC,AQCLMX'}
   name: column_panel_3
@@ -107,6 +109,7 @@ components:
     font_size: 12
     spacing:
       margin: ['0', null, '0', null]
+    visible: false
   type: RichText
 - components:
   - layout_properties: {grid_position: 'QMCWOL,ZXEUVK'}
@@ -124,6 +127,7 @@ components:
       font_size: 12
       spacing:
         margin: ['0', null, '0', null]
+      visible: false
     type: RichText
   layout_properties: {grid_position: 'MFHNVH,NCDAVN'}
   name: column_panel_7
