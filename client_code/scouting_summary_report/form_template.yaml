@@ -45,7 +45,7 @@ components:
     properties:
       spacing:
         margin: ['0', null, '0', null]
-      visible: false
+      visible: true
     type: RichText
   layout_properties: {grid_position: 'BGXTTM,IGUYGG'}
   name: column_panel_2
@@ -120,6 +120,7 @@ components:
       font_size: 14
       spacing:
         margin: ['0', null, '0', null]
+      visible: false
     type: Label
   - layout_properties: {grid_position: 'SEWRXB,VCMNOS'}
     name: box4
