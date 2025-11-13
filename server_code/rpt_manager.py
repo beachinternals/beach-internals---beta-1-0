@@ -36,6 +36,7 @@ def rpt_mgr_generate():
 #
 #---------------------------------------------------------------
 @anvil.server.background_task
+@monitor_performance
 def rpt_mgr_generate_background():
   # Generate reports from the report mgt data file
   now = datetime.now()
@@ -578,6 +579,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
     return return_text, report_infos
 
   return return_text, report_infos
+
 
 
 def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):

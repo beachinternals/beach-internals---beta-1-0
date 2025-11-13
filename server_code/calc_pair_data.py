@@ -23,6 +23,7 @@ from plot_functions import *
 #  player_data is only for league entries in the ppr_csv_tables table.  We also sotre the list of player data stats
 
 @anvil.server.callable
+@monitor_performance
 def calc_all_pair_data():
   # caluclate the plaeyr data for ALL leagues
   # so seach th eleague data base, then loop thru them

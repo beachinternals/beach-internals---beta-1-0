@@ -61,6 +61,7 @@ def night_processing_cron():
 
 
 @anvil.server.background_task
+@monitor_performance
 def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues):
   # call all the different night processing tasks in sequence, league by leaguye
 
@@ -261,12 +262,14 @@ def call_merge_ppr_data():
   return task
 
 @anvil.server.background_task
+@monitor_performance
 def merge_ppr_data1():
   # this just call the background task with the 
   task = merge_ppr_data()
   return task
   
 @anvil.server.callable
+@monitor_performance
 def merge_ppr_data():
   now = datetime.now()
   email_text = "Merging PPR Data \n Called at:" + str(now) + "\n"
