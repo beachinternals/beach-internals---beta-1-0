@@ -34,7 +34,7 @@ import inspect
 import copy
 
 # Create logger with formatting
-from logger_utils import log_info, log_error, log_critical, log_debug, log_row
+from logger_utils import log_info, log_error, log_critical, log_debug
 
 import json
 import requests
@@ -46,8 +46,81 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
+import time
+import functools
+
 fake = Faker()
- 
+
+# ============================================================================
+# PERFORMANCE MONITORING
+# Added: [Today's Date] - Week 1 Tuesday
+# Purpose: Track function execution times to identify bottlenecks
+# ============================================================================
+# 
+# PASTE THIS CODE IN server_functions.py
+# Right after all the import statements, before any function definitions
+#
+# ============================================================================
+
+def monitor_performance(func):
+  """
+    Decorator to track function execution time.
+    
+    Usage:
+        @monitor_performance
+        def slow_function(data):
+            # Your code here
+            return result
+    
+    This will automatically log how long the function takes to the performance_log table.
+    
+    Example Output:
+        ⏱️  generate_and_store_report: 12.34s
+    """
+  @functools.wraps(func)
+  def wrapper(*args, **kwargs):
+    start_time = time.time()
+    error_occurred = None
+
+    try:
+      result = func(*args, **kwargs)
+      success = True
+      return result
+
+    except Exception as e:
+      success = False
+      error_occurred = type(e).__name__
+      raise  # Re-raise the error so it still breaks
+
+    finally:
+      # Always log, even if error occurred
+      elapsed = time.time() - start_time
+
+      try:
+        app_tables.performance_log.add_row(
+          timestamp=datetime.now(),
+          function_name=func.__name__,
+          elapsed_seconds=round(elapsed, 3),
+          success=success,
+          error_type=error_occurred
+        )
+
+        # Also print to console for immediate feedback
+        if elapsed > 1.0:  # Only print if > 1 second
+          print(f"⏱️  {func.__name__}: {elapsed:.2f}s")
+
+      except Exception as log_error:
+        # Don't let logging break the function
+        print(f"⚠️  Failed to log performance for {func.__name__}: {log_error}")
+
+  return wrapper
+
+
+# ============================================================================
+# END OF PERFORMANCE MONITORING CODE
+# ============================================================================
+
+@monitor_performance
 def fbhe( ppr_df, disp_player, play_type, video_yn ):
   # pass this a query of rows, figures the FBHE for the display player as the attacker
   # initialize the vector
@@ -207,6 +280,7 @@ def build_video_links(ppr_df: pd.DataFrame) -> str:
 
   return ' '.join(links)
 
+@monitor_performance
 def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str, video_yn: bool) -> FBHEResult:
   """
     Calculates the First Ball Hitting Efficiency (FBHE) and related statistics for a given player based on 

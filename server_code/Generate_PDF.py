@@ -19,7 +19,7 @@ from pair_reports import *
 from server_functions import *
 from scouting_reports import *
 from player_reports import *
-from logger_utils import log_info, log_error, log_critical, log_debug, log_row
+from logger_utils import log_info, log_error, log_critical, log_debug
 
 
 # This is a server module. It runs on the Anvil server,

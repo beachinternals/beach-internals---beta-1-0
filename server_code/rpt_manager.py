@@ -18,7 +18,7 @@ import re
 from typing import Tuple
 from collections import defaultdict
 import traceback
-from logger_utils import log_info, log_error, log_critical, log_debug, log_row
+from logger_utils import log_info, log_error, log_critical, log_debug
 
   
 # This is a server module. It runs on the Anvil server,

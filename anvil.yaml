@@ -162,6 +162,26 @@ db_schema:
       type: string
     server: full
     title: coach_preferences
+  error_log:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: timestamp
+      type: datetime
+    - admin_ui: {order: 1, width: 200}
+      name: severity
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: source
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: message
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      name: traceback_text
+      type: string
+    server: full
+    title: error_log
   league_comp_l1:
     client: search
     columns:
@@ -303,6 +323,29 @@ db_schema:
       type: media
     server: full
     title: master_player
+  performance_log:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: timestamp
+      type: datetime
+    - admin_ui: {order: 1, width: 200}
+      name: function_name
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: elapsed_seconds
+      type: number
+    - admin_ui: {order: 3, width: 200}
+      name: success
+      type: bool
+    - admin_ui: {order: 4, width: 200}
+      name: error_type
+      type: string
+    - admin_ui: {order: 5, width: 200}
+      name: context_json
+      type: string
+    server: full
+    title: performance_log
   ppr_csv_tables:
     client: search
     columns:
