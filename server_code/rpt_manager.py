@@ -36,7 +36,7 @@ def rpt_mgr_generate():
 #
 #---------------------------------------------------------------
 @anvil.server.background_task
-@monitor_performance
+#@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def rpt_mgr_generate_background():
   # Generate reports from the report mgt data file
   now = datetime.now()

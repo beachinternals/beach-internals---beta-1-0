@@ -49,6 +49,7 @@ logger = Logger()
 # If the library supports standard Python logging formatting:
 formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
 
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_att_along_net( lgy, team, **rpt_filters):
   '''
   Report Functions:
@@ -245,45 +246,48 @@ def get_player_attack_plots( ppr_df, disp_player):
   z4_df = pd.DataFrame.from_dict(zone_dict)
   z5_df = pd.DataFrame.from_dict(zone_dict)
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_result = fbhe_obj(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 1) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z1_df.at[0,'Value'] = fbhe_vector[0]
-  z1_df.at[1,'Value'] = fbhe_vector[4]
-  z1_df.at[2,'Value'] = fbhe_vector[3]
-  z1_df.at[3,'Value'] = fbhe_vector[5]
+  z1_df.at[0,'Value'] = fbhe_result.fbhe
+  z1_df.at[1,'Value'] = fbhe_result.fbso
+  z1_df.at[2,'Value'] = fbhe_result.attempts
+  z1_df.at[3,'Value'] = fbhe_result.video_link
   #z1_df.at[3,'Value'] = oos_vector[0]
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_result = fbhe_obj(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 2) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z2_df.at[0,'Value'] = fbhe_vector[0]
-  z2_df.at[1,'Value'] = fbhe_vector[4]
-  z2_df.at[2,'Value'] = fbhe_vector[3]
-  z2_df.at[3,'Value'] = fbhe_vector[5]
-  #z2_df.at[3,'Value'] = oos_vector[0]
+  z2_df.at[0,'Value'] = fbhe_result.fbhe
+  z2_df.at[1,'Value'] = fbhe_result.fbso
+  z2_df.at[2,'Value'] = fbhe_result.attempts
+  z2_df.at[3,'Value'] = fbhe_result.video_link
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+
+  #fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_result = fbhe_obj(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 3) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z3_df.at[0,'Value'] = fbhe_vector[0]
-  z3_df.at[1,'Value'] = fbhe_vector[4]
-  z3_df.at[2,'Value'] = fbhe_vector[3]
-  z3_df.at[3,'Value'] = fbhe_vector[5]
-  #z3_df.at[3,'Value'] = oos_vector[0]
+  z3_df.at[0,'Value'] = fbhe_result.fbhe
+  z3_df.at[1,'Value'] = fbhe_result.fbso
+  z3_df.at[2,'Value'] = fbhe_result.attempts
+  z3_df.at[3,'Value'] = fbhe_result.video_link
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+
+  #fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_result = fbhe_obj(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 4) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z4_df.at[0,'Value'] = fbhe_vector[0]
-  z4_df.at[1,'Value'] = fbhe_vector[4]
-  z4_df.at[2,'Value'] = fbhe_vector[3]
-  z4_df.at[3,'Value'] = fbhe_vector[5]
-  #z4_df.at[3,'Value'] = oos_vector[0]
+  z4_df.at[0,'Value'] = fbhe_result.fbhe
+  z4_df.at[1,'Value'] = fbhe_result.fbso
+  z4_df.at[2,'Value'] = fbhe_result.attempts
+  z4_df.at[3,'Value'] = fbhe_result.video_link
 
-  fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  #fbhe_vector = fbhe(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
+  fbhe_result = fbhe_obj(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'att', 'Yes')
   #oos_vector = count_out_of_system(new_ppr[ (new_ppr['att_src_zone_net'] == 5) & (new_ppr['tactic'] != 'option')], disp_player, 'pass' )
-  z5_df.at[0,'Value'] = fbhe_vector[0]
-  z5_df.at[1,'Value'] = fbhe_vector[4]
-  z5_df.at[2,'Value'] = fbhe_vector[3]
-  z5_df.at[3,'Value'] = fbhe_vector[5]
-  #z5_df.at[3,'Value'] = oos_vector[0]
+  z3_df.at[0,'Value'] = fbhe_result.fbhe
+  z5_df.at[1,'Value'] = fbhe_result.fbso
+  z5_df.at[2,'Value'] = fbhe_result.attempts
+  z5_df.at[3,'Value'] = fbhe_result.video_link
 
   #z1_mkdn = pd.DataFrame.to_markdown(z1_df, index=False, headers=['',''] )
   #z2_mkdn = pd.DataFrame.to_markdown(z2_df, index=False, headers=['',''])
@@ -306,6 +310,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_att_tendencies(lgy, team, **rpt_filters):
   """
     Test report function - serves as a stub/template for other report functions.
@@ -514,6 +519,7 @@ from matplotlib.colors import Normalize
 import numpy as np
 import pandas as pd
 
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_att_set(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -647,7 +653,7 @@ def report_player_att_set(lgy, team, **rpt_filters):
 
 
 
-
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_att_transition(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -781,6 +787,7 @@ def report_player_att_transition(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_att_expected(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -1005,6 +1012,7 @@ def plot_volleyball_attacks(ppr_df, plt_title=''):
 #------------------------------------------------------
 #  Player Passing Reports
 #=-------------------------------------------------------------
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def player_other_sw(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -1131,7 +1139,7 @@ def player_other_sw(lgy, team, **rpt_filters):
 
 
 
-
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -1466,7 +1474,7 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
-
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_passing_45_pass(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -1890,6 +1898,7 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_passing_cluster(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -1993,7 +2002,7 @@ def report_player_passing_cluster(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
   
-
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_srv_fbhe(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -2058,18 +2067,19 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
   if ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( ppr_df, disp_player, 'srv', True )
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[3,'All'] = fbhe_vector[1]  # kills
-    fbhe_table.at[4,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[5,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[2,'All'] = fbhe_vector[4]  # FBSO
-    fbhe_table.at[8,'All'] = fbhe_vector[5]  # URL
+    #fbhe_vector = fbhe( ppr_df, disp_player, 'srv', True )
+    fbhe_result = fbhe_obj( ppr_df, disp_player, 'srv', True)
+    fbhe_table.at[0,'All'] = fbhe_result.fbhe  # fbhe
+    fbhe_table.at[3,'All'] = fbhe_result.kills  # kills
+    fbhe_table.at[4,'All'] = fbhe_result.kills  # errors
+    fbhe_table.at[5,'All'] = fbhe_result.attempts  # attempts
+    fbhe_table.at[2,'All'] = fbhe_result.fbso  # FBSO
+    fbhe_table.at[8,'All'] = fbhe_result.video_link  # URL
     oos_vector = count_out_of_system( ppr_df, disp_player, 'srv' )
     fbhe_table.at[6,'All'] = 1 - oos_vector[1]  # Good Pass
     fbhe_table.at[6,'All'] = str('{:.1%}').format(fbhe_table.at[6,'All'])
     # FBHE Percentile
-    fbhe_table.at[1,'All'] =  round( stats.norm.cdf( (fbhe_vector[0] - player_data_stats_df.at[0,'srv_fbhe_mean'])/ player_data_stats_df.at[0,'srv_fbhe_stdev'] ), 3)
+    fbhe_table.at[1,'All'] =  round( stats.norm.cdf( (fbhe_result.fbhe - player_data_stats_df.at[0,'srv_fbhe_mean'])/ player_data_stats_df.at[0,'srv_fbhe_stdev'] ), 3)
     fbhe_table.at[1,'All'] = str('{:.0%}').format(fbhe_table.at[1,'All'])
     value = fbhe_table.at[6, 'All']  # '89.3%'
     float_value = float(value.replace('%', ''))/100  # 89.3
@@ -2082,17 +2092,18 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
     zone_stdev = ['srv1_fbhe_stdev', 'srv3_fbhe_stdev', 'srv5_fbhe_stdev', 'srv_fbhe_stdev']
     for i in [0,1,2,3]:
       zone = 0 if i == 3 else (i*2)+1
-      fbhe_vector = fbhe( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv', True )
-      fbhe_table.at[0,column[i]] = fbhe_vector[0]  # fbhe
-      fbhe_table.at[3,column[i]] = fbhe_vector[1]  # kills
-      fbhe_table.at[4,column[i]] = fbhe_vector[2]  # errors
-      fbhe_table.at[5,column[i]] = fbhe_vector[3]  # attempts
-      fbhe_table.at[2,column[i]] = fbhe_vector[4]  # fbso
-      fbhe_table.at[8,column[i]] = fbhe_vector[5]  # URL
+      #fbhe_vector = fbhe( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv', True )
+      fbhe_result = fbhe_obj( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv', True)
+      fbhe_table.at[0,column[i]] = fbhe_result.fbhe  # fbhe
+      fbhe_table.at[3,column[i]] = fbhe_result.kills  # kills
+      fbhe_table.at[4,column[i]] = fbhe_result.errors  # errors
+      fbhe_table.at[5,column[i]] = fbhe_result.attempts  # attempts
+      fbhe_table.at[2,column[i]] = fbhe_result.fbso  # fbso
+      fbhe_table.at[8,column[i]] = fbhe_result.video_link  # URL
       oos_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'srv' )
       fbhe_table.at[6,column[i]] = 1 - oos_vector[1]  # Good Pass
       fbhe_table.at[6,column[i]] = str('{:.1%}').format(fbhe_table.at[6,column[i]])
-      fbhe_table.at[1,column[i]] =  round( stats.norm.cdf( (fbhe_vector[0] - player_data_stats_df.at[0,zone_stats[i]])/ player_data_stats_df.at[0,zone_stdev[i]] ), 3)
+      fbhe_table.at[1,column[i]] =  round( stats.norm.cdf( (fbhe_result.fbhe - player_data_stats_df.at[0,zone_stats[i]])/ player_data_stats_df.at[0,zone_stdev[i]] ), 3)
       fbhe_table.at[1,column[i]] = str('{:.0%}').format(fbhe_table.at[1,column[i]])
       value = fbhe_table.at[6,column[i]]  # '89.3%'
       float_value = float(value.replace('%', ''))/100  # 89.3
@@ -2161,50 +2172,50 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
       #print(f"size of ppr_df, srv src = 1, dest = {i}{j}: {ppr_df[(ppr_df['serve_src_zone_net'] == 1)&(ppr_df['serve_dest_zone_net'] == i)&(ppr_df['serve_dest_zone_depth'] == j.capitalize() )].shape[0]}")
 
       # Zone 1
-      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
+      fbhe_result = fbhe_obj(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                          disp_player, 'srv', True
                         )
       #print(f"FBHE vector for 1, {i}{j}, {fbhe_vector}")
-      if fbhe_vector[3] >= 5:
-        pass1_val[index] = fbhe_vector[0]
-        srv1_val[index] = fbhe_vector[3]
+      if fbhe_result.attempts >= 5:
+        pass1_val[index] = fbhe_result.fbhe
+        srv1_val[index] = fbhe_result.attempts
         z1_table.loc[z1_table_index,'Dest Zone'] = str(i)+j.capitalize()
-        z1_table.loc[z1_table_index,'FBHE'] = fbhe_vector[0]
-        z1_table.loc[z1_table_index,'Srv'] = fbhe_vector[3]
-        z1_table.loc[z1_table_index,'URL'] = fbhe_vector[5]
+        z1_table.loc[z1_table_index,'FBHE'] = fbhe_result.fbhe
+        z1_table.loc[z1_table_index,'Srv'] = fbhe_result.attempts
+        z1_table.loc[z1_table_index,'URL'] = fbhe_result.video_link
         z1_table_index = z1_table_index + 1
 
 
       # Zone 3
-      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
+      fbhe_result = fbhe_obj(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize())],
                          disp_player, 'srv', True
                         )
-      if fbhe_vector[3] >= 5:        
-        pass3_val[index] = fbhe_vector[0]
-        srv3_val[index] = fbhe_vector[3]
+      if fbhe_result.attempts >= 5:        
+        pass3_val[index] = fbhe_result.fbhe
+        srv3_val[index] = fbhe_result.attempts
         z3_table.loc[z3_table_index,'Dest Zone'] = str(i)+j.capitalize()
-        z3_table.loc[z3_table_index,'FBHE'] = fbhe_vector[0]
-        z3_table.loc[z3_table_index,'Srv'] = fbhe_vector[3]
-        z3_table.loc[z3_table_index,'URL'] = fbhe_vector[5]
+        z3_table.loc[z3_table_index,'FBHE'] = fbhe_result.fbhe
+        z3_table.loc[z3_table_index,'Srv'] = fbhe_result.attempts
+        z3_table.loc[z3_table_index,'URL'] = fbhe_result.video_lini
         z3_table_index = z3_table_index + 1
 
       # Zone 5
-      fbhe_vector = fbhe(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
+      fbhe_result = fbhe_obj(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                          disp_player, 'srv', True
                         )
-      if fbhe_vector[3] >= 5:      
-        pass5_val[index] = fbhe_vector[0]
-        srv5_val[index] = fbhe_vector[3]
+      if fbhe_result[3].attempts >= 5:      
+        pass5_val[index] = fbhe_result.fbhe
+        srv5_val[index] = fbhe_result.attempts
         z5_table.loc[z5_table_index,'Dest Zone'] = str(i)+j.capitalize()
-        z5_table.loc[z5_table_index,'FBHE'] = fbhe_vector[0]
-        z5_table.loc[z5_table_index,'Srv'] = fbhe_vector[3]
-        z5_table.loc[z5_table_index,'URL'] = fbhe_vector[5]
+        z5_table.loc[z5_table_index,'FBHE'] = fbhe_result.fbhe
+        z5_table.loc[z5_table_index,'Srv'] = fbhe_result.attempts
+        z5_table.loc[z5_table_index,'URL'] = fbhe_result.video_link
         z5_table_index = z5_table_index + 1
 
       index = index + 1
@@ -2321,6 +2332,7 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_srv_passing(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -2736,7 +2748,7 @@ def report_player_srv_passing(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
-
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_srv_transition(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
@@ -2874,7 +2886,7 @@ def report_player_srv_transition(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
-
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_trends(lgy, team, **rpt_filters):
   """
   Player trends report function - shows weekly performance trends for a player.
@@ -3067,7 +3079,7 @@ def report_player_trends(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
-
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_profile(lgy, team, **rpt_filters):
   """
   Player profile report function - displays player info and key metrics in a single dataframe.
@@ -3287,7 +3299,7 @@ def report_player_profile(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
-
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_tournament_summary(lgy, team, **rpt_filters):
   """
   Player tournament summary report function.
@@ -3536,7 +3548,7 @@ def report_player_tournament_summary(lgy, team, **rpt_filters):
 #
 #-------------------------------------------------------------------------------------------------
 
-
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def  player_consistency_report_new(lgy, team, **rpt_filters):
   '''
 

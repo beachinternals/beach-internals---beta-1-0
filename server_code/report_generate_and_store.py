@@ -65,7 +65,7 @@ def get_valid_functions() -> set:
 #
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
 @anvil.server.callable
-@monitor_performance
+@monitor_performance( level=MONITORING_LEVEL_IMPORTANT )
 def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters) -> str:
   """
     Generate a report using the specified function, store results in report_data table, and return the report ID.

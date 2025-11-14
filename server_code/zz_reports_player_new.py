@@ -1146,14 +1146,17 @@ def player_45_fbhe_new(lgy, team, **rpt_filters):
   if ppr_df.shape[0] > 0:
     # calculate fbhe for all attacks
     #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}")
-    fbhe_vector = fbhe( ppr_df, disp_player, 'pass', True )
+    result = fbhe_obj(ppr_df, player, 'pass', True)
+    if result.attempts == 0:
+      return None
+    #fbhe_vector = fbhe( ppr_df, disp_player, 'pass', True )
     eso_obj = calc_player_eso(ppr_df,disp_player)
-    fbhe_table.at[0,'All'] = fbhe_vector[0]  # fbhe
-    fbhe_table.at[4,'All'] = fbhe_vector[1]  # attacks
-    fbhe_table.at[5,'All'] = fbhe_vector[2]  # errors
-    fbhe_table.at[6,'All'] = fbhe_vector[3]  # attempts
-    fbhe_table.at[2,'All'] = fbhe_vector[4]  # FBSO
-    fbhe_table.at[9,'All'] = fbhe_vector[5]  # URL
+    fbhe_table.at[0,'All'] = fbhe_result.fbhe  # fbhe
+    fbhe_table.at[4,'All'] = fbhe_result.attempts  # attacks
+    fbhe_table.at[5,'All'] = fbhe__result.errors  # errors
+    fbhe_table.at[6,'All'] = fbhe_result.attempts  # attempts
+    fbhe_table.at[2,'All'] = fbhe_result.fbso  # FBSO
+    fbhe_table.at[9,'All'] = fbhe_results.url  # URL
     fbhe_table.at[3,'All'] = eso_obj.get('eso')  # ESO
     #fbhe_table.at[3,'All'] = float("{:.3f}").format(fbhe_table.at[2,'All'])    
     oos_vector = count_out_of_system( ppr_df, disp_player, 'pass' )

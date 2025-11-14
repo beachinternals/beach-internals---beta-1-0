@@ -51,76 +51,134 @@ import functools
 
 fake = Faker()
 
+import time
+import functools
+
 # ============================================================================
-# PERFORMANCE MONITORING
-# Added: [Today's Date] - Week 1 Tuesday
-# Purpose: Track function execution times to identify bottlenecks
-# ============================================================================
-# 
-# PASTE THIS CODE IN server_functions.py
-# Right after all the import statements, before any function definitions
-#
+# TIERED PERFORMANCE MONITORING
+# Added: [Today's Date]
+# Purpose: Control monitoring granularity with levels
 # ============================================================================
 
-def monitor_performance(func):
+# Monitoring levels
+MONITORING_LEVEL_OFF = 0       # No monitoring
+MONITORING_LEVEL_CRITICAL = 1  # Only high-level orchestrators
+MONITORING_LEVEL_IMPORTANT = 2 # Add report generation
+MONITORING_LEVEL_DETAILED = 3  # Add data processing
+MONITORING_LEVEL_VERBOSE = 4   # Everything including helpers
+
+# Current monitoring level (change this to control what gets monitored)
+#CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_OFF  # ← Set your desired level
+#CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_CRITICAL  # ← Set your desired level
+#CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_IMPORTANT  # ← Set your desired level
+#CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_DETAILED  # ← Set your desired level
+CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_VERBOSE  # ← Set your desired level
+
+def monitor_performance(func=None, level=MONITORING_LEVEL_IMPORTANT):
   """
-    Decorator to track function execution time.
+    Decorator to track function execution time with configurable monitoring levels.
     
     Usage:
-        @monitor_performance
-        def slow_function(data):
-            # Your code here
-            return result
-    
-    This will automatically log how long the function takes to the performance_log table.
-    
-    Example Output:
-        ⏱️  generate_and_store_report: 12.34s
+        @monitor_performance                           # Default level (IMPORTANT)
+        @monitor_performance(level=MONITORING_LEVEL_CRITICAL)  # Specific level
+        
+    Args:
+        func: The function to decorate (provided automatically)
+        level: Minimum monitoring level required for this function to be monitored
+               Higher levels = less important functions
     """
-  @functools.wraps(func)
-  def wrapper(*args, **kwargs):
-    start_time = time.time()
-    error_occurred = None
+  def decorator(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+      # Check if this function should be monitored based on current level
+      if CURRENT_MONITORING_LEVEL < level:
+        # Current level is lower than required, skip monitoring
+        return f(*args, **kwargs)
 
-    try:
-      result = func(*args, **kwargs)
-      success = True
-      return result
-
-    except Exception as e:
-      success = False
-      error_occurred = type(e).__name__
-      raise  # Re-raise the error so it still breaks
-
-    finally:
-      # Always log, even if error occurred
-      elapsed = time.time() - start_time
+        # Monitoring is enabled for this level, track performance
+      start_time = time.time()
+      error_occurred = None
 
       try:
-        app_tables.performance_log.add_row(
-          timestamp=datetime.now(),
-          function_name=func.__name__,
-          elapsed_seconds=round(elapsed, 3),
-          success=success,
-          error_type=error_occurred
-        )
+        result = f(*args, **kwargs)
+        success = True
+        return result
 
-        # Also print to console for immediate feedback
-        if elapsed > 1.0:  # Only print if > 1 second
-          print(f"⏱️  {func.__name__}: {elapsed:.2f}s")
+      except Exception as e:
+        success = False
+        error_occurred = type(e).__name__
+        raise  # Re-raise the error
 
-      except Exception as log_error:
-        # Don't let logging break the function
-        print(f"⚠️  Failed to log performance for {func.__name__}: {log_error}")
+      finally:
+        # Always log if monitoring is enabled for this level
+        elapsed = time.time() - start_time
 
-  return wrapper
+        try:
+          app_tables.performance_log.add_row(
+            timestamp=datetime.now(),
+            function_name=f.__name__,
+            elapsed_seconds=round(elapsed, 3),
+            success=success,
+            error_type=error_occurred
+          )
+
+          # Print to console for immediate feedback (only if >1 second)
+          if elapsed > 1.0:
+            print(f"⏱️  {f.__name__}: {elapsed:.2f}s")
+
+        except Exception as log_error:
+          # Don't let logging break the function
+          print(f"⚠️  Failed to log performance for {f.__name__}: {log_error}")
+
+    return wrapper
+
+    # Handle being called with or without arguments
+  if func is None:
+    # Called with arguments: @monitor_performance(level=X)
+    return decorator
+  else:
+    # Called without arguments: @monitor_performance
+    return decorator(func)
 
 
-# ============================================================================
-# END OF PERFORMANCE MONITORING CODE
-# ============================================================================
+@anvil.server.callable
+def set_monitoring_level(level: int):
+  """
+    Change the current monitoring level.
+    
+    Args:
+        level: 0=OFF, 1=CRITICAL, 2=IMPORTANT, 3=DETAILED, 4=VERBOSE
+    
+    Returns:
+        String describing the new level
+    """
+  global CURRENT_MONITORING_LEVEL
 
-@monitor_performance
+  level_names = {
+    0: "OFF (no monitoring)",
+    1: "CRITICAL (orchestrators only)",
+    2: "IMPORTANT (+ report generation)",
+    3: "DETAILED (+ data processing)",
+    4: "VERBOSE (everything)"
+  }
+
+  if level not in level_names:
+    return f"Invalid level {level}. Use 0-4."
+
+  CURRENT_MONITORING_LEVEL = level
+  return f"Monitoring level set to {level}: {level_names[level]}"
+
+
+@anvil.server.callable
+def get_monitoring_level():
+  """Get current monitoring level and description"""
+  level_names = {
+    0: "OFF", 1: "CRITICAL", 2: "IMPORTANT", 3: "DETAILED", 4: "VERBOSE"
+  }
+  return f"Level {CURRENT_MONITORING_LEVEL}: {level_names.get(CURRENT_MONITORING_LEVEL, 'UNKNOWN')}"
+  
+
+@monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def fbhe( ppr_df, disp_player, play_type, video_yn ):
   # pass this a query of rows, figures the FBHE for the display player as the attacker
   # initialize the vector
@@ -280,7 +338,7 @@ def build_video_links(ppr_df: pd.DataFrame) -> str:
 
   return ' '.join(links)
 
-@monitor_performance
+@monitor_performance@monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str, video_yn: bool) -> FBHEResult:
   """
     Calculates the First Ball Hitting Efficiency (FBHE) and related statistics for a given player based on 
