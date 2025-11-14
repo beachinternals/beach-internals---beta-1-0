@@ -8,7 +8,16 @@ import anvil.tables.query as q
 import anvil.server
 from Generate_PDF import *
 from pair_functions import *
-from server_functions import *
+import server_functions  # MUST BE BEFORE any @monitor_performance
+from server_functions import (
+  monitor_performance,
+  CURRENT_MONITORING_LEVEL,
+  MONITORING_LEVEL_OFF,       # No monitoring
+  MONITORING_LEVEL_CRITICAL,  # Only high-level orchestrators
+  MONITORING_LEVEL_IMPORTANT, # Add report generation
+  MONITORING_LEVEL_DETAILED,  # Add data processing
+  MONITORING_LEVEL_VERBOSE   # Everything including helpers
+)
 import pandas as pd
 from report_generate_and_store import *
 from datetime import datetime, timedelta, date
@@ -36,7 +45,7 @@ def rpt_mgr_generate():
 #
 #---------------------------------------------------------------
 @anvil.server.background_task
-#@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
+@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def rpt_mgr_generate_background():
   # Generate reports from the report mgt data file
   now = datetime.now()
