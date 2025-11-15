@@ -366,15 +366,17 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
         # Generate JSON
         #log_info(f"Generating JSON for {rptname['rpt_form']}")
-        json_media = generate_json_report(rptname['rpt_form'], report_id, include_images=False, include_urls=False, include_nulls=False)
-        #log_info(f"Json media returned: {json_media}")
-        if isinstance(json_media, dict) and json_media.get('error'):
-          log_info(f"JSON generation failed: {json_media['error']}")
+        json_media, json_error = generate_json_report(rptname['rpt_form'], report_id, 
+                                                        include_images=False, include_urls=False, 
+                                                        include_nulls=False)
+        if json_error:
+          log_info(f"JSON generation failed: {json_error}")
           json_result = None
         else:
           json_name = f"{player_pair} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
           json_result = write_to_nested_folder(json_folder, json_name, json_media)
           pdf_files_created.append({'name': json_name, 'result': json_result})
+
 
           # COMMENTED OUT: Individual AI summaries no longer generated per report
           # This code is preserved in case we want to restore individual summaries in the future
@@ -675,40 +677,36 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           continue
 
         # Generate JSON version for data analysis
-        json_media = generate_json_report(rptname['rpt_form'], report_id, 
-                                          include_images=False, 
-                                          include_urls=False, 
-                                          include_nulls=False)
+        json_media, json_error = generate_json_report(rptname['rpt_form'], report_id, 
+                                                        include_images=False, 
+                                                        include_urls=False, 
+                                                        include_nulls=False)
+        if not json_error:  # Only proceed if no error
+          try:
+            json_data = json.loads(json_media.get_bytes().decode('utf-8'))
+            json_name = f"scouting_{disp_pair} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+            json_result = write_to_nested_folder(json_folder, json_name, json_media)
+            pdf_files_created.append({'name': json_name, 'result': json_result})
 
-        # Check if generation was successful
-        if json_media is None:
-          log_error(f"Error generating JSON report for {rptname['report_name']}")
-          continue
+        
 
-        # Process the successful BlobMedia object
-        try:
-          json_data = json.loads(json_media.get_bytes().decode('utf-8'))
-          json_name = f"scouting_{disp_pair}_{rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
-          json_result = write_to_nested_folder(json_folder, json_name, json_media)
-          pdf_files_created.append({'name': json_name, 'result': json_result})
-
-          # Get coach's AI summary level preference and prompt description
-          coach_user = app_tables.users.get(email=rpt_r['email'])
-          ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
-          prompt_row = app_tables.ai_prompt_templates.get(
+            # Get coach's AI summary level preference and prompt description
+            coach_user = app_tables.users.get(email=rpt_r['email'])
+            ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
+            prompt_row = app_tables.ai_prompt_templates.get(
             report_description=rpt_r['Report Description'],
             hierarchy_level='1',
             ai_summary_level=ai_summary_level
-          )
+            )
 
-          # Collect data for AI summary
-          report_data_collection.append({
-            'report_name': rptname['report_name'],
-            'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
-            'json_data': json_data
-          })
-        except Exception as e:
-          log_error(f"Failed to parse scouting json_media for {rptname['report_name']}: {e}")
+            # Collect data for AI summary
+            report_data_collection.append({
+              'report_name': rptname['report_name'],
+              'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
+              'json_data': json_data
+            })
+          except Exception as e:
+            log_error(f"Failed to parse scouting json_media for {rptname['report_name']}: {e}")
 
         # Generate PDF version
         pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
@@ -731,40 +729,35 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             continue
 
           # Generate JSON version for data analysis
-          json_media = generate_json_report(rptname['rpt_form'], report_id, 
-                                            include_images=False, 
-                                            include_urls=False, 
-                                            include_nulls=False)
+          json_media, json_error = generate_json_report(rptname['rpt_form'], report_id, 
+                                              include_images=False, 
+                                              include_urls=False, 
+                                              include_nulls=False)
+          if not json_error:  # Only proceed if no error
+            try:
+              json_data = json.loads(json_media.get_bytes().decode('utf-8'))
+              json_name = f"{label}_{player} {rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+              json_result = write_to_nested_folder(json_folder, json_name, json_media)
+              pdf_files_created.append({'name': json_name, 'result': json_result})
 
-          # Check if generation was successful
-          if json_media is None:
-            log_error(f"Error generating JSON report for {label} {player} - {rptname['report_name']}")
-            continue
 
-          # Process the successful BlobMedia object
-          try:
-            json_data = json.loads(json_media.get_bytes().decode('utf-8'))
-            json_name = f"{label}_{player}_{rptname['report_name']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
-            json_result = write_to_nested_folder(json_folder, json_name, json_media)
-            pdf_files_created.append({'name': json_name, 'result': json_result})
+              # Get coach's AI summary level preference and prompt description
+              coach_user = app_tables.users.get(email=rpt_r['email'])
+              ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
+              prompt_row = app_tables.ai_prompt_templates.get(
+                report_description=rpt_r['Report Description'],
+                hierarchy_level='1',
+                ai_summary_level=ai_summary_level
+              )
 
-            # Get coach's AI summary level preference and prompt description
-            coach_user = app_tables.users.get(email=rpt_r['email'])
-            ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
-            prompt_row = app_tables.ai_prompt_templates.get(
-              report_description=rpt_r['Report Description'],
-              hierarchy_level='1',
-              ai_summary_level=ai_summary_level
-            )
-
-            # Collect data for AI summary
-            report_data_collection.append({
-              'report_name': rptname['report_name'],
-              'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
-              'json_data': json_data
-            })
-          except Exception as e:
-            log_error(f"Failed to parse {label} json_media for {player} - {rptname['report_name']}: {e}")
+              # Collect data for AI summary
+              report_data_collection.append({
+                'report_name': rptname['report_name'],
+                'description': prompt_row['desc_beach_volleyball'] if prompt_row else '',
+                'json_data': json_data
+              })
+            except Exception as e:
+              log_error(f"Failed to parse {label} json_media for {player} - {rptname['report_name']}: {e}")
 
           # Generate PDF version
           pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)

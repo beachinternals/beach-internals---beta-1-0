@@ -62,7 +62,7 @@ MONITORING_LEVEL_DETAILED = 3  # Add data processing
 MONITORING_LEVEL_VERBOSE = 4   # Everything including helpers
 
 # Current monitoring level
-CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_IMPORTANT  # ← Set to IMPORTANT for now
+CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_DETAILED  # ← Set to IMPORTANT for now
 
 def monitor_performance(func=None, level=MONITORING_LEVEL_IMPORTANT):
   """
