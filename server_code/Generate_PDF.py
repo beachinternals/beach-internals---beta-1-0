@@ -215,10 +215,6 @@ def strip_urls_safe(obj, path="root"):
 # -----------------------------------------------------------------------------
 # Generate JSON from report_data_row
 # -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# UPDATED FUNCTION: Replace the existing generate_json_report function
-# Starting at line 173
-# -----------------------------------------------------------------------------
 def generate_json_report(rpt_form, report_id, include_images=False, include_urls=False, include_nulls=True):
   """
   Generate a JSON report from report_data table.
@@ -231,16 +227,16 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     include_nulls: If True, keep null/empty values; if False, strip them (default: True)
     
   Returns:
-    anvil.BlobMedia: JSON file as BlobMedia object on success
-    None: If an error occurs (error is logged internally)
+    tuple: (json_media, error_message)
+      - json_media: anvil.BlobMedia object on success, None on error
+      - error_message: None on success, error string on error
   """
-
   try:
     # Get report row
     rpt_data_row = tables.app_tables.report_data.get(report_id=report_id)
     if not rpt_data_row:
       log_error(f"Report ID {report_id} not found", with_traceback=False)
-      return None
+      return (None, f'Report ID {report_id} not found')
 
     # Determine file name for JSON safely from report_data_row
     rpt_type = rpt_data_row['title_6'].strip()
@@ -253,10 +249,10 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     elif rpt_type == 'dashboard':
       base_name = rpt_data_row['title_9']
     elif rpt_type == 'scouting':
-      base_name = rpt_data_row['title_9'] or rpt_data_row['title_10'] or 'Scouting'
+      base_name = rpt_data_row['title_9']
     else:
       base_name = 'Unknown'
-    base_name = base_name.strip() if base_name else 'Unknown'
+    base_name = base_name.strip()
 
     # Construct JSON file name
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -320,24 +316,21 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
             'data_uri': f"data:{content_type};base64,{img_base64}"
           }
 
-    # Strip URLs if include_urls is False
-    if not include_urls:
-      report_data = strip_urls_safe(report_data)
-
     # Optionally strip nulls
     if not include_nulls:
+      log_debug("Stripping nulls from report_data")
       report_data = strip_nulls_safe(report_data)
 
     # Convert to JSON media
     json_str = json.dumps(report_data, indent=2, default=str)
     json_bytes = json_str.encode('utf-8')
     json_media = anvil.BlobMedia(content_type='application/json', content=json_bytes, name=json_file)
-    return json_media
+
+    return (json_media, None)  # SUCCESS: return media and no error
 
   except Exception as e:
     log_critical(f"CRITICAL ERROR in generate_json_report: {e}")
-    return None
-
+    return (None, str(e))  # ERROR: return None and error message
     
 
 
