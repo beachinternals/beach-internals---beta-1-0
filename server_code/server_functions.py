@@ -14,16 +14,14 @@ import anvil.secrets
 import anvil.http
 import pandas as pd
 import io
-from io import BytesIO  # Add this line
+from io import BytesIO
 import numpy as np
 import matplotlib.pyplot as plt
-#from matplotlib.patches import Ellipse
 import matplotlib.patches as patches
 import matplotlib.colors as mcolors
 import math
 from pair_functions import *
 from datetime import datetime, timedelta, date
-#import logging
 import re
 import scipy.stats as stats
 from matplotlib.colors import LinearSegmentedColormap
@@ -32,6 +30,8 @@ from plot_functions import *
 from dataclasses import dataclass
 import inspect
 import copy
+import time          # ← Keep only ONE set of imports here
+import functools     # ← Keep only ONE set of imports here
 
 # Create logger with formatting
 from logger_utils import log_info, log_error, log_critical, log_debug
@@ -46,33 +46,23 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
-import time
-import functools
-
 fake = Faker()
-
-import time
-import functools
 
 # ============================================================================
 # TIERED PERFORMANCE MONITORING
-# Added: [Today's Date]
+# Added: November 15, 2025
 # Purpose: Control monitoring granularity with levels
 # ============================================================================
 
-# Monitoring levels
+# Monitoring levels (module-level constants)
 MONITORING_LEVEL_OFF = 0       # No monitoring
 MONITORING_LEVEL_CRITICAL = 1  # Only high-level orchestrators
 MONITORING_LEVEL_IMPORTANT = 2 # Add report generation
 MONITORING_LEVEL_DETAILED = 3  # Add data processing
 MONITORING_LEVEL_VERBOSE = 4   # Everything including helpers
 
-# Current monitoring level (change this to control what gets monitored)
-#CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_OFF  # ← Set your desired level
-#CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_CRITICAL  # ← Set your desired level
-#CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_IMPORTANT  # ← Set your desired level
-#CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_DETAILED  # ← Set your desired level
-CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_VERBOSE  # ← Set your desired level
+# Current monitoring level
+CURRENT_MONITORING_LEVEL = MONITORING_LEVEL_IMPORTANT  # ← Set to IMPORTANT for now
 
 def monitor_performance(func=None, level=MONITORING_LEVEL_IMPORTANT):
   """
@@ -85,7 +75,6 @@ def monitor_performance(func=None, level=MONITORING_LEVEL_IMPORTANT):
     Args:
         func: The function to decorate (provided automatically)
         level: Minimum monitoring level required for this function to be monitored
-               Higher levels = less important functions
     """
   def decorator(f):
     @functools.wraps(f)
@@ -176,7 +165,12 @@ def get_monitoring_level():
     0: "OFF", 1: "CRITICAL", 2: "IMPORTANT", 3: "DETAILED", 4: "VERBOSE"
   }
   return f"Level {CURRENT_MONITORING_LEVEL}: {level_names.get(CURRENT_MONITORING_LEVEL, 'UNKNOWN')}"
-  
+
+# ============================================================================
+# END OF PERFORMANCE MONITORING CODE
+# Now your regular functions start below
+# ============================================================================
+
 
 @monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def fbhe( ppr_df, disp_player, play_type, video_yn ):
@@ -338,7 +332,7 @@ def build_video_links(ppr_df: pd.DataFrame) -> str:
 
   return ' '.join(links)
 
-@monitor_performance@monitor_performance(level=MONITORING_LEVEL_VERBOSE)
+@monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str, video_yn: bool) -> FBHEResult:
   """
     Calculates the First Ball Hitting Efficiency (FBHE) and related statistics for a given player based on 

@@ -4,7 +4,6 @@ import anvil.email
 import anvil.google.auth, anvil.google.drive, anvil.google.mail
 from anvil.google.drive import app_files
 import anvil.users
-import anvil.tables.query as q
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
@@ -25,27 +24,28 @@ import importlib
 import sys
 from typing import Tuple, List, Dict, Any
 
+# ============================================================================
+# PERFORMANCE MONITORING IMPORTS
+# ============================================================================
+from server_functions import (
+  monitor_performance,
+  MONITORING_LEVEL_OFF,
+  MONITORING_LEVEL_CRITICAL,
+  MONITORING_LEVEL_IMPORTANT,
+  MONITORING_LEVEL_DETAILED,
+  MONITORING_LEVEL_VERBOSE
+)
+
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
+
+# Import other modules
 from plot_functions import *
-from server_functions import *
-#from reports_player_new import *
 from reports_player import *
 from reports_dashboard import *
 from reports_league import *
 from reports_pair import *
 from reports_scouting import *
-
-# Option A: Check if it's just called Logger
-from anvil_extras.logging import Logger
-import logging
-# Create a detailed formatter
-logger = Logger()
-formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
-
-# Use it in your code
-logger.info("Application started, Report Generate and Store")
-#logger.debug("Debug information")
-#logger.warning("This is a warning")
-#logger.error("An error occurred")
 
 
 # Cache for valid function names
@@ -65,7 +65,7 @@ def get_valid_functions() -> set:
 #
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
 @anvil.server.callable
-@monitor_performance( level=MONITORING_LEVEL_IMPORTANT )
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters) -> str:
   """
     Generate a report using the specified function, store results in report_data table, and return the report ID.

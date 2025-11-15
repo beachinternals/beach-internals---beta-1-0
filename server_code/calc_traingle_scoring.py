@@ -13,8 +13,24 @@ import math
 import statistics
 import numpy as np
 from tabulate import tabulate
-from server_functions import *
 from datetime import datetime, timedelta, date
+
+# ============================================================================
+# PERFORMANCE MONITORING IMPORTS
+# ============================================================================
+from server_functions import (
+  monitor_performance,
+  MONITORING_LEVEL_OFF,
+  MONITORING_LEVEL_CRITICAL,
+  MONITORING_LEVEL_IMPORTANT,
+  MONITORING_LEVEL_DETAILED,
+  MONITORING_LEVEL_VERBOSE
+)
+
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
+
+# Import other modules
 
 # ########## Calculate league summaries, stored as player data
 #

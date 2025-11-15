@@ -12,7 +12,23 @@ import pandas as pd
 import io
 import rebuild_data
 import numpy as np
-import logging
+
+# ============================================================================
+# PERFORMANCE MONITORING IMPORTS
+# ============================================================================
+from server_functions import (
+monitor_performance,
+MONITORING_LEVEL_OFF,
+MONITORING_LEVEL_CRITICAL,
+MONITORING_LEVEL_IMPORTANT,
+MONITORING_LEVEL_DETAILED,
+MONITORING_LEVEL_VERBOSE
+)
+
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
+
+# Import other modules
 from btd_ppr_conversion import *
 from ppr_master_merge import *
 from calc_player_data import *
@@ -20,10 +36,6 @@ from calc_pair_data import *
 from calc_traingle_scoring import *
 from s_w_report import *
 
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # functions to update / rebuild all the data files
 

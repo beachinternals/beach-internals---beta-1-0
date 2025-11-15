@@ -13,6 +13,23 @@ import io
 import math
 from datetime import datetime, timedelta, date
 
+# ============================================================================
+# PERFORMANCE MONITORING IMPORTS
+# ============================================================================
+from server_functions import (
+  monitor_performance,
+  MONITORING_LEVEL_OFF,
+  MONITORING_LEVEL_CRITICAL,
+  MONITORING_LEVEL_IMPORTANT,
+  MONITORING_LEVEL_DETAILED,
+  MONITORING_LEVEL_VERBOSE
+)
+
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
+
+# Import other modules
+
 # This is a server module. It runs on the Anvil server,
 
 @anvil.server.callable
@@ -36,6 +53,7 @@ def make_all_ppr_files():
 
 # rather than in the user's browser.
 @anvil.server.callable
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def make_ppr_files( u_league, u_gender, u_year, u_team, rebuild):
   # call the background task
   task = anvil.server.launch_background_task('generate_ppr_files',u_league, u_gender, u_year, u_team, rebuild)

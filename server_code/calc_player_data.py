@@ -13,16 +13,33 @@ import math
 import statistics
 import numpy as np
 from tabulate import tabulate
-from server_functions import *
 from datetime import datetime, timedelta, date
+
+# ============================================================================
+# PERFORMANCE MONITORING IMPORTS
+# ============================================================================
+from server_functions import (
+  monitor_performance,
+  MONITORING_LEVEL_OFF,
+  MONITORING_LEVEL_CRITICAL,
+  MONITORING_LEVEL_IMPORTANT,
+  MONITORING_LEVEL_DETAILED,
+  MONITORING_LEVEL_VERBOSE
+)
+
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
+
+# Import other modules
 from plot_functions import *
+
 
 # ########## Calculate league summaries, stored as player data
 #
 #  player_data is only for league entries in the ppr_csv_tables table.  We also sotre the list of player data stats
 
 @anvil.server.callable
-@monitor_performance
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def calc_all_player_data():
   # caluclate the plaeyr data for ALL leagues
   # so seach th eleague data base, then loop thru them

@@ -6,20 +6,7 @@ import anvil.users
 import anvil.tables as tables
 import anvil.tables.query as q
 import anvil.server
-from Generate_PDF import *
-from pair_functions import *
-import server_functions  # MUST BE BEFORE any @monitor_performance
-from server_functions import (
-  monitor_performance,
-  CURRENT_MONITORING_LEVEL,
-  MONITORING_LEVEL_OFF,       # No monitoring
-  MONITORING_LEVEL_CRITICAL,  # Only high-level orchestrators
-  MONITORING_LEVEL_IMPORTANT, # Add report generation
-  MONITORING_LEVEL_DETAILED,  # Add data processing
-  MONITORING_LEVEL_VERBOSE   # Everything including helpers
-)
 import pandas as pd
-from report_generate_and_store import *
 from datetime import datetime, timedelta, date
 import json
 import base64
@@ -27,11 +14,24 @@ import re
 from typing import Tuple
 from collections import defaultdict
 import traceback
-from logger_utils import log_info, log_error, log_critical, log_debug
+from logger_utils import log_info, log_error, log_critical, log_debug, log_row
 
-  
-# This is a server module. It runs on the Anvil server,
-# rather than in the user's browser.
+# ============================================================================
+# PERFORMANCE MONITORING IMPORTS - ADD THIS BLOCK
+# ============================================================================
+from server_functions import (
+monitor_performance,
+MONITORING_LEVEL_CRITICAL,
+MONITORING_LEVEL_IMPORTANT,
+MONITORING_LEVEL_DETAILED,
+MONITORING_LEVEL_VERBOSE
+)
+# ============================================================================
+
+# import local functions
+from Generate_PDF import *
+from pair_functions import *
+from report_generate_and_store import *
 
 @anvil.server.callable
 def rpt_mgr_generate():
@@ -280,6 +280,7 @@ info@BeachInternals.com
 #-------------------------------------------------------------------------------------------------------
 # Report Manager - All Types of Reports
 #-------------------------------------------------------------------------------------------------------
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   """
     Generate new reports for players or pairs, including JSON, PDFs, and AI summaries.
@@ -590,7 +591,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
   return return_text, report_infos
 
 
-
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
   """
   Generate scouting reports for pairs, including both pair-level and individual player reports.
