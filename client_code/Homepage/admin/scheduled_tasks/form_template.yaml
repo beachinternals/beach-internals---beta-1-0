@@ -118,6 +118,15 @@ components:
     name: night_proc_all
     properties: {role: outlined-button, text: Night Processing - All}
     type: Button
+  - layout_properties: {grid_position: 'TCJZDZ,NCZJCI'}
+    name: label_11
+    properties: {align: right, text: Performance Report}
+    type: Label
+  - event_bindings: {click: button_1_click}
+    layout_properties: {grid_position: 'TCJZDZ,METMQD'}
+    name: button_1
+    properties: {text: Performance Report}
+    type: Button
   layout_properties: {grid_position: 'EXITKV,AEDSYF'}
   name: outlined_card_5
   properties: {col_widths: '{"VYNCIF":15,"RLNRSN":20,"NHRAUN":25}', role: outlined-card}

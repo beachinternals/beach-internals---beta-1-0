@@ -1045,6 +1045,12 @@ scheduled_tasks:
     at: {hour: 8, minute: 30}
     every: day
     n: 1
+- job_id: FLBABCIP
+  task_name: daily_performance_summary
+  time_spec:
+    at: {hour: 10, minute: 0}
+    every: day
+    n: 1
 secrets:
   GEMINI_API_KEY:
     type: secret
