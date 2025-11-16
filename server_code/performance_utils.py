@@ -24,7 +24,11 @@ import json
 # ============================================================================
 # MAIN SCHEDULED TASK - This is what the cron job calls
 # ============================================================================
-
+@anvil.server.callable
+def daily_performance_summary_client():
+  anvil.server.background_task(daily_performance_summary())
+  return
+  
 @anvil.server.callable
 @anvil.server.background_task
 def daily_performance_summary():

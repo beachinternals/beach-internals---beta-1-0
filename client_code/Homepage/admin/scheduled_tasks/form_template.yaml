@@ -118,12 +118,12 @@ components:
     name: night_proc_all
     properties: {role: outlined-button, text: Night Processing - All}
     type: Button
-  - layout_properties: {grid_position: 'TCJZDZ,NCZJCI'}
+  - layout_properties: {grid_position: 'TESZGA,UPZVGZ'}
     name: label_11
     properties: {align: right, text: Performance Report}
     type: Label
   - event_bindings: {click: button_1_click}
-    layout_properties: {grid_position: 'TCJZDZ,METMQD'}
+    layout_properties: {grid_position: 'VFOMZI,QMNJMG'}
     name: button_1
     properties: {text: Performance Report}
     type: Button
