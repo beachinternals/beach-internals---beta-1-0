@@ -134,6 +134,7 @@ class scheduled_tasks(scheduled_tasksTemplate):
 
   def button_1_click(self, **event_args):
     """This method is called when the button is clicked"""
+    print("Calling Daily Performance Summary Client")
     return_value = anvil.server.call('daily_performance_summary_client')
     pass
 
