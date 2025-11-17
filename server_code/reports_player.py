@@ -363,22 +363,27 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
   # Calculate attacks from zones
   ppr_df = ppr_df[(ppr_df['att_yn'] == 'Y') & (ppr_df['att_player'] == disp_player)]
   att12 = ppr_df[((ppr_df['att_src_zone_net'] == 1) | 
-                    (ppr_df['att_src_zone_net'] == 2)) &
-                   (ppr_df['tactic'] != 'behind')].shape[0]
+                  (ppr_df['att_src_zone_net'] == 2)) &
+    (ppr_df['tactic'] != 'behind')].shape[0]
   att45 = ppr_df[((ppr_df['att_src_zone_net'] == 4) | 
-                    (ppr_df['att_src_zone_net'] == 5)) &
-                   (ppr_df['tactic'] != 'behind')].shape[0]
+                  (ppr_df['att_src_zone_net'] == 5)) &
+    (ppr_df['tactic'] != 'behind')].shape[0]
 
   att_front = '12' if att12 >= att45 else '45'
   print(f"attacks, from 1 and 2: {att12}, from 4 & 5: {att45}, att_front is {att_front}")
 
   # Create the new table with specified columns, including 'Metric'
+  # UPDATED: Added 6 new rows for pass touch type (bump, hand, unknown - FBHE and Attempts each)
   table_data = {
-        'Metric': ['FBHE', 'Percentile', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts', '% In System', 'URL'],
-        'Front-Pin': [0, 0, 0, 0, 0, 0, '0%', '0%', ''],
-        'Front-Slot': [0, 0, 0, 0, 0, 0, '0%', '0%', ''],
-        'Behind': [0, 0, 0, 0, 0, 0, '0%', '0%', ''],
-        'Middle': [0, 0, 0, 0, 0, 0, '0%', '0%', '']
+    'Metric': ['FBHE', 'Percentile', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts', '% In System',
+               'Bump Set FBHE', 'Bump Set Attempts',
+               'Hand Set FBHE', 'Hand Set Attempts',
+               'Unknown Touch Type FBHE', 'Unknown Touch Type Attempts',
+               'URL'],
+    'Front-Pin': [0, 0, 0, 0, 0, 0, '0%', '0%', 0, 0, 0, 0, 0, 0, ''],
+    'Front-Slot': [0, 0, 0, 0, 0, 0, '0%', '0%', 0, 0, 0, 0, 0, 0, ''],
+    'Behind': [0, 0, 0, 0, 0, 0, '0%', '0%', 0, 0, 0, 0, 0, 0, ''],
+    'Middle': [0, 0, 0, 0, 0, 0, '0%', '0%', 0, 0, 0, 0, 0, 0, '']
   }
   new_table_df = pd.DataFrame(table_data)
 
@@ -388,39 +393,62 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
 
   # Define zone mappings based on att_front
   if att_front == '12':
-        front_pin_zones = [1]
-        front_slot_zones = [2]
-        middle_zones = [3, 4, 5]
+    front_pin_zones = [1]
+    front_slot_zones = [2]
+    middle_zones = [3, 4, 5]
   else:  # att_front == '45'
-        front_pin_zones = [5]
-        front_slot_zones = [4]
-        middle_zones = [1, 2, 3]
+    front_pin_zones = [5]
+    front_slot_zones = [4]
+    middle_zones = [1, 2, 3]
 
   # Calculate metrics for each position
   for pos, zones in [('Front-Pin', front_pin_zones), ('Front-Slot', front_slot_zones), ('Middle', middle_zones)]:
-        pos_df = ppr_df[(ppr_df['att_src_zone_net'].isin(zones)) & (ppr_df['tactic'] != 'behind')]
-        
-        # Get FBHE, Kills, Errors, Attempts, FBSO, URL from fbhe_obj
-        fbhe_result = fbhe_obj(pos_df, disp_player, play_type='att', video_yn=True)
-        new_table_df.loc[new_table_df['Metric'] == 'FBHE', pos] = fbhe_result.fbhe
-        new_table_df.loc[new_table_df['Metric'] == 'Kills', pos] = fbhe_result.kills
-        new_table_df.loc[new_table_df['Metric'] == 'Errors', pos] = fbhe_result.errors
-        new_table_df.loc[new_table_df['Metric'] == 'Attempts', pos] = fbhe_result.attempts
-        new_table_df.loc[new_table_df['Metric'] == 'FBSO', pos] = round(fbhe_result.fbso, 3)  # Format as x.xxx
-        new_table_df.loc[new_table_df['Metric'] == 'URL', pos] = fbhe_result.video_link
-        
-        # Accumulate total attempts
-        total_attempts += fbhe_result.attempts
-        
-        # Percentile: Using stats.norm.cdf
-        fbhe_mean = player_data_stats_df.get('fbhe_mean', pd.Series([0])).iloc[0]
-        fbhe_stdev = player_data_stats_df.get('fbhe_stdev', pd.Series([1])).iloc[0]  # Avoid division by zero
-        percentile = stats.norm.cdf((fbhe_result.fbhe - fbhe_mean) / fbhe_stdev) * 100 if fbhe_stdev != 0 else 0
-        new_table_df.loc[new_table_df['Metric'] == 'Percentile', pos] = round(percentile, 1)
-        
-        # % In System: Get from count_good_passes_obj (use percent_str for xx% format)
-        good_passes = count_good_passes_obj(pos_df, disp_player, action='att', video_yn=True)
-        new_table_df.loc[new_table_df['Metric'] == '% In System', pos] = good_passes.get('percent_str', '0%')
+    pos_df = ppr_df[(ppr_df['att_src_zone_net'].isin(zones)) & (ppr_df['tactic'] != 'behind')]
+
+    # Get FBHE, Kills, Errors, Attempts, FBSO, URL from fbhe_obj
+    fbhe_result = fbhe_obj(pos_df, disp_player, play_type='att', video_yn=True)
+    new_table_df.loc[new_table_df['Metric'] == 'FBHE', pos] = fbhe_result.fbhe
+    new_table_df.loc[new_table_df['Metric'] == 'Kills', pos] = fbhe_result.kills
+    new_table_df.loc[new_table_df['Metric'] == 'Errors', pos] = fbhe_result.errors
+    new_table_df.loc[new_table_df['Metric'] == 'Attempts', pos] = fbhe_result.attempts
+    new_table_df.loc[new_table_df['Metric'] == 'FBSO', pos] = round(fbhe_result.fbso, 3)  # Format as x.xxx
+    new_table_df.loc[new_table_df['Metric'] == 'URL', pos] = fbhe_result.video_link  # Updated index (still using loc)
+
+    # Accumulate total attempts
+    total_attempts += fbhe_result.attempts
+
+    # Percentile: Using stats.norm.cdf
+    fbhe_mean = player_data_stats_df.get('fbhe_mean', pd.Series([0])).iloc[0]
+    fbhe_stdev = player_data_stats_df.get('fbhe_stdev', pd.Series([1])).iloc[0]  # Avoid division by zero
+    percentile = stats.norm.cdf((fbhe_result.fbhe - fbhe_mean) / fbhe_stdev) * 100 if fbhe_stdev != 0 else 0
+    new_table_df.loc[new_table_df['Metric'] == 'Percentile', pos] = round(percentile, 1)
+
+    # % In System: Get from count_good_passes_obj (use percent_str for xx% format)
+    good_passes = count_good_passes_obj(pos_df, disp_player, action='att', video_yn=True)
+    new_table_df.loc[new_table_df['Metric'] == '% In System', pos] = good_passes.get('percent_str', '0%')
+
+    # ADDED: Calculate pass touch type stats for each position
+    for touch_type, row_fbhe, row_att in [('bump', 'Bump Set FBHE', 'Bump Set Attempts'), 
+                                          ('hand', 'Hand Set FBHE', 'Hand Set Attempts')]:
+      # Filter by pass_touch_type
+      touch_type_df = pos_df[pos_df['pass_touch_type'] == touch_type]
+      if touch_type_df.shape[0] > 0:
+        fbhe_touch_result = fbhe_obj(touch_type_df, disp_player, play_type='att', video_yn=True)
+        new_table_df.loc[new_table_df['Metric'] == row_fbhe, pos] = fbhe_touch_result.fbhe
+        new_table_df.loc[new_table_df['Metric'] == row_att, pos] = fbhe_touch_result.attempts
+      else:
+        new_table_df.loc[new_table_df['Metric'] == row_fbhe, pos] = 0
+        new_table_df.loc[new_table_df['Metric'] == row_att, pos] = 0
+
+        # ADDED: Calculate unknown touch type (anything that's not 'bump' or 'hand')
+    unknown_df = pos_df[~pos_df['pass_touch_type'].isin(['bump', 'hand'])]
+    if unknown_df.shape[0] > 0:
+      fbhe_unknown_result = fbhe_obj(unknown_df, disp_player, play_type='att', video_yn=True)
+      new_table_df.loc[new_table_df['Metric'] == 'Unknown Touch Type FBHE', pos] = fbhe_unknown_result.fbhe
+      new_table_df.loc[new_table_df['Metric'] == 'Unknown Touch Type Attempts', pos] = fbhe_unknown_result.attempts
+    else:
+      new_table_df.loc[new_table_df['Metric'] == 'Unknown Touch Type FBHE', pos] = 0
+      new_table_df.loc[new_table_df['Metric'] == 'Unknown Touch Type Attempts', pos] = 0
 
   # Behind position
   behind_df = ppr_df[ppr_df['tactic'] == 'behind']
@@ -430,7 +458,7 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
   new_table_df.loc[new_table_df['Metric'] == 'Errors', 'Behind'] = fbhe_result.errors
   new_table_df.loc[new_table_df['Metric'] == 'Attempts', 'Behind'] = fbhe_result.attempts
   new_table_df.loc[new_table_df['Metric'] == 'FBSO', 'Behind'] = round(fbhe_result.fbso, 3)  # Format as x.xxx
-  new_table_df.loc[new_table_df['Metric'] == 'URL', 'Behind'] = fbhe_result.video_link
+  new_table_df.loc[new_table_df['Metric'] == 'URL', 'Behind'] = fbhe_result.video_link  # Updated index (still using loc)
   total_attempts += fbhe_result.attempts
   fbhe_mean = player_data_stats_df.get('fbhe_mean', pd.Series([0])).iloc[0]
   fbhe_stdev = player_data_stats_df.get('fbhe_stdev', pd.Series([1])).iloc[0]
@@ -438,6 +466,29 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
   new_table_df.loc[new_table_df['Metric'] == 'Percentile', 'Behind'] = round(percentile, 1)
   good_passes = count_good_passes_obj(behind_df, disp_player, action='att', video_yn=True)
   new_table_df.loc[new_table_df['Metric'] == '% In System', 'Behind'] = good_passes.get('percent_str', '0%')
+
+  # ADDED: Calculate pass touch type stats for Behind position
+  for touch_type, row_fbhe, row_att in [('bump', 'Bump Set FBHE', 'Bump Set Attempts'), 
+                                        ('hand', 'Hand Set FBHE', 'Hand Set Attempts')]:
+    # Filter by pass_touch_type
+    touch_type_df = behind_df[behind_df['pass_touch_type'] == touch_type]
+    if touch_type_df.shape[0] > 0:
+      fbhe_touch_result = fbhe_obj(touch_type_df, disp_player, play_type='att', video_yn=True)
+      new_table_df.loc[new_table_df['Metric'] == row_fbhe, 'Behind'] = fbhe_touch_result.fbhe
+      new_table_df.loc[new_table_df['Metric'] == row_att, 'Behind'] = fbhe_touch_result.attempts
+    else:
+      new_table_df.loc[new_table_df['Metric'] == row_fbhe, 'Behind'] = 0
+      new_table_df.loc[new_table_df['Metric'] == row_att, 'Behind'] = 0
+
+  # ADDED: Calculate unknown touch type for Behind position
+  unknown_df = behind_df[~behind_df['pass_touch_type'].isin(['bump', 'hand'])]
+  if unknown_df.shape[0] > 0:
+    fbhe_unknown_result = fbhe_obj(unknown_df, disp_player, play_type='att', video_yn=True)
+    new_table_df.loc[new_table_df['Metric'] == 'Unknown Touch Type FBHE', 'Behind'] = fbhe_unknown_result.fbhe
+    new_table_df.loc[new_table_df['Metric'] == 'Unknown Touch Type Attempts', 'Behind'] = fbhe_unknown_result.attempts
+  else:
+    new_table_df.loc[new_table_df['Metric'] == 'Unknown Touch Type FBHE', 'Behind'] = 0
+    new_table_df.loc[new_table_df['Metric'] == 'Unknown Touch Type Attempts', 'Behind'] = 0
 
   # Calculate % of Attempts for all positions (format as xx%)
   for pos in ['Front-Pin', 'Front-Slot', 'Behind', 'Middle']:
@@ -503,6 +554,7 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
+  
 
   
 
@@ -1191,12 +1243,17 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
   #-------------------------------------------------------------------------------------
 
   # create the output dataframe - This dataframe is the summary for zone 1,3,5
-  df_dict = {' ':['FBHE','Percentile','FBSO','ESO','Kills','Errors','Attempts','% In System','Percentile','URL'],
-             'All':[0,0,0,0,0,0,0,0,0,' '],
-             'Zone 1':[0,0,0,0,0,0,0,0,0,' '],
-             'Zone 3':[0,0,0,0,0,0,0,0,0,' '],
-             'Zone 5':[0,0,0,0,0,0,0,0,0,' '],
-             'No Zone':[0,0,0,0,0,0,0,0,0,' ']
+  # UPDATED: Added 6 new rows for pass locations (left, center, right - FBHE and Attempts each)
+  df_dict = {' ':['FBHE','Percentile','FBSO','ESO','Kills','Errors','Attempts','% In System','Percentile',
+                  'Pass Left: FBHE','Pass Left: Attempts',
+                  'Pass On Centerline: FBHE','Pass On Centerline: Attempts',
+                  'Pass Right: FBHE','Pass Right: Attempts',
+                  'URL'],
+             'All':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             'Zone 1':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             'Zone 3':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             'Zone 5':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             'No Zone':[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict( df_dict )
 
@@ -1211,7 +1268,7 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
     fbhe_table.at[5,'All'] = fbhe_result.errors  # errors
     fbhe_table.at[6,'All'] = fbhe_result.attempts  # attempts
     fbhe_table.at[2,'All'] = fbhe_result.fbso  # FBSO
-    fbhe_table.at[9,'All'] = fbhe_result.video_link  # URL
+    fbhe_table.at[15,'All'] = fbhe_result.video_link  # URL (updated index from 9 to 15)
     fbhe_table.at[3,'All'] = eso_obj.get('eso')  # ESO
     #fbhe_table.at[3,'All'] = float("{:.3f}").format(fbhe_table.at[2,'All'])    
     oos_vector = count_out_of_system( ppr_df, disp_player, 'pass' )
@@ -1225,6 +1282,18 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
     fbhe_table.at[8,'All'] =  round( stats.norm.cdf( (float_value - player_data_stats_df.at[0,'goodpass_mean'])/ player_data_stats_df.at[0,'goodpass_stdev'] ), 3)
     fbhe_table.at[8,'All'] = str('{:.0%}').format(fbhe_table.at[8,'All'])
 
+    # ADDED: Calculate pass location stats for 'All' column
+    for pass_pos, row_fbhe, row_att in [('left', 9, 10), ('center', 11, 12), ('right', 13, 14)]:
+      # Filter by pass_touch_position
+      pass_pos_df = ppr_df[ppr_df['pass_touch_position'] == pass_pos]
+      if pass_pos_df.shape[0] > 0:
+        fbhe_pos_result = fbhe_obj(pass_pos_df, disp_player, 'both', True)
+        fbhe_table.at[row_fbhe, 'All'] = fbhe_pos_result.fbhe
+        fbhe_table.at[row_att, 'All'] = fbhe_pos_result.attempts
+      else:
+        fbhe_table.at[row_fbhe, 'All'] = 0
+        fbhe_table.at[row_att, 'All'] = 0
+
     # calculate for zones 1 - 5
     column = ['Zone 1','Zone 3','Zone 5','No Zone']
     for i in [0,1,2,3]:
@@ -1236,7 +1305,7 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
       fbhe_table.at[5,column[i]] = fbhe_result.errors  # errors
       fbhe_table.at[6,column[i]] = fbhe_result.attempts  # attempts
       fbhe_table.at[2,column[i]] = fbhe_result.fbso  # fbso
-      fbhe_table.at[9,column[i]] = fbhe_result.video_link  # URL
+      fbhe_table.at[15,column[i]] = fbhe_result.video_link  # URL (updated index from 9 to 15)
       fbhe_table.at[3,column[i]] = eso_obj.get('eso')  # ESO
       #fbhe_table.at[3,column[i]] = float('{:.3f}').format(fbhe_table.at[2,column[i]])
       oos_vector = count_out_of_system( ppr_df[ppr_df['serve_src_zone_net']==zone], disp_player, 'pass' )
@@ -1248,6 +1317,19 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
       float_value = float(value.replace('%', ''))/100  # 89.3
       fbhe_table.at[8,column[i]] =  round( stats.norm.cdf( (float_value - player_data_stats_df.at[0,'goodpass_mean'])/ player_data_stats_df.at[0,'goodpass_stdev'] ), 3)
       fbhe_table.at[8,column[i]] = str('{:.0%}').format(fbhe_table.at[8,column[i]])
+
+      # ADDED: Calculate pass location stats for each zone column
+      zone_df = ppr_df[ppr_df['serve_src_zone_net']==zone]
+      for pass_pos, row_fbhe, row_att in [('left', 9, 10), ('center', 11, 12), ('right', 13, 14)]:
+        # Filter by pass_touch_position
+        pass_pos_df = zone_df[zone_df['pass_touch_position'] == pass_pos]
+        if pass_pos_df.shape[0] > 0:
+          fbhe_pos_result = fbhe_obj(pass_pos_df, disp_player, 'both', True)
+          fbhe_table.at[row_fbhe, column[i]] = fbhe_pos_result.fbhe
+          fbhe_table.at[row_att, column[i]] = fbhe_pos_result.attempts
+        else:
+          fbhe_table.at[row_fbhe, column[i]] = 0
+          fbhe_table.at[row_att, column[i]] = 0
   else:
     fbhe_table.at[0,'All'] = "No Data Found"
 
@@ -1314,8 +1396,8 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
       fbhe_vector = fbhe_obj(ppr_df[  (ppr_df['serve_src_zone_net'] == 1) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                         disp_player, 'both', True
-                        )
+                             disp_player, 'both', True
+                            )
       #print(f"FBHE vector for 1, {i}{j}, {fbhe_vector}")
       if fbhe_vector.attempts >= 5:
         pass1_val[index] = fbhe_vector.fbhe
@@ -1331,8 +1413,8 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
       fbhe_vector = fbhe_obj(ppr_df[  (ppr_df['serve_src_zone_net'] == 3) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize())],
-                         disp_player, 'both', True
-                        )
+                             disp_player, 'both', True
+                            )
       if fbhe_vector.attempts >= 5:        
         pass3_val[index] = fbhe_vector.fbhe
         att3_val[index] = fbhe_vector.attempts
@@ -1346,8 +1428,8 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
       fbhe_vector = fbhe_obj(ppr_df[  (ppr_df['serve_src_zone_net'] == 5) &
         (ppr_df['serve_dest_zone_net'] == i) &
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
-                         disp_player, 'both', True
-                        )
+                             disp_player, 'both', True
+                            )
       if fbhe_vector.attempts >= 5:      
         pass5_val[index] = fbhe_vector.fbhe
         att5_val[index] = fbhe_vector.attempts
@@ -1407,71 +1489,21 @@ def report_player_passing_45_fbhe(lgy, team, **rpt_filters):
   z5_plt = anvil.mpl_util.plot_image()
 
   # put the Images in the image_list
-  image_list[3] = z1_plt
-  image_list[4] = z3_plt
-  image_list[5] = z5_plt
-  
-  # put the DF's in the df_list
+  image_list[0] = z1_plt
+  image_list[1] = z3_plt
+  image_list[2] = z5_plt
 
-  # before storing the first table, I want to change Zone 1,3,5 to Left, Middle, Right
-  fbhe_table = fbhe_table.rename(columns={
-    'Zone 1': 'Left',
-    'Zone 3': 'Middle',
-    'Zone 5': 'Right'
-  })
+  # put the DF's in the df_list
   df_list[0] = fbhe_table.to_dict('records')
   df_list[1] = z1_table.to_dict('records')
   df_list[2] = z3_table.to_dict('records')
   df_list[3] = z5_table.to_dict('records')
-
-  #
-  #  now create plots for attempts from zone 1,3,5
-  #
-
-  # get high and low for the color scheme, mean +/- 2 sdtd
-  cmax = 25  # kind of a guess on the maximum number of attemtps in one of the 46 serves
-  cmin = 5  # a logical minimum since we don show anything less then 5 attempts
-  
-  # from zone 1
-  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
-  plot_court_background(fig,ax)
-  #print(f"Attemtps values 1 {att1_val}")
-  ax.plot( [x11, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
-  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att1_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
-  ax.set_title("Attempts from Zone 1, Left", fontsize=35)
-  a1_plt = anvil.mpl_util.plot_image()
-
-  # Create the plot for serves from Zone 3 - define the figure, plot the court, plot a few serve lines, plot the dots
-  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
-  plot_court_background(fig,ax)
-  #print(f"Attemtps values 3 {att3_val}")
-  ax.plot( [x31, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
-  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att3_val, vmin=cmin, vmax=cmax, cmap='PiYG' ) 
-  ax.set_title("Attempts from Zone 3, Middle", fontsize=35)
-  a3_plt = anvil.mpl_util.plot_image()
-
-  # Create the plot for serves from Zone 5 - define the figure, plot the court, plot a few serve lines, plot the dots
-  fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
-  plot_court_background(fig,ax)
-  #print(f"Attemtps values 5 {att5_val}")
-  ax.plot( [x51, x12], [y1, y2], c='0.75', linestyle='dashed', linewidth =2.5 )
-  ax.scatter( pass_x, pass_y, s = np.full(len(pass_x),4000), c=att5_val, vmin=cmin, vmax=cmax, cmap='PiYG' )  
-  fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(cmin, cmax), cmap='PiYG'),ax=ax, orientation='vertical', label='Attempts')
-  ax.set_title("Attempts from Zone 5, Right", fontsize=35)
-  a5_plt = anvil.mpl_util.plot_image()
-
-  image_list[0] = a1_plt
-  image_list[1] = a3_plt
-  image_list[2] = a5_plt
-
-  plt.close('All')
-
-
   # =============================================================================
   # END REPORT-SPECIFIC LOGIC
   # =============================================================================
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+  
 
 
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
