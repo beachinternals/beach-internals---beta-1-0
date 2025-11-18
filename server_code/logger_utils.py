@@ -1,12 +1,14 @@
-# logger_utils.py - IMPROVED VERSION
-# Replace your existing logger_utils.py with this version
-# ============================================================================
+# logger_utils.py
 import traceback
 from anvil_extras.logging import Logger, DEBUG
-from anvil.tables import app_tables
 import json
-import inspect
 from datetime import datetime
+import inspect
+
+# Import here to avoid circular imports
+# We'll do lazy import inside functions
+# import anvil.tables as tables
+# from anvil.tables import app_tables
 
 # -----------------------------------------------------------------------------
 # Logger setup
@@ -18,291 +20,162 @@ critical_logger = Logger(
 )
 
 # -----------------------------------------------------------------------------
-# Helper function to auto-detect calling function
+# Helper function to write to error_log table
 # -----------------------------------------------------------------------------
-def _get_calling_function(stack_offset=2):
+def _write_to_error_log(severity: str, message: str, source: str = None, traceback_text: str = None):
   """
-    Automatically detect which function called the logging function.
-    
-    Args:
-        stack_offset: How far up the stack to look (default 2)
-        
-    Returns:
-        String with format "filename.function_name"
-    """
+  Internal function to write log entries to the error_log database table.
+  
+  Args:
+    severity: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    message: The log message
+    source: Source of the log (function name, module, etc.)
+    traceback_text: Stack trace if applicable
+  """
   try:
-    stack = inspect.stack()
+    # Lazy import to avoid circular dependencies
+    import anvil.tables as tables
+    from anvil.tables import app_tables
 
-    # stack[0] = _get_calling_function (this function)
-    # stack[1] = log_error/log_critical/etc (the logging function)
-    # stack[2] = the function that called log_error (what we want!)
+    # Only write ERROR and CRITICAL to database to avoid clutter
+    if severity not in ['ERROR', 'CRITICAL']:
+      return
 
-    if len(stack) > stack_offset:
-      frame = stack[stack_offset]
-      function_name = frame.function
-      filename = frame.filename.split('/')[-1].replace('.py', '')
-      return f"{filename}.{function_name}"
+    # Get source if not provided
+    if source is None:
+      frame = inspect.currentframe()
+      try:
+        # Go back 2 frames: _write_to_error_log -> log_error/log_critical -> actual caller
+        caller_frame = frame.f_back.f_back
+        source = f"{caller_frame.f_code.co_filename}:{caller_frame.f_code.co_name}:{caller_frame.f_lineno}"
+      except:
+        source = "Unknown"
+      finally:
+        del frame
 
-    return "unknown"
-
-  except Exception:
-    return "unknown"
+    # Write to error_log table
+    app_tables.error_log.add_row(
+      timestamp=datetime.now(),
+      severity=severity,
+      source=source,
+      message=message,
+      traceback_text=traceback_text
+    )
+  except Exception as e:
+    # If database write fails, log to console but don't raise exception
+    # This prevents logging failures from breaking the application
+    critical_logger.error(f"Failed to write to error_log table: {str(e)}")
 
 # -----------------------------------------------------------------------------
-# Logging helpers - IMPROVED with auto-detection and database logging
+# Logging helpers - Enhanced to write to database
 # -----------------------------------------------------------------------------
-
-def log_debug(msg: str, source=None):
+def log_debug(msg: str, source: str = None):
   """
-    Log debug with traceback (if one exists in the current context).
-    
-    Args:
-        msg: Debug message
-        source: Optional source identifier (auto-detected if not provided)
-    """
-  if source is None:
-    source = _get_calling_function(stack_offset=2)
-
+  Log debug with traceback (if one exists in the current context).
+  DEBUG messages are NOT written to error_log table.
+  """
   tb_str = traceback.format_exc()
-  full_msg = f"[{source}] {msg}\n{tb_str}" if tb_str.strip() != "NoneType: None" else f"[{source}] {msg}"
+  full_msg = f"{msg}\n{tb_str}" if tb_str.strip() != "NoneType: None" else msg
   critical_logger.debug(full_msg)
+  # Debug messages not written to database
 
-
-def log_info(msg: str, source=None):
+def log_info(msg: str, source: str = None):
   """
-    Log info without traceback.
-    
-    Args:
-        msg: Info message
-        source: Optional source identifier (auto-detected if not provided)
-    """
-  if source is None:
-    source = _get_calling_function(stack_offset=2)
-
-  critical_logger.info(f"[{source}] {msg}")
-
-
-def log_error(msg: str, with_traceback=True, source=None, save_to_db=True, context=None):
+  Log info without traceback.
+  INFO messages are NOT written to error_log table.
   """
-    Log error. By default includes traceback and saves to error_log table.
-    
-    Args:
-        msg: Error message
-        with_traceback: Include traceback (default True)
-        source: Optional source identifier (auto-detected if not provided)
-        save_to_db: Save to error_log table (default True)
-        context: Optional dict with additional context
-        
-    Example:
-        try:
-            risky_operation()
-        except Exception as e:
-            log_error(f"Failed to process: {e}", context={'filename': filename})
-    """
-  if source is None:
-    source = _get_calling_function(stack_offset=2)
+  critical_logger.info(msg)
+  # Info messages not written to database
 
-    # Log to anvil_extras logger
+def log_error(msg: str, with_traceback=True, source: str = None):
+  """
+  Log error. By default includes traceback, unless with_traceback=False.
+  ERROR messages ARE automatically written to error_log table.
+  
+  Args:
+    msg: Error message
+    with_traceback: Whether to include traceback (default: True)
+    source: Optional source identifier (auto-detected if not provided)
+  """
+  tb_str = None
   if with_traceback:
     tb_str = traceback.format_exc()
-    full_msg = f"[{source}] {msg}\n{tb_str}" if tb_str.strip() != "NoneType: None" else f"[{source}] {msg}"
-    critical_logger.error(full_msg)
+    full_msg = f"{msg}\n{tb_str}" if tb_str.strip() != "NoneType: None" else msg
   else:
-    critical_logger.error(f"[{source}] {msg}")
+    full_msg = msg
 
-    # Also save to error_log database table
-  if save_to_db:
-    try:
-      # Extract error type from traceback if available
-      tb_str = traceback.format_exc()
-      error_type = "Error"
-      if "Error:" in tb_str:
-        # Try to extract the exception type
-        lines = tb_str.split('\n')
-        for line in reversed(lines):
-          if 'Error:' in line or 'Exception:' in line:
-            error_type = line.split(':')[0].strip().split()[-1]
-            break
-
-            # Build context JSON
-      context_dict = context or {}
-      if with_traceback:
-        context_dict['traceback'] = tb_str[:1000]  # Limit size
-
-      app_tables.error_log.add_row(
-        timestamp=datetime.now(),
-        source=source,
-        error_type=error_type,
-        error_message=msg[:500],  # Limit message length
-        context_json=json.dumps(context_dict),
-        severity='error'
-      )
-
-    except Exception as db_error:
-      # Don't let database logging break the application
-      critical_logger.error(f"Failed to save error to database: {db_error}")
-
-
-def log_critical(msg: str, source=None, save_to_db=True, context=None):
-  """
-    Log critical error with traceback and save to database.
-    
-    Args:
-        msg: Critical error message
-        source: Optional source identifier (auto-detected if not provided)
-        save_to_db: Save to error_log table (default True)
-        context: Optional dict with additional context
-        
-    Example:
-        try:
-            critical_operation()
-        except Exception as e:
-            log_critical(f"System failure: {e}", context={'user': user_id})
-    """
-  if source is None:
-    source = _get_calling_function(stack_offset=2)
-
-    # Log to anvil_extras logger
-  tb_str = traceback.format_exc()
-  full_msg = f"[{source}] CRITICAL: {msg}\n{tb_str}" if tb_str.strip() != "NoneType: None" else f"[{source}] CRITICAL: {msg}"
+  # Log to console
   critical_logger.error(full_msg)
 
-  # Also save to error_log database table
-  if save_to_db:
-    try:
-      # Extract error type from traceback
-      error_type = "CriticalError"
-      if "Error:" in tb_str:
-        lines = tb_str.split('\n')
-        for line in reversed(lines):
-          if 'Error:' in line or 'Exception:' in line:
-            error_type = line.split(':')[0].strip().split()[-1]
-            break
+  # Write to database
+  _write_to_error_log(
+    severity='ERROR',
+    message=msg,
+    source=source,
+    traceback_text=tb_str if with_traceback else None
+  )
 
-            # Build context JSON
-      context_dict = context or {}
-      context_dict['traceback'] = tb_str[:1000]  # Limit size
-
-      app_tables.error_log.add_row(
-        timestamp=datetime.now(),
-        source=source,
-        error_type=error_type,
-        error_message=msg[:500],  # Limit message length
-        context_json=json.dumps(context_dict),
-        severity='critical'
-      )
-
-    except Exception as db_error:
-      critical_logger.error(f"Failed to save critical error to database: {db_error}")
-
-
-def log_row(label: str, row, source=None):
+def log_critical(msg: str, source: str = None):
   """
-    Log the contents of a data row (dict or LiveObjectProxy).
-    
-    Args:
-        label: Description of the row being logged
-        row: The data row to log
-        source: Optional source identifier (auto-detected if not provided)
-    """
-  if source is None:
-    source = _get_calling_function(stack_offset=2)
+  Log critical error with traceback.
+  CRITICAL messages ARE automatically written to error_log table.
+  
+  Args:
+    msg: Critical error message
+    source: Optional source identifier (auto-detected if not provided)
+  """
+  tb_str = traceback.format_exc()
+  full_msg = f"CRITICAL: {msg}\n{tb_str}" if tb_str.strip() != "NoneType: None" else f"CRITICAL: {msg}"
 
+  # Log to console
+  critical_logger.error(full_msg)
+
+  # Write to database
+  _write_to_error_log(
+    severity='CRITICAL',
+    message=f"CRITICAL: {msg}",
+    source=source,
+    traceback_text=tb_str
+  )
+
+def log_row(label: str, row):
+  """
+  Log the contents of a data row (dict or LiveObjectProxy).
+  This is a DEBUG level log and is NOT written to error_log table.
+  """
   try:
     row_dict = dict(row)
     formatted = json.dumps(row_dict, indent=2)
   except Exception:
     formatted = str(row)
-
-  log_debug(f"{label}: {formatted}", source=source)
-
+  log_debug(f"{label}: {formatted}")
 
 # -----------------------------------------------------------------------------
-# NEW: Convenience function for logging exceptions
+# Additional utility function for querying error logs
 # -----------------------------------------------------------------------------
-
-def log_exception(exception, message=None, source=None, severity='error', context=None):
+def get_recent_errors(limit: int = 50, severity: str = None):
   """
-    Convenience function to log an exception with full context.
-    
-    Args:
-        exception: The exception object
-        message: Optional custom message (uses str(exception) if not provided)
-        source: Optional source identifier (auto-detected if not provided)
-        severity: 'error' or 'critical' (default 'error')
-        context: Optional dict with additional context
-        
-    Example:
-        try:
-            process_btd_file(filename)
-        except Exception as e:
-            log_exception(e, context={'filename': filename})
-            raise
-    """
-  if source is None:
-    source = _get_calling_function(stack_offset=2)
+  Retrieve recent errors from error_log table.
+  
+  Args:
+    limit: Maximum number of errors to return
+    severity: Filter by severity (ERROR, CRITICAL, etc.) or None for all
+  
+  Returns:
+    List of error log rows
+  """
+  try:
+    import anvil.tables as tables
+    from anvil.tables import app_tables
 
-  msg = message or str(exception)
+    query = app_tables.error_log.search(
+      tables.order_by("timestamp", ascending=False)
+    )
 
-  if severity == 'critical':
-    log_critical(msg, source=source, context=context)
-  else:
-    log_error(msg, with_traceback=True, source=source, context=context)
+    if severity:
+      query = [row for row in query if row['severity'] == severity]
 
-
-# -----------------------------------------------------------------------------
-# USAGE EXAMPLES
-# -----------------------------------------------------------------------------
-
-"""
-EXAMPLE 1: Auto-detect source (recommended)
--------------------------------------------
-def my_function(player_name):
-    try:
-        data = load_player_data(player_name)
-    except Exception as e:
-        log_error(f"Failed to load player data: {e}")  
-        # Source auto-detected as "my_module.my_function"
-        return None
-
-
-EXAMPLE 2: Add context for debugging
--------------------------------------
-def process_btd_file(filename):
-    try:
-        df = pd.read_csv(filename)
-    except Exception as e:
-        log_error(
-            f"Failed to process BTD file: {e}",
-            context={'filename': filename, 'size': os.path.getsize(filename)}
-        )
-        return None
-
-
-EXAMPLE 3: Use log_exception convenience function
---------------------------------------------------
-def generate_report(player_name, report_type):
-    try:
-        report = create_report(player_name, report_type)
-    except Exception as e:
-        log_exception(e, context={'player': player_name, 'type': report_type})
-        raise
-
-
-EXAMPLE 4: Manual source specification
----------------------------------------
-def complex_function():
-    try:
-        step_one()
-    except Exception as e:
-        log_error(f"Step 1 failed: {e}", source="complex_function.step_one")
-
-
-EXAMPLE 5: Critical errors
----------------------------
-try:
-    critical_system_operation()
-except Exception as e:
-    log_critical(f"System failure: {e}", context={'user': current_user})
-    # This logs with severity='critical' and saves to database
-"""
+    return list(query)[:limit]
+  except Exception as e:
+    critical_logger.error(f"Failed to retrieve error logs: {str(e)}")
+    return []
