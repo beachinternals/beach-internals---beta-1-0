@@ -2232,7 +2232,7 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
         z3_table.loc[z3_table_index,'Dest Zone'] = str(i)+j.capitalize()
         z3_table.loc[z3_table_index,'FBHE'] = fbhe_result.fbhe
         z3_table.loc[z3_table_index,'Srv'] = fbhe_result.attempts
-        z3_table.loc[z3_table_index,'URL'] = fbhe_result.video_lini
+        z3_table.loc[z3_table_index,'URL'] = fbhe_result.video_link
         z3_table_index = z3_table_index + 1
 
       # Zone 5
@@ -2241,7 +2241,7 @@ def report_player_srv_fbhe(lgy, team, **rpt_filters):
         (ppr_df['serve_dest_zone_depth'] == j.capitalize() )],
                          disp_player, 'srv', True
                         )
-      if fbhe_result[3].attempts >= 5:      
+      if fbhe_result.attempts >= 5:      
         pass5_val[index] = fbhe_result.fbhe
         srv5_val[index] = fbhe_result.attempts
         z5_table.loc[z5_table_index,'Dest Zone'] = str(i)+j.capitalize()
