@@ -13,18 +13,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import math
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
+
+# Import other beachinternals moudles
 from server_functions import *
-
-from anvil_extras.logging import Logger
-import logging
-
-# Create logger with formatting
-logger = Logger()
-# If the library supports standard Python logging formatting:
-formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
-
-# This is a server module. It runs on the Anvil server,
-# rather than in the user's browser.
 
 #-----------------------------------------------
 #
@@ -292,20 +285,20 @@ def plot_pass_clusters(ppr_df, disp_player, category):
     """
   #print("Entered Plot Pass Clusters")
   try:
-    logger.info(f"Generating plot for Player: {disp_player}")
+    log_info(f"Generating plot for Player: {disp_player}")
     # Validate colormap
     try:
       custom_colors = ['#ff0000', '#00ff00', '#0000ff', '#ff00ff', '#00ffff']  # # Red, Green, Blue, Magenta, Cyan
       cmap = mcolors.ListedColormap(custom_colors)
       colors = cmap.colors
     except ValueError as e:
-      logger.error(f"Invalid colormap 'RdYlGn': {str(e)}")
+      log_error(f"Invalid colormap 'RdYlGn': {str(e)}")
       return {'error': f"Invalid colormap: {str(e)}"}
 
     if not (category == "FBK" or category == 'FBE'):
       print(f"Error, invalid category ; {category}")
       error_msg = "Invalid Category" + category
-      logger.error(f"Clustering error: {error_msg}")
+      log_error(f"Clustering error: {error_msg}")
       return {'error': error_msg}
 
     #print(f"Calling find {category} error clusters")
@@ -315,7 +308,7 @@ def plot_pass_clusters(ppr_df, disp_player, category):
 
     if 'error' in category_result:
       error_msg = category_result.get('error', '') 
-      logger.error(f"Clustering error: {error_msg}")
+      log_error(f"Clustering error: {error_msg}")
       return {'error': error_msg}
 
       # Convert results to DataFrames
@@ -425,7 +418,7 @@ def plot_pass_clusters(ppr_df, disp_player, category):
     }
 
   except Exception as e:
-    logger.error(f"Error in plot_weekly_counts_no_xlabels: {str(e)}")
+    log_error(f"Error in plot_weekly_counts_no_xlabels: {str(e)}")
     return {'error': str(e)}
 
     

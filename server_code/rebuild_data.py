@@ -536,7 +536,7 @@ def check_inconsistent_data():
     only for league='NCAA', and send an email report to beachinternals@gmail.com.
     """
   try:
-    logger.info("Starting nightly data consistency check at %s", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    log_info("Starting nightly data consistency check at %s", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     issues = []
 
     # Check btd_files for per_xy == 0, points < 25, and duplicate video_id
@@ -641,10 +641,10 @@ def check_inconsistent_data():
       subject=f"Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')}",
       html=email_body
     )
-    logger.info("Data consistency check completed and email sent")
+    log_info("Data consistency check completed and email sent")
 
   except Exception as e:
-    logger.error(f"Error in check_inconsistent_data: {str(e)}")
+    log_error(f"Error in check_inconsistent_data: {str(e)}")
     anvil.email.send(
       to="beachinternals@gmail.com",
       subject=f"Data Consistency Check Error - {datetime.now().strftime('%Y-%m-%d')}",

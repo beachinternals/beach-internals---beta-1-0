@@ -32,7 +32,10 @@ import anvil.media
 from io import BytesIO
 from collections import namedtuple
 
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
 
+# Import other modules
 from tabulate import tabulate
 from anvil import pdf
 from pair_functions import *
@@ -41,13 +44,6 @@ from plot_functions import *
 from datetime import datetime, timedelta
 from server_functions import *
 from plot_functions import *
-
-# Create logger with formatting
-from anvil_extras.logging import Logger
-import logging
-logger = Logger()
-# If the library supports standard Python logging formatting:
-formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
 
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)  # ← Monitor at level 3+
 def report_player_att_along_net( lgy, team, **rpt_filters):

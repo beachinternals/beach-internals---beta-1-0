@@ -30,23 +30,19 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import anvil.media
 from io import BytesIO
-
-
 from tabulate import tabulate
 from anvil import pdf
+
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
+
+# Import other modules
 from pair_functions import *
-#from matchup_reports import player_45_serves
 from plot_functions import *
 from datetime import datetime, timedelta
 from server_functions import *
 from plot_functions import *
 
-# Create logger with formatting
-from anvil_extras.logging import Logger
-import logging
-logger = Logger()
-# If the library supports standard Python logging formatting:
-formatter = logging.Formatter('%(levelname)s - %(funcName)s:%(lineno)d - %(message)s')
 
 
 def report_stub(lgy, team, **rpt_filters):

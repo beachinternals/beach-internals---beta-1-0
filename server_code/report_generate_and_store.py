@@ -91,26 +91,26 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
   image_desc_list: List[str] = []
 
   # Log the request
-  logger.info(f"Generating report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}, filters: {rpt_filters}")
+  log_info(f"Generating report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}, filters: {rpt_filters}")
 
   # Validate function name against report_list table
   valid_functions = get_valid_functions()
   if fnct_name not in valid_functions:
-    logger.error(f"Function name '{fnct_name}' not found in report_list table")
+    log_error(f"Function name '{fnct_name}' not found in report_list table")
     title_list.append(f"Report Not Found: {fnct_name}")
   else:
     # Dynamically get the function from globals
     try:
       func = globals()[fnct_name]
     except KeyError:
-      logger.error(f"Function '{fnct_name}' is not implemented in the global namespace")
+      log_error(f"Function '{fnct_name}' is not implemented in the global namespace")
       title_list.append(f"Function Error: {fnct_name}")
     else:
       # Call the function
       try:
         title_list, label_list, image_list, df_list, df_desc_list, image_desc_list = func(lgy, team, **rpt_filters)
       except Exception as e:
-        logger.error(f"Error executing {fnct_name}: {str(e)}")
+        log_error(f"Error executing {fnct_name}: {str(e)}")
         title_list.append(f"Execution Error: {fnct_name}")
 
     # Close any open matplotlib plots
@@ -141,7 +141,7 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
   try:
     rpt_data_row['title_7'] = make_filter_text(lgy, **rpt_filters)
   except NameError:
-    logger.warning("make_filter_text not defined; skipping filter text storage")
+    log_debug("make_filter_text not defined; skipping filter text storage")
     rpt_data_row['title_7'] = str(rpt_filters)
 
   # Store player in title_9
@@ -184,7 +184,7 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
         )
         no_dfs += 1
       except Exception as e:
-        logger.error(f"Failed to store DataFrame {i+1}: {str(e)}")
+        log_error(f"Failed to store DataFrame {i+1}: {str(e)}")
   rpt_data_row['no_df'] = no_dfs
 
   # Store DataFrame descriptions (max 10)
@@ -192,7 +192,7 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
   for i, df_desc in enumerate(df_desc_list[:10]):
     rpt_data_row[f'df_desc_{i+1}'] = df_desc
 
-  logger.info(f"Stored report with ID: {report_id}")
+  log_info(f"Stored report with ID: {report_id}")
   return report_id
 
   #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
