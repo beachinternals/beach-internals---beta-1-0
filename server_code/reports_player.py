@@ -165,18 +165,24 @@ def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
     - DataFrame containing the player attack statistics
   '''
   # Create the output dataframe
-  df_dict = {' ':['FBHE','Percentile','FBSO','Kills','Errors','Attempts','Percent Errors','URL'],
-             'All':[0,0,0,0,0,0,0,' '],
-             'Area 1':[0,0,0,0,0,0,0,' '],
-             "Area 2":[0,0,0,0,0,0,0,' '],
-             'Area 3':[0,0,0,0,0,0,0,' '],
-             'Area 4':[0,0,0,0,0,0,0,' '],
-             'Area 5':[0,0,0,0,0,0,0,' '],
-             'No Area':[0,0,0,0,0,0,0,' ']
+  # UPDATED: Added 6 new rows for set touch type (bump, hand, unknown - FBHE and Attempts each)
+  df_dict = {' ':['FBHE','Percentile','FBSO','Kills','Errors','Attempts','Percent Errors',
+                  'Bump Set FBHE', 'Bump Set Attempts',
+                  'Hand Set FBHE', 'Hand Set Attempts',
+                  'Unknown Set Type FBHE', 'Unknown Set Type Attempts',
+                  'URL'],
+             'All':[0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             'Area 1':[0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             "Area 2":[0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             'Area 3':[0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             'Area 4':[0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             'Area 5':[0,0,0,0,0,0,0,0,0,0,0,0,0,' '],
+             'No Area':[0,0,0,0,0,0,0,0,0,0,0,0,0,' ']
             }
   fbhe_table = pd.DataFrame.from_dict(df_dict)
   var_mean = 'fbhe'+'_mean'
   var_stdev = 'fbhe'+'_stdev'
+
   # If the data is not empty, create the dataframe, populate it, and return it
   if ppr_df.shape[0] > 0:
     # Calculate fbhe for all attacks
@@ -186,15 +192,40 @@ def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
     fbhe_table.at[4,'All'] = fbhe_result.errors  # errors
     fbhe_table.at[5,'All'] = fbhe_result.attempts  # attempts
     fbhe_table.at[2,'All'] = fbhe_result.fbso  # fbso
-    fbhe_table.at[7,'All'] = fbhe_result.video_link  # URL
+    fbhe_table.at[13,'All'] = fbhe_result.video_link  # URL (updated from row 7 to row 13)
+
     # Calculate percent errors
     if fbhe_result.attempts > 0:
       fbhe_table.at[6,'All'] = str('{:.0%}').format(fbhe_result.errors / fbhe_result.attempts)  # errors / attempts
     else:
       fbhe_table.at[6,'All'] = '0%'
+
     # Calculate percentile
     fbhe_table.at[1,'All'] = round(stats.norm.cdf(((fbhe_result.fbhe - player_data_stats_df.at[0,var_mean]) / player_data_stats_df.at[0,var_stdev])), 3)
     fbhe_table.at[1,'All'] = str('{:.0%}').format(fbhe_table.at[1,'All'])
+
+    # ADDED: Calculate set touch type stats for 'All' column
+    for touch_type, row_fbhe, row_att in [('bump', 7, 8), ('hand', 9, 10)]:
+      # Filter by set_touch_type
+      set_type_df = ppr_df[ppr_df['set_touch_type'] == touch_type]
+      if set_type_df.shape[0] > 0:
+        fbhe_set_result = fbhe_obj(set_type_df, disp_player, 'both', True)
+        fbhe_table.at[row_fbhe, 'All'] = fbhe_set_result.fbhe
+        fbhe_table.at[row_att, 'All'] = fbhe_set_result.attempts
+      else:
+        fbhe_table.at[row_fbhe, 'All'] = 0
+        fbhe_table.at[row_att, 'All'] = 0
+
+    # ADDED: Calculate unknown set type for 'All' column
+    unknown_set_df = ppr_df[~ppr_df['set_touch_type'].isin(['bump', 'hand'])]
+    if unknown_set_df.shape[0] > 0:
+      fbhe_unknown_set_result = fbhe_obj(unknown_set_df, disp_player, 'both', True)
+      fbhe_table.at[11, 'All'] = fbhe_unknown_set_result.fbhe
+      fbhe_table.at[12, 'All'] = fbhe_unknown_set_result.attempts
+    else:
+      fbhe_table.at[11, 'All'] = 0
+      fbhe_table.at[12, 'All'] = 0
+
     # Calculate for areas 1 - 5 and No Area
     column = ['Area 1','Area 2','Area 3','Area 4','Area 5','No Area']
     for i in [1,2,3,4,5,6]:
@@ -202,24 +233,55 @@ def get_player_attack_table(ppr_df, player_data_stats_df, disp_player):
       if i != 6:
         var_mean = 'fbhe'+str(zone)+'_mean'
         var_stdev = 'fbhe'+str(zone)+'_stdev'
-      fbhe_result = fbhe_obj(ppr_df[ppr_df['att_src_zone_net']==zone], disp_player, 'both', True)
+
+      # Filter data for this zone
+      zone_df = ppr_df[ppr_df['att_src_zone_net']==zone]
+
+      fbhe_result = fbhe_obj(zone_df, disp_player, 'both', True)
       fbhe_table.at[0,column[i-1]] = fbhe_result.fbhe  # fbhe
       fbhe_table.at[3,column[i-1]] = fbhe_result.kills  # kills
       fbhe_table.at[4,column[i-1]] = fbhe_result.errors  # errors
       fbhe_table.at[5,column[i-1]] = fbhe_result.attempts  # attempts
       fbhe_table.at[2,column[i-1]] = fbhe_result.fbso  # fbso
-      fbhe_table.at[7,column[i-1]] = fbhe_result.video_link  # URL
+      fbhe_table.at[13,column[i-1]] = fbhe_result.video_link  # URL (updated from row 7 to row 13)
+
       # Calculate percent errors
       if fbhe_result.attempts > 0:
         fbhe_table.at[6,column[i-1]] = str('{:.0%}').format(fbhe_result.errors / fbhe_result.attempts)  # errors / attempts
       else:
         fbhe_table.at[6,column[i-1]] = '0%'
+
       fbhe_table.at[1,column[i-1]] = round(stats.norm.cdf(((fbhe_result.fbhe - player_data_stats_df.at[0,var_mean]) / player_data_stats_df.at[0,var_stdev])), 3)
       fbhe_table.at[1,column[i-1]] = str('{:.0%}').format(fbhe_table.at[1,column[i-1]])
+
+      # ADDED: Calculate set touch type stats for each zone
+      for touch_type, row_fbhe, row_att in [('bump', 7, 8), ('hand', 9, 10)]:
+        # Filter by set_touch_type within this zone
+        set_type_df = zone_df[zone_df['set_touch_type'] == touch_type]
+        if set_type_df.shape[0] > 0:
+          fbhe_set_result = fbhe_obj(set_type_df, disp_player, 'both', True)
+          fbhe_table.at[row_fbhe, column[i-1]] = fbhe_set_result.fbhe
+          fbhe_table.at[row_att, column[i-1]] = fbhe_set_result.attempts
+        else:
+          fbhe_table.at[row_fbhe, column[i-1]] = 0
+          fbhe_table.at[row_att, column[i-1]] = 0
+
+      # ADDED: Calculate unknown set type for each zone
+      unknown_set_df = zone_df[~zone_df['set_touch_type'].isin(['bump', 'hand'])]
+      if unknown_set_df.shape[0] > 0:
+        fbhe_unknown_set_result = fbhe_obj(unknown_set_df, disp_player, 'both', True)
+        fbhe_table.at[11, column[i-1]] = fbhe_unknown_set_result.fbhe
+        fbhe_table.at[12, column[i-1]] = fbhe_unknown_set_result.attempts
+      else:
+        fbhe_table.at[11, column[i-1]] = 0
+        fbhe_table.at[12, column[i-1]] = 0
+
     return fbhe_table
   else:
     fbhe_table.at[0,'Area 1'] = 'No Data Found'
     return fbhe_table
+    
+    
     
   
 
