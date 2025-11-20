@@ -764,9 +764,6 @@ def merge_pdfs(*files, pdf_name: str = None) -> anvil.BlobMedia:
   if len(files) < 2:
     raise ValueError("At least two PDF files are required for merging.")
 
-    # Configure logging
-  logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
   validated_files = []
   for file in files:
     # Log the type and content type of each file
