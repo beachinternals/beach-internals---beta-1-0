@@ -29,12 +29,12 @@ class player_ci_report(player_ci_reportTemplate):
     # ------------------------------
     if report_id:
       # Fetch report data from server
-      title_list, label_list, image_list, df_list, df_desc, image_desc = (
+      title_list, label_list, image_list, df_list, df_desc_list, image_desc_list = (
         anvil.server.call("get_report_data", report_id)
       )
 
       """
-      Labels and titles are stored as below: 
+      Labels and titles are stored as below:
         title_list[0] = rpt_row['rpt_title']
         title_list[1] = rpt_row['rpt_sub_title']
         title_list[2] = rpt_row['rpt_section_title1']
@@ -45,7 +45,7 @@ class player_ci_report(player_ci_reportTemplate):
         title_list[7] = rpt_row['explain_text']
         title_list[8] = rpt_row['player']
         title_list[9] = rpt_row['pair']
-  
+
         label_list[0] = rpt_row['box1_title']
         label_list[1] = rpt_row['box2_title']
         label_list[2] = rpt_row['box3_title']
@@ -61,97 +61,122 @@ class player_ci_report(player_ci_reportTemplate):
       # populate the titles
       if isinstance(title_list[0], str):
         self.rpt_title.text = title_list[0]
+      # populate the subtitle with ... 'Player : FSU 02'
       if isinstance(title_list[1], str) and isinstance(title_list[8], str):
-        self.rpt_subtitle.text = title_list[1] + title_list[8]
+        if "team" in title_list[1].lower():
+          self.rpt_subtitle.text = title_list[1] + " " + title_list[4]
+        elif "player" in title_list[1].lower():
+          self.rpt_subtitle.text = title_list[1] + " " + title_list[8]
+        elif "pair" in title_list[1].lower():
+          self.rpt_subtitle.text = title_list[1] + " " + title_list[9]
+        elif "league" in title_list[1].lower():
+          self.rpt_subtitle.text = title_list[1] + " " + title_list[3]
+        else:
+          self.rpt_subtitle.text = title_list[1]
       if isinstance(title_list[7], str):
         self.explain_text.content = title_list[7]
       if isinstance(title_list[8], str):
         self.filter_text.content = title_list[6]
 
-      # populate the attack Table
+      # ------------------------------------------------
+      # populate the box1 label and table
       if isinstance(label_list[0], str):
         self.box1_title.text = label_list[0]
-      if isinstance(df_list[3], str):
+      if isinstance(df_list[0], str):
         if len(df_list[0]) != 0:
-          self.att_table.content = df_list[0]
+          self.box1.content = df_list[0]
       elif isinstance(df_list[0], anvil.Media):
-        if len(df_list.get_bytes()) != 0:
-          self.att_table.content = df_list[0]
+        if len(df_list[0].get_bytes()) != 0:
+          self.box1.content = df_list[0]
 
-      # populate the
+      # ------------------------------------------------
+      # populate the box2 label and table
       if isinstance(label_list[1], str):
         self.box2_title.text = label_list[1]
-
-      # Populate The zone attack charts
-      if isinstance(image_list[0], str):
-        if len(image_list[0]) != 0:
-          self.z1_plt.source = image_list[0]
-      elif isinstance(image_list[0], anvil.Media):
-        if len(image_list[0].get_bytes()) != 0:
-          self.z1_plt.source = image_list[0]
-
-      if isinstance(image_list[1], str):
-        if len(image_list[1]) != 0:
-          self.z2_plt.source = image_list[1]
-      elif isinstance(image_list[1], anvil.Media):
-        if len(image_list[1].get_bytes()) != 0:
-          self.z2_plt.source = image_list[1]
-
-      if isinstance(image_list[2], str):
-        if len(image_list[2]) != 0:
-          self.z3_plt.source = image_list[2]
-      elif isinstance(image_list[2], anvil.Media):
-        if len(image_list[2].get_bytes()) != 0:
-          self.z3_plt.source = image_list[2]
-
-      if isinstance(image_list[3], str):
-        if len(image_list[3]) != 0:
-          self.z4_plt.source = image_list[3]
-      elif isinstance(image_list[3], anvil.Media):
-        if len(image_list[3].get_bytes()) != 0:
-          self.z4_plt.source = image_list[3]
-
-      if isinstance(image_list[4], str):
-        if len(image_list[4]) != 0:
-          self.z5_plt.source = image_list[4]
-      elif isinstance(image_list[4], anvil.Media):
-        if len(image_list[4].get_bytes()) != 0:
-          self.z5_plt.source = image_list[4]
-
       if isinstance(df_list[1], str):
         if len(df_list[1]) != 0:
-          self.z1_mkdn.content = df_list[1]
+          self.box2.content = df_list[1]
       elif isinstance(df_list[1], anvil.Media):
         if len(df_list[1].get_bytes()) != 0:
-          self.z1_mkdn.content = df_list[1]
+          self.box2.content = df_list[1]
 
+      # ------------------------------------------------
+      # populate the box3 label and table
+      if isinstance(label_list[2], str):
+        self.box3_title.text = label_list[2]
       if isinstance(df_list[2], str):
         if len(df_list[2]) != 0:
-          self.z2_mkdn.content = df_list[2]
+          self.box3.content = df_list[2]
       elif isinstance(df_list[2], anvil.Media):
         if len(df_list[2].get_bytes()) != 0:
-          self.z2_mkdn.content = df_list[2]
+          self.box3.content = df_list[2]
 
+      # ------------------------------------------------
+      # populate the box4 label and table
+      if isinstance(label_list[3], str):
+        self.box4_title.text = label_list[3]
       if isinstance(df_list[3], str):
         if len(df_list[3]) != 0:
-          self.z3_mkdn.content = df_list[3]
+          self.box4.content = df_list[3]
       elif isinstance(df_list[3], anvil.Media):
         if len(df_list[3].get_bytes()) != 0:
-          self.z3_mkdn.content = df_list[3]
+          self.box4.content = df_list[3]
 
+          # ------------------------------------------------
+      # populate the box5 label and table
+      if isinstance(label_list[4], str):
+        self.box5_title.text = label_list[4]
       if isinstance(df_list[4], str):
         if len(df_list[4]) != 0:
-          self.z4_mkdn.content = df_list[4]
+          self.box5.content = df_list[4]
       elif isinstance(df_list[4], anvil.Media):
         if len(df_list[4].get_bytes()) != 0:
-          self.z4_mkdn.content = df_list[4]
+          self.box5.content = df_list[4]
 
+          # ------------------------------------------------
+      # populate the box6 label and table
+      if isinstance(label_list[5], str):
+        self.box6_title.text = label_list[5]
       if isinstance(df_list[5], str):
         if len(df_list[5]) != 0:
-          self.z5_mkdn.content = df_list[5]
+          self.box6.content = df_list[5]
       elif isinstance(df_list[5], anvil.Media):
         if len(df_list[5].get_bytes()) != 0:
-          self.z5_mkdn.content = df_list[5]
+          self.box6.content = df_list[5]
 
+          # ------------------------------------------------
+      # populate the box7 label and table
+      if isinstance(label_list[6], str):
+        self.box7_title.text = label_list[6]
+      if isinstance(df_list[6], str):
+        if len(df_list[6]) != 0:
+          self.box7.content = df_list[6]
+      elif isinstance(df_list[6], anvil.Media):
+        if len(df_list[6].get_bytes()) != 0:
+          self.box7.content = df_list[6]
+
+          # ------------------------------------------------
+      # populate the box8 label and table
+      if isinstance(label_list[7], str):
+        self.box8_title.text = label_list[7]
+      if isinstance(df_list[7], str):
+        if len(df_list[7]) != 0:
+          self.box8.content = df_list[7]
+      elif isinstance(df_list[7], anvil.Media):
+        if len(df_list[7].get_bytes()) != 0:
+          self.box8.content = df_list[7]
+
+          # ------------------------------------------------
+      # populate the box9 label and table
+      if isinstance(label_list[8], str):
+        self.box9_title.text = label_list[8]
+      if isinstance(df_list[8], str):
+        if len(df_list[8]) != 0:
+          self.box9.content = df_list[3]
+      elif isinstance(df_list[8], anvil.Media):
+        if len(df_list[8].get_bytes()) != 0:
+          self.box9.content = df_list[8]
+
+          
     else:
       self.label_1.text = "No Report Data Found"

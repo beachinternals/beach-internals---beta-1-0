@@ -1164,7 +1164,7 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team):
           )
 
           if isinstance(zone_metrics, str):  # Error occurred
-            logging.warning(f"Zone metrics calculation failed: {zone_metrics}")
+            log_info(f"Zone metrics calculation failed: {zone_metrics}")
             continue
 
             # Create matchup record

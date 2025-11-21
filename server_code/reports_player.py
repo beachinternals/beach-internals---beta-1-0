@@ -35,11 +35,8 @@ from collections import namedtuple
 # import error logging funcitons
 from logger_utils import log_info, log_error, log_critical, log_debug
 
-from confidence_intervals import (
-wilson_score_ci,
-calculate_fbhe_ci,
-get_reliability_level
-)
+from confidence_intervals import wilson_score_ci
+
 
 # Import other modules
 from tabulate import tabulate

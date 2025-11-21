@@ -767,13 +767,13 @@ def merge_pdfs(*files, pdf_name: str = None) -> anvil.BlobMedia:
   validated_files = []
   for file in files:
     # Log the type and content type of each file
-    logging.info(f"Processing file: type={type(file)}, content_type={getattr(file, 'content_type', 'Unknown')}")
+    log_info(f"Processing file: type={type(file)}, content_type={getattr(file, 'content_type', 'Unknown')}")
 
     # Handle StreamingMedia or BlobMedia
     if isinstance(file, (anvil.BlobMedia, anvil._serialise.StreamingMedia)):
       content_type = getattr(file, 'content_type', None)
       if content_type != 'application/pdf':
-        logging.warning(f"File has incorrect content_type: {content_type}. Attempting to treat as PDF.")
+        log_info(f"File has incorrect content_type: {content_type}. Attempting to treat as PDF.")
       validated_files.append(file)
     else:
       raise ValueError(f"Invalid input: {file} is not a valid PDF media object (type={type(file)}).")
@@ -797,7 +797,7 @@ def merge_pdfs(*files, pdf_name: str = None) -> anvil.BlobMedia:
     return anvil.BlobMedia('application/pdf', merged_pdf.getvalue(), name=pdf_name)
 
   except Exception as e:
-    logging.error(f"Error merging PDFs: {str(e)}")
+    log_error(f"Error merging PDFs: {str(e)}")
     raise Exception(f"Failed to merge PDFs: {str(e)}")
 
   finally:
