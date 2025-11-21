@@ -1,3 +1,15 @@
+import anvil.secrets
+import anvil.email
+import anvil.google.auth, anvil.google.drive, anvil.google.mail
+from anvil.google.drive import app_files
+import anvil.users
+import anvil.tables as tables
+import anvil.tables.query as q
+from anvil.tables import app_tables
+import anvil.server
+import math
+from scipy import stats
+
 """
 Anvil Integration Module for Confidence Intervals
 
@@ -6,14 +18,13 @@ to your existing volleyball performance reports on Anvil.works.
 
 QUICK START:
 1. Copy this entire file into a new Server Module in Anvil
-2. Name it 'confidence_intervals' 
+2. Name it 'confidence_intervals_anvil' 
 3. Import into your existing reports: 
-   from confidence_intervals import add_ci_to_fbhe_result
+   from confidence_intervals_anvil import add_ci_to_fbhe_result
 
 """
 
-import math
-from scipy import stats
+
 
 
 def wilson_score_ci(successes, attempts, confidence=0.95):
@@ -295,23 +306,23 @@ def add_ci_column_to_dataframe(df, metric_col, attempts_col, output_col='ci_disp
 
     if attempts == 0:
       return "—"
-
-      # Transform and calculate
+        
+        # Transform and calculate
     metric_scaled = (metric + 1) / 2
     successes_scaled = metric_scaled * attempts
     ci = wilson_score_ci(successes_scaled, attempts)
-
+        
     ci_lower = ci['lower'] * 2 - 1
     ci_upper = ci['upper'] * 2 - 1
-
+        
     return f"{metric:.3f} (CI: {ci_lower:.3f} to {ci_upper:.3f})"
-
+    
   df[output_col] = df.apply(calculate_ci_for_row, axis=1)
   return df
 
 
 def should_display_metric(attempts, min_attempts=10):
-  """
+    """
     Determine if a metric should be displayed based on sample size.
     
     Returns True if attempts >= min_attempts, False otherwise.
@@ -324,93 +335,5 @@ def should_display_metric(attempts, min_attempts=10):
     else:
         print("FBHE: Insufficient data")
     """
-  return attempts >= min_attempts
+    return attempts >= min_attempts
 
-
-# Example integration with your existing report code
-def example_integration():
-  """
-    Example showing how to integrate CI into your existing reports_player.py code.
-    """
-  print("EXAMPLE INTEGRATION PATTERNS:")
-  print("=" * 70)
-
-  print("\n1. Simple addition to existing fbhe_obj result:")
-  print("-" * 70)
-    print("""
-    # BEFORE (your existing code):
-    fbhe_result = fbhe_obj(ppr_df, disp_player, 'att', True)
-    fbhe_table.at[0, 'All'] = fbhe_result.fbhe
-    
-    # AFTER (with CI):
-    fbhe_result = fbhe_obj(ppr_df, disp_player, 'att', True)
-    fbhe_with_ci = add_ci_to_fbhe_result(fbhe_result)
-    fbhe_table.at[0, 'All'] = fbhe_with_ci['ci_display']
-    """)
-    
-    print("\n2. Add reliability indicator:")
-    print("-" * 70)
-    print("""
-    fbhe_result = fbhe_obj(ppr_df, disp_player, 'att', True)
-    reliability = get_reliability_indicator(fbhe_result.attempts)
-    
-    if reliability in ['Very Limited', 'Limited']:
-        # Show warning or don't display
-        fbhe_table.at[0, 'All'] = f"{fbhe_result.fbhe:.3f} *"
-        # Add footnote: "* Based on limited data"
-    else:
-        fbhe_with_ci = add_ci_to_fbhe_result(fbhe_result)
-        fbhe_table.at[0, 'All'] = fbhe_with_ci['ci_display']
-    """)
-    
-    print("\n3. For Good Pass Percentage:")
-    print("-" * 70)
-    print("""
-    # BEFORE:
-    oos_vector = count_out_of_system(ppr_df, disp_player, 'srv')
-    good_pass_pct = 1 - oos_vector[1]
-    fbhe_table.at[6, 'All'] = str('{:.1%}').format(good_pass_pct)
-    
-    # AFTER (with CI):
-    oos_vector = count_out_of_system(ppr_df, disp_player, 'srv')
-    good_passes = int((1 - oos_vector[1]) * oos_vector[2])  # Calculate good passes
-    ci_result = calculate_proportion_ci(good_passes, oos_vector[2])
-    fbhe_table.at[6, 'All'] = ci_result['ci_display']
-    """)
-
-
-if __name__ == "__main__":
-    example_integration()
-    
-    print("\n\nTEST WITH SAMPLE DATA:")
-    print("=" * 70)
-    
-    # Simulate fbhe_obj result
-    class FakeFbheResult:
-        def __init__(self, kills, errors, attempts):
-            self.kills = kills
-            self.errors = errors
-            self.attempts = attempts
-            self.fbhe = (kills - errors) / attempts if attempts > 0 else 0
-            self.fbso = kills / attempts if attempts > 0 else 0
-            self.video_link = "http://example.com/video"
-    
-    # Test with different sample sizes
-    test_cases = [
-        (15, 5, 30, "Moderate sample"),
-        (8, 2, 20, "Small sample"),
-        (50, 20, 100, "Large sample"),
-        (3, 1, 5, "Very small sample")
-    ]
-    
-    print(f"\n{'Scenario':<20} {'Attempts':<10} {'FBHE':<10} {'Display with CI':<50}")
-    print("-" * 90)
-    
-    for kills, errors, attempts, scenario in test_cases:
-        fake_result = FakeFbheResult(kills, errors, attempts)
-        result_with_ci = add_ci_to_fbhe_result(fake_result)
-        reliability = get_reliability_indicator(attempts)
-        
-        print(f"{scenario:<20} {attempts:<10} {result_with_ci['fbhe']:.3f}      {result_with_ci['ci_display']}")
-        print(f"{'':>20} {'Reliability: ' + reliability}")
-        print()
