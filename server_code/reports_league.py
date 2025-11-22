@@ -1172,7 +1172,7 @@ def create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df):
     })
 
     # Good Pass Percentage
-  pass_df = player_ppr[player_ppr['pass_plauer'] == disp_player]
+  pass_df = player_ppr[player_ppr['pass_player'] == disp_player]
   if pass_df.shape[0] > 0:
     oos_result = count_out_of_system(pass_df, disp_player, 'pass')
     good_passes = int((1 - oos_result[1]) * oos_result[2])
