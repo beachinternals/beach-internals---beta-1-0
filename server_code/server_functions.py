@@ -2141,7 +2141,7 @@ def apply_date_filters(df, column, value ):
 
 
   
-
+@anvil.server.callable
 def find_clusters(ppr_df, disp_player, category):
   """
     Find clusters of kills or errors using DBSCAN and return cluster labels and densities metrics.
