@@ -262,7 +262,7 @@ def create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df):
 
     # FBHE - Serving (FIXED: check if 'action' column exists)
   if 'action' in ppr_df.columns:
-    srv_df = ppr_df[ppr_df['action'] == 'srv']
+    srv_df = ppr_df[ppr_df['serve_player'] == disp_player]
     if srv_df.shape[0] > 0:
       fbhe_result = fbhe_obj(srv_df, disp_player, 'srv', False)
       ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
@@ -279,7 +279,7 @@ def create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df):
 
     # Good Pass Percentage (FIXED: check if 'action' column exists)
   if 'action' in ppr_df.columns:
-    pass_df = ppr_df[ppr_df['action'] == 'pass']
+    pass_df = ppr_df[ppr_df['pass_player'] == disp_player]
     if pass_df.shape[0] > 0:
       oos_result = count_out_of_system(pass_df, disp_player, 'pass')
       good_passes = int((1 - oos_result[1]) * oos_result[2])
@@ -579,7 +579,7 @@ def plot_player_ci_visualization(ppr_df, disp_player):
     
     # Serving (FIXED: check for 'action' column)
     if 'action' in ppr_df.columns:
-        srv_df = ppr_df[ppr_df['action'] == 'srv']
+        srv_df = ppr_df[ppr_df['serve_player'] == disp_player]
         if srv_df.shape[0] > 0:
             fbhe_result = fbhe_obj(srv_df, disp_player, 'srv', False)
             ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)

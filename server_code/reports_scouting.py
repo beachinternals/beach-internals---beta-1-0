@@ -1068,8 +1068,8 @@ def matchup_net(disp_league, disp_gender, disp_year, pair_a, pair_b, disp_team):
         
     Returns:
         pd.DataFrame: Net matchup analysis with columns:
-            - srv_player: Serving player name
-            - rcv_player: Receiving player name  
+            - serve_player: Serving player name
+            - pass_player: Receiving player name  
             - zone: Net zone (1-5)
             - opp_fbhe: Serving player's opponent FBHE rating for this zone
             - opp_per: Opponent FBHE percentile rank (higher = better serving matchup)

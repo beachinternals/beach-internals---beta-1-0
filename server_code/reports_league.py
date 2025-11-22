@@ -44,7 +44,7 @@ from plot_functions import *
 from datetime import datetime, timedelta
 from server_functions import *
 from plot_functions import *
-from confidence_intervals import add_ci_to_fbhe_result
+#from confidence_intervals import add_ci_to_fbhe_result
 
 
 
@@ -1017,15 +1017,18 @@ def report_confidence_intervals(lgy, team, **rpt_filters):
     df_list[5] = create_cumulative_ci_analysis(ppr_df, disp_player)
 
     # IMAGE 0: Margin of Error vs Sample Size Plot
-  image_list[0] = plot_margin_vs_sample_size()
-
+  fig = plot_margin_vs_sample_size()
+  image_list[0] = anvil.mpl_util.plot_image(fig)
+  
   # IMAGE 1: Confidence Interval Visualization for Player (if player specified)
   if disp_player and ppr_df.shape[0] > 0:
-    image_list[1] = plot_player_ci_visualization(ppr_df, disp_player)
+    fig = plot_player_ci_visualization(ppr_df, disp_player)
+    image_list[1] = anvil.mpl_util.plot_image(fig)
 
-    # IMAGE 2: Zone Comparison with Error Bars (if player specified)
+  # IMAGE 2: Zone Comparison with Error Bars (if player specified)
   if disp_player and ppr_df.shape[0] > 0:
-    image_list[2] = plot_zone_comparison_with_ci(ppr_df, disp_player)
+    fig = plot_zone_comparison_with_ci(ppr_df, disp_player)
+    image_list[2] = anvil.mpl_util.plot_image(fig)
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
@@ -1129,7 +1132,7 @@ def create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df):
   """Create table of player's key metrics with confidence intervals."""
 
   # Filter for this player's attacks
-  player_ppr = ppr_df[ppr_df['player'] == disp_player]
+  player_ppr = ppr_df[ppr_df['att_player'] == disp_player]
 
   if player_ppr.shape[0] == 0:
     return pd.DataFrame({'Message': ['No data available for this player']})
@@ -1137,7 +1140,7 @@ def create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df):
   metrics_data = []
 
   # FBHE - Attacking
-  att_df = player_ppr[player_ppr['action'] == 'att']
+  att_df = player_ppr[player_ppr['att_player'] == disp_player]
   if att_df.shape[0] > 0:
     fbhe_result = fbhe_obj(att_df, disp_player, 'att', False)
     ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
@@ -1153,7 +1156,7 @@ def create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df):
     })
 
     # FBHE - Serving
-  srv_df = player_ppr[player_ppr['action'] == 'srv']
+  srv_df = player_ppr[player_ppr['serve_player'] == disp_player]
   if srv_df.shape[0] > 0:
     fbhe_result = fbhe_obj(srv_df, disp_player, 'srv', False)
     ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
@@ -1169,7 +1172,7 @@ def create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df):
     })
 
     # Good Pass Percentage
-  pass_df = player_ppr[player_ppr['action'] == 'pass']
+  pass_df = player_ppr[player_ppr['pass_plauer'] == disp_player]
   if pass_df.shape[0] > 0:
     oos_result = count_out_of_system(pass_df, disp_player, 'pass')
     good_passes = int((1 - oos_result[1]) * oos_result[2])
@@ -1273,7 +1276,7 @@ def create_sample_size_requirements():
 def create_zone_confidence_analysis(ppr_df, disp_player, player_data_stats_df):
   """Create table analyzing FBHE by zone with confidence intervals."""
 
-  player_ppr = ppr_df[(ppr_df['player'] == disp_player) & (ppr_df['action'] == 'att')]
+  player_ppr = ppr_df[(ppr_df['att_player'] == disp_player) ]
 
   if player_ppr.shape[0] == 0:
     return pd.DataFrame({'Message': ['No attacking data available']})
@@ -1321,7 +1324,7 @@ def create_zone_confidence_analysis(ppr_df, disp_player, player_data_stats_df):
 def create_cumulative_ci_analysis(ppr_df, disp_player):
   """Show how confidence intervals narrow over time."""
 
-  player_ppr = ppr_df[(ppr_df['player'] == disp_player) & (ppr_df['action'] == 'att')]
+  player_ppr = ppr_df[(ppr_df['att_player'] == disp_player) ]
 
   if player_ppr.shape[0] < 10:
     return pd.DataFrame({'Message': ['Insufficient data for cumulative analysis']})
@@ -1424,7 +1427,7 @@ def plot_player_ci_visualization(ppr_df, disp_player):
     """Create visualization of player's metrics with error bars."""
     import plotly.graph_objects as go
     
-    player_ppr = ppr_df[ppr_df['player'] == disp_player]
+    player_ppr = ppr_df[ppr_df['att_player'] == disp_player]
     
     metrics = []
     values = []
@@ -1432,7 +1435,7 @@ def plot_player_ci_visualization(ppr_df, disp_player):
     upper_errors = []
     
     # Attacking
-    att_df = player_ppr[player_ppr['action'] == 'att']
+    att_df = player_ppr[player_ppr['att_player'] == disp_player]
     if att_df.shape[0] > 0:
         fbhe_result = fbhe_obj(att_df, disp_player, 'att', False)
         ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
@@ -1443,7 +1446,7 @@ def plot_player_ci_visualization(ppr_df, disp_player):
         upper_errors.append(ci['upper'] - ci['fbhe'])
     
     # Serving
-    srv_df = player_ppr[player_ppr['action'] == 'srv']
+    srv_df = player_ppr[player_ppr['serve_player'] == disp_player]
     if srv_df.shape[0] > 0:
         fbhe_result = fbhe_obj(srv_df, disp_player, 'srv', False)
         ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
@@ -1477,60 +1480,60 @@ def plot_player_ci_visualization(ppr_df, disp_player):
     
     return fig
 
-
 def plot_zone_comparison_with_ci(ppr_df, disp_player):
-    """Create zone comparison plot with error bars."""
-    import plotly.graph_objects as go
+  import plotly.graph_objects as go
+
+  player_att = ppr_df[ppr_df['att_player'] == disp_player]
+
+  # Use correct column name
+  zone_col = 'att_src_zone_net'
+
+  if zone_col not in player_att.columns:
+    fig = go.Figure()
+    fig.add_annotation(text="Zone data not available",
+                       xref="paper", yref="paper",
+                       x=0.5, y=0.5, showarrow=False)
+    return fig
+
+  zones = []
+  fbhe_values = []
+  lower_errors = []
+  upper_errors = []
+  colors = []
+
+  # Zones are 1, 2, 3, 4, 5 in your system
+  for zone in [1, 2, 3, 4, 5]:
+    zone_df = player_att[player_att[zone_col] == zone]
+    if zone_df.shape[0] > 0:
+      try:
+        fbhe_result = fbhe_obj(zone_df, disp_player, 'att', False)
+        ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
+
+        zones.append(f'Zone {zone}\n(n={fbhe_result.attempts})')
+        fbhe_values.append(ci['fbhe'])
+        lower_errors.append(ci['fbhe'] - ci['lower'])
+        upper_errors.append(ci['upper'] - ci['fbhe'])
+
+        reliability = get_reliability_level(fbhe_result.attempts)
+        colors.append('green' if reliability in ['Good', 'Very Good'] else 
+                            'orange' if reliability == 'Moderate' else 'red')
+      except:
+        pass
     
-    player_ppr = ppr_df[(ppr_df['player'] == disp_player) & (ppr_df['action'] == 'att')]
-    
-    zones = []
-    fbhe_values = []
-    lower_errors = []
-    upper_errors = []
-    colors = []
-    
-    for zone in [1, 3, 5]:
-        zone_df = player_ppr[player_ppr['attack_zone'] == zone]
-        
-        if zone_df.shape[0] > 0:
-            fbhe_result = fbhe_obj(zone_df, disp_player, 'att', False)
-            ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
-            
-            zones.append(f'Zone {zone}\n(n={fbhe_result.attempts})')
-            fbhe_values.append(ci['fbhe'])
-            lower_errors.append(ci['fbhe'] - ci['lower'])
-            upper_errors.append(ci['upper'] - ci['fbhe'])
-            
-            # Color by reliability
-            reliability = get_reliability_level(fbhe_result.attempts)
-            if reliability in ['Good', 'Very Good']:
-                colors.append('green')
-            elif reliability == 'Moderate':
-                colors.append('orange')
-            else:
-                colors.append('red')
+    if not zones:
+        fig = go.Figure()
+        fig.add_annotation(text="No zone data available",
+                          xref="paper", yref="paper",
+                          x=0.5, y=0.5, showarrow=False)
+        return fig
     
     fig = go.Figure()
+    fig.add_trace(go.Bar(x=zones, y=fbhe_values,
+                         error_y=dict(type='data', symmetric=False,
+                                    array=upper_errors, arrayminus=lower_errors),
+                         marker_color=colors, name='FBHE by Zone'))
     
-    fig.add_trace(go.Bar(
-        x=zones,
-        y=fbhe_values,
-        error_y=dict(
-            type='data',
-            symmetric=False,
-            array=upper_errors,
-            arrayminus=lower_errors
-        ),
-        marker_color=colors,
-        name='FBHE by Zone'
-    ))
-    
-    fig.update_layout(
-        title=f"{disp_player} - FBHE by Zone with 95% CI",
-        yaxis_title="FBHE",
-        yaxis=dict(range=[-1, 1]),
-        showlegend=False
-    )
-    
+    fig.update_layout(title=f"{disp_player} - FBHE by Zone with 95% CI",
+                     yaxis_title="FBHE", yaxis=dict(range=[-1, 1]), showlegend=False)
     return fig
+  
