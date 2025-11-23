@@ -19,6 +19,7 @@ from logger_utils import log_info, log_error, log_critical, log_debug
 # Import other beachinternals moudles
 from server_functions import *
 
+
 #-----------------------------------------------
 #
 #.   Plot Fucntions 
@@ -614,4 +615,80 @@ def plot_histogram(player_data_df, plot_var, var_name, l_min, l_max):
   return stat_text, plt_v
 
 
+
+@anvil.server.callable
+def find_clusters(ppr_df, disp_player, category):
+  """
+    Find clusters of kills or errors using DBSCAN and return cluster labels and densities metrics.
+    """
+  #print("Entered find kill error clusters")
+  #print(f"size of ppr_df passed:{ppr_df.shape[0]}")
+  try:
+    log_info(f"Finding {category} clusters for player: {disp_player}")
+    # Fetch data from ppr_df, limit to only pass by disp_player
+    ppr_df = ppr_df[ ppr_df['pass_player'] == disp_player]
+    #print(f"ppr df size {ppr_df.shape[0]}")
+    #print(f" ppr df pass src x:\n{ppr_df['pass_dest_x']}")
+    #print(f" ppr df pass src y:\n{ppr_df['pass_dest_y']}")
+    #print(f" ppr df point outcome:\n{ppr_df['point_outcome']}")
+
+    # Select three columns and rename them
+    df = ppr_df[['pass_dest_x', 'pass_dest_y', 'point_outcome']]
+    #print(f"DF with old columns: {df}")
+    df = df.rename(columns={
+      'pass_dest_x': 'x', 'pass_dest_y': 'y', 'point_outcome': 'value'
+    })
+
+    #print(f" DF with new names: /n:{df}")
+
+    # Ensure x, y are numeric
+    df['x'] = pd.to_numeric(df['x'], errors='coerce')
+    df['y'] = pd.to_numeric(df['y'], errors='coerce')
+    df = df.dropna(subset=['x', 'y'])
+
+    # Logical limits on x values ( along the net)
+    lower = -1
+    upper = 9
+    ppr_df = ppr_df.loc[(ppr_df['pass_dest_x'] >= lower) & (ppr_df['pass_dest_x'] <= upper)]
+    lower = 0
+    upper = 9
+    ppr_df = ppr_df.loc[(ppr_df['pass_dest_y'] >= lower) & (ppr_df['pass_dest_y'] <= upper)]
+
+    # Filter for the specified category (kill or error)
+    df_category = df[df['value'] == category]
+    #print(f" category total: {df_category.shape[0]}")
+    if df_category.empty:
+      log_info(f"No {category} data found for report_id: {report_id}")
+      return {'error': f'No {category} data found'}
+
+      # Extract coordinates
+    X = df_category[['x', 'y']].values
+
+    #print(f" X, whatever that is: {X.shape[0]},{X}")
+    # Apply DBSCAN
+    eps = .85  # Adjust based on your data's scale (e.g., distance threshold)
+    min_samples = int(df_category.shape[0]/5)
+    if min_samples < 5:
+      min_samples = 5 # Minimum points to form a cluster
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
+    labels = db.labels_  # Cluster labels (-1 for noise)
+
+    # Calculate density (points per cluster)
+    cluster_counts = pd.Series(labels).value_counts()
+    density_info = {
+      f'cluster_{label}': count for label, count in cluster_counts.items() if label != -1
+    }
+
+    # Add cluster labels to DataFrame
+    df_category['cluster'] = labels
+
+    return {
+      'status': 'success',
+      'data': df_category.to_dict('records'),
+      'density': density_info,
+      'n_clusters': len(set(labels)) - (1 if -1 in labels else 0)
+    }
+  except Exception as e:
+    log_error(f"Error in find_kill_error_clusters: {str(e)}")
+    return {'error': str(e)}
 

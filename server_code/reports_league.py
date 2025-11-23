@@ -1273,64 +1273,83 @@ def create_sample_size_requirements():
   return pd.DataFrame(data)
 
 
+
 def create_zone_confidence_analysis(ppr_df, disp_player, player_data_stats_df):
   """Create table analyzing FBHE by zone with confidence intervals."""
 
-  player_ppr = ppr_df[(ppr_df['att_player'] == disp_player) ]
+  player_ppr = ppr_df[(ppr_df['att_player'] == disp_player)]
 
   if player_ppr.shape[0] == 0:
     return pd.DataFrame({'Message': ['No attacking data available']})
 
+    # Check if zone column exists
+  if 'att_src_zone_net' not in player_ppr.columns:
+    return pd.DataFrame({'Message': ['Zone column not found in data']})
+
   zones_data = []
 
-  for zone in [1, 3, 5]:
-    zone_df = player_ppr[player_ppr['attack_zone'] == zone]
+  # Loop through all 5 zones (1, 2, 3, 4, 5)
+  for zone in [1, 2, 3, 4, 5]:
+    zone_df = player_ppr[player_ppr['att_src_zone_net'] == zone]
 
     if zone_df.shape[0] > 0:
-      fbhe_result = fbhe_obj(zone_df, disp_player, 'att', False)
-      ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
+      try:
+        fbhe_result = fbhe_obj(zone_df, disp_player, 'att', False)
+        ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
 
-      zones_data.append({
-        'Zone': f"Zone {zone}",
-        'FBHE': f"{ci['fbhe']:.3f}",
-        'CI Lower': f"{ci['lower']:.3f}",
-        'CI Upper': f"{ci['upper']:.3f}",
-        'Margin': f"±{ci['margin']:.3f}",
-        'Attempts': fbhe_result.attempts,
-        'Reliability': get_reliability_level(fbhe_result.attempts),
-        'Kills': fbhe_result.kills,
-        'Errors': fbhe_result.errors
-      })
+        zones_data.append({
+          'Zone': f"Zone {zone}",
+          'FBHE': f"{ci['fbhe']:.3f}",
+          'CI Lower': f"{ci['lower']:.3f}",
+          'CI Upper': f"{ci['upper']:.3f}",
+          'Margin': f"±{ci['margin']:.3f}",
+          'Attempts': fbhe_result.attempts,
+          'Reliability': get_reliability_level(fbhe_result.attempts),
+          'Kills': fbhe_result.kills,
+          'Errors': fbhe_result.errors
+        })
+      except Exception as e:
+        print(f"Error calculating zone {zone}: {e}")
 
-    # Add overall
-  fbhe_result = fbhe_obj(player_ppr, disp_player, 'att', False)
-  ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
+    # Add overall (all zones combined)
+  try:
+    fbhe_result = fbhe_obj(player_ppr, disp_player, 'att', False)
+    ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
 
-  zones_data.append({
-    'Zone': 'All Zones',
-    'FBHE': f"{ci['fbhe']:.3f}",
-    'CI Lower': f"{ci['lower']:.3f}",
-    'CI Upper': f"{ci['upper']:.3f}",
-    'Margin': f"±{ci['margin']:.3f}",
-    'Attempts': fbhe_result.attempts,
-    'Reliability': get_reliability_level(fbhe_result.attempts),
-    'Kills': fbhe_result.kills,
-    'Errors': fbhe_result.errors
-  })
+    zones_data.append({
+      'Zone': 'All Zones',
+      'FBHE': f"{ci['fbhe']:.3f}",
+      'CI Lower': f"{ci['lower']:.3f}",
+      'CI Upper': f"{ci['upper']:.3f}",
+      'Margin': f"±{ci['margin']:.3f}",
+      'Attempts': fbhe_result.attempts,
+      'Reliability': get_reliability_level(fbhe_result.attempts),
+      'Kills': fbhe_result.kills,
+      'Errors': fbhe_result.errors
+    })
+  except Exception as e:
+    print(f"Error calculating all zones: {e}")
+
+  if not zones_data:
+    return pd.DataFrame({'Message': ['No zone data available']})
 
   return pd.DataFrame(zones_data)
-
-
+  
 def create_cumulative_ci_analysis(ppr_df, disp_player):
   """Show how confidence intervals narrow over time."""
 
-  player_ppr = ppr_df[(ppr_df['att_player'] == disp_player) ]
+  player_ppr = ppr_df[(ppr_df['att_player'] == disp_player)]
 
   if player_ppr.shape[0] < 10:
-    return pd.DataFrame({'Message': ['Insufficient data for cumulative analysis']})
+    return pd.DataFrame({'Message': ['Insufficient data for cumulative analysis (need 10+ attempts)']})
 
-    # Sort by date
-  player_ppr = player_ppr.sort_values('game_date')
+    # Check if column exists
+  if 'point_outcome' not in player_ppr.columns:
+    return pd.DataFrame({'Message': ['Point outcome column not found']})
+
+    # Sort by date if available
+  if 'game_date' in player_ppr.columns:
+    player_ppr = player_ppr.sort_values('game_date')
 
   data = []
   cumulative_kills = 0
@@ -1342,10 +1361,13 @@ def create_cumulative_ci_analysis(ppr_df, disp_player):
   current_interval_idx = 0
 
   for idx, row in player_ppr.iterrows():
-    if row['result'] == 'kill':
+    # Check for kill (FBK = First Ball Kill)
+    if row['point_outcome'] == 'FBK':
       cumulative_kills += 1
-    elif row['result'] == 'error':
+      # Check for error (FBE = First Ball Error)
+    elif row['point_outcome'] == 'FBE':
       cumulative_errors += 1
+
     cumulative_attempts += 1
 
     # Check if we've reached next interval
@@ -1358,22 +1380,36 @@ def create_cumulative_ci_analysis(ppr_df, disp_player):
         'CI Width': f"{ci['upper'] - ci['lower']:.3f}",
         'Margin': f"±{ci['margin']:.3f}",
         'Reliability': get_reliability_level(cumulative_attempts)
-            })
-            
+      })
+
       current_interval_idx += 1
-    
-    # Add final cumulative
-    if cumulative_attempts not in [d['After N Attempts'] for d in data]:
-        ci = calculate_fbhe_ci(cumulative_kills, cumulative_errors, cumulative_attempts)
-        data.append({
-            'After N Attempts': cumulative_attempts,
-            'FBHE': f"{ci['fbhe']:.3f}",
-            'CI Width': f"{ci['upper'] - ci['lower']:.3f}",
-            'Margin': f"±{ci['margin']:.3f}",
-            'Reliability': get_reliability_level(cumulative_attempts)
-        })
-    
-    return pd.DataFrame(data)
+
+    # Add final cumulative if not already added
+  if data and cumulative_attempts not in [d['After N Attempts'] for d in data]:
+    ci = calculate_fbhe_ci(cumulative_kills, cumulative_errors, cumulative_attempts)
+    data.append({
+      'After N Attempts': cumulative_attempts,
+      'FBHE': f"{ci['fbhe']:.3f}",
+      'CI Width': f"{ci['upper'] - ci['lower']:.3f}",
+      'Margin': f"±{ci['margin']:.3f}",
+      'Reliability': get_reliability_level(cumulative_attempts)
+    })
+  elif not data:
+    # If no intervals were reached, add at least the final total
+    ci = calculate_fbhe_ci(cumulative_kills, cumulative_errors, cumulative_attempts)
+    data.append({
+      'After N Attempts': cumulative_attempts,
+      'FBHE': f"{ci['fbhe']:.3f}",
+      'CI Width': f"{ci['upper'] - ci['lower']:.3f}",
+      'Margin': f"±{ci['margin']:.3f}",
+      'Reliability': get_reliability_level(cumulative_attempts)
+    })
+
+  if not data:
+    return pd.DataFrame({'Message': ['Not enough data to reach any intervals']})
+
+  return pd.DataFrame(data)
+  
 
 
 #------------------------------------------------------------------------------------------------------
