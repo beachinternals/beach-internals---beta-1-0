@@ -46,6 +46,8 @@ from reports_dashboard import *
 from reports_league import *
 from reports_pair import *
 from reports_scouting import *
+from confidence_intervals import *
+
 
 
 # Cache for valid function names

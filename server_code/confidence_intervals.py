@@ -15,6 +15,16 @@ import math
 import inspect
 from anvil.tables import app_tables
 
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
+
+# Import other modules
+from pair_functions import *
+from plot_functions import *
+from datetime import datetime, timedelta
+from server_functions import *
+from plot_functions import *
+
 
 def report_confidence_intervals(lgy, team, **rpt_filters):
   '''
@@ -110,25 +120,25 @@ def report_confidence_intervals(lgy, team, **rpt_filters):
     #------------------------------------------------------------------------------------------------------
 
     # DF 0: Theoretical Margin of Error Reference Table
-  df_list[0] = create_margin_of_error_table()
+  df_list[0] = create_margin_of_error_table().to_dict('records')
 
   # DF 1: Player's Actual Metrics with Confidence Intervals (if player specified)
   if disp_player and ppr_df.shape[0] > 0:
-    df_list[1] = create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df)
+    df_list[1] = create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df).to_dict('records')
 
     # DF 2: Reliability Guidelines
-  df_list[2] = create_reliability_guidelines()
+  df_list[2] = create_reliability_guidelines().to_dict('records')
 
   # DF 3: Sample Size Requirements for Target Precision
-  df_list[3] = create_sample_size_requirements()
+  df_list[3] = create_sample_size_requirements().to_dict('records')
 
   # DF 4: Player Zone Analysis with CIs (if player specified)
   if disp_player and ppr_df.shape[0] > 0:
-    df_list[4] = create_zone_confidence_analysis(ppr_df, disp_player, player_data_stats_df)
+    df_list[4] = create_zone_confidence_analysis(ppr_df, disp_player, player_data_stats_df).to_dict('records')
 
     # DF 5: How Metrics Change Over Season (if player specified)
   if disp_player and ppr_df.shape[0] > 0:
-    df_list[5] = create_cumulative_ci_analysis(ppr_df, disp_player)
+    df_list[5] = create_cumulative_ci_analysis(ppr_df, disp_player).to_dict('records')
 
     # IMAGE 0: Margin of Error vs Sample Size Plot
   image_list[0] = plot_margin_vs_sample_size()
@@ -141,6 +151,8 @@ def report_confidence_intervals(lgy, team, **rpt_filters):
   if disp_player and ppr_df.shape[0] > 0:
     image_list[2] = plot_zone_comparison_with_ci(ppr_df, disp_player)
 
+  log_error(f"Data Frames returned from report_confidence_intervals: {df_list}")
+  
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
@@ -297,7 +309,8 @@ def create_player_ci_metrics(ppr_df, disp_player, player_data_stats_df):
       })
 
   if not metrics_data:
-    return pd.DataFrame({'Message': ['No data available for this player']})
+    #return pd.DataFrame({'Message': ['No data available for this player']})
+    return ' '  # on return it checks for empty dataframe.
 
   return pd.DataFrame(metrics_data)
 
@@ -512,191 +525,174 @@ def create_cumulative_ci_analysis(ppr_df, disp_player):
 #------------------------------------------------------------------------------------------------------
 #                           Plot/Image Creation Functions
 #------------------------------------------------------------------------------------------------------
-
 def plot_margin_vs_sample_size():
-    """Create plot showing margin of error decreasing with sample size."""
-    import plotly.graph_objects as go
-    
-    sample_sizes = list(range(5, 201, 5))
-    margins = []
-    
-    for n in sample_sizes:
-        # Assume typical FBHE around 0.30
-        kills = int(0.6 * n)
-        errors = int(kills - 0.30 * n)
-        ci = calculate_fbhe_ci(kills, errors, n)
-        margins.append(ci['margin'])
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=sample_sizes,
-        y=margins,
-        mode='lines+markers',
-        name='Margin of Error',
-        line=dict(color='#1f77b4', width=3),
-        marker=dict(size=6)
-    ))
-    
-    # Add reference lines
-    fig.add_hline(y=0.35, line_dash="dash", line_color="red", 
-                  annotation_text="Moderate (±0.35)", annotation_position="right")
-    fig.add_hline(y=0.25, line_dash="dash", line_color="orange",
-                  annotation_text="Good (±0.25)", annotation_position="right")
-    fig.add_hline(y=0.18, line_dash="dash", line_color="green",
-                  annotation_text="Very Good (±0.18)", annotation_position="right")
-    
-    fig.update_layout(
-        title="How Margin of Error Decreases with Sample Size",
-        xaxis_title="Number of Attempts",
-        yaxis_title="Margin of Error (±)",
-        hovermode='x unified',
-        showlegend=True
-    )
-    
-    return fig
+  """Create plot showing margin of error decreasing with sample size."""
+  import matplotlib.pyplot as plt
+
+  sample_sizes = list(range(5, 201, 5))
+  margins = []
+
+  for n in sample_sizes:
+    kills = int(0.6 * n)
+    errors = int(kills - 0.30 * n)
+    ci = calculate_fbhe_ci(kills, errors, n)
+    margins.append(ci['margin'])
+
+  fig, ax = plt.subplots(figsize=(12, 8))
+  ax.plot(sample_sizes, margins, 'o-', color='#1f77b4', linewidth=3, 
+          markersize=6, label='Margin of Error')
+  ax.axhline(y=0.35, color='red', linestyle='--', linewidth=2, 
+             label='Moderate (±0.35)')
+  ax.axhline(y=0.25, color='orange', linestyle='--', linewidth=2,
+             label='Good (±0.25)')
+  ax.axhline(y=0.18, color='green', linestyle='--', linewidth=2,
+             label='Very Good (±0.18)')
+  ax.set_title("How Margin of Error Decreases with Sample Size", fontsize=16)
+  ax.set_xlabel("Number of Attempts", fontsize=14)
+  ax.set_ylabel("Margin of Error (±)", fontsize=14)
+  ax.legend(loc='upper right')
+  ax.grid(True, alpha=0.3)
+
+  img = anvil.mpl_util.plot_image()
+  plt.close()
+  return img
 
 
 def plot_player_ci_visualization(ppr_df, disp_player):
-    """Create visualization of player's metrics with error bars."""
-    import plotly.graph_objects as go
-    
-    metrics = []
-    values = []
-    lower_errors = []
-    upper_errors = []
-    
-    # Attacking (FIXED: use 'att_player')
-    att_df = ppr_df[ppr_df['att_player'] == disp_player]
-    if att_df.shape[0] > 0:
-        fbhe_result = fbhe_obj(att_df, disp_player, 'att', False)
+  """Create visualization of player's metrics with error bars."""
+  import matplotlib.pyplot as plt
+
+  metrics = []
+  values = []
+  errors_lower = []
+  errors_upper = []
+
+  att_df = ppr_df[ppr_df['att_player'] == disp_player]
+  if att_df.shape[0] > 0:
+    try:
+      fbhe_result = fbhe_obj(att_df, disp_player, 'att', False)
+      ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
+      metrics.append(f'Attacking\n(n={fbhe_result.attempts})')
+      values.append(ci['fbhe'])
+      errors_lower.append(ci['fbhe'] - ci['lower'])
+      errors_upper.append(ci['upper'] - ci['fbhe'])
+    except:
+      pass
+
+  if 'serve_player' in ppr_df.columns:
+    srv_df = ppr_df[ppr_df['serve_player'] == disp_player]
+    if srv_df.shape[0] > 0:
+      try:
+        fbhe_result = fbhe_obj(srv_df, disp_player, 'srv', False)
         ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
-        
-        metrics.append(f'Attacking\n(n={fbhe_result.attempts})')
+        metrics.append(f'Serving\n(n={fbhe_result.attempts})')
         values.append(ci['fbhe'])
-        lower_errors.append(ci['fbhe'] - ci['lower'])
-        upper_errors.append(ci['upper'] - ci['fbhe'])
-    
-    # Serving (FIXED: check for 'action' column)
-    if 'action' in ppr_df.columns:
-        srv_df = ppr_df[ppr_df['serve_player'] == disp_player]
-        if srv_df.shape[0] > 0:
-            fbhe_result = fbhe_obj(srv_df, disp_player, 'srv', False)
-            ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
-            
-            metrics.append(f'Serving\n(n={fbhe_result.attempts})')
-            values.append(ci['fbhe'])
-            lower_errors.append(ci['fbhe'] - ci['lower'])
-            upper_errors.append(ci['upper'] - ci['fbhe'])
-    
-    if not metrics:
-        # Return empty figure with message
-        fig = go.Figure()
-        fig.add_annotation(text="No data available for visualization",
-                          xref="paper", yref="paper",
-                          x=0.5, y=0.5, showarrow=False)
-        return fig
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Bar(
-        x=metrics,
-        y=values,
-        error_y=dict(
-            type='data',
-            symmetric=False,
-            array=upper_errors,
-            arrayminus=lower_errors
-        ),
-        marker_color='lightblue',
-        name='FBHE with 95% CI'
-    ))
-    
-    fig.update_layout(
-        title=f"{disp_player} - FBHE with 95% Confidence Intervals",
-        yaxis_title="FBHE",
-        yaxis=dict(range=[-1, 1]),
-        showlegend=False
-    )
-    
-    return fig
+        errors_lower.append(ci['fbhe'] - ci['lower'])
+        errors_upper.append(ci['upper'] - ci['fbhe'])
+      except:
+        pass
+
+  if not metrics:
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.text(0.5, 0.5, 'No data available', ha='center', va='center', fontsize=14)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+    img = anvil.mpl_util.plot_image()
+    plt.close()
+    return img
+
+  fig, ax = plt.subplots(figsize=(10, 8))
+  x_pos = range(len(metrics))
+  ax.bar(x_pos, values, yerr=[errors_lower, errors_upper], 
+         capsize=10, color='lightblue', edgecolor='navy', linewidth=2)
+  ax.set_xticks(x_pos)
+  ax.set_xticklabels(metrics)
+  ax.set_ylabel('FBHE', fontsize=14)
+  ax.set_title(f"{disp_player} - FBHE with 95% Confidence Intervals", fontsize=16)
+  ax.set_ylim(-1, 1)
+  ax.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
+  ax.grid(True, alpha=0.3, axis='y')
+
+  img = anvil.mpl_util.plot_image()
+  plt.close()
+  return img
 
 
 def plot_zone_comparison_with_ci(ppr_df, disp_player):
-    """Create zone comparison plot with error bars."""
-    import plotly.graph_objects as go
+  """Create zone comparison plot with error bars."""
+  import matplotlib.pyplot as plt
+  from matplotlib.patches import Patch
+
+  player_att = ppr_df[ppr_df['att_player'] == disp_player]
+  zone_col = 'att_src_zone_net'
+
+  if zone_col not in player_att.columns:
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.text(0.5, 0.5, 'Zone data not available', ha='center', va='center', fontsize=14)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+    img = anvil.mpl_util.plot_image()
+    plt.close()
+    return img
+
+  zones = []
+  fbhe_values = []
+  errors_lower = []
+  errors_upper = []
+  colors = []
+
+  for zone in [1, 2, 3, 4, 5]:
+    zone_df = player_att[player_att[zone_col] == zone]
+    if zone_df.shape[0] > 0:
+      try:
+        fbhe_result = fbhe_obj(zone_df, disp_player, 'att', False)
+        ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
+        zones.append(f'Zone {zone}\n(n={fbhe_result.attempts})')
+        fbhe_values.append(ci['fbhe'])
+        errors_lower.append(ci['fbhe'] - ci['lower'])
+        errors_upper.append(ci['upper'] - ci['fbhe'])
+        reliability = get_reliability_level(fbhe_result.attempts)
+        if reliability in ['Good', 'Very Good']:
+          colors.append('green')
+        elif reliability == 'Moderate':
+          colors.append('orange')
+        else:
+          colors.append('red')
+      except:
+        pass
+
+  if not zones:
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.text(0.5, 0.5, 'No zone data available', ha='center', va='center', fontsize=14)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis('off')
+    img = anvil.mpl_util.plot_image()
+    plt.close()
+    return img
+
+  fig, ax = plt.subplots(figsize=(12, 8))
+  x_pos = range(len(zones))
+  bars = ax.bar(x_pos, fbhe_values, yerr=[errors_lower, errors_upper],
+                  capsize=10, color=colors, edgecolor='black', linewidth=2, alpha=0.7)
+  ax.set_xticks(x_pos)
+  ax.set_xticklabels(zones)
+  ax.set_ylabel('FBHE', fontsize=14)
+  ax.set_title(f"{disp_player} - FBHE by Zone with 95% CI", fontsize=16)
+  ax.set_ylim(-1, 1)
+  ax.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
+  ax.grid(True, alpha=0.3, axis='y')
     
-    # FIXED: Use 'att_player' and check zone column
-    player_att = ppr_df[ppr_df['att_player'] == disp_player]
+  legend_elements = [
+        Patch(facecolor='green', alpha=0.7, label='Good/Very Good'),
+        Patch(facecolor='orange', alpha=0.7, label='Moderate'),
+        Patch(facecolor='red', alpha=0.7, label='Limited')
+  ]
+  ax.legend(handles=legend_elements, loc='upper right')
     
-    # Determine zone column
-    zone_col = None
-    if 'attack_zone' in player_att.columns:
-        zone_col = 'attack_zone'
-    elif 'att_src_zone_net' in player_att.columns:
-        zone_col = 'att_src_zone_net'
-    
-    if zone_col is None:
-        fig = go.Figure()
-        fig.add_annotation(text="Zone data not available",
-                          xref="paper", yref="paper",
-                          x=0.5, y=0.5, showarrow=False)
-        return fig
-    
-    zones = []
-    fbhe_values = []
-    lower_errors = []
-    upper_errors = []
-    colors = []
-    
-    for zone in [1, 3, 5]:
-        zone_df = player_att[player_att[zone_col] == zone]
-        
-        if zone_df.shape[0] > 0:
-            fbhe_result = fbhe_obj(zone_df, disp_player, 'att', False)
-            ci = calculate_fbhe_ci(fbhe_result.kills, fbhe_result.errors, fbhe_result.attempts)
-            
-            zones.append(f'Zone {zone}\n(n={fbhe_result.attempts})')
-            fbhe_values.append(ci['fbhe'])
-            lower_errors.append(ci['fbhe'] - ci['lower'])
-            upper_errors.append(ci['upper'] - ci['fbhe'])
-            
-            # Color by reliability
-            reliability = get_reliability_level(fbhe_result.attempts)
-            if reliability in ['Good', 'Very Good']:
-                colors.append('green')
-            elif reliability == 'Moderate':
-                colors.append('orange')
-            else:
-                colors.append('red')
-    
-    if not zones:
-        fig = go.Figure()
-        fig.add_annotation(text="No zone data available",
-                          xref="paper", yref="paper",
-                          x=0.5, y=0.5, showarrow=False)
-        return fig
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Bar(
-        x=zones,
-        y=fbhe_values,
-        error_y=dict(
-            type='data',
-            symmetric=False,
-            array=upper_errors,
-            arrayminus=lower_errors
-        ),
-        marker_color=colors,
-        name='FBHE by Zone'
-    ))
-    
-    fig.update_layout(
-        title=f"{disp_player} - FBHE by Zone with 95% CI",
-        yaxis_title="FBHE",
-        yaxis=dict(range=[-1, 1]),
-        showlegend=False
-    )
-    
-    return fig
+  img = anvil.mpl_util.plot_image()
+  plt.close()
+  return img
+
