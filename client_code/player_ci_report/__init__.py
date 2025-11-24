@@ -78,7 +78,11 @@ class player_ci_report(player_ci_reportTemplate):
       if isinstance(title_list[8], str):
         self.filter_text.content = title_list[6]
 
-      # ------------------------------------------------
+      #----------------------------------------------------
+      #
+      #        Save any and all labels, Box Titles
+      #
+      # ----------------------------------------------------
       # populate the box1 label and table
       if isinstance(label_list[0], str):
         self.box1_title.text = label_list[0]
@@ -177,6 +181,88 @@ class player_ci_report(player_ci_reportTemplate):
         if len(df_list[8].get_bytes()) != 0:
           self.box9.content = df_list[8]
 
-          
+      #----------------------------------------------------
+      #
+      #        Save any and all images
+      #
+      # ----------------------------------------------------
+
+      #---------------------------------------
+      #
+      # Populate The plots / images
+      #
+      #----------------------------------------
+      if isinstance(image_list[0], str):
+        if len(image_list[0]) != 0:
+          self.image_1.source = image_list[0]
+      elif isinstance(image_list[0], anvil.Media):
+        if len(image_list[0].get_bytes()) != 0:
+          self.image_1.source = image_list[0]
+
+      if isinstance(image_list[1], str):
+        if len(image_list[1]) != 0:
+          self.image_2.source = image_list[1]
+      elif isinstance(image_list[1], anvil.Media):
+        if len(image_list[1].get_bytes()) != 0:
+          self.image_2.source = image_list[1]
+
+      if isinstance(image_list[2], str):
+        if len(image_list[2]) != 0:
+          self.image_3.source = image_list[2]
+      elif isinstance(image_list[2], anvil.Media):
+        if len(image_list[2].get_bytes()) != 0:
+          self.image_3.source = image_list[2]
+      '''
+
+      if isinstance(image_list[3], str):
+        if len(image_list[3]) != 0:
+          self.image_4.source = image_list[3]
+      elif isinstance(image_list[3], anvil.Media):
+        if len(image_list[3].get_bytes()) != 0:
+          self.image_4.source = image_list[3]
+
+      if isinstance(image_list[4], str):
+        if len(image_list[4]) != 0:
+          self.image_5.source = image_list[4]
+      elif isinstance(image_list[4], anvil.Media):
+        if len(image_list[4].get_bytes()) != 0:
+          self.image_5.source = image_list[4]
+
+      if isinstance(image_list[5], str):
+        if len(image_list[5]) != 0:
+          self.image_6.source = image_list[5]
+      elif isinstance(image_list[5], anvil.Media):
+        if len(image_list[5].get_bytes()) != 0:
+          self.image_6.source = image_list[5]
+
+      if isinstance(image_list[6], str):
+        if len(image_list[6]) != 0:
+          self.image_7.source = image_list[6]
+      elif isinstance(image_list[6], anvil.Media):
+        if len(image_list[6].get_bytes()) != 0:
+          self.image_7.source = image_list[6]
+
+      if isinstance(image_list[7], str):
+        if len(image_list[7]) != 0:
+          self.image_8.source = image_list[7]
+      elif isinstance(image_list[7], anvil.Media):
+        if len(image_list[7].get_bytes()) != 0:
+          self.image_8.source = image_list[7]
+
+      if isinstance(image_list[8], str):
+        if len(image_list[8]) != 0:
+          self.image_9.source = image_list[8]
+      elif isinstance(image_list[8], anvil.Media):
+        if len(image_list[8].get_bytes()) != 0:
+          self.image_9.source = image_list[8]
+
+      if isinstance(image_list[9], str):
+        if len(image_list[9]) != 0:
+          self.image_10.source = image_list[9]
+      elif isinstance(image_list[9], anvil.Media):
+        if len(image_list[9].get_bytes()) != 0:
+          self.image_10.source = image_list[9]
+      '''
+      
     else:
       self.label_1.text = "No Report Data Found"
