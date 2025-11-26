@@ -696,3 +696,495 @@ def plot_zone_comparison_with_ci(ppr_df, disp_player):
   plt.close()
   return img
 
+
+
+def report_statistical_guidelines(lgy, team, **rpt_filters):
+  '''
+    Statistical Guidelines Report - League-Wide Analysis
+    
+    Provides league-wide statistical guidance for the 5 key beach volleyball metrics:
+    - First Ball Hitting Efficiency (FBHE)
+    - Transition Conversion Rate (TCR)
+    - Error Density
+    - Knockout Rate
+    - In-System Passing %
+    
+    Shows sample size requirements, reliability guidelines, and margin of error curves
+    to help coaches understand how much data is needed for reliable metrics.
+    
+    INPUT Parameters:
+        - lgy : league, gender, year combination
+        - team : the team of the user calling the report
+        - rpt_filters : filters to limit the data (comp_l1, comp_l2, comp_l3, date ranges, etc.)
+    
+    OUTPUT Return Parameters:
+        - title_list : report titles
+        - label_list : section labels
+        - image_list : plots and charts
+        - df_list : data tables
+        - df_desc_list : descriptions for dataframes
+        - image_desc_list : descriptions for images
+  '''
+
+  #------------------------------------------------------------------------------------------------------
+  #            Initialize and Fetch Data
+  #------------------------------------------------------------------------------------------------------
+
+  # Initialize lists
+  title_list = ['','','','','','','','','','']
+  label_list = ['','','','','','','','','','']
+  image_list = ['','','','','','','','','','']
+  df_list = ['','','','','','','','','','']
+  df_desc_list = ['','','','','','','','','','']
+  image_desc_list = ['','','','','','','','','','']
+
+  # Unpack lgy
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  # Fetch and filter data
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # Get report metadata from database
+  rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+
+  if rpt_row:
+    title_list[0] = rpt_row['rpt_title']
+    title_list[1] = rpt_row['rpt_sub_title']
+    title_list[2] = rpt_row['rpt_section_title1']
+    title_list[3] = rpt_filters.get('lgy')
+    title_list[4] = rpt_row['team_name']
+    title_list[5] = rpt_row['rpt_type']
+    title_list[6] = rpt_row['filter_text']
+    title_list[7] = rpt_row['explain_text']
+    title_list[8] = 'League-Wide Analysis'
+    title_list[9] = ''
+
+    label_list[0] = rpt_row['box1_title']
+    label_list[1] = rpt_row['box2_title']
+    label_list[2] = rpt_row['box3_title']
+    label_list[3] = rpt_row['box4_title']
+    label_list[4] = rpt_row['box5_title']
+    label_list[5] = rpt_row['box6_title']
+    label_list[6] = rpt_row['box7_title']
+    label_list[7] = rpt_row['box8_title']
+    label_list[8] = rpt_row['box9_title']
+    label_list[9] = rpt_row['box10_title']
+
+    df_desc_list[0] = rpt_row['df_desc_1']
+    df_desc_list[1] = rpt_row['df_desc_2']
+    df_desc_list[2] = rpt_row['df_desc_3']
+    df_desc_list[3] = rpt_row['df_desc_4']
+    df_desc_list[4] = rpt_row['df_desc_5']
+    df_desc_list[5] = rpt_row['df_desc_6']
+
+  #------------------------------------------------------------------------------------------------------
+  #            Calculate League-Wide Percentages for Each Metric Type
+  #------------------------------------------------------------------------------------------------------
+
+  total_points = len(ppr_df)
+
+  if total_points == 0:
+    # Return empty report if no data
+    df_list[0] = pd.DataFrame({'Message': ['No data available for selected filters']})
+    return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+  # Calculate actual percentages in this league/filter
+  # First ball attempts = all points except service errors (TSE)
+  fb_points = len(ppr_df[ppr_df['point_outcome'] != 'TSE'])
+  fb_pct = fb_points / total_points if total_points > 0 else 0.45
+
+  trans_points = len(ppr_df[ppr_df['point_outcome'].isin(['TK', 'TE'])])
+  trans_pct = trans_points / total_points if total_points > 0 else 0.40
+
+  knockout_points = len(ppr_df[ppr_df['point_outcome'] != 'TSE'])
+  knockout_pct = knockout_points / total_points if total_points > 0 else 0.95
+
+  error_pct = 1.0  # Always 100% of points
+
+  passing_points = len(ppr_df[~ppr_df['point_outcome'].isin(['TSE', 'TSA'])])
+  passing_pct = passing_points / total_points if total_points > 0 else 0.80
+
+  # Define metrics with their characteristics
+  metrics_info = {
+    'FBHE': {
+      'name': 'First Ball Hitting Efficiency',
+      'range': '(-1 to 1)',
+      'type': 'efficiency',
+      'attempts_per_point': fb_pct,
+      'typical_value': 0.30
+    },
+    'TCR': {
+      'name': 'Transition Conversion Rate',
+      'range': '(0 to 1)',
+      'type': 'proportion',
+      'attempts_per_point': trans_pct,
+      'typical_value': 0.50
+    },
+    'Error Density': {
+      'name': 'Error Density',
+      'range': '(0 to 1)',
+      'type': 'proportion',
+      'attempts_per_point': error_pct,
+      'typical_value': 0.20
+    },
+    'Knockout Rate': {
+      'name': 'Knockout Rate',
+      'range': '(0 to 1)',
+      'type': 'proportion',
+      'attempts_per_point': knockout_pct,
+      'typical_value': 0.15
+    },
+    'In-System %': {
+      'name': 'In-System Passing',
+      'range': '(0 to 1)',
+      'type': 'proportion',
+      'attempts_per_point': passing_pct,
+      'typical_value': 0.70
+    }
+  }
+
+  #------------------------------------------------------------------------------------------------------
+  #            Create DataFrames and Images
+  #------------------------------------------------------------------------------------------------------
+
+  # DF 0: Dataset Summary (total points and matches)
+  df_list[0] = create_league_data_summary(total_points, metrics_info).to_dict('records')
+  
+  # DF 1: Metric Occurrence Percentages
+  df_list[1] = create_metric_percentages_table(metrics_info).to_dict('records')
+  
+  # DF 2: Sample Size Requirements (in points)
+  df_list[2] = create_sample_size_by_points(metrics_info).to_dict('records')
+  
+  # DF 3: Reliability Guidelines
+  df_list[3] = create_reliability_guidelines_league().to_dict('records')
+  
+  # DF 4: Points-to-Matches Conversion
+  df_list[4] = create_points_to_matches_table().to_dict('records')
+  
+  # DF 5: Detailed Margin of Error by Metric
+  df_list[5] = create_detailed_margin_table(metrics_info).to_dict('records')
+  
+  # IMAGE 0: Margin of Error Curves for All Metrics
+  plot_all_metrics_margin_curves(metrics_info)
+  image_list[0] = anvil.mpl_util.plot_image()
+  
+  # IMAGE 1: Sample Size Comparison Chart
+  plot_sample_size_comparison(metrics_info)
+  image_list[1] = anvil.mpl_util.plot_image()
+  
+  # IMAGE 2: Attempts per Match Visualization
+  plot_attempts_per_match(metrics_info)
+  image_list[2] = anvil.mpl_util.plot_image()
+  
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+
+#------------------------------------------------------------------------------------------------------
+#                    Helper Functions for Statistical Guidelines Report
+#------------------------------------------------------------------------------------------------------
+
+def calculate_se_proportion(p, n):
+  """Calculate standard error for a simple proportion (0 to 1)."""
+  if n == 0:
+    return 0
+  return math.sqrt(p * (1 - p) / n)
+
+
+def calculate_se_efficiency(p_good, p_bad, n):
+  """Calculate standard error for an efficiency metric (-1 to 1)."""
+  if n == 0:
+    return 0
+  return math.sqrt((p_good * (1 - p_good) / n) + (p_bad * (1 - p_bad) / n))
+
+
+def calculate_margin_of_error(metric_info, n, confidence=0.95):
+  """Calculate margin of error for a given metric and sample size."""
+  z = stats.norm.ppf(1 - (1 - confidence) / 2)  # 1.96 for 95% CI
+  
+  if metric_info['type'] == 'efficiency':
+    # For efficiency metrics like FBHE
+    typical_val = metric_info['typical_value']
+    # Estimate p_good and p_bad
+    p_good = (typical_val + 1) / 2  # Convert from [-1,1] to [0,1] scale
+    p_bad = 1 - p_good
+    se = calculate_se_efficiency(p_good, p_bad, n)
+  else:
+    # For simple proportions
+    p = metric_info['typical_value']
+    se = calculate_se_proportion(p, n)
+  
+  return z * se
+
+
+def get_sample_size_for_margin(metric_info, target_margin, confidence=0.95):
+  """Calculate required sample size for a target margin of error."""
+  z = stats.norm.ppf(1 - (1 - confidence) / 2)
+  
+  if metric_info['type'] == 'efficiency':
+    # Conservative estimate using p=0.5 for maximum variance
+    p_good = 0.5
+    p_bad = 0.5
+    # n = z^2 * (var_good + var_bad) / margin^2
+    n = (z ** 2) * (p_good * (1 - p_good) + p_bad * (1 - p_bad)) / (target_margin ** 2)
+  else:
+    # Use p=0.5 for maximum variance (conservative)
+    p = 0.5
+    n = (z ** 2) * p * (1 - p) / (target_margin ** 2)
+  
+  return int(math.ceil(n))
+
+
+#------------------------------------------------------------------------------------------------------
+#                    DataFrame Creation Functions
+#------------------------------------------------------------------------------------------------------
+
+def create_league_data_summary(total_points, metrics_info):
+  """Create summary of league data - just the totals."""
+  
+  data = [{
+    'Statistic': 'Total Points in Dataset',
+    'Value': f"{total_points}"
+  }, {
+    'Statistic': 'Estimated Matches',
+    'Value': f"{total_points / 85:.1f}"
+  }]
+  
+  return pd.DataFrame(data)
+
+
+def create_metric_percentages_table(metrics_info):
+  """Create table showing what percentage of points each metric occurs on."""
+  
+  data = []
+  for metric_key, info in metrics_info.items():
+    pct = info['attempts_per_point'] * 100
+    data.append({
+      'Metric': info['name'],
+      'Attempts per Point': f"{info['attempts_per_point']:.2f}",
+      'Percentage of Points': f"{pct:.1f}%"
+    })
+  
+  return pd.DataFrame(data)
+
+
+def create_sample_size_by_points(metrics_info):
+  """Create table showing required points for different accuracy levels."""
+  
+  target_margins = [0.05, 0.075, 0.10, 0.15, 0.20]
+  
+  data = []
+  for target_margin in target_margins:
+    row = {'Target Accuracy (±)': f"±{target_margin:.1%}"}
+    
+    for metric_key, info in metrics_info.items():
+      required_attempts = get_sample_size_for_margin(info, target_margin)
+      # Convert to points
+      required_points = int(required_attempts / info['attempts_per_point']) if info['attempts_per_point'] > 0 else 0
+      row[metric_key] = f"{required_points} pts"
+    
+    data.append(row)
+  
+  return pd.DataFrame(data)
+
+
+def create_reliability_guidelines_league():
+  """Create reliability guidelines based on number of points."""
+  
+  data = [
+    {
+      'Points': '< 100',
+      'Matches (≈)': '< 1',
+      'Reliability': 'Very Limited',
+      'Guidance': 'Insufficient data for reliable conclusions'
+    },
+    {
+      'Points': '100-250',
+      'Matches (≈)': '1-3',
+      'Reliability': 'Limited',
+      'Guidance': 'Use with caution; significant uncertainty'
+    },
+    {
+      'Points': '250-500',
+      'Matches (≈)': '3-6',
+      'Reliability': 'Moderate',
+      'Guidance': 'Reasonable for general trends'
+    },
+    {
+      'Points': '500-1000',
+      'Matches (≈)': '6-12',
+      'Reliability': 'Good',
+      'Guidance': 'Reliable for most decisions'
+    },
+    {
+      'Points': '> 1000',
+      'Matches (≈)': '> 12',
+      'Reliability': 'Very Good',
+      'Guidance': 'High confidence in metrics'
+    }
+  ]
+  
+  return pd.DataFrame(data)
+
+
+def create_points_to_matches_table():
+  """Create conversion table from points to matches."""
+  
+  matches = [1, 2, 3, 5, 10, 15, 20, 30, 50]
+  
+  data = []
+  for m in matches:
+    points = m * 85
+    row = {
+      'Matches': m,
+      'Points (≈85/match)': points,
+      'Range': f"{m * 75} - {m * 100}"
+    }
+    data.append(row)
+  
+  return pd.DataFrame(data)
+
+
+def create_detailed_margin_table(metrics_info):
+  """Create detailed margin of error table for each metric at different sample sizes."""
+  
+  point_counts = [100, 250, 500, 750, 1000, 1500, 2000]
+  
+  data = []
+  for points in point_counts:
+    row = {
+      'Points': points,
+      'Matches (≈)': f"{points / 85:.1f}"
+    }
+    
+    for metric_key, info in metrics_info.items():
+      # Calculate actual attempts for this metric
+      attempts = int(points * info['attempts_per_point'])
+      if attempts > 0:
+        margin = calculate_margin_of_error(info, attempts)
+        row[metric_key] = f"±{margin:.3f}"
+      else:
+        row[metric_key] = "N/A"
+    
+    data.append(row)
+  
+  return pd.DataFrame(data)
+
+
+#------------------------------------------------------------------------------------------------------
+#                    Plot/Image Creation Functions
+#------------------------------------------------------------------------------------------------------
+
+def plot_all_metrics_margin_curves(metrics_info):
+  """Create plot showing margin of error curves for all 5 metrics using matplotlib."""
+  
+  plt.figure(figsize=(12, 8))
+  
+  point_range = list(range(100, 2001, 50))
+  
+  colors = {
+    'FBHE': '#1f77b4',
+    'TCR': '#ff7f0e',
+    'Error Density': '#2ca02c',
+    'Knockout Rate': '#d62728',
+    'In-System %': '#9467bd'
+  }
+  
+  for metric_key, info in metrics_info.items():
+    margins = []
+    
+    for points in point_range:
+      attempts = int(points * info['attempts_per_point'])
+      if attempts > 0:
+        margin = calculate_margin_of_error(info, attempts)
+        margins.append(margin)
+      else:
+        margins.append(None)
+    
+    plt.plot(point_range, margins, 
+             label=metric_key, 
+             color=colors.get(metric_key, '#000000'), 
+             linewidth=2)
+  
+  # Add reference lines
+  plt.axhline(y=0.10, linestyle='--', color='green', alpha=0.7, label='±10% (Good)')
+  plt.axhline(y=0.15, linestyle='--', color='orange', alpha=0.7, label='±15% (Moderate)')
+  
+  plt.title("Margin of Error vs. Number of Points (All Metrics)", fontsize=14, fontweight='bold')
+  plt.xlabel("Number of Points", fontsize=12)
+  plt.ylabel("Margin of Error (±)", fontsize=12)
+  plt.legend(loc='upper right', fontsize=10)
+  plt.grid(True, alpha=0.3)
+  plt.tight_layout()
+
+
+def plot_sample_size_comparison(metrics_info):
+  """Create bar chart comparing required sample sizes for ±10% accuracy using matplotlib."""
+  
+  target_margin = 0.10
+  
+  metrics = []
+  required_points = []
+  required_matches = []
+  
+  for metric_key, info in metrics_info.items():
+    required_attempts = get_sample_size_for_margin(info, target_margin)
+    points = int(required_attempts / info['attempts_per_point']) if info['attempts_per_point'] > 0 else 0
+    matches = points / 85
+    
+    metrics.append(metric_key)
+    required_points.append(points)
+    required_matches.append(matches)
+  
+  plt.figure(figsize=(10, 6))
+  
+  colors_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+  bars = plt.bar(metrics, required_points, color=colors_list)
+  
+  # Add value labels on bars
+  for i, (bar, points, matches) in enumerate(zip(bars, required_points, required_matches)):
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2., height,
+             f'{points} pts\n({matches:.1f} matches)',
+             ha='center', va='bottom', fontsize=9)
+  
+  plt.title("Points Required for ±10% Accuracy (95% Confidence)", fontsize=14, fontweight='bold')
+  plt.ylabel("Number of Points Required", fontsize=12)
+  plt.xlabel("Metric", fontsize=12)
+  plt.xticks(rotation=45, ha='right')
+  plt.grid(True, axis='y', alpha=0.3)
+  plt.tight_layout()
+
+
+def plot_attempts_per_match(metrics_info):
+  """Visualize how many attempts per match for each metric type using matplotlib."""
+  
+  metrics = []
+  attempts_per_match = []
+  
+  for metric_key, info in metrics_info.items():
+    metrics.append(metric_key)
+    # Assuming 85 points per match
+    attempts_per_match.append(info['attempts_per_point'] * 85)
+  
+  plt.figure(figsize=(10, 6))
+  
+  colors_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
+  bars = plt.bar(metrics, attempts_per_match, color=colors_list)
+  
+  # Add value labels on bars
+  for bar, attempts in zip(bars, attempts_per_match):
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2., height,
+             f'{attempts:.1f}',
+             ha='center', va='bottom', fontsize=10)
+  
+  plt.title("Expected Attempts per Match (Based on Filtered Data)", fontsize=14, fontweight='bold')
+  plt.ylabel("Attempts per Match (≈85 points)", fontsize=12)
+  plt.xlabel("Metric", fontsize=12)
+  plt.xticks(rotation=45, ha='right')
+  plt.grid(True, axis='y', alpha=0.3)
+  plt.tight_layout()
+
+  
