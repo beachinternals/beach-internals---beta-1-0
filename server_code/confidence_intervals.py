@@ -696,13 +696,13 @@ def plot_zone_comparison_with_ci(ppr_df, disp_player):
   plt.close()
   return img
 
-
+#===================================================================================
 
 def report_statistical_guidelines(lgy, team, **rpt_filters):
   '''
-    Statistical Guidelines Report - League-Wide Analysis
+    Statistical Guidelines Report - League-Wide Analysis (Per-Player Metrics)
     
-    Provides league-wide statistical guidance for the 5 key beach volleyball metrics:
+    Provides statistical guidance for the 5 key beach volleyball metrics:
     - First Ball Hitting Efficiency (FBHE)
     - Transition Conversion Rate (TCR)
     - Error Density
@@ -710,7 +710,11 @@ def report_statistical_guidelines(lgy, team, **rpt_filters):
     - In-System Passing %
     
     Shows sample size requirements, reliability guidelines, and margin of error curves
-    to help coaches understand how much data is needed for reliable metrics.
+    to help coaches understand how much data is needed for reliable PER-PLAYER metrics.
+    
+    NOTE: All calculations are adjusted for individual player analysis. Since attempts
+    are shared among multiple players (4 attackers, 2 servers, 2 passers), the 
+    "attempts per point" values account for this distribution.
     
     INPUT Parameters:
         - lgy : league, gender, year combination
@@ -790,20 +794,29 @@ def report_statistical_guidelines(lgy, team, **rpt_filters):
     return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
   # Calculate actual percentages in this league/filter
-  # First ball attempts = all points except service errors (TSE)
+  # Adjusted for PER-PLAYER analysis (4 players total: 2 per team)
+
+  # First ball attacks: Only 1 player attacks per first ball point
+  # Each of 4 players gets approximately 1/4 of all first ball attempts
   fb_points = len(ppr_df[ppr_df['point_outcome'] != 'TSE'])
-  fb_pct = fb_points / total_points if total_points > 0 else 0.45
+  fb_pct = (fb_points / total_points / 4) if total_points > 0 else 0.22
 
+  # Transition: All 4 players have opportunity on transition points (no division)
   trans_points = len(ppr_df[ppr_df['point_outcome'].isin(['TK', 'TE'])])
-  trans_pct = trans_points / total_points if total_points > 0 else 0.40
+  trans_pct = (trans_points / total_points) if total_points > 0 else 0.40
 
+  # Error Density: All 4 players have opportunity to make errors (no division)
+  error_pct = 1.0
+
+  # Knockout (serving): Only 1 of 4 players serves each point
+  # Each player serves approximately 1/4 of all points
   knockout_points = len(ppr_df[ppr_df['point_outcome'] != 'TSE'])
-  knockout_pct = knockout_points / total_points if total_points > 0 else 0.95
+  knockout_pct = (knockout_points / total_points / 4) if total_points > 0 else 0.22
 
-  error_pct = 1.0  # Always 100% of points
-
+  # In-System Passing: Only 1 of 4 players passes each point
+  # Each player passes approximately 1/4 of all points
   passing_points = len(ppr_df[~ppr_df['point_outcome'].isin(['TSE', 'TSA'])])
-  passing_pct = passing_points / total_points if total_points > 0 else 0.80
+  passing_pct = (passing_points / total_points / 4) if total_points > 0 else 0.21
 
   # Define metrics with their characteristics
   metrics_info = {
@@ -850,34 +863,37 @@ def report_statistical_guidelines(lgy, team, **rpt_filters):
 
   # DF 0: Dataset Summary (total points and matches)
   df_list[0] = create_league_data_summary(total_points, metrics_info).to_dict('records')
-  
+
   # DF 1: Metric Occurrence Percentages
   df_list[1] = create_metric_percentages_table(metrics_info).to_dict('records')
-  
+
   # DF 2: Sample Size Requirements (in points)
   df_list[2] = create_sample_size_by_points(metrics_info).to_dict('records')
-  
+
   # DF 3: Reliability Guidelines
   df_list[3] = create_reliability_guidelines_league().to_dict('records')
-  
+
   # DF 4: Points-to-Matches Conversion
   df_list[4] = create_points_to_matches_table().to_dict('records')
-  
-  # DF 5: Detailed Margin of Error by Metric
+
+  # DF 5: Detailed Margin of Error by Metric (by points)
   df_list[5] = create_detailed_margin_table(metrics_info).to_dict('records')
-  
+
+  # DF 6: Margin of Error by Attempts (for single-actor metrics)
+  df_list[6] = create_margin_by_attempts_table().to_dict('records')
+
   # IMAGE 0: Margin of Error Curves for All Metrics
   plot_all_metrics_margin_curves(metrics_info)
   image_list[0] = anvil.mpl_util.plot_image()
-  
+
   # IMAGE 1: Sample Size Comparison Chart
   plot_sample_size_comparison(metrics_info)
   image_list[1] = anvil.mpl_util.plot_image()
-  
+
   # IMAGE 2: Attempts per Match Visualization
   plot_attempts_per_match(metrics_info)
   image_list[2] = anvil.mpl_util.plot_image()
-  
+
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
@@ -902,7 +918,7 @@ def calculate_se_efficiency(p_good, p_bad, n):
 def calculate_margin_of_error(metric_info, n, confidence=0.95):
   """Calculate margin of error for a given metric and sample size."""
   z = stats.norm.ppf(1 - (1 - confidence) / 2)  # 1.96 for 95% CI
-  
+
   if metric_info['type'] == 'efficiency':
     # For efficiency metrics like FBHE
     typical_val = metric_info['typical_value']
@@ -914,14 +930,14 @@ def calculate_margin_of_error(metric_info, n, confidence=0.95):
     # For simple proportions
     p = metric_info['typical_value']
     se = calculate_se_proportion(p, n)
-  
+
   return z * se
 
 
 def get_sample_size_for_margin(metric_info, target_margin, confidence=0.95):
   """Calculate required sample size for a target margin of error."""
   z = stats.norm.ppf(1 - (1 - confidence) / 2)
-  
+
   if metric_info['type'] == 'efficiency':
     # Conservative estimate using p=0.5 for maximum variance
     p_good = 0.5
@@ -932,7 +948,7 @@ def get_sample_size_for_margin(metric_info, target_margin, confidence=0.95):
     # Use p=0.5 for maximum variance (conservative)
     p = 0.5
     n = (z ** 2) * p * (1 - p) / (target_margin ** 2)
-  
+
   return int(math.ceil(n))
 
 
@@ -942,7 +958,7 @@ def get_sample_size_for_margin(metric_info, target_margin, confidence=0.95):
 
 def create_league_data_summary(total_points, metrics_info):
   """Create summary of league data - just the totals."""
-  
+
   data = [{
     'Statistic': 'Total Points in Dataset',
     'Value': f"{total_points}"
@@ -950,13 +966,13 @@ def create_league_data_summary(total_points, metrics_info):
     'Statistic': 'Estimated Matches',
     'Value': f"{total_points / 85:.1f}"
   }]
-  
+
   return pd.DataFrame(data)
 
 
 def create_metric_percentages_table(metrics_info):
   """Create table showing what percentage of points each metric occurs on."""
-  
+
   data = []
   for metric_key, info in metrics_info.items():
     pct = info['attempts_per_point'] * 100
@@ -965,33 +981,33 @@ def create_metric_percentages_table(metrics_info):
       'Attempts per Point': f"{info['attempts_per_point']:.2f}",
       'Percentage of Points': f"{pct:.1f}%"
     })
-  
+
   return pd.DataFrame(data)
 
 
 def create_sample_size_by_points(metrics_info):
   """Create table showing required points for different accuracy levels."""
-  
+
   target_margins = [0.05, 0.075, 0.10, 0.15, 0.20]
-  
+
   data = []
   for target_margin in target_margins:
     row = {'Target Accuracy (±)': f"±{target_margin:.1%}"}
-    
+
     for metric_key, info in metrics_info.items():
       required_attempts = get_sample_size_for_margin(info, target_margin)
       # Convert to points
       required_points = int(required_attempts / info['attempts_per_point']) if info['attempts_per_point'] > 0 else 0
       row[metric_key] = f"{required_points} pts"
-    
+
     data.append(row)
-  
+
   return pd.DataFrame(data)
 
 
 def create_reliability_guidelines_league():
   """Create reliability guidelines based on number of points."""
-  
+
   data = [
     {
       'Points': '< 100',
@@ -1024,15 +1040,15 @@ def create_reliability_guidelines_league():
       'Guidance': 'High confidence in metrics'
     }
   ]
-  
+
   return pd.DataFrame(data)
 
 
 def create_points_to_matches_table():
   """Create conversion table from points to matches."""
-  
+
   matches = [1, 2, 3, 5, 10, 15, 20, 30, 50]
-  
+
   data = []
   for m in matches:
     points = m * 85
@@ -1042,22 +1058,22 @@ def create_points_to_matches_table():
       'Range': f"{m * 75} - {m * 100}"
     }
     data.append(row)
-  
+
   return pd.DataFrame(data)
 
 
 def create_detailed_margin_table(metrics_info):
   """Create detailed margin of error table for each metric at different sample sizes."""
-  
+
   point_counts = [100, 250, 500, 750, 1000, 1500, 2000]
-  
+
   data = []
   for points in point_counts:
     row = {
       'Points': points,
       'Matches (≈)': f"{points / 85:.1f}"
     }
-    
+
     for metric_key, info in metrics_info.items():
       # Calculate actual attempts for this metric
       attempts = int(points * info['attempts_per_point'])
@@ -1066,9 +1082,48 @@ def create_detailed_margin_table(metrics_info):
         row[metric_key] = f"±{margin:.3f}"
       else:
         row[metric_key] = "N/A"
-    
+
     data.append(row)
-  
+
+  return pd.DataFrame(data)
+
+
+def create_margin_by_attempts_table():
+  """Create margin of error table based on number of attempts for single-actor metrics."""
+
+  attempt_counts = [10, 25, 50, 100, 150, 200, 300, 400]
+
+  data = []
+  for attempts in attempt_counts:
+    # FBHE uses efficiency formula (range -1 to 1)
+    fbhe_metric = {
+      'type': 'efficiency',
+      'typical_value': 0.30
+    }
+    fbhe_margin = calculate_margin_of_error(fbhe_metric, attempts)
+
+    # Knockout and In-System use proportion formula (range 0 to 1)
+    proportion_metric = {
+      'type': 'proportion',
+      'typical_value': 0.50
+    }
+    knockout_margin = calculate_margin_of_error(proportion_metric, attempts)
+    in_system_margin = calculate_margin_of_error(proportion_metric, attempts)
+
+    # Calculate equivalent matches for single-actor metrics (÷4 factor)
+    # attempts * 4 = points needed, then / 85 = matches
+    matches_needed = (attempts * 4) / 85
+
+    row = {
+      'Attempts': attempts,
+      'FBHE': f"±{fbhe_margin:.3f}",
+      'Knockout': f"±{knockout_margin:.3f}",
+      'In-System %': f"±{in_system_margin:.3f}",
+      'Matches Needed': f"{matches_needed:.1f}",
+      'Reliability': get_reliability_level(attempts)
+    }
+    data.append(row)
+
   return pd.DataFrame(data)
 
 
@@ -1078,11 +1133,11 @@ def create_detailed_margin_table(metrics_info):
 
 def plot_all_metrics_margin_curves(metrics_info):
   """Create plot showing margin of error curves for all 5 metrics using matplotlib."""
-  
+
   plt.figure(figsize=(12, 8))
-  
+
   point_range = list(range(100, 2001, 50))
-  
+
   colors = {
     'FBHE': '#1f77b4',
     'TCR': '#ff7f0e',
@@ -1090,10 +1145,10 @@ def plot_all_metrics_margin_curves(metrics_info):
     'Knockout Rate': '#d62728',
     'In-System %': '#9467bd'
   }
-  
+
   for metric_key, info in metrics_info.items():
     margins = []
-    
+
     for points in point_range:
       attempts = int(points * info['attempts_per_point'])
       if attempts > 0:
@@ -1101,16 +1156,16 @@ def plot_all_metrics_margin_curves(metrics_info):
         margins.append(margin)
       else:
         margins.append(None)
-    
+
     plt.plot(point_range, margins, 
              label=metric_key, 
              color=colors.get(metric_key, '#000000'), 
              linewidth=2)
-  
+
   # Add reference lines
   plt.axhline(y=0.10, linestyle='--', color='green', alpha=0.7, label='±10% (Good)')
   plt.axhline(y=0.15, linestyle='--', color='orange', alpha=0.7, label='±15% (Moderate)')
-  
+
   plt.title("Margin of Error vs. Number of Points (All Metrics)", fontsize=14, fontweight='bold')
   plt.xlabel("Number of Points", fontsize=12)
   plt.ylabel("Margin of Error (±)", fontsize=12)
@@ -1121,24 +1176,24 @@ def plot_all_metrics_margin_curves(metrics_info):
 
 def plot_sample_size_comparison(metrics_info):
   """Create bar chart comparing required sample sizes for ±10% accuracy using matplotlib."""
-  
+
   target_margin = 0.10
-  
+
   metrics = []
   required_points = []
   required_matches = []
-  
+
   for metric_key, info in metrics_info.items():
     required_attempts = get_sample_size_for_margin(info, target_margin)
     points = int(required_attempts / info['attempts_per_point']) if info['attempts_per_point'] > 0 else 0
     matches = points / 85
-    
+
     metrics.append(metric_key)
     required_points.append(points)
     required_matches.append(matches)
-  
+
   plt.figure(figsize=(10, 6))
-  
+
   colors_list = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
   bars = plt.bar(metrics, required_points, color=colors_list)
   
@@ -1186,5 +1241,4 @@ def plot_attempts_per_match(metrics_info):
   plt.xticks(rotation=45, ha='right')
   plt.grid(True, axis='y', alpha=0.3)
   plt.tight_layout()
-
   
