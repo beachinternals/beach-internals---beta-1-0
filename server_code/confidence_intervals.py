@@ -750,7 +750,7 @@ def report_statistical_guidelines(lgy, team, **rpt_filters):
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
   # Fetch and filter data
-  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, 'League', True)
   ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
 
   # Get report metadata from database

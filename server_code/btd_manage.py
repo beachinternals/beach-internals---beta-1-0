@@ -211,11 +211,11 @@ def analyze_btd_csv_strict(csv_file):
     }
     """
     
-    errors = []
-    warnings = []
-    invalid_players = []
+  errors = []
+  warnings = []
+  invalid_players = []
     
-    try:
+  try:
         # Parse the CSV file
         file_obj = io.BytesIO(csv_file.get_bytes())
         btd_df = pd.read_csv(file_obj)
@@ -325,7 +325,7 @@ def analyze_btd_csv_strict(csv_file):
         
         return result
         
-    except Exception as e:
+  except Exception as e:
         errors.append(f"Failed to parse CSV file: {str(e)}")
         return {
             'valid': False,
