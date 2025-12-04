@@ -218,7 +218,7 @@ def strip_urls_safe(obj, path="root"):
 def generate_json_report(rpt_form, report_id, include_images=False, include_urls=False, include_nulls=True):
   """
   Generate a JSON report from report_data table.
-  
+
   Args:
     rpt_form: Report form identifier
     report_id: ID of the report in app_tables.report_data
@@ -239,20 +239,30 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
       return (None, f'Report ID {report_id} not found')
 
     # Determine file name for JSON safely from report_data_row
-    rpt_type = rpt_data_row['title_6'].strip()
+    # Add None-safe handling for all title fields
+    rpt_type = rpt_data_row['title_6']
+    rpt_type = rpt_type.strip() if rpt_type is not None else 'unknown'
+
     if rpt_type == 'player':
       base_name = rpt_data_row['title_9']
+      base_name = base_name if base_name is not None else 'Unknown_Player'
     elif rpt_type == 'league':
       base_name = rpt_data_row['title_4']
+      base_name = base_name if base_name is not None else 'Unknown_League'
     elif rpt_type == 'pair':
       base_name = rpt_data_row['title_10']
+      base_name = base_name if base_name is not None else 'Unknown_Pair'
     elif rpt_type == 'dashboard':
       base_name = rpt_data_row['title_9']
+      base_name = base_name if base_name is not None else 'Unknown_Dashboard'
     elif rpt_type == 'scouting':
       base_name = rpt_data_row['title_9']
+      base_name = base_name if base_name is not None else 'Unknown_Scouting'
     else:
       base_name = 'Unknown'
-    base_name = base_name.strip()
+
+    # Strip whitespace if base_name is a string
+    base_name = base_name.strip() if isinstance(base_name, str) else str(base_name)
 
     # Construct JSON file name
     json_file = f"{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -275,29 +285,87 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
       if isinstance(rpt_data_row[df_key], type(None)):
         report_data['dataframes'][df_key] = None
       else:
-        df_bytes = rpt_data_row[df_key].get_bytes()
-        df_str = df_bytes.decode("utf-8")
+        try:
+          df_bytes = rpt_data_row[df_key].get_bytes()
+          df_str = df_bytes.decode("utf-8")
 
-        # Pandas can parse it as pipe-delimited text
-        df = pd.read_csv(
-          io.StringIO(df_str),
-          sep="|",
-          engine="python"
-        )
+          # Try multiple parsing strategies
+          df = None
+          parse_error = None
 
-        # Cleanup: strip whitespace from col names + values
-        df = df.rename(columns=lambda c: c.strip())
-        df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+          # Strategy 1: Standard pipe-delimited with error handling
+          try:
+            df = pd.read_csv(
+              io.StringIO(df_str),
+              sep="|",
+              engine="python",
+              on_bad_lines='warn'  # Changed from error to warn
+            )
+          except Exception as e1:
+            parse_error = str(e1)
+            log_debug(f"Strategy 1 failed for {df_key}: {parse_error}")
 
-        # Drop empty cols
-        df = df.dropna(axis=1, how="all")
+            # Strategy 2: Try with skipinitialspace
+            try:
+              df = pd.read_csv(
+                io.StringIO(df_str),
+                sep="|",
+                engine="python",
+                skipinitialspace=True,
+                on_bad_lines='skip'  # Skip bad lines instead of erroring
+              )
+            except Exception as e2:
+              log_debug(f"Strategy 2 failed for {df_key}: {str(e2)}")
 
-        # Drop markdown alignment rows like ":---", "---", ":---:"
-        mask = df.applymap(lambda x: bool(re.fullmatch(r":?-+?:?", str(x).strip())))
-        df = df[~mask.all(axis=1)].reset_index(drop=True)
+              # Strategy 3: Manual parsing from markdown
+              try:
+                lines = df_str.strip().split('\n')
+                if len(lines) >= 2:
+                  # Get headers from first line
+                  headers = [h.strip() for h in lines[0].split('|') if h.strip()]
 
-        # Now you can convert to JSON
-        report_data['dataframes'][df_key] = df.to_dict(orient="records")
+                  # Skip separator line (usually line 1 with :--- patterns)
+                  data_lines = []
+                  for line in lines[1:]:
+                    # Skip separator lines
+                    if re.match(r'^[\s|:-]+$', line):
+                      continue
+                    parts = [p.strip() for p in line.split('|') if p.strip() or p == '']
+                    if len(parts) == len(headers):
+                      data_lines.append(parts)
+
+                  if data_lines:
+                    df = pd.DataFrame(data_lines, columns=headers)
+                  else:
+                    log_warning(f"No valid data lines found in {df_key}")
+                    report_data['dataframes'][df_key] = None
+                    continue
+              except Exception as e3:
+                log_error(f"All parsing strategies failed for {df_key}: {str(e3)}")
+                report_data['dataframes'][df_key] = None
+                continue
+
+          if df is not None:
+            # Cleanup: strip whitespace from col names + values
+            df = df.rename(columns=lambda c: c.strip() if isinstance(c, str) else c)
+            df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
+
+            # Drop empty cols
+            df = df.dropna(axis=1, how="all")
+
+            # Drop markdown alignment rows like ":---", "---", ":---:"
+            if len(df) > 0:
+              mask = df.map(lambda x: bool(re.fullmatch(r":?-+:?", str(x).strip())))
+              df = df[~mask.all(axis=1)].reset_index(drop=True)
+
+            # Convert to JSON
+            report_data['dataframes'][df_key] = df.to_dict(orient="records")
+          else:
+            report_data['dataframes'][df_key] = None
+
+        except Exception as e:
+          log_error(f"Error processing dataframe {df_key}: {str(e)}")
+          report_data['dataframes'][df_key] = None
 
     # Extract images
     for i in range(1, 11):
