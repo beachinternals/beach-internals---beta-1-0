@@ -1,0 +1,54 @@
+components:
+- components:
+  - components:
+    - layout_properties: {width: 60}
+      name: date_label
+      properties: {bold: true, text: 3/15}
+      type: Label
+    - layout_properties: {width: 200}
+      name: comp_label
+      properties: {text: NCAA - Regional}
+      type: Label
+    - layout_properties: {width: 150}
+      name: players_label
+      properties: {text: Smith vs Jones}
+      type: Label
+    - layout_properties: {width: 30}
+      name: error_icon
+      properties: {text: ⚠}
+      type: Label
+    - layout_properties: {width: 30}
+      name: status_label
+      properties: {text: 🔒}
+      type: Label
+    layout_properties: {grid_position: 'RHJPUQ,GNOWRJ'}
+    name: flow_panel_1
+    properties: {}
+    type: FlowPanel
+  - components:
+    - layout_properties: {width: 60}
+      name: comp_score_label
+      properties: {font_size: 12, text: 87.75%}
+      type: Label
+    - layout_properties: {width: 80}
+      name: xy_label
+      properties: {font_size: 12, text: 45%}
+      type: Label
+    - layout_properties: {width: 80}
+      name: points_label
+      properties: {font_size: 11, text: 43%}
+      type: Label
+    layout_properties: {grid_position: 'AZLTBU,WRQZIE'}
+    name: flow_panel_2
+    properties: {}
+    type: FlowPanel
+  event_bindings: {show: card_1_show}
+  layout_properties: {grid_position: 'HILMST,ZNIMWJ'}
+  name: card_1
+  properties:
+    role: outlined-card
+    spacing:
+      padding: ['-', '0', '0', '0']
+  type: ColumnPanel
+container: {type: ColumnPanel}
+is_package: true
