@@ -37,7 +37,7 @@ class DataMgr(DataMgrTemplate):
   def btd_manage_click_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
-    self.outlined_card_3.add_component(btd_manage())
+    self.outlined_card_3.add_component( DataMgr_btd_manage())
     pass
 
   def roster_manage_click_click(self, **event_args):

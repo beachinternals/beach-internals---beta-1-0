@@ -2,7 +2,7 @@ components:
 - components:
   - layout_properties: {grid_position: 'OTOOFX,EOUTHC'}
     name: label_1
-    properties: {role: headline, text: BTD FILE MANAGEMENT}
+    properties: {align: center, role: headline, text: Ball Time Data FILE MANAGEMENT}
     type: Label
   - components:
     - components:
@@ -46,11 +46,13 @@ components:
         name: has_errors_checkbox
         properties: {text: Show only errors}
         type: CheckBox
-      - layout_properties: {grid_position: 'VJXSMB,WUWMCQ'}
+      - event_bindings: {click: apply_filters_button_click}
+        layout_properties: {grid_position: 'VJXSMB,WUWMCQ'}
         name: apply_filters_button
         properties: {role: outlined-button, text: Apply Filters}
         type: Button
-      - layout_properties: {grid_position: 'VJXSMB,OSQYFX JWKVPX,KAFWBO'}
+      - event_bindings: {click: clear_filters_button_click}
+        layout_properties: {grid_position: 'VJXSMB,OSQYFX'}
         name: clear_filters_button
         properties: {role: outlined-button, text: Clear}
         type: Button
@@ -58,7 +60,8 @@ components:
         name: label_3
         properties: {text: BallTime Data Files}
         type: Label
-      - layout_properties: {grid_position: 'HCNEBK,BSLICM'}
+      - event_bindings: {change: sort_drop_down_change}
+        layout_properties: {grid_position: 'HCNEBK,BSLICM'}
         name: sort_drop_down
         properties: {}
         type: DropDown
@@ -66,38 +69,67 @@ components:
         name: file_count_label
         properties: {text: 0 Files}
         type: Label
-      - layout_properties: {grid_position: 'ZBXOCI,LTWKLI'}
-        name: file_list_panel
-        properties: {item_template: DataMgr_btd_file_row_template}
-        type: RepeatingPanel
+      - components:
+        - event_bindings: {show: repeating_panel_1_show}
+          name: repeating_panel_1
+          properties: {item_template: Homepage.DataMgr.DataMgr_btd_manage.RowTemplate6}
+          type: RepeatingPanel
+        layout_properties: {grid_position: 'YHFOZJ,KPZPSS'}
+        name: file_grid
+        properties:
+          columns:
+          - {data_key: date, id: JKSDUP, title: Date}
+          - {data_key: comp_l1, id: VJQQOR, title: Competition}
+          - {data_key: players_display, id: OJLQEN, title: Players}
+          - {data_key: completeness_score, id: HVMZYB, title: Score}
+          - {data_key: per_xy, id: JCGREN, title: '%XY'}
+          - {data_key: no_errors, id: JIFKWH, title: Errors}
+        type: DataGrid
       layout_properties: {width: 400}
       name: left_panel
-      properties: {role: elevated-card}
+      properties: {role: outlined-card}
       type: ColumnPanel
     - components:
+      - layout_properties: {grid_position: 'VCVRLI,SHMYLC'}
+        name: select_file_label
+        properties: {align: center, role: headline, text: ← Select a file from the list}
+        type: Label
       - components:
-        - layout_properties: {grid_position: 'VCGYPR,BYXMWC'}
+        - layout_properties: {grid_position: 'AUEAJI,CJDETQ'}
           name: file_name_label
-          properties: {}
+          properties: {bold: true, role: headline, text: Filename}
           type: Label
-        - layout_properties: {grid_position: 'VCGYPR,HBBOWX'}
-          name: upload_date_label
-          properties: {}
+        - layout_properties: {grid_position: 'SBYDHF,ACRTTM'}
+          name: date_label
+          properties: {text: 'Date:'}
           type: Label
-        - layout_properties: {grid_position: 'VCGYPR,KMJHGE'}
-          name: uploaded_by_label
-          properties: {}
+        - layout_properties: {grid_position: 'RQQWHB,BSRJIA'}
+          name: comp_label
+          properties: {text: 'Competition:'}
           type: Label
-        - layout_properties: {grid_position: 'VCGYPR,WQDRPE'}
-          name: status_badge
-          properties: {}
+        - layout_properties: {grid_position: 'PIAEIR,PUETPI'}
+          name: team_label
+          properties: {text: 'Team:'}
           type: Label
-        - layout_properties: {grid_position: 'DRRVTU,UWKHZI'}
-          name: master_badge
-          properties: {}
+        - layout_properties: {grid_position: 'TRMPZD,BUUPFC'}
+          name: stats_label
+          properties: {text: 'Statistics:'}
           type: Label
-        layout_properties: {grid_position: 'HIWESO,SWBEMY'}
-        name: outlined_card_1
+        - layout_properties: {grid_position: 'QGZJDI,JKEHAF'}
+          name: players_label
+          properties: {text: 'Players:'}
+          type: Label
+        - layout_properties: {grid_position: 'LZZLNT,YADSAH'}
+          name: errors_label
+          properties: {text: 'Errors:', visible: false}
+          type: Label
+        - event_bindings: {click: delete_button_click}
+          layout_properties: {grid_position: 'MSCWWE,KSCWNQ'}
+          name: delete_button
+          properties: {role: outlined-button, text: Delete}
+          type: Button
+        layout_properties: {grid_position: 'WRMHMD,RMHXNK'}
+        name: details_card
         properties: {role: outlined-card, visible: false}
         type: ColumnPanel
       layout_properties: {}
@@ -108,6 +140,11 @@ components:
     name: flow_panel_1
     properties: {}
     type: FlowPanel
+  - event_bindings: {click: close_button_click}
+    layout_properties: {grid_position: 'WGLABE,OWTOKP'}
+    name: close_button
+    properties: {role: outlined-button, text: Close}
+    type: Button
   layout_properties: {grid_position: 'WTTKXM,KLUJTC'}
   name: column_panel_1
   properties: {}
