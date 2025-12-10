@@ -178,7 +178,7 @@ components:
   name: column_panel_1
   properties:
     background: ''
-    col_spacing: small
+    col_spacing: tiny
     spacing:
       padding: ['10', null, '10', null]
   type: ColumnPanel

@@ -1,105 +1,152 @@
 components:
-- layout_properties: {grid_position: 'GTUGIY,ULUKBZ'}
-  name: label_1
-  properties: {align: left, background: 'theme:Secondary', foreground: 'theme:On Primary', role: title, text: List of Ball Time Match Files}
-  type: Label
 - components:
+  - layout_properties: {grid_position: 'OTOOFX,EOUTHC'}
+    name: label_1
+    properties: {align: center, role: headline, text: Ball Time Data FILE MANAGEMENT}
+    type: Label
   - components:
-    - layout_properties: {grid_position: 'BTQUFI,IZTRII'}
-      name: label_2
-      properties: {align: right, text: 'League:'}
-      type: Label
-    - event_bindings: {change: league_drop_down_change}
-      layout_properties: {grid_position: 'BTQUFI,JGDQOS'}
-      name: league_drop_down
-      properties: {}
-      type: DropDown
-    layout_properties: {grid_position: 'OUGWSJ,GRHNXG'}
-    name: column_panel_1
+    - components:
+      - layout_properties: {grid_position: 'IUJVNZ,NRWURK'}
+        name: label_2
+        properties: {align: center, role: title, text: Filters}
+        type: Label
+      - layout_properties: {grid_position: 'GBYFSU,EYNKEU'}
+        name: league_dropdown
+        properties: {}
+        type: DropDown
+      - layout_properties: {grid_position: 'IXAURQ,XSGQUW'}
+        name: team_dropdown
+        properties: {}
+        type: DropDown
+      - layout_properties: {grid_position: 'HHAGVD,QFIJDJ'}
+        name: date_from_picker
+        properties: {}
+        type: DatePicker
+      - layout_properties: {grid_position: 'HHAGVD,JZGRVI'}
+        name: date_to_picker
+        properties: {}
+        type: DatePicker
+      - layout_properties: {grid_position: 'KDYETE,XZCYPN'}
+        name: status_all_radio
+        properties: {text: All}
+        type: RadioButton
+      - layout_properties: {grid_position: 'KDYETE,HPCOTT'}
+        name: status_private_radio
+        properties: {text: Private}
+        type: RadioButton
+      - layout_properties: {grid_position: 'KDYETE,BBJRAM'}
+        name: status_scouting_radio
+        properties: {text: Scouting}
+        type: RadioButton
+      - layout_properties: {grid_position: 'DPKNMA,BRPVTH'}
+        name: min_completeness_box
+        properties: {text: Min Completeness %}
+        type: Label
+      - layout_properties: {grid_position: 'DPKNMA,IYYLTA'}
+        name: has_errors_checkbox
+        properties: {text: Show only errors}
+        type: CheckBox
+      - event_bindings: {click: apply_filters_button_click}
+        layout_properties: {grid_position: 'VJXSMB,WUWMCQ'}
+        name: apply_filters_button
+        properties: {role: outlined-button, text: Apply Filters}
+        type: Button
+      - event_bindings: {click: clear_filters_button_click}
+        layout_properties: {grid_position: 'VJXSMB,OSQYFX'}
+        name: clear_filters_button
+        properties: {role: outlined-button, text: Clear}
+        type: Button
+      - layout_properties: {grid_position: 'ITTYTB,ZQJRZU'}
+        name: label_3
+        properties: {text: BallTime Data Files}
+        type: Label
+      - event_bindings: {change: sort_dropdown_change}
+        layout_properties: {grid_position: 'HCNEBK,BSLICM'}
+        name: sort_dropdown
+        properties: {}
+        type: DropDown
+      - layout_properties: {grid_position: 'QYBFMI,LKWAIH'}
+        name: file_count_label
+        properties: {text: 0 Files}
+        type: Label
+      layout_properties: {width: 400}
+      name: left_panel
+      properties: {role: outlined-card}
+      type: ColumnPanel
+    - components:
+      - layout_properties: {grid_position: 'VCVRLI,SHMYLC'}
+        name: select_file_label
+        properties: {align: center, role: headline, text: ← Select a file from the list}
+        type: Label
+      - components:
+        - layout_properties: {grid_position: 'AUEAJI,CJDETQ'}
+          name: file_name_label
+          properties: {bold: true, role: headline, text: Filename}
+          type: Label
+        - layout_properties: {grid_position: 'SBYDHF,ACRTTM'}
+          name: date_label
+          properties: {text: 'Date:'}
+          type: Label
+        - layout_properties: {grid_position: 'RQQWHB,BSRJIA'}
+          name: comp_label
+          properties: {text: 'Competition:'}
+          type: Label
+        - layout_properties: {grid_position: 'PIAEIR,PUETPI'}
+          name: team_label
+          properties: {text: 'Team:'}
+          type: Label
+        - layout_properties: {grid_position: 'TRMPZD,BUUPFC'}
+          name: stats_label
+          properties: {text: 'Statistics:'}
+          type: Label
+        - layout_properties: {grid_position: 'QGZJDI,JKEHAF'}
+          name: players_label
+          properties: {text: 'Players:'}
+          type: Label
+        - layout_properties: {grid_position: 'LZZLNT,YADSAH'}
+          name: errors_label
+          properties: {text: 'Errors:', visible: false}
+          type: Label
+        - event_bindings: {click: delete_button_click}
+          layout_properties: {grid_position: 'MSCWWE,KSCWNQ'}
+          name: delete_button
+          properties: {role: outlined-button, text: Delete}
+          type: Button
+        layout_properties: {grid_position: 'WRMHMD,RMHXNK'}
+        name: details_card
+        properties: {role: outlined-card, visible: false}
+        type: ColumnPanel
+      layout_properties: {}
+      name: right_panel
+      properties: {role: elevated-card}
+      type: ColumnPanel
+    layout_properties: {grid_position: 'RYCVRK,UMXYBT'}
+    name: flow_panel_1
     properties: {}
-    type: ColumnPanel
-  - components:
-    - layout_properties: {grid_position: 'HDIFWE,UWJOEA'}
-      name: label_3
-      properties: {align: right, text: 'Gender:'}
-      type: Label
-    - event_bindings: {change: gender_drop_down_change}
-      layout_properties: {grid_position: 'HDIFWE,EMWHUT'}
-      name: gender_drop_down
-      properties:
-        items: [M, W]
-      type: DropDown
-    layout_properties: {grid_position: 'OUGWSJ,UIAJNS'}
-    name: column_panel_3
-    properties: {}
-    type: ColumnPanel
-  - components:
-    - layout_properties: {grid_position: 'EJSBDL,TGQCTU'}
-      name: label_4
-      properties: {align: right, text: 'Year:'}
-      type: Label
-    - event_bindings: {change: year_drop_down_change}
-      layout_properties: {grid_position: 'EJSBDL,FRILTP'}
-      name: year_drop_down
-      properties:
-        items: ['2024', '2025']
-      type: DropDown
-    layout_properties: {grid_position: 'OUGWSJ,GKPVKE'}
-    name: column_panel_4
-    properties: {}
-    type: ColumnPanel
-  - components:
-    - layout_properties: {grid_position: 'EQSRFE,NHQIGB'}
-      name: label_5
-      properties: {align: right, text: 'Compeition:'}
-      type: Label
-    - event_bindings: {change: comp_l1_drop_down_change}
-      layout_properties: {grid_position: 'EQSRFE,ZFDOUC'}
-      name: comp_l1_drop_down
-      properties: {}
-      type: DropDown
-    layout_properties: {grid_position: 'OUGWSJ,PLDMJT'}
-    name: column_panel_2
-    properties: {}
-    type: ColumnPanel
-  - components:
-    - layout_properties: {grid_position: 'TLIYVT,FIIWON'}
-      name: label_6
-      properties: {align: right, text: 'Team:'}
-      type: Label
-    - layout_properties: {grid_position: 'TLIYVT,XHRKUU'}
-      name: team_label
-      properties: {text: ''}
-      type: Label
-    layout_properties: {grid_position: 'OUGWSJ,PIFWMF'}
-    name: column_panel_5
-    properties: {}
-    type: ColumnPanel
-  layout_properties: {grid_position: 'KUDEEJ,AXNICV'}
-  name: outlined_card_2
-  properties: {role: outlined-card}
-  type: ColumnPanel
-- components:
+    type: FlowPanel
   - components:
     - name: repeating_panel_1
-      properties: {item_template: Homepage.DataMgr.btd_manage.RowTemplate2}
+      properties: {item_template: Homepage.DataMgr.btd_manage.RowTemplate8}
       type: RepeatingPanel
-    layout_properties: {grid_position: 'IZCUPP,XFYRNH'}
-    name: data_grid_1
+    layout_properties: {grid_position: 'NIMCIW,LVPPPG'}
+    name: file_grid
     properties:
       columns:
-      - {data_key: date, expand: false, id: HGGFJV, title: Game Date, width: 87.0078125}
-      - {data_key: points, expand: false, id: IIVUBY, title: Total Points, width: 55.9296875}
-      - {data_key: ppr_playera1, expand: false, id: HCPSRB, title: Player A1, width: 86.392578125}
-      - {data_key: ppr_playerb1, expand: false, id: SVMQUC, title: Player B1, width: 85.158203125}
-      - {data_key: completeness_score, expand: false, id: VCGSFQ, title: Data Score, width: 81.9609375}
-      - {data_key: no_errors, expand: false, id: LIZYID, title: PPR File Errors, width: 76.9853515625}
-      - {data_key: private, expand: false, id: KOKNTX, title: 'Private?', width: 68.96875}
-      - {data_key: filename, id: TOAARW, title: File Name}
+      - {data_key: date, id: JKSDUP, title: Date}
+      - {data_key: comp_l1, id: VJQQOR, title: Competition}
+      - {data_key: players_display, id: OJLQEN, title: Players}
+      - {data_key: completeness_score, id: OSQOMS, title: Score}
+      - {data_key: per_xy, id: RSXXLU, title: '% XY'}
+      - {data_key: no_errors, id: RBBCWZ, title: Errors}
     type: DataGrid
-  layout_properties: {grid_position: 'ZGMYNQ,JCDGEZ'}
-  name: outlined_card_1
-  properties: {role: outlined-card}
+  - event_bindings: {click: close_button_click}
+    layout_properties: {grid_position: 'WGLABE,OWTOKP'}
+    name: close_button
+    properties: {role: outlined-button, text: Close}
+    type: Button
+  layout_properties: {grid_position: 'WTTKXM,KLUJTC'}
+  name: column_panel_1
+  properties: {}
   type: ColumnPanel
 container: {type: ColumnPanel}
 is_package: true

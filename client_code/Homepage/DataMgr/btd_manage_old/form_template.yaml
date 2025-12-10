@@ -1,0 +1,105 @@
+components:
+- layout_properties: {grid_position: 'GTUGIY,ULUKBZ'}
+  name: label_1
+  properties: {align: left, background: 'theme:Secondary', foreground: 'theme:On Primary', role: title, text: List of Ball Time Match Files}
+  type: Label
+- components:
+  - components:
+    - layout_properties: {grid_position: 'BTQUFI,IZTRII'}
+      name: label_2
+      properties: {align: right, text: 'League:'}
+      type: Label
+    - event_bindings: {change: league_drop_down_change}
+      layout_properties: {grid_position: 'BTQUFI,JGDQOS'}
+      name: league_drop_down
+      properties: {}
+      type: DropDown
+    layout_properties: {grid_position: 'OUGWSJ,GRHNXG'}
+    name: column_panel_1
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'HDIFWE,UWJOEA'}
+      name: label_3
+      properties: {align: right, text: 'Gender:'}
+      type: Label
+    - event_bindings: {change: gender_drop_down_change}
+      layout_properties: {grid_position: 'HDIFWE,EMWHUT'}
+      name: gender_drop_down
+      properties:
+        items: [M, W]
+      type: DropDown
+    layout_properties: {grid_position: 'OUGWSJ,UIAJNS'}
+    name: column_panel_3
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'EJSBDL,TGQCTU'}
+      name: label_4
+      properties: {align: right, text: 'Year:'}
+      type: Label
+    - event_bindings: {change: year_drop_down_change}
+      layout_properties: {grid_position: 'EJSBDL,FRILTP'}
+      name: year_drop_down
+      properties:
+        items: ['2024', '2025']
+      type: DropDown
+    layout_properties: {grid_position: 'OUGWSJ,GKPVKE'}
+    name: column_panel_4
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'EQSRFE,NHQIGB'}
+      name: label_5
+      properties: {align: right, text: 'Compeition:'}
+      type: Label
+    - event_bindings: {change: comp_l1_drop_down_change}
+      layout_properties: {grid_position: 'EQSRFE,ZFDOUC'}
+      name: comp_l1_drop_down
+      properties: {}
+      type: DropDown
+    layout_properties: {grid_position: 'OUGWSJ,PLDMJT'}
+    name: column_panel_2
+    properties: {}
+    type: ColumnPanel
+  - components:
+    - layout_properties: {grid_position: 'TLIYVT,FIIWON'}
+      name: label_6
+      properties: {align: right, text: 'Team:'}
+      type: Label
+    - layout_properties: {grid_position: 'TLIYVT,XHRKUU'}
+      name: team_label
+      properties: {text: ''}
+      type: Label
+    layout_properties: {grid_position: 'OUGWSJ,PIFWMF'}
+    name: column_panel_5
+    properties: {}
+    type: ColumnPanel
+  layout_properties: {grid_position: 'KUDEEJ,AXNICV'}
+  name: outlined_card_2
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - components:
+    - name: repeating_panel_1
+      properties: {item_template: Homepage.DataMgr.btd_manage_old.RowTemplate2}
+      type: RepeatingPanel
+    layout_properties: {grid_position: 'IZCUPP,XFYRNH'}
+    name: data_grid_1
+    properties:
+      columns:
+      - {data_key: date, expand: false, id: HGGFJV, title: Game Date, width: 87.0078125}
+      - {data_key: points, expand: false, id: IIVUBY, title: Total Points, width: 55.9296875}
+      - {data_key: ppr_playera1, expand: false, id: HCPSRB, title: Player A1, width: 86.392578125}
+      - {data_key: ppr_playerb1, expand: false, id: SVMQUC, title: Player B1, width: 85.158203125}
+      - {data_key: completeness_score, expand: false, id: VCGSFQ, title: Data Score, width: 81.9609375}
+      - {data_key: no_errors, expand: false, id: LIZYID, title: PPR File Errors, width: 76.9853515625}
+      - {data_key: private, expand: false, id: KOKNTX, title: 'Private?', width: 68.96875}
+      - {data_key: filename, id: TOAARW, title: File Name}
+    type: DataGrid
+  layout_properties: {grid_position: 'ZGMYNQ,JCDGEZ'}
+  name: outlined_card_1
+  properties: {role: outlined-card}
+  type: ColumnPanel
+container: {type: ColumnPanel}
+is_package: true

@@ -46,7 +46,7 @@ def get_btd_files_filtered(filters=None):
     if filters.get('gender'):
       query_args['gender'] = filters['gender']
     if filters.get('year'):
-      query_args['year'] = int(filters['year'])
+      query_args['year'] = filters['year']
     if filters.get('team'):
       query_args['team'] = filters['team']
 
