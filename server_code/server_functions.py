@@ -710,6 +710,8 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
   # return the different parameters as an object
   # calcaulte transition details
 
+  # Flag = 'all', 'att', 'srv', 'rcv'
+
   # defiitions:
   #  tcr_per = % of transition
   #  tcr_percentile = Percentile
