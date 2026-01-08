@@ -14,7 +14,7 @@ def check_user_team():
   # check if the user has a team assigned, maybe double check that all temas are valid
   team_list = ['INTERNALS','VISITOR','BALLTIME',
               'FSU',
-              'LMU'
+              'LMU', 'STETSON'
               ]
 
   user_row = anvil.users.get_user()
