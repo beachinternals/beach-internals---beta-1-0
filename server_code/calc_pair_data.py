@@ -327,7 +327,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
         pair_df.at[i,'fbhe_tempo_per'] = None 
 
       #------------------- Calculate Poke, Shoot, and Bang fbhe and %
-      fbhe_vector = fbhe( tmp_df, disp_player, 'all', False)
+      fbhe_vector = fbhe( tmp_df, disp_player, 'both', False)
       #print(f"player: {p_list[i]}, fbhe_vector: {fbhe_vector}")
       total_attempts = fbhe_vector[3] if fbhe_vector[3] != 0 else 1
       fbhe_vector = fbhe_attack_type( tmp_df, disp_player, 'poke', False)

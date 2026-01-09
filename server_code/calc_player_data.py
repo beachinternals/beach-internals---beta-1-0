@@ -340,7 +340,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
 
 
     #------------------- Calculate Poke, Shoot, and Bang fbhe and %
-    fbhe_result = fbhe_obj( ppr_df, p_list[i], 'all', False)
+    fbhe_result = fbhe_obj( ppr_df, p_list[i], 'both', False)
     #print(f"player: {p_list[i]}, fbhe_result: {fbhe_result}")
     total_attempts = fbhe_result.attempts if fbhe_result.attempts != 0 else 1
     fbhe_result = fbhe_attack_type( ppr_df, p_list[i], 'poke', False)
