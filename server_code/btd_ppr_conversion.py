@@ -78,7 +78,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
   )
 
   print(f"generate_ppr_files_not_background: {user_league}, {user_gender}, {user_year},{user_team},{rebuild}")
-  return_string = 'generate_ppr_files_not_background: '+user_league+', '+user_gender+',  '+ user_year+', '+user_team+', '+str(rebuild)
+  #return_string = 'generate_ppr_files_not_background: '+user_league+', '+user_gender+',  '+ user_year+', '+user_team+', '+str(rebuild)
   new_data = False # flag to indicate that new data was found to help night processing do the rest of the tasts
   
   for flist_r in btd_row:
