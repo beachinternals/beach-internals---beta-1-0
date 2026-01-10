@@ -352,7 +352,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     player_df.at[i,'fbhe_shoot'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
     player_df.at[i,'fbhe_shoot_n'] = fbhe_result.attempts
     player_df.at[i,'fbhe_shoot_per'] = fbhe_result.attempts/total_attempts
-    bhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'bang', False)
+    fbhe_vector = fbhe_attack_type( ppr_df, p_list[i], 'bang', False)
     player_df.at[i,'fbhe_bang'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
     player_df.at[i,'fbhe_bang_n'] = fbhe_result.attempts
     player_df.at[i,'fbhe_bang_per'] = fbhe_result.attempts/total_attempts

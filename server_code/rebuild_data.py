@@ -377,11 +377,11 @@ def calculate_data1():
       for c_year in year_list:
         # now make the player data and triange data
         email_text = email_text + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
-        r_val = anvil.server.launch_background_task('calculate_player_data', c_league, c_gender, c_year)
+        r_val = calculate_player_data( c_league, c_gender, c_year)
         email_text = email_text + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-        r_val = anvil.server.launch_background_task('calculate_triangle_scoring', c_league, c_gender, c_year)
+        r_val = calculate_triangle_scoring( c_league, c_gender, c_year)
         email_text = email_text + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-        r_val = anvil.server.launch_background_task('build_pair_table_background', c_league, c_gender, c_year)
+        r_val = build_pair_table_background( c_league, c_gender, c_year)
 
   #now, send an email with the updates
   internals_email = 'beachinternals@gmail.com'
