@@ -609,7 +609,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
       #print(f'Scout DB Found:{scout_ppr_df.shape}')
     else:
       #print('No Scout Rows Found')
-      a=b
+      a = 1
 
   #print(f"GET PPR DATA ppr db returned: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{m_ppr_df.shape[0]}")
 
