@@ -269,16 +269,19 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
       pair_df.at[i,'pair'] = pair_r['pair']
       pair_df.at[i,'team'] = pair_r['team']
       pair_df.at[i,'player'] = pair_r['player1'] if p == 0 else pair_r['player2']
+      
+      # ============================================================================
+      # COMPLETE FIX for calc_player_data.py - Lines 275-362
+      # Replace ALL fbhe() calls with fbhe_obj() calls
+      # ============================================================================
 
-
-        
       # ----------- calculate FBHE, 1-5 ------------------
-      fbhe_vector = fbhe(tmp_df, disp_player, 'att', True )
+      fbhe_result = fbhe_obj(tmp_df, disp_player, 'att', True)
       #if 'STANFORD' in disp_player:
-        #print(f"Player: {disp_player}, size of tmp_df : {tmp_df.shape[0]}, FBHE Vector: {fbhe_vector}")
-      pair_df.at[i,'fbhe_n'] = fbhe_vector[3]
-      if fbhe_vector[3] >= min_att:
-        pair_df.at[i,'fbhe'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
+      #print(f"Player: {disp_player}, size of tmp_df : {tmp_df.shape[0]}, FBHE Result: {fbhe_result}")
+      pair_df.at[i,'fbhe_n'] = fbhe_result.attempts
+      if fbhe_result.attempts >= min_att:
+        pair_df.at[i,'fbhe'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
 
 
       #print(f"player_df after fbhe calc:{player_df}")
@@ -286,81 +289,89 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
       fbhe_min = 1
       fbhe_max = 0
       for j in [1,2,3,4,5]:
-        fbhe_vector = fbhe( tmp_df[ tmp_df['att_src_zone_net']==j ], disp_player, 'att', False)
+        fbhe_result = fbhe_obj( tmp_df[ tmp_df['att_src_zone_net']==j ], disp_player, 'att', False)
         field = "fbhe" + str(j)
         field_n = field + str('_n')
-        #print(f"Field:{field}, fbhe vector:{fbhe_vector}")
-        if fbhe_vector[3] >= min_att:
-          pair_df.at[i,field] = fbhe_vector[0] 
-          pair_df.at[i,field_n] = fbhe_vector[3]
-          fbhe_min = fbhe_vector[0] if fbhe_vector[0] < fbhe_min else fbhe_min
-          fbhe_max = fbhe_vector[0] if fbhe_vector[0] > fbhe_max else fbhe_max
+        #print(f"Field:{field}, fbhe result:{fbhe_result}")
+        if fbhe_result.attempts >= min_att:
+          pair_df.at[i,field] = fbhe_result.fbhe 
+          pair_df.at[i,field_n] = fbhe_result.attempts
+          fbhe_min = fbhe_result.fbhe if fbhe_result.fbhe < fbhe_min else fbhe_min
+          fbhe_max = fbhe_result.fbhe if fbhe_result.fbhe > fbhe_max else fbhe_max
       if fbhe_max - fbhe_min != -1:
         pair_df.at[i,'fbhe_range'] = float("{:.3f}".format(fbhe_max - fbhe_min))
       else:
         pair_df.at[i,'fbhe_range'] = None
-      
+
       #------------------- Behind, Option, and Tempo fbhe and %
-      fbhe_vector = fbhe(tmp_df, disp_player, 'pass', True)
-      total_attempts = fbhe_vector[3] if fbhe_vector[3] != min_att else 1
-      fbhe_vector = fbhe(tmp_df[tmp_df['tactic'] == 'option'],disp_player,'pass', False)
-      pair_df.at[i,'fbhe_option'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      pair_df.at[i,'fbhe_option_n'] = fbhe_vector[3]
+      fbhe_result = fbhe_obj(tmp_df, disp_player, 'pass', True)
+      total_attempts = fbhe_result.attempts if fbhe_result.attempts != min_att else 1
+
+      fbhe_result = fbhe_obj(tmp_df[tmp_df['tactic'] == 'option'],disp_player,'pass', False)
+      pair_df.at[i,'fbhe_option'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
+      pair_df.at[i,'fbhe_option_n'] = fbhe_result.attempts
       if total_attempts != 0:
-        pair_df.at[i,'fbhe_option_per'] = int(fbhe_vector[3])/total_attempts
+        pair_df.at[i,'fbhe_option_per'] = int(fbhe_result.attempts)/total_attempts
       else:
         pair_df.at[i,'fbhe_option_per'] = None 
-        
-      fbhe_vector = fbhe(tmp_df[tmp_df['tactic'] == 'behind'],disp_player,'pass', False)
-      pair_df.at[i,'fbhe_behind'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      pair_df.at[i,'fbhe_behind_n'] = fbhe_vector[3]
+
+      fbhe_result = fbhe_obj(tmp_df[tmp_df['tactic'] == 'behind'],disp_player,'pass', False)
+      pair_df.at[i,'fbhe_behind'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
+      pair_df.at[i,'fbhe_behind_n'] = fbhe_result.attempts
       if total_attempts != 0:
-        pair_df.at[i,'fbhe_behind_per'] = int(fbhe_vector[3])/total_attempts
+        pair_df.at[i,'fbhe_behind_per'] = int(fbhe_result.attempts)/total_attempts
       else:
         pair_df.at[i,'fbhe_behind_per'] = None 
-        
-      fbhe_vector = fbhe(tmp_df[tmp_df['tactic'] == 'tempo'],disp_player,'pass', False)
-      pair_df.at[i,'fbhe_tempo'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      pair_df.at[i,'fbhe_tempo_n'] = fbhe_vector[3]
+
+      fbhe_result = fbhe_obj(tmp_df[tmp_df['tactic'] == 'tempo'],disp_player,'pass', False)
+      pair_df.at[i,'fbhe_tempo'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
+      pair_df.at[i,'fbhe_tempo_n'] = fbhe_result.attempts
       if total_attempts != 0:
-        pair_df.at[i,'fbhe_tempo_per'] = int(fbhe_vector[3])/total_attempts
+        pair_df.at[i,'fbhe_tempo_per'] = int(fbhe_result.attempts)/total_attempts
       else:
         pair_df.at[i,'fbhe_tempo_per'] = None 
 
       #------------------- Calculate Poke, Shoot, and Bang fbhe and %
-      fbhe_vector = fbhe( tmp_df, disp_player, 'both', False)
-      #print(f"player: {p_list[i]}, fbhe_vector: {fbhe_vector}")
-      total_attempts = fbhe_vector[3] if fbhe_vector[3] != 0 else 1
-      fbhe_vector = fbhe_attack_type( tmp_df, disp_player, 'poke', False)
-      #print(f"player: {p_list[i]}, i: {i}, fbhe_vector line 188: {fbhe_vector}")
-      pair_df.at[i,'fbhe_poke'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      pair_df.at[i,'fbhe_poke_n'] = fbhe_vector[3]    
-      pair_df.at[i,'poke_per_per'] = fbhe_vector[3]/total_attempts
-      fbhe_vector = fbhe_attack_type( tmp_df, disp_player, 'shoot', False)
-      pair_df.at[i,'fbhe_shoot'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      pair_df.at[i,'fbhe_shoot_n'] = fbhe_vector[3]
-      pair_df.at[i,'fbhe_shoot_per'] = fbhe_vector[3]/total_attempts
-      bhe_vector = fbhe_attack_type( tmp_df, disp_player, 'bang', False)
-      pair_df.at[i,'fbhe_bang'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      pair_df.at[i,'fbhe_bang_n'] = fbhe_vector[3]
-      pair_df.at[i,'fbhe_bang_per'] = fbhe_vector[3]/total_attempts
+      fbhe_result = fbhe_obj( tmp_df, disp_player, 'both', False)
+      #print(f"player: {p_list[i]}, fbhe_result: {fbhe_result}")
+      total_attempts = fbhe_result.attempts if fbhe_result.attempts != 0 else 1
+
+      fbhe_result = fbhe_attack_type( tmp_df, disp_player, 'poke', False)
+      #print(f"player: {p_list[i]}, i: {i}, fbhe_result line 188: {fbhe_result}")
+      pair_df.at[i,'fbhe_poke'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
+      pair_df.at[i,'fbhe_poke_n'] = fbhe_result.attempts    
+      pair_df.at[i,'poke_per_per'] = fbhe_result.attempts/total_attempts
+
+      fbhe_result = fbhe_attack_type( tmp_df, disp_player, 'shoot', False)
+      pair_df.at[i,'fbhe_shoot'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
+      pair_df.at[i,'fbhe_shoot_n'] = fbhe_result.attempts
+      pair_df.at[i,'fbhe_shoot_per'] = fbhe_result.attempts/total_attempts
+
+      fbhe_result = fbhe_attack_type( tmp_df, disp_player, 'bang', False)
+      pair_df.at[i,'fbhe_bang'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
+      pair_df.at[i,'fbhe_bang_n'] = fbhe_result.attempts
+      pair_df.at[i,'fbhe_bang_per'] = fbhe_result.attempts/total_attempts
 
       #--------------calculate in and out of system
-      fbhe_vector = fbhe( tmp_df, disp_player, 'pass', False)  
-      tot_att = fbhe_vector[3]
-      fbhe_vector = fbhe( tmp_df[tmp_df['pass_oos'] > 0], disp_player, 'pass', False)
-      pair_df.at[i,'fbhe_oos'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      pair_df.at[i,'fbhe_oos_n'] = fbhe_vector[3]
-      fbhe_vector = fbhe( tmp_df[tmp_df['pass_oos'] == 0], disp_player, 'pass', False)
-      pair_df.at[i,'fbhe_insys'] = fbhe_vector[0] if fbhe_vector[3] >= min_att else None
-      pair_df.at[i,'fbhe_insys_n'] = fbhe_vector[3]  
+      fbhe_result = fbhe_obj( tmp_df, disp_player, 'pass', False)  
+      tot_att = fbhe_result.attempts
+
+      fbhe_result = fbhe_obj( tmp_df[tmp_df['pass_oos'] > 0], disp_player, 'pass', False)
+      pair_df.at[i,'fbhe_oos'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
+      pair_df.at[i,'fbhe_oos_n'] = fbhe_result.attempts
+
+      fbhe_result = fbhe_obj( tmp_df[tmp_df['pass_oos'] == 0], disp_player, 'pass', False)
+      pair_df.at[i,'fbhe_insys'] = fbhe_result.fbhe if fbhe_result.attempts >= min_att else None
+      pair_df.at[i,'fbhe_insys_n'] = fbhe_result.attempts  
+
       if tot_att != 0:
         pair_df.at[i,'fbhe_oos_per'] = pair_df.at[i,'fbhe_oos_n']/tot_att 
         pair_df.at[i,'fbhe_insys_per'] = pair_df.at[i,'fbhe_insys_n']/tot_att 
       else:
         pair_df.at[i,'fbhe_oos_per'] = None
         pair_df.at[i,'fbhe_insys_per'] = None
-      
+
+
       # ------------calculate transition Conversion ------------------
       trans_vector = calc_trans( tmp_df, disp_player, 'all' )
       pair_df.at[i,'tcr'] = float(trans_vector[0][:-1]) if trans_vector[0] else None
