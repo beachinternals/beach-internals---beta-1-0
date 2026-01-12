@@ -125,7 +125,7 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
             email_message = email_message + 'Generating PPR files for: '+c_league+' '+c_gender+' '+c_year+' '+c_team+'\n'
             #print(email_message)
             r_value, new_team_data = generate_ppr_files_not_background(c_league, c_gender, c_year, c_team, rebuild_all  ) # modify this to return true if there are update, false if not
-            email_message = email_message + '        '+str(r_value) + ' New Data Found =' + str(new_team_data) + "\n"
+            #email_message = email_message + '        '+str(r_value) + ' New Data Found =' + str(new_team_data) + "\n"
     
             # now merge the data for this league
             #-------------------------------------
