@@ -13,6 +13,21 @@ import math
 import statistics
 import numpy as np
 from tabulate import tabulate
+# ============================================================================
+# PERFORMANCE MONITORING IMPORTS
+# ============================================================================
+from server_functions import (
+monitor_performance,
+MONITORING_LEVEL_OFF,
+MONITORING_LEVEL_CRITICAL,
+MONITORING_LEVEL_IMPORTANT,
+MONITORING_LEVEL_DETAILED,
+MONITORING_LEVEL_VERBOSE
+)
+
+# import error logging funcitons
+from logger_utils import log_info, log_error, log_critical, log_debug
+
 from server_functions import *
 from datetime import datetime, timedelta, date
 from plot_functions import *
@@ -69,13 +84,14 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
       year = c_year,
       team = c_team
     ) )
-
   if ppr_csv_row:
     ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
+    log_info(f"calc_player_data: Loaded ppr_df for {c_league} {c_gender} {c_year}, shape: {ppr_df.shape}")
     if ppr_df.shape[0] == 0:
+      log_error(f"calc_player_data: ERROR - ppr_df has 0 rows for {c_league} {c_gender} {c_year}, returning without saving")
       return ["No Rows"]
   else:
-    #print('No Rows Found')
+    log_error(f"calc_player_data: ERROR - No ppr_csv_row found for {c_league} {c_gender} {c_year}")
     return ["No Rows"]
 
   #print(f"shape of ppr_df :{ppr_df.shape}")
@@ -830,13 +846,35 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
         
   # now lets store our player_data file back as a csv file in the database
   #---------------------------------------------------------------------------
-  # first, I need to cahnge the ppr_file dataframe to a csv file.
-  player_csv_file = pd.DataFrame.to_csv(player_df)
-  player_media = anvil.BlobMedia(content_type="text/plain", content=player_csv_file.encode(), name="player_data.csv")
+  log_info(f"About to save player_data for {c_league} {c_gender} {c_year}")
+  log_info(f"player_df shape: {player_df.shape}, player_stats_df shape: {player_stats_df.shape}")
 
-  player_stats_csv = pd.DataFrame.to_csv(player_stats_df)
-  player_stats_media = anvil.BlobMedia(content_type="text/plain", content=player_stats_csv.encode(), name="player_sats.csv")
-  
-  ppr_csv_row.update( player_data = player_media, player_data_date = datetime.now(), player_data_stats=player_stats_media, player_data_stats_date = datetime.now(), )
-  
+  try:
+    player_csv_file = pd.DataFrame.to_csv(player_df)
+    player_media = anvil.BlobMedia(content_type="text/plain", content=player_csv_file.encode(), name="player_data.csv")
+    log_info(f"Created player_media, size: {len(player_csv_file)} bytes")
+
+    player_stats_csv = pd.DataFrame.to_csv(player_stats_df)
+    player_stats_media = anvil.BlobMedia(content_type="text/plain", content=player_stats_csv.encode(), name="player_sats.csv")
+    log_info(f"Created player_stats_media, size: {len(player_stats_csv)} bytes")
+
+    if ppr_csv_row is None:
+      log_error(f"ERROR: ppr_csv_row is None, cannot save player_data for {c_league} {c_gender} {c_year}")
+      return "ERROR: ppr_csv_row is None"
+
+    log_info(f"Calling ppr_csv_row.update() for {c_league} {c_gender} {c_year}")
+    ppr_csv_row.update( 
+      player_data = player_media, 
+      player_data_date = datetime.now(), 
+      player_data_stats = player_stats_media, 
+      player_data_stats_date = datetime.now()
+    )
+    log_info(f"Successfully called ppr_csv_row.update() for {c_league} {c_gender} {c_year}")
+
+  except Exception as e:
+    log_error(f"ERROR saving player_data: {e}")
+    import traceback
+    log_error(f"Traceback: {traceback.format_exc()}")
+    return f"ERROR: {e}"
+
   return result_string
