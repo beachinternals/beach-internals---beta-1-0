@@ -76,7 +76,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   result_string = "Calculate Player Data server module Called"
 
   c_team = "League"    # only updating the league tables
-  #print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
+  log_info(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
       league = c_league,
@@ -270,6 +270,7 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
   #print(f"player stats df:{player_stats_df}")
   
   for i in range(0,num_players):
+    log_info('Calculating Player Data for '+p_list[i])
     #print(f"player: {p_list[i]}")
     player_df.at[i,'player'] = p_list[i]
 
