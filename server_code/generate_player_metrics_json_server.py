@@ -188,22 +188,22 @@ def get_filtered_ppr_data(league, gender, year, team, **filters):
 
   if 'set_ht_low' in filters:
         ppr_df = ppr_df[ppr_df['set_height'] >= float(filters['set_ht_low'])]
-    if 'set_ht_high' in filters:
+  if 'set_ht_high' in filters:
         ppr_df = ppr_df[ppr_df['set_height'] <= float(filters['set_ht_high'])]
     
-    if 'pass_ht_low' in filters:
+  if 'pass_ht_low' in filters:
         ppr_df = ppr_df[ppr_df['pass_height'] >= float(filters['pass_ht_low'])]
-    if 'pass_ht_high' in filters:
+  if 'pass_ht_high' in filters:
         ppr_df = ppr_df[ppr_df['pass_height'] <= float(filters['pass_ht_high'])]
     
     # Zone filters
-    if 'srv_fr' in filters:
+  if 'srv_fr' in filters:
         ppr_df = ppr_df[ppr_df['serve_src_zone_net'].isin(filters['srv_fr'])]
     
-    if 'srv_to' in filters:
+  if 'srv_to' in filters:
         ppr_df = ppr_df[ppr_df['serve_dest_zone'].isin(filters['srv_to'])]
     
-    return ppr_df
+  return ppr_df
 
 
 def get_filtered_triangle_data(league, gender, year, team, **filters):
