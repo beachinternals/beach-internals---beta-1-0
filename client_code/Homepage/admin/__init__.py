@@ -12,6 +12,7 @@ from google_drive_maint import *
 from ppr_file_maint import *
 from scheduled_tasks import *
 from pdf_reports import *
+from .Metrics_json_generator import *
 
 
 
@@ -59,6 +60,13 @@ class admin(adminTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(google_drive_maint())
+    pass
+
+  @handle("link_2", "click")
+  def link_2_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(Metrics_json_generator())
     pass
 
 
