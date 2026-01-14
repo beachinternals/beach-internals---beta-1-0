@@ -323,6 +323,68 @@ db_schema:
       type: media
     server: full
     title: master_player
+  metric_dictionary:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: metric_id
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: metric_name
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: metric_type
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: metric_role
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      name: parent_metric
+      type: string
+    - admin_ui: {order: 5, width: 200}
+      name: metric_category
+      type: string
+    - admin_ui: {order: 7, width: 200}
+      name: ci_calculation_method
+      type: string
+    - admin_ui: {order: 11, width: 200}
+      name: function_name
+      type: string
+    - admin_ui: {order: 12, width: 200}
+      name: calculation_formula
+      type: string
+    - admin_ui: {order: 15, width: 200}
+      name: coach_speak_elite
+      type: string
+    - admin_ui: {order: 16, width: 200}
+      name: coach_speak_good
+      type: string
+    - admin_ui: {order: 17, width: 200}
+      name: coach_speak_average
+      type: string
+    - admin_ui: {order: 18, width: 200}
+      name: coach_speak_poor
+      type: string
+    - admin_ui: {order: 4.5, width: 200}
+      name: min_attempts_for_ci
+      type: number
+    - admin_ui: {order: 12.5, width: 200}
+      name: data_range_max
+      type: number
+    - admin_ui: {order: 8.5, width: 200}
+      name: return_type
+      type: string
+    - admin_ui: {order: 7.75, width: 200}
+      name: data_filter
+      type: string
+    - admin_ui: {order: 9.75, width: 200}
+      name: result_path
+      type: string
+    - admin_ui: {order: 12.25, width: 200}
+      name: data_range_min
+      type: number
+    server: full
+    title: metric_dictionary
   performance_log:
     client: none
     columns:

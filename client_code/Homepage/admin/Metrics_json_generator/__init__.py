@@ -1,4 +1,5 @@
 from ._anvil_designer import Metrics_json_generatorTemplate
+import anvil
 from anvil.js import window
 import anvil.js
 import anvil.server
@@ -90,7 +91,7 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
 
   def league_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
-    # Extract league, gender, year from selected value
+    # extract league, gender, year from league selected value
     league_value = self.league_drop_down.selected_value
     str_loc = league_value.index("|")
     disp_league = league_value[: str_loc - 1].strip()
@@ -99,15 +100,21 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
     disp_gender = league_value[: str_loc - 1].strip()
     disp_year = league_value[str_loc + 1 :].strip()
 
-    # Update competition dropdowns
+    # set comp_l1 data:
     self.comp_l1_drop_down.items = [
       (row["comp_l1"], row)
       for row in app_tables.league_comp_l1.search(league=disp_league)
     ]
+
+    # set comp_l2 data:
     self.comp_l2_drop_down.items = [
       (row["comp_l2"], row)
-      for row in app_tables.league_comp_l2.search(league=disp_league)
+      for row in app_tables.league_comp_l2.search(
+        league=disp_league, comp_l1=self.comp_l1_drop_down.selected_value["comp_l1"]
+      )
     ]
+
+    # set comp_l3 data:
     comp3lbl = [
       (r["comp_l3_label"], r) for r in app_tables.league_list.search(league=disp_league)
     ]
@@ -116,7 +123,7 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
       for row in app_tables.league_comp_l3.search(comp_l3_label=comp3lbl[0][0])
     ]
 
-    # Update player dropdown
+    # set the player drop down
     self.player_drop_down.items = [
       (row["team"] + " " + row["number"] + " " + row["shortname"], row)
       for row in app_tables.master_player.search(
@@ -127,6 +134,21 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
         year=disp_year,
       )
     ]
+    # populate the player drop down
+    self.pair_drop_down.items = [
+      (row["pair"], row)
+      for row in app_tables.master_pair.search(
+        tables.order_by("pair"),
+        league=disp_league,
+        gender=disp_gender,
+        year=disp_year,
+      )
+    ]
+    # set the sstart and end date to beginning and end of the season (needed for function call)
+    # self.start_date_picker.date = datetime.date.today()  # temp : need to pull from league DB
+    # self.end_date_picker.date = datetime.date.today()
+
+    pass
 
   def comp_l1_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
@@ -143,7 +165,7 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
       )
     ]
 
-  def generate_json_button_click(self, **event_args):
+  def json_button_click(self, **event_args):
     """This method is called when the Generate JSON button is clicked"""
 
     # Get user info
@@ -301,3 +323,39 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
     self.download_link.visible = False
     self.status_label.text = ""
     pass
+
+  def start_date_picker_change(self, **event_args):
+    """This method is called when the selected date changes"""
+    pass
+
+  def end_date_picker_change(self, **event_args):
+    """This method is called when the selected date changes"""
+    pass
+
+  @anvil.handle("upload_dictionary", "click")
+  def upload_dictionary_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    pass
+
+  @anvil.handle("dict_file_loader", "change")
+  def dict_file_loader_change(self, **event_args):
+    """This method is called when a new file is loaded into this FileLoader"""
+
+    # Get the file from event_args
+    csv_file = event_args.get('file')
+
+    if csv_file:
+      with anvil.Notification("Importing metrics... this may take a minute"):
+        result = anvil.server.call('import_metric_dictionary_from_csv', csv_file)
+
+      if result['success']:
+        anvil.alert(f"✓ Successfully imported {result['imported']} metrics!")
+        if result['errors']:
+          print(f"Errors encountered: {len(result['errors'])}")
+          for error in result['errors'][:10]:  # Show first 10 errors
+            print(f"  - {error}")
+      else:
+        anvil.alert(f"Import failed: {result['errors'][0]}")
+
+    pass
+

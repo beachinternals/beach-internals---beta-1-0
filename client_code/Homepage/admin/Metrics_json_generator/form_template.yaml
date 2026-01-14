@@ -25,43 +25,27 @@ components_by_slot:
         properties:
           items: [NCAA | W | 2025]
         type: DropDown
-      - layout_properties: {grid_position: 'PLKWHD,BRHHZT'}
-        name: label_19
-        properties: {bold: true, text: 'Report Type:'}
-        type: Label
-      - event_bindings: {change: rpt_type_drop_down_change}
-        layout_properties: {grid_position: 'PLKWHD,FDUXDY'}
-        name: rpt_type_drop_down
-        properties: {}
-        type: DropDown
-      - layout_properties: {grid_position: 'LFVHTF,YEPJIN'}
-        name: label_5
-        properties: {align: left, bold: true, text: 'Report:'}
-        type: Label
-      - event_bindings: {change: report_drop_down_change}
-        layout_properties: {grid_position: 'LFVHTF,HSKEKD DYUGJA,VBAJYU'}
-        name: report_drop_down
-        properties:
-          items: []
-        type: DropDown
-      - event_bindings: {click: generate_report_button_click}
-        layout_properties: {grid_position: 'ZDTNXF,LBDMQF'}
-        name: generate_report_button
-        properties: {align: right, role: outlined-button, text: Generate Report}
-        type: Button
-      - event_bindings: {click: pdf_button_click}
-        layout_properties: {grid_position: 'ZDTNXF,IOTQYG NVGQKA,OFCIMS'}
-        name: pdf_button
-        properties: {role: outlined-button, text: Generate PDF}
-        type: Button
       - event_bindings: {click: json_button_click}
-        layout_properties: {grid_position: 'ZDTNXF,IOTQYG YFPYAY,TOTUGP'}
+        layout_properties: {grid_position: 'YFPYAY,TOTUGP'}
         name: json_button
         properties: {role: outlined-button, text: Generate JSON}
         type: Button
+      - layout_properties: {grid_position: 'PZBQCW,GCUURV'}
+        name: status_label
+        properties: {visible: false}
+        type: Label
+      - layout_properties: {grid_position: 'PZBQCW,JYGOZE'}
+        name: download_link
+        properties: {align: center, bold: true, font_size: 16, icon: 'fa:download', text: Download JSON File}
+        type: Link
+      - event_bindings: {}
+        layout_properties: {grid_position: 'OVWHCI,HLMRZT'}
+        name: dict_file_loader
+        properties: {text: Metrics Dictionary (csv)}
+        type: FileLoader
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
-      properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40,"YEPJIN":10,"HSKEKD":50,"BRHHZT":20,"FDUXDY":40}', role: outlined-card}
+      properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40}', role: outlined-card}
       type: ColumnPanel
     - components:
       - layout_properties: {grid_position: 'QMLNQC,HADUKF'}

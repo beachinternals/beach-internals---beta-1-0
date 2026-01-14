@@ -1,8 +1,7 @@
 """
 SERVER FUNCTION: generate_player_metrics_json()
 ===============================================
-This function generates comprehensive metrics JSON for a player based on filters.
-Add this to your Anvil server code module.
+Updated with logger_utils integration
 """
 
 import anvil.tables as tables
@@ -15,6 +14,10 @@ import numpy as np
 import json
 from datetime import datetime
 import hashlib
+import io
+
+# Import your logging utilities
+from logger_utils import log_info, log_error, log_debug, log_critical
 
 
 @anvil.server.callable
@@ -25,101 +28,117 @@ def generate_player_metrics_json(league_value, team, **json_filters):
     Args:
         league_value (str): League|Gender|Year format (e.g., "AVP|W|2024")
         team (str): Team name
-        **json_filters: Filter parameters including:
-            - player (str): REQUIRED - Player name
-            - player_shortname (str): Player short name for filename
-            - comp_l1, comp_l2, comp_l3: Competition level filters
-            - start_date, end_date: Date range filters
-            - set, set_touch_type, pass_oos: Play-specific filters
-            - att_ht_low, att_ht_high, att_speed_low, att_speed_high: Attack filters
-            - set_ht_low, set_ht_high: Set filters
-            - pass_ht_low, pass_ht_high: Pass filters
-            - srv_fr, srv_to: Serve zone filters
+        **json_filters: Filter parameters
     
     Returns:
-        dict: {
-            'media_obj': BlobMedia object for download,
-            'filename': str,
-            'summary': dict with metadata
-        }
+        dict: {'media_obj': BlobMedia, 'filename': str, 'summary': dict}
     """
 
-  # Parse league value
-  str_loc = league_value.index("|")
-  league = league_value[: str_loc - 1].strip()
-  league_value = league_value[str_loc + 1 :]
-  str_loc = league_value.index("|")
-  gender = league_value[: str_loc - 1].strip()
-  year = int(league_value[str_loc + 1 :].strip())
+  try:
+    log_info("=== JSON Generation Started ===")
+    log_info(f"Player: {json_filters.get('player')}")
+    log_info(f"League: {league_value}")
+    log_info(f"Team: {team}")
 
-  # Get player name (required)
-  player_name = json_filters.get('player')
-  if not player_name:
-    raise ValueError("Player name is required")
+    # Parse league value
+    str_loc = league_value.index("|")
+    league = league_value[: str_loc - 1].strip()
+    league_value = league_value[str_loc + 1 :]
+    str_loc = league_value.index("|")
+    gender = league_value[: str_loc - 1].strip()
+    year = int(league_value[str_loc + 1 :].strip())
 
-  player_shortname = json_filters.get('player_shortname', 'player')
+    log_info(f"Parsed - League: {league}, Gender: {gender}, Year: {year}")
 
-  # Load metric dictionary
-  dict_rows = app_tables.metric_dictionary.search()
-  metric_dict = pd.DataFrame([
-    {col: row[col] for col in row.get_column_names()}
-    for row in dict_rows
-  ])
+    # Get player name (required)
+    player_name = json_filters.get('player')
+    if not player_name:
+      log_error("Player name not provided", with_traceback=False)
+      raise ValueError("Player name is required")
 
-  # Get PPR data with filters
-  ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
+    player_shortname = json_filters.get('player_shortname', 'player')
 
-  # Get triangle data (for set-to-set consistency)
-  tri_df = get_filtered_triangle_data(league, gender, year, team, **json_filters)
+    # Load metric dictionary
+    log_info("Loading metric dictionary from database...")
+    dict_rows = app_tables.metric_dictionary.search()
+    metric_dict = pd.DataFrame([
+      {col: row[col] for col in row.get_column_names()}
+      for row in dict_rows
+    ])
+    log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary")
 
-  if len(ppr_df) == 0:
-    raise ValueError("No data found for the specified filters")
+    # Get PPR data with filters
+    log_info("Retrieving and filtering PPR data...")
+    ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
+    log_info(f"✓ Loaded {len(ppr_df)} points from PPR data")
 
-    # Build metadata
-  metadata = {
-    'generated_at': datetime.now().isoformat(),
-    'player_name': player_name,
-    'player_shortname': player_shortname,
-    'league': league,
-    'gender': gender,
-    'year': year,
-    'team': team,
-    'filters_applied': {k: str(v) for k, v in json_filters.items() if k not in ['player', 'player_shortname']},
-    'total_points_analyzed': len(ppr_df),
-    'total_sets_analyzed': len(tri_df) if len(tri_df) > 0 else 0,
-    'dictionary_version': '1.0'
-  }
+    # Get triangle data (for set-to-set consistency)
+    log_info("Retrieving triangle data...")
+    tri_df = get_filtered_triangle_data(league, gender, year, team, **json_filters)
+    log_info(f"✓ Loaded {len(tri_df)} sets from triangle data")
 
-  # Calculate all metrics
-  metrics_result = calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name)
+    if len(ppr_df) == 0:
+      log_error("No data found for the specified filters", with_traceback=False)
+      raise ValueError("No data found for the specified filters")
 
-  # Build final JSON structure
-  json_output = {
-    'metadata': metadata,
-    'metrics': metrics_result['metrics'],
-    'summary_stats': {
-      'total_metrics_calculated': metrics_result['total_calculated'],
-      'metrics_with_sufficient_data': metrics_result['successful'],
-      'metrics_below_min_attempts': metrics_result['insufficient_data']
+      # Build metadata
+    metadata = {
+      'generated_at': datetime.now().isoformat(),
+      'player_name': player_name,
+      'player_shortname': player_shortname,
+      'league': league,
+      'gender': gender,
+      'year': year,
+      'team': team,
+      'filters_applied': {k: str(v) for k, v in json_filters.items() 
+                          if k not in ['player', 'player_shortname']},
+      'total_points_analyzed': len(ppr_df),
+      'total_sets_analyzed': len(tri_df) if len(tri_df) > 0 else 0,
+      'dictionary_version': '1.0'
     }
-  }
 
-  # Generate filename
-  filter_hash = generate_filter_hash(json_filters)
-  timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-  filename = f"{league}_{gender}_{year}_{player_shortname}_{filter_hash}_{timestamp}.json"
+    # Calculate all metrics
+    log_info("Starting metric calculations...")
+    metrics_result = calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name)
+    log_info(f"✓ Calculated {metrics_result['successful']} / {metrics_result['total_calculated']} metrics")
+    log_info(f"  ({metrics_result['insufficient_data']} metrics had insufficient data)")
 
-  # Convert to JSON string
-  json_string = json.dumps(json_output, indent=2)
+    # Build final JSON structure
+    log_info("Building JSON output structure...")
+    json_output = {
+      'metadata': metadata,
+      'metrics': metrics_result['metrics'],
+      'summary_stats': {
+        'total_metrics_calculated': metrics_result['total_calculated'],
+        'metrics_with_sufficient_data': metrics_result['successful'],
+        'metrics_below_min_attempts': metrics_result['insufficient_data']
+      }
+    }
 
-  # Create media object
-  media_obj = anvil.BlobMedia('application/json', json_string.encode('utf-8'), name=filename)
+    # Generate filename
+    filter_hash = generate_filter_hash(json_filters)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"{league}_{gender}_{year}_{player_shortname}_{filter_hash}_{timestamp}.json"
+    log_info(f"Generated filename: {filename}")
 
-  return {
-    'media_obj': media_obj,
-    'filename': filename,
-    'summary': metadata
-  }
+    # Convert to JSON string
+    json_string = json.dumps(json_output, indent=2)
+    log_info(f"JSON size: {len(json_string)} bytes")
+
+    # Create media object
+    media_obj = anvil.BlobMedia('application/json', json_string.encode('utf-8'), name=filename)
+
+    log_info("=== JSON Generation Complete ===")
+
+    return {
+      'media_obj': media_obj,
+      'filename': filename,
+      'summary': metadata
+    }
+
+  except Exception as e:
+    log_error(f"JSON generation failed: {str(e)}", with_traceback=True)
+    raise
 
 
 def get_filtered_ppr_data(league, gender, year, team, **filters):
@@ -129,125 +148,166 @@ def get_filtered_ppr_data(league, gender, year, team, **filters):
     Returns:
         DataFrame: Filtered PPR data
     """
-  # Get PPR data from your data source
-  # This is a placeholder - adapt to your actual data retrieval method
+  try:
+    log_info(f"Querying PPR data for {league}/{gender}/{year}/{team}...")
 
-  # Example: Load from ppr_csv_tables or similar
-  ppr_rows = app_tables.ppr_csv_tables.search(
-    league=league,
-    gender=gender,
-    year=year,
-    team=team
-  )
+    # Get PPR data from your data source
+    # TODO: Adapt this to your actual data structure
+    ppr_rows = app_tables.ppr_csv_tables.search(
+      league=league,
+      gender=gender,
+      year=year,
+      team=team
+    )
 
-  # Convert to DataFrame (adapt based on your data structure)
-  if len(list(ppr_rows)) == 0:
-    return pd.DataFrame()
+    ppr_list = list(ppr_rows)
+    if len(ppr_list) == 0:
+      log_error(f"No PPR data found for {league}/{gender}/{year}/{team}", with_traceback=False)
+      return pd.DataFrame()
 
+    log_info(f"Found {len(ppr_list)} PPR data records")
+
+    # TODO: Adapt based on your actual data structure
     # This assumes ppr_csv column contains the CSV data
-    # Adapt based on your actual structure
-  ppr_row = list(ppr_rows)[0]
-  ppr_df = pd.read_csv(io.StringIO(ppr_row['ppr_csv']))
+    ppr_row = ppr_list[0]
 
-  # Apply filters
-  if 'comp_l1' in filters:
-    ppr_df = ppr_df[ppr_df['comp_l1'] == filters['comp_l1']]
+    # Check if ppr_csv is a string or needs to be converted
+    if 'ppr_csv' in ppr_row.get_column_names():
+      ppr_df = pd.read_csv(io.StringIO(ppr_row['ppr_csv']))
+    else:
+      log_error("ppr_csv column not found in data", with_traceback=False)
+      return pd.DataFrame()
 
-  if 'comp_l2' in filters:
-    ppr_df = ppr_df[ppr_df['comp_l2'] == filters['comp_l2']]
+    log_info(f"Loaded {len(ppr_df)} raw points from PPR")
 
-  if 'comp_l3' in filters:
-    ppr_df = ppr_df[ppr_df['comp_l3'] == filters['comp_l3']]
+    # Apply filters
+    original_count = len(ppr_df)
 
-  if 'start_date' in filters and 'end_date' in filters:
-    ppr_df['date'] = pd.to_datetime(ppr_df['date'])
-    ppr_df = ppr_df[
-      (ppr_df['date'] >= filters['start_date']) &
-      (ppr_df['date'] <= filters['end_date'])
-      ]
+    if 'comp_l1' in filters:
+      ppr_df = ppr_df[ppr_df['comp_l1'] == filters['comp_l1']]
+      log_debug(f"After comp_l1 filter: {len(ppr_df)} points")
 
-  if 'set' in filters:
-    ppr_df = ppr_df[ppr_df['set_num'] == filters['set']]
+    if 'comp_l2' in filters:
+      ppr_df = ppr_df[ppr_df['comp_l2'] == filters['comp_l2']]
+      log_debug(f"After comp_l2 filter: {len(ppr_df)} points")
 
-  if 'set_touch_type' in filters:
-    ppr_df = ppr_df[ppr_df['set_touch_type'] == filters['set_touch_type']]
+    if 'comp_l3' in filters:
+      ppr_df = ppr_df[ppr_df['comp_l3'] == filters['comp_l3']]
+      log_debug(f"After comp_l3 filter: {len(ppr_df)} points")
 
-  if 'pass_oos' in filters:
-    ppr_df = ppr_df[ppr_df['pass_oos'] == filters['pass_oos']]
+    if 'start_date' in filters and 'end_date' in filters:
+      ppr_df['date'] = pd.to_datetime(ppr_df['date'])
+      ppr_df = ppr_df[
+        (ppr_df['date'] >= filters['start_date']) &
+        (ppr_df['date'] <= filters['end_date'])
+        ]
+      log_debug(f"After date filter: {len(ppr_df)} points")
 
-    # Numeric filters
-  if 'att_ht_low' in filters:
-    ppr_df = ppr_df[ppr_df['att_height'] >= float(filters['att_ht_low'])]
-  if 'att_ht_high' in filters:
-    ppr_df = ppr_df[ppr_df['att_height'] <= float(filters['att_ht_high'])]
+    if 'set' in filters:
+      ppr_df = ppr_df[ppr_df['set_num'] == filters['set']]
+      log_debug(f"After set filter: {len(ppr_df)} points")
 
-  if 'att_speed_low' in filters:
-    ppr_df = ppr_df[ppr_df['att_speed'] >= float(filters['att_speed_low'])]
-  if 'att_speed_high' in filters:
-    ppr_df = ppr_df[ppr_df['att_speed'] <= float(filters['att_speed_high'])]
+    if 'set_touch_type' in filters:
+      ppr_df = ppr_df[ppr_df['set_touch_type'] == filters['set_touch_type']]
+      log_debug(f"After set_touch_type filter: {len(ppr_df)} points")
 
-  if 'set_ht_low' in filters:
-        ppr_df = ppr_df[ppr_df['set_height'] >= float(filters['set_ht_low'])]
-  if 'set_ht_high' in filters:
-        ppr_df = ppr_df[ppr_df['set_height'] <= float(filters['set_ht_high'])]
-    
-  if 'pass_ht_low' in filters:
-        ppr_df = ppr_df[ppr_df['pass_height'] >= float(filters['pass_ht_low'])]
-  if 'pass_ht_high' in filters:
-        ppr_df = ppr_df[ppr_df['pass_height'] <= float(filters['pass_ht_high'])]
-    
-    # Zone filters
-  if 'srv_fr' in filters:
-        ppr_df = ppr_df[ppr_df['serve_src_zone_net'].isin(filters['srv_fr'])]
-    
-  if 'srv_to' in filters:
-        ppr_df = ppr_df[ppr_df['serve_dest_zone'].isin(filters['srv_to'])]
-    
-  return ppr_df
+    if 'pass_oos' in filters:
+      ppr_df = ppr_df[ppr_df['pass_oos'] == filters['pass_oos']]
+      log_debug(f"After pass_oos filter: {len(ppr_df)} points")
+
+      # Numeric filters
+    if 'att_ht_low' in filters:
+      ppr_df = ppr_df[ppr_df['att_height'] >= float(filters['att_ht_low'])]
+    if 'att_ht_high' in filters:
+      ppr_df = ppr_df[ppr_df['att_height'] <= float(filters['att_ht_high'])]
+
+    if 'att_speed_low' in filters:
+      ppr_df = ppr_df[ppr_df['att_speed'] >= float(filters['att_speed_low'])]
+    if 'att_speed_high' in filters:
+      ppr_df = ppr_df[ppr_df['att_speed'] <= float(filters['att_speed_high'])]
+
+    if 'set_ht_low' in filters:
+      ppr_df = ppr_df[ppr_df['set_height'] >= float(filters['set_ht_low'])]
+    if 'set_ht_high' in filters:
+      ppr_df = ppr_df[ppr_df['set_height'] <= float(filters['set_ht_high'])]
+
+    if 'pass_ht_low' in filters:
+      ppr_df = ppr_df[ppr_df['pass_height'] >= float(filters['pass_ht_low'])]
+    if 'pass_ht_high' in filters:
+      ppr_df = ppr_df[ppr_df['pass_height'] <= float(filters['pass_ht_high'])]
+
+      # Zone filters
+    if 'srv_fr' in filters:
+      ppr_df = ppr_df[ppr_df['serve_src_zone_net'].isin(filters['srv_fr'])]
+      log_debug(f"After srv_fr filter: {len(ppr_df)} points")
+
+    if 'srv_to' in filters:
+      ppr_df = ppr_df[ppr_df['serve_dest_zone'].isin(filters['srv_to'])]
+      log_debug(f"After srv_to filter: {len(ppr_df)} points")
+
+    filtered_count = len(ppr_df)
+    log_info(f"Filtering complete: {filtered_count} / {original_count} points retained")
+
+    return ppr_df
+
+  except Exception as e:
+    log_error(f"Error in get_filtered_ppr_data: {str(e)}", with_traceback=True)
+    return pd.DataFrame()
 
 
 def get_filtered_triangle_data(league, gender, year, team, **filters):
-    """
+  """
     Retrieve and filter triangle (set-level) data.
     
     Returns:
         DataFrame: Filtered triangle data
     """
-    # Similar to ppr_df but for triangle data
-    # Placeholder - adapt to your actual data structure
-    
+  try:
+    log_info("Querying triangle data...")
+
+    # TODO: Adapt to your actual triangle data structure
+    # This is a placeholder
     tri_rows = app_tables.triangle_data.search(
-        league=league,
-        gender=gender,
-        year=year,
-        team=team
+      league=league,
+      gender=gender,
+      year=year,
+      team=team
     )
-    
-    if len(list(tri_rows)) == 0:
-        return pd.DataFrame()
-    
-    # Convert to DataFrame
+
+    tri_list = list(tri_rows)
+    if len(tri_list) == 0:
+      log_info("No triangle data found")
+      return pd.DataFrame()
+
+      # Convert to DataFrame
     tri_df = pd.DataFrame([
-        {col: row[col] for col in row.get_column_names()}
-        for row in tri_rows
+      {col: row[col] for col in row.get_column_names()}
+      for row in tri_list
     ])
-    
+
+    log_info(f"Loaded {len(tri_df)} sets from triangle data")
+
     # Apply relevant filters
     if 'comp_l1' in filters:
-        tri_df = tri_df[tri_df['comp_l1'] == filters['comp_l1']]
-    
+      tri_df = tri_df[tri_df['comp_l1'] == filters['comp_l1']]
+
     if 'start_date' in filters and 'end_date' in filters:
-        tri_df['date'] = pd.to_datetime(tri_df['date'])
-        tri_df = tri_df[
-            (tri_df['date'] >= filters['start_date']) &
-            (tri_df['date'] <= filters['end_date'])
+      tri_df['date'] = pd.to_datetime(tri_df['date'])
+      tri_df = tri_df[
+        (tri_df['date'] >= filters['start_date']) &
+        (tri_df['date'] <= filters['end_date'])
         ]
-    
+
+    log_info(f"After filtering: {len(tri_df)} sets")
     return tri_df
+
+  except Exception as e:
+    log_error(f"Error in get_filtered_triangle_data: {str(e)}", with_traceback=True)
+    return pd.DataFrame()
 
 
 def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
-    """
+  """
     Calculate all metrics from the dictionary.
     
     Args:
@@ -264,26 +324,32 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
             'insufficient_data': int
         }
     """
-    
-    metrics_output = {}
-    total_calculated = 0
-    successful = 0
-    insufficient_data = 0
-    
-    # Loop through dictionary
-    for idx, metric_row in metric_dict.iterrows():
-        metric_id = metric_row['metric_id']
-        category = metric_row['metric_category']
-        function_name = metric_row['function_name']
-        result_path = metric_row['result_path']
-        data_filter = metric_row['data_filter']
+
+  metrics_output = {}
+  total_calculated = 0
+  successful = 0
+  insufficient_data = 0
+
+  log_info(f"Calculating {len(metric_dict)} metrics for {player_name}...")
+
+  # Loop through dictionary
+  for idx, metric_row in metric_dict.iterrows():
+    metric_id = metric_row['metric_id']
+    category = metric_row['metric_category']
+    function_name = metric_row['function_name']
+    result_path = metric_row['result_path']
+    data_filter = metric_row['data_filter']
+
+    if pd.isna(function_name):
+      continue
+
+    total_calculated += 1
+
+    # Progress logging every 50 metrics
+    if total_calculated % 50 == 0:
+            log_info(f"Progress: {total_calculated}/{len(metric_dict)} metrics calculated...")
         
-        if pd.isna(function_name):
-            continue
-        
-        total_calculated += 1
-        
-        try:
+    try:
             # Apply data filter if specified
             if pd.notna(data_filter) and data_filter.strip():
                 filtered_ppr = eval(data_filter)
@@ -335,12 +401,13 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
             
             successful += 1
             
-        except Exception as e:
+    except Exception as e:
             # Metric calculation failed (likely insufficient data)
             insufficient_data += 1
-            # Optionally log the error
-            print(f"Error calculating {metric_id}: {str(e)}")
+            log_debug(f"Metric {metric_id} failed: {str(e)}")
             continue
+    
+    log_info(f"Calculation complete: {successful} successful, {insufficient_data} failed")
     
     return {
         'metrics': metrics_output,
@@ -351,16 +418,7 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
 
 
 def generate_filter_hash(filters):
-    """
-    Generate a short hash of filters for filename.
-    
-    Args:
-        filters (dict): Filter dictionary
-    
-    Returns:
-        str: Short hash string
-    """
-    # Create a string representation of filters (excluding player name)
+    """Generate a short hash of filters for filename."""
     filter_items = []
     for k, v in sorted(filters.items()):
         if k not in ['player', 'player_shortname']:
@@ -372,3 +430,6 @@ def generate_filter_hash(filters):
     filter_string = "_".join(filter_items)
     hash_obj = hashlib.md5(filter_string.encode())
     return hash_obj.hexdigest()[:8]
+
+  
+
