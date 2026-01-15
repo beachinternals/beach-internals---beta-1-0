@@ -168,7 +168,7 @@ components:
       type: DropDown
     layout_properties: {grid_position: 'PSXPQF,STIGCC'}
     name: column_panel_9
-    properties: {}
+    properties: {col_widths: '{"OJEXXW":10,"RTFSFK":30,"HJTEJJ":20}'}
     type: ColumnPanel
   - components:
     - layout_properties: {grid_position: 'JFKEBS,EZGMNZ'}
@@ -193,7 +193,7 @@ components:
       type: DropDown
     layout_properties: {grid_position: 'WYHUHP,YTZRFF'}
     name: column_panel_10
-    properties: {col_widths: '{"EZGMNZ":20,"FXCGZV":40}'}
+    properties: {col_widths: '{"EZGMNZ":10,"FXCGZV":50,"JLZGGJ":35,"LYORUE":25,"WYWMVI":35,"YIZVNU":25}'}
     type: ColumnPanel
   - event_bindings: {click: cancel_file_button_click}
     layout_properties: {grid_position: 'NEIZEH,BGGKRP'}
