@@ -106,7 +106,7 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
   gender_list = pd.unique(btd_df['gender'])
   year_list = pd.unique(btd_df['year'])
   team_list = pd.unique(btd_df['team'])
-  
+
   for c_league in league_list:
     # loop ober gender
     #print(f"processing for league: {c_league}")
@@ -126,7 +126,7 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
             #print(email_message)
             r_value, new_team_data = generate_ppr_files_not_background(c_league, c_gender, c_year, c_team, rebuild_all  ) # modify this to return true if there are update, false if not
             #email_message = email_message + '        '+str(r_value) + ' New Data Found =' + str(new_team_data) + "\n"
-    
+
             # now merge the data for this league
             #-------------------------------------
             if new_team_data:
@@ -139,171 +139,54 @@ def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues
               email_message = email_message + ' Merging PPR Files for ' + c_league + ' '+ c_gender + ' '+ c_year+' League'+ "\n"
               r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'League' )
 
-        # ====================================================================
-        # SIMPLIFIED: All-or-none calculation logic
-        # If ppr_csv is newer than ANY calculated data, recalculate EVERYTHING
-        # ====================================================================
+        if new_league_data:
+          # now calculate player data
+          #-----------------------------
+          email_message = email_message + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
+          r_val = calculate_player_data_not_background(c_league, c_gender, c_year)
+          email_message = email_message + '        '+str(r_val)+"\n"
 
-        # Get the League row from ppr_csv_tables to check dates
-        ppr_csv_row = app_tables.ppr_csv_tables.get( 
-          q.all_of(
-            league = c_league,
-            gender = c_gender,
-            year = c_year,
-            team = 'League'
-          ) 
-        )
+          # Calculate Pair Table (MOVED BEFORE TRIANGLE DATA)
+          #-----------------------
+          email_message = email_message + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = build_pair_df( c_league, c_gender, c_year)
+          email_message = email_message + '        '+str(r_val) + "\n"
 
-        if ppr_csv_row:
-          # Determine if we need to recalculate everything
-          need_calculations = False
+          # Load Pair Data into master_pair table (MOVED BEFORE TRIANGLE DATA)
+          #-----------------------
+          email_message = email_message + ' Loading Pair data into master_pair table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = load_pair_data_table_for_league(c_league, c_gender, c_year)
+          email_message = email_message + '        '+str(r_val) + "\n"
 
-          # Check 1: New PPR data was just created
-          if new_league_data:
-            need_calculations = True
-            log_info(f"Calculations triggered by new_league_data for {c_league} {c_gender} {c_year}")
+          # Calculate Triangle Data (MOVED AFTER PAIR TABLE IS LOADED)
+          #------------------------
+          email_message = email_message + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = calculate_triangle_scoring_not_background( c_league, c_gender, c_year)
+          email_message = email_message + '        '+str(r_val) + "\n"
 
-          # Check 2: ppr_csv exists but player_data doesn't
-          elif ppr_csv_row['date'] and not ppr_csv_row['player_data_date']:
-            need_calculations = True
-            log_info(f"Calculations triggered - player_data_date is None for {c_league} {c_gender} {c_year}")
+          # Calculate Pair Data
+          #-----------------------
+          email_message = email_message + ' Building Pair Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = calculate_pair_data_not_background( c_league, c_gender, c_year)
+          email_message = email_message + '        '+str(r_val) + "\n"
 
-          # Check 3: ppr_csv is newer than player_data
-          elif ppr_csv_row['date'] and ppr_csv_row['player_data_date'] and ppr_csv_row['date'] > ppr_csv_row['player_data_date']:
-            need_calculations = True
-            log_info(f"Calculations triggered - ppr_csv date ({ppr_csv_row['date']}) > player_data_date ({ppr_csv_row['player_data_date']}) for {c_league} {c_gender} {c_year}")
+          # calculate pair data
+          email_message = email_message + ' Building Pair Data & Stats for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = calc_s_w_player( c_league, c_gender, c_year )
+          email_message = email_message + '        '+str(r_val) + "\n"
 
-          # Check 4: ppr_csv exists but tri_data doesn't
-          elif ppr_csv_row['date'] and not ppr_csv_row['tri_data_date']:
-            need_calculations = True
-            log_info(f"Calculations triggered - tri_data_date is None for {c_league} {c_gender} {c_year}")
-
-          # Check 5: ppr_csv is newer than tri_data
-          elif ppr_csv_row['date'] and ppr_csv_row['tri_data_date'] and ppr_csv_row['date'] > ppr_csv_row['tri_data_date']:
-            need_calculations = True
-            log_info(f"Calculations triggered - ppr_csv date > tri_data_date for {c_league} {c_gender} {c_year}")
-
-          # Check 6: ppr_csv exists but pair_data doesn't
-          elif ppr_csv_row['date'] and not ppr_csv_row['pair_data_date']:
-            need_calculations = True
-            log_info(f"Calculations triggered - pair_data_date is None for {c_league} {c_gender} {c_year}")
-
-          # Check 7: ppr_csv is newer than pair_data
-          elif ppr_csv_row['date'] and ppr_csv_row['pair_data_date'] and ppr_csv_row['date'] > ppr_csv_row['pair_data_date']:
-            need_calculations = True
-            log_info(f"Calculations triggered - ppr_csv date > pair_data_date for {c_league} {c_gender} {c_year}")
-
-          # FIX FOR rebuild_data.py - Skip calculations when ppr_csv is empty
-
-          # In the calculation section (around line 197), add this check right after "if need_calculations:"
-
-          # If ANY check triggered, recalculate EVERYTHING
-          if need_calculations:
-            # First, verify that ppr_csv has data before attempting calculations
-            if ppr_csv_row['ppr_csv'] is None:
-              log_error(f"Cannot calculate - ppr_csv is None for {c_league} {c_gender} {c_year}")
-              email_message = email_message + f'  ERROR: ppr_csv is None for {c_league} {c_gender} {c_year}\n'
-            else:
-              # Check if ppr_csv is empty (0 rows)
-              try:
-                test_df = pd.read_csv(io.BytesIO(ppr_csv_row['ppr_csv'].get_bytes()))
-                if test_df.shape[0] == 0:
-                  log_info(f"Skipping calculations - ppr_csv is empty (0 rows) for {c_league} {c_gender} {c_year}")
-                  email_message = email_message + f'  Skipped: ppr_csv is empty (0 rows) for {c_league} {c_gender} {c_year}\n'
-                else:
-                  # ppr_csv has data, proceed with calculations
-                  log_info(f"Starting ALL calculations for {c_league} {c_gender} {c_year} (ppr_csv has {test_df.shape[0]} rows)")
-
-                  # Step 1: Calculate player data (MUST succeed before continuing)
-                  email_message = email_message + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
-                  try:
-                    r_val = calculate_player_data_not_background(c_league, c_gender, c_year)
-                    email_message = email_message + '        '+str(r_val)+"\n"
-                    log_info(f"Player data calculation completed for {c_league} {c_gender} {c_year}")
-
-                    # RE-FETCH the row to get updated data
-                    ppr_csv_row = app_tables.ppr_csv_tables.get(league=c_league, gender=c_gender, year=c_year, team='League')
-
-                    # Verify it was actually saved
-                    if ppr_csv_row and ppr_csv_row['player_data'] is None:
-                      log_error(f"ERROR: Player data calculation completed but player_data is still None for {c_league} {c_gender} {c_year}")
-                      email_message = email_message + '        ERROR: Player data not saved!\n'
-                    else:
-                      log_info(f"Verified: Player data was saved for {c_league} {c_gender} {c_year}")
-                  except Exception as e:
-                    log_error(f"ERROR in calculate_player_data: {e}")
-                    email_message = email_message + f'        ERROR: {e}\n'
-
-                  # Step 2: Calculate Triangle Data (depends on player_data)
-                  email_message = email_message + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-                  try:
-                    r_val = calculate_triangle_scoring_not_background( c_league, c_gender, c_year)
-                    email_message = email_message + '        '+str(r_val) + "\n"
-                    log_info(f"Triangle data calculation completed for {c_league} {c_gender} {c_year}")
-
-                    # RE-FETCH the row
-                    ppr_csv_row = app_tables.ppr_csv_tables.get(league=c_league, gender=c_gender, year=c_year, team='League')
-                  except Exception as e:
-                    log_error(f"ERROR in calculate_triangle_scoring: {e}")
-                    email_message = email_message + f'        ERROR: {e}\n'
-
-                  # Step 3: Calculate Pair data
-                  email_message = email_message + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-                  try:
-                    r_val = build_pair_df( c_league, c_gender, c_year)
-                    email_message = email_message + ' Building Pair Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-                    r_val = calculate_pair_data_not_background( c_league, c_gender, c_year)
-                    email_message = email_message + '        '+str(r_val) + "\n"
-                    log_info(f"Pair data calculation completed for {c_league} {c_gender} {c_year}")
-
-                    # RE-FETCH the row
-                    ppr_csv_row = app_tables.ppr_csv_tables.get(league=c_league, gender=c_gender, year=c_year, team='League')
-                  except Exception as e:
-                    log_error(f"ERROR in calculate_pair_data: {e}")
-                    email_message = email_message + f'        ERROR: {e}\n'
-
-                  # Step 4: Calculate pair data & stats
-                  email_message = email_message + ' Building Pair Data & Stats for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-                  try:
-                    r_val = calc_s_w_player( c_league, c_gender, c_year )
-                    email_message = email_message + '        '+str(r_val) + "\n"
-                    log_info(f"Pair stats calculation completed for {c_league} {c_gender} {c_year}")
-                  except Exception as e:
-                    log_error(f"ERROR in calc_s_w_player: {e}")
-                    email_message = email_message + f'        ERROR: {e}\n'
-
-                  # Step 5: Calculate the strength and weaknesses
-                  email_message = email_message + ' Building Strengths & Weaknesses for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-                  try:
-                    r_val = calc_s_w_player( c_league, c_gender, c_year )
-                    email_message = email_message + '        '+str(r_val) + "\n"
-                    log_info(f"Strengths & Weaknesses calculation completed for {c_league} {c_gender} {c_year}")
-                  except Exception as e:
-                    log_error(f"ERROR in calc_s_w_player (2): {e}")
-                    email_message = email_message + f'        ERROR: {e}\n'
-
-              except Exception as e:
-                log_error(f"Error checking ppr_csv for {c_league} {c_gender} {c_year}: {e}")
-                email_message = email_message + f'  ERROR checking ppr_csv: {e}\n'
-              
-          else:
-            # No calculations needed - everything is up to date
-            email_message = email_message + 'All data up to date for ' + c_league + ' '+ c_gender + ' '+ c_year +'\n'
-            log_info(f"No calculations needed for {c_league} {c_gender} {c_year} - all data up to date")
-
+          # calculate the strength and weaknesses
+          email_message = email_message + ' Building Strengths & Weaknesses for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          r_val = calc_s_w_player( c_league, c_gender, c_year )
+          email_message = email_message + '        '+str(r_val) + "\n"
         else:
-          # No League row found in ppr_csv_tables
-          if new_league_data:
-            email_message = email_message + 'WARNING: New league data found but no League row in ppr_csv_tables for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-            log_error(f"WARNING: New league data found but no League row in ppr_csv_tables for {c_league} {c_gender} {c_year}")
-          else:
-            log_info(f"No League row found in ppr_csv_tables for {c_league} {c_gender} {c_year}")
-          
+          email_message = email_message + 'No New data Found for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+
   # the very last thing, load the pair's data table
   email_message = email_message + ' Loading Pair data Table ' + "\n"
   r_val = load_pair_data_table()
   email_message = email_message + '        '+str(r_val) + "\n"
-  
+
   #now, send an email with the updates
   internals_email = 'beachinternals@gmail.com'
   now1 = datetime.now()
@@ -345,7 +228,7 @@ def build_ppr_data2():
 def calculate_ppr_data(rebuild):
   now = datetime.now()
   email_text = "Calculate PPR Data \n Called at:" + str(now) + "\n"
-  
+
   # build data for all new files, for all leagues
 
   # do the btd -> ppr conversion for all btf files
@@ -654,6 +537,87 @@ def load_pair_data_table():
   return True
 
 
+def load_pair_data_table_for_league(c_league, c_gender, c_year):
+  """
+  Load pair data into master_pair table for a specific league/gender/year.
+  This is called during night processing for each league individually,
+  BEFORE calculate_triangle_scoring which needs the pairs in the table.
+  
+  Args:
+      c_league (str): League identifier (e.g., 'NCAA')
+      c_gender (str): Gender ('M' or 'W')
+      c_year (int): Year (e.g., 2026)
+      
+  Returns:
+      bool or list: True if successful, or list with error message
+  """
+  # Get the specific league row from ppr_csv_tables
+  lrow = app_tables.ppr_csv_tables.get(
+    league=c_league,
+    gender=c_gender, 
+    year=c_year,
+    team=q.like("League")
+  )
+  
+  if not lrow:
+    print(f"load_pair_data_table_for_league: No league row found for {c_league} {c_gender} {c_year}")
+    return ["No League Row Found"]
+  
+  show_print = (c_league == 'AVP')
+  print(f"load_pair_data_table_for_league: Processing {c_league}, {c_gender}, {c_year}")
+  
+  if not lrow['pair_list']:
+    print(f"load_pair_data_table_for_league: No Pair List Data for {c_league}, {c_gender}, {c_year}")
+    return ["No Pair List Found"]
+  
+  # Read the pair list from the CSV stored in the database
+  pair_df = pd.read_csv(io.BytesIO(lrow['pair_list'].get_bytes()))
+  
+  if pair_df.shape[0] == 0:
+    print(f"load_pair_data_table_for_league: Pair List Df Empty for {c_league}, {c_gender}, {c_year}")
+    return ["No Pair List Found"]
+  
+  # Loop through the pairs and add them to master_pair table if not already there
+  pairs_added = 0
+  for index, p in pair_df.iterrows():
+    # Extract team from pair name (first word before space)
+    team_delim = p[1].find(' ')
+    if team_delim == -1:
+      if show_print:
+        print(f"load_pair_data_table_for_league: No space found looking for Team in: {p[1]}")
+      continue
+      
+    pair_team = p[1][:team_delim].strip()
+    
+    # Check if this pair already exists in master_pair
+    if not app_tables.master_pair.get(
+      league=c_league,
+      gender=c_gender,
+      year=c_year,
+      player1=p[2],
+      player2=p[3],
+      pair=p[1],
+      team=pair_team
+    ):
+      # Add the pair to master_pair table
+      if show_print:
+        print(f"load_pair_data_table_for_league: Adding pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}")
+      
+      app_tables.master_pair.add_row(
+        league=c_league,
+        gender=c_gender,
+        year=c_year,
+        player1=p[2],
+        player2=p[3],
+        pair=p[1],
+        team=pair_team
+      )
+      pairs_added += 1
+  
+  print(f"load_pair_data_table_for_league: Added {pairs_added} pairs for {c_league} {c_gender} {c_year}")
+  return True
+
+
 
 @anvil.server.background_task
 def check_inconsistent_data():
@@ -785,4 +749,3 @@ def trigger_nightly_check():
     """
   anvil.server.launch_background_task('check_inconsistent_data')
   return {"status": "Nightly check triggered"}
-  

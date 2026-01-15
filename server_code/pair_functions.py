@@ -34,9 +34,9 @@ def get_pair_ppr_data(disp_league, disp_gender, disp_year, disp_team, disp_pair)
 
   # now filter to just this pair
   ppr_df = pair_filter(ppr_df, disp_pair)
-  
+
   return ppr_df
-  
+
 
 #------------------------------------------------------------------
 #           Pair Filter - limit data to only points with disp_pair 
@@ -45,8 +45,8 @@ def pair_filter(ppr_df, disp_pair):
   # filter a ppr dataframe down to all plays with the pair palyer 1 and 2
   disp_pair = disp_pair.strip()
   tmp_df = ppr_df[ (ppr_df['teama'].str.strip() == disp_pair) |
-                   (ppr_df['teamb'].str.strip() == disp_pair) 
-                  ]
+    (ppr_df['teamb'].str.strip() == disp_pair) 
+    ]
   return tmp_df
 
 #------------------------------------------------------------------
@@ -64,7 +64,7 @@ def pair_team_filter(ppr_df, disp_team):
   else:
     tmp_df1 = ppr_df
     tmp_df2 = ppr_df
-    
+
   return pd.concat([tmp_df1,tmp_df2])
 
 #------------------------------------------------------------------
@@ -74,27 +74,27 @@ def pair_team_list(ppr_df, disp_team):
   # return a df of the pair and player's that are in the passed df
   # format of returned df: [ 'team', 'player1', 'player2' ]
 
-    # extract team a and team b lists
+  # extract team a and team b lists
   team_list_a = ppr_df[['teama','player_a1','player_a2']]
   # now limit to just this team
   team_list_a = team_list_a[ team_list_a['teama'].str.contains(disp_team.strip()+' ', case=True, na=False)]
   team_list_a = team_list_a.rename( columns={'teama':'team', 'player_a1':'player1', 'player_a2':'player2'} )
   #print(f"Team List A: {team_list_a}")
-  
+
   team_list_b = ppr_df[['teamb','player_b1','player_b2']]
   team_list_b = team_list_b[ team_list_b['teamb'].str.contains(disp_team.strip()+' ', case=True, na=False)]
   team_list_b = team_list_b.rename( columns={'teamb':'team', 'player_b1':'player1','player_b2':'player2'} )
   #print(f"Team List B: {team_list_b}")
-  
+
   team_list = pd.concat([team_list_a,team_list_b])
   #print(f"Pair List Concat:{team_list}")
-  
+
   team_list = team_list.drop_duplicates()
   #print(f"Pair List Unique:{team_list}")
-  
+
   team_list = team_list.sort_values(by=['team'])
   #print(f"Pair List Sort:{team_list}")
-  
+
   return team_list
 
 
@@ -105,10 +105,10 @@ def player_filter(ppr_df, disp_player):
   # filter a ppr dataframe down to all plays with the pair player 1 and 2
   disp_player = disp_player.strip()
   tmp_df = ppr_df[ (ppr_df['player_a1'].str.strip() == disp_player) |
-                   (ppr_df['player_a2'].str.strip() == disp_player) |
-                   (ppr_df['player_b1'].str.strip() == disp_player) |
-                   (ppr_df['player_b2'].str.strip() == disp_player) 
-                  ]
+    (ppr_df['player_a2'].str.strip() == disp_player) |
+    (ppr_df['player_b1'].str.strip() == disp_player) |
+    (ppr_df['player_b2'].str.strip() == disp_player) 
+    ]
   return tmp_df
 
 #------------------------------------------------------------------
@@ -117,9 +117,11 @@ def player_filter(ppr_df, disp_player):
 def pair_players(disp_pair: str) -> Tuple[str, str]:
   """
     Retrieve the two player names associated with a pair identifier from the master_pair table.
+    If not found in the table, attempts to parse the pair string directly.
     
     Args:
-        disp_pair (str): Pair identifier (e.g., "Player1/Player2" or other unique pair ID)
+        disp_pair (str): Pair identifier in format "TEAM1 NUM1 NAME1 TEAM2 NUM2 NAME2"
+                        Example: "UNF 10 Sophia UNF 32 Kamryn"
         
     Returns:
         tuple[str, str]: A tuple containing the two player names (player1, player2)
@@ -130,13 +132,57 @@ def pair_players(disp_pair: str) -> Tuple[str, str]:
   if not isinstance(disp_pair, str) or not disp_pair.strip():
     raise ValueError("Pair identifier must be a non-empty string")
 
-  #disp_pair = disp_pair.strip()
+  disp_pair = disp_pair.strip()
   #print(f"Pair Players: disp pair = {disp_pair}")
+
+  # First, try to look up in master_pair table
   for pair_row in app_tables.master_pair.search(pair=disp_pair):
     return pair_row['player1'], pair_row['player2']
 
-  raise ValueError(f"No players found for pair: {disp_pair}")
-  
+  # If not found in table, try to parse the pair string directly
+  # This is a fallback for when pairs haven't been loaded into master_pair yet
+  try:
+    parts = disp_pair.split()
+
+    # We need at least 6 parts: TEAM1 NUM1 NAME1 TEAM2 NUM2 NAME2
+    if len(parts) < 6:
+      raise ValueError(f"Invalid pair format: {disp_pair}")
+
+    # Find the split point between the two players
+    # Look for where we have TEAM NUM pattern appearing a second time
+    split_idx = None
+
+    # Start from position 3 (after first TEAM NUM NAME)
+    for i in range(3, len(parts) - 2):
+      # Check if parts[i] looks like a team (2-4 uppercase letters)
+      # and parts[i+1] is a number
+      if (parts[i].isupper() and 
+          2 <= len(parts[i]) <= 4 and 
+          parts[i+1].isdigit()):
+        split_idx = i
+        break
+
+    if split_idx is None:
+      # Fallback: assume it's exactly in the middle
+      split_idx = len(parts) // 2
+
+    # Build player1 and player2 strings
+    player1_parts = parts[:split_idx]
+    player2_parts = parts[split_idx:]
+
+    # Validate each player has at least TEAM NUM NAME (3 parts)
+    if len(player1_parts) < 3 or len(player2_parts) < 3:
+      raise ValueError(f"Invalid pair format: {disp_pair}")
+
+    player1 = ' '.join(player1_parts)
+    player2 = ' '.join(player2_parts)
+
+    #print(f"Parsed pair {disp_pair} -> player1: {player1}, player2: {player2}")
+    return player1, player2
+
+  except Exception as e:
+    raise ValueError(f"No players found for pair: {disp_pair}. Error: {str(e)}")
+
 #-----------------------------------------------------------------
 #
 #           Get master pair row
@@ -151,14 +197,14 @@ def fetch_pair_row( c_league, c_gender, c_year, c_pair):
   else:
     return 'Error, Pair Not Found:'+c_league+c_gender+c_year+c_pair+' fetch_pair_row()'
 
-    
+
 #-------------------------------------------------------------------------------------------------------
 #.    Get Pair Data
 #.    get the pair_data and pair_stats files, return the data fram
 #-------------------------------------------------------------------------------------------------------
 def get_pair_data( disp_league, disp_gender, disp_year):
   # return the player_data dataframe
-  
+
   # find the play_data table
   # pull out the player_data csv file
   #print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}")
@@ -168,7 +214,7 @@ def get_pair_data( disp_league, disp_gender, disp_year):
       gender = disp_gender,
       year = disp_year,
       team = "League"
-      ) )
+    ) )
 
   if ppr_csv_row:
     pair_data_df =  pd.read_csv(io.BytesIO( ppr_csv_row['pair_data'].get_bytes()))
@@ -245,7 +291,7 @@ def pair_pt_total(ppr_df, disp_pair):
   pts_df.at[0,'p_good_pass'] = ppr_df[ ((ppr_df['serve_player'] == player1) | (ppr_df['serve_player'] == player2)) & (ppr_df['pass_oos'] <= 0) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'p_bad_pass']  = ppr_df[ ((ppr_df['serve_player'] == player1) | (ppr_df['serve_player'] == player2)) & (ppr_df['pass_oos'] >= 1) & (ppr_df['point_outcome'] != "TSE")].shape[0]
   pts_df.at[0,'p_serves'] = ppr_df[ ppr_df['serve_player'] == player1  ].shape[0] + ppr_df[ ppr_df['serve_player'] == player2  ].shape[0]
-  
+
   pts_df.at[0,'o_tsa'] = ppr_df[ (ppr_df['point_outcome'] == 'TSA') & ( ppr_df['point_outcome_team'] != disp_pair) ].shape[0]
   pts_df.at[0,'o_tse'] = ppr_df[ (ppr_df['point_outcome'] == 'TSE') & ( ppr_df['point_outcome_team'] != disp_pair) ].shape[0]
   pts_df.at[0,'o_fbk'] = ppr_df[ (ppr_df['point_outcome'] == 'FBK') & ( ppr_df['point_outcome_team'] != disp_pair) ].shape[0]
