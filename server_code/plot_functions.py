@@ -658,7 +658,7 @@ def find_clusters(ppr_df, disp_player, category):
     df_category = df[df['value'] == category]
     #print(f" category total: {df_category.shape[0]}")
     if df_category.empty:
-      log_info(f"No {category} data found for report_id: {report_id}")
+      log_info(f"No {category} data found for player: {disp_player}")
       return {'error': f'No {category} data found'}
 
       # Extract coordinates
