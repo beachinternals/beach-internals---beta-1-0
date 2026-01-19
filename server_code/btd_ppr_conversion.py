@@ -685,7 +685,7 @@ def error_check_ppr(ppr_df):
     if ppr_r['att_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and (ppr_r['set_player'] == ppr_r['att_player'] ):
       #print(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       all3 = True
-      error_string = error_string + print_to_string(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
+      error_string = error_string + '\n' + print_to_string(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       no_errors += 1
       #print(f"Error String in all 3:{error_string}")
       #
@@ -698,29 +698,29 @@ def error_check_ppr(ppr_df):
         ppr_r['set_player'] = ppr_r['player_b2']
       elif ppr_r['set_player'] ==  ppr_r['player_b2']:
         ppr_r['set_player'] = ppr_r['player_b2']
-      error_string = error_string + "Swapped the set player to "+ppr_r['set_player'] 
+      error_string = error_string + '\n' + "Swapped the set player to "+ppr_r['set_player'] 
     
     if ppr_r['set_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and not all3:
       #print(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
-      error_string = error_string + print_to_string(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
+      error_string = error_string + '\n' + print_to_string(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
       no_errors += 1
 
     if ppr_r['att_yn'] == "Y" and (ppr_r['att_player'] == ppr_r['set_player'] ) and not all3:  
       #print(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
-      error_string = error_string + print_to_string(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
+      error_string = error_string + '\n' + print_to_string(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
       no_errors += 1
       
     # serve and attack player are the same team
     if ppr_r['pass_yn'] == "Y":
       if (ppr_r['serve_player'] in ppr_r['teama']) and (ppr_r['pass_player'] in ppr_r['teama'] ) or (ppr_r['serve_player'] in ppr_r['teamb']) and (ppr_r['pass_player'] in ppr_r['teamb'] ):
         #print(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
-        error_string = error_string + print_to_string(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
+        error_string = error_string + '\n' + print_to_string(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
         no_errors += 1
       
     # can I check the service order?
     if not ppr_r['serve_player']:
       #print(f"|- No Serve Player                   -|{ppr_r['serve_player']}, Point Number:{ppr_r['point_no']}")
-      error_string = error_string + print_to_string(f"|- No Serve Player                   -|{ppr_r['serve_player']}, Point Number:{ppr_r['point_no']}")
+      error_string = error_string + '\n' + print_to_string(f"|- No Serve Player                   -|{ppr_r['serve_player']}, Point Number:{ppr_r['point_no']}")
       no_errors += 1
       
     # can I check if the right team got the point?
@@ -728,7 +728,7 @@ def error_check_ppr(ppr_df):
     # someday, I'll have to deal with missing players
 
     #print(f"Total Errors Found:{no_errors}")
-  error_string = error_string + print_to_string(f"Total Errors Found:{no_errors}")
+  error_string = error_string + '\n' + print_to_string(f"Total Errors Found:{no_errors}")
   return ppr_df, no_errors, error_string
 
 def calc_dist(x1,x2,y1,y2):

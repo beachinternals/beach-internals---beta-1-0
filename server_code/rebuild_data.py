@@ -625,22 +625,30 @@ def check_inconsistent_data():
     Nightly task to check for inconsistent data in btd_files and master_player tables,
     including duplicate video_id in btd_files and near-duplicate numbers in master_player
     only for league='NCAA', and send an email report to beachinternals@gmail.com.
+    
+    UPDATED: Now filters to only check data for the current year (set below).
     """
   try:
+    # SET THE YEAR TO CHECK HERE - Change this value to check a different year
+    current_year = '2026'
+
     log_info("Starting nightly data consistency check at %s", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     issues = []
 
     # Check btd_files for per_xy == 0, points < 25, and duplicate video_id
+    # Filtered for current_year only
     btd_issues = []
-    btd_rows = list(app_tables.btd_files.search())  # Convert to list for multiple passes
+    btd_rows = list(app_tables.btd_files.search(year=current_year))  # Convert to list for multiple passes
 
     # Check per_xy and points
-    for row in btd_rows:
+    for row in btd_rows: 
       row_issues = []
       if row['per_xy'] == 0:
         row_issues.append("per_xy is 0")
       if row['points'] is not None and row['points'] < 25:
         row_issues.append(f"points ({row['points']}) < 25")
+      if row['no_errors'] > 20 :
+        row_issues.append(f"errors > 20 {row['error_str']}")
       if row_issues:
         league = str(row['league'] or 'None')
         gender = str(row['gender'] or 'None')
@@ -678,8 +686,9 @@ def check_inconsistent_data():
       issues.append("<h3>btd_files Issues</h3><ul>" + "".join(f"<li>{issue}</li>" for issue in btd_issues) + "</ul>")
 
       # Check master_player for single-digit number and near-duplicates (NCAA only)
+      # Filtered for current_year only
     mp_issues = []
-    mp_rows = list(app_tables.master_player.search())
+    mp_rows = list(app_tables.master_player.search(year=current_year))
     groups = {}
     for row in mp_rows:
       key = (
@@ -718,12 +727,12 @@ def check_inconsistent_data():
 
       # Prepare email content
     email_body = (
-      f"<h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')}</h2>"
+      f"<h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')} ({current_year} Data Only)</h2>"
       f"<p>Found the following inconsistencies in the database:</p>{''.join(issues)}"
       f"<p>Please review these issues and update the data as needed.</p>"
     ) if issues else (
-      f"<h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')}</h2>"
-      f"<p>No inconsistencies found in btd_files or master_player tables.</p>"
+      f"<h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')} ({current_year} Data Only)</h2>"
+      f"<p>No inconsistencies found in btd_files or master_player tables for year {current_year}.</p>"
     )
 
     # Send email
@@ -749,3 +758,5 @@ def trigger_nightly_check():
     """
   anvil.server.launch_background_task('check_inconsistent_data')
   return {"status": "Nightly check triggered"}
+
+
