@@ -150,119 +150,87 @@ def generate_player_metrics_json(league_value, team, **json_filters):
     log_error(f"JSON generation failed: {str(e)}", with_traceback=True)
     raise
 
-
 def get_filtered_ppr_data(league, gender, year, team, **filters):
   """
     Retrieve and filter point-by-point data.
+    
+    Uses logged-in user's team to determine which PPR data to access.
     
     Returns:
         DataFrame: Filtered PPR data
     """
   try:
-    log_info(f"Querying PPR data for {league}/{gender}/{year}/{team}...")
+    # Get the logged-in user's team from the users table
+    current_user = anvil.users.get_user()
+    if not current_user:
+      log_error("No user logged in", with_traceback=False)
+      return pd.DataFrame()
 
-    # Get PPR data from your data source
-    # TODO: Adapt this to your actual data structure
-    ppr_rows = app_tables.ppr_csv_tables.search(
+    user_team = current_user['team']
+    log_info(f"User team from login: {user_team}")
+
+    # Special handling for INTERNALS users
+    if user_team == 'INTERNALS':
+      search_team = 'League'
+      log_info(f"INTERNALS user - using team='{search_team}'")
+    else:
+      search_team = user_team
+
+    log_info(f"Querying PPR data for {league}/{gender}/{year}/team={search_team}...")
+
+    # Get data from the user's team row
+    ppr_rows = list(app_tables.ppr_csv_tables.search(
       league=league,
       gender=gender,
       year=year,
-      team=team
-    )
+      team=search_team
+    ))
 
-    ppr_list = list(ppr_rows)
-    if len(ppr_list) == 0:
-      log_error(f"No PPR data found for {league}/{gender}/{year}/{team}", with_traceback=False)
+    if len(ppr_rows) == 0:
+      log_error(f"No PPR data found for {league}/{gender}/{year}/team={search_team}", with_traceback=False)
       return pd.DataFrame()
 
-    log_info(f"Found {len(ppr_list)} PPR data records")
+    log_info(f"Found {len(ppr_rows)} PPR data record(s)")
 
-    # TODO: Adapt based on your actual data structure
-    # This assumes ppr_csv column contains the CSV data
-    ppr_row = ppr_list[0]
+    # Get the first (or only) row
+    ppr_row = ppr_rows[0]
 
-    # Check if ppr_csv is a string or needs to be converted
-    if 'ppr_csv' in ppr_row.get_column_names():
-      ppr_df = pd.read_csv(io.StringIO(ppr_row['ppr_csv']))
+    # Get column names from table schema
+    column_names = [col['name'] for col in app_tables.ppr_csv_tables.list_columns()]
+
+    # Check if ppr_csv column exists
+    if 'ppr_csv' not in column_names:
+      log_error("ppr_csv column not found in ppr_csv_tables", with_traceback=False)
+      return pd.DataFrame()
+
+    # Load the CSV data - handle Media object
+    ppr_csv_data = ppr_row['ppr_csv']
+
+    if hasattr(ppr_csv_data, 'get_bytes'):
+      # It's a Media object - get the bytes and decode
+      ppr_csv_string = ppr_csv_data.get_bytes().decode('utf-8')
+      log_debug("Loaded ppr_csv from Media object")
     else:
-      log_error("ppr_csv column not found in data", with_traceback=False)
-      return pd.DataFrame()
+      # It's already a string
+      ppr_csv_string = ppr_csv_data
+      log_debug("Loaded ppr_csv as string")
+
+    ppr_df = pd.read_csv(io.StringIO(ppr_csv_string))
 
     log_info(f"Loaded {len(ppr_df)} raw points from PPR")
 
-    # Apply filters
-    original_count = len(ppr_df)
+    # Use existing filter_ppr_df function to apply filters
+    log_info("Applying filters using filter_ppr_df()...")
+    ppr_df = filter_ppr_df(ppr_df, **filters)
 
-    if 'comp_l1' in filters:
-      ppr_df = ppr_df[ppr_df['comp_l1'] == filters['comp_l1']]
-      log_debug(f"After comp_l1 filter: {len(ppr_df)} points")
-
-    if 'comp_l2' in filters:
-      ppr_df = ppr_df[ppr_df['comp_l2'] == filters['comp_l2']]
-      log_debug(f"After comp_l2 filter: {len(ppr_df)} points")
-
-    if 'comp_l3' in filters:
-      ppr_df = ppr_df[ppr_df['comp_l3'] == filters['comp_l3']]
-      log_debug(f"After comp_l3 filter: {len(ppr_df)} points")
-
-    if 'start_date' in filters and 'end_date' in filters:
-      ppr_df['date'] = pd.to_datetime(ppr_df['date'])
-      ppr_df = ppr_df[
-        (ppr_df['date'] >= filters['start_date']) &
-        (ppr_df['date'] <= filters['end_date'])
-        ]
-      log_debug(f"After date filter: {len(ppr_df)} points")
-
-    if 'set' in filters:
-      ppr_df = ppr_df[ppr_df['set_num'] == filters['set']]
-      log_debug(f"After set filter: {len(ppr_df)} points")
-
-    if 'set_touch_type' in filters:
-      ppr_df = ppr_df[ppr_df['set_touch_type'] == filters['set_touch_type']]
-      log_debug(f"After set_touch_type filter: {len(ppr_df)} points")
-
-    if 'pass_oos' in filters:
-      ppr_df = ppr_df[ppr_df['pass_oos'] == filters['pass_oos']]
-      log_debug(f"After pass_oos filter: {len(ppr_df)} points")
-
-      # Numeric filters
-    if 'att_ht_low' in filters:
-      ppr_df = ppr_df[ppr_df['att_height'] >= float(filters['att_ht_low'])]
-    if 'att_ht_high' in filters:
-      ppr_df = ppr_df[ppr_df['att_height'] <= float(filters['att_ht_high'])]
-
-    if 'att_speed_low' in filters:
-      ppr_df = ppr_df[ppr_df['att_speed'] >= float(filters['att_speed_low'])]
-    if 'att_speed_high' in filters:
-      ppr_df = ppr_df[ppr_df['att_speed'] <= float(filters['att_speed_high'])]
-
-    if 'set_ht_low' in filters:
-      ppr_df = ppr_df[ppr_df['set_height'] >= float(filters['set_ht_low'])]
-    if 'set_ht_high' in filters:
-      ppr_df = ppr_df[ppr_df['set_height'] <= float(filters['set_ht_high'])]
-
-    if 'pass_ht_low' in filters:
-      ppr_df = ppr_df[ppr_df['pass_height'] >= float(filters['pass_ht_low'])]
-    if 'pass_ht_high' in filters:
-      ppr_df = ppr_df[ppr_df['pass_height'] <= float(filters['pass_ht_high'])]
-
-      # Zone filters
-    if 'srv_fr' in filters:
-      ppr_df = ppr_df[ppr_df['serve_src_zone_net'].isin(filters['srv_fr'])]
-      log_debug(f"After srv_fr filter: {len(ppr_df)} points")
-
-    if 'srv_to' in filters:
-      ppr_df = ppr_df[ppr_df['serve_dest_zone'].isin(filters['srv_to'])]
-      log_debug(f"After srv_to filter: {len(ppr_df)} points")
-
-    filtered_count = len(ppr_df)
-    log_info(f"Filtering complete: {filtered_count} / {original_count} points retained")
+    log_info(f"After filtering: {len(ppr_df)} points retained")
 
     return ppr_df
 
   except Exception as e:
     log_error(f"Error in get_filtered_ppr_data: {str(e)}", with_traceback=True)
     return pd.DataFrame()
+    
 
 def get_filtered_triangle_data(league, gender, year, team, **filters):
   """
@@ -274,9 +242,30 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
   try:
     log_info("Querying triangle data...")
 
+    # Get date range from filters (optional)
+    has_dates = 'start_date' in filters and 'end_date' in filters
+
+    if has_dates:
+      date_checked = True
+      disp_start_date = filters['start_date']
+      disp_end_date = filters['end_date']
+      log_info(f"Using date range: {disp_start_date} to {disp_end_date}")
+    else:
+      # No date filtering - get all data
+      date_checked = False
+      disp_start_date = None
+      disp_end_date = None
+      log_info("No date range specified - retrieving all triangle data")
+
     # Get triangle data using existing server function
-    # Note: tri_data is league-wide (team="League"), not team-specific
-    tri_df, tri_found = get_tri_data(league, gender, year)
+    tri_df, tri_found = get_tri_data(
+      league, 
+      gender, 
+      year,
+      date_checked,
+      disp_start_date,
+      disp_end_date
+    )
 
     # Check if data was found
     if not tri_found or len(tri_df) == 0:
@@ -296,7 +285,7 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
         tri_df = tri_df[(tri_df['player1'] == player_name) | (tri_df['player2'] == player_name)]
         log_debug(f"After player filter (player1/player2): {len(tri_df)} sets")
 
-    # Apply competition level filters
+    # Apply competition level filters (if not already applied by get_tri_data)
     if 'comp_l1' in filters and 'comp_l1' in tri_df.columns:
       tri_df = tri_df[tri_df['comp_l1'] == filters['comp_l1']]
       log_debug(f"After comp_l1 filter: {len(tri_df)} sets")
@@ -309,22 +298,12 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
       tri_df = tri_df[tri_df['comp_l3'] == filters['comp_l3']]
       log_debug(f"After comp_l3 filter: {len(tri_df)} sets")
 
-    # Apply date range filter
-    if 'start_date' in filters and 'end_date' in filters and 'date' in tri_df.columns:
-      tri_df['date'] = pd.to_datetime(tri_df['date'])
-      tri_df = tri_df[
-        (tri_df['date'] >= filters['start_date']) &
-        (tri_df['date'] <= filters['end_date'])
-        ]
-      log_debug(f"After date filter: {len(tri_df)} sets")
-
     log_info(f"After all filtering: {len(tri_df)} sets")
     return tri_df
 
   except Exception as e:
     log_error(f"Error in get_filtered_triangle_data: {str(e)}", with_traceback=True)
     return pd.DataFrame()
-
     
 
 
