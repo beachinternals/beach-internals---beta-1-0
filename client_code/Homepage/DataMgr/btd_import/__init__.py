@@ -92,28 +92,33 @@ class btd_import(btd_importTemplate):
   def file_loader_1_change(self, file, **event_args):
     """This method is called when a new file is loaded into this FileLoader"""
 
-    # call the server function that will analyze the file and return stats + cleaned CSV
+    # Call the server function that will analyze the file and return stats + cleaned CSV
     # IMPORTANT: Now returns TWO values: statistics AND cleaned CSV
     statistics, cleaned_csv = anvil.server.call('update_btd_characteristics', file)
 
     # Unpack the statistics
     [playera1, playera2, playerb1, playerb2, num_serves, 
-     comp_score, per_action_players, per_coord, per_srv_players] = statistics
+    comp_score, per_action_players, per_coord, per_srv_players] = statistics
 
-    # CRITICAL: Store the cleaned CSV for later use
+    # CRITICAL: Store the cleaned CSV for later use in save_button_click
     self.cleaned_csv_file = cleaned_csv
-    
+
+    # Create the player_list from the extracted 4 players
+    player_list = [playera1, playera2, playerb1, playerb2]
+
+    # Populate the BTD player dropdowns with the extracted players
     self.btd_playera1_drop_down.items = player_list
     self.btd_playera2_drop_down.items = player_list
-    self.btd_playerb2_drop_down.items = player_list
     self.btd_playerb1_drop_down.items = player_list
+    self.btd_playerb2_drop_down.items = player_list
 
-    self.btd_playera1_drop_down.selected_value = return_value[0]
-    self.btd_playera2_drop_down.selected_value = return_value[1]
-    self.btd_playerb1_drop_down.selected_value = return_value[2]
-    self.btd_playerb2_drop_down.selected_value = return_value[3]
+    # Set the selected values to the extracted players
+    self.btd_playera1_drop_down.selected_value = playera1
+    self.btd_playera2_drop_down.selected_value = playera2
+    self.btd_playerb1_drop_down.selected_value = playerb1
+    self.btd_playerb2_drop_down.selected_value = playerb2
 
-    # extract league, gender, year from league selected value
+    # Extract league, gender, year from league selected value
     league_value = self.league2_drop_down.selected_value
     str_loc = league_value.index('|')
     disp_league = league_value[:str_loc-1].strip()
@@ -121,38 +126,42 @@ class btd_import(btd_importTemplate):
     str_loc = league_value.index('|')
     disp_gender = league_value[:str_loc-1].strip()
     disp_year = league_value[str_loc+1:].strip()
-    
+
     # Set the drop down for the ppr players
     ppr_list = [
       {
-        "team":   row["team"],
-        "number":   row["number"],
+        "team": row["team"],
+        "number": row["number"],
         "shortname": row["shortname"],
       }
       for row in app_tables.master_player.search(
-        league = disp_league,
-        year = disp_year,
-        gender= disp_gender
+        league=disp_league,
+        year=disp_year,
+        gender=disp_gender
       )
     ]
+
     ppr_player_list = []
     for i in ppr_list:
-      ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
+      ppr_player_list.append(i['team'] + " " + i['number'] + " " + i['shortname'])
+    ppr_player_list.sort()
 
-    ppr_player_list.sort()    
     self.ppr_playera1_drop_down.items = ppr_player_list
     self.ppr_playera2_drop_down.items = ppr_player_list
     self.ppr_playerb1_drop_down.items = ppr_player_list
     self.ppr_playerb2_drop_down.items = ppr_player_list
-    
-    # save the other values
-    self.points_label.text = return_value[4]
-    self.comp_score_label.text = return_value[5]
-    self.per_players_label.text = return_value[6]
-    self.per_coord_label.text = return_value[7] 
-    self.per_srv_player_label.text = return_value[8]
+
+    # Save the other values (using the unpacked variables, not return_value)
+    self.points_label.text = num_serves
+    self.comp_score_label.text = comp_score
+    self.per_players_label.text = per_action_players
+    self.per_coord_label.text = per_coord
+    self.per_srv_player_label.text = per_srv_players
     self.filename_box.text = file.name
+
+    # Done - event handlers don't need to return anything
     pass
+
 
   def save_file_button_click(self, **event_args):
     """This method is called when the button is clicked"""
@@ -204,7 +213,7 @@ class btd_import(btd_importTemplate):
       comp_l3=self.comp_l3_drop_down.selected_value["comp_l3"],
       date=self.date_picker.date,
       filename=self.file_loader_1.file.name,
-      csv_data=self.file_loader_1.file,
+      csv_data=self.cleaned_csv_file,
       btd_file_date=datetime.datetime.now(),
       team=anvil.users.get_user()['team'],
       points = pts,
