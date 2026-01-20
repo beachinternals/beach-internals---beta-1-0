@@ -88,15 +88,20 @@ class btd_import(btd_importTemplate):
     
     pass
 
+
   def file_loader_1_change(self, file, **event_args):
     """This method is called when a new file is loaded into this FileLoader"""
-     # calcuate the information on the uploaded btd file
-    return_value =  anvil.server.call('update_btd_characteristics', file )
 
-    #print(f"players in the client, {return_value[0]} , {return_value[1]} , {return_value[2]} , {return_value[3]}")
-    #print(f"League Dropdown selected value:{self.league_drop_down.selected_value}")
-    
-    player_list = [ return_value[0], return_value[1], return_value[2], return_value[3] ]
+    # call the server function that will analyze the file and return stats + cleaned CSV
+    # IMPORTANT: Now returns TWO values: statistics AND cleaned CSV
+    statistics, cleaned_csv = anvil.server.call('update_btd_characteristics', file)
+
+    # Unpack the statistics
+    [playera1, playera2, playerb1, playerb2, num_serves, 
+     comp_score, per_action_players, per_coord, per_srv_players] = statistics
+
+    # CRITICAL: Store the cleaned CSV for later use
+    self.cleaned_csv_file = cleaned_csv
     
     self.btd_playera1_drop_down.items = player_list
     self.btd_playera2_drop_down.items = player_list
