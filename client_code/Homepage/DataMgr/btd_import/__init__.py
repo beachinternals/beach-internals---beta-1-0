@@ -29,12 +29,12 @@ class btd_import(btd_importTemplate):
     self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
     self.league2_drop_down.selected_value = self.league_drop_down.selected_value
     self.league2_drop_down.items = self.league_drop_down.items
-    
+
     # populate the drop downs for league, and competition level 1 and 3
     self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = user_row["def_league"] )]
     self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( league= user_row['def_league'] )]
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = user_row['def_league'])]
-    
+
   pass
 
   def league_drop_down_change(self, **event_args):
@@ -58,7 +58,7 @@ class btd_import(btd_importTemplate):
       comp_l1=self.comp_l1_drop_down.selected_value['comp_l1']
     )]
     self.league2_drop_down.selected_value = self.league_drop_down.selected_value
-    
+
     # set comp_l3 data:
     comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=disp_league)]
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
@@ -85,22 +85,29 @@ class btd_import(btd_importTemplate):
     self.ppr_playera2_drop_down.items = ppr_player_list
     self.ppr_playerb1_drop_down.items = ppr_player_list
     self.ppr_playerb2_drop_down.items = ppr_player_list
-    
+
     pass
 
 
   def file_loader_1_change(self, file, **event_args):
     """This method is called when a new file is loaded into this FileLoader"""
 
-    # Call the server function that will analyze the file and return stats + cleaned CSV
-    # IMPORTANT: Now returns TWO values: statistics AND cleaned CSV
-    statistics, cleaned_csv = anvil.server.call('update_btd_characteristics', file)
+    # Show processing notification
+    with Notification("Processing and validating BTD file...", style="info", timeout=None):
+      # Call the server function that will analyze the file and return stats + cleaned CSV
+      # IMPORTANT: Now returns TWO values: statistics AND cleaned CSV
+      # The cleaned CSV has been validated and corrected for player/team assignments
+      statistics, cleaned_csv = anvil.server.call('update_btd_characteristics', file)
 
     # Unpack the statistics
     [playera1, playera2, playerb1, playerb2, num_serves, 
-    comp_score, per_action_players, per_coord, per_srv_players] = statistics
+     comp_score, per_action_players, per_coord, per_srv_players] = statistics
 
     # CRITICAL: Store the cleaned CSV for later use in save_button_click
+    # This cleaned CSV includes:
+    # - Normalized player names (removed 'None ' prefixes)
+    # - Corrected team assignments
+    # - 'changes' column documenting any corrections made
     self.cleaned_csv_file = cleaned_csv
 
     # Create the player_list from the extracted 4 players
@@ -159,6 +166,11 @@ class btd_import(btd_importTemplate):
     self.per_srv_player_label.text = per_srv_players
     self.filename_box.text = file.name
 
+    # Show success notification
+    Notification("File processed successfully! Player/team assignments validated.", 
+                 style="success", 
+                 timeout=3)
+
     # Done - event handlers don't need to return anything
     pass
 
@@ -172,7 +184,7 @@ class btd_import(btd_importTemplate):
       alert("Please enter a valid date for this Match")
       return
 
-    # let's check if the privae tag looks correct
+    # let's check if the private tag looks correct
     user_team = anvil.users.get_user()['team']
     if user_team in self.ppr_playera1_drop_down.selected_value or user_team in self.ppr_playerb1_drop_down.selected_value:
       # should be a private data file
@@ -203,7 +215,11 @@ class btd_import(btd_importTemplate):
     else:
       is_private = False
     
-    # creat a new row with the data    
+    # Create a new row with the data
+    # IMPORTANT: We're now saving the cleaned_csv_file which includes:
+    # - Player/team validation corrections
+    # - Normalized player names
+    # - A 'changes' column documenting all modifications
     app_tables.btd_files.add_row( 
       league=disp_league,
       gender=disp_gender,
@@ -213,7 +229,7 @@ class btd_import(btd_importTemplate):
       comp_l3=self.comp_l3_drop_down.selected_value["comp_l3"],
       date=self.date_picker.date,
       filename=self.file_loader_1.file.name,
-      csv_data=self.cleaned_csv_file,
+      csv_data=self.cleaned_csv_file,  # This is the validated and corrected CSV
       btd_file_date=datetime.datetime.now(),
       team=anvil.users.get_user()['team'],
       points = pts,
@@ -232,19 +248,19 @@ class btd_import(btd_importTemplate):
       ppr_playerb1 = self.ppr_playerb1_drop_down.selected_value,
       ppr_playerb2 = self.ppr_playerb2_drop_down.selected_value
     )
-    alert("New Row Saved!")
+    alert("New Row Saved! (With validated player/team assignments)")
     open_form("Homepage.DataMgr")
 
   def private_help_link_click(self, **event_args):
     """This method is called when the link is clicked"""
-    alert("This defines how the data will be user: /n Private - Only avaiable to the team, used for Player and Pair reports. /n Public - used for scouting, avaialble to all teams on the Internals network.")
+    alert("This defines how the data will be used:\n\nPrivate - Only available to the team, used for Player and Pair reports.\n\nPublic - Used for scouting, available to all teams on the Internals network.")
     pass
 
   def save_player_button_click(self, **event_args):
     """This method is called when the button is clicked"""
     # this is to save a new player in the master player database.
     # First, check if the player exists
-    # uppeercase the team name and the alias
+    # uppercase the team name and the alias
     self.team2_text_box.text = self.team2_text_box.text.upper()
     self.alias_text_box.text = self.alias_text_box.text.upper()
 
@@ -268,7 +284,7 @@ class btd_import(btd_importTemplate):
       )
 
     if len(p_rows) > 0:
-      alert(title='Player Elready Exists')
+      alert(title='Player Already Exists')
       return False
 
     add_row = app_tables.master_player.add_row(
@@ -343,4 +359,3 @@ class btd_import(btd_importTemplate):
     if confirm("Cancel Data Import?"):
       open_form('Homepage.DataMgr')
     pass
-

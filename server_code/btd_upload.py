@@ -90,6 +90,100 @@ def identify_declared_team(btd_df):
   return team_counts.index[0]
 
 
+def validate_and_correct_player_assignments(btd_df):
+  """
+  Validate and correct player/team assignments in BTD data.
+  
+  This function:
+  1. Identifies the 4 main players (2 per team with most entries)
+  2. Checks all other entries for misassigned teams
+  3. Corrects team assignments where player appears on wrong team
+  4. Logs errors for players that don't match any of the 4 main players
+  
+  Args:
+    btd_df: DataFrame with BTD data (must have 'team' and 'player' columns)
+    Note: 'player' column should already have 'None ' prefix removed
+    
+  Returns:
+    DataFrame: Corrected BTD data with 'changes' column added
+  """
+  log_info("=== Starting Player/Team Validation ===")
+
+  # Add changes column if it doesn't exist
+  if 'changes' not in btd_df.columns:
+    btd_df['changes'] = ''
+
+  # Step 1: Identify the two teams
+  teams = btd_df['team'].value_counts()
+  if len(teams) != 2:
+    error_msg = f"Expected 2 teams, found {len(teams)}: {list(teams.index)}"
+    log_error(error_msg, with_traceback=False)
+    return btd_df
+
+  team1, team2 = teams.index[0], teams.index[1]
+  log_info(f"Teams identified: '{team1}' ({teams[team1]} rows), '{team2}' ({teams[team2]} rows)")
+
+  # Step 2: Find top 2 players per team by entry count (using player column - now cleaned)
+  team1_players = btd_df[btd_df['team'] == team1]['player'].value_counts().head(2)
+  team2_players = btd_df[btd_df['team'] == team2]['player'].value_counts().head(2)
+
+  team1_player_list = list(team1_players.index)
+  team2_player_list = list(team2_players.index)
+
+  log_info(f"Team '{team1}' main players: {team1_player_list[0]} ({team1_players.iloc[0]} entries), "
+           f"{team1_player_list[1]} ({team1_players.iloc[1]} entries)")
+  log_info(f"Team '{team2}' main players: {team2_player_list[0]} ({team2_players.iloc[0]} entries), "
+           f"{team2_player_list[1]} ({team2_players.iloc[1]} entries)")
+
+  # Create mapping: player_number -> correct_team
+  # Since we already stripped 'None ' prefix, these are just the numbers
+  player_to_team = {}
+  for player in team1_player_list:
+    player_to_team[str(player)] = team1
+
+  for player in team2_player_list:
+    player_to_team[str(player)] = team2
+
+  log_info(f"Player to team mapping: {player_to_team}")
+
+  # All 4 main players (used for validation)
+  all_main_players = team1_player_list + team2_player_list
+
+  # Step 3: Process each row for corrections
+  changes_count = 0
+  errors_count = 0
+
+  for idx, row in btd_df.iterrows():
+    current_team = row['team']
+    current_player = str(row['player'])
+
+    # Skip rows with no player data
+    if not current_player or current_player in ['', 'nan', 'NOPLAYER']:
+      continue
+
+    # Check if this player is one of our 4 main players
+    if current_player in player_to_team:
+      correct_team = player_to_team[current_player]
+
+      if current_team != correct_team:
+        # Player is on wrong team - fix it
+        old_team = current_team
+        btd_df.at[idx, 'team'] = correct_team
+        btd_df.at[idx, 'changes'] = f"Team changed from '{old_team}' to '{correct_team}'"
+        log_info(f"Row {idx}: Player '{current_player}' moved from '{old_team}' to '{correct_team}'")
+        changes_count += 1
+    else:
+      # This player doesn't match any of our 4 main players
+      error_msg = f"Row {idx}: Player '{current_player}' on team '{current_team}' does not match any of the 4 main players"
+      log_error(error_msg, with_traceback=False)
+      btd_df.at[idx, 'changes'] = "ERROR: Player not in main 4 players"
+      errors_count += 1
+
+  log_info(f"=== Validation Complete: {changes_count} corrections, {errors_count} errors ===")
+
+  return btd_df
+
+
 def detect_cross_team_players(players_df, btd_df):
   """
   Detect players who might be attributed to the wrong team
@@ -100,8 +194,8 @@ def detect_cross_team_players(players_df, btd_df):
   if players_df.empty:
     return []
 
-  # Get player counts
-  player_counts = players_df['player'].value_counts()
+  # Get player counts from player_combined (team + player for unique ID)
+  player_counts = players_df['player_combined'].value_counts()
 
   # Extract team and number from each player
   player_info = {}
@@ -161,6 +255,10 @@ def extract_four_players(players_df, btd_df):
   """
   Extract exactly 4 players from the BTD data, handling duplicates and errors
   
+  Args:
+    players_df: DataFrame filtered to rows with player data (has player_combined column)
+    btd_df: Full BTD DataFrame
+  
   Returns:
     Tuple: (list of 4 player strings, list of warnings)
   """
@@ -172,8 +270,8 @@ def extract_four_players(players_df, btd_df):
     warnings.append("No player data found in BTD file")
     return ["Unknown", "Unknown", "Unknown", "Unknown"], warnings
 
-  # Get unique players
-  players_unique = players_df['player'].unique()
+  # Get unique players from player_combined (team + player)
+  players_unique = players_df['player_combined'].unique()
   players_unique = [p for p in players_unique if p and len(p.strip()) > 0]
 
   log_info("=== PLAYER EXTRACTION DEBUG ===")
@@ -198,8 +296,8 @@ def extract_four_players(players_df, btd_df):
     warnings.append("Could not identify declared team")
     return extract_by_frequency(players_df, players_unique), warnings
   
-  # Count occurrences of each player
-  player_counts = players_df['player'].value_counts().to_dict()
+  # Count occurrences of each player (using player_combined)
+  player_counts = players_df['player_combined'].value_counts().to_dict()
   log_debug("Player frequencies:")
   for player, count in sorted(player_counts.items(), key=lambda x: x[1], reverse=True):
     log_debug(f"  {player}: {count} occurrences")
@@ -283,7 +381,7 @@ def extract_by_frequency(players_df, players_unique):
   """Fallback method: Extract players purely by frequency"""
   log_info("Using frequency-based extraction (fallback method)")
   
-  player_counts = players_df['player'].value_counts().to_dict()
+  player_counts = players_df['player_combined'].value_counts().to_dict()
   sorted_players = sorted(
     players_unique,
     key=lambda p: (-player_counts.get(p, 0), p)
@@ -337,13 +435,25 @@ def update_btd_characteristics(file):
     # Fill nan with '' in team and player
     btd_df = btd_df.fillna({'team': str('NOTEAM'), 'player': str('NOPLAYER')})
     
-    # Rename 'player' to 'only_player' to preserve original
-    btd_df = btd_df.rename(columns={'player': 'only_player'})
+    # FIRST: Remove 'None ' prefix from player column IN PLACE
+    # This ensures "None 1" and "1" are treated as the same player
+    def strip_none_prefix(player_val):
+      player_str = str(player_val) if pd.notna(player_val) else ''
+      if player_str.startswith('None '):
+        return player_str[5:].strip()
+      return player_str
     
-    # Clean and combine team + player using the new function
-    # THIS NORMALIZES THE DATA - removes 'None ' prefixes, etc.
-    btd_df['player'] = btd_df.apply(
-      lambda row: clean_player_name(row['team'], row['only_player']), 
+    btd_df['player'] = btd_df['player'].apply(strip_none_prefix)
+    log_info("Removed 'None ' prefix from player column")
+    
+    # SECOND: Validate and correct player/team assignments
+    # Now operates on the 'player' column with clean values (no 'None ' prefix)
+    btd_df = validate_and_correct_player_assignments(btd_df)
+    
+    # THIRD: Create a temporary combined column for statistics
+    # (team + player for unique identification across teams)
+    btd_df['player_combined'] = btd_df.apply(
+      lambda row: clean_player_name(row['team'], row['player']), 
       axis=1
     )
     
@@ -353,10 +463,14 @@ def update_btd_characteristics(file):
   num_actions = int(btd_df.shape[0])
   serves_df = btd_df[btd_df['action_type'] == "serve"]
   num_serves = int(serves_df.shape[0])
-  players_df = btd_df[btd_df['player'].notna() & (btd_df['player'] != '')]
+  
+  # Use player_combined for statistics (team + player for unique ID)
+  players_df = btd_df[btd_df['player_combined'].notna() & (btd_df['player_combined'] != '')]
   per_action_players = int(players_df.shape[0]) / num_actions if num_actions > 0 else 0
-  srv_players = serves_df[serves_df['player'].notna() & (serves_df['player'] != '')]
+  
+  srv_players = serves_df[serves_df['player_combined'].notna() & (serves_df['player_combined'] != '')]
   per_srv_players = int(srv_players.shape[0]) / num_serves if num_serves > 0 else 0
+  
   src_coord = btd_df[btd_df['src_zone'].notna()]
   dest_coord = btd_df[btd_df['dest_zone'].notna()]
   num_src_coord = int(src_coord.shape[0]) + int(dest_coord.shape[0])
@@ -370,7 +484,7 @@ def update_btd_characteristics(file):
   
   log_info(f"BTD Statistics: Actions={num_actions}, Serves={num_serves}, %SrvPlayers={per_srv_players}, %Coord={per_coord}, %ActionPlayers={per_action_players}, Score={comp_score}")
 
-  # Extract the 4 players using improved logic (from CLEANED data)
+  # Extract the 4 players using improved logic (from player_combined data)
   four_players, warnings = extract_four_players(players_df, btd_df)
   
   playera1 = four_players[0]
@@ -384,6 +498,11 @@ def update_btd_characteristics(file):
     log_error(f"BTD Upload Warnings ({len(warnings)}):", with_traceback=False)
     for w in warnings:
       log_error(f"  - {w}", with_traceback=False)
+
+  # Drop the temporary player_combined column before saving
+  # Keep only 'player' column for downstream compatibility
+  if 'player_combined' in btd_df.columns:
+    btd_df = btd_df.drop(columns=['player_combined'])
 
   # Convert the CLEANED dataframe back to CSV
   cleaned_csv_string = btd_df.to_csv(index=False)
