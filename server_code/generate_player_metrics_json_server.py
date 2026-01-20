@@ -19,6 +19,7 @@ import io
 # Import your logging utilities
 from logger_utils import log_info, log_error, log_debug, log_critical
 
+from server_functions import *
 
 @anvil.server.callable
 def generate_player_metrics_json(league_value, team, **json_filters):
@@ -46,7 +47,7 @@ def generate_player_metrics_json(league_value, team, **json_filters):
     league_value = league_value[str_loc + 1 :]
     str_loc = league_value.index("|")
     gender = league_value[: str_loc - 1].strip()
-    year = int(league_value[str_loc + 1 :].strip())
+    year = str(int(league_value[str_loc + 1 :].strip()))
 
     log_info(f"Parsed - League: {league}, Gender: {gender}, Year: {year}")
 
@@ -60,9 +61,18 @@ def generate_player_metrics_json(league_value, team, **json_filters):
 
     # Load metric dictionary
     log_info("Loading metric dictionary from database...")
-    dict_rows = app_tables.metric_dictionary.search()
+    dict_rows = list(app_tables.metric_dictionary.search())
+
+    if len(dict_rows) == 0:
+      log_error("No metrics found in metric_dictionary table", with_traceback=False)
+      raise ValueError("Metric dictionary is empty")
+
+    # Get column names from the table schema
+    column_names = [col['name'] for col in app_tables.metric_dictionary.list_columns()]
+
+    # Convert to DataFrame
     metric_dict = pd.DataFrame([
-      {col: row[col] for col in row.get_column_names()}
+      {col: row[col] for col in column_names}
       for row in dict_rows
     ])
     log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary")
@@ -254,7 +264,6 @@ def get_filtered_ppr_data(league, gender, year, team, **filters):
     log_error(f"Error in get_filtered_ppr_data: {str(e)}", with_traceback=True)
     return pd.DataFrame()
 
-
 def get_filtered_triangle_data(league, gender, year, team, **filters):
   """
     Retrieve and filter triangle (set-level) data.
@@ -265,45 +274,58 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
   try:
     log_info("Querying triangle data...")
 
-    # TODO: Adapt to your actual triangle data structure
-    # This is a placeholder
-    tri_rows = app_tables.triangle_data.search(
-      league=league,
-      gender=gender,
-      year=year,
-      team=team
-    )
+    # Get triangle data using existing server function
+    # Note: tri_data is league-wide (team="League"), not team-specific
+    tri_df, tri_found = get_tri_data(league, gender, year)
 
-    tri_list = list(tri_rows)
-    if len(tri_list) == 0:
+    # Check if data was found
+    if not tri_found or len(tri_df) == 0:
       log_info("No triangle data found")
       return pd.DataFrame()
 
-      # Convert to DataFrame
-    tri_df = pd.DataFrame([
-      {col: row[col] for col in row.get_column_names()}
-      for row in tri_list
-    ])
+    log_info(f"Loaded {len(tri_df)} raw sets from triangle data")
 
-    log_info(f"Loaded {len(tri_df)} sets from triangle data")
+    # Filter by player (required for player-specific metrics)
+    player_name = filters.get('player')
+    if player_name and 'player' in tri_df.columns:
+      tri_df = tri_df[tri_df['player'] == player_name]
+      log_debug(f"After player filter: {len(tri_df)} sets")
+    elif player_name:
+      # If player column doesn't exist, check for player1/player2 columns
+      if 'player1' in tri_df.columns and 'player2' in tri_df.columns:
+        tri_df = tri_df[(tri_df['player1'] == player_name) | (tri_df['player2'] == player_name)]
+        log_debug(f"After player filter (player1/player2): {len(tri_df)} sets")
 
-    # Apply relevant filters
-    if 'comp_l1' in filters:
+    # Apply competition level filters
+    if 'comp_l1' in filters and 'comp_l1' in tri_df.columns:
       tri_df = tri_df[tri_df['comp_l1'] == filters['comp_l1']]
+      log_debug(f"After comp_l1 filter: {len(tri_df)} sets")
 
-    if 'start_date' in filters and 'end_date' in filters:
+    if 'comp_l2' in filters and 'comp_l2' in tri_df.columns:
+      tri_df = tri_df[tri_df['comp_l2'] == filters['comp_l2']]
+      log_debug(f"After comp_l2 filter: {len(tri_df)} sets")
+
+    if 'comp_l3' in filters and 'comp_l3' in tri_df.columns:
+      tri_df = tri_df[tri_df['comp_l3'] == filters['comp_l3']]
+      log_debug(f"After comp_l3 filter: {len(tri_df)} sets")
+
+    # Apply date range filter
+    if 'start_date' in filters and 'end_date' in filters and 'date' in tri_df.columns:
       tri_df['date'] = pd.to_datetime(tri_df['date'])
       tri_df = tri_df[
         (tri_df['date'] >= filters['start_date']) &
         (tri_df['date'] <= filters['end_date'])
         ]
+      log_debug(f"After date filter: {len(tri_df)} sets")
 
-    log_info(f"After filtering: {len(tri_df)} sets")
+    log_info(f"After all filtering: {len(tri_df)} sets")
     return tri_df
 
   except Exception as e:
     log_error(f"Error in get_filtered_triangle_data: {str(e)}", with_traceback=True)
     return pd.DataFrame()
+
+    
 
 
 def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
