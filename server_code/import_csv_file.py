@@ -7,15 +7,28 @@ import io
 from logger_utils import log_info, log_error, log_debug, log_critical
 
 def sanitize_quotes(text):
-  """Replace Unicode quotes with regular quotes."""
-  if text == '' or text is None or text == 'nan':
+  """Replace ALL types of Unicode quotes with regular ASCII quotes."""
+  # Check for None or empty
+  if text is None or text == '' or text == 'nan':
     return ''
+
   text = str(text)
-  # Replace all types of Unicode quotes
-  text = text.replace(''', "'").replace(''', "'")  # Single curly quotes
-  text = text.replace('"', '"').replace('"', '"')  # Double curly quotes
-  text = text.replace('`', "'")  # Backticks
+
+  # Replace using Unicode code points (more reliable than copying characters)
+  # Single quotes
+  text = text.replace('\u2018', "'").replace('\u2019', "'")  # Left/right single quote
+  text = text.replace('\u201a', "'").replace('\u201b', "'")  # Low/high single quote
+
+  # Double quotes
+  text = text.replace('\u201c', '"').replace('\u201d', '"')  # Left/right double quote
+  text = text.replace('\u201e', '"').replace('\u201f', '"')  # Low/high double quote
+
+  # Other quote-like characters
+  text = text.replace('\u2039', "'").replace('\u203a', "'")  # Angle quotes
+  text = text.replace('`', "'").replace('\u00b4', "'")       # Backtick/acute
+
   return text
+  
 
 @anvil.server.callable
 def import_metric_dictionary_from_csv(csv_file):
