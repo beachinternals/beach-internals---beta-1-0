@@ -15,13 +15,18 @@ from datetime import datetime
 # ==============================================================================
 def consistency_sd_match(ppr_df, player_name, metric_name):
   """
-    Calculate the standard deviation of a metric within a single match.
+    Calculate the standard deviation of a metric across set periods.
     
-    This measures how consistent a player's performance is during a match.
+    Splits sets into early/late game:
+    - Set 1: Early (≤21 points), Late (>21 points)
+    - Set 2: Early (≤21 points), Late (>21 points)  
+    - Set 3: Early (≤15 points), Late (>15 points)
+    
+    This measures how consistent a player's performance is across different game periods.
     Lower std dev = more consistent performance.
     
     Args:
-        ppr_df (DataFrame): Point-by-point dataframe for the match
+        ppr_df (DataFrame): Point-by-point dataframe
         player_name (str): Player to analyze
         metric_name (str): Which metric to calculate consistency for.
                           Options: 'fbhe', 'error_density', 'knockout', 
@@ -29,50 +34,65 @@ def consistency_sd_match(ppr_df, player_name, metric_name):
     
     Returns:
         dict: {
-            'std_dev': float (standard deviation),
+            'std_dev': float (standard deviation across periods),
             'metric_name': str,
-            'window_size': int (size of calculation window),
-            'num_windows': int (number of windows analyzed),
-            'mean_value': float (average metric value)
+            'num_periods': int (number of periods analyzed),
+            'mean_value': float (average metric value across periods),
+            'period_values': list (metric value for each period)
         }
     """
 
   # Filter for player
   player_df = ppr_df[
     (ppr_df['player_a1'] == player_name) | 
-    (ppr_df['player_a2'] == player_name)
+    (ppr_df['player_a2'] == player_name) |
+    (ppr_df['player_b1'] == player_name) | 
+    (ppr_df['player_b2'] == player_name)
     ].copy()
 
   if len(player_df) == 0:
     return {
       'std_dev': None,
       'metric_name': metric_name,
-      'window_size': 0,
-      'num_windows': 0,
+      'num_periods': 0,
       'mean_value': None,
+      'period_values': [],
       'error': 'No data for player'
     }
 
-    # Calculate metric values for rolling windows
-  window_size = 5  # Calculate metric every 5 points
-  window_values = []
+  # Calculate total score for each point
+  player_df['total_score'] = player_df['a_score'] + player_df['b_score']
 
-  total_points = len(player_df)
+  # Assign period group based on set and score
+  def assign_period(row):
+    set_num = row['set']
+    total_score = row['total_score']
 
-  # If not enough points, use smaller window
-  if total_points < window_size:
-    window_size = max(3, total_points // 2)
+    if set_num == 1:
+      return 1 if total_score <= 21 else 2
+    elif set_num == 2:
+      return 3 if total_score <= 21 else 4
+    elif set_num == 3:
+      return 5 if total_score <= 15 else 6
+    else:
+      return None  # Invalid set number
 
-    # Calculate metric for each window
-  for i in range(0, total_points - window_size + 1, window_size):
-    window_df = player_df.iloc[i:i + window_size]
+  player_df['period'] = player_df.apply(assign_period, axis=1)
 
-    # Calculate the specified metric
+  # Remove any rows with invalid periods
+  player_df = player_df[player_df['period'].notna()]
+
+  # Group by video_id and period to get unique periods
+  period_values = []
+
+  for (video_id, period), period_df in player_df.groupby(['video_id', 'period']):
+
+    # Calculate the specified metric for this period
     metric_value = None
 
     if metric_name == 'fbhe':
       # First ball hitting efficiency
-      attacks = window_df[window_df['skill'] == 'attack']
+      attacks = period_df[period_df['att_player'] == player_name]
       if len(attacks) > 0:
         kills = len(attacks[attacks['point_outcome'] == 'FBK'])
         errors = len(attacks[attacks['point_outcome'] == 'FBE'])
@@ -81,42 +101,64 @@ def consistency_sd_match(ppr_df, player_name, metric_name):
 
     elif metric_name == 'error_density':
       # Total errors / total points
-      errors = len(window_df[window_df['eval_code'].str.contains('error', case=False, na=False)])
-      points = len(window_df)
+      att_errors = len(period_df[(period_df['point_outcome'] == 'FBE') & (period_df['att_player'] == player_name)])
+      tran_errors = len(period_df[(period_df['point_outcome'] == 'TE') & (period_df['point_outcome_team'].str.contains(player_name, na=False))]) / 2
+      serve_errors = len(period_df[(period_df['point_outcome'] == 'TSE') & (period_df['serve_player'] == player_name)])
+      errors = att_errors + tran_errors + serve_errors
+      points = len(period_df)
       metric_value = errors / points if points > 0 else None
 
     elif metric_name == 'knockout':
       # (Aces + opponent OOS passes) / serves
-      serves = window_df[window_df['skill'] == 'serve']
+      serves = period_df[period_df['serve_player'] == player_name]
       if len(serves) > 0:
-        aces = len(serves[serves['eval_code'] == '#'])
-        # Note: OOS passes would need to be tracked in opponent data
-        # For now, just use aces
-        metric_value = aces / len(serves)
+        aces = len(serves[serves['point_outcome'] == 'TSA'])
+        oos = len(serves[serves['pass_oos'] != 0])
+        metric_value = (aces + oos) / len(serves)
 
     elif metric_name == 'pass_oos':
       # Out of system passes / total passes
-      passes = window_df[window_df['skill'] == 'pass']
+      passes = period_df[period_df['pass_player'] == player_name]
       if len(passes) > 0:
-        oos = len(passes[passes['eval_code'].isin(['!', '/', '-'])])
+        oos = len(passes[passes['pass_oos'] != 0])
         metric_value = oos / len(passes)
 
     elif metric_name == 'points':
-      # Points per window (simple count)
-      metric_value = len(window_df)
+      # Points won / total points in period
+      points_earned = len(period_df[
+        ((period_df['point_outcome'] == 'FBK') | 
+         (period_df['point_outcome'] == 'TK') | 
+         (period_df['point_outcome'] == 'TSA')) &
+        (period_df['point_outcome_team'].str.contains(player_name, na=False))
+        ])
+      metric_value = points_earned / len(period_df) if len(period_df) > 0 else None
 
     elif metric_name == 'transition':
-      # Simplified transition - would need proper transition identification
-      # For now, use rally length as proxy
-      metric_value = len(window_df)
+      # Transition points won / total transition points
+      tran_pts_won = len(period_df[
+        (period_df['point_outcome'] == 'TK') & 
+        (period_df['point_outcome_team'].str.contains(player_name, na=False))
+        ])
+      tran_pts_opp_err = len(period_df[
+        (period_df['point_outcome'] == 'TE') & 
+        (~period_df['point_outcome_team'].str.contains(player_name, na=False))
+        ])
+      tran_pts = tran_pts_won + tran_pts_opp_err
+
+      total_tran = len(period_df[
+        (period_df['point_outcome'] == 'TK') | 
+        (period_df['point_outcome'] == 'TE')
+        ])
+
+      metric_value = tran_pts / total_tran if total_tran > 0 else None
 
     if metric_value is not None:
-      window_values.append(metric_value)
+      period_values.append(metric_value)
 
-    # Calculate standard deviation
-  if len(window_values) >= 2:
-    std_dev = float(np.std(window_values, ddof=1))
-    mean_value = float(np.mean(window_values))
+  # Calculate standard deviation across periods
+  if len(period_values) >= 2:
+    std_dev = float(np.std(period_values, ddof=1))
+    mean_value = float(np.mean(period_values))
   else:
     std_dev = None
     mean_value = None
@@ -124,43 +166,47 @@ def consistency_sd_match(ppr_df, player_name, metric_name):
   return {
     'std_dev': std_dev,
     'metric_name': metric_name,
-    'window_size': window_size,
-    'num_windows': len(window_values),
-    'mean_value': mean_value
+    'num_periods': len(period_values),
+    'mean_value': mean_value,
+    'period_values': period_values
   }
+
 
 
 # ==============================================================================
 # FUNCTION 2: consistency_sd_set2set()
 # ==============================================================================
-def consistency_sd_set2set(tri_df, player_name, metric_name):
+def consistency_sd_set2set(ppr_df, player_name, metric_name):
+  
   """
-    Calculate the consistency of a metric from set to set.
+    Calculate the standard deviation of a metric across sets.
     
-    This measures whether a player performs similarly across different sets.
-    Lower std dev = more consistent across sets.
+    This measures how consistent a player's performance is from set to set.
+    Lower std dev = more consistent performance.
     
     Args:
-        tri_df (DataFrame): Triangle dataframe (one row per set)
+        ppr_df (DataFrame): Point-by-point dataframe
         player_name (str): Player to analyze
         metric_name (str): Which metric to calculate consistency for.
-                          Options: 'fbhe', 'error_density', 'knockout',
+                          Options: 'fbhe', 'error_density', 'knockout', 
                                    'pass_oos', 'points', 'transition'
     
     Returns:
         dict: {
-            'std_dev': float (std dev across sets),
+            'std_dev': float (standard deviation across sets),
             'metric_name': str,
-            'num_sets': int,
-            'mean_value': float,
-            'set_breakdown': list of dicts with per-set values
+            'num_sets': int (number of sets analyzed),
+            'mean_value': float (average metric value across sets),
+            'set_values': list (metric value for each set)
         }
     """
 
-  # Filter for player's sets
-  player_df = tri_df[
-    (tri_df['player_a1'] == player_name) | 
-    (tri_df['player_a2'] == player_name)
+  # Filter for player
+  player_df = ppr_df[
+    (ppr_df['player_a1'] == player_name) | 
+    (ppr_df['player_a2'] == player_name) |
+    (ppr_df['player_b1'] == player_name) | 
+    (ppr_df['player_b2'] == player_name)
     ].copy()
 
   if len(player_df) == 0:
@@ -169,71 +215,84 @@ def consistency_sd_set2set(tri_df, player_name, metric_name):
       'metric_name': metric_name,
       'num_sets': 0,
       'mean_value': None,
-      'set_breakdown': [],
+      'set_values': [],
       'error': 'No data for player'
     }
 
-    # Sort by set number
-  if 'set_num' in player_df.columns:
-    player_df = player_df.sort_values('set_num')
-
-    # Calculate metric for each set
+  # Group by video_id and set to get unique sets
   set_values = []
-  set_breakdown = []
 
-  for idx, row in player_df.iterrows():
+  for (video_id, set_num), set_df in player_df.groupby(['video_id', 'set']):
+
+    # Calculate the specified metric for this set
     metric_value = None
-    attempts = 0
 
     if metric_name == 'fbhe':
-      # Get from triangle data columns
-      if 'fbhe' in row:
-        metric_value = row['fbhe']
-        attempts = row.get('att_attempts', 0)
-      elif 'att_kills' in row and 'att_errors' in row and 'att_attempts' in row:
-        attempts = row['att_attempts']
-        if attempts > 0:
-          metric_value = (row['att_kills'] - row['att_errors']) / attempts
+      # First ball hitting efficiency
+      attacks = set_df[set_df['att_player'] == player_name]
+      if len(attacks) > 0:
+        kills = len(attacks[attacks['point_outcome'] == 'FBK'])
+        errors = len(attacks[attacks['point_outcome'] == 'FBE'])
+        attempts = len(attacks)
+        metric_value = (kills - errors) / attempts if attempts > 0 else None
 
     elif metric_name == 'error_density':
-      if 'total_errors' in row and 'total_points' in row:
-        total_points = row['total_points']
-        if total_points > 0:
-          metric_value = row['total_errors'] / total_points
-          attempts = total_points
+      # Total errors / total points
+      att_errors = len(set_df[(set_df['point_outcome'] == 'FBE') & (set_df['att_player'] == player_name)])
+      tran_errors = len(set_df[(set_df['point_outcome'] == 'TE') & (set_df['point_outcome_team'].str.contains(player_name, na=False))]) / 2
+      serve_errors = len(set_df[(set_df['point_outcome'] == 'TSE') & (set_df['serve_player'] == player_name)])
+      errors = att_errors + tran_errors + serve_errors
+      points = len(set_df)
+      metric_value = errors / points if points > 0 else None
 
     elif metric_name == 'knockout':
-      if 'srv_aces' in row and 'srv_attempts' in row:
-        attempts = row['srv_attempts']
-        if attempts > 0:
-          metric_value = row['srv_aces'] / attempts
+      # (Aces + opponent OOS passes) / serves
+      serves = set_df[set_df['serve_player'] == player_name]
+      if len(serves) > 0:
+        aces = len(serves[serves['point_outcome'] == 'TSA'])
+        oos = len(serves[serves['pass_oos'] != 0])
+        metric_value = (aces + oos) / len(serves)
 
     elif metric_name == 'pass_oos':
-      if 'pass_oos' in row and 'pass_attempts' in row:
-        attempts = row['pass_attempts']
-        if attempts > 0:
-          metric_value = row['pass_oos'] / attempts
+      # Out of system passes / total passes
+      passes = set_df[set_df['pass_player'] == player_name]
+      if len(passes) > 0:
+        oos = len(passes[passes['pass_oos'] != 0])
+        metric_value = oos / len(passes)
 
     elif metric_name == 'points':
-      if 'total_points' in row:
-        metric_value = row['total_points']
-        attempts = 1
+      # Points won / total points in set
+      points_earned = len(set_df[
+        ((set_df['point_outcome'] == 'FBK') | 
+         (set_df['point_outcome'] == 'TK') | 
+         (set_df['point_outcome'] == 'TSA')) &
+        (set_df['point_outcome_team'].str.contains(player_name, na=False))
+        ])
+      metric_value = points_earned / len(set_df) if len(set_df) > 0 else None
 
     elif metric_name == 'transition':
-      if 'transition_kills' in row and 'transition_attempts' in row:
-        attempts = row['transition_attempts']
-        if attempts > 0:
-          metric_value = row['transition_kills'] / attempts
+      # Transition points won / total transition points
+      tran_pts_won = len(set_df[
+        (set_df['point_outcome'] == 'TK') & 
+        (set_df['point_outcome_team'].str.contains(player_name, na=False))
+        ])
+      tran_pts_opp_err = len(set_df[
+        (set_df['point_outcome'] == 'TE') & 
+        (~set_df['point_outcome_team'].str.contains(player_name, na=False))
+        ])
+      tran_pts = tran_pts_won + tran_pts_opp_err
+
+      total_tran = len(set_df[
+        (set_df['point_outcome'] == 'TK') | 
+        (set_df['point_outcome'] == 'TE')
+        ])
+
+      metric_value = tran_pts / total_tran if total_tran > 0 else None
 
     if metric_value is not None:
       set_values.append(metric_value)
-      set_breakdown.append({
-        'set_num': row.get('set_num', idx + 1),
-        'metric_value': float(metric_value),
-        'attempts': int(attempts)
-      })
 
-    # Calculate standard deviation across sets
+  # Calculate standard deviation across sets
   if len(set_values) >= 2:
     std_dev = float(np.std(set_values, ddof=1))
     mean_value = float(np.mean(set_values))
@@ -246,8 +305,10 @@ def consistency_sd_set2set(tri_df, player_name, metric_name):
     'metric_name': metric_name,
     'num_sets': len(set_values),
     'mean_value': mean_value,
-    'set_breakdown': set_breakdown
+    'set_values': set_values
   }
+
+
 
 
 # ==============================================================================
@@ -286,10 +347,10 @@ def calc_serve_pct_obj(ppr_df, player_name):
     )
 
     # Count aces (direct point from serve)
-  aces = len(serves[serves['eval_code'] == '#'])
+  aces = len(serves[serves['point_outcome'] == 'TSA'])
 
   # Count errors (serve out, net, foot fault)
-  errors = len(serves[serves['eval_code'].isin(['=', 'serve_error', '=!', '=/'])])
+  errors = len(serves[serves['point_outcome'] == 'TSE'])
 
   # Calculate percentages
   ace_pct = aces / total_serves

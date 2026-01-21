@@ -140,7 +140,7 @@ def cleanup_metric_dictionary_quotes():
       return text
 
     text = str(text)
-
+      
     # Replace using Unicode code points (more reliable than copying characters)
     # Single quotes
     text = text.replace('\u2018', "'")  # Left single quote
