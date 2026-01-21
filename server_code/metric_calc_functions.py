@@ -74,8 +74,8 @@ def consistency_sd_match(ppr_df, player_name, metric_name):
       # First ball hitting efficiency
       attacks = window_df[window_df['skill'] == 'attack']
       if len(attacks) > 0:
-        kills = len(attacks[attacks['eval_code'].isin(['#', 'winning_attack'])])
-        errors = len(attacks[attacks['eval_code'].isin(['=', 'attack_error'])])
+        kills = len(attacks[attacks['point_outcome'] == 'FBK'])
+        errors = len(attacks[attacks['point_outcome'] == 'FBE'])
         attempts = len(attacks)
         metric_value = (kills - errors) / attempts if attempts > 0 else None
 
@@ -272,10 +272,7 @@ def calc_serve_pct_obj(ppr_df, player_name):
   from types import SimpleNamespace
 
   # Filter for player's serves
-  serves = ppr_df[
-    ((ppr_df['player_a1'] == player_name) | (ppr_df['player_a2'] == player_name)) &
-    (ppr_df['skill'] == 'serve')
-    ].copy()
+  serves = ppr_df[ ppr_df['serve_player'] == player_name ].copy()
 
   total_serves = len(serves)
 
@@ -336,10 +333,7 @@ def calc_angle_attacks_obj(ppr_df, player_name):
   from types import SimpleNamespace
 
   # Filter for player's attacks
-  attacks = ppr_df[
-    ((ppr_df['player_a1'] == player_name) | (ppr_df['player_a2'] == player_name)) &
-    (ppr_df['skill'] == 'attack')
-    ].copy()
+  attacks = ppr_df[ ppr_df['att_player'] == player_name].copy()
 
   total_attacks = len(attacks)
 
@@ -366,8 +360,8 @@ def calc_angle_attacks_obj(ppr_df, player_name):
       return 0.0, 0.0, 0
 
       # Calculate FBHE
-    kills = len(angle_attacks[angle_attacks['eval_code'].isin(['#', 'winning_attack'])])
-    errors = len(angle_attacks[angle_attacks['eval_code'].isin(['=', 'attack_error'])])
+    kills = len(angle_attacks[angle_attacks['point_outcome'] == 'FBK'])
+    errors = len(angle_attacks[angle_attacks['point_outcome'] == 'FBE'])
     fbhe = (kills - errors) / attempts
 
     # Calculate percentage
