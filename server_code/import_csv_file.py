@@ -6,6 +6,17 @@ import io
 
 from logger_utils import log_info, log_error, log_debug, log_critical
 
+def sanitize_quotes(text):
+  """Replace Unicode quotes with regular quotes."""
+  if text == '' or text is None or text == 'nan':
+    return ''
+  text = str(text)
+  # Replace all types of Unicode quotes
+  text = text.replace(''', "'").replace(''', "'")  # Single curly quotes
+  text = text.replace('"', '"').replace('"', '"')  # Double curly quotes
+  text = text.replace('`', "'")  # Backticks
+  return text
+
 @anvil.server.callable
 def import_metric_dictionary_from_csv(csv_file):
   """Import metric dictionary from an uploaded CSV file."""
@@ -38,12 +49,12 @@ def import_metric_dictionary_from_csv(csv_file):
         'errors': ['No rows found in CSV file']
       }
 
-      # DEBUG: Show first row
+    # DEBUG: Show first row
     if len(rows_list) > 0:
       log_debug(f"First row keys: {list(rows_list[0].keys())}")
       log_debug(f"First row sample: {list(rows_list[0].items())[:5]}")
 
-      # Import each row
+    # Import each row
     for row_num, row in enumerate(rows_list, start=2):
       try:
         # Convert empty strings to None
@@ -55,11 +66,17 @@ def import_metric_dictionary_from_csv(csv_file):
           except:
             return None
 
-            # DEBUG: Show what we're trying to import
+        # DEBUG: Show what we're trying to import
         if row_num == 2:  # First data row
           log_info(f"Importing first row: metric_id={row.get('metric_id')}, name={row.get('metric_name')}")
 
-          # Add row to table
+        # Sanitize critical fields that contain code/formulas
+        function_name_clean = sanitize_quotes(row.get('function_name', ''))
+        result_path_clean = sanitize_quotes(row.get('result_path', ''))
+        data_filter_clean = sanitize_quotes(row.get('data_filter', ''))
+        calculation_formula_clean = sanitize_quotes(row.get('calculation_formula', ''))
+
+        # Add row to table
         app_tables.metric_dictionary.add_row(
           metric_id=row.get('metric_id', ''),
           metric_name=row.get('metric_name', ''),
@@ -69,11 +86,11 @@ def import_metric_dictionary_from_csv(csv_file):
           metric_category=row.get('metric_category', ''),
           min_attempts_for_ci=to_number(row.get('min_attempts_for_ci')),
           ci_calculation_method=row.get('ci_calculation_method', ''),
-          data_filter=row.get('data_filter', ''),
+          data_filter=data_filter_clean,
           return_type=row.get('return_type', ''),
-          result_path=row.get('result_path', ''),
-          function_name=row.get('function_name', ''),
-          calculation_formula=row.get('calculation_formula', ''),
+          result_path=result_path_clean,
+          function_name=function_name_clean,
+          calculation_formula=calculation_formula_clean,
           data_range_min=to_number(row.get('data_range_min')),
           data_range_max=to_number(row.get('data_range_max')),
           coach_speak_elite=row.get('coach_speak_elite', ''),
@@ -111,3 +128,59 @@ def import_metric_dictionary_from_csv(csv_file):
       'errors': [f"Critical error: {str(e)}"]
     }
 
+
+@anvil.server.callable
+def cleanup_metric_dictionary_quotes():
+  """One-time cleanup to fix Unicode quotes in existing data."""
+
+  def sanitize_quotes(text):
+    """Replace ALL types of Unicode quotes with regular ASCII quotes."""
+    # Check for None or empty without using pandas
+    if text is None or text == '' or text == 'nan':
+      return text
+
+    text = str(text)
+
+    # Replace using Unicode code points (more reliable than copying characters)
+    # Single quotes
+    text = text.replace('\u2018', "'")  # Left single quote
+    text = text.replace('\u2019', "'")  # Right single quote
+    text = text.replace('\u201a', "'")  # Single low quote
+    text = text.replace('\u201b', "'")  # Single high-reversed quote
+
+    # Double quotes
+    text = text.replace('\u201c', '"')  # Left double quote
+    text = text.replace('\u201d', '"')  # Right double quote
+    text = text.replace('\u201e', '"')  # Double low quote
+    text = text.replace('\u201f', '"')  # Double high-reversed quote
+
+    # Other quote-like characters
+    text = text.replace('\u2039', "'")  # Single left-pointing angle quote
+    text = text.replace('\u203a', "'")  # Single right-pointing angle quote
+    text = text.replace('`', "'")       # Backtick
+    text = text.replace('´', "'")       # Acute accent
+
+    return text
+
+  updated_count = 0
+
+  log_info("Starting quote cleanup...")
+
+  for row in app_tables.metric_dictionary.search():
+    # Clean the critical fields
+    row['function_name'] = sanitize_quotes(row['function_name'])
+    row['result_path'] = sanitize_quotes(row['result_path'])
+    row['data_filter'] = sanitize_quotes(row['data_filter'])
+    row['calculation_formula'] = sanitize_quotes(row['calculation_formula'])
+
+    updated_count += 1
+
+    if updated_count % 50 == 0:
+      log_info(f"Cleaned {updated_count} rows...")
+
+  log_info(f"✓ Cleanup complete! Updated {updated_count} rows.")
+
+  return {
+    'success': True,
+    'updated': updated_count
+  }

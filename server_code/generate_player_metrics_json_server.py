@@ -20,6 +20,8 @@ import io
 from logger_utils import log_info, log_error, log_debug, log_critical
 
 from server_functions import *
+from metric_calc_functions import *
+
 
 @anvil.server.callable
 def generate_player_metrics_json(league_value, team, **json_filters):
@@ -306,7 +308,6 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
     return pd.DataFrame()
     
 
-
 def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
   """
     Calculate all metrics from the dictionary.
@@ -348,74 +349,84 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
 
     # Progress logging every 50 metrics
     if total_calculated % 50 == 0:
-            log_info(f"Progress: {total_calculated}/{len(metric_dict)} metrics calculated...")
-        
+      log_info(f"Progress: {total_calculated}/{len(metric_dict)} metrics calculated...")
+
     try:
-            # Apply data filter if specified
-            if pd.notna(data_filter) and data_filter.strip():
-                filtered_ppr = eval(data_filter)
-            else:
-                filtered_ppr = ppr_df
-            
-            # Set up local namespace for eval
-            local_namespace = {
-                'ppr_df': filtered_ppr,
-                'tri_df': tri_df,
-                'disp_player': player_name,
-                # Import your metric functions here
-                'fbhe_obj': fbhe_obj,
-                'calc_player_eso_obj': calc_player_eso_obj,
-                'calc_ev_obj': calc_ev_obj,
-                'calc_knock_out_obj': calc_knock_out_obj,
-                'count_oos_obj': count_oos_obj,
-                'calc_trans_obj': calc_trans_obj,
-                'calc_error_density_obj': calc_error_density_obj,
-                'find_ellipse_area': find_ellipse_area,
-                # New functions
-                'consistency_sd_match': consistency_sd_match,
-                'consistency_sd_set2set': consistency_sd_set2set,
-                'calc_serve_pct_obj': calc_serve_pct_obj,
-                'calc_angle_attacks_obj': calc_angle_attacks_obj
-            }
-            
-            # Execute function
-            exec(function_name, local_namespace)
-            
-            # Extract result using result_path
-            result_var_name = function_name.split('=')[0].strip()
-            func_result = local_namespace[result_var_name]
-            
-            # Extract the metric value
-            if pd.notna(result_path) and result_path.strip():
-                metric_value = eval(result_path, local_namespace)
-            else:
-                metric_value = func_result
-            
-            # Store in output organized by category
-            if category not in metrics_output:
-                metrics_output[category] = {}
-            
-            metrics_output[category][metric_id] = {
-                'value': float(metric_value) if isinstance(metric_value, (int, float, np.number)) else metric_value,
-                'metric_name': metric_row['metric_name']
-            }
-            
-            successful += 1
-            
+      # Apply data filter if specified
+      if pd.notna(data_filter) and data_filter.strip():
+        # Sanitize quotes - replace Unicode quotes with regular quotes
+        data_filter_clean = data_filter.replace(''', "'").replace(''', "'")
+        data_filter_clean = data_filter_clean.replace('"', '"').replace('"', '"')
+
+        # Set up minimal namespace for eval
+        filter_namespace = {'ppr_df': ppr_df}
+        filtered_ppr = eval(data_filter_clean, filter_namespace)
+      else:
+        filtered_ppr = ppr_df
+
+      # Set up local namespace for eval
+      local_namespace = {
+        'ppr_df': filtered_ppr,
+        'tri_df': tri_df,
+        'disp_player': player_name,
+        # Import your metric functions here
+        'fbhe_obj': fbhe_obj,
+        'calc_player_eso_obj': calc_player_eso_obj,
+        'calc_ev_obj': calc_ev_obj,
+        'calc_knock_out_obj': calc_knock_out_obj,
+        'count_oos_obj': count_oos_obj,
+        'calc_trans_obj': calc_trans_obj,
+        'calc_error_density_obj': calc_error_density_obj,
+        'find_ellipse_area': find_ellipse_area,
+        # New functions
+        'consistency_sd_match': consistency_sd_match,
+        'consistency_sd_set2set': consistency_sd_set2set,
+        'calc_serve_pct_obj': calc_serve_pct_obj,
+        'calc_angle_attacks_obj': calc_angle_attacks_obj,
+        # Add pandas/numpy for metric calculations
+        'pd': pd,
+        'np': np
+      }
+
+      # Execute function
+      exec(function_name, local_namespace)
+
+      # Extract result using result_path
+      result_var_name = function_name.split('=')[0].strip()
+      func_result = local_namespace[result_var_name]
+
+      # Extract the metric value
+      if pd.notna(result_path) and result_path.strip():
+        metric_value = eval(result_path, local_namespace)
+      else:
+        metric_value = func_result
+
+      # Store in output organized by category
+      if category not in metrics_output:
+        metrics_output[category] = {}
+
+      metrics_output[category][metric_id] = {
+        'value': float(metric_value) if isinstance(metric_value, (int, float, np.number)) else metric_value,
+        'metric_name': metric_row['metric_name']
+      }
+
+      successful += 1
+
     except Exception as e:
-            # Metric calculation failed (likely insufficient data)
-            insufficient_data += 1
-            log_debug(f"Metric {metric_id} failed: {str(e)}")
-            continue
-    
-    log_info(f"Calculation complete: {successful} successful, {insufficient_data} failed")
-    
-    return {
-        'metrics': metrics_output,
-        'total_calculated': total_calculated,
-        'successful': successful,
-        'insufficient_data': insufficient_data
-    }
+      # Metric calculation failed (likely insufficient data)
+      insufficient_data += 1
+      log_debug(f"Metric {metric_id} failed: {str(e)}")
+      continue
+
+  log_info(f"Calculation complete: {successful} successful, {insufficient_data} failed")
+
+  return {
+    'metrics': metrics_output,
+    'total_calculated': total_calculated,
+    'successful': successful,
+    'insufficient_data': insufficient_data
+  }
+
 
 
 def generate_filter_hash(filters):
