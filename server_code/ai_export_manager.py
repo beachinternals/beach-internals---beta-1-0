@@ -464,20 +464,18 @@ League: {league}
 Team: {team}
 Files Generated: {len(result['files'])}
 
-Generated Files (click to open in Google Drive):
+Generated Files:
 """
       for file_info in result['files']:
-        if file_info.get('file_url'):
-          email_body += f"\n- {file_info['filename']}"
-          email_body += f"\n  {file_info['file_url']}"
-          email_body += f"\n  ({file_info['sessions_count']} sessions, {file_info['word_count']} words)\n"
-        else:
-          email_body += f"\n- {file_info['filename']} ({file_info['sessions_count']} sessions)\n"
+        email_body += f"\n- {file_info['filename']}"
+        email_body += f"\n  {file_info.get('result', 'Saved to Google Drive')}"
+        email_body += f"\n  ({file_info['sessions_count']} sessions, {file_info['word_count']} words)\n"
 
       email_body += f"""
 
 Files are saved in: Beach Internals Reports/{league}/{team}/notebooklm/
 
+You can find these files in your Google Drive at the path above.
 These files are ready to upload to NotebookLM for AI analysis.
 
 Best regards,
@@ -664,14 +662,14 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
     print(f"Failed to save file for {player}")
     return None
 
-  log_info(f"Successfully saved file for {player}: {file_info['file_url']}")
+  log_info(f"Successfully saved file for {player}: {file_info.get('url', 'No URL')}")
 
   return {
     'player': player,
     'filename': filename,
-    'file_id': file_info['id'],
-    'file_url': file_info['url'],
-    'path': file_info['path'],
+    'file_id': file_info.get('id', 'unknown'),
+    'file_url': file_info.get('url', None),
+    'path': file_info.get('path', 'unknown'),
     'sessions_count': len(sessions_data),
     'word_count': len(markdown_content.split())
   }
@@ -833,32 +831,32 @@ def extract_session_metrics(match_row, player):
   # Adjust field names to match your actual data structure
 
   session = {
-    'session_id': match_row.get('match_id', 'unknown'),
-    'date': str(match_row.get('date', '')),
-    'opponent': match_row.get('opponent', 'Unknown'),
-    'partner': match_row.get('partner', 'Unknown'),
-    'session_type': match_row.get('match_type', 'Match'),
-    'result': match_row.get('result', 'Unknown'),
-
-    # Performance metrics (add all your 500+ metrics here)
-    'metrics': {}
-  }
-
-  # Extract all numeric metrics
-  # This is a placeholder - you'll expand this based on your data
+        'session_id': match_row.get('match_id', 'unknown'),
+        'date': str(match_row.get('date', '')),
+        'opponent': match_row.get('opponent', 'Unknown'),
+        'partner': match_row.get('partner', 'Unknown'),
+        'session_type': match_row.get('match_type', 'Match'),
+        'result': match_row.get('result', 'Unknown'),
+        
+        # Performance metrics (add all your 500+ metrics here)
+        'metrics': {}
+    }
+    
+    # Extract all numeric metrics
+    # This is a placeholder - you'll expand this based on your data
   metric_fields = [
-    'total_attacks', 'attack_kills', 'attack_errors', 'attack_pct',
-    'serve_aces', 'serve_errors', 'serve_total',
-    'block_kills', 'block_assists', 'block_errors',
-    'dig_total', 'reception_total', 'reception_errors',
-    'set_assists', 'set_errors',
-    # Add all your other metrics here...
-  ]
-
+        'total_attacks', 'attack_kills', 'attack_errors', 'attack_pct',
+        'serve_aces', 'serve_errors', 'serve_total',
+        'block_kills', 'block_assists', 'block_errors',
+        'dig_total', 'reception_total', 'reception_errors',
+        'set_assists', 'set_errors',
+        # Add all your other metrics here...
+    ]
+    
   for field in metric_fields:
-    if field in match_row:
-      session['metrics'][field] = match_row[field]
-
+        if field in match_row:
+            session['metrics'][field] = match_row[field]
+    
   return session
 
 
@@ -867,85 +865,85 @@ def extract_session_metrics(match_row, player):
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def build_markdown_content(player, team, league, sessions_data, date_start=None, date_end=None):
-  """
+    """
     Build markdown content following the NotebookLM format:
     1. Metadata header
     2. Coach's Quick Summary
     3. JSON data blocks
     """
-
-  # Calculate summary statistics
-  total_sessions = len(sessions_data)
-  date_range = f"{date_start} to {date_end}" if date_start and date_end else "All available data"
-
-  # Calculate some quick stats for the summary
-  total_kills = sum(s['metrics'].get('attack_kills', 0) for s in sessions_data)
-  total_attacks = sum(s['metrics'].get('total_attacks', 0) for s in sessions_data)
-  avg_attack_pct = (total_kills / total_attacks * 100) if total_attacks > 0 else 0
-
-  # Build markdown
-  markdown_lines = [
-    "# Player Performance Data Export",
-    "",
-    "## Metadata",
-    f"- **Player Name:** {player}",
-    f"- **Team:** {team}",
-    f"- **League:** {league}",
-    f"- **Date Range:** {date_range}",
-    f"- **Total Sessions:** {total_sessions}",
-    f"- **Export Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-    "",
-    "---",
-    "",
-    "## Coach's Quick Summary",
-    "",
-    f"This file contains performance data for **{player}** from {team}.",
-    f"The dataset includes {total_sessions} sessions with 500+ metrics per session.",
-    "",
-    f"**Key Performance Indicators:**",
-    f"- Total Attack Kills: {total_kills}",
-    f"- Total Attack Attempts: {total_attacks}",
-    f"- Average Attack %: {avg_attack_pct:.1f}%",
-    "",
-    "The detailed metrics for each session are provided in JSON format below.",
-    "This allows AI analysis tools to quickly parse and analyze patterns across sessions.",
-    "",
-    "---",
-    "",
-    "## Session Data (JSON Format)",
-    "",
-  ]
-
-  # Add each session as a JSON block
-  for i, session in enumerate(sessions_data, 1):
-    markdown_lines.extend([
-      f"### Session {i}: {session['date']} vs {session['opponent']}",
-      "",
-      "```json",
-      json.dumps(session, indent=2),
-      "```",
-      ""
-    ])
-
+    
+    # Calculate summary statistics
+    total_sessions = len(sessions_data)
+    date_range = f"{date_start} to {date_end}" if date_start and date_end else "All available data"
+    
+    # Calculate some quick stats for the summary
+    total_kills = sum(s['metrics'].get('attack_kills', 0) for s in sessions_data)
+    total_attacks = sum(s['metrics'].get('total_attacks', 0) for s in sessions_data)
+    avg_attack_pct = (total_kills / total_attacks * 100) if total_attacks > 0 else 0
+    
+    # Build markdown
+    markdown_lines = [
+        "# Player Performance Data Export",
+        "",
+        "## Metadata",
+        f"- **Player Name:** {player}",
+        f"- **Team:** {team}",
+        f"- **League:** {league}",
+        f"- **Date Range:** {date_range}",
+        f"- **Total Sessions:** {total_sessions}",
+        f"- **Export Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        "",
+        "---",
+        "",
+        "## Coach's Quick Summary",
+        "",
+        f"This file contains performance data for **{player}** from {team}.",
+        f"The dataset includes {total_sessions} sessions with 500+ metrics per session.",
+        "",
+        f"**Key Performance Indicators:**",
+        f"- Total Attack Kills: {total_kills}",
+        f"- Total Attack Attempts: {total_attacks}",
+        f"- Average Attack %: {avg_attack_pct:.1f}%",
+        "",
+        "The detailed metrics for each session are provided in JSON format below.",
+        "This allows AI analysis tools to quickly parse and analyze patterns across sessions.",
+        "",
+        "---",
+        "",
+        "## Session Data (JSON Format)",
+        "",
+    ]
+    
+    # Add each session as a JSON block
+    for i, session in enumerate(sessions_data, 1):
+        markdown_lines.extend([
+            f"### Session {i}: {session['date']} vs {session['opponent']}",
+            "",
+            "```json",
+            json.dumps(session, indent=2),
+            "```",
+            ""
+        ])
+    
     # Add consolidated summary at the end
-  markdown_lines.extend([
-    "---",
-    "",
-    "## Consolidated Metrics Summary",
-    "",
-    "```json",
-    json.dumps({
-      'player': player,
-      'team': team,
-      'league': league,
-      'total_sessions': total_sessions,
-      'date_range': date_range,
-      'all_sessions': sessions_data
-    }, indent=2),
-    "```"
-  ])
-
-  return "\n".join(markdown_lines)
+    markdown_lines.extend([
+        "---",
+        "",
+        "## Consolidated Metrics Summary",
+        "",
+        "```json",
+        json.dumps({
+            'player': player,
+            'team': team,
+            'league': league,
+            'total_sessions': total_sessions,
+            'date_range': date_range,
+            'all_sessions': sessions_data
+        }, indent=2),
+        "```"
+    ])
+    
+    return "\n".join(markdown_lines)
 
 
 #--------------------------------------------------------------
@@ -953,7 +951,7 @@ def build_markdown_content(player, team, league, sessions_data, date_start=None,
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def save_markdown_to_drive(filename, content, league, team):
-  """
+    """
     Save markdown file to Google Drive using the existing write_to_drive function.
     
     Folder structure: Beach Internals Reports/[league]/[team]/notebooklm/
@@ -961,93 +959,92 @@ def save_markdown_to_drive(filename, content, league, team):
     
     Returns the file path/ID and URL.
     """
-
-  try:
-    from server_functions import write_to_drive
-
-    # Build folder path matching your report manager pattern
-    # Instead of: ['Beach Internals Reports', league, team, '2025-01-26']
-    # We use:     ['Beach Internals Reports', league, team, 'notebooklm']
-    folder_path = ['Beach Internals Reports', league, team, 'notebooklm']
-
-    log_info(f"Saving to folder: {' / '.join(folder_path)}")
-
-    # Create the file media (markdown content as BlobMedia)
-    media = anvil.BlobMedia('text/markdown', content.encode('utf-8'), name=filename)
-
-    # Use your existing write_to_drive function
-    # This should handle folder creation and file upload
-    file_id = write_to_drive(media, folder_path, filename)
-
-    if not file_id:
-      raise Exception("write_to_drive returned None")
-
-      # Get the file URL
-    file_url = f"https://drive.google.com/file/d/{file_id}/view"
-
-    log_info(f"Saved file: {filename} (ID: {file_id})")
-
-    return {
-      'id': file_id,
-      'url': file_url,
-      'path': ' / '.join(folder_path)
-    }
-
-  except Exception as e:
-    log_exception('error', f"Error saving markdown to Google Drive", e)
-    print(f"Error saving to Google Drive: {str(e)}")
-
-    # Fallback: save to Anvil's data files table if it exists
+    
     try:
-      # Create table if it doesn't exist (you may need to create this manually)
-      row = app_tables.ai_export_files.add_row(
-        filename=filename,
-        content=content,  # Store as text
-        league=league,
-        team=team,
-        created=datetime.now()
-      )
-
-      log_info(f"Fallback: Saved to ai_export_files table (row ID: {row.get_id()})")
-
-      return {
-        'id': row.get_id(),
-        'url': None,  # No direct URL for data table files
-        'path': 'ai_export_files table'
-      }
-
-    except Exception as e2:
-      log_exception('error', f"Fallback storage also failed {e2}", e2)
-      print(f"Fallback storage failed: {str(e2)}")
-      return None
+        from server_functions import write_to_drive
+        
+        # Build folder path matching your report manager pattern
+        # Instead of: ['Beach Internals Reports', league, team, '2025-01-26']
+        # We use:     ['Beach Internals Reports', league, team, 'notebooklm']
+        folder_path = ['Beach Internals Reports', league, team, 'notebooklm']
+        
+        log_info(f"Saving to folder: {' / '.join(folder_path)}")
+        
+        # Create the file media (markdown content as BlobMedia)
+        media = anvil.BlobMedia('text/markdown', content.encode('utf-8'), name=filename)
+        
+        # Use your existing write_to_drive function
+        # This should handle folder creation and file upload
+        result = write_to_drive(media, folder_path, filename)
+        
+        log_info(f"write_to_drive returned: {result}")
+        
+        # write_to_drive returns a string description, not a file ID
+        # We don't have direct access to the file ID or URL from this function
+        # So we'll return success but with placeholder values
+        
+        return {
+            'id': 'saved_to_drive',  # Placeholder since we don't get the actual ID
+            'url': None,  # We don't have a direct URL from write_to_drive
+            'path': ' / '.join(folder_path),
+            'result': str(result)  # Include the actual result for logging
+        }
+        
+    except Exception as e:
+        log_exception('error', f"Error saving markdown to Google Drive", e)
+        print(f"Error saving to Google Drive: {str(e)}")
+        
+        # Fallback: save to Anvil's data files table if it exists
+        try:
+            # Create table if it doesn't exist (you may need to create this manually)
+            row = app_tables.ai_export_files.add_row(
+                filename=filename,
+                content=content,  # Store as text
+                league=league,
+                team=team,
+                created=datetime.now()
+            )
+            
+            log_info(f"Fallback: Saved to ai_export_files table (row ID: {row.get_id()})")
+            
+            return {
+                'id': row.get_id(),
+                'url': None,  # No direct URL for data table files
+                'path': 'ai_export_files table'
+            }
+            
+        except Exception as e2:
+            log_exception('error', f"Fallback storage also failed", e2)
+            print(f"Fallback storage failed: {str(e2)}")
+            return None
 
 
 #--------------------------------------------------------------
 # Utility function to check file size and consolidation needs
 #--------------------------------------------------------------
 def check_consolidation_needs(sessions_data):
-  """
+    """
     Check if data needs to be split across multiple files.
     NotebookLM limit: 500k words per file.
     
     Returns list of session groups if splitting is needed.
     """
-
-  # Estimate word count
-  total_json = json.dumps(sessions_data)
-  word_count = len(total_json.split())
-
-  MAX_WORDS = 450000  # Leave buffer below 500k
-
-  if word_count < MAX_WORDS:
-    return [sessions_data]  # One file is fine
-
+    
+    # Estimate word count
+    total_json = json.dumps(sessions_data)
+    word_count = len(total_json.split())
+    
+    MAX_WORDS = 450000  # Leave buffer below 500k
+    
+    if word_count < MAX_WORDS:
+        return [sessions_data]  # One file is fine
+    
     # Need to split - divide sessions into groups
-  words_per_session = word_count / len(sessions_data)
-  sessions_per_file = int(MAX_WORDS / words_per_session)
-
-  groups = []
-  for i in range(0, len(sessions_data), sessions_per_file):
-    groups.append(sessions_data[i:i + sessions_per_file])
-
-  return groups
+    words_per_session = word_count / len(sessions_data)
+    sessions_per_file = int(MAX_WORDS / words_per_session)
+    
+    groups = []
+    for i in range(0, len(sessions_data), sessions_per_file):
+        groups.append(sessions_data[i:i + sessions_per_file])
+    
+    return groups
