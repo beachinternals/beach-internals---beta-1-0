@@ -43,6 +43,11 @@ components_by_slot:
         name: dict_file_loader
         properties: {text: Metrics Dictionary (csv)}
         type: FileLoader
+      - event_bindings: {}
+        layout_properties: {grid_position: 'QHFDDP,VWUHFC'}
+        name: ai_export
+        properties: {role: outlined-button, text: Run AI Export Manager}
+        type: Button
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
       properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40}', role: outlined-card}

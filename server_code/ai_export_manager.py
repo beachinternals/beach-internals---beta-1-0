@@ -10,8 +10,24 @@ from datetime import datetime, timedelta, date
 import json
 import traceback
 
-# Import your logging and performance monitoring utilities
-from server_functions import logger, log_performance
+# ============================================================================
+# LOGGING IMPORTS
+# ============================================================================
+from .logger_utils import log_debug, log_info, log_error, log_critical
+
+# ============================================================================
+# PERFORMANCE MONITORING IMPORTS
+# ============================================================================
+from server_functions import (
+  monitor_performance,
+  MONITORING_LEVEL_OFF,
+  MONITORING_LEVEL_CRITICAL,
+  MONITORING_LEVEL_IMPORTANT,
+  MONITORING_LEVEL_DETAILED,
+  MONITORING_LEVEL_VERBOSE
+)
+
+from generate_player_metrics_json_server import *
 
 # This is a server module for generating NotebookLM-ready markdown files
 # with player performance data in JSON format
@@ -20,23 +36,25 @@ from server_functions import logger, log_performance
 #--------------------------------------------------------------
 # Helper function for logging errors with tracebacks
 #--------------------------------------------------------------
-def log_exception(logger, level, message, exception):
-  """Helper to log exceptions with traceback using f-strings"""
+def log_exception(level, message, exception):
+  """Helper to log exceptions with traceback"""
   tb = traceback.format_exc()
-  if level.lower() == 'critical':
-    logger.critical(f"{message}: {str(exception)}\nTraceback:\n{tb}")
-  elif level.lower() == 'error':
-    logger.error(f"{message}: {str(exception)}\nTraceback:\n{tb}")
-  elif level.lower() == 'warning':
-    logger.warning(f"{message}: {str(exception)}\nTraceback:\n{tb}")
-  elif level.lower() == 'info':
-    logger.info(f"{message}: {str(exception)}\nTraceback:\n{tb}")
+  full_message = f"{message}: {str(exception)}\nTraceback:\n{tb}"
+
+  if level == 'critical':
+    log_critical(full_message)
+  elif level == 'error':
+    log_error(full_message)
+  elif level == 'debug':
+    log_debug(full_message)
+  else:
+    log_info(full_message)
 
 #--------------------------------------------------------------
 # Main function - processes all rows in ai_export_mgr table
 #--------------------------------------------------------------
 @anvil.server.callable
-@log_performance
+@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def ai_export_mgr_generate():
   """
     Process all pending exports in the ai_export_mgr table.
@@ -45,25 +63,25 @@ def ai_export_mgr_generate():
     Returns:
         True when complete
     """
-  logger.info("AI Export Manager - Generate Called")
+  log_info("AI Export Manager - Generate Called")
   print("Starting AI Export Manager...")
   now = datetime.now()
   email_text = f"AI Export Manager Started at: {str(now)}\n\n"
 
   # Launch as background task
   task = anvil.server.launch_background_task('ai_export_mgr_generate_background')
-  logger.info("AI Export Manager - Background task launched")
+  log_info("AI Export Manager - Background task launched")
 
   return True
 
 
 @anvil.server.background_task
-@log_performance
+@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def ai_export_mgr_generate_background():
   """
     Background task that processes the ai_export_mgr table.
     """
-  logger.info("AI Export Manager Background - Started")
+  log_info("AI Export Manager Background - Started")
   now = datetime.now()
   email_text = f"AI Export Manager Started at: {str(now)}\n\n"
 
@@ -75,13 +93,13 @@ def ai_export_mgr_generate_background():
 
     total_rows = len(export_rows)
     email_text += f"Found {total_rows} pending export requests\n\n"
-    logger.info(f"AI Export Manager - Processing {total_rows} export requests")
+    log_info(f"AI Export Manager - Processing {total_rows} export requests")
     print(f"Processing {total_rows} export requests")
 
     # Process each row
     for idx, export_row in enumerate(export_rows, 1):
       try:
-        logger.info(f"AI Export Manager - Processing export {idx} of {total_rows}")
+        log_info(f"AI Export Manager - Processing export {idx} of {total_rows}")
         email_text += f"\n{'='*60}\n"
         email_text += f"Processing export {idx} of {total_rows}\n"
         email_text += f"{'='*60}\n"
@@ -90,13 +108,19 @@ def ai_export_mgr_generate_background():
         team = export_row['team']
         date_start = export_row['date_start']
         date_end = export_row['date_end']
-        export_type = export_row.get('export_type', 'full')
-        user_email = export_row.get('user_email', None)
+        export_type = export_row['export_type'] or 'full'
+        user_email = export_row['user_email']
+
+        log_info(f"Export row data: team={team}, export_type={export_type}, date_start={date_start}, date_end={date_end}")
 
         # NEW: Handle player_filter as linked rows from master player table
-        player_filter_rows = export_row.get('player_filter', None)
+        player_filter_rows = export_row['player_filter']
         player_filter = None
-        league = export_row.get('league', None)  # May be None - we'll derive it
+        league = export_row['league']  # May be None - we'll derive it
+
+        log_info(f"Player filter rows: {player_filter_rows}, type: {type(player_filter_rows)}")
+        if player_filter_rows:
+          log_info(f"Number of players selected: {len(player_filter_rows) if player_filter_rows else 0}")
 
         if player_filter_rows and len(player_filter_rows) > 0:
           # Convert linked rows to list of player names and derive league
@@ -104,13 +128,28 @@ def ai_export_mgr_generate_background():
           leagues_found = set()
 
           for player_row in player_filter_rows:
-            # Get player name (adjust field name to match your master player table)
-            player_name = player_row.get('player_name') or player_row.get('name') or player_row.get('shortname')
+            # Get player name in YOUR format: "TEAM NUMBER SHORTNAME"
+            # Example: "FSU 12 Johnson"
+            try:
+              team_val = player_row['team']
+              number_val = player_row['number']
+              shortname_val = player_row['shortname']
+              player_name = f"{team_val} {number_val} {shortname_val}"
+              log_info(f"Built player name: {player_name}")
+            except (KeyError, AttributeError) as e:
+              log_error(f"Error building player name from row: {e}")
+              continue
+
             if player_name:
               player_filter.append(player_name)
 
               # Collect league from each player
-            player_league = player_row.get('league')
+            player_league = None
+            try:
+              player_league = player_row['league']
+            except (KeyError, AttributeError):
+              pass
+
             if player_league:
               leagues_found.add(player_league)
 
@@ -122,13 +161,13 @@ def ai_export_mgr_generate_background():
 
             # Use the league from the players (overrides table league if present)
           league = list(leagues_found)[0]
-          logger.info(f"League derived from players: {league}")
+          log_info(f"League derived from players: {league}")
           email_text += f"League (derived from players): {league}\n"
         else:
           # No player filter - must have league specified in table
           if not league:
             raise ValueError("Either league or player_filter must be specified")
-          logger.info(f"League from table: {league}")
+          log_info(f"League from table: {league}")
           email_text += f"League (from table): {league}\n"
 
         email_text += f"Team: {team}\n"
@@ -136,10 +175,10 @@ def ai_export_mgr_generate_background():
         email_text += f"Export Type: {export_type}\n"
         if player_filter:
           email_text += f"Players: {', '.join(player_filter)}\n"
-          logger.info(f"Players: {', '.join(player_filter)}")
+          log_info(f"Players: {', '.join(player_filter)}")
         else:
           email_text += f"Players: All players on team\n"
-          logger.info("Players: All players on team")
+          log_info("Players: All players on team")
 
           # Update status to 'processing'
         export_row['status'] = 'processing'
@@ -149,7 +188,7 @@ def ai_export_mgr_generate_background():
         export_row['league'] = league
 
         # Generate the exports
-        logger.info(f"Calling ai_export_generate for {team}")
+        log_info(f"Calling ai_export_generate for {team}")
         result = ai_export_generate(
           league=league,
           team=team,
@@ -165,7 +204,7 @@ def ai_export_mgr_generate_background():
           export_row['files_generated'] = len(result['files'])
           export_row['result_message'] = result['message']
 
-          logger.info(f"SUCCESS: Generated {len(result['files'])} files for {team}")
+          log_info(f"SUCCESS: Generated {len(result['files'])} files for {team}")
           email_text += f"✓ SUCCESS: Generated {len(result['files'])} files\n"
 
           # Store file info in JSON
@@ -176,7 +215,7 @@ def ai_export_mgr_generate_background():
           export_row['completed_at'] = datetime.now()
           export_row['result_message'] = result['message']
 
-          logger.error(f"ERROR: {result['message']}")
+          log_error(f"ERROR: {result['message']}")
           email_text += f"✗ ERROR: {result['message']}\n"
 
           # Send individual notification if email provided
@@ -184,7 +223,7 @@ def ai_export_mgr_generate_background():
           send_export_notification(user_email, result, league, team)
 
       except Exception as e:
-        log_exception(logger, 'error', f"Error processing export row {idx}", e)
+        log_exception('error', f"Error processing export row {idx}", e)
         email_text += f"✗ EXCEPTION: {str(e)}\n"
         export_row['status'] = 'error'
         export_row['completed_at'] = datetime.now()
@@ -196,7 +235,7 @@ def ai_export_mgr_generate_background():
     email_text += f"AI Export Manager Completed at: {str(now1)}\n"
     email_text += f"Compute time: {str(now1-now)}\n"
 
-    logger.info(f"AI Export Manager - Completed. Compute time: {str(now1-now)}")
+    log_info(f"AI Export Manager - Completed. Compute time: {str(now1-now)}")
 
     internals_email = 'info@beachinternals.com'
     try:
@@ -206,15 +245,15 @@ def ai_export_mgr_generate_background():
         subject='Beach Internals - AI Export Manager Complete',
         text=email_text
       )
-      logger.info("Summary email sent to admin")
+      log_info("Summary email sent to admin")
     except Exception as e:
-      log_exception(logger, 'error', "Error sending summary email", e)
+      log_exception('error', "Error sending summary email", e)
       print(f"Error sending summary email: {str(e)}")
 
     return True
 
   except Exception as e:
-    log_exception(logger, 'critical', "CRITICAL ERROR in ai_export_mgr_generate_background", e)
+    log_exception('critical', "CRITICAL ERROR in ai_export_mgr_generate_background", e)
     raise
 
 
@@ -222,7 +261,7 @@ def ai_export_mgr_generate_background():
 # Direct callable function (for manual/immediate exports)
 #--------------------------------------------------------------
 @anvil.server.callable
-@log_performance
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def ai_export_generate(league, team, date_start=None, date_end=None, player_filter=None):
   """
     Generate NotebookLM-ready markdown files for AI analysis.
@@ -238,7 +277,7 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
         Dictionary with status and list of generated files
     """
   try:
-    logger.info(f"Starting AI export for {team} in {league}")
+    log_info(f"Starting AI export for {team} in {league}")
     print(f"Starting AI export for {team} in {league}")
 
     # Get player list for the team
@@ -247,24 +286,24 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
     # Apply player filter if provided
     if player_filter:
       players = [p for p in players if p in player_filter]
-      logger.info(f"Filtered to {len(players)} players: {players}")
+      log_info(f"Filtered to {len(players)} players: {players}")
 
     if not players:
       error_msg = 'No players found for this team'
-      logger.warning(f"AI Export - {error_msg}: {team} in {league}")
+      log_error(f"AI Export - {error_msg}: {team} in {league}")
       return {
         'status': 'error',
         'message': error_msg,
         'files': []
       }
 
-    logger.info(f"Generating exports for {len(players)} players")
+    log_info(f"Generating exports for {len(players)} players")
     generated_files = []
 
     # Generate one consolidated markdown file per player
     for player in players:
       try:
-        logger.info(f"Generating markdown for player: {player}")
+        log_info(f"Generating markdown for player: {player}")
         file_info = generate_player_markdown(
           league=league,
           team=team,
@@ -274,13 +313,13 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
         )
         if file_info:
           generated_files.append(file_info)
-          logger.info(f"Successfully generated file for {player}: {file_info['filename']}")
+          log_info(f"Successfully generated file for {player}: {file_info['filename']}")
       except Exception as e:
-        log_exception(logger, 'error', f"Error generating file for {player}", e)
+        log_exception('error', f"Error generating file for {player}", e)
         print(f"Error generating file for {player}: {str(e)}")
         continue
 
-    logger.info(f"Successfully generated {len(generated_files)} markdown files")
+    log_info(f"Successfully generated {len(generated_files)} markdown files")
     print(f"Successfully generated {len(generated_files)} markdown files")
 
     return {
@@ -290,7 +329,7 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
     }
 
   except Exception as e:
-    log_exception(logger, 'error', f"Error in ai_export_generate for {team}", e)
+    log_exception('error', f"Error in ai_export_generate for {team}", e)
     print(f"Error in ai_export_generate: {str(e)}")
     return {
       'status': 'error',
@@ -360,6 +399,7 @@ Beach Internals AI Export Manager
 # Helper function to add export request to table
 #--------------------------------------------------------------
 @anvil.server.callable
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def ai_export_add_request(team, player_filter=None, date_start=None, date_end=None, 
                           export_type='full', user_email=None):
   """
@@ -418,66 +458,71 @@ def ai_export_add_request(team, player_filter=None, date_start=None, date_end=No
 #--------------------------------------------------------------
 # Helper function to add export request to table
 #--------------------------------------------------------------
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def get_team_players(league, team):
   """
-    Get list of players for a team.
-    You'll need to adjust this to match your data structure.
+    Get list of players for a team from the 'players' table.
+    Returns player names in format: "TEAM NUMBER SHORTNAME"
+    
+    Note: The table name 'players' needs to match your actual player table name in Anvil.
     """
-  logger.info(f"Getting players for {team} in {league}")
-  # This is a placeholder - adjust based on your actual data tables
+  log_info(f"Getting players for {team} in {league}")
   try:
-    # Example: Query your player table
-    players_query = app_tables.players.search(
+    # Query your player table
+    # TODO: Replace 'players' with your actual table name if different
+    players_query = app_tables.master_player.search(
       league=league,
       team=team
     )
 
-    # Return list of unique player names
-    players = list(set([row['player_name'] for row in players_query]))
-    logger.info(f"Found {len(players)} players for {team}")
-    return sorted(players)
+    # Build player names in your format: "TEAM NUMBER SHORTNAME"
+    players = []
+    for row in players_query:
+      try:
+        player_name = f"{row['team']} {row['number']} {row['shortname']}"
+        players.append(player_name)
+      except (KeyError, AttributeError) as e:
+        log_error(f"Error building player name: {e}")
+        continue
 
+        # Remove duplicates and sort
+    players = sorted(list(set(players)))
+    log_info(f"Found {len(players)} players for {team}")
+    return players
+
+  except AttributeError as e:
+    if "No such app table" in str(e):
+      log_error(f"Player table not found: {e}")
+      log_error("Please update the table name in get_team_players() to match your actual table")
+    else:
+      log_exception('error', f"Error getting players for {team}", e)
+    return []
   except Exception as e:
-    log_exception(logger, 'warning', f"Error getting players from players table for {team}", e)
-    # Fallback: try to get from match data
-    try:
-      matches = app_tables.matches.search(
-        league=league,
-        team=team
-      )
-      players = set()
-      for match in matches:
-        if hasattr(match, 'player1'):
-          players.add(match['player1'])
-        if hasattr(match, 'player2'):
-          players.add(match['player2'])
-      logger.info(f"Found {len(players)} players from matches table for {team}")
-      return sorted(list(players))
-    except Exception as e2:
-      log_exception(logger, 'error', f"Error getting players from matches table for {team}", e2)
-      return []
+    log_exception('error', f"Error getting players for {team}", e)
+    return []
 
 
 #--------------------------------------------------------------
 # Core function to generate markdown for a single player
 #--------------------------------------------------------------
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def generate_player_markdown(league, team, player, date_start=None, date_end=None):
   """
     Generate a single consolidated markdown file for one player.
     
     Returns file info dict with path and metadata.
     """
-  logger.info(f"Generating markdown for {player} ({team})")
+  log_info(f"Generating markdown for {player} ({team})")
 
   # 1. Gather all session/match data for this player
   sessions_data = get_player_sessions(league, team, player, date_start, date_end)
 
   if not sessions_data:
-    logger.warning(f"No data found for {player}")
+    log_error(f"No data found for {player}")
     print(f"No data found for {player}")
     return None
 
-  logger.info(f"Found {len(sessions_data)} sessions for {player}")
+  log_info(f"Found {len(sessions_data)} sessions for {player}")
 
   # 2. Build the markdown content
   markdown_content = build_markdown_content(
@@ -494,15 +539,15 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
   filename = f"{safe_player_name}_{league}_{team}.md"
 
   # 4. Save to Google Drive
-  logger.info(f"Saving markdown file: {filename}")
+  log_info(f"Saving markdown file: {filename}")
   file_info = save_markdown_to_drive(filename, markdown_content, league, team)
 
   if not file_info:
-    logger.error(f"Failed to save file for {player}")
+    log_error(f"Failed to save file for {player}")
     print(f"Failed to save file for {player}")
     return None
 
-  logger.info(f"Successfully saved file for {player}: {file_info['file_url']}")
+  log_info(f"Successfully saved file for {player}: {file_info['file_url']}")
 
   return {
     'player': player,
@@ -518,53 +563,91 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
 #--------------------------------------------------------------
 # Get all session data for a player
 #--------------------------------------------------------------
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def get_player_sessions(league, team, player, date_start=None, date_end=None):
   """
-    Retrieve all match/session data for a player.
+    Retrieve player metrics using the existing generate_player_metrics_json function.
     
-    Returns list of dictionaries, each containing session metrics.
+    Returns list with single session containing all metrics.
     """
-  logger.info(f"Getting sessions for {player} ({team}, {league})")
-  sessions = []
+  log_info(f"Getting metrics for {player} ({team}, {league})")
 
   try:
-    # Build query filters
-    query_filters = {
-      'league': league,
-      'team': team
+    # Import the existing function
+    #from generate_player_metrics_json import generate_player_metrics_json
+
+    # Parse player name back to components
+    # Format is: "TEAM NUMBER SHORTNAME" e.g., "STETSON 01 Katie"
+    parts = player.split()
+    if len(parts) >= 3:
+      player_team = parts[0]
+      player_number = parts[1]
+      player_shortname = ' '.join(parts[2:])  # Handle multi-word names
+    else:
+      log_error(f"Invalid player name format: {player}")
+      return []
+
+      # Build league_value in format: "League | Gender | Year"
+      # Your league is "NCAA", need to add gender and year
+      # For now, assume from your data structure
+    league_value = f"{league}|W|2026"  # Adjust as needed
+
+    # Build filters for generate_player_metrics_json
+    json_filters = {
+      'player': player,
+      'player_shortname': player_shortname
     }
 
     # Add date filters if provided
     if date_start:
-      query_filters['date'] = q.greater_than_or_equal_to(date_start)
-      logger.info(f"Filtering sessions after {date_start}")
+      json_filters['start_date'] = date_start
     if date_end:
-      query_filters['date'] = q.less_than_or_equal_to(date_end)
-      logger.info(f"Filtering sessions before {date_end}")
+      json_filters['end_date'] = date_end
 
-      # Query your matches table (adjust to your schema)
-    matches = app_tables.matches.search(**query_filters)
+    log_info(f"Calling generate_player_metrics_json with filters: {json_filters}")
 
-    match_count = 0
-    for match in matches:
-      # Check if player participated
-      if match.get('player1') == player or match.get('player2') == player:
-        match_count += 1
-        # Extract all metrics for this session
-        session_data = extract_session_metrics(match, player)
-        sessions.append(session_data)
+    # Call your existing function
+    result = generate_player_metrics_json(league_value, team, **json_filters)
 
-    logger.info(f"Found {len(sessions)} sessions for {player} (out of {match_count} matches)")
-    return sessions
+    # Extract the JSON data
+    if result and 'media_obj' in result:
+      # Get the JSON string from the media object
+      json_string = result['media_obj'].get_bytes().decode('utf-8')
+      json_data = json.loads(json_string)
+
+      # Extract metadata and metrics
+      metadata = json_data.get('metadata', {})
+      metrics = json_data.get('metrics', {})
+
+      log_info(f"Got {len(metrics)} metric categories for {player}")
+
+      # Return as a single "session" with all metrics
+      session = {
+        'session_id': 'full_season',
+        'date': metadata.get('generated_at', str(datetime.now())),
+        'opponent': 'All Opponents',
+        'partner': 'All Partners',
+        'session_type': 'Season Analysis',
+        'result': 'N/A',
+        'total_points_analyzed': metadata.get('total_points_analyzed', 0),
+        'total_sets_analyzed': metadata.get('total_sets_analyzed', 0),
+        'metrics': metrics  # All 492 metrics organized by category
+      }
+
+      return [session]  # Return as list with one session
+    else:
+      log_error(f"No data returned from generate_player_metrics_json")
+      return []
 
   except Exception as e:
-    log_exception(logger, 'error', f"Error getting sessions for {player}", e)
+    log_exception('error', f"Error getting metrics for {player}", e)
     return []
 
 
 #--------------------------------------------------------------
 # Extract metrics from a single match/session
 #--------------------------------------------------------------
+@monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def extract_session_metrics(match_row, player):
   """
     Extract all available metrics from a match row.
@@ -608,6 +691,7 @@ def extract_session_metrics(match_row, player):
 #--------------------------------------------------------------
 # Build the markdown content following Gemini's format
 #--------------------------------------------------------------
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def build_markdown_content(player, team, league, sessions_data, date_start=None, date_end=None):
   """
     Build markdown content following the NotebookLM format:
@@ -693,6 +777,7 @@ def build_markdown_content(player, team, league, sessions_data, date_start=None,
 #--------------------------------------------------------------
 # Save markdown file to Google Drive
 #--------------------------------------------------------------
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def save_markdown_to_drive(filename, content, league, team):
   """
     Save markdown file to Google Drive in the same folder structure as reports.
@@ -784,6 +869,6 @@ def check_consolidation_needs(sessions_data):
 
   groups = []
   for i in range(0, len(sessions_data), sessions_per_file):
-        groups.append(sessions_data[i:i + sessions_per_file])
-    
+    groups.append(sessions_data[i:i + sessions_per_file])
+
   return groups
