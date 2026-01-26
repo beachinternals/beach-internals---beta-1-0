@@ -80,7 +80,7 @@ def generate_player_metrics_json(league_value, team, **json_filters):
     log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary")
 
     # Get PPR data with filters
-    log_info("Retrieving and filtering PPR data...")
+    log_info(f"Retrieving and filtering PPR data... {league},{gender},{year},{team}")
     ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
     log_info(f"✓ Loaded {len(ppr_df)} points from PPR data")
 

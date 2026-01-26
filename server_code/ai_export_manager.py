@@ -19,19 +19,88 @@ from .logger_utils import log_debug, log_info, log_error, log_critical
 # PERFORMANCE MONITORING IMPORTS
 # ============================================================================
 from server_functions import (
-  monitor_performance,
-  MONITORING_LEVEL_OFF,
-  MONITORING_LEVEL_CRITICAL,
-  MONITORING_LEVEL_IMPORTANT,
-  MONITORING_LEVEL_DETAILED,
-  MONITORING_LEVEL_VERBOSE
+monitor_performance,
+MONITORING_LEVEL_OFF,
+MONITORING_LEVEL_CRITICAL,
+MONITORING_LEVEL_IMPORTANT,
+MONITORING_LEVEL_DETAILED,
+MONITORING_LEVEL_VERBOSE
 )
 
-from generate_player_metrics_json_server import *
+# ============================================================================
+# EXISTING METRIC GENERATION IMPORT
+# ============================================================================
+from generate_player_metrics_json_server import generate_player_metrics_json
+
+# Import pandas for data processing
+import pandas as pd
+import io
 
 # This is a server module for generating NotebookLM-ready markdown files
 # with player performance data in JSON format
 # Uses ai_export_mgr table for control (similar to rpt_mgr table for reports)
+
+#--------------------------------------------------------------
+# Helper function to get PPR data without user check
+#--------------------------------------------------------------
+def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
+  """
+    Get PPR data directly using team parameter, bypassing user check.
+    This is for scheduled/background tasks where no user is logged in.
+    """
+  try:
+    # Determine search_team (same logic as original function)
+    # For INTERNALS, use 'League', otherwise use the team as-is
+    if team == 'INTERNALS':
+      search_team = 'League'
+      log_info(f"INTERNALS team - using search_team='League'")
+    else:
+      search_team = team
+      log_info(f"Using search_team='{search_team}'")
+
+    log_info(f"Querying PPR data for {league}/{gender}/{year}/team={search_team}...")
+
+    # Query ppr_csv_tables directly
+    ppr_rows = list(app_tables.ppr_csv_tables.search(
+      league=league,
+      gender=gender,
+      year=year,
+      team=search_team
+    ))
+
+    if len(ppr_rows) == 0:
+      log_error(f"No PPR data found for {league}/{gender}/{year}/team={search_team}")
+      return pd.DataFrame()
+
+    log_info(f"Found {len(ppr_rows)} PPR data record(s)")
+
+    # Get the first row
+    ppr_row = ppr_rows[0]
+
+    # Load the CSV data
+    ppr_csv_data = ppr_row['ppr_csv']
+
+    if hasattr(ppr_csv_data, 'get_bytes'):
+      ppr_csv_string = ppr_csv_data.get_bytes().decode('utf-8')
+      log_debug("Loaded ppr_csv from Media object")
+    else:
+      ppr_csv_string = ppr_csv_data
+      log_debug("Loaded ppr_csv as string")
+
+    ppr_df = pd.read_csv(io.StringIO(ppr_csv_string))
+    log_info(f"Loaded {len(ppr_df)} raw points from PPR")
+
+    # Apply filters using the existing filter function
+    from server_functions import filter_ppr_df
+    log_info("Applying filters...")
+    ppr_df = filter_ppr_df(ppr_df, **filters)
+    log_info(f"After filtering: {len(ppr_df)} points retained")
+
+    return ppr_df
+
+  except Exception as e:
+    log_exception('error', f"Error in get_filtered_ppr_data_direct", e)
+    return pd.DataFrame()
 
 #--------------------------------------------------------------
 # Helper function for logging errors with tracebacks
@@ -68,8 +137,12 @@ def ai_export_mgr_generate():
   now = datetime.now()
   email_text = f"AI Export Manager Started at: {str(now)}\n\n"
 
-  # Launch as background task
-  task = anvil.server.launch_background_task('ai_export_mgr_generate_background')
+  # Capture the current user to use as a template
+  # We'll override the 'team' field with the team from each export request
+  current_user = anvil.users.get_user()
+
+  # Launch as background task with user template
+  task = anvil.server.launch_background_task('ai_export_mgr_generate_background', current_user)
   log_info("AI Export Manager - Background task launched")
 
   return True
@@ -77,22 +150,36 @@ def ai_export_mgr_generate():
 
 @anvil.server.background_task
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
-def ai_export_mgr_generate_background():
+def ai_export_mgr_generate_background(user=None):
   """
     Background task that processes the ai_export_mgr table.
+    
+    Args:
+        user: The user who initiated the export (for accessing their team's data)
     """
   log_info("AI Export Manager Background - Started")
+  if user:
+    log_info(f"Running as user: {user['email']}")
+  else:
+    log_error("No user context provided to background task!")
+
   now = datetime.now()
   email_text = f"AI Export Manager Started at: {str(now)}\n\n"
 
   try:
-    # Get all rows from ai_export_mgr table where status is 'pending'
+    # Get all rows from ai_export_mgr table where NOT disabled
+    # This allows re-running exports by just unchecking 'disabled'
     export_rows = app_tables.ai_export_mgr.search(
-      status='pending'
+      tables.order_by('created_at', ascending=True)
     )
 
+    # Filter out disabled rows
+    # Note: Use bracket notation, not .get() - Anvil rows don't support .get()
+    # Handle None values - treat None as False (not disabled)
+    export_rows = [row for row in export_rows if row['disabled'] != True]
+
     total_rows = len(export_rows)
-    email_text += f"Found {total_rows} pending export requests\n\n"
+    email_text += f"Found {total_rows} enabled export requests\n\n"
     log_info(f"AI Export Manager - Processing {total_rows} export requests")
     print(f"Processing {total_rows} export requests")
 
@@ -126,6 +213,7 @@ def ai_export_mgr_generate_background():
           # Convert linked rows to list of player names and derive league
           player_filter = []
           leagues_found = set()
+          player_data_map = {}  # Map player_name to their full data
 
           for player_row in player_filter_rows:
             # Get player name in YOUR format: "TEAM NUMBER SHORTNAME"
@@ -135,23 +223,38 @@ def ai_export_mgr_generate_background():
               number_val = player_row['number']
               shortname_val = player_row['shortname']
               player_name = f"{team_val} {number_val} {shortname_val}"
-              log_info(f"Built player name: {player_name}")
+
+              # Get league components
+              league_val = player_row['league']
+              gender_val = player_row['gender']
+              year_val = player_row['year']
+
+              # Build league_value string for generate_player_metrics_json
+              league_value = f"{league_val} | {gender_val} | {year_val}"
+
+              log_info(f"Built player: {player_name}, league_value: {league_value}")
+
+              # Store player data
+              player_data_map[player_name] = {
+                'team': team_val,
+                'number': number_val,
+                'shortname': shortname_val,
+                'league': league_val,
+                'gender': gender_val,
+                'year': year_val,
+                'league_value': league_value
+              }
+
             except (KeyError, AttributeError) as e:
-              log_error(f"Error building player name from row: {e}")
+              log_error(f"Error building player data from row: {e}")
               continue
 
             if player_name:
               player_filter.append(player_name)
 
-              # Collect league from each player
-            player_league = None
-            try:
-              player_league = player_row['league']
-            except (KeyError, AttributeError):
-              pass
-
-            if player_league:
-              leagues_found.add(player_league)
+              # Collect league from each player for validation
+            if league_val:
+              leagues_found.add(league_val)
 
               # Validate: all players must be from same league
           if len(leagues_found) == 0:
@@ -169,6 +272,7 @@ def ai_export_mgr_generate_background():
             raise ValueError("Either league or player_filter must be specified")
           log_info(f"League from table: {league}")
           email_text += f"League (from table): {league}\n"
+          player_data_map = {}  # Empty map when no player filter
 
         email_text += f"Team: {team}\n"
         email_text += f"Date Range: {date_start} to {date_end}\n"
@@ -180,8 +284,7 @@ def ai_export_mgr_generate_background():
           email_text += f"Players: All players on team\n"
           log_info("Players: All players on team")
 
-          # Update status to 'processing'
-        export_row['status'] = 'processing'
+          # Mark as processing (set started_at timestamp)
         export_row['started_at'] = datetime.now()
 
         # Store the derived league back to the row
@@ -194,12 +297,14 @@ def ai_export_mgr_generate_background():
           team=team,
           date_start=date_start,
           date_end=date_end,
-          player_filter=player_filter
+          player_filter=player_filter,
+          player_data_map=player_data_map,  # Pass the full player data
+          user=user  # Pass user context
         )
 
         # Update row with results
         if result['status'] == 'success':
-          export_row['status'] = 'complete'
+          export_row['disabled'] = True  # Disable the row after successful export
           export_row['completed_at'] = datetime.now()
           export_row['files_generated'] = len(result['files'])
           export_row['result_message'] = result['message']
@@ -211,7 +316,7 @@ def ai_export_mgr_generate_background():
           export_row['file_list'] = json.dumps(result['files'])
 
         else:
-          export_row['status'] = 'error'
+          export_row['disabled'] = True  # Also disable on error (prevents retry loop)
           export_row['completed_at'] = datetime.now()
           export_row['result_message'] = result['message']
 
@@ -225,7 +330,7 @@ def ai_export_mgr_generate_background():
       except Exception as e:
         log_exception('error', f"Error processing export row {idx}", e)
         email_text += f"✗ EXCEPTION: {str(e)}\n"
-        export_row['status'] = 'error'
+        export_row['disabled'] = True  # Disable on exception
         export_row['completed_at'] = datetime.now()
         export_row['result_message'] = str(e)
 
@@ -262,16 +367,17 @@ def ai_export_mgr_generate_background():
 #--------------------------------------------------------------
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def ai_export_generate(league, team, date_start=None, date_end=None, player_filter=None):
+def ai_export_generate(league, team, date_start=None, date_end=None, player_filter=None, player_data_map=None, user=None):
   """
     Generate NotebookLM-ready markdown files for AI analysis.
     
     Args:
-        league: League identifier (e.g., 'NCAA_W_2025')
+        league: League identifier (e.g., 'NCAA')
         team: Team name (e.g., 'FSU')
         date_start: Optional start date for filtering data
         date_end: Optional end date for filtering data
         player_filter: Optional list of specific player names
+        player_data_map: Dict mapping player_name to their full data (league, gender, year, etc.)
     
     Returns:
         Dictionary with status and list of generated files
@@ -304,12 +410,18 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
     for player in players:
       try:
         log_info(f"Generating markdown for player: {player}")
+
+        # Get player data if available
+        player_data = player_data_map.get(player) if player_data_map else None
+
         file_info = generate_player_markdown(
           league=league,
           team=team,
           player=player,
           date_start=date_start,
-          date_end=date_end
+          date_end=date_end,
+          player_data=player_data,  # Pass individual player's data
+          user=user  # Pass user context
         )
         if file_info:
           generated_files.append(file_info)
@@ -445,7 +557,7 @@ def ai_export_add_request(team, player_filter=None, date_start=None, date_end=No
       export_type=export_type,
       player_filter=player_filter,  # Now accepts linked rows
       user_email=user_email,
-      status='pending',
+      disabled=False,  # Start as enabled
       created_at=datetime.now(),
       files_generated=0
     )
@@ -461,15 +573,12 @@ def ai_export_add_request(team, player_filter=None, date_start=None, date_end=No
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def get_team_players(league, team):
   """
-    Get list of players for a team from the 'players' table.
+    Get list of players for a team from the 'master_player' table.
     Returns player names in format: "TEAM NUMBER SHORTNAME"
-    
-    Note: The table name 'players' needs to match your actual player table name in Anvil.
     """
   log_info(f"Getting players for {team} in {league}")
   try:
-    # Query your player table
-    # TODO: Replace 'players' with your actual table name if different
+    # Query the master_player table
     players_query = app_tables.master_player.search(
       league=league,
       team=team
@@ -492,8 +601,8 @@ def get_team_players(league, team):
 
   except AttributeError as e:
     if "No such app table" in str(e):
-      log_error(f"Player table not found: {e}")
-      log_error("Please update the table name in get_team_players() to match your actual table")
+      log_error(f"Table 'master_player' not found: {e}")
+      log_error("Please verify the table name matches your Anvil database")
     else:
       log_exception('error', f"Error getting players for {team}", e)
     return []
@@ -506,16 +615,24 @@ def get_team_players(league, team):
 # Core function to generate markdown for a single player
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def generate_player_markdown(league, team, player, date_start=None, date_end=None):
+def generate_player_markdown(league, team, player, date_start=None, date_end=None, player_data=None, user=None):
   """
     Generate a single consolidated markdown file for one player.
+    
+    Args:
+        league: League identifier
+        team: Team name
+        player: Player name in format "TEAM NUMBER SHORTNAME"
+        date_start: Optional start date
+        date_end: Optional end date
+        player_data: Dict with player's league, gender, year, etc.
     
     Returns file info dict with path and metadata.
     """
   log_info(f"Generating markdown for {player} ({team})")
 
   # 1. Gather all session/match data for this player
-  sessions_data = get_player_sessions(league, team, player, date_start, date_end)
+  sessions_data = get_player_sessions(league, team, player, date_start, date_end, player_data, user)
 
   if not sessions_data:
     log_error(f"No data found for {player}")
@@ -564,35 +681,45 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
 # Get all session data for a player
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
-def get_player_sessions(league, team, player, date_start=None, date_end=None):
+def get_player_sessions(league, team, player, date_start=None, date_end=None, player_data=None, user=None):
   """
     Retrieve player metrics using the existing generate_player_metrics_json function.
+    
+    Args:
+        league: League identifier
+        team: Team name
+        player: Player name in format "TEAM NUMBER SHORTNAME"
+        date_start: Optional start date
+        date_end: Optional end date
+        player_data: Dict with player's league, gender, year, shortname, etc.
+        user: User context for accessing data
     
     Returns list with single session containing all metrics.
     """
   log_info(f"Getting metrics for {player} ({team}, {league})")
 
   try:
-    # Import the existing function
-    #from generate_player_metrics_json import generate_player_metrics_json
-
-    # Parse player name back to components
-    # Format is: "TEAM NUMBER SHORTNAME" e.g., "STETSON 01 Katie"
-    parts = player.split()
-    if len(parts) >= 3:
-      player_team = parts[0]
-      player_number = parts[1]
-      player_shortname = ' '.join(parts[2:])  # Handle multi-word names
+    # Use player_data if provided, otherwise parse from player name
+    if player_data:
+      league_value = player_data['league_value']  # Already formatted: "NCAA | W | 2025"
+      player_shortname = player_data['shortname']
+      log_info(f"Using player_data: league_value={league_value}, shortname={player_shortname}")
     else:
-      log_error(f"Invalid player name format: {player}")
-      return []
+      # Fallback: parse player name (shouldn't happen in normal use)
+      log_error(f"No player_data provided for {player} - using fallback!")
+      parts = player.split()
+      if len(parts) >= 3:
+        player_team = parts[0]
+        player_number = parts[1]
+        player_shortname = ' '.join(parts[2:])  # Handle multi-word names
+        # Build league_value - this is a GUESS without player_data
+        league_value = f"{league} | W | 2025"  # HARDCODED FALLBACK - NOT IDEAL!
+        log_error(f"WARNING: Using hardcoded fallback league_value={league_value}. This may be incorrect!")
+      else:
+        log_error(f"Invalid player name format: {player}")
+        return []
 
-      # Build league_value in format: "League | Gender | Year"
-      # Your league is "NCAA", need to add gender and year
-      # For now, assume from your data structure
-    league_value = f"{league}|W|2026"  # Adjust as needed
-
-    # Build filters for generate_player_metrics_json
+        # Build filters for generate_player_metrics_json
     json_filters = {
       'player': player,
       'player_shortname': player_shortname
@@ -604,40 +731,87 @@ def get_player_sessions(league, team, player, date_start=None, date_end=None):
     if date_end:
       json_filters['end_date'] = date_end
 
-    log_info(f"Calling generate_player_metrics_json with filters: {json_filters}")
+    log_info(f"Calling generate_player_metrics_json with league_value='{league_value}', team='{team}', filters={json_filters}")
 
-    # Call your existing function
-    result = generate_player_metrics_json(league_value, team, **json_filters)
+    # ISSUE: generate_player_metrics_json checks for logged-in user
+    # SOLUTION: Call the underlying data functions directly using the team parameter
 
-    # Extract the JSON data
-    if result and 'media_obj' in result:
-      # Get the JSON string from the media object
-      json_string = result['media_obj'].get_bytes().decode('utf-8')
-      json_data = json.loads(json_string)
+    # Import the data functions directly
+    from generate_player_metrics_json_server import (
+    get_filtered_ppr_data, 
+    get_filtered_triangle_data,
+    calculate_all_metrics
+    )
 
-      # Extract metadata and metrics
-      metadata = json_data.get('metadata', {})
-      metrics = json_data.get('metrics', {})
+    # Parse league_value to get components
+    str_loc = league_value.index("|")
+    league_part = league_value[:str_loc].strip()
+    league_value_remainder = league_value[str_loc + 1:]
+    str_loc = league_value_remainder.index("|")
+    gender = league_value_remainder[:str_loc].strip()
+    year = str(int(league_value_remainder[str_loc + 1:].strip()))
 
-      log_info(f"Got {len(metrics)} metric categories for {player}")
+    log_info(f"Parsed league_value: league={league_part}, gender={gender}, year={year}")
 
-      # Return as a single "session" with all metrics
-      session = {
-        'session_id': 'full_season',
-        'date': metadata.get('generated_at', str(datetime.now())),
-        'opponent': 'All Opponents',
-        'partner': 'All Partners',
-        'session_type': 'Season Analysis',
-        'result': 'N/A',
-        'total_points_analyzed': metadata.get('total_points_analyzed', 0),
-        'total_sets_analyzed': metadata.get('total_sets_analyzed', 0),
-        'metrics': metrics  # All 492 metrics organized by category
-      }
+    # Get PPR data directly (bypassing user check)
+    log_info("Retrieving PPR data directly...")
+    ppr_df = get_filtered_ppr_data_direct(league_part, gender, year, team, **json_filters)
 
-      return [session]  # Return as list with one session
-    else:
-      log_error(f"No data returned from generate_player_metrics_json")
+    if len(ppr_df) == 0:
+      log_error("No PPR data found")
       return []
+
+    log_info(f"Retrieved {len(ppr_df)} PPR data points")
+
+    # Get triangle data
+    log_info("Retrieving triangle data...")
+    tri_df = get_filtered_triangle_data(league_part, gender, year, team, **json_filters)
+    log_info(f"Retrieved {len(tri_df)} triangle data sets")
+
+    # Load metric dictionary
+    log_info("Loading metric dictionary...")
+    dict_rows = list(app_tables.metric_dictionary.search())
+    column_names = [col['name'] for col in app_tables.metric_dictionary.list_columns()]
+    metric_dict = pd.DataFrame([{col: row[col] for col in column_names} for row in dict_rows])
+    log_info(f"Loaded {len(metric_dict)} metrics")
+
+    # Calculate metrics
+    log_info("Calculating metrics...")
+    metrics_result = calculate_all_metrics(metric_dict, ppr_df, tri_df, player)
+    log_info(f"Calculated {metrics_result['successful']} metrics")
+
+    # Build metadata
+    metadata = {
+      'generated_at': datetime.now().isoformat(),
+      'player_name': player,
+      'player_shortname': player_shortname,
+      'league': league_part,
+      'gender': gender,
+      'year': year,
+      'team': team,
+      'total_points_analyzed': len(ppr_df),
+      'total_sets_analyzed': len(tri_df),
+    }
+
+    # Build metrics dict organized by category
+    metrics_by_category = metrics_result['metrics']
+
+    log_info(f"Got {len(metrics_by_category)} metric categories for {player}")
+
+    # Return as a single "session" with all metrics
+    session = {
+      'session_id': 'full_season',
+      'date': metadata['generated_at'],
+      'opponent': 'All Opponents',
+      'partner': 'All Partners',
+      'session_type': 'Season Analysis',
+      'result': 'N/A',
+      'total_points_analyzed': metadata['total_points_analyzed'],
+      'total_sets_analyzed': metadata['total_sets_analyzed'],
+      'metrics': metrics_by_category  # All 492 metrics organized by category
+    }
+
+    return [session]  # Return as list with one session
 
   except Exception as e:
     log_exception('error', f"Error getting metrics for {player}", e)
@@ -780,7 +954,7 @@ def build_markdown_content(player, team, league, sessions_data, date_start=None,
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def save_markdown_to_drive(filename, content, league, team):
   """
-    Save markdown file to Google Drive in the same folder structure as reports.
+    Save markdown file to Google Drive using the existing write_to_drive function.
     
     Folder structure: Beach Internals Reports/[league]/[team]/notebooklm/
     (Similar to reports but with 'notebooklm' instead of date folder)
@@ -789,57 +963,62 @@ def save_markdown_to_drive(filename, content, league, team):
     """
 
   try:
+    from server_functions import write_to_drive
+
     # Build folder path matching your report manager pattern
     # Instead of: ['Beach Internals Reports', league, team, '2025-01-26']
     # We use:     ['Beach Internals Reports', league, team, 'notebooklm']
     folder_path = ['Beach Internals Reports', league, team, 'notebooklm']
 
-    print(f"Saving to folder: {' / '.join(folder_path)}")
+    log_info(f"Saving to folder: {' / '.join(folder_path)}")
 
-    # Create the file media
+    # Create the file media (markdown content as BlobMedia)
     media = anvil.BlobMedia('text/markdown', content.encode('utf-8'), name=filename)
 
-    # Upload to Google Drive using the folder path
-    # This uses the same pattern as your report manager
-    file = anvil.google.drive.app_files.create_in_folder(
-      media,
-      folder_path,
-      title=filename
-    )
+    # Use your existing write_to_drive function
+    # This should handle folder creation and file upload
+    file_id = write_to_drive(media, folder_path, filename)
 
-    # Get the file URL for the return value
-    file_url = f"https://drive.google.com/file/d/{file['id']}/view"
+    if not file_id:
+      raise Exception("write_to_drive returned None")
 
-    print(f"Saved file: {filename} (ID: {file['id']})")
+      # Get the file URL
+    file_url = f"https://drive.google.com/file/d/{file_id}/view"
+
+    log_info(f"Saved file: {filename} (ID: {file_id})")
 
     return {
-      'id': file['id'],
+      'id': file_id,
       'url': file_url,
       'path': ' / '.join(folder_path)
     }
 
   except Exception as e:
+    log_exception('error', f"Error saving markdown to Google Drive", e)
     print(f"Error saving to Google Drive: {str(e)}")
-    # Fallback: save to Anvil's data files table
-    try:
-      from anvil import media as anvil_media
 
+    # Fallback: save to Anvil's data files table if it exists
+    try:
       # Create table if it doesn't exist (you may need to create this manually)
       row = app_tables.ai_export_files.add_row(
         filename=filename,
-        content=anvil_media.from_file(content.encode('utf-8')),
+        content=content,  # Store as text
         league=league,
         team=team,
         created=datetime.now()
       )
 
+      log_info(f"Fallback: Saved to ai_export_files table (row ID: {row.get_id()})")
+
       return {
-        'id': str(row.get_id()),
-        'url': None,
-        'path': 'Anvil Data Tables'
+        'id': row.get_id(),
+        'url': None,  # No direct URL for data table files
+        'path': 'ai_export_files table'
       }
+
     except Exception as e2:
-      print(f"Fallback also failed: {str(e2)}")
+      log_exception('error', f"Fallback storage also failed {e2}", e2)
+      print(f"Fallback storage failed: {str(e2)}")
       return None
 
 

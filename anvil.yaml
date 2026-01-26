@@ -46,6 +46,9 @@ db_schema:
       name: player_filter
       target: master_player
       type: link_multiple
+    - admin_ui: {order: 6.5, width: 200}
+      name: disabled
+      type: bool
     server: full
     title: ai_export_mgr
   ai_prompt_templates:
