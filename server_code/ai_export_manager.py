@@ -971,6 +971,7 @@ def save_markdown_to_drive(filename, content, league, team, player_data=None):
             league_str = league
         
         # Folder path: ['reports', 'NCAAW2026', 'STETSON', 'notebooklm']
+        # take the 'reports' out of he league string
         folder_path = ['reports', league_str, team, 'notebooklm']
         
         log_info(f"Saving to folder: {' / '.join(folder_path)}")
