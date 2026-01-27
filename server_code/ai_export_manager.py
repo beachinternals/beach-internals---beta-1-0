@@ -655,7 +655,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
 
   # 4. Save to Google Drive
   log_info(f"Saving markdown file: {filename}")
-  file_info = save_markdown_to_drive(filename, markdown_content, league, team)
+  file_info = save_markdown_to_drive(filename, markdown_content, league, team, player_data)
 
   if not file_info:
     log_error(f"Failed to save file for {player}")
@@ -750,70 +750,70 @@ def get_player_sessions(league, team, player, date_start=None, date_end=None, pl
     year = str(int(league_value_remainder[str_loc + 1:].strip()))
 
     log_info(f"Parsed league_value: league={league_part}, gender={gender}, year={year}")
-
-    # Get PPR data directly (bypassing user check)
+        
+        # Get PPR data directly (bypassing user check)
     log_info("Retrieving PPR data directly...")
     ppr_df = get_filtered_ppr_data_direct(league_part, gender, year, team, **json_filters)
-
+        
     if len(ppr_df) == 0:
-      log_error("No PPR data found")
-      return []
-
+            log_error("No PPR data found")
+            return []
+        
     log_info(f"Retrieved {len(ppr_df)} PPR data points")
-
-    # Get triangle data
+        
+        # Get triangle data
     log_info("Retrieving triangle data...")
     tri_df = get_filtered_triangle_data(league_part, gender, year, team, **json_filters)
     log_info(f"Retrieved {len(tri_df)} triangle data sets")
-
-    # Load metric dictionary
+        
+        # Load metric dictionary
     log_info("Loading metric dictionary...")
     dict_rows = list(app_tables.metric_dictionary.search())
     column_names = [col['name'] for col in app_tables.metric_dictionary.list_columns()]
     metric_dict = pd.DataFrame([{col: row[col] for col in column_names} for row in dict_rows])
     log_info(f"Loaded {len(metric_dict)} metrics")
-
-    # Calculate metrics
+        
+        # Calculate metrics
     log_info("Calculating metrics...")
     metrics_result = calculate_all_metrics(metric_dict, ppr_df, tri_df, player)
     log_info(f"Calculated {metrics_result['successful']} metrics")
-
-    # Build metadata
+        
+        # Build metadata
     metadata = {
-      'generated_at': datetime.now().isoformat(),
-      'player_name': player,
-      'player_shortname': player_shortname,
-      'league': league_part,
-      'gender': gender,
-      'year': year,
-      'team': team,
-      'total_points_analyzed': len(ppr_df),
-      'total_sets_analyzed': len(tri_df),
-    }
-
-    # Build metrics dict organized by category
+            'generated_at': datetime.now().isoformat(),
+            'player_name': player,
+            'player_shortname': player_shortname,
+            'league': league_part,
+            'gender': gender,
+            'year': year,
+            'team': team,
+            'total_points_analyzed': len(ppr_df),
+            'total_sets_analyzed': len(tri_df),
+        }
+        
+        # Build metrics dict organized by category
     metrics_by_category = metrics_result['metrics']
-
+        
     log_info(f"Got {len(metrics_by_category)} metric categories for {player}")
-
-    # Return as a single "session" with all metrics
+        
+        # Return as a single "session" with all metrics
     session = {
-      'session_id': 'full_season',
-      'date': metadata['generated_at'],
-      'opponent': 'All Opponents',
-      'partner': 'All Partners',
-      'session_type': 'Season Analysis',
-      'result': 'N/A',
-      'total_points_analyzed': metadata['total_points_analyzed'],
-      'total_sets_analyzed': metadata['total_sets_analyzed'],
-      'metrics': metrics_by_category  # All 492 metrics organized by category
-    }
-
+            'session_id': 'full_season',
+            'date': metadata['generated_at'],
+            'opponent': 'All Opponents',
+            'partner': 'All Partners',
+            'session_type': 'Season Analysis',
+            'result': 'N/A',
+            'total_points_analyzed': metadata['total_points_analyzed'],
+            'total_sets_analyzed': metadata['total_sets_analyzed'],
+            'metrics': metrics_by_category  # All 492 metrics organized by category
+        }
+        
     return [session]  # Return as list with one session
-
+        
   except Exception as e:
-    log_exception('error', f"Error getting metrics for {player}", e)
-    return []
+        log_exception('error', f"Error getting metrics for {player}", e)
+        return []
 
 
 #--------------------------------------------------------------
@@ -821,16 +821,16 @@ def get_player_sessions(league, team, player, date_start=None, date_end=None, pl
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def extract_session_metrics(match_row, player):
-  """
+    """
     Extract all available metrics from a match row.
     
     Returns dictionary with all metrics for this session.
     """
-
-  # This is where you'll extract your 500+ metrics per session
-  # Adjust field names to match your actual data structure
-
-  session = {
+    
+    # This is where you'll extract your 500+ metrics per session
+    # Adjust field names to match your actual data structure
+    
+    session = {
         'session_id': match_row.get('match_id', 'unknown'),
         'date': str(match_row.get('date', '')),
         'opponent': match_row.get('opponent', 'Unknown'),
@@ -844,7 +844,7 @@ def extract_session_metrics(match_row, player):
     
     # Extract all numeric metrics
     # This is a placeholder - you'll expand this based on your data
-  metric_fields = [
+    metric_fields = [
         'total_attacks', 'attack_kills', 'attack_errors', 'attack_pct',
         'serve_aces', 'serve_errors', 'serve_total',
         'block_kills', 'block_assists', 'block_errors',
@@ -853,11 +853,11 @@ def extract_session_metrics(match_row, player):
         # Add all your other metrics here...
     ]
     
-  for field in metric_fields:
+    for field in metric_fields:
         if field in match_row:
             session['metrics'][field] = match_row[field]
     
-  return session
+    return session
 
 
 #--------------------------------------------------------------
@@ -950,44 +950,44 @@ def build_markdown_content(player, team, league, sessions_data, date_start=None,
 # Save markdown file to Google Drive
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def save_markdown_to_drive(filename, content, league, team):
+def save_markdown_to_drive(filename, content, league, team, player_data=None):
     """
-    Save markdown file to Google Drive using the existing write_to_drive function.
+    Save markdown file to Google Drive using write_to_nested_folder.
     
-    Folder structure: Beach Internals Reports/[league]/[team]/notebooklm/
-    (Similar to reports but with 'notebooklm' instead of date folder)
+    Folder structure: reports/[league][gender][year]/[team]/notebooklm/
+    Example: reports/NCAAW2026/STETSON/notebooklm/
     
     Returns the file path/ID and URL.
     """
     
     try:
-        from server_functions import write_to_drive
+        from server_functions import write_to_nested_folder
         
-        # Build folder path matching your report manager pattern
-        # Instead of: ['Beach Internals Reports', league, team, '2025-01-26']
-        # We use:     ['Beach Internals Reports', league, team, 'notebooklm']
-        folder_path = ['Beach Internals Reports', league, team, 'notebooklm']
+        # Build league string in format: NCAAW2026 (league + gender + year)
+        if player_data:
+            league_str = f"{player_data['league']}{player_data['gender']}{player_data['year']}"
+        else:
+            # Fallback if no player_data - just use league as-is
+            league_str = league
+        
+        # Folder path: ['reports', 'NCAAW2026', 'STETSON', 'notebooklm']
+        folder_path = ['reports', league_str, team, 'notebooklm']
         
         log_info(f"Saving to folder: {' / '.join(folder_path)}")
         
         # Create the file media (markdown content as BlobMedia)
         media = anvil.BlobMedia('text/markdown', content.encode('utf-8'), name=filename)
         
-        # Use your existing write_to_drive function
-        # This should handle folder creation and file upload
-        result = write_to_drive(media, folder_path, filename)
+        # Use write_to_nested_folder (same as report manager)
+        result = write_to_nested_folder(folder_path, filename, media)
         
-        log_info(f"write_to_drive returned: {result}")
-        
-        # write_to_drive returns a string description, not a file ID
-        # We don't have direct access to the file ID or URL from this function
-        # So we'll return success but with placeholder values
+        log_info(f"write_to_nested_folder returned: {result}")
         
         return {
-            'id': 'saved_to_drive',  # Placeholder since we don't get the actual ID
-            'url': None,  # We don't have a direct URL from write_to_drive
+            'id': 'saved_to_drive',
+            'url': None,
             'path': ' / '.join(folder_path),
-            'result': str(result)  # Include the actual result for logging
+            'result': str(result)
         }
         
     except Exception as e:
@@ -996,10 +996,9 @@ def save_markdown_to_drive(filename, content, league, team):
         
         # Fallback: save to Anvil's data files table if it exists
         try:
-            # Create table if it doesn't exist (you may need to create this manually)
             row = app_tables.ai_export_files.add_row(
                 filename=filename,
-                content=content,  # Store as text
+                content=content,
                 league=league,
                 team=team,
                 created=datetime.now()
@@ -1009,7 +1008,7 @@ def save_markdown_to_drive(filename, content, league, team):
             
             return {
                 'id': row.get_id(),
-                'url': None,  # No direct URL for data table files
+                'url': None,
                 'path': 'ai_export_files table'
             }
             
@@ -1048,3 +1047,5 @@ def check_consolidation_needs(sessions_data):
         groups.append(sessions_data[i:i + sessions_per_file])
     
     return groups
+
+  
