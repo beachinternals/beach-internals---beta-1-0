@@ -31,6 +31,7 @@ MONITORING_LEVEL_VERBOSE
 # EXISTING METRIC GENERATION IMPORT
 # ============================================================================
 from generate_player_metrics_json_server import generate_player_metrics_json
+from generate_player_metrics_markdown import generate_player_metrics_markdown, generate_global_context_markdown
 
 # Import pandas for data processing
 import pandas as pd
@@ -1049,4 +1050,166 @@ def check_consolidation_needs(sessions_data):
     
     return groups
 
-  
+
+def process_export_job_markdown(export_row):
+  """
+    Process export job - MARKDOWN VERSION.
+    
+    This is the NEW version that generates Markdown instead of JSON.
+    Add this function to your existing ai_export_manager module.
+    
+    Args:
+        export_row: Row from ai_export_mgr table
+        
+    Returns:
+        dict: {
+            'files_generated': int,
+            'file_list': list of dicts with file info,
+            'message': str
+        }
+    """
+
+  log_info(f"Processing MARKDOWN export for {export_row['team']} ({export_row['league']})")
+
+  # Extract export parameters
+  league = export_row['league']
+  team = export_row['team']
+  date_start = export_row['date_start']
+  date_end = export_row['date_end']
+  export_type = export_row['export_type']
+  player_filter = export_row['player_filter']  # Linked rows from master_player
+
+  # Determine year and gender
+  # ADJUST THIS based on how your data stores league/gender/year
+  year = 2026  # Or extract from somewhere
+
+  if 'W' in league or 'WOMEN' in league.upper():
+    gender = 'W'
+  elif 'M' in league or 'MEN' in league.upper():
+    gender = 'M'
+  else:
+    gender = 'W'  # Default
+
+  log_info(f"Parsed: League={league}, Gender={gender}, Year={year}, Team={team}")
+
+  # Build filters
+  filters = {'team': team}
+  if date_start:
+    filters['start_date'] = date_start
+  if date_end:
+    filters['end_date'] = date_end
+
+    # Get player list
+  if not player_filter:
+    log_error("No players specified in player_filter")
+    return {'files_generated': 0, 'file_list': [], 'message': 'No players specified'}
+
+  player_list = list(player_filter)
+  log_info(f"Found {len(player_list)} players to export")
+
+  # Set up output folder
+  league_gender_year = f"{league}{gender}{year}"
+  output_folder = [league_gender_year, team, 'notebooklm']
+  log_info(f"Output folder: {' / '.join(output_folder)}")
+
+  # Generate global context file once
+  try:
+    log_info("Generating global context file...")
+    context_file = generate_global_context_markdown()
+    context_result = write_to_nested_folder(
+      output_folder,
+      '00_Global_Context_Philosophy.md',
+      context_file
+    )
+    log_info(f"Global context file: {context_result}")
+  except Exception as e:
+    log_error(f"Failed to create global context: {e}")
+
+    # Generate Markdown file for each player
+  file_list = []
+  files_generated = 0
+
+  for player_idx, player_row in enumerate(player_list):
+    log_info(f"\n--- Player {player_idx + 1}/{len(player_list)} ---")
+
+    try:
+      # Extract player info
+      player_fullname = player_row['fullname']
+      player_shortname = player_row['shortname']
+      player_number = str(player_row['number'])
+
+      # Build player display name
+      player_name = f"{team} {player_number} {player_shortname}"
+      log_info(f"Processing: {player_name}")
+
+      # Build league_value format
+      league_value = f"{league} | {gender} | {year}"
+
+      # Add player-specific filters
+      player_filters = filters.copy()
+      player_filters['player'] = player_name
+      player_filters['player_shortname'] = player_shortname
+
+      # Generate Markdown export
+      # Call the generation function (JSON or Markdown)
+      if export_type in ['markdown', 'full']:
+        log_info(f"Calling generate_player_metrics_markdown...")
+        result = generate_player_metrics_markdown(
+          league_value=league_value,
+          team=team,
+          **player_filters
+        )
+      else:
+        log_info(f"Calling generate_player_metrics_json...")
+        result = generate_player_metrics_json(
+          league_value=league_value,
+          team=team,
+          **player_filters
+        )
+
+      if result and result['media_obj']:
+        # Upload to Google Drive
+        log_info(f"Uploading to Drive: {result['filename']}")
+        upload_result = write_to_nested_folder(
+          output_folder,
+          result['filename'],
+          result['media_obj']
+        )
+
+        # Count words
+        md_content = result['media_obj'].get_bytes().decode('utf-8')
+        word_count = len(md_content.split())
+
+        # Track file info (matches your existing format from CSV)
+        file_info = {
+          'player': player_name,
+          'filename': result['filename'],
+          'file_id': 'saved_to_drive',
+          'file_url': None,
+          'path': ' / '.join(output_folder),
+          'sessions_count': result['summary']['total_sets_analyzed'],
+          'word_count': word_count
+        }
+
+        file_list.append(file_info)
+        files_generated += 1
+
+        log_info(f"✓ Generated: {result['filename']} ({word_count} words)")
+
+      else:
+        log_error(f"Failed to generate Markdown for {player_name}")
+
+    except Exception as e:
+      log_error(f"Error processing player {player_name}: {str(e)}", with_traceback=True)
+      continue
+
+    # Build result message
+  message = f"Generated {files_generated} player files"
+  if files_generated < len(player_list):
+    message += f" ({len(player_list) - files_generated} failed)"
+
+  return {
+    'files_generated': files_generated,
+    'file_list': file_list,
+    'message': message
+  }
