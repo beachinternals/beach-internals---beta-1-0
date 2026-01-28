@@ -991,7 +991,7 @@ def save_markdown_to_drive_updated(filename, content, league, team, player_data=
     folder_path = [league_str, team, 'notebooklm']
 
     # Create media with text/markdown MIME type
-    media = anvil.BlobMedia('text/markdown', content.encode('utf-8'), name=filename)
+    media = anvil.BlobMedia('text/markdown', content.encode('utf-8'))
 
     # Use your existing function
     result = write_to_nested_folder(folder_path, filename, media)

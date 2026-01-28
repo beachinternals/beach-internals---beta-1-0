@@ -1520,7 +1520,7 @@ def write_to_nested_folder(folder_path, filename, content):
     # --- THE "FORCE REFRESH" TRICK ---
     # Re-setting the name on the Drive object forces a metadata sync.
     # This ensures the new MIME type 'sticks' in the Google Index immediately.
-  file.name = filename 
+  #file.name = filename 
 
   return f"File {filename} written to {'/'.join(folder_path)}"
   
