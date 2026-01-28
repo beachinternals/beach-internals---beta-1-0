@@ -682,7 +682,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
   
   # Save to Google Drive
   log_info(f"Saving markdown file: {filename}")
-  file_info = save_markdown_to_drive(filename, markdown_content, league, team, player_data)
+  file_info = save_markdown_to_drive_updated(filename, markdown_content, league, team, player_data)
 
   if not file_info:
     log_error(f"Failed to save file for {player}")
@@ -977,73 +977,280 @@ def build_markdown_content(player, team, league, sessions_data, date_start=None,
 # Save markdown file to Google Drive
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def save_markdown_to_drive(filename, content, league, team, player_data=None):
-    """
-    Save markdown file to Google Drive using write_to_nested_folder.
+def save_markdown_to_drive_updated(filename, content, league, team, player_data=None):
+  """
+    Save markdown file to Google Drive with update-or-create logic.
     
-    Folder structure: reports/[league][gender][year]/[team]/notebooklm/
-    Example: reports/NCAAW2026/STETSON/notebooklm/
+    This ensures NotebookLM links remain stable by updating existing files
+    rather than creating new ones each time.
     
-    Returns the file path/ID and URL.
-    """
-    
-    try:
-        from server_functions import write_to_nested_folder
+    Args:
+        filename: Name of the file (e.g., "STETSON_41_Emma_NCAA_STETSON.md")
+        content: Markdown content (string)
+        league: League identifier
+        team: Team name
+        player_data: Optional dict with league, gender, year
         
-        # Build league string in format: NCAAW2026 (league + gender + year)
-        if player_data:
-            league_str = f"{player_data['league']}{player_data['gender']}{player_data['year']}"
-        else:
-            # Fallback if no player_data - just use league as-is
-            league_str = league
-        
-        # Folder path: ['reports', 'NCAAW2026', 'STETSON', 'notebooklm']
-        # take the 'reports' out of he league string
-        folder_path = [ league_str, team, 'notebooklm']
-        
-        log_info(f"Saving to folder: {' / '.join(folder_path)}")
-        
-        # Create the file media (markdown content as BlobMedia)
-        media = anvil.BlobMedia('text/markdown', content.encode('utf-8'), name=filename)
-        
-        # Use write_to_nested_folder (same as report manager)
-        result = write_to_nested_folder(folder_path, filename, media)
-        
-        log_info(f"write_to_nested_folder returned: {result}")
-        
-        return {
-            'id': 'saved_to_drive',
-            'url': None,
-            'path': ' / '.join(folder_path),
-            'result': str(result)
+    Returns:
+        dict: {
+            'id': Google Drive file ID,
+            'url': Google Drive file URL,
+            'path': Folder path,
+            'action': 'updated' or 'created'
         }
+    """
+
+  try:
+    # Build league string in format: NCAAW2026
+    if player_data:
+      league_str = f"{player_data['league']}{player_data['gender']}{player_data['year']}"
+    else:
+      league_str = league
+
+      # Folder path components
+    folder_path = [league_str, team, 'notebooklm']
+    log_info(f"Target folder: {' / '.join(folder_path)}")
+
+    # Step 1: Get or create the target folder
+    parent_folder = get_or_create_nested_folder(folder_path)
+
+    if not parent_folder:
+      log_error("Failed to get/create target folder")
+      return None
+
+    log_info(f"Target folder ID: {parent_folder['id']}")
+
+    # Step 2: Search for existing file with this name in the folder
+    existing_file = search_file_in_folder(filename, parent_folder['id'])
+
+    # Step 3: Prepare the content with proper MIME type
+    # Try text/markdown first, fallback to text/plain if needed
+    mime_type = 'text/markdown'  # NotebookLM understands markdown
+
+    media_body = anvil.BlobMedia(
+      mime_type,
+      content.encode('utf-8'),
+      name=filename
+    )
+
+    # Step 4: Update existing file OR create new file
+    if existing_file:
+      # UPDATE existing file (preserves NotebookLM link)
+      log_info(f"File exists (ID: {existing_file['id']}), updating...")
+
+      result_file = update_drive_file(
+        file_id=existing_file['id'],
+        media_body=media_body,
+        filename=filename,
+        mime_type=mime_type
+      )
+
+      action = 'updated'
+      log_info(f"✓ File updated: {filename}")
+
+    else:
+      # CREATE new file
+      log_info(f"File doesn't exist, creating new...")
+
+      result_file = create_drive_file(
+        filename=filename,
+        media_body=media_body,
+        parent_folder_id=parent_folder['id'],
+        mime_type=mime_type
+      )
+
+      action = 'created'
+      log_info(f"✓ File created: {filename}")
+
+    if not result_file:
+      log_error("Failed to save file to Drive")
+      return None
+
+    return {
+      'id': result_file['id'],
+      'url': result_file.get('url'),
+      'path': ' / '.join(folder_path),
+      'action': action,
+      'result': f"File {action} successfully"
+    }
+
+  except Exception as e:
+    log_error(f"Error in save_markdown_to_drive_updated: {str(e)}")
+    import traceback
+    log_error(traceback.format_exc())
+    return None
+
+
+def get_or_create_nested_folder(folder_path):
+  """
+    Navigate to (or create) a nested folder structure in Google Drive.
+    
+    Args:
+        folder_path: List of folder names (e.g., ['NCAAW2026', 'STETSON', 'notebooklm'])
         
-    except Exception as e:
-        log_exception('error', f"Error saving markdown to Google Drive", e)
-        print(f"Error saving to Google Drive: {str(e)}")
+    Returns:
+        dict: Folder info with 'id' and 'name'
+    """
+  try:
+    # Start from root of app_files
+    current_folder = None
+
+    for folder_name in folder_path:
+      # Search for this folder in current location
+      if current_folder:
+        # Search within current folder
+        folders = list(app_files.search(
+          name=folder_name,
+          parent=current_folder,
+          type='folder'
+        ))
+      else:
+        # Search in root
+        folders = list(app_files.search(
+          name=folder_name,
+          type='folder'
+        ))
+
+      if folders:
+        # Folder exists
+        current_folder = folders[0]
+        log_debug(f"Found folder: {folder_name}")
+      else:
+        # Create folder
+        log_info(f"Creating folder: {folder_name}")
+        if current_folder:
+          current_folder = app_files.create_folder(
+            name=folder_name,
+            parent=current_folder
+          )
+        else:
+          current_folder = app_files.create_folder(name=folder_name)
+
+        log_info(f"Created folder: {folder_name}")
+
+    return {
+      'id': current_folder,
+      'name': folder_path[-1]
+    }
+
+  except Exception as e:
+    log_error(f"Error in get_or_create_nested_folder: {str(e)}")
+    import traceback
+    log_error(traceback.format_exc())
+    return None
+
+
+def search_file_in_folder(filename, folder_id):
+  """
+    Search for a file by name within a specific folder.
+    
+    Args:
+        filename: Name of file to search for
+        folder_id: Google Drive folder ID or Anvil folder object
         
-        # Fallback: save to Anvil's data files table if it exists
-        try:
-            row = app_tables.ai_export_files.add_row(
-                filename=filename,
-                content=content,
-                league=league,
-                team=team,
-                created=datetime.now()
-            )
-            
-            log_info(f"Fallback: Saved to ai_export_files table (row ID: {row.get_id()})")
-            
-            return {
-                'id': row.get_id(),
-                'url': None,
-                'path': 'ai_export_files table'
-            }
-            
-        except Exception as e2:
-            log_exception('error', f"Fallback storage also failed", e2)
-            print(f"Fallback storage failed: {str(e2)}")
-            return None
+    Returns:
+        dict: File info with 'id', 'name', 'url' if found, None otherwise
+    """
+  try:
+    log_debug(f"Searching for file: {filename}")
+
+    # Search for file in the folder
+    files = list(app_files.search(
+      name=filename,
+      parent=folder_id,
+      type='file'
+    ))
+
+    if files:
+      file = files[0]
+      log_info(f"Found existing file: {filename}")
+
+      # Get file info
+      return {
+        'id': file,
+        'name': filename,
+        'url': file.get_url() if hasattr(file, 'get_url') else None
+      }
+    else:
+      log_debug(f"File not found: {filename}")
+      return None
+
+  except Exception as e:
+    log_error(f"Error searching for file: {str(e)}")
+    return None
+
+
+def update_drive_file(file_id, media_body, filename, mime_type):
+  """
+    Update an existing Google Drive file's content.
+    
+    Args:
+        file_id: Google Drive file ID or Anvil file object
+        media_body: BlobMedia object with new content
+        filename: Filename
+        mime_type: MIME type (text/markdown or text/plain)
+        
+    Returns:
+        dict: Updated file info
+    """
+  try:
+    log_info(f"Updating file content...")
+
+    # Use Anvil's app_files to update
+    # Note: Anvil abstracts the Google Drive API
+    file_id.set_bytes(media_body.get_bytes())
+
+    log_info("File content updated successfully")
+
+    return {
+      'id': file_id,
+      'name': filename,
+      'url': file_id.get_url() if hasattr(file_id, 'get_url') else None
+    }
+
+  except Exception as e:
+    log_error(f"Error updating file: {str(e)}")
+    import traceback
+    log_error(traceback.format_exc())
+    return None
+
+
+def create_drive_file(filename, media_body, parent_folder_id, mime_type):
+  """
+    Create a new file in Google Drive.
+    
+    Args:
+        filename: Name of the file
+        media_body: BlobMedia object with content
+        parent_folder_id: Folder ID or object where file should be created
+        mime_type: MIME type (text/markdown or text/plain)
+        
+    Returns:
+        dict: Created file info
+    """
+  try:
+    log_info(f"Creating new file: {filename}")
+
+    # Use Anvil's app_files to create
+    new_file = app_files.create(
+      media_body,
+      name=filename,
+      parent=parent_folder_id
+    )
+
+    log_info("File created successfully")
+
+    return {
+      'id': new_file,
+      'name': filename,
+      'url': new_file.get_url() if hasattr(new_file, 'get_url') else None
+    }
+
+  except Exception as e:
+    log_error(f"Error creating file: {str(e)}")
+    import traceback
+    log_error(traceback.format_exc())
+    return None
 
 
 #--------------------------------------------------------------
