@@ -978,160 +978,93 @@ def build_markdown_content(player, team, league, sessions_data, date_start=None,
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def save_markdown_to_drive_updated(filename, content, league, team, player_data=None):
-  """
-    Save markdown file to Google Drive with update-or-create logic.
-    
-    This ensures NotebookLM links remain stable by updating existing files
-    rather than creating new ones each time.
-    
-    Args:
-        filename: Name of the file (e.g., "STETSON_41_Emma_NCAA_STETSON.md")
-        content: Markdown content (string)
-        league: League identifier
-        team: Team name
-        player_data: Optional dict with league, gender, year
-        
-    Returns:
-        dict: {
-            'id': Google Drive file ID,
-            'url': Google Drive file URL,
-            'path': Folder path,
-            'action': 'updated' or 'created'
-        }
-    """
-
+  """Simple version - uses existing write_to_nested_folder."""
   try:
-    # Build league string in format: NCAAW2026
+    from server_functions import write_to_nested_folder
+
+    # Build folder path
     if player_data:
       league_str = f"{player_data['league']}{player_data['gender']}{player_data['year']}"
     else:
       league_str = league
 
-      # Folder path components
     folder_path = [league_str, team, 'notebooklm']
-    log_info(f"Target folder: {' / '.join(folder_path)}")
 
-    # Step 1: Get or create the target folder
-    parent_folder = get_or_create_nested_folder(folder_path)
+    # Create media with text/markdown MIME type
+    media = anvil.BlobMedia('text/markdown', content.encode('utf-8'), name=filename)
 
-    if not parent_folder:
-      log_error("Failed to get/create target folder")
-      return None
+    # Use your existing function
+    result = write_to_nested_folder(folder_path, filename, media)
 
-    log_info(f"Target folder ID: {parent_folder['id']}")
-
-    # Step 2: Search for existing file with this name in the folder
-    existing_file = search_file_in_folder(filename, parent_folder['id'])
-
-    # Step 3: Prepare the content with proper MIME type
-    # Try text/markdown first, fallback to text/plain if needed
-    mime_type = 'text/markdown'  # NotebookLM understands markdown
-
-    media_body = anvil.BlobMedia(
-      mime_type,
-      content.encode('utf-8'),
-      name=filename
-    )
-
-    # Step 4: Update existing file OR create new file
-    if existing_file:
-      # UPDATE existing file (preserves NotebookLM link)
-      log_info(f"File exists (ID: {existing_file['id']}), updating...")
-
-      result_file = update_drive_file(
-        file_id=existing_file['id'],
-        media_body=media_body,
-        filename=filename,
-        mime_type=mime_type
-      )
-
-      action = 'updated'
-      log_info(f"✓ File updated: {filename}")
-
-    else:
-      # CREATE new file
-      log_info(f"File doesn't exist, creating new...")
-
-      result_file = create_drive_file(
-        filename=filename,
-        media_body=media_body,
-        parent_folder_id=parent_folder['id'],
-        mime_type=mime_type
-      )
-
-      action = 'created'
-      log_info(f"✓ File created: {filename}")
-
-    if not result_file:
-      log_error("Failed to save file to Drive")
-      return None
+    log_info(f"✓ File saved: {filename}")
 
     return {
-      'id': result_file['id'],
-      'url': result_file.get('url'),
+      'id': 'saved_to_drive',
+      'url': None,
       'path': ' / '.join(folder_path),
-      'action': action,
-      'result': f"File {action} successfully"
+      'result': str(result)
     }
 
   except Exception as e:
-    log_error(f"Error in save_markdown_to_drive_updated: {str(e)}")
-    import traceback
-    log_error(traceback.format_exc())
+    log_error(f"Error: {str(e)}")
     return None
+
 
 
 def get_or_create_nested_folder(folder_path):
   """
-    Navigate to (or create) a nested folder structure in Google Drive.
+    Navigate to (or create) nested folders using proper Anvil API.
     
     Args:
-        folder_path: List of folder names (e.g., ['NCAAW2026', 'STETSON', 'notebooklm'])
+        folder_path: List of folder names ['NCAAW2026', 'STETSON', 'notebooklm']
         
     Returns:
-        dict: Folder info with 'id' and 'name'
+        Anvil folder object (or None on failure)
     """
   try:
-    # Start from root of app_files
     current_folder = None
 
     for folder_name in folder_path:
-      # Search for this folder in current location
-      if current_folder:
-        # Search within current folder
-        folders = list(app_files.search(
-          name=folder_name,
-          parent=current_folder,
-          type='folder'
-        ))
-      else:
-        # Search in root
-        folders = list(app_files.search(
-          name=folder_name,
-          type='folder'
-        ))
+      log_debug(f"Looking for folder: {folder_name}")
 
-      if folders:
-        # Folder exists
-        current_folder = folders[0]
-        log_debug(f"Found folder: {folder_name}")
+      # List files in current location
+      if current_folder:
+        # List files in this folder
+        files_list = current_folder.list()
+      else:
+        # List files in root
+        files_list = app_files.list()
+
+        # Search for matching folder
+      found_folder = None
+      for item in files_list:
+        try:
+          item_name = item.get_name()
+          if item_name == folder_name:
+            # Check if it's a folder (has list-like behavior)
+            try:
+              list(item)  # Folders are iterable
+              found_folder = item
+              log_debug(f"Found existing folder: {folder_name}")
+              break
+            except:
+              # Not a folder, skip
+              continue
+        except:
+          continue
+
+      if found_folder:
+        current_folder = found_folder
       else:
         # Create folder
         log_info(f"Creating folder: {folder_name}")
         if current_folder:
-          current_folder = app_files.create_folder(
-            name=folder_name,
-            parent=current_folder
-          )
+          current_folder = current_folder.create_folder(folder_name)
         else:
-          current_folder = app_files.create_folder(name=folder_name)
-
+          current_folder = app_files.create_folder(folder_name)
         log_info(f"Created folder: {folder_name}")
 
-    return {
-      'id': current_folder,
-      'name': folder_path[-1]
-    }
+    return current_folder
 
   except Exception as e:
     log_error(f"Error in get_or_create_nested_folder: {str(e)}")
@@ -1140,73 +1073,59 @@ def get_or_create_nested_folder(folder_path):
     return None
 
 
-def search_file_in_folder(filename, folder_id):
+def search_file_in_folder(filename, folder_obj):
   """
-    Search for a file by name within a specific folder.
+    Search for a file by name within a folder object.
     
     Args:
         filename: Name of file to search for
-        folder_id: Google Drive folder ID or Anvil folder object
+        folder_obj: Anvil folder object
         
     Returns:
-        dict: File info with 'id', 'name', 'url' if found, None otherwise
+        Anvil file object if found, None otherwise
     """
   try:
     log_debug(f"Searching for file: {filename}")
 
-    # Search for file in the folder
-    files = list(app_files.search(
-      name=filename,
-      parent=folder_id,
-      type='file'
-    ))
+    # List files in the folder
+    files_list = folder_obj.list()
 
-    if files:
-      file = files[0]
-      log_info(f"Found existing file: {filename}")
+    for item in files_list:
+      try:
+        item_name = item.get_name()
+        if item_name == filename:
+          log_info(f"Found existing file: {filename}")
+          return item
+      except:
+        continue
 
-      # Get file info
-      return {
-        'id': file,
-        'name': filename,
-        'url': file.get_url() if hasattr(file, 'get_url') else None
-      }
-    else:
-      log_debug(f"File not found: {filename}")
-      return None
+    log_debug(f"File not found: {filename}")
+    return None
 
   except Exception as e:
     log_error(f"Error searching for file: {str(e)}")
     return None
 
 
-def update_drive_file(file_id, media_body, filename, mime_type):
+def update_drive_file(file_obj, media_body):
   """
-    Update an existing Google Drive file's content.
+    Update an existing file's content.
     
     Args:
-        file_id: Google Drive file ID or Anvil file object
-        media_body: BlobMedia object with new content
-        filename: Filename
-        mime_type: MIME type (text/markdown or text/plain)
+        file_obj: Anvil file object
+        media_body: BlobMedia with new content
         
     Returns:
-        dict: Updated file info
+        Updated file object
     """
   try:
-    log_info(f"Updating file content...")
+    log_debug(f"Updating file content...")
 
-    # Use Anvil's app_files to update
-    # Note: Anvil abstracts the Google Drive API
-    file_id.set_bytes(media_body.get_bytes())
+    # Update the file content
+    file_obj.set_bytes(media_body.get_bytes())
 
-    log_info("File content updated successfully")
-
-    return {
-      'id': file_id,
-      'name': filename,
-      'url': file_id.get_url() if hasattr(file_id, 'get_url') else None
-    }
+    log_debug("File content updated successfully")
+    return file_obj
 
   except Exception as e:
     log_error(f"Error updating file: {str(e)}")
@@ -1215,42 +1134,33 @@ def update_drive_file(file_id, media_body, filename, mime_type):
     return None
 
 
-def create_drive_file(filename, media_body, parent_folder_id, mime_type):
+def create_drive_file(filename, media_body, parent_folder):
   """
-    Create a new file in Google Drive.
+    Create a new file in a folder.
     
     Args:
         filename: Name of the file
-        media_body: BlobMedia object with content
-        parent_folder_id: Folder ID or object where file should be created
-        mime_type: MIME type (text/markdown or text/plain)
+        media_body: BlobMedia with content
+        parent_folder: Anvil folder object
         
     Returns:
-        dict: Created file info
+        Created file object
     """
   try:
-    log_info(f"Creating new file: {filename}")
+    log_debug(f"Creating new file: {filename}")
 
-    # Use Anvil's app_files to create
-    new_file = app_files.create(
-      media_body,
-      name=filename,
-      parent=parent_folder_id
-    )
+    # Create file in the folder
+    new_file = parent_folder.create(media_body, name=filename)
 
-    log_info("File created successfully")
-
-    return {
-      'id': new_file,
-      'name': filename,
-      'url': new_file.get_url() if hasattr(new_file, 'get_url') else None
-    }
+    log_debug("File created successfully")
+    return new_file
 
   except Exception as e:
     log_error(f"Error creating file: {str(e)}")
     import traceback
     log_error(traceback.format_exc())
     return None
+
 
 
 #--------------------------------------------------------------

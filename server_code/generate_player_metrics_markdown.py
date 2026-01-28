@@ -685,8 +685,9 @@ def generate_player_metrics_markdown(league_value, team, use_direct_data=False, 
         
         # Generate filename
         safe_name = sanitize_name_for_filename(player_name)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"{league}_{gender}_{year}_{safe_name}_metrics_{timestamp}.md"
+        # Remove timestamp - use consistent filename
+        filename = f"{safe_name}_{league}_{gender}_{year}.md"
+        # Example: STETSON_35_Liz_NCAA_W_2026.md
         log_info(f"Generated filename: {filename}")
         
         # Create media object
