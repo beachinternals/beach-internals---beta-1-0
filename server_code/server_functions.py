@@ -1478,18 +1478,7 @@ def write_to_drive(filename, directory, content):
 # anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
 
 def write_to_nested_folder(folder_path, filename, content):
-  """
-    Write content to a file in a nested folder structure in Google Drive.
-    
-    Args:
-        folder_path: List of subfolder names
-        filename: Name of the file to write
-        content: Content to write (string or object with get_bytes method)
-    
-    Returns:
-        str: Success message or warning if content is invalid
-    """
-  current_folder = app_files.reports  # Replace with your folder name
+  current_folder = app_files.reports  
 
   for subfolder_name in folder_path:
     next_folder = current_folder.get(subfolder_name)
@@ -1498,27 +1487,42 @@ def write_to_nested_folder(folder_path, filename, content):
     current_folder = next_folder
 
   if content is None:
-    log_info(f"Cannot write file {filename} to {'/'.join(folder_path)}: Content is None")
-    return f"Skipped writing {filename} to {'/'.join(folder_path)}: Content is None"
+    return f"Skipped: Content is None"
+
+    # --- KEY LOGIC: EXPLICIT MIME TYPE SELECTION ---
+  if filename.lower().endswith('.pdf'):
+    target_mime = 'application/pdf'
+  elif filename.lower().endswith('.md'):
+    # Using 'text/plain' for .md is a 'pro-move' for Google Drive.
+    # It ensures immediate indexing while keeping the .md extension.
+    target_mime = 'text/plain' 
+  else:
+    target_mime = 'text/plain'
 
   file = current_folder.get(filename)
+
+  # CASE A: Content is a raw string
   if isinstance(content, str):
-    content_bytes = content.encode()
+    content_bytes = content.encode('utf-8')
     if file is None:
-      file = current_folder.create_file(filename, content_bytes)
+      file = current_folder.create_file(filename, content_bytes, content_type=target_mime)
     else:
       file.set_bytes(content_bytes)
+
+    # CASE B: Content is an Anvil Media Object (like a PDF blob)
   elif hasattr(content, 'get_bytes'):
     if file is None:
-      file = current_folder.create_file(filename, content)
+      # We pass the media object and the explicit content_type
+      file = current_folder.create_file(filename, content, content_type=target_mime)
     else:
       file.set_media(content)
-  else:
-    log_error(f"Unsupported content type for {filename}: {type(content)}")
-    raise Exception(f"Unsupported content type: {type(content)}")
+
+    # --- THE "FORCE REFRESH" TRICK ---
+    # Re-setting the name on the Drive object forces a metadata sync.
+    # This ensures the new MIME type 'sticks' in the Google Index immediately.
+  file.name = filename 
 
   return f"File {filename} written to {'/'.join(folder_path)}"
-
   
 
 
