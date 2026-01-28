@@ -616,7 +616,7 @@ def get_team_players(league, team):
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def generate_player_markdown(league, team, player, date_start=None, date_end=None, player_data=None, user=None):
   """
-    Generate a single consolidated markdown file for one player.
+    Generate a single consolidated markdown file for one player using the NEW table-based format.
     
     Args:
         league: League identifier
@@ -630,31 +630,56 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
     """
   log_info(f"Generating markdown for {player} ({team})")
 
-  # 1. Gather all session/match data for this player
-  sessions_data = get_player_sessions(league, team, player, date_start, date_end, player_data, user)
+  # Use player_data if provided, otherwise parse from player name
+  if player_data:
+    league_value = player_data['league_value']  # Already formatted: "NCAA | W | 2025"
+    player_shortname = player_data['shortname']
+    log_info(f"Using player_data: league_value={league_value}, shortname={player_shortname}")
+  else:
+    # Fallback: parse player name (shouldn't happen in normal use)
+    log_error(f"No player_data provided for {player} - using fallback!")
+    parts = player.split()
+    if len(parts) >= 3:
+      player_team = parts[0]
+      player_number = parts[1]
+      player_shortname = ' '.join(parts[2:])  # Handle multi-word names
+      # Build league_value - this is a GUESS without player_data
+      league_value = f"{league} | W | 2025"  # HARDCODED FALLBACK - NOT IDEAL!
+      log_error(f"WARNING: Using hardcoded fallback league_value={league_value}. This may be incorrect!")
+    else:
+      log_error(f"Invalid player name format: {player}")
+      return None
 
-  if not sessions_data:
-    log_error(f"No data found for {player}")
-    print(f"No data found for {player}")
-    return None
+  # Build filters
+  json_filters = {
+    'player': player,
+    'player_shortname': player_shortname
+  }
 
-  log_info(f"Found {len(sessions_data)} sessions for {player}")
+  # Add date filters if provided
+  if date_start:
+    json_filters['start_date'] = date_start
+  if date_end:
+    json_filters['end_date'] = date_end
 
-  # 2. Build the markdown content
-  markdown_content = build_markdown_content(
-    player=player,
-    team=team,
-    league=league,
-    sessions_data=sessions_data,
-    date_start=date_start,
-    date_end=date_end
+  log_info(f"Calling generate_player_metrics_markdown with league_value='{league_value}', team='{team}', filters={json_filters}")
+
+  # Call the NEW Markdown generator which creates proper tables (not JSON blocks)
+  result = generate_player_metrics_markdown(
+      league_value=league_value,
+      team=team,
+      **json_filters
   )
-
-  # 3. Create filename (safe for filesystems)
-  safe_player_name = player.replace(' ', '_').replace('/', '_')
-  filename = f"{safe_player_name}_{league}_{team}.md"
-
-  # 4. Save to Google Drive
+  
+  if not result or 'media_obj' not in result:
+      log_error(f"Failed to generate metrics markdown for {player}")
+      return None
+  
+  # Get the markdown content
+  markdown_content = result['media_obj'].get_bytes().decode('utf-8')
+  filename = result['filename']
+  
+  # Save to Google Drive
   log_info(f"Saving markdown file: {filename}")
   file_info = save_markdown_to_drive(filename, markdown_content, league, team, player_data)
 
@@ -671,7 +696,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
     'file_id': file_info.get('id', 'unknown'),
     'file_url': file_info.get('url', None),
     'path': file_info.get('path', 'unknown'),
-    'sessions_count': len(sessions_data),
+    'sessions_count': result['summary']['total_sets_analyzed'],
     'word_count': len(markdown_content.split())
   }
 
