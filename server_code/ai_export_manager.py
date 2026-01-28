@@ -666,9 +666,10 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
 
   # Call the NEW Markdown generator which creates proper tables (not JSON blocks)
   result = generate_player_metrics_markdown(
-      league_value=league_value,
-      team=team,
-      **json_filters
+    league_value=league_value,
+    team=team,
+    use_direct_data=True,  # ADD THIS LINE
+    **json_filters
   )
   
   if not result or 'media_obj' not in result:

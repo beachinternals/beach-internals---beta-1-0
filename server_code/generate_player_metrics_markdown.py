@@ -25,6 +25,7 @@ from logger_utils import log_info, log_error, log_debug, log_critical
 
 from server_functions import *
 from metric_calc_functions import *
+from generate_player_metrics_json_server import calculate_all_metrics
 
 
 def sanitize_name_for_filename(name):
@@ -559,7 +560,7 @@ def generate_markdown_content(player_name, metadata, metrics_by_category, metric
 
 
 @anvil.server.callable
-def generate_player_metrics_markdown(league_value, team, **json_filters):
+def generate_player_metrics_markdown(league_value, team, use_direct_data=False, **json_filters):
     """
     Generate comprehensive player metrics MARKDOWN file (instead of JSON).
     
@@ -627,7 +628,12 @@ def generate_player_metrics_markdown(league_value, team, **json_filters):
         
         # Get PPR data with filters
         log_info("Retrieving and filtering PPR data...")
-        ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
+        if use_direct_data:
+          # Import the direct access function from ai_export_manager
+          from ai_export_manager import get_filtered_ppr_data_direct
+          ppr_df = get_filtered_ppr_data_direct(league, gender, year, team, **json_filters)
+        else:
+          ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
         log_info(f"✓ Loaded {len(ppr_df)} points from PPR data")
         
         # Get triangle data (for set-to-set consistency)
