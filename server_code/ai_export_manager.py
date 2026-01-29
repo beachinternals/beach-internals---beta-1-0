@@ -335,7 +335,20 @@ def ai_export_mgr_generate_background(user=None):
         export_row['completed_at'] = datetime.now()
         export_row['result_message'] = str(e)
 
-        # Send summary email to admin
+    # ==========================================
+    # INSERT THE FORCE INDEX CALL HERE
+    # ==========================================
+    log_info("All exports complete. Triggering force index for NotebookLM...")
+    try:
+      # Construct the path to your notebooklm folder
+      # Adjust this path if your folder structure is different
+      folder_path = ["Beach Internals Reports", league, team, "notebooklm"]
+      force_index_player_files(folder_path)
+      log_info("Force index complete.")
+    except Exception as e:
+      log_error(f"Force index failed: {str(e)}")
+    
+    # Send summary email to admin
     now1 = datetime.now()
     email_text += f"\n{'='*60}\n"
     email_text += f"AI Export Manager Completed at: {str(now1)}\n"
@@ -1356,3 +1369,36 @@ def process_export_job_markdown(export_row):
     'file_list': file_list,
     'message': message
   }
+
+
+def force_index_player_files(folder_path):
+  """
+    Loop through files in a folder and 'touch' them to force 
+    Google Drive to index them for NotebookLM.
+    """
+  current_folder = app_files.reports
+  for subfolder_name in folder_path:
+    current_folder = current_folder.get(subfolder_name)
+    if not current_folder:
+      return "Folder path not found."
+
+  files_touched = 0
+  # Iterate through all files in the folder
+  for file in current_folder.list_files():
+    # 1. Update the description (This is a metadata 'touch')
+    # We add a timestamp so Google sees a 'change'
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    file.description = f"Indexed for NotebookLM at {timestamp}"
+
+    # 2. Force a read (This forces the server to pull the bytes)
+    _ = file.get_bytes()
+
+    # 3. Re-affirm the title
+    original_title = file.title
+    file.title = original_title
+
+    files_touched += 1
+    print(f"Touched: {original_title}")
+
+  return f"Successfully touched {files_touched} files. Try NotebookLM again in 2-3 minutes."
