@@ -988,7 +988,7 @@ def save_markdown_to_drive_updated(filename, content, league, team, player_data=
     else:
       league_str = league
 
-    folder_path = [league_str, team, 'notebooklm']
+    folder_path = [league_str, team, 'notebooklm-test']
 
     # Create media with text/markdown MIME type
     media = anvil.BlobMedia('text/markdown', content.encode('utf-8'))
@@ -1252,7 +1252,7 @@ def process_export_job_markdown(export_row):
 
   # Set up output folder
   league_gender_year = f"{league}{gender}{year}"
-  output_folder = [league_gender_year, team, 'notebooklm']
+  output_folder = [league_gender_year, team, 'notebooklm-test']
   log_info(f"Output folder: {' / '.join(output_folder)}")
 
   # Generate global context file once

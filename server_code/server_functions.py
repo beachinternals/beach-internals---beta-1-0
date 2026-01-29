@@ -1476,7 +1476,6 @@ def write_to_drive(filename, directory, content):
 
 # Example usage from client code
 # anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
-
 def write_to_nested_folder(folder_path, filename, content):
   current_folder = app_files.reports  
 
@@ -1489,41 +1488,37 @@ def write_to_nested_folder(folder_path, filename, content):
   if content is None:
     return f"Skipped: Content is None"
 
-    # --- KEY LOGIC: EXPLICIT MIME TYPE SELECTION ---
+    # --- THE COMPATIBILITY PIVOT ---
+    # We change .md to .txt and force text/plain.
+    # NotebookLM reads Markdown perfectly inside .txt files.
   if filename.lower().endswith('.pdf'):
     target_mime = 'application/pdf'
-  elif filename.lower().endswith('.md'):
-    # Using 'text/plain' for .md is a 'pro-move' for Google Drive.
-    # It ensures immediate indexing while keeping the .md extension.
-    target_mime = 'text/plain' 
+    final_filename = filename
   else:
     target_mime = 'text/plain'
+    # Ensure the file ends in .txt so the Drive Indexer likes it
+    final_filename = filename.replace('.md', '.txt') if '.md' in filename.lower() else filename
 
-  file = current_folder.get(filename)
+  file = current_folder.get(final_filename)
 
-  # CASE A: Content is a raw string
   if isinstance(content, str):
     content_bytes = content.encode('utf-8')
     if file is None:
-      file = current_folder.create_file(filename, content_bytes, content_type=target_mime)
+      # Simple creation, no 'convert' flag (unsupported in Anvil)
+      file = current_folder.create_file(final_filename, content_bytes, content_type=target_mime)
     else:
       file.set_bytes(content_bytes)
 
-    # CASE B: Content is an Anvil Media Object (like a PDF blob)
   elif hasattr(content, 'get_bytes'):
     if file is None:
-      # We pass the media object and the explicit content_type
-      file = current_folder.create_file(filename, content, content_type=target_mime)
+      file = current_folder.create_file(final_filename, content, content_type=target_mime)
     else:
       file.set_media(content)
 
-    # --- THE "FORCE REFRESH" TRICK ---
-    # Re-setting the name on the Drive object forces a metadata sync.
-    # This ensures the new MIME type 'sticks' in the Google Index immediately.
-  file.title = filename
+    # Trigger the refresh
+  file.title = final_filename 
 
-  return f"File {filename} written to {'/'.join(folder_path)}"
-  
+  return f"File {final_filename} written to {'/'.join(folder_path)}"
 
 
 '''
