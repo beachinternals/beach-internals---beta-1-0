@@ -1480,7 +1480,10 @@ def write_to_drive(filename, directory, content):
 # anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
 def write_to_nested_folder(folder_path, filename, content):
   """
-    Handles PDF naturally and 'Forces' Text/Markdown into Blue-Icon Google Docs.
+    STABLE VERSION: 
+    - Writes PDFs and Markdown/Text.
+    - Shares with spccoach@gmail.com (The key to NotebookLM visibility).
+    - Uses Folder Jolt to force indexing.
     """
   current_folder = app_files.reports  
 
@@ -1491,53 +1494,53 @@ def write_to_nested_folder(folder_path, filename, content):
       next_folder = current_folder.create_folder(subfolder_name)
     current_folder = next_folder
 
+  if content is None:
+    return "Skipped: Content is None"
+
+    # 2. Setup Naming & Type
   is_pdf = filename.lower().endswith('.pdf')
-  clean_title = filename.replace('.md', '').replace('.txt', '')
+  mime_type = 'application/pdf' if is_pdf else 'text/plain'
 
+  # 3. Content Preparation (The BlobMedia Fix)
   try:
-    if is_pdf:
-      # --- PDF LOGIC (Works great as-is) ---
-      file = current_folder.get(filename)
-      if file is None:
-        file = current_folder.create_file(filename, content)
-      else:
-        file.set_media(content)
+    if isinstance(content, str):
+      content_bytes = content.encode('utf-8')
+    elif hasattr(content, 'get_bytes'):
+      content_bytes = content.get_bytes()
     else:
-      # --- TEXT/MARKDOWN LOGIC (The "Blue Icon" Strategy) ---
-      # Instead of create_file, we use create_doc if the file doesn't exist
-      # This is Anvil's built-in way to make a Native Google Doc
-      file = current_folder.get(clean_title)
+      content_bytes = content
 
-      # Prepare the text content
-      text_content = content if isinstance(content, str) else content.get_bytes().decode('utf-8')
+    content_media = anvil.BlobMedia(mime_type, content_bytes, name=filename)
+  except Exception as e:
+    return f"Error preparing media: {str(e)}"
 
-      if file is None:
-        # This creates a native Blue Icon Google Doc immediately
-        file = current_folder.create_doc(clean_title)
+    # 4. Create or Update file
+  file = current_folder.get(filename)
+  try:
+    if file is None:
+      file = current_folder.create_file(filename, content_media)
+    else:
+      file.set_media(content_media)
 
-        # Write the text into the Native Doc
-      file.text = text_content
-
-      # --- SHARING (The Visibility Key) ---
+      # 5. THE CRITICAL STEP: Ownership/Visibility Push
+      # This makes the file visible to NotebookLM
     file.share("spccoach@gmail.com", type='user', role='writer', send_notification=False)
 
-    # Folder Jolt to refresh the picker
+    # 6. The Folder Jolt (to refresh the picker index)
     try:
-      jolt = current_folder.create_file("sync.tmp", " ")
-      jolt.delete()
+      jolt_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+      jolt_media = anvil.BlobMedia('text/plain', b'sync', name='sync.tmp')
+      jolt_file = current_folder.create_file(f"refresh_{jolt_id}.tmp", jolt_media)
+      jolt_file.delete()
     except:
-      pass
+      pass # Jolt failure isn't fatal
 
-    return f"✓ {clean_title} saved and shared."
+    return f"✓ {filename} saved and shared with spccoach@gmail.com"
 
   except Exception as e:
-    # Fallback: If create_doc fails, just save as a normal file
-    print(f"Doc creation failed: {e}. Falling back to standard file.")
-    return current_folder.create_file(filename, content)
-    
-    
-    
-    
+    error_msg = f"Error writing {filename}: {str(e)}"
+    print(error_msg)
+    return error_msg
     
     
 
