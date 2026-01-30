@@ -1477,8 +1477,20 @@ def write_to_drive(filename, directory, content):
 # Example usage from client code
 # anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
 def write_to_nested_folder(folder_path, filename, content):
+  """
+    Handles PDFs, JSON, and Markdown:
+    - PDFs: Saved as raw PDFs
+    - Markdown: Converted to native Google Docs for NotebookLM (removes .md extension)
+    - JSON: Kept as JSON files (for API use) but shared for visibility
+    
+    Args:
+        folder_path: List of folder names for nested structure
+        filename: Name of file to create
+        content: Can be str, bytes, or anvil.BlobMedia object
+    """
   current_folder = app_files.reports  
 
+  # 1. Navigate/Create folders
   for subfolder_name in folder_path:
     next_folder = current_folder.get(subfolder_name)
     if next_folder is None:
@@ -1486,39 +1498,88 @@ def write_to_nested_folder(folder_path, filename, content):
     current_folder = next_folder
 
   if content is None:
-    return f"Skipped: Content is None"
+    return "Skipped: Content is None"
 
-    # --- THE COMPATIBILITY PIVOT ---
-    # We change .md to .txt and force text/plain.
-    # NotebookLM reads Markdown perfectly inside .txt files.
-  if filename.lower().endswith('.pdf'):
+    # 2. Identify File Type
+  filename_lower = filename.lower()
+  is_pdf = filename_lower.endswith('.pdf')
+  is_json = filename_lower.endswith('.json')
+  is_markdown = filename_lower.endswith('.md')
+
+  # 3. Set mime type and title
+  if is_pdf:
     target_mime = 'application/pdf'
-    final_filename = filename
+    clean_title = filename 
+    file_type_desc = "PDF"
+  elif is_json:
+    target_mime = 'application/json'
+    clean_title = filename
+    file_type_desc = "JSON"
+  elif is_markdown:
+    target_mime = 'application/vnd.google-apps.document'
+    clean_title = filename.replace('.md', '')
+    file_type_desc = "Google Doc"
   else:
-    target_mime = 'text/plain'
-    # Ensure the file ends in .txt so the Drive Indexer likes it
-    final_filename = filename.replace('.md', '.txt') if '.md' in filename.lower() else filename
+    target_mime = 'application/octet-stream'
+    clean_title = filename
+    file_type_desc = "File"
 
-  file = current_folder.get(final_filename)
-
-  if isinstance(content, str):
-    content_bytes = content.encode('utf-8')
-    if file is None:
-      # Simple creation, no 'convert' flag (unsupported in Anvil)
-      file = current_folder.create_file(final_filename, content_bytes, content_type=target_mime)
+    # 4. Convert content to BlobMedia if needed
+  try:
+    if isinstance(content, str):
+      # String: encode to bytes and wrap in BlobMedia
+      content_media = anvil.BlobMedia(
+        target_mime,
+        content.encode('utf-8'),
+        name=clean_title
+      )
+    elif isinstance(content, bytes):
+      # Raw bytes: wrap in BlobMedia
+      content_media = anvil.BlobMedia(
+        target_mime,
+        content,
+        name=clean_title
+      )
+    elif hasattr(content, 'get_bytes'):
+      # Already a BlobMedia or Media object
+      content_media = content
     else:
-      file.set_bytes(content_bytes)
+      return f"Error: Unsupported content type: {type(content)}"
+  except Exception as e:
+    return f"Error preparing content: {str(e)}"
 
-  elif hasattr(content, 'get_bytes'):
+    # 5. Create or Update file
+  file = current_folder.get(clean_title)
+
+  try:
     if file is None:
-      file = current_folder.create_file(final_filename, content, content_type=target_mime)
+      # Create new file
+      file = current_folder.create_file(clean_title, content_media)
     else:
-      file.set_media(content)
+      # Update existing file
+      file.set_media(content_media)
 
-    # Trigger the refresh
-  file.title = final_filename 
+      # 6. Share for NotebookLM visibility
+    try:
+      file.share("spccoach@gmail.com", type='user', role='writer', send_notification=False)
+    except (AttributeError, Exception) as e:
+      # Fallback if share method doesn't work
+      try:
+        file.add_permission(email="spccoach@gmail.com", role="writer")
+      except Exception as e2:
+        print(f"Warning: Could not share file: {e2}")
 
-  return f"File {final_filename} written to {'/'.join(folder_path)}"
+        # Touch the title to trigger metadata sync
+    file.title = clean_title
+
+    return f"✓ {clean_title} written as {file_type_desc} and shared"
+
+  except Exception as e:
+    error_msg = f"Error writing {filename}: {str(e)}"
+    print(error_msg)
+    return error_msg
+    
+    
 
 
 '''
