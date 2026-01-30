@@ -32,6 +32,8 @@ import inspect
 import copy
 import time          # ← Keep only ONE set of imports here
 import functools     # ← Keep only ONE set of imports here
+import random
+import string
 
 # Create logger with formatting
 from logger_utils import log_info, log_error, log_critical, log_debug
@@ -1478,15 +1480,7 @@ def write_to_drive(filename, directory, content):
 # anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
 def write_to_nested_folder(folder_path, filename, content):
   """
-    Handles PDFs, JSON, and Markdown:
-    - PDFs: Saved as raw PDFs
-    - Markdown: Converted to native Google Docs for NotebookLM (removes .md extension)
-    - JSON: Kept as JSON files (for API use) but shared for visibility
-    
-    Args:
-        folder_path: List of folder names for nested structure
-        filename: Name of file to create
-        content: Can be str, bytes, or anvil.BlobMedia object
+    Handles PDF naturally and 'Forces' Text/Markdown into Blue-Icon Google Docs.
     """
   current_folder = app_files.reports  
 
@@ -1497,87 +1491,53 @@ def write_to_nested_folder(folder_path, filename, content):
       next_folder = current_folder.create_folder(subfolder_name)
     current_folder = next_folder
 
-  if content is None:
-    return "Skipped: Content is None"
-
-    # 2. Identify File Type
-  filename_lower = filename.lower()
-  is_pdf = filename_lower.endswith('.pdf')
-  is_json = filename_lower.endswith('.json')
-  is_markdown = filename_lower.endswith('.md')
-
-  # 3. Set mime type and title
-  if is_pdf:
-    target_mime = 'application/pdf'
-    clean_title = filename 
-    file_type_desc = "PDF"
-  elif is_json:
-    target_mime = 'application/json'
-    clean_title = filename
-    file_type_desc = "JSON"
-  elif is_markdown:
-    target_mime = 'application/vnd.google-apps.document'
-    clean_title = filename.replace('.md', '')
-    file_type_desc = "Google Doc"
-  else:
-    target_mime = 'application/octet-stream'
-    clean_title = filename
-    file_type_desc = "File"
-
-    # 4. Convert content to BlobMedia if needed
-  try:
-    if isinstance(content, str):
-      # String: encode to bytes and wrap in BlobMedia
-      content_media = anvil.BlobMedia(
-        target_mime,
-        content.encode('utf-8'),
-        name=clean_title
-      )
-    elif isinstance(content, bytes):
-      # Raw bytes: wrap in BlobMedia
-      content_media = anvil.BlobMedia(
-        target_mime,
-        content,
-        name=clean_title
-      )
-    elif hasattr(content, 'get_bytes'):
-      # Already a BlobMedia or Media object
-      content_media = content
-    else:
-      return f"Error: Unsupported content type: {type(content)}"
-  except Exception as e:
-    return f"Error preparing content: {str(e)}"
-
-    # 5. Create or Update file
-  file = current_folder.get(clean_title)
+  is_pdf = filename.lower().endswith('.pdf')
+  clean_title = filename.replace('.md', '').replace('.txt', '')
 
   try:
-    if file is None:
-      # Create new file
-      file = current_folder.create_file(clean_title, content_media)
+    if is_pdf:
+      # --- PDF LOGIC (Works great as-is) ---
+      file = current_folder.get(filename)
+      if file is None:
+        file = current_folder.create_file(filename, content)
+      else:
+        file.set_media(content)
     else:
-      # Update existing file
-      file.set_media(content_media)
+      # --- TEXT/MARKDOWN LOGIC (The "Blue Icon" Strategy) ---
+      # Instead of create_file, we use create_doc if the file doesn't exist
+      # This is Anvil's built-in way to make a Native Google Doc
+      file = current_folder.get(clean_title)
 
-      # 6. Share for NotebookLM visibility
+      # Prepare the text content
+      text_content = content if isinstance(content, str) else content.get_bytes().decode('utf-8')
+
+      if file is None:
+        # This creates a native Blue Icon Google Doc immediately
+        file = current_folder.create_doc(clean_title)
+
+        # Write the text into the Native Doc
+      file.text = text_content
+
+      # --- SHARING (The Visibility Key) ---
+    file.share("spccoach@gmail.com", type='user', role='writer', send_notification=False)
+
+    # Folder Jolt to refresh the picker
     try:
-      file.share("spccoach@gmail.com", type='user', role='writer', send_notification=False)
-    except (AttributeError, Exception) as e:
-      # Fallback if share method doesn't work
-      try:
-        file.add_permission(email="spccoach@gmail.com", role="writer")
-      except Exception as e2:
-        print(f"Warning: Could not share file: {e2}")
+      jolt = current_folder.create_file("sync.tmp", " ")
+      jolt.delete()
+    except:
+      pass
 
-        # Touch the title to trigger metadata sync
-    file.title = clean_title
-
-    return f"✓ {clean_title} written as {file_type_desc} and shared"
+    return f"✓ {clean_title} saved and shared."
 
   except Exception as e:
-    error_msg = f"Error writing {filename}: {str(e)}"
-    print(error_msg)
-    return error_msg
+    # Fallback: If create_doc fails, just save as a normal file
+    print(f"Doc creation failed: {e}. Falling back to standard file.")
+    return current_folder.create_file(filename, content)
+    
+    
+    
+    
     
     
 
