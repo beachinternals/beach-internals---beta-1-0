@@ -1478,13 +1478,19 @@ def write_to_drive(filename, directory, content):
 
 # Example usage from client code
 # anvil.server.call('write_to_drive', 'example.txt', b'Hello, World!')
+# ===================================================================
+# ORIGINAL WORKING VERSION - Use for PDFs and JSONs
+# ===================================================================
 def write_to_nested_folder(folder_path, filename, content):
   """
-    STABLE VERSION: 
-    - Writes PDFs and Markdown/Text.
-    - Shares with spccoach@gmail.com (The key to NotebookLM visibility).
-    - Uses Folder Jolt to force indexing.
+    STABLE VERSION for PDFs and JSON files:
+    - Writes files to nested Google Drive folders
+    - Uses Folder Jolt to force indexing
+    - No sharing (use for PDFs and files that don't need NotebookLM)
     """
+  import random
+  import string
+
   current_folder = app_files.reports  
 
   # 1. Navigate/Create folders
@@ -1497,11 +1503,18 @@ def write_to_nested_folder(folder_path, filename, content):
   if content is None:
     return "Skipped: Content is None"
 
-    # 2. Setup Naming & Type
+  # 2. Setup Naming & Type
   is_pdf = filename.lower().endswith('.pdf')
-  mime_type = 'application/pdf' if is_pdf else 'text/plain'
+  is_json = filename.lower().endswith('.json')
 
-  # 3. Content Preparation (The BlobMedia Fix)
+  if is_pdf:
+    mime_type = 'application/pdf'
+  elif is_json:
+    mime_type = 'application/json'
+  else:
+    mime_type = 'text/plain'
+
+  # 3. Content Preparation
   try:
     if isinstance(content, str):
       content_bytes = content.encode('utf-8')
@@ -1514,7 +1527,7 @@ def write_to_nested_folder(folder_path, filename, content):
   except Exception as e:
     return f"Error preparing media: {str(e)}"
 
-    # 4. Create or Update file
+  # 4. Create or Update file
   file = current_folder.get(filename)
   try:
     if file is None:
@@ -1522,9 +1535,135 @@ def write_to_nested_folder(folder_path, filename, content):
     else:
       file.set_media(content_media)
 
-      # 5. THE CRITICAL STEP: Ownership/Visibility Push
-      # This makes the file visible to NotebookLM
-    file.share("spccoach@gmail.com", type='user', role='writer', send_notification=False)
+    # 5. The Folder Jolt (to refresh the picker index)
+    try:
+      jolt_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+      jolt_media = anvil.BlobMedia('text/plain', b'sync', name='sync.tmp')
+      jolt_file = current_folder.create_file(f"refresh_{jolt_id}.tmp", jolt_media)
+      jolt_file.delete()
+    except:
+      pass # Jolt failure isn't fatal
+
+    return f"✓ {filename} saved successfully"
+
+  except Exception as e:
+    error_msg = f"Error writing {filename}: {str(e)}"
+    print(error_msg)
+    return error_msg
+
+
+# ===================================================================
+# NEW VERSION WITH SHARING - Use for Markdown/Text files for NotebookLM
+# ===================================================================
+def write_to_nested_folder_with_sharing(folder_path, filename, content, share_email='spccoach@gmail.com'):
+  """
+    VERSION WITH SHARING for Markdown/Text files:
+    - Writes files to nested Google Drive folders
+    - Shares files with specified email for NotebookLM visibility
+    - Uses native Google Drive API for sharing
+    - Uses Folder Jolt to force indexing
+    """
+  import random
+  import string
+  import anvil.google.drive
+  from anvil.google.drive import app_files
+
+  current_folder = app_files.reports  
+
+  # 1. Navigate/Create folders
+  for subfolder_name in folder_path:
+    next_folder = current_folder.get(subfolder_name)
+    if next_folder is None:
+      next_folder = current_folder.create_folder(subfolder_name)
+    current_folder = next_folder
+
+  if content is None:
+    return "Skipped: Content is None"
+
+  # 2. Setup Naming & Type (prioritize text/markdown for NotebookLM)
+  is_markdown = filename.lower().endswith('.md') or filename.lower().endswith('.mkdn')
+  is_text = filename.lower().endswith('.txt')
+
+  if is_markdown:
+    mime_type = 'text/markdown'
+  elif is_text:
+    mime_type = 'text/plain'
+  else:
+    mime_type = 'text/plain'
+
+  # 3. Content Preparation
+  try:
+    if isinstance(content, str):
+      content_bytes = content.encode('utf-8')
+    elif hasattr(content, 'get_bytes'):
+      content_bytes = content.get_bytes()
+    else:
+      content_bytes = content
+
+    content_media = anvil.BlobMedia(mime_type, content_bytes, name=filename)
+  except Exception as e:
+    return f"Error preparing media: {str(e)}"
+
+  # 4. Create or Update file using app_files
+  file = current_folder.get(filename)
+  try:
+    if file is None:
+      file = current_folder.create_file(filename, content_media)
+    else:
+      file.set_media(content_media)
+
+    # 5. Share using native Google Drive API
+    try:
+      # Get the Google Drive service
+      from googleapiclient.discovery import build
+
+      # Use Anvil's credentials
+      service = build('drive', 'v3', credentials=anvil.google.auth.get_user_credentials())
+
+      # Get the file ID from the Anvil file object
+      # The file object should have a get_id() method or similar
+      # If not, we'll need to search for it by name
+      try:
+        # Try to get file ID directly
+        file_id = file.get_id() if hasattr(file, 'get_id') else None
+
+        if not file_id:
+          # Search for the file by name in the current folder
+          # This is a fallback if get_id() doesn't exist
+          folder_id = current_folder.get_id() if hasattr(current_folder, 'get_id') else None
+          if folder_id:
+            query = f"name='{filename}' and '{folder_id}' in parents"
+            results = service.files().list(q=query, fields='files(id)').execute()
+            files_found = results.get('files', [])
+            if files_found:
+              file_id = files_found[0]['id']
+
+        if file_id:
+          # Create permission for sharing
+          permission = {
+            'type': 'user',
+            'role': 'writer',
+            'emailAddress': share_email
+          }
+          service.permissions().create(
+            fileId=file_id,
+            body=permission,
+            sendNotificationEmail=False
+          ).execute()
+          share_status = f" and shared with {share_email}"
+        else:
+          share_status = " (could not share - file ID not found)"
+
+      except Exception as share_error:
+        print(f"Sharing error: {str(share_error)}")
+        share_status = f" (sharing failed: {str(share_error)})"
+
+    except ImportError:
+      # Google API client not available, fall back to no sharing
+      share_status = " (Google API not available for sharing)"
+    except Exception as api_error:
+      print(f"Google Drive API error: {str(api_error)}")
+      share_status = f" (API error: {str(api_error)})"
 
     # 6. The Folder Jolt (to refresh the picker index)
     try:
@@ -1535,12 +1674,15 @@ def write_to_nested_folder(folder_path, filename, content):
     except:
       pass # Jolt failure isn't fatal
 
-    return f"✓ {filename} saved and shared with spccoach@gmail.com"
+    return f"✓ {filename} saved{share_status}"
 
   except Exception as e:
     error_msg = f"Error writing {filename}: {str(e)}"
     print(error_msg)
     return error_msg
+
+
+    
     
     
 

@@ -9,6 +9,8 @@ import anvil.server
 from datetime import datetime, timedelta, date
 import json
 import traceback
+import pandas as pd
+import io
 
 # ============================================================================
 # LOGGING IMPORTS
@@ -32,10 +34,7 @@ MONITORING_LEVEL_VERBOSE
 # ============================================================================
 from generate_player_metrics_json_server import generate_player_metrics_json
 from generate_player_metrics_markdown import generate_player_metrics_markdown, generate_global_context_markdown
-
-# Import pandas for data processing
-import pandas as pd
-import io
+from server_functions import write_to_nested_folder, write_to_nested_folder_with_sharing
 
 # This is a server module for generating NotebookLM-ready markdown files
 # with player performance data in JSON format
@@ -1269,6 +1268,8 @@ def process_export_job_markdown(export_row):
   log_info(f"Output folder: {' / '.join(output_folder)}")
 
   # Generate global context file once
+  # not doing this, we make this file manually and update it there
+  '''
   try:
     log_info("Generating global context file...")
     context_file = generate_global_context_markdown()
@@ -1280,6 +1281,7 @@ def process_export_job_markdown(export_row):
     log_info(f"Global context file: {context_result}")
   except Exception as e:
     log_error(f"Failed to create global context: {e}")
+  '''
 
     # Generate Markdown file for each player
   file_list = []
@@ -1326,7 +1328,7 @@ def process_export_job_markdown(export_row):
       if result and result['media_obj']:
         # Upload to Google Drive
         log_info(f"Uploading to Drive: {result['filename']}")
-        upload_result = write_to_nested_folder(
+        upload_result = write_to_nested_folder_with_sharing(
           output_folder,
           result['filename'],
           result['media_obj']
