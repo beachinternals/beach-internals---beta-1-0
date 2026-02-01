@@ -428,6 +428,13 @@ def calc_player_eso_obj( ppr_df, disp_player ):
 
   # limit to attacks by our player
   #print(f"fbhe funct: ppr_df shape:{ppr_df.shape}")
+
+  # limit the ppr_df to player with this disp_player
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
+                   (ppr_df['player_a2'] == disp_player) | 
+                   (ppr_df['player_b1'] == disp_player) | 
+                   (ppr_df['player_b2'] == disp_player) ]
+                     
   if ppr_df.shape[0] == 0:      # Then no data passed!
     return {
       'status':False,
