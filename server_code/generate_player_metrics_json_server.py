@@ -383,6 +383,7 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
         'consistency_sd_set2set': consistency_sd_set2set,
         'calc_serve_pct_obj': calc_serve_pct_obj,
         'calc_angle_attacks_obj': calc_angle_attacks_obj,
+        'count_good_passes_obj' : count_good_passes_obj,
         # Add pandas/numpy for metric calculations
         'pd': pd,
         'np': np

@@ -354,11 +354,11 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
           print(f"Errors encountered: {len(result['errors'])}")
           for error in result['errors'][:10]:  # Show first 10 errors
             print(f"  - {error}")
-        else:
-          result1 = anvil.server.call('cleanup_metric_dictionary_quotes')
-          print(result)
-          if result1['success']:
-            anvil.alert(f"✓ Successfully cleaned {result1['updated']} metrics!")
+        #else:
+        #  result1 = anvil.server.call('cleanup_metric_dictionary_quotes')
+        #  print(result)
+        #  if result1['success']:
+        #    anvil.alert(f"✓ Successfully cleaned {result1['updated']} metrics!")
 
       else:
         anvil.alert(f"Import failed: {result['errors'][0]}")
