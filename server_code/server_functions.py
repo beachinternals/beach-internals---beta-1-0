@@ -363,6 +363,14 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
   if ppr_df.empty:
     return FBHEResult(0.0, 0, 0, 0, 0.0, " No Data Available ")
 
+    # calculate the total number of points the player is involved with
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player )| 
+                   (ppr_df['player_a2'] == disp_player )| 
+                   (ppr_df['player_b1'] == disp_player )| 
+                   (ppr_df['player_ab'] == disp_player )
+    ]
+  all_points = len(ppr_df
+                   
     # Filter based on play_type
   disp_player = disp_player.strip()
   if play_type == "att":
@@ -399,7 +407,8 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
     errors=int(errors),
     attempts=attempts,
     fbso=round(fbso, 3),
-    video_link=video_link
+    video_link=video_link,
+    points = all_points
   )
 
 
