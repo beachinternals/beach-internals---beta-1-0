@@ -277,6 +277,7 @@ class FBHEResult:
     - attempts (int): Number of attempts.
     - fbso (float): First Ball Sideout, rounded to 3 decimal places.
     - video_link (str): Video links string, "N/A", or " No Data Available ".
+    - points: total number of points player is involved with in any way
     """
   fbhe: float
   kills: int
@@ -284,6 +285,7 @@ class FBHEResult:
   attempts: int
   fbso: float
   video_link: str
+  points: int
 
 def build_video_links(ppr_df: pd.DataFrame) -> str:
   """
@@ -361,15 +363,14 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
     ppr_df = ppr_df.to_frame().T
 
   if ppr_df.empty:
-    return FBHEResult(0.0, 0, 0, 0, 0.0, " No Data Available ")
+    return FBHEResult(0.0, 0, 0, 0, 0.0, " No Data Available ", 0)
 
     # calculate the total number of points the player is involved with
-  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player )| 
-                   (ppr_df['player_a2'] == disp_player )| 
-                   (ppr_df['player_b1'] == disp_player )| 
-                   (ppr_df['player_ab'] == disp_player )
-    ]
-  all_points = len(ppr_df
+  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player ) | 
+                   (ppr_df['player_a2'] == disp_player ) | 
+                   (ppr_df['player_b1'] == disp_player ) | 
+                   (ppr_df['player_b2'] == disp_player ) ]
+  all_points = len(ppr_df)
                    
     # Filter based on play_type
   disp_player = disp_player.strip()
@@ -385,7 +386,7 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
     raise ValueError("Invalid play_type. Must be 'att', 'srv', or 'pass'.")
 
   if ppr_df.empty:
-    return FBHEResult(0.0, 0, 0, 0, 0.0, " No Data Available ")
+    return FBHEResult(0.0, 0, 0, 0, 0.0, " No Data Available ", 0)
 
     # Calculate statistics
   attempts = len(ppr_df)
@@ -408,7 +409,7 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
     attempts=attempts,
     fbso=round(fbso, 3),
     video_link=video_link,
-    points = all_points
+    points=int(all_points)
   )
 
 
