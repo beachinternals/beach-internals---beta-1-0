@@ -395,29 +395,30 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
     Returns:
         Dictionary with status and list of generated files
     """
+
   try:
     log_info(f"Starting AI export for {team} in {league}")
     print(f"Starting AI export for {team} in {league}")
 
-    # Get player list for the team
-    players = get_team_players(league, team)
-
-    # Apply player filter if provided
-    if player_filter:
-      players = [p for p in players if p in player_filter]
-      log_info(f"Filtered to {len(players)} players: {players}")
-
-    if not players:
-      error_msg = 'No players found for this team'
-      log_error(f"AI Export - {error_msg}: {team} in {league}")
+    # FIXED: Just use player_filter directly!
+    if not player_filter:
+      error_msg = 'No players specified for export (player_filter is required)'
+      log_error(f"AI Export - {error_msg}")
       return {
         'status': 'error',
         'message': error_msg,
         'files': []
       }
 
-    log_info(f"Generating exports for {len(players)} players")
-    generated_files = []
+    players = player_filter  # That's it!
+    log_info(f"Generating exports for {len(players)} players: {players}")
+
+    # Verify we have player data
+    if not player_data_map:
+      log_error("player_data_map is missing")
+      return {'status': 'error', 'message': 'Missing player data map', 'files': []}
+
+    generated_files = []  
 
     # Generate one consolidated markdown file per player
     for player in players:

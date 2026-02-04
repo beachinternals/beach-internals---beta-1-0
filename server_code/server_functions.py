@@ -2932,8 +2932,22 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     # --- Send request ---
     json_payload = json.dumps(payload)
 
-    # Use Gemini 2.5 Flash
-    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
+    # Use Gemini 2.5 Flash DO NOT -- EXPIRED
+    #gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={api_key}"
+    
+    # --- Gemini Model URL Definitions ---
+
+    # 1. Gemini 3 Flash (Fast, high-reasoning, cheapest)
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key={api_key}"
+
+    # 2. Gemini 3 Pro (Most intelligent, best for complex logic)
+    # gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key={api_key}"
+
+    # 3. Gemini 2.5 Flash (The 'Stable' workhorse - very reliable)
+    # gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+
+    # 4. Gemini 2.0 Flash (Stable version of what you were using - expires March 31, 2026)
+    # gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
 
     log_info(f"Sending request to Gemini API with {len(parts)} parts (1 text + {len(parts)-1} images)")
 
