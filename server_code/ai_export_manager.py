@@ -1514,6 +1514,7 @@ def process_export_job_with_datasets(export_row):
   log_info(f"Output folder: {' / '.join(output_folder)}")
 
   # Generate global context file once
+  '''
   try:
     log_info("Generating global context file...")
     from generate_player_metrics_markdown import generate_global_context_markdown
@@ -1526,7 +1527,8 @@ def process_export_job_with_datasets(export_row):
     log_info(f"Global context file created")
   except Exception as e:
     log_error(f"Failed to create global context: {str(e)}")
-
+  '''
+  
     # Determine output format
   if export_type in ['markdown', 'full']:
     output_format = 'markdown'

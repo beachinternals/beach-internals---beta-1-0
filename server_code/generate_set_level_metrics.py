@@ -33,8 +33,9 @@ MONITORING_LEVEL_DETAILED,
 MONITORING_LEVEL_VERBOSE
 )
 
-# Import calculation functions - we'll import dynamically based on metric_dictionary
-import importlib
+# Import ALL calculation functions (same approach as generate_player_metrics_json)
+from server_functions import *
+from metric_calc_functions import *
 
 
 # ============================================================================
@@ -140,6 +141,7 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name):
 def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
   """
     Calculate a single metric for a filtered set of data.
+    Uses the same dynamic execution approach as generate_player_metrics_json.
     
     Args:
         metric_row: Row from metric_dictionary table
@@ -151,84 +153,77 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
     """
   metric_id = metric_row['metric_id']
   metric_name = metric_row['metric_name']
-  function_name = metric_row['function_name']
-  return_type = metric_row['return_type']
-  result_path = metric_row['result_path']
+  function_name = metric_row['function_name']  # This is the actual Python code to execute!
 
   log_debug(f"Calculating metric: {metric_id} ({metric_name})")
 
+  # Skip if no function_name (shouldn't happen for core metrics)
+  if not function_name or function_name.strip() == '':
+    log_debug(f"No function_name for metric {metric_id}, skipping")
+    return None
+
   try:
-    # Import the calculation function dynamically
-    from server_functions import (
-    fbhe_obj, calc_player_eso_obj, calc_ev_obj, calc_trans_obj,
-    count_oos_obj, calc_error_density_obj, calc_knock_out_obj,
-    calc_serve_eff_obj, calc_dig_obj, calc_block_obj
-    )
+    # Set up the execution context (same as generate_player_metrics_json)
+    disp_player = player_name
+    ppr_df = ppr_df_filtered
 
-    # Execute the calculation based on function_name
-    result = None
+    # Execute the function_name string dynamically
+    # This evaluates expressions like "fbhe_result = fbhe_obj(ppr_df, disp_player, 'both', False)"
+    exec_context = {
+      'ppr_df': ppr_df,
+      'disp_player': disp_player,
+      'player_name': player_name
+    }
 
-    if function_name == 'fbhe_obj':
-      result = fbhe_obj(ppr_df_filtered, player_name, 'both', False)
-    elif function_name == 'calc_player_eso_obj':
-      result = calc_player_eso_obj(ppr_df_filtered, player_name)
-    elif function_name == 'calc_ev_obj':
-      result = calc_ev_obj(ppr_df_filtered, player_name)
-    elif function_name == 'calc_trans_obj':
-      result = calc_trans_obj(ppr_df_filtered, player_name, 'all')
-    elif function_name == 'count_oos_obj':
-      result = count_oos_obj(ppr_df_filtered, player_name, 'pass', False)
-    elif function_name == 'calc_error_density_obj':
-      result = calc_error_density_obj(ppr_df_filtered, player_name)
-    elif function_name == 'calc_knock_out_obj':
-      result = calc_knock_out_obj(ppr_df_filtered, player_name)
-    elif function_name == 'calc_serve_eff_obj':
-      result = calc_serve_eff_obj(ppr_df_filtered, player_name)
-    elif function_name == 'calc_dig_obj':
-      result = calc_dig_obj(ppr_df_filtered, player_name)
-    elif function_name == 'calc_block_obj':
-      result = calc_block_obj(ppr_df_filtered, player_name)
-    else:
-      log_debug(f"Function {function_name} not recognized, skipping")
-      return None
+    # Add all imported functions to the execution context
+    exec_context.update(globals())
 
-      # Extract the value from result based on return_type and result_path
-    if result is None:
-      return None
+    # Execute the function_name (NOT calculation_formula!)
+    exec(function_name, exec_context)
 
-      # Parse result_path (e.g., "fbhe_result.fbhe" or "eso_result['eso']")
+    # Extract the result based on result_path
+    return_type = metric_row['return_type']
+    result_path = metric_row['result_path']
+
     value = None
     attempts = None
 
+    # Parse the result_path to extract the value
     if return_type == 'object':
       # Object notation like fbhe_result.fbhe
-      path_parts = result_path.split('.')
-      if len(path_parts) >= 2:
-        attr_name = path_parts[1]
-        value = getattr(result, attr_name, None)
-        # Try to get attempts
-        attempts = getattr(result, 'attempts', None)
+      parts = result_path.split('.')
+      if len(parts) >= 2:
+        obj_name = parts[0]
+        attr_name = parts[1]
+        if obj_name in exec_context:
+          result_obj = exec_context[obj_name]
+          value = getattr(result_obj, attr_name, None)
+          attempts = getattr(result_obj, 'attempts', None)
 
     elif return_type == 'dict':
       # Dictionary notation like eso_result['eso']
-      key_start = result_path.find("['")
-      key_end = result_path.find("']")
-      if key_start >= 0 and key_end > key_start:
-        key = result_path[key_start+2:key_end]
-        value = result.get(key, None)
-        # Try to get attempts
-        attempts = result.get('attempts', None) or result.get('total_points', None)
-
-    return {
-      'metric_id': metric_id,
-      'metric_name': metric_name,
-      'value': value,
-      'attempts': attempts
-    }
-
+      # Extract dict name and key
+      dict_name = result_path.split('[')[0]
+      if dict_name in exec_context:
+        result_dict = exec_context[dict_name]
+        # Extract key from result_path
+        key_start = result_path.find("['")
+        key_end = result_path.find("']")
+        if key_start >= 0 and key_end > key_start:
+          key = result_path[key_start+2:key_end]
+          value = result_dict.get(key, None)
+          attempts = result_dict.get('attempts', None) or result_dict.get('total_points', None)
+        
+        return {
+            'metric_id': metric_id,
+            'metric_name': metric_name,
+            'value': value,
+            'attempts': attempts
+        }
+        
   except Exception as e:
-    log_error(f"Error calculating metric {metric_id}: {str(e)}")
-    return None
+        log_error(f"Error calculating metric {metric_id}: {str(e)}")
+        return None
 
 
 # ============================================================================
@@ -237,7 +232,7 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
 
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, team):
-  """
+    """
     Generate set-level core metrics for a single player across all their sets.
     
     Args:
@@ -255,40 +250,40 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
             'summary': summary statistics
         }
     """
-  log_info(f"Generating set-level metrics for player: {player_name}")
+    log_info(f"Generating set-level metrics for player: {player_name}")
     
     # Get core metrics from dictionary
-  core_metrics = get_core_metrics_from_dictionary()
-  if not core_metrics:
+    core_metrics = get_core_metrics_from_dictionary()
+    if not core_metrics:
         log_error("No core metrics found in metric_dictionary")
         return None
     
-  log_info(f"Will calculate {len(core_metrics)} core metrics per set")
+    log_info(f"Will calculate {len(core_metrics)} core metrics per set")
     
     # Filter ppr_df to this player's points only
-  player_df = ppr_df[
+    player_df = ppr_df[
         (ppr_df['player_a1'] == player_name) | 
         (ppr_df['player_a2'] == player_name) |
         (ppr_df['player_b1'] == player_name) | 
         (ppr_df['player_b2'] == player_name)
     ]
     
-  if len(player_df) == 0:
+    if len(player_df) == 0:
         log_error(f"No data found for player {player_name}")
         return None
     
-  log_info(f"Found {len(player_df)} total points for player")
+    log_info(f"Found {len(player_df)} total points for player")
     
     # Get unique video_id + set combinations
-  set_combinations = player_df.groupby(['video_id', 'set']).size().reset_index(name='point_count')
-  log_info(f"Found {len(set_combinations)} unique sets for player")
+    set_combinations = player_df.groupby(['video_id', 'set']).size().reset_index(name='point_count')
+    log_info(f"Found {len(set_combinations)} unique sets for player")
     
     # Process each set
-  sets_data = []
-  sets_included = 0
-  sets_excluded = 0
+    sets_data = []
+    sets_included = 0
+    sets_excluded = 0
     
-  for idx, row in set_combinations.iterrows():
+    for idx, row in set_combinations.iterrows():
         video_id = row['video_id']
         set_num = row['set']
         point_count = row['point_count']
@@ -340,10 +335,10 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
         
         log_debug(f"Processed set {video_id}-{set_num}: {point_count} points, {len(set_metrics)} metrics")
     
-  log_info(f"Set-level processing complete: {sets_included} sets included, {sets_excluded} excluded")
+    log_info(f"Set-level processing complete: {sets_included} sets included, {sets_excluded} excluded")
     
     # Create summary
-  summary = {
+    summary = {
         'total_sets_analyzed': sets_included,
         'total_sets_excluded': sets_excluded,
         'total_points': int(player_df['point_no'].nunique()) if 'point_no' in player_df.columns else len(player_df),
@@ -354,7 +349,7 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
         'metrics_per_set': len(core_metrics)
     }
     
-  return {
+    return {
         'player': player_name,
         'league': league_value,
         'team': team,
@@ -381,17 +376,16 @@ def format_set_level_data_as_markdown(set_level_data):
     
     md = []
     
-    # Header
-    md.append(f"# Set-Level Performance Detail")
+    # Header - Player is H1
+    md.append(f"# {set_level_data['player']}")
     md.append(f"")
-    md.append(f"**Player:** {set_level_data['player']}")
     md.append(f"**League:** {set_level_data['league']}")
     md.append(f"**Team:** {set_level_data['team']}")
     md.append(f"")
     
-    # Summary
+    # Summary - H2
     summary = set_level_data['summary']
-    md.append(f"## Summary")
+    md.append(f"## Performance Summary")
     md.append(f"- Total Sets Analyzed: {summary['total_sets_analyzed']}")
     md.append(f"- Total Sets Excluded: {summary['total_sets_excluded']}")
     md.append(f"- Total Points: {summary['total_points']}")
@@ -399,16 +393,21 @@ def format_set_level_data_as_markdown(set_level_data):
         md.append(f"- Date Range: {summary['date_range']['start']} to {summary['date_range']['end']}")
     md.append(f"- Core Metrics Per Set: {summary['metrics_per_set']}")
     md.append(f"")
+    md.append(f"---")
+    md.append(f"")
     
     # Individual sets
-    md.append(f"## Set Details")
+    md.append(f"## Individual Set Performance")
     md.append(f"")
     
     for idx, set_data in enumerate(set_level_data['sets'], 1):
-        md.append(f"### Set {idx}: {set_data['video_id']}, Set {set_data['set']}")
+        # Better header format: Date | vs Opponent | Set N
+        opponent_display = f"vs {set_data['opponent_team']}"
+        set_header = f"## {set_data['date']} | {opponent_display} | Set {set_data['set']}"
+        
+        md.append(set_header)
         md.append(f"")
         md.append(f"**Match Information:**")
-        md.append(f"- Date: {set_data['date']}")
         if set_data.get('match_time'):
             md.append(f"- Time: {set_data['match_time']}")
         if set_data.get('venue_name'):
@@ -417,9 +416,9 @@ def format_set_level_data_as_markdown(set_level_data):
             md.append(f"- Venue ID: {set_data['venue_id']}")
         md.append(f"- Competition: {set_data.get('comp_l1', '')} / {set_data.get('comp_l2', '')} / {set_data.get('comp_l3', '')}")
         md.append(f"- Partner: {set_data['partner']}")
-        md.append(f"- Opponent Team: {set_data['opponent_team']}")
         md.append(f"- Opponents: {set_data['opponent1']}, {set_data['opponent2']}")
         md.append(f"- Total Points in Set: {set_data['total_points']}")
+        md.append(f"- Video ID: {set_data['video_id']}")
         md.append(f"")
         
         md.append(f"**Core Metrics:**")
@@ -432,11 +431,16 @@ def format_set_level_data_as_markdown(set_level_data):
             value = metric_info['value']
             attempts = metric_info['attempts']
             
-            # Format value
+            # Format value with better N/A handling
             if value is None:
-                value_str = "N/A"
+                value_str = "No Data"  # Better than "N/A"
             elif isinstance(value, float):
-                value_str = f"{value:.3f}"
+                if value == 0.0:
+                    value_str = "0.000"  # Explicit zero
+                else:
+                    value_str = f"{value:.3f}"
+            elif value == 0:
+                value_str = "0"  # Integer zero
             else:
                 value_str = str(value)
             

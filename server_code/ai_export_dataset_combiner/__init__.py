@@ -148,16 +148,42 @@ def generate_combined_player_export(
         # This is the existing player aggregate metrics
         log_info(f"Calling {function_name} for aggregate data...")
 
-        # Call the existing markdown generation
-        from generate_player_metrics_markdown import generate_player_metrics_markdown_content
+        # Import the direct calculation function
+        from generate_player_metrics_json_server import calculate_all_metrics
+        import pandas as pd
 
-        # Generate just the content (not the full file with headers)
-        aggregate_result = generate_player_metrics_markdown_content(
-          ppr_df=ppr_df,
-          player_name=player_name,
-          league_value=league_value,
-          team=team
+        # Get metric dictionary
+        dict_rows = list(app_tables.metric_dictionary.search())
+        column_names = [col['name'] for col in app_tables.metric_dictionary.list_columns()]
+        metric_dict = pd.DataFrame([{col: row[col] for col in column_names} for row in dict_rows])
+
+        # Get triangle data (we need this for aggregate metrics)
+        from server_functions import get_filtered_triangle_data
+        league_parts = league_value.split('|')
+        league_str = league_parts[0].strip()
+        gender = league_parts[1].strip()
+        year = league_parts[2].strip()
+
+        tri_df = get_filtered_triangle_data(league_str, gender, year, team)
+
+        # Calculate all metrics using the PRE-LOADED ppr_df
+        log_info(f"Calculating aggregate metrics with {len(ppr_df)} points...")
+        metrics_result = calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name)
+
+        # Format as markdown content
+        aggregate_content = format_aggregate_metrics_as_markdown(
+          metrics_result['metrics'],
+          player_name
         )
+
+        aggregate_result = {
+          'content': aggregate_content,
+          'summary': {
+            'total_points': len(ppr_df),
+            'total_sets': len(tri_df),
+            'metrics_calculated': metrics_result['successful']
+          }
+        }
 
         if aggregate_result:
           if output_format == 'markdown':
