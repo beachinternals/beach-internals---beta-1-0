@@ -1027,3 +1027,90 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
     except Exception as e:
         log_error(f"Error in get_filtered_triangle_data: {str(e)}", with_traceback=True)
         return pd.DataFrame()
+
+
+"""
+Helper function to add to generate_player_metrics_markdown.py
+
+This function extracts just the content portion of the player metrics markdown
+without the top-level headers, so it can be combined with other datasets.
+"""
+
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
+def generate_player_metrics_markdown_content(ppr_df, player_name, league_value, team):
+  """
+    Generate player metrics markdown content WITHOUT the top-level file headers.
+    This is used when combining multiple datasets into one file.
+    
+    Args:
+        ppr_df: Filtered PPR dataframe
+        player_name: Player name
+        league_value: League string
+        team: Team name
+        
+    Returns:
+        dict: {
+            'content': str (markdown content without top headers),
+            'summary': dict (summary statistics)
+        }
+    """
+  log_info(f"Generating player metrics content (no headers) for {player_name}")
+
+  # Call the existing generate_player_metrics_markdown function
+  # but extract just the content portion
+
+  from generate_player_metrics_json_server import generate_player_metrics_json
+
+  # Generate the JSON data first
+  json_result = generate_player_metrics_json(
+    league_value=league_value,
+    team=team,
+    player=player_name
+  )
+
+  if not json_result or 'data' not in json_result:
+    log_error(f"Failed to generate JSON data for {player_name}")
+    return None
+
+  player_data = json_result['data']
+
+  # Format as markdown (without top-level headers)
+  md_lines = []
+
+  # Performance categories
+  categories = [
+    ('attacking', 'Attacking'),
+    ('passing', 'Passing'),
+    ('serving', 'Serving'),
+    ('defense', 'Defense'),
+    ('transition', 'Transition')
+  ]
+
+  for cat_key, cat_name in categories:
+    if cat_key in player_data and player_data[cat_key]:
+      md_lines.append(f"### {cat_name}")
+      md_lines.append("")
+
+      cat_data = player_data[cat_key]
+      for metric_key, metric_data in cat_data.items():
+        if isinstance(metric_data, dict):
+          value = metric_data.get('value', 'N/A')
+          attempts = metric_data.get('attempts', '')
+          metric_name = metric_data.get('name', metric_key)
+
+          if attempts:
+            md_lines.append(f"- **{metric_name}**: {value} (n={attempts})")
+          else:
+            md_lines.append(f"- **{metric_name}**: {value}")
+
+      md_lines.append("")
+
+  content = "\n".join(md_lines)
+
+  # Extract summary
+  summary = json_result.get('summary', {})
+
+  return {
+    'content': content,
+    'summary': summary
+  }

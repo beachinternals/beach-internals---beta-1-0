@@ -1,5 +1,37 @@
 allow_embedding: false
 db_schema:
+  ai_export_dataset_list:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      name: ID
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      name: dataset_id
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      name: dataset_name
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      name: dataset_type
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      name: function_name
+      type: string
+    - admin_ui: {order: 5, width: 200}
+      name: description
+      type: string
+    - admin_ui: {order: 6, width: 200}
+      name: active
+      type: bool
+    - admin_ui: {order: 7, width: 200}
+      name: order
+      type: number
+    - admin_ui: {order: 8, width: 200}
+      name: output_section_title
+      type: string
+    server: full
+    title: ai_export_dataset_list
   ai_export_mgr:
     client: none
     columns:
@@ -49,6 +81,10 @@ db_schema:
     - admin_ui: {order: 6.5, width: 200}
       name: disabled
       type: bool
+    - admin_ui: {order: 5.25, width: 200}
+      name: datasets_included
+      target: ai_export_dataset_list
+      type: link_multiple
     server: full
     title: ai_export_mgr
   ai_prompt_templates:

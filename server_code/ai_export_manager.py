@@ -36,6 +36,18 @@ from generate_player_metrics_json_server import generate_player_metrics_json
 from generate_player_metrics_markdown import generate_player_metrics_markdown, generate_global_context_markdown
 from server_functions import write_to_nested_folder, write_to_nested_folder_with_sharing
 
+# ============================================================================
+# NEW: MULTI-DATASET SUPPORT IMPORTS
+# ============================================================================
+from ai_export_dataset_combiner import (
+get_enabled_datasets,
+generate_combined_player_export
+)
+
+from generate_set_level_metrics import (
+generate_set_level_metrics_for_player
+)
+
 # This is a server module for generating NotebookLM-ready markdown files
 # with player performance data in JSON format
 # Uses ai_export_mgr table for control (similar to rpt_mgr table for reports)
@@ -291,16 +303,26 @@ def ai_export_mgr_generate_background(user=None):
         export_row['league'] = league
 
         # Generate the exports
-        log_info(f"Calling ai_export_generate for {team}")
-        result = ai_export_generate(
-          league=league,
-          team=team,
-          date_start=date_start,
-          date_end=date_end,
-          player_filter=player_filter,
-          player_data_map=player_data_map,  # Pass the full player data
-          user=user  # Pass user context
-        )
+        # NEW: Check if using multi-dataset processor
+        datasets_included = export_row['datasets_included']
+
+        if datasets_included and len(datasets_included) > 0:
+          # Use new multi-dataset processor
+          log_info(f"Using multi-dataset processor for {team}")
+          log_info(f"Datasets: {[ds['dataset_name'] for ds in datasets_included]}")
+          result = process_export_job_with_datasets(export_row)
+        else:
+          # Use existing single-dataset processor (backward compatibility)
+          log_info(f"Using legacy processor for {team}")
+          result = ai_export_generate(
+            league=league,
+            team=team,
+            date_start=date_start,
+            date_end=date_end,
+            player_filter=player_filter,
+            player_data_map=player_data_map,
+            user=user
+          )
 
         # Update row with results
         if result['status'] == 'success':
@@ -1405,3 +1427,216 @@ def force_index_player_files(folder_path):
     print(f"Touched: {original_title}")
 
   return f"Successfully touched {files_touched} files. Try NotebookLM again in 2-3 minutes."
+
+"""
+Updated process_export_job function for ai_export_manager.py
+
+This replaces the existing process_export_job_markdown function.
+It now supports multiple datasets that can be combined into single or separate files.
+
+ADD THIS TO ai_export_manager.py
+"""
+
+@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
+def process_export_job_with_datasets(export_row):
+  """
+    Process export job with support for multiple datasets.
+    
+    This is the NEW version that supports:
+    - Multiple datasets per export (player aggregate, set-level, etc.)
+    - Both combined and separate file output
+    - Both markdown and JSON formats
+    
+    Args:
+        export_row: Row from ai_export_mgr table
+        
+    Returns:
+        dict: {
+            'files_generated': int,
+            'file_list': list of dicts with file info,
+            'message': str
+        }
+    """
+  log_info(f"Processing multi-dataset export for {export_row['team']} ({export_row['league']})")
+
+  # Extract export parameters
+  league = export_row['league']
+  team = export_row['team']
+  date_start = export_row['date_start']
+  date_end = export_row['date_end']
+  export_type = export_row['export_type'] or 'markdown'
+  player_filter = export_row['player_filter']  # Linked rows from master_player
+
+  # NEW: Get datasets to include
+  from ai_export_dataset_combiner import get_enabled_datasets
+  datasets_to_include = get_enabled_datasets(export_row)
+
+  if not datasets_to_include:
+    log_error("No datasets enabled for this export")
+    return {'files_generated': 0, 'file_list': [], 'message': 'No datasets enabled'}
+
+  log_info(f"Datasets to include: {[ds['dataset_name'] for ds in datasets_to_include]}")
+  
+  # Get player list
+  if not player_filter:
+    log_error("No players specified in player_filter")
+    return {'files_generated': 0, 'file_list': [], 'message': 'No players specified'}
+
+  player_list = list(player_filter)
+  log_info(f"Found {len(player_list)} players to export")
+  
+  # Extract year and gender from player data (like the rest of the code does)
+  # Get player list
+  if not player_filter:
+    log_error("No players specified in player_filter")
+    return {'status': 'error', 'message': 'No players specified', 'files': []}
+
+  player_list = list(player_filter)
+  log_info(f"Found {len(player_list)} players to export")
+
+  # Get year and gender from first player (all players should have same league/gender/year)
+  first_player = player_list[0]
+  year = str(first_player['year'])  # Convert to string for table query
+  gender = first_player['gender']
+
+  log_info(f"Extracted from player data: League={league}, Gender={gender}, Year={year}, Team={team}")
+
+  # Build filters
+  filters = {}
+  if date_start:
+    filters['start_date'] = date_start
+  if date_end:
+    filters['end_date'] = date_end
+
+  # Set up output folder
+  league_gender_year = f"{league}{gender}{year}"
+  output_folder = [league_gender_year, team, 'notebooklm-ai-export']
+  log_info(f"Output folder: {' / '.join(output_folder)}")
+
+  # Generate global context file once
+  try:
+    log_info("Generating global context file...")
+    from generate_player_metrics_markdown import generate_global_context_markdown
+    context_file = generate_global_context_markdown()
+    context_result = write_to_nested_folder(
+      output_folder,
+      '00_Global_Context_Philosophy.md',
+      context_file
+    )
+    log_info(f"Global context file created")
+  except Exception as e:
+    log_error(f"Failed to create global context: {str(e)}")
+
+    # Determine output format
+  if export_type in ['markdown', 'full']:
+    output_format = 'markdown'
+  elif export_type == 'json':
+    output_format = 'json'
+  else:
+    output_format = 'markdown'  # Default
+
+  log_info(f"Output format: {output_format}")
+
+  # Generate files for each player
+  file_list = []
+  files_generated = 0
+
+  for player_idx, player_row in enumerate(player_list):
+    log_info(f"\n--- Player {player_idx + 1}/{len(player_list)} ---")
+
+    try:
+      # Extract player info
+      player_fullname = player_row['fullname']
+      player_shortname = player_row['shortname']
+      player_number = str(player_row['number'])
+
+      # Build player display name
+      player_name = f"{team} {player_number} {player_shortname}"
+      log_info(f"Processing: {player_name}")
+
+      # Build league_value format
+      league_value = f"{league} | {gender} | {year}"
+
+      # Add player-specific filters
+      player_filters = filters.copy()
+      player_filters['player'] = player_name
+      player_filters['player_shortname'] = player_shortname
+
+      # Get PPR data for this player
+      log_info("Fetching PPR data...")
+      ppr_df = get_filtered_ppr_data_direct(
+        league=league,
+        gender=gender,
+        year=year,
+        team=team,
+        **player_filters
+      )
+
+      if ppr_df is None or len(ppr_df) == 0:
+        log_error(f"No PPR data found for {player_name}")
+        continue
+
+      log_info(f"Loaded {len(ppr_df)} points for {player_name}")
+
+      # Generate combined export with all datasets
+      from ai_export_dataset_combiner import generate_combined_player_export
+
+      result = generate_combined_player_export(
+        ppr_df=ppr_df,
+        player_name=player_name,
+        league_value=league_value,
+        team=team,
+        datasets_to_include=datasets_to_include,
+        output_format=output_format
+      )
+
+      if result['success'] and result['media_obj']:
+        # Upload to Google Drive
+        log_info(f"Uploading to Drive: {result['filename']}")
+        upload_result = write_to_nested_folder(
+          output_folder,
+          result['filename'],
+          result['media_obj']
+        )
+
+        # Count words/size
+        content_bytes = result['media_obj'].get_bytes()
+        word_count = len(content_bytes.decode('utf-8').split())
+
+        # Track file info
+        file_info = {
+          'player': player_name,
+          'filename': result['filename'],
+          'file_id': 'saved_to_drive',
+          'file_url': None,
+          'path': ' / '.join(output_folder),
+          'datasets': [ds['dataset_name'] for ds in datasets_to_include],
+          'word_count': word_count,
+          'summary': result['summary']
+        }
+
+        file_list.append(file_info)
+        files_generated += 1
+
+        log_info(f"✓ Generated: {result['filename']} ({word_count} words)")
+
+      else:
+        log_error(f"Failed to generate export for {player_name}")
+
+    except Exception as e:
+      log_error(f"Error processing player {player_name}: {str(e)}")
+      import traceback
+      log_error(traceback.format_exc())
+      continue
+
+    # Build result message
+  message = f"Generated {files_generated} player files with {len(datasets_to_include)} dataset(s) each"
+  if files_generated < len(player_list):
+    message += f" ({len(player_list) - files_generated} failed)"
+
+  # Return in same format as ai_export_generate for consistency
+  return {
+    'status': 'success' if files_generated > 0 else 'error',
+    'message': message,
+    'files': file_list  # Changed from 'file_list' to 'files'
+  }
