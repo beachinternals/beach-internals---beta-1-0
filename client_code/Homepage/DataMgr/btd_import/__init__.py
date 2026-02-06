@@ -35,6 +35,9 @@ class btd_import(btd_importTemplate):
     self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( league= user_row['def_league'] )]
     self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = user_row['def_league'])]
 
+    # populate the venue drop down:
+    self.venue_drop_down.items =  [(row["venue_name"], row) for row in app_tables.venue.search( venue_league=user_row['def_league'])]
+    
   pass
 
   def league_drop_down_change(self, **event_args):
@@ -246,7 +249,10 @@ class btd_import(btd_importTemplate):
       ppr_playera1 = self.ppr_playera1_drop_down.selected_value,
       ppr_playera2 = self.ppr_playera2_drop_down.selected_value,
       ppr_playerb1 = self.ppr_playerb1_drop_down.selected_value,
-      ppr_playerb2 = self.ppr_playerb2_drop_down.selected_value
+      ppr_playerb2 = self.ppr_playerb2_drop_down.selected_value,
+      venue_name=self.venue_drop_down.selected_value['venue_name'],
+      venue_id = app_tables.venue.get(venue_name=self.venue_drop_down.selected_value['venue_name'])['venue_id'],
+      match_time_range=self.match_time_drop_down.selected_value
     )
     alert("New Row Saved! (With validated player/team assignments)")
     open_form("Homepage.DataMgr")

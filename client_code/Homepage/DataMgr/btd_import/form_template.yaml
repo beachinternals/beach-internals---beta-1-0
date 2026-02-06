@@ -21,6 +21,15 @@ components:
     name: date_picker
     properties: {}
     type: DatePicker
+  - layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,EWIITU ETVSHI,VSNEDV'}
+    name: label_3
+    properties: {align: right, text: 'Match Time:'}
+    type: Label
+  - layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,EWIITU ETVSHI,XOEQGC'}
+    name: match_time_drop_down
+    properties:
+      items: [8am-12pm, 12pm-4pm, 4pm-8pm]
+    type: DropDown
   - event_bindings: {change: comp_l1_drop_down_change}
     layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,QSGWJX CJIOWT,NIPOSY'}
     name: comp_l1_drop_down
@@ -37,6 +46,14 @@ components:
     type: ColumnPanel
   - layout_properties: {grid_position: 'PVOVSQ,VBCDKB JYEQOD,QSGWJX GVYHIJ,OJUDNO'}
     name: comp_l3_drop_down
+    properties: {}
+    type: DropDown
+  - layout_properties: {grid_position: 'PVOVSQ,VBCDKB PGLHHV,LZGNLG'}
+    name: label_4
+    properties: {align: right, text: 'Venue:'}
+    type: Label
+  - layout_properties: {grid_position: 'PVOVSQ,VBCDKB PGLHHV,CDCVON'}
+    name: venue_drop_down
     properties: {}
     type: DropDown
   - layout_properties: {grid_position: 'PVOVSQ,THUYNP WFBAAS,MAKLPO'}
@@ -72,7 +89,7 @@ components:
     type: FileLoader
   layout_properties: {grid_position: 'GRQZAQ,AEVLXG'}
   name: outlined_card_1
-  properties: {col_widths: '{"EWIITU":35,"QSGWJX":25,"VBCDKB":35,"THUYNP":25,"BJJGKG":20,"SPMECB":40}', role: outlined-card}
+  properties: {col_widths: '{"EWIITU":35,"QSGWJX":25,"VBCDKB":35,"THUYNP":25,"BJJGKG":20,"SPMECB":40,"LZGNLG":10,"CDCVON":50,"VSNEDV":20,"XOEQGC":40}', role: outlined-card}
   type: ColumnPanel
 - components:
   - layout_properties: {grid_position: 'RDYBVE,ZPOOEW'}
