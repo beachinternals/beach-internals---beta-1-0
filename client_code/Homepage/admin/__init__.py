@@ -13,6 +13,7 @@ from ppr_file_maint import *
 from scheduled_tasks import *
 from pdf_reports import *
 from .Metrics_json_generator import *
+from .weather_data import weather_data
 
 
 
@@ -67,6 +68,13 @@ class admin(adminTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(Metrics_json_generator())
+    pass
+
+  @handle("weather_link", "click")
+  def weather_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(weather_data())
     pass
 
 

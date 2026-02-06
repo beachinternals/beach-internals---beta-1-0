@@ -228,7 +228,7 @@ db_schema:
       name: venue_name
       type: string
     - admin_ui: {order: 24, width: 200}
-      name: match_time_range
+      name: match_time
       type: string
     - admin_ui: {order: 25, width: 200}
       name: weather_fetched

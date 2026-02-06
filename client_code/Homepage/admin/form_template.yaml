@@ -47,6 +47,11 @@ components_by_slot:
         name: link_2
         properties: {text: 'Mertic JSON '}
         type: Link
+      - event_bindings: {}
+        layout_properties: {grid_position: 'CBLWSK,DHEBLE'}
+        name: weather_link
+        properties: {text: Weather}
+        type: Link
       layout_properties: {grid_position: 'KCZYCU,SMAHSC'}
       name: column_panel_1
       properties: {}

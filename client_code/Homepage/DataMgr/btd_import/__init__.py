@@ -252,7 +252,7 @@ class btd_import(btd_importTemplate):
       ppr_playerb2 = self.ppr_playerb2_drop_down.selected_value,
       venue_name=self.venue_drop_down.selected_value['venue_name'],
       venue_id = app_tables.venue.get(venue_name=self.venue_drop_down.selected_value['venue_name'])['venue_id'],
-      match_time_range=self.match_time_drop_down.selected_value
+      match_time=self.match_time_drop_down.selected_value
     )
     alert("New Row Saved! (With validated player/team assignments)")
     open_form("Homepage.DataMgr")
