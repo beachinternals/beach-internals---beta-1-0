@@ -1605,6 +1605,13 @@ def process_export_job_with_datasets(export_row):
         content_bytes = result['media_obj'].get_bytes()
         word_count = len(content_bytes.decode('utf-8').split())
 
+        # Extract sessions_count from the new summary structure
+        # The summary has datasets_included array, each with their own summary
+        sessions_count = 0
+        for dataset_info in result['summary'].get('datasets_included', []):
+          if 'summary' in dataset_info and 'total_sets' in dataset_info['summary']:
+            sessions_count = max(sessions_count, dataset_info['summary']['total_sets'])
+
         # Track file info
         file_info = {
           'player': player_name,
@@ -1613,6 +1620,7 @@ def process_export_job_with_datasets(export_row):
           'file_url': None,
           'path': ' / '.join(output_folder),
           'datasets': [ds['dataset_name'] for ds in datasets_to_include],
+          'sessions_count': sessions_count,  # Now properly extracted
           'word_count': word_count,
           'summary': result['summary']
         }

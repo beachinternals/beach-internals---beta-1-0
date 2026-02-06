@@ -408,7 +408,8 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
 
       metrics_output[category][metric_id] = {
         'value': float(metric_value) if isinstance(metric_value, (int, float, np.number)) else metric_value,
-        'metric_name': metric_row['metric_name']
+        'metric_name': metric_row['metric_name'],
+        'parent_metric': metric_row['parent_metric'] if pd.notna(metric_row.get('parent_metric')) else None
       }
 
       successful += 1
@@ -443,6 +444,3 @@ def generate_filter_hash(filters):
     filter_string = "_".join(filter_items)
     hash_obj = hashlib.md5(filter_string.encode())
     return hash_obj.hexdigest()[:8]
-
-  
-

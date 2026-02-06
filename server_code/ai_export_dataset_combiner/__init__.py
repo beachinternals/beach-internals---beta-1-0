@@ -14,6 +14,7 @@ from anvil.tables import app_tables
 from anvil import BlobMedia
 from datetime import datetime
 import json
+import pandas as pd
 
 # ============================================================================
 # LOGGING IMPORTS
@@ -32,6 +33,14 @@ MONITORING_LEVEL_DETAILED,
 MONITORING_LEVEL_VERBOSE
 )
 
+# ============================================================================
+# METRIC GENERATION IMPORTS
+# ============================================================================
+from generate_player_metrics_json_server import (
+calculate_all_metrics,
+get_filtered_triangle_data
+)
+
 # Import the generation functions
 from generate_player_metrics_markdown import (
 generate_player_metrics_markdown, 
@@ -42,6 +51,61 @@ generate_set_level_metrics_for_player,
 format_set_level_data_as_markdown,
 format_set_level_data_as_json
 )
+
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def format_aggregate_metrics_as_markdown(metrics_dict, player_name):
+  """
+  Format aggregate metrics dictionary as markdown text.
+  
+  Args:
+      metrics_dict (dict): Dictionary of metrics organized by category
+      player_name (str): Player name for the header
+      
+  Returns:
+      str: Formatted markdown text
+  """
+  lines = []
+
+  # Sort categories alphabetically for consistent output
+  for category in sorted(metrics_dict.keys()):
+    lines.append(f"### {category}")
+    lines.append("")
+
+    # Sort metrics within category by metric_id
+    metrics_in_category = metrics_dict[category]
+    for metric_id in sorted(metrics_in_category.keys()):
+      metric_info = metrics_in_category[metric_id]
+      metric_name = metric_info['metric_name']
+      metric_value = metric_info['value']
+      parent_metric = metric_info.get('parent_metric')
+
+      # Format the value appropriately
+      if isinstance(metric_value, float):
+        formatted_value = f"{metric_value:.3f}"
+      else:
+        formatted_value = str(metric_value)
+
+      # Format the line with parent metric context if available
+      if parent_metric and parent_metric != metric_id:
+        # Show: metric_name (metric_id | parent: parent_metric): value
+        lines.append(f"- **{metric_name}** (`{metric_id}` | parent: `{parent_metric}`): {formatted_value}")
+      else:
+        # No parent or metric is its own parent - simpler format
+        lines.append(f"- **{metric_name}** (`{metric_id}`): {formatted_value}")
+
+    lines.append("")  # Blank line between categories
+
+  return "\n".join(lines)
+
+
+# ============================================================================
+# MAIN FUNCTIONS
+# ============================================================================
+
 
 
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
@@ -148,17 +212,10 @@ def generate_combined_player_export(
         # This is the existing player aggregate metrics
         log_info(f"Calling {function_name} for aggregate data...")
 
-        # Import the direct calculation function
-        from generate_player_metrics_json_server import calculate_all_metrics
-        import pandas as pd
-
         # Get metric dictionary
         dict_rows = list(app_tables.metric_dictionary.search())
         column_names = [col['name'] for col in app_tables.metric_dictionary.list_columns()]
         metric_dict = pd.DataFrame([{col: row[col] for col in column_names} for row in dict_rows])
-
-        # Get triangle data (we need this for aggregate metrics)
-        from server_functions import get_filtered_triangle_data
         league_parts = league_value.split('|')
         league_str = league_parts[0].strip()
         gender = league_parts[1].strip()
@@ -214,7 +271,7 @@ def generate_combined_player_export(
         set_level_data = generate_set_level_metrics_for_player(
           ppr_df=ppr_df,
           player_name=player_name,
-          league_value=league_value,
+        league_value=league_value,
           team=team
         )
 
@@ -240,69 +297,69 @@ def generate_combined_player_export(
           log_error(f"Failed to generate set-level data for {player_name}")
           combined_summary['datasets_included'].append({
             'dataset': dataset_name,
-                        'success': False,
-                        'error': 'Generation failed'
-                    })
+            'success': False,
+            'error': 'Generation failed'
+          })
             
       else:
-                log_error(f"Unknown dataset type: {dataset_type}")
-                combined_summary['datasets_included'].append({
-                    'dataset': dataset_name,
-                    'success': False,
-                    'error': f'Unknown dataset type: {dataset_type}'
-                })
+        log_error(f"Unknown dataset type: {dataset_type}")
+        combined_summary['datasets_included'].append({
+          'dataset': dataset_name,
+          'success': False,
+          'error': f'Unknown dataset type: {dataset_type}'
+        })
                 
     except Exception as e:
-            log_error(f"Error processing dataset {dataset_name}: {str(e)}")
-            combined_summary['datasets_included'].append({
-                'dataset': dataset_name,
-                'success': False,
-                'error': str(e)
-            })
-    
-    # Combine all content
-    if output_format == 'markdown':
-        final_content = "\n".join(combined_content)
-        filename = f"{player_name.replace(' ', '_')}_combined.md"
-    elif output_format == 'json':
-        # For JSON, create a structured object
-        json_obj = {
-            'player': player_name,
-            'league': league_value,
-            'team': team,
-            'generated': str(datetime.now()),
-            'datasets': {}
-        }
-        
-        # TODO: Add actual JSON content from each dataset
-        final_content = json.dumps(json_obj, indent=2, default=str)
-        filename = f"{player_name.replace(' ', '_')}_combined.json"
-    else:
-        log_error(f"Unknown output format: {output_format}")
-        return {
-            'success': False,
-            'content': None,
-            'media_obj': None,
-            'filename': None,
-            'summary': combined_summary
-        }
-    
-    # Create BlobMedia object
-    media_obj = BlobMedia(
-        'text/plain' if output_format == 'markdown' else 'application/json',
-        final_content.encode('utf-8'),
-        name=filename
-    )
-    
-    log_info(f"Successfully generated combined export: {filename}")
-    
-    return {
-        'success': True,
-        'content': final_content,
-        'media_obj': media_obj,
-        'filename': filename,
-        'summary': combined_summary
+      log_error(f"Error processing dataset {dataset_name}: {str(e)}")
+      combined_summary['datasets_included'].append({
+        'dataset': dataset_name,
+        'success': False,
+        'error': str(e)
+      })
+  
+  # Combine all content (AFTER the loop completes)
+  if output_format == 'markdown':
+    final_content = "\n".join(combined_content)
+    filename = f"{player_name.replace(' ', '_')}_combined.md"
+  elif output_format == 'json':
+    # For JSON, create a structured object
+    json_obj = {
+      'player': player_name,
+      'league': league_value,
+      'team': team,
+      'generated': str(datetime.now()),
+      'datasets': {}
     }
+    
+    # TODO: Add actual JSON content from each dataset
+    final_content = json.dumps(json_obj, indent=2, default=str)
+    filename = f"{player_name.replace(' ', '_')}_combined.json"
+  else:
+    log_error(f"Unknown output format: {output_format}")
+    return {
+      'success': False,
+      'content': None,
+      'media_obj': None,
+      'filename': None,
+      'summary': combined_summary
+    }
+  
+  # Create BlobMedia object
+  media_obj = BlobMedia(
+    'text/plain' if output_format == 'markdown' else 'application/json',
+    final_content.encode('utf-8'),
+    name=filename
+  )
+  
+  log_info(f"Successfully generated combined export: {filename}")
+  
+  return {
+    'success': True,
+    'content': final_content,
+    'media_obj': media_obj,
+    'filename': filename,
+    'summary': combined_summary
+  }
 
 
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
