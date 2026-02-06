@@ -248,19 +248,19 @@ def fetch_weather_for_match(venue_name, match_date, match_time):
     target_time = f"{date_str}T{fetch_hour:02d}:00"
 
     log_debug(f"Looking for data at target time: {target_time}")
-        
+
     if target_time not in times:
-            log_error(f"No weather data available for {target_time} at {venue_name}")
-            return {
-                'success': False,
-                'weather_id': None,
-                'message': f'No data available for {target_time}',
-                'data': None
-            }
-        
+      log_error(f"No weather data available for {target_time} at {venue_name}")
+      return {
+        'success': False,
+        'weather_id': None,
+        'message': f'No data available for {target_time}',
+        'data': None
+      }
+
     idx = times.index(target_time)
-        
-        # Extract weather data
+
+    # Extract weather data
     temp_c = hourly_data.get('temperature_2m', [])[idx]
     humidity = hourly_data.get('relative_humidity_2m', [])[idx]
     precipitation = hourly_data.get('precipitation', [])[idx]
@@ -269,85 +269,85 @@ def fetch_weather_for_match(venue_name, match_date, match_time):
     wind_speed_kmh = hourly_data.get('wind_speed_10m', [])[idx]
     wind_direction = hourly_data.get('wind_direction_10m', [])[idx]
     wind_gust_kmh = hourly_data.get('wind_gusts_10m', [])[idx]
-        
-        # Convert units
+
+    # Convert units
     temp_f = celsius_to_fahrenheit(temp_c)
     wind_speed_mph = kmh_to_mph(wind_speed_kmh)
     wind_gust_mph = kmh_to_mph(wind_gust_kmh)
     wind_dir_text = degrees_to_direction(wind_direction)
     weather_desc = get_weather_description(weather_code)
-        
+
     log_info(f"Weather data retrieved: {temp_f}°F, {wind_speed_mph}mph wind, {humidity}% humidity, {weather_desc}")
-        
-        # 6. Store in weather table
+
+    # 6. Store in weather table
     weather_row = app_tables.weather_data.add_row(
-            venue_name=venue_name,
-            weather_date=match_date,
-            time_range=match_time,
-            fetch_hour=fetch_hour,
-            temperature_f=temp_f,
-            temperature_c=temp_c,
-            wind_speed_mph=wind_speed_mph,
-            wind_gust_mph=wind_gust_mph,
-            wind_direction_degrees=wind_direction,
-            wind_direction_text=wind_dir_text,
-            humidity_percent=humidity,
-            cloud_cover_percent=cloud_cover,
-            uv_index=None,  # Open-Meteo archive doesn't provide UV index
-            participation_mm=precipitation,
-            weather_code=weather_code,
-            weather_description=weather_desc,
-            data_source="Open-Meteo",
-            fetched_at=datetime.now(),
-            api_success=True
-        )
-        
+      venue_name=venue_name,
+      weather_date=match_date,
+      time_range=match_time,
+      fetch_hour=fetch_hour,
+      temperature_f=temp_f,
+      temperature_c=temp_c,
+      wind_speed_mph=wind_speed_mph,
+      wind_gust_mph=wind_gust_mph,
+      wind_direction_degrees=wind_direction,
+      wind_direction_text=wind_dir_text,
+      humidity_percent=humidity,
+      cloud_cover_percent=cloud_cover,
+      uv_index=None,  # Open-Meteo archive doesn't provide UV index
+      participation_mm=precipitation,
+      weather_code=weather_code,
+      weather_description=weather_desc,
+      data_source="Open-Meteo",
+      fetched_at=datetime.now(),
+      api_success=True
+    )
+
     log_info(f"✓ Weather data stored successfully for {venue_name} on {date_str}, weather_id={weather_row.get_id()}")
-        
+
     return {
-            'success': True,
-            'weather_id': weather_row.get_id(),
-            'message': 'Weather data fetched and stored successfully',
-            'data': {
-                'temperature_f': temp_f,
-                'wind_speed_mph': wind_speed_mph,
-                'wind_gust_mph': wind_gust_mph,
-                'humidity_percent': humidity,
-                'weather_description': weather_desc
-            }
-        }
-        
+      'success': True,
+      'weather_id': weather_row.get_id(),
+      'message': 'Weather data fetched and stored successfully',
+      'data': {
+        'temperature_f': temp_f,
+        'wind_speed_mph': wind_speed_mph,
+        'wind_gust_mph': wind_gust_mph,
+        'humidity_percent': humidity,
+        'weather_description': weather_desc
+      }
+    }
+
   except requests.exceptions.Timeout:
-        log_error(f"API request timeout for {venue_name} on {match_date}")
-        return {
-            'success': False,
-            'weather_id': None,
-            'message': 'API request timeout - please try again',
-            'data': None
-        }
+    log_error(f"API request timeout for {venue_name} on {match_date}")
+    return {
+      'success': False,
+      'weather_id': None,
+      'message': 'API request timeout - please try again',
+      'data': None
+    }
   except requests.exceptions.RequestException as e:
-        log_error(f"API request error for {venue_name} on {match_date}: {str(e)}")
-        return {
-            'success': False,
-            'weather_id': None,
-            'message': f'API request failed: {str(e)}',
-            'data': None
-        }
+    log_error(f"API request error for {venue_name} on {match_date}: {str(e)}")
+    return {
+      'success': False,
+      'weather_id': None,
+      'message': f'API request failed: {str(e)}',
+      'data': None
+    }
   except Exception as e:
-        log_error(f"Unexpected error in fetch_weather_for_match: {str(e)}")
-        log_error(traceback.format_exc())
-        return {
-            'success': False,
-            'weather_id': None,
-            'message': f'Error: {str(e)}',
-            'data': None
-        }
+    log_error(f"Unexpected error in fetch_weather_for_match: {str(e)}")
+    log_error(traceback.format_exc())
+    return {
+      'success': False,
+      'weather_id': None,
+      'message': f'Error: {str(e)}',
+      'data': None
+    }
 
 
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def get_or_create_weather(venue_name, match_date, match_time):
-    """
+  """
     Get existing weather record or create new one if needed
     
     Args:
@@ -358,35 +358,35 @@ def get_or_create_weather(venue_name, match_date, match_time):
     Returns:
         str or None: weather_id if successful, None if failed
     """
-    log_debug(f"get_or_create_weather: {venue_name}, {match_date}, {match_time}")
-    
-    # Check if weather already exists
-    existing = app_tables.weather_data.get(
-        venue_name=venue_name,
-        weather_date=match_date,
-        time_range=match_time
-    )
-    
-    if existing:
-        log_debug(f"Found existing weather record: {existing.get_id()}")
-        return existing.get_id()
-    
+  log_debug(f"get_or_create_weather: {venue_name}, {match_date}, {match_time}")
+
+  # Check if weather already exists
+  existing = app_tables.weather_data.get(
+    venue_name=venue_name,
+    weather_date=match_date,
+    time_range=match_time
+  )
+
+  if existing:
+    log_debug(f"Found existing weather record: {existing.get_id()}")
+    return existing.get_id()
+
     # Fetch new weather data
-    log_info(f"No existing weather found, fetching new data for {venue_name} on {match_date}")
-    result = fetch_weather_for_match(venue_name, match_date, match_time)
-    
-    if result['success']:
-        log_info(f"✓ Weather created successfully: {result['weather_id']}")
-        return result['weather_id']
-    else:
-        log_error(f"✗ Weather fetch failed: {result['message']}")
-        return None
+  log_info(f"No existing weather found, fetching new data for {venue_name} on {match_date}")
+  result = fetch_weather_for_match(venue_name, match_date, match_time)
+
+  if result['success']:
+    log_info(f"✓ Weather created successfully: {result['weather_id']}")
+    return result['weather_id']
+  else:
+    log_error(f"✗ Weather fetch failed: {result['message']}")
+    return None
 
 
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def update_ppr_weather_batch(league, year):
-    """
+  """
     Update weather_id for all ppr_csv_tables records for a given league/year
     
     This function:
@@ -410,92 +410,92 @@ def update_ppr_weather_batch(league, year):
             'details': list
         }
     """
-    log_info(f"Starting batch weather update for {league} {year}")
-    
-    try:
-        stats = {
-            'success': True,
-            'total_records': 0,
-            'records_updated': 0,
-            'records_skipped': 0,
-            'unique_weather_fetched': 0,
-            'errors': [],
-            'details': []
-        }
-        
-        # 1. Get all ppr records for this league/year
-        ppr_records = app_tables.ppr_csv_tables.search(
-            league=league,
-            year=year
-        )
-        
-        stats['total_records'] = len(ppr_records)
-        
-        log_info(f"Found {stats['total_records']} PPR records for {league} {year}")
-        
-        if stats['total_records'] == 0:
-            log_info(f"No records found for {league} {year}")
-            stats['details'].append(f"No records found for {league} {year}")
-            return stats
-        
-        # 2. Group records by unique (venue_name, date, match_time)
-        # First, collect records that need weather
-        needs_weather = []
-        
-        log_debug("Scanning records for missing weather data...")
-        
-        for ppr in ppr_records:
-            # Skip if already has weather_id
-            if ppr['weather_id']:
-                stats['records_skipped'] += 1
-                continue
-            
-            # Skip if missing required fields
-            venue_name = ppr['venue_name'] if 'venue_name' in ppr else None
-            match_time = ppr['match_time'] if 'match_time' in ppr else None
-            match_date = ppr['date'] if 'date' in ppr else None
-            
-            if not venue_name or not match_time or not match_date:
-                stats['records_skipped'] += 1
-                log_debug(f"Skipped record {ppr.get_id()}: missing venue_name, match_time, or date")
-                stats['details'].append(
-                    f"Skipped record {ppr.get_id()}: missing venue_name, match_time, or date"
-                )
-                continue
-            
-            # Validate match_time format
-            if match_time not in ["8am-12pm", "12pm-4pm", "4pm-8pm"]:
-                stats['records_skipped'] += 1
-                log_error(f"Invalid match_time '{match_time}' for record {ppr.get_id()}")
-                stats['details'].append(
-                    f"Skipped record {ppr.get_id()}: invalid match_time '{match_time}'"
-                )
-                continue
-            
-            needs_weather.append({
-                'record': ppr,
-                'venue_name': venue_name,
-                'date': match_date,
-                'match_time': match_time
-            })
-        
-        log_info(f"Found {len(needs_weather)} records needing weather data, {stats['records_skipped']} skipped")
-        
-        # 3. Group by unique combinations
-        unique_matches = {}
-        for item in needs_weather:
-            key = (item['venue_name'], item['date'], item['match_time'])
-            if key not in unique_matches:
-                unique_matches[key] = []
-            unique_matches[key].append(item['record'])
-        
-        log_info(f"Found {len(unique_matches)} unique venue/date/time combinations")
+  log_info(f"Starting batch weather update for {league} {year}")
+
+  try:
+    stats = {
+      'success': True,
+      'total_records': 0,
+      'records_updated': 0,
+      'records_skipped': 0,
+      'unique_weather_fetched': 0,
+      'errors': [],
+      'details': []
+    }
+
+    # 1. Get all ppr records for this league/year
+    ppr_records = app_tables.ppr_csv_tables.search(
+      league=league,
+      year=year
+    )
+
+    stats['total_records'] = len(ppr_records)
+
+    log_info(f"Found {stats['total_records']} PPR records for {league} {year}")
+
+    if stats['total_records'] == 0:
+      log_info(f"No records found for {league} {year}")
+      stats['details'].append(f"No records found for {league} {year}")
+      return stats
+
+      # 2. Group records by unique (venue_name, date, match_time)
+      # First, collect records that need weather
+    needs_weather = []
+
+    log_debug("Scanning records for missing weather data...")
+
+    for ppr in ppr_records:
+      # Skip if already has weather_id
+      if ppr['weather_id']:
+        stats['records_skipped'] += 1
+        continue
+
+        # Skip if missing required fields
+      venue_name = ppr['venue_name'] if 'venue_name' in ppr else None
+      match_time = ppr['match_time'] if 'match_time' in ppr else None
+      match_date = ppr['date'] if 'date' in ppr else None
+
+      if not venue_name or not match_time or not match_date:
+        stats['records_skipped'] += 1
+        log_debug(f"Skipped record {ppr.get_id()}: missing venue_name, match_time, or date")
         stats['details'].append(
+          f"Skipped record {ppr.get_id()}: missing venue_name, match_time, or date"
+        )
+        continue
+
+        # Validate match_time format
+      if match_time not in ["8am-12pm", "12pm-4pm", "4pm-8pm"]:
+        stats['records_skipped'] += 1
+        log_error(f"Invalid match_time '{match_time}' for record {ppr.get_id()}")
+        stats['details'].append(
+          f"Skipped record {ppr.get_id()}: invalid match_time '{match_time}'"
+        )
+        continue
+
+      needs_weather.append({
+        'record': ppr,
+        'venue_name': venue_name,
+        'date': match_date,
+        'match_time': match_time
+      })
+
+    log_info(f"Found {len(needs_weather)} records needing weather data, {stats['records_skipped']} skipped")
+
+    # 3. Group by unique combinations
+    unique_matches = {}
+    for item in needs_weather:
+      key = (item['venue_name'], item['date'], item['match_time'])
+      if key not in unique_matches:
+        unique_matches[key] = []
+      unique_matches[key].append(item['record'])
+
+      log_info(f"Found {len(unique_matches)} unique venue/date/time combinations")
+      stats['details'].append(
             f"Found {len(unique_matches)} unique venue/date/time combinations"
         )
         
         # 4. Fetch weather for each unique combination
-        for (venue_name, match_date, match_time), records in unique_matches.items():
+      for (venue_name, match_date, match_time), records in unique_matches.items():
             try:
                 log_debug(f"Processing: {venue_name}, {match_date}, {match_time} ({len(records)} records)")
                 
@@ -529,22 +529,22 @@ def update_ppr_weather_batch(league, year):
                 stats['errors'].append(error_msg)
         
         # 5. Final summary
-        summary_msg = (
+      summary_msg = (
             f"Batch update complete: Updated {stats['records_updated']} of "
             f"{stats['total_records']} records for {league} {year}"
         )
-        log_info(summary_msg)
-        stats['details'].append(f"\n{summary_msg}")
+      log_info(summary_msg)
+      stats['details'].append(f"\n{summary_msg}")
         
-        if stats['errors']:
+      if stats['errors']:
             stats['success'] = False
             log_error(f"Batch update completed with {len(stats['errors'])} errors")
-        else:
+      else:
             log_info(f"✓ Batch update completed successfully with no errors")
         
-        return stats
+      return stats
         
-    except Exception as e:
+  except Exception as e:
         error_msg = f"Fatal error in update_ppr_weather_batch: {str(e)}"
         log_critical(error_msg)
         log_critical(traceback.format_exc())

@@ -44,7 +44,7 @@ class weather_data(weather_dataTemplate):
     """This method is called when the button is clicked"""
     # call server evnetf
     venue_name = self.venue_dropdown.selected_value['venue_name']
-    match_date = self.match_time_drop_down.selected_value
+    match_date = self.date_picker_1.date
     match_time = self.match_time_drop_down.selected_value
     return_text = anvil.server.call('fetch_weather_for_match',venue_name, match_date, match_time)
     # give an alert
