@@ -139,7 +139,8 @@ def get_weather_description(weather_code):
 
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
-def fetch_weather_for_match(venue_name, match_date, match_time):
+def fetch_weather_for_match(venue_id, match_date, match_time):
+
   """
     Fetch weather data for a single match and store in weather table
     
@@ -156,11 +157,12 @@ def fetch_weather_for_match(venue_name, match_date, match_time):
             'data': dict (weather data if successful)
         }
     """
-  log_debug(f"fetch_weather_for_match called: venue={venue_name}, date={match_date}, time={match_time}")
+
+  log_debug(f"fetch_weather_for_match called: venue={venue_id}, date={match_date}, time={match_time}")
 
   try:
     # 1. Validate inputs
-    if not venue_name or not match_date or not match_time:
+    if not venue_id or not match_date or not match_time:
       log_error(f"Missing required parameters: venue={venue_name}, date={match_date}, time={match_time}")
       return {
         'success': False,
@@ -170,22 +172,26 @@ def fetch_weather_for_match(venue_name, match_date, match_time):
       }
 
       # 2. Get venue information
-    venue = app_tables.venue.get(venue_name=venue_name)
+    venue = app_tables.venue.get(venue_id=venue_id)
     if not venue:
-      log_error(f"Venue not found: {venue_name}")
+      log_error(f"Venue not found: {venue_id}")
       return {
         'success': False,
         'weather_id': None,
-        'message': f'Venue not found: {venue_name}',
+        'message': f'Venue not found: {venue_id}',
         'data': None
       }
 
-    log_debug(f"Found venue: {venue_name} at lat={venue['latitude']}, lon={venue['longitude']}")
+    venue_name = venue['venue_name']  # Extract for logging
+    lat = venue['latitude']
+    lon = venue['longitude']
+
+    log_debug(f"Found venue: {venue_name} at lat={lat}, lon={lon}")
 
     # 3. Check if weather already exists
     fetch_hour = get_fetch_hour(match_time)
     existing_weather = app_tables.weather_data.get(
-      venue_name=venue_name,
+      venue_id=venue_id,
       weather_date=match_date,
       time_range=match_time
     )
@@ -204,9 +210,6 @@ def fetch_weather_for_match(venue_name, match_date, match_time):
       }
 
       # 4. Fetch from Open-Meteo API
-    lat = venue['latitude']
-    lon = venue['longitude']
-
     # Format date for API (YYYY-MM-DD)
     date_str = match_date.strftime('%Y-%m-%d')
 

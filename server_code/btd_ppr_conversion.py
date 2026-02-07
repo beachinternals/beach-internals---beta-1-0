@@ -29,6 +29,8 @@ from server_functions import (
 from logger_utils import log_info, log_error, log_critical, log_debug
 
 # Import other modules
+# Add with other imports at top
+from weather_ppr_integration import add_weather_to_ppr
 
 # This is a server module. It runs on the Anvil server,
 
@@ -113,7 +115,10 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
 
       # 3) Calculate offensive tactic
       ppr_df = calc_tactic(ppr_df)
-    
+      
+      # Add weather to PPR (fetches weather once for entire match)
+      ppr_df = add_weather_to_ppr(ppr_df, flist_r)
+      
       # 4) Error check the ppr file for consistency, maybe raise errors into an email/text message??
       ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
       #print(f"Error String: {error_string}")
@@ -122,9 +127,20 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       # first, I need to cahnge the ppr_file dataframe to a csv file.
       ppr_csv_file = pd.DataFrame.to_csv(ppr_df)
       ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
-    
-      # now I can store it in the btd files database
-      flist_r.update( ppr_data = ppr_media, error_str = error_string, no_errors = no_errors, ppr_file_date=datetime.now() )
+      
+      # Extract weather_id from ppr_df (all rows have same weather)
+      weather_id = ppr_df['weather_id'].iloc[0] if 'weather_id' in ppr_df.columns else None
+
+      # Update btd_files row
+      flist_r.update(
+        ppr_data=ppr_media,
+        error_str=error_string,
+        no_errors=no_errors,
+        ppr_file_date=datetime.now(),
+        weather_id=weather_id,                    # NEW: Store weather_id
+        weather_fetched=True if weather_id else False  # NEW: Track success
+      )
+
     else:
       True
       #print(f"Not processing file:{flist_r['filename']}")
