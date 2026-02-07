@@ -5,8 +5,11 @@ This module calculates core metrics for individual sets (video_id + set number +
 It reads the metric_dictionary to determine which metrics to calculate and uses
 the existing calculation functions.
 
+UPDATED: Now includes weather data fetched via weather_id from PPR
+
 Author: Beach Volleyball Analytics
 Created: 2026-02-05
+Updated: 2026-02-07 - Added weather integration via weather_id
 """
 
 import anvil.tables as tables
@@ -67,6 +70,78 @@ def get_core_metrics_from_dictionary():
 
 
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
+def get_weather_from_weather_id(set_df):
+  """
+    Get weather data using weather_id from PPR dataframe.
+    
+    Flow: set_df → weather_id column → weather_data table → weather data
+    
+    Args:
+        set_df: PPR dataframe filtered to a specific set
+        
+    Returns:
+        dict: Weather data from weather_data table with keys:
+            - temperature_f: Temperature in Fahrenheit
+            - wind_speed_mph: Wind speed in mph
+            - wind_gust_mph: Wind gust speed in mph  
+            - humidity_percent: Humidity percentage
+            - uv_index: UV index (may be None)
+            - weather_id: The ID that links to weather_data table
+        Returns None if no weather_id in PPR or weather_id not found in table
+    """
+  try:
+    if len(set_df) == 0:
+      log_debug("Empty set_df, cannot get weather")
+      return None
+
+    # Check if weather_id column exists in PPR
+    if 'weather_id' not in set_df.columns:
+      log_debug("No weather_id column in PPR (backward compatible with old files)")
+      return None
+
+    # Get weather_id from first row (all rows in set have same weather_id)
+    first_row = set_df.iloc[0]
+    weather_id = first_row.get('weather_id')
+
+    if weather_id is None or pd.isna(weather_id):
+      log_debug("weather_id is None/NaN in PPR (no weather for this set)")
+      return None
+
+    # Fetch from weather_data table using weather_id
+    try:
+      weather_row = app_tables.weather_data.get_by_id(weather_id)
+
+      if not weather_row:
+        log_error(f"weather_id {weather_id} not found in weather_data table")
+        return None
+
+      # Extract weather data from table
+      weather_data = {
+        'weather_id': weather_id,
+        'temperature_f': weather_row.get('temperature_f'),
+        'wind_speed_mph': weather_row.get('wind_speed_mph'),
+        'wind_gust_mph': weather_row.get('wind_gust_mph'),
+        'humidity_percent': weather_row.get('humidity_percent'),
+        'uv_index': weather_row.get('uv_index')
+      }
+
+      log_debug(f"Fetched weather from weather_data table (ID={weather_id}): " +
+                f"temp={weather_data['temperature_f']}°F, " +
+                f"wind={weather_data['wind_speed_mph']}mph, " +
+                f"humidity={weather_data['humidity_percent']}%")
+
+      return weather_data
+
+    except Exception as e:
+      log_error(f"Error fetching weather_id {weather_id} from weather_data table: {str(e)}")
+      return None
+
+  except Exception as e:
+    log_error(f"Error in get_weather_from_weather_id: {str(e)}")
+    return None
+
+
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def get_set_metadata(ppr_df, video_id, set_number, player_name):
   """
     Extract metadata for a specific set from ppr_df.
@@ -78,7 +153,7 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name):
         player_name: Player name in format "TEAM NUMBER SHORTNAME"
         
     Returns:
-        dict: Metadata including date, time, opponent, partner, venue_id
+        dict: Metadata including date, time, opponent, partner, venue_id, and weather
     """
   log_debug(f"Getting metadata for video_id={video_id}, set={set_number}, player={player_name}")
 
@@ -89,7 +164,7 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name):
     log_error(f"No data found for video_id={video_id}, set={set_number}")
     return None
 
-    # Get first row for metadata (all rows in set should have same metadata)
+  # Get first row for metadata (all rows in set should have same metadata)
   first_row = set_df.iloc[0]
 
   # Determine which team the player is on (a or b)
@@ -108,13 +183,16 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name):
     opponent1 = first_row.get('player_a1', '')
     opponent2 = first_row.get('player_a2', '')
 
+  # Get weather data using weather_id from PPR
+  weather_data = get_weather_from_weather_id(set_df)
+
   metadata = {
     'video_id': video_id,
     'set': set_number,
     'player': player_name,
     'date': first_row.get('game_date', ''),
-    'match_time': first_row.get('match_time', None),  # May not exist yet
-    'venue_id': first_row.get('venue_id', None),  # May not exist yet
+    'match_time': first_row.get('match_time', None),
+    'venue_id': first_row.get('venue_id', None),
     'venue_name': first_row.get('venue_name', ''),
     'team': team,
     'partner': partner,
@@ -125,14 +203,18 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name):
     'filename': first_row.get('filename', ''),
     'comp_l1': first_row.get('comp_l1', ''),
     'comp_l2': first_row.get('comp_l2', ''),
-    'comp_l3': first_row.get('comp_l3', '')
+    'comp_l3': first_row.get('comp_l3', ''),
+    # Weather data fetched via weather_id
+    'weather': weather_data  # None if no weather_id or not found
   }
 
-  # Log if match_time or venue_id are missing
+  # Log if optional fields are missing
   if metadata['match_time'] is None:
     log_debug(f"match_time not found in ppr_df for video_id={video_id}")
   if metadata['venue_id'] is None:
     log_debug(f"venue_id not found in ppr_df for video_id={video_id}")
+  if metadata['weather'] is None:
+    log_debug(f"No weather data for video_id={video_id} (backward compatible)")
 
   return metadata
 
@@ -153,44 +235,34 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
     """
   metric_id = metric_row['metric_id']
   metric_name = metric_row['metric_name']
-  function_name = metric_row['function_name']  # This is the actual Python code to execute!
+  function_name = metric_row['function_name']
 
   log_debug(f"Calculating metric: {metric_id} ({metric_name})")
 
-  # Skip if no function_name (shouldn't happen for core metrics)
   if not function_name or function_name.strip() == '':
     log_debug(f"No function_name for metric {metric_id}, skipping")
     return None
 
   try:
-    # Set up the execution context (same as generate_player_metrics_json)
     disp_player = player_name
     ppr_df = ppr_df_filtered
 
-    # Execute the function_name string dynamically
-    # This evaluates expressions like "fbhe_result = fbhe_obj(ppr_df, disp_player, 'both', False)"
     exec_context = {
       'ppr_df': ppr_df,
       'disp_player': disp_player,
       'player_name': player_name
     }
 
-    # Add all imported functions to the execution context
     exec_context.update(globals())
-
-    # Execute the function_name (NOT calculation_formula!)
     exec(function_name, exec_context)
 
-    # Extract the result based on result_path
     return_type = metric_row['return_type']
     result_path = metric_row['result_path']
 
     value = None
     attempts = None
 
-    # Parse the result_path to extract the value
     if return_type == 'object':
-      # Object notation like fbhe_result.fbhe
       parts = result_path.split('.')
       if len(parts) >= 2:
         obj_name = parts[0]
@@ -201,44 +273,37 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
           attempts = getattr(result_obj, 'attempts', None)
 
     elif return_type == 'dict':
-      # Dictionary notation like eso_result['eso']
-      # Extract dict name and key
       dict_name = result_path.split('[')[0]
       if dict_name in exec_context:
         result_dict = exec_context[dict_name]
-        # Extract key from result_path
         key_start = result_path.find("['")
         key_end = result_path.find("']")
         if key_start >= 0 and key_end > key_start:
           key = result_path[key_start+2:key_end]
           value = result_dict.get(key, None)
           attempts = result_dict.get('attempts', None) or result_dict.get('total_points', None)
-        
-        return {
-            'metric_id': metric_id,
-            'metric_name': metric_name,
-            'value': value,
-            'attempts': attempts
-        }
+
+    return {
+      'metric_id': metric_id,
+      'metric_name': metric_name,
+      'value': value,
+      'attempts': attempts
+    }
         
   except Exception as e:
-        log_error(f"Error calculating metric {metric_id}: {str(e)}")
-        return None
+    log_error(f"Error calculating metric {metric_id}: {str(e)}")
+    return None
 
 
-# ============================================================================
-# MAIN GENERATION FUNCTIONS
-# ============================================================================
-
-@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
+@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, team):
     """
-    Generate set-level core metrics for a single player across all their sets.
+    Generate set-by-set metrics for a single player.
     
     Args:
-        ppr_df: Full PPR dataframe (already filtered by date range, etc.)
+        ppr_df: Filtered PPR dataframe (already filtered for player/date/comp)
         player_name: Player name in format "TEAM NUMBER SHORTNAME"
-        league_value: League value string (e.g., "NCAA | W | 2026")
+        league_value: League string (e.g., "NCAA | W | 2026")
         team: Team name
         
     Returns:
@@ -246,21 +311,20 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
             'player': player_name,
             'league': league_value,
             'team': team,
-            'sets': [list of set data],
-            'summary': summary statistics
+            'sets': [...],  # Each set includes weather if available
+            'summary': {...}
         }
     """
-    log_info(f"Generating set-level metrics for player: {player_name}")
+    log_info(f"Generating set-level metrics for {player_name}")
     
-    # Get core metrics from dictionary
     core_metrics = get_core_metrics_from_dictionary()
-    if not core_metrics:
+    
+    if len(core_metrics) == 0:
         log_error("No core metrics found in metric_dictionary")
         return None
     
     log_info(f"Will calculate {len(core_metrics)} core metrics per set")
     
-    # Filter ppr_df to this player's points only
     player_df = ppr_df[
         (ppr_df['player_a1'] == player_name) | 
         (ppr_df['player_a2'] == player_name) |
@@ -274,11 +338,9 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
     
     log_info(f"Found {len(player_df)} total points for player")
     
-    # Get unique video_id + set combinations
     set_combinations = player_df.groupby(['video_id', 'set']).size().reset_index(name='point_count')
     log_info(f"Found {len(set_combinations)} unique sets for player")
     
-    # Process each set
     sets_data = []
     sets_included = 0
     sets_excluded = 0
@@ -288,7 +350,6 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
         set_num = row['set']
         point_count = row['point_count']
         
-        # Check point count thresholds
         if point_count < 10:
             log_info(f"Excluding set {video_id}-{set_num}: only {point_count} points (< 10 minimum)")
             sets_excluded += 1
@@ -300,19 +361,17 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
         if point_count > 50:
             log_info(f"Warning: Set {video_id}-{set_num} has {point_count} points (> 50 typical maximum)")
         
-        # Get metadata for this set
+        # Get metadata (includes weather via weather_id)
         metadata = get_set_metadata(ppr_df, video_id, set_num, player_name)
         if not metadata:
             log_error(f"Could not get metadata for set {video_id}-{set_num}")
             continue
         
-        # Filter ppr_df to this specific set
         set_df = player_df[
             (player_df['video_id'] == video_id) & 
             (player_df['set'] == set_num)
         ]
         
-        # Calculate all core metrics for this set
         set_metrics = {}
         for metric_row in core_metrics:
             metric_result = calculate_metric_for_set(metric_row, set_df, player_name)
@@ -323,7 +382,6 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
                     'attempts': metric_result['attempts']
                 }
         
-        # Combine metadata and metrics
         set_data = {
             **metadata,
             'metrics': set_metrics,
@@ -337,7 +395,6 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
     
     log_info(f"Set-level processing complete: {sets_included} sets included, {sets_excluded} excluded")
     
-    # Create summary
     summary = {
         'total_sets_analyzed': sets_included,
         'total_sets_excluded': sets_excluded,
@@ -361,7 +418,7 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def format_set_level_data_as_markdown(set_level_data):
     """
-    Format set-level data as markdown.
+    Format set-level data as markdown WITH WEATHER DATA IN HEADERS.
     
     Args:
         set_level_data: Output from generate_set_level_metrics_for_player
@@ -376,14 +433,14 @@ def format_set_level_data_as_markdown(set_level_data):
     
     md = []
     
-    # Header - Player is H1
+    # Header
     md.append(f"# {set_level_data['player']}")
     md.append(f"")
     md.append(f"**League:** {set_level_data['league']}")
     md.append(f"**Team:** {set_level_data['team']}")
     md.append(f"")
     
-    # Summary - H2
+    # Summary
     summary = set_level_data['summary']
     md.append(f"## Performance Summary")
     md.append(f"- Total Sets Analyzed: {summary['total_sets_analyzed']}")
@@ -401,12 +458,13 @@ def format_set_level_data_as_markdown(set_level_data):
     md.append(f"")
     
     for idx, set_data in enumerate(set_level_data['sets'], 1):
-        # Better header format: Date | vs Opponent | Set N
         opponent_display = f"vs {set_data['opponent_team']}"
-        set_header = f"## {set_data['date']} | {opponent_display} | Set {set_data['set']}"
+        set_header = f"### {set_data['date']} | {opponent_display} | Set {set_data['set']}"
         
         md.append(set_header)
         md.append(f"")
+        
+        # Match Information
         md.append(f"**Match Information:**")
         if set_data.get('match_time'):
             md.append(f"- Time: {set_data['match_time']}")
@@ -421,30 +479,55 @@ def format_set_level_data_as_markdown(set_level_data):
         md.append(f"- Video ID: {set_data['video_id']}")
         md.append(f"")
         
+        # WEATHER DATA - Only show if available
+        weather = set_data.get('weather')
+        if weather and any(v is not None and not pd.isna(v) for v in weather.values()):
+            md.append(f"**Weather Conditions:**")
+            
+            # Temperature
+            if weather.get('temperature_f') is not None and not pd.isna(weather.get('temperature_f')):
+                md.append(f"- Temperature: {weather['temperature_f']:.1f}°F")
+            
+            # Wind Speed
+            if weather.get('wind_speed_mph') is not None and not pd.isna(weather.get('wind_speed_mph')):
+                wind_str = f"{weather['wind_speed_mph']:.1f} mph"
+                # Add gust if available
+                if weather.get('wind_gust_mph') is not None and not pd.isna(weather.get('wind_gust_mph')):
+                    wind_str += f" (gusts to {weather['wind_gust_mph']:.1f} mph)"
+                md.append(f"- Wind: {wind_str}")
+            
+            # Humidity
+            if weather.get('humidity_percent') is not None and not pd.isna(weather.get('humidity_percent')):
+                md.append(f"- Humidity: {weather['humidity_percent']:.0f}%")
+            
+            # UV Index (if available)
+            if weather.get('uv_index') is not None and not pd.isna(weather.get('uv_index')):
+                md.append(f"- UV Index: {weather['uv_index']:.1f}")
+            
+            md.append(f"")
+        
+        # Core Metrics
         md.append(f"**Core Metrics:**")
         md.append(f"")
         
-        # Sort metrics by metric_id for consistent ordering
         sorted_metrics = sorted(set_data['metrics'].items())
         
         for metric_id, metric_info in sorted_metrics:
             value = metric_info['value']
             attempts = metric_info['attempts']
             
-            # Format value with better N/A handling
             if value is None:
-                value_str = "No Data"  # Better than "N/A"
+                value_str = "No Data"
             elif isinstance(value, float):
                 if value == 0.0:
-                    value_str = "0.000"  # Explicit zero
+                    value_str = "0.000"
                 else:
                     value_str = f"{value:.3f}"
             elif value == 0:
-                value_str = "0"  # Integer zero
+                value_str = "0"
             else:
                 value_str = str(value)
             
-            # Format attempts
             if attempts is not None:
                 md.append(f"- **{metric_info['name']}**: {value_str} (n={attempts})")
             else:
@@ -473,7 +556,6 @@ def format_set_level_data_as_json(set_level_data):
     
     log_info("Formatting set-level data as JSON...")
     
-    # Convert to JSON-serializable format
     json_data = {
         'player': set_level_data['player'],
         'league': set_level_data['league'],
