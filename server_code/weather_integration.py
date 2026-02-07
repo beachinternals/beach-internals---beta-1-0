@@ -296,7 +296,7 @@ def fetch_weather_for_match(venue_id, match_date, match_time):
       wind_direction_text=wind_dir_text,
       humidity_percent=humidity,
       cloud_cover_percent=cloud_cover,
-      uv_index=None,  # Open-Meteo archive doesn't provide UV index
+      #uv_index=None,  # Open-Meteo archive doesn't provide UV index
       participation_mm=precipitation,
       weather_code=weather_code,
       weather_description=weather_desc,

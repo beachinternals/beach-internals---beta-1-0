@@ -31,6 +31,7 @@ from logger_utils import log_info, log_error, log_critical, log_debug
 # Import other modules
 # Add with other imports at top
 from weather_ppr_integration import add_weather_to_ppr
+from weather_integration import get_or_create_weather
 
 # This is a server module. It runs on the Anvil server,
 
@@ -223,7 +224,7 @@ def btd_to_ppr_df(btd_df, flist_r):
     # create the ppr datafram
   ppr_dict = {
     "league":flist_r["league"],"gender":flist_r['gender'],"year":flist_r['year'],"comp_l1":flist_r['comp_l1'],"comp_l2":flist_r['comp_l2'],"comp_l3":flist_r['comp_l3'],'team':flist_r['team'],'game_date':flist_r['date'],
-    "filename":flist_r['csv_data'].name,'video_id':blank,'rally_id':zero, 'venue_id':flist_r["venue_id"], 'weather_id':flist_r["weather_id"], 'match_time':flist_r["match_time"],
+    "filename":flist_r['csv_data'].name,'video_id':blank,'rally_id':zero, 'venue_id':flist_r["venue_id"], 'weather_id':flist_r["weather_id"], 'match_time':flist_r["match_time"],'temperature_f':zero, 'wind_speed_mph':zero,'wind_gust_mph':zero,'humidity_percent':zero,
     'point_no':zero,'set':zero,'a_set_diff':zero,'a_score_diff':zero,
     'a_score':zero,'teama':teama,'player_a1':player_a1,'player_a2':player_a2,
     'b_score':zero,'teamb':teamb,'player_b1':player_b1,'player_b2':player_b2,
