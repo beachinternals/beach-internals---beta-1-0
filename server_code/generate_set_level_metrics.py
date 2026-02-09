@@ -118,11 +118,11 @@ def get_weather_from_weather_id(set_df):
       # Extract weather data from table
       weather_data = {
         'weather_id': weather_id,
-        'temperature_f': weather_row.get('temperature_f'),
-        'wind_speed_mph': weather_row.get('wind_speed_mph'),
-        'wind_gust_mph': weather_row.get('wind_gust_mph'),
-        'humidity_percent': weather_row.get('humidity_percent'),
-        'uv_index': weather_row.get('uv_index')
+        'temperature_f': weather_row['temperature_f'],
+        'wind_speed_mph': weather_row['wind_speed_mph'],
+        'wind_gust_mph': weather_row['wind_gust_mph'],
+        'humidity_percent': weather_row['humidity_percent'],
+        'uv_index': weather_row['uv_index']
       }
 
       log_debug(f"Fetched weather from weather_data table (ID={weather_id}): " +
