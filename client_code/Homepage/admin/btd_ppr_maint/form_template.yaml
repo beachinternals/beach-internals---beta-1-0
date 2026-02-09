@@ -300,5 +300,19 @@ components:
   name: outlined_card_7
   properties: {role: outlined-card}
   type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'XOKJDX,UQQPWY'}
+    name: label_17
+    properties: {text: Repair video_id in btd_file}
+    type: Label
+  - event_bindings: {}
+    layout_properties: {grid_position: 'XOKJDX,VKGSPX'}
+    name: btd_fix
+    properties: {text: Fix btd_file}
+    type: Button
+  layout_properties: {grid_position: 'GIUEKO,FTWVQD'}
+  name: outlined_card_8
+  properties: {role: outlined-card}
+  type: ColumnPanel
 container: {type: ColumnPanel}
 is_package: true

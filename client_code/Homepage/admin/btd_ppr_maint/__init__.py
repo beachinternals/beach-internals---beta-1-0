@@ -224,3 +224,10 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     alert(task)
     pass
 
+  @handle("btd_fix", "click")
+  def btd_fix_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    task = anvil.server.call('repair_video_id_column')
+    alert(task)
+    pass
+
