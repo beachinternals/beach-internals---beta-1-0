@@ -726,13 +726,22 @@ def error_check_ppr(ppr_df):
       #print(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
       error_string = error_string + '\n' + print_to_string(f"|- Set and  Attack Same Player     -| {ppr_r['set_player']},{ppr_r['att_player']}Point Number:{ppr_r['point_no']}")  
       no_errors += 1
-      
+
     # serve and attack player are the same team
     if ppr_r['pass_yn'] == "Y":
-      if (ppr_r['serve_player'] in ppr_r['teama']) and (ppr_r['pass_player'] in ppr_r['teama'] ) or (ppr_r['serve_player'] in ppr_r['teamb']) and (ppr_r['pass_player'] in ppr_r['teamb'] ):
-        #print(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
-        error_string = error_string + '\n' + print_to_string(f"|- Serve and Pass Same Team          -| {ppr_r['serve_player']}, {ppr_r['pass_player']}, Point Number:{ppr_r['point_no']}")
-        no_errors += 1
+      serve_player = ppr_r.get('serve_player')
+      pass_player = ppr_r.get('pass_player')
+      teama = ppr_r.get('teama')
+      teamb = ppr_r.get('teamb')
+
+      if serve_player and pass_player and teama and teamb:
+        if ((serve_player in teama) and (pass_player in teama)) or \
+        ((serve_player in teamb) and (pass_player in teamb)):
+          error_string = error_string + '\n' + print_to_string(f"|- Serve and Pass Same Team          -| {serve_player}, {pass_player}, Point Number:{ppr_r['point_no']}")
+          no_errors += 1
+      else:
+        # Optional: log which field is missing for debugging
+        print(f"Missing data - serve:{serve_player}, pass:{pass_player}, teama:{teama}, teamb:{teamb}")
       
     # can I check the service order?
     if not ppr_r['serve_player']:
@@ -912,19 +921,20 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
   oos_flag = 0
   #print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
   
-  # Angle
-  if (src_zone_net == '1') and ( float(pass_angle) > 10):
-    oos_flag = oos_flag + 1
-    #print(f'2a oos flag: {oos_flag}')
-  if (src_zone_net == '2') & (pass_angle > 15 ):
-    oos_flag = oos_flag + 1
-    #print(f'2b oos flag: {oos_flag}')
-  if (src_zone_net == '4') & (pass_angle < -15 ):
-    oos_flag = oos_flag + 1
-    #print(f'2c oos flag: {oos_flag}')
-  if (src_zone_net == '5') & (pass_angle < -10 ):
-    oos_flag = oos_flag + 1
-    #print(f'2d oos flag: {oos_flag}')
+  # Angle checks - only if we have a valid angle
+  if pass_angle is not None:
+    if (src_zone_net == '1') and (pass_angle > 10):
+      oos_flag = oos_flag + 1
+      #print(f'2a oos flag: {oos_flag}')
+    if (src_zone_net == '2') and (pass_angle > 15):
+      oos_flag = oos_flag + 1
+      #print(f'2b oos flag: {oos_flag}')
+    if (src_zone_net == '4') and (pass_angle < -15):
+      oos_flag = oos_flag + 1
+      #print(f'2c oos flag: {oos_flag}')
+    if (src_zone_net == '5') and (pass_angle < -10):
+      oos_flag = oos_flag + 1
+      #print(f'2d oos flag: {oos_flag}')
     
   # zone
   if ( dest_zone_depth == 'E'):
