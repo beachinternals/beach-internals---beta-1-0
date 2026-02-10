@@ -273,6 +273,10 @@ def btd_to_ppr_df(btd_df, flist_r):
   for index, btd_r in btd_df.iterrows():
     #print(f"loop over rows, index = {index}, Transition? {in_trans}, Action Type?{btd_r['action_type']}, Player: {btd_r['player']}")
     
+    # ADD THIS:
+    if index == 0:
+      print(f"FIRST ROW: action_type={btd_r['action_type']}, rally_id={btd_r['rally_id']}, ppr_row={ppr_row}")
+      
     # replace the btd players with the master player reference
     if btd_r['player'] == btd_playera1:
       btd_r['player'] = player_a1
@@ -307,18 +311,26 @@ def btd_to_ppr_df(btd_df, flist_r):
         
     if btd_r['action_type'] == "receive" and not in_trans:
       # process the serve receive data
+      if ppr_row == -1:
+        continue
       touch_since_serve +=  1
       ppr_df = save_pass_info(ppr_df, btd_r, ppr_row)    
       
     if btd_r['action_type'] == "set" and not in_trans:
+      if ppr_row == -1:
+        continue
       touch_since_serve += 1
       ppr_df = save_set_info(ppr_df, btd_r, ppr_row)
 
     if btd_r['action_type'] == "attack" and not in_trans:
+      if ppr_row == -1:
+        continue
       touch_since_serve += 1
       ppr_df = save_att_info(ppr_df, btd_r, ppr_row)
 
     if btd_r['action_type'] == "dig" and not in_trans:
+      if ppr_row == -1:
+        continue
       touch_since_serve += 1
       ppr_df = save_dig_info(ppr_df, btd_r, ppr_row)
 
@@ -335,6 +347,9 @@ def btd_to_ppr_df(btd_df, flist_r):
   # we should be out of the loop over btd rows, so check the last point outcome and score
   ppr_df = check_last_point( ppr_df, ppr_row, btd_r, last_player, last_quality, last_action_id, last_action_type, in_trans, teama, teamb, True  )
   ppr_df = update_score(ppr_df, ppr_row, teama)
+
+  print(f"BEFORE RETURN: ppr_df.shape={ppr_df.shape}, ppr_row={ppr_row}, max_index={ppr_df.index.max()}")
+  
   return ppr_df
 
 def save_serve_info( ppr_df, btd_r, ppr_row ):
