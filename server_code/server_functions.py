@@ -1812,7 +1812,84 @@ def get_knock_out_summary(ppr_df, disp_player):
     'has_data': stats.get('has_serves', False)
   }
 
+def calc_att_height_metrics(ppr_df, player, ceiling_pct=90, near_ceiling_threshold=0.15):
+  """
+    Calculate attack height metrics for a player using att_touch_height 
+    (from BallTime video data). Handles older datasets where this field 
+    may be missing or zero.
 
+    Args:
+        ppr_df:                  Filtered ppr dataframe
+        player:                  Player name string (matches att_player column)
+        ceiling_pct:             Percentile to use as the player's ceiling (default 90)
+        near_ceiling_threshold:  How close to ceiling counts as 'near ceiling' 
+                                 in meters (default 0.15m)
+
+    Returns:
+        dict with status flag and all metrics, or status=False with reason
+    """
+
+  # Check column exists at all (older datasets won't have it)
+  if 'att_touch_height' not in ppr_df.columns:
+    return {
+      'status': False,
+      'msg': 'att_touch_height column not present in this dataset',
+      'att_ht_mean': None,
+      'attempts': None,
+      'att_ht_p90': None,
+      'att_ht_gap': None
+    }
+
+    # All attacks by this player
+  all_atts = ppr_df[ppr_df['att_player'].str.strip() == player.strip()]
+  total_atts = len(all_atts)
+
+  # Filter to attacks that have a valid height reading
+  player_atts = all_atts[
+    all_atts['att_touch_height'].notna() &
+    (all_atts['att_touch_height'] > 0)
+    ]['att_touch_height']
+
+  attempts_with_height = len(player_atts)
+
+  if attempts_with_height < 10:
+    return {
+      'status': False,
+      'msg': f'Insufficient data: only {attempts_with_height} attacks with height data',
+      'att_ht_mean': None,
+      'attempts': attempts_with_height,
+      'att_ht_p90': None,
+      'att_ht_gap': None
+    }
+
+  pct_with_height = round(attempts_with_height / total_atts, 3) if total_atts > 0 else 0
+
+  att_ht_mean   = round(float(player_atts.mean()), 3)
+  att_ht_stdev  = round(float(player_atts.std()), 3)
+  att_ht_median = round(float(player_atts.median()), 3)
+  att_ht_p90    = round(float(np.percentile(player_atts, ceiling_pct)), 3)
+  att_ht_max    = round(float(player_atts.max()), 3)
+  att_ht_gap    = round(att_ht_p90 - att_ht_mean, 3)
+
+  near_ceiling_count = (player_atts >= (att_ht_p90 - near_ceiling_threshold)).sum()
+  att_ht_pct_near_ceiling = round(near_ceiling_count / attempts_with_height, 3)
+
+  att_ht_cv = round(att_ht_stdev / att_ht_mean, 3) if att_ht_mean > 0 else None
+
+  return {
+    'status': True,
+    'attempts': attempts_with_height,          # key used in metrics dict CSV
+    'attempts_total': total_atts,
+    'pct_with_height': pct_with_height,
+    'att_ht_mean': att_ht_mean,
+    'att_ht_stdev': att_ht_stdev,
+    'att_ht_median': att_ht_median,
+    'att_ht_p90': att_ht_p90,
+    'att_ht_max': att_ht_max,
+    'att_ht_gap': att_ht_gap,
+    'att_ht_pct_near_ceiling': att_ht_pct_near_ceiling,
+    'att_ht_cv': att_ht_cv
+  }
   
 
 
