@@ -426,6 +426,9 @@ db_schema:
     - admin_ui: {order: 12, width: 200}
       name: photo
       type: media
+    - admin_ui: {order: 6.25, width: 200}
+      name: player_uuid
+      type: string
     server: full
     title: master_player
   metric_dictionary:
