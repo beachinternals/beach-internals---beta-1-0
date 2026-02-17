@@ -18,7 +18,8 @@ components_by_slot:
         name: admin1_click
         properties: {col_spacing: tiny, icon: 'fa:file-excel-o', text: BTD>PPR Maintenance}
         type: Link
-      - layout_properties: {grid_position: 'EBBKEF,VKQTBE'}
+      - event_bindings: {}
+        layout_properties: {grid_position: 'EBBKEF,VKQTBE'}
         name: link_1
         properties: {text: Player Data Maintenance}
         type: Link

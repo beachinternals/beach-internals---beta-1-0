@@ -388,7 +388,12 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     if not include_nulls:
       log_debug("Stripping nulls from report_data")
       report_data = strip_nulls_safe(report_data)
-
+      
+    # Optionally strip URLs
+    if not include_urls:
+      log_debug("Stripping URLs from report_data")
+      report_data = strip_urls_safe(report_data)
+      
     # Convert to JSON media
     json_str = json.dumps(report_data, indent=2, default=str)
     json_bytes = json_str.encode('utf-8')

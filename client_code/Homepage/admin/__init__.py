@@ -14,6 +14,7 @@ from scheduled_tasks import *
 from pdf_reports import *
 from .Metrics_json_generator import *
 from .weather_data import weather_data
+from player_data_mgmt import *  
 
 
 
@@ -75,6 +76,13 @@ class admin(adminTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(weather_data())
+    pass
+
+  @handle("link_1", "click")
+  def link_1_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(player_data_mgmt())
     pass
 
 

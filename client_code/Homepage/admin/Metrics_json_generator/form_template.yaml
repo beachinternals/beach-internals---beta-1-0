@@ -48,6 +48,11 @@ components_by_slot:
         name: ai_export
         properties: {role: outlined-button, text: Run AI Export Manager}
         type: Button
+      - event_bindings: {}
+        layout_properties: {grid_position: 'UHGOIH,MOUOUB'}
+        name: outlined_button_1
+        properties: {role: outlined-button, text: Test De-Identification}
+        type: Button
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
       properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40}', role: outlined-card}

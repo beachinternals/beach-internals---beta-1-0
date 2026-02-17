@@ -518,7 +518,10 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
             rpt_r['email'],
             rollup_prompt['desc_beach_volleyball'],
             images=image_list,
-            include_images=send_images
+            include_images=send_images,
+            league=p['league'],       # ADD
+            gender=p['gender'],       # ADD
+            year=p['year']            # ADD
           )
 
 
@@ -819,7 +822,10 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             rollup_data,
             rollup_prompt_text,
             rpt_r['email'],
-            rollup_prompt['desc_beach_volleyball']  # Human-readable context
+            rollup_prompt['desc_beach_volleyball'],  # Human-readable context
+            league=p['league'],       # ADD
+            gender=p['gender'],       # ADD
+            year=p['year']            # ADD
           )
 
           # Save rollup summary as JSON for data analysis

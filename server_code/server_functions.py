@@ -34,6 +34,8 @@ import time          # ← Keep only ONE set of imports here
 import functools     # ← Keep only ONE set of imports here
 import random
 import string
+import uuid
+
 
 # Create logger with formatting
 from logger_utils import log_info, log_error, log_critical, log_debug
@@ -2683,88 +2685,95 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
 
 
 #----------------------------------------------------------------------------------
-
-def anonymize_json(json_data, player_replacement="Player A", pair_replacement="Pair A"):
+def anonymize_json(json_data, league=None, gender=None, year=None):
   """
-    Anonymize JSON data, preserving structure while anonymizing player/pair names in title_9, title_10, and strings.
+    De-identify JSON data by replacing player identifiers with their stored UUIDs.
+
+    Player identifier format in JSON: "TEAM NUMBER SHORTNAME" (e.g. "FSU 12 Sara")
+    This matches the format stored in master_player as team+' '+number+' '+shortname.
+
+    Scans master_player for the given league/gender/year to build the substitution map.
+    If league/gender/year are not provided, scans ALL players (less efficient but safe).
+
+    Returns:
+        tuple: (anonymized_json_dict, substitution_map)
+            - anonymized_json_dict: deep copy of json_data with player IDs replaced by UUIDs
+            - substitution_map: dict of {uuid: real_player_id} for re-identification
     """
-  log_info("---------- Anonymize Json --------------")
+  import copy
+
+  log_info("---------- Anonymize Json (UUID-based) --------------")
+
+  # --- Parse if string ---
+  if isinstance(json_data, str):
+    try:
+      json_data = json.loads(json_data)
+    except json.JSONDecodeError as e:
+      log_error(f"anonymize_json: Failed to parse JSON string: {e}")
+      return {}, {}
+
+  if json_data is None:
+    return {}, {}
+
+    # --- Build substitution map from master_player ---
+    # Format: { "FSU 12 Sara": "PLYR-a3f7c2e9", ... }
+  to_uuid = {}      # real_id  -> uuid  (for substitution in JSON)
+  from_uuid = {}    # uuid     -> real_id  (for re-identification in summary text)
+
   try:
-    if json_data is None:
-      log_info("json_data is None in anonymize_json")
-      return {}
-
-      # Parse JSON string if necessary
-    if isinstance(json_data, str):
-      log_info("Parsing JSON string")
-      try:
-        parsed_data = json.loads(json_data)
-      except json.JSONDecodeError as e:
-        log_error(f"Failed to parse JSON string: {e}")
-        return {"error": f"Invalid JSON string: {str(e)}"}
+    if league and gender and year:
+      player_rows = app_tables.master_player.search(
+        league=league,
+        gender=gender,
+        year=year
+      )
     else:
-      parsed_data = json_data
+      player_rows = app_tables.master_player.search()
 
-      # Deep copy to avoid modifying original
-    anon_data = copy.deepcopy(parsed_data)
+    for row in player_rows:
+      if not row['player_uuid']:
+        # Skip players without a UUID (shouldn't happen after backfill)
+        log_info(f"anonymize_json: player missing UUID: {row['team']} {row['number']} {row['shortname']}")
+        continue
 
-    # Extract original player and pair names from titles for string replacement
-    player_name = None
-    pair_name = None
-    if isinstance(anon_data, dict) and 'titles' in anon_data and isinstance(anon_data['titles'], dict):
-      # Get and clean player name (strip whitespace)
-      raw_player_name = anon_data['titles'].get('title_9')
-      if raw_player_name and isinstance(raw_player_name, str):
-        player_name = raw_player_name.strip()
-        # Get pair name (handle None case)
-      raw_pair_name = anon_data['titles'].get('title_10')
-      if raw_pair_name and isinstance(raw_pair_name, str):
-        pair_name = raw_pair_name.strip()
+        # Build the identifier exactly as it appears in the JSON
+      real_id = f"{row['team']} {row['number']} {row['shortname']}".strip()
+      p_uuid = row['player_uuid'].strip()
 
-    log_info(f"Anonymizing - Player: '{player_name}' -> '{player_replacement}', Pair: '{pair_name}' -> '{pair_replacement}'")
+      to_uuid[real_id] = p_uuid
+      from_uuid[p_uuid] = real_id
 
-    def recursive_anonymize(data):
-      if isinstance(data, dict):
-        new_data = {}
-        for key, value in data.items():
-          if key in ['title_9', 'title_10']:
-            # Anonymize title_9 and title_10
-            if key == 'title_9':
-              new_data[key] = player_replacement
-            elif key == 'title_10':
-              new_data[key] = pair_replacement if value is not None else None
-          elif isinstance(value, (dict, list)):
-            new_data[key] = recursive_anonymize(value)
-          elif isinstance(value, str) and value:  # Only process non-empty strings
-            # Replace player/pair names in strings
-            anonymized_value = value
-            if player_name and player_name in anonymized_value:
-              anonymized_value = anonymized_value.replace(player_name, player_replacement)
-            if pair_name and pair_name in anonymized_value:
-              anonymized_value = anonymized_value.replace(pair_name, pair_replacement)
-            new_data[key] = anonymized_value
-          else:
-            new_data[key] = value
-        return new_data
-      elif isinstance(data, list):
-        return [recursive_anonymize(item) for item in data]
-      else:
-        return data
-
-    anon_data = recursive_anonymize(anon_data)
-
-    # Validate that anon_data contains some data
-    if not anon_data or (isinstance(anon_data, dict) and not any(anon_data.values())):
-      log_info(f"Anonymized JSON is empty: {anon_data}")
-      return {"error": "No valid data after anonymization"}
-
-    log_info("Anonymization completed successfully")
-    return anon_data
+    log_info(f"anonymize_json: built substitution map with {len(to_uuid)} players")
 
   except Exception as e:
-    log_error(f"Error in anonymize_json: {str(e)}")
-    return {"error": f"Anonymization failed: {str(e)}"}
+    log_error(f"anonymize_json: failed to build substitution map: {e}")
+    return json_data, {}
 
+  if not to_uuid:
+    log_info("anonymize_json: no players found for substitution, returning original data")
+    return json_data, {}
+
+    # --- Recursive substitution through the JSON ---
+  def substitute(data):
+    if isinstance(data, dict):
+      return {k: substitute(v) for k, v in data.items()}
+    elif isinstance(data, list):
+      return [substitute(item) for item in data]
+    elif isinstance(data, str) and data:
+      result = data
+      for real_id, p_uuid in to_uuid.items():
+        if real_id in result:
+          result = result.replace(real_id, p_uuid)
+      return result
+    else:
+      return data
+
+  anon_data = substitute(copy.deepcopy(json_data))
+  log_info(f"anonymize_json: substitution complete")
+
+  return anon_data, from_uuid
+
+  
 
 
 def remove_null_fields(data):
@@ -2809,7 +2818,9 @@ def remove_null_fields(data):
     print(f"Error in remove_null_fields: {str(e)}")
     return data
 
-def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary=None, images=None, include_images=False):
+def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary=None, 
+                          images=None, include_images=False,
+                          league=None, gender=None, year=None):
   """
   Call Gemini API to generate a summary.
   
@@ -2845,10 +2856,10 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     # --- Remove Null fields and URLs ---
     json_data = remove_null_fields(json_data)
 
-    # --- Anonymize sensitive fields ---
-    anon_json = anonymize_json(json_data)
-    if isinstance(anon_json, dict) and "error" in anon_json:
-      return f"Error: {anon_json['error']}"
+    # --- De-identify: replace player IDs with UUIDs before sending to Gemini ---
+    anon_json, reident_map = anonymize_json(json_data, league=league, gender=gender, year=year)
+    log_info(f"generate_ai_summary: de-identification map has {len(reident_map)} players")
+    
 
     # --- Default prompt if missing ---
     if not prompt_template:
@@ -2962,9 +2973,16 @@ def generate_ai_summary(json_data, prompt_template, coach_id=None, human_summary
     json_response = json.loads(response._content)
     summary = json_response['candidates'][0]['content']['parts'][0]['text']
 
-    log_info(f"AI Summary Returned ({len(summary)} chars)")
+    log_info(f"AI Summary Returned ({len(summary)} chars, before re-identification)")
+
+    # --- Re-identify: swap UUIDs back to real player names in the summary ---
+    if reident_map:
+      for p_uuid, real_id in reident_map.items():
+        summary = summary.replace(p_uuid, real_id)
+      log_info(f"generate_ai_summary: re-identification complete")
 
     return summary.strip()
+    
 
   except anvil.http.HttpError as e:
     log_error(f"HTTP error: {e.content}")
@@ -3287,3 +3305,116 @@ def markdown_to_reportlab_html(markdown_text):
   html = re.sub(r'`(.+?)`', r'<font face="Courier">\1</font>', html)
 
   return html
+
+
+@anvil.server.callable
+def generate_player_uuid():
+  """
+    Generate a short, persistent player UUID for de-identification.
+    Format: PLYR-xxxxxxxx (8 random hex characters)
+    Called from client when adding a new player to master_player.
+    """
+  short_id = uuid.uuid4().hex[:8]  # 8 random hex chars
+  return f"PLYR-{short_id}"
+
+@anvil.server.callable
+def backfill_player_uuids():
+  """
+    Back-populate player_uuid for any master_player rows missing one.
+    Safe to run multiple times — only touches rows where player_uuid is blank/None.
+    Returns a count of rows updated.
+    """
+  import uuid
+  updated = 0
+  skipped = 0
+
+  for row in app_tables.master_player.search():
+    if not row['player_uuid']:  # None or empty string
+      short_id = uuid.uuid4().hex[:8]
+      row['player_uuid'] = f"PLYR-{short_id}"
+      updated += 1
+    else:
+      skipped += 1
+
+  log_info(f"backfill_player_uuids: updated={updated}, skipped={skipped}")
+  return f"Done: {updated} players updated, {skipped} already had a UUID."
+
+@anvil.server.callable
+def test_deidentification(league, gender, year):
+  """
+    Test the de-identification pipeline without actually calling Gemini.
+    
+    Shows:
+    - How many players were found in master_player for this league/gender/year
+    - Which players have UUIDs vs missing UUIDs
+    - A sample substitution showing real name -> UUID
+    - A preview of what the JSON would look like after anonymization
+    
+    Call from admin page as:
+        result = anvil.server.call('test_deidentification', 'NCAA', 'W', '2025')
+        alert(result)
+    """
+  lines = []
+  lines.append(f"=== De-identification Test: {league} | {gender} | {year} ===\n")
+
+  # Step 1: Check master_player for this league/gender/year
+  player_rows = list(app_tables.master_player.search(
+    league=league,
+    gender=gender,
+    year=year
+  ))
+  lines.append(f"Players found in master_player: {len(player_rows)}")
+
+  # Step 2: Show UUID status
+  has_uuid = [r for r in player_rows if r['player_uuid']]
+  missing_uuid = [r for r in player_rows if not r['player_uuid']]
+  lines.append(f"  - Have UUID:    {len(has_uuid)}")
+  lines.append(f"  - Missing UUID: {len(missing_uuid)}")
+
+  if missing_uuid:
+    lines.append("\nPLAYERS MISSING UUID (run backfill!):")
+    for r in missing_uuid:
+      lines.append(f"  {r['team']} {r['number']} {r['shortname']}")
+
+    # Step 3: Show the substitution map
+  lines.append("\nSubstitution map (real name -> UUID):")
+  for r in has_uuid:
+    real_id = f"{r['team']} {r['number']} {r['shortname']}".strip()
+    lines.append(f"  '{real_id}'  ->  '{r['player_uuid']}'")
+
+    # Step 4: Run anonymize_json on a synthetic sample that mimics what gets sent
+  sample_json = {
+    "player_pair": f"{has_uuid[0]['team']} {has_uuid[0]['number']} {has_uuid[0]['shortname']}" if has_uuid else "No players found",
+    "reports": [
+      {
+        "report_name": "Test Report",
+        "json_data": {
+          "titles": {
+            "title_9": f"{has_uuid[0]['team']} {has_uuid[0]['number']} {has_uuid[0]['shortname']}" if has_uuid else "N/A"
+          },
+          "sample_stat": "This player scored well"
+        }
+      }
+    ]
+  }
+
+  lines.append("\nSample JSON BEFORE anonymization:")
+  lines.append(json.dumps(sample_json, indent=2)[:500])
+
+  anon_json, reident_map = anonymize_json(sample_json, league=league, gender=gender, year=year)
+
+  lines.append("\nSample JSON AFTER anonymization:")
+  lines.append(json.dumps(anon_json, indent=2)[:500])
+
+  lines.append(f"\nRe-identification map has {len(reident_map)} entries")
+
+  # Step 5: Test round-trip on a fake summary
+  if reident_map:
+    first_uuid = list(reident_map.keys())[0]
+    first_real = reident_map[first_uuid]
+    fake_summary = f"The player {first_uuid} showed strong performance this season."
+    lines.append(f"\nFake summary with UUID:\n  {fake_summary}")
+    restored = fake_summary.replace(first_uuid, first_real)
+    lines.append(f"After re-identification:\n  {restored}")
+
+  return "\n".join(lines)

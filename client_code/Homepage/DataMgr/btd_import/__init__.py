@@ -304,8 +304,11 @@ class btd_import(btd_importTemplate):
       alias1=self.alias_text_box.text
     )
 
+    # Generate and store a persistent UUID for de-identification
     if add_row:
-      alert(title='Player Added Successfully')
+     new_uuid = anvil.server.call('generate_player_uuid')
+     add_row['player_uuid'] = new_uuid
+    alert(title='Player Added Successfully')
 
     # now update the drop down menus for players
     

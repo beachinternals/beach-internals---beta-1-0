@@ -1,0 +1,40 @@
+components:
+- components:
+  - layout_properties: {grid_position: 'CUBVAY,TRBHXY'}
+    name: label_1
+    properties: {align: center, role: headline, text: Player Data Management}
+    type: Label
+  layout_properties: {grid_position: 'TWPHOE,FQMOWA'}
+  name: outlined_card_1
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'YVKKFQ,VYNCIF'}
+    name: label_10
+    properties: {align: right, bold: false, text: Generate UUIDs for all missing}
+    type: Label
+  - event_bindings: {click: gen_uuid_click}
+    layout_properties: {grid_position: 'YVKKFQ,RLNRSN'}
+    name: gen_uuid
+    properties: {role: outlined-button, text: Gen UUID}
+    type: Button
+  - components:
+    - layout_properties: {grid_position: 'BYVMKG,APSIAL'}
+      name: label_8
+      properties: {text: League Drop Down}
+      type: Label
+    - event_bindings: {change: league_drop_down_change}
+      layout_properties: {grid_position: 'BYVMKG,URECSD'}
+      name: league_drop_down
+      properties: {}
+      type: DropDown
+    layout_properties: {grid_position: 'PLQQPS,HZJJGC'}
+    name: column_panel_2
+    properties: {}
+    type: ColumnPanel
+  layout_properties: {grid_position: 'EXITKV,AEDSYF'}
+  name: outlined_card_5
+  properties: {col_widths: '{"VYNCIF":15,"RLNRSN":20,"NHRAUN":25}', role: outlined-card}
+  type: ColumnPanel
+container: {type: ColumnPanel}
+is_package: true
