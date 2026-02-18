@@ -1318,9 +1318,10 @@ def process_export_job_markdown(export_row):
       player_fullname = player_row['fullname']
       player_shortname = player_row['shortname']
       player_number = str(player_row['number'])
+      player_team = player_row['team']
 
       # Build player display name
-      player_name = f"{team} {player_number} {player_shortname}"
+      player_name = f"{player_team} {player_number} {player_shortname}"
       log_info(f"Processing: {player_name}")
 
       # Build league_value format
@@ -1551,9 +1552,10 @@ def process_export_job_with_datasets(export_row):
       player_fullname = player_row['fullname']
       player_shortname = player_row['shortname']
       player_number = str(player_row['number'])
+      player_team = player_row['team']
 
       # Build player display name
-      player_name = f"{team} {player_number} {player_shortname}"
+      player_name = f"{player_team} {player_number} {player_shortname}"
       log_info(f"Processing: {player_name}")
 
       # Build league_value format
