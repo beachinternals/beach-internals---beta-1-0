@@ -109,10 +109,12 @@ def deidentify_league_ppr(master_ppr_df, c_league, c_gender, c_year):
     if not isinstance(val, str) or not val.strip():
       return val
     player_id = val.strip()
+    if player_id in ('empty', ''):   # ADD 'empty' here
+      return val
     if player_id in to_uuid:
       return to_uuid[player_id]
-    # Not found in master_player — data error
-    if player_id and player_id not in missing_players:
+    # Not found — data error
+    if player_id not in missing_players:
       log_error(
         f"deidentify_league_ppr: DATA ERROR — player in ppr not in master_player: '{player_id}' "
         f"({c_league}/{c_gender}/{c_year}). Left unsubstituted."

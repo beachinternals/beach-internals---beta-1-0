@@ -278,8 +278,11 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
     # there is a space in between, built lie this:
     #  ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
     teama = player_df.at[i,'player']
-    teama_loc = teama.index(" ")
-    this_team = teama[:teama_loc].strip()
+    if teama.startswith('PLYR-'):
+      this_team = 'League'   # de-identified, no team available
+    else:
+      teama_loc = teama.index(" ")
+      this_team = teama[:teama_loc].strip()
     player_df.at[i,'team'] = this_team
 
     # calculate point ratio
