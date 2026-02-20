@@ -76,7 +76,7 @@ def deidentify_league_ppr(master_ppr_df, c_league, c_gender, c_year):
     player_rows = app_tables.master_player.search(
       league=c_league,
       gender=c_gender,
-      year=int(c_year)
+      year=str(c_year)
     )
 
     for row in player_rows:
