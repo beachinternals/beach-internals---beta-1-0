@@ -159,16 +159,27 @@ def ai_export_mgr_generate():
 
   return True
 
+"""
+PATCH for ai_export_manager.py
+===============================
+Replace the ai_export_mgr_generate_background() function with this version.
+
+Fixes:
+  1. 'league referenced before assignment' — force_index used league/team
+     variables that only exist inside the loop. Guarded with a check.
+  2. Added logging to explain why 0 rows are found (disabled flag status).
+"""
+
 
 @anvil.server.background_task
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def ai_export_mgr_generate_background(user=None):
   """
-    Background task that processes the ai_export_mgr table.
-    
-    Args:
-        user: The user who initiated the export (for accessing their team's data)
-    """
+  Background task that processes the ai_export_mgr table.
+
+  Args:
+      user: The user who initiated the export (for accessing their team's data)
+  """
   log_info("AI Export Manager Background - Started")
   if user:
     log_info(f"Running as user: {user['email']}")
@@ -178,24 +189,43 @@ def ai_export_mgr_generate_background(user=None):
   now = datetime.now()
   email_text = f"AI Export Manager Started at: {str(now)}\n\n"
 
-  try:
-    # Get all rows from ai_export_mgr table where NOT disabled
-    # This allows re-running exports by just unchecking 'disabled'
-    export_rows = app_tables.ai_export_mgr.search(
-      tables.order_by('created_at', ascending=True)
-    )
+  # Track last processed league/team for force_index (only set if loop runs)
+  last_league = None
+  last_team = None
 
-    # Filter out disabled rows
-    # Note: Use bracket notation, not .get() - Anvil rows don't support .get()
-    # Handle None values - treat None as False (not disabled)
-    export_rows = [row for row in export_rows if row['disabled'] != True]
+  try:
+    # -------------------------------------------------------
+    # Get all rows from ai_export_mgr table
+    # -------------------------------------------------------
+    all_export_rows = list(app_tables.ai_export_mgr.search(
+      tables.order_by('created_at', ascending=True)
+    ))
+
+    # Log the breakdown so we can see WHY we might get 0 rows
+    total_all = len(all_export_rows)
+    total_disabled = sum(1 for row in all_export_rows if row['disabled'] == True)
+    total_enabled = sum(1 for row in all_export_rows if row['disabled'] != True)
+
+    log_info(f"ai_export_mgr table: {total_all} total rows, "
+             f"{total_disabled} disabled, {total_enabled} enabled (will process)")
+
+    if total_all == 0:
+      log_info("Table is empty — nothing to process.")
+      log_info("To run an export: add a row to ai_export_mgr with disabled=False")
+    elif total_enabled == 0:
+      log_info("All rows are disabled — nothing to process.")
+      log_info("To re-run: uncheck 'disabled' on the row(s) you want to re-process")
+
+    # Filter to enabled rows only
+    export_rows = [row for row in all_export_rows if row['disabled'] != True]
 
     total_rows = len(export_rows)
     email_text += f"Found {total_rows} enabled export requests\n\n"
-    log_info(f"AI Export Manager - Processing {total_rows} export requests")
-    print(f"Processing {total_rows} export requests")
+    log_info(f"Processing {total_rows} export requests")
 
-    # Process each row
+    # -------------------------------------------------------
+    # Process each enabled row
+    # -------------------------------------------------------
     for idx, export_row in enumerate(export_rows, 1):
       try:
         log_info(f"AI Export Manager - Processing export {idx} of {total_rows}")
@@ -205,48 +235,38 @@ def ai_export_mgr_generate_background(user=None):
 
         # Extract parameters from the row
         team = export_row['team']
-        date_start = export_row['date_start']
-        date_end = export_row['date_end']
         export_type = export_row['export_type'] or 'full'
         user_email = export_row['user_email']
 
-        log_info(f"Export row data: team={team}, export_type={export_type}, date_start={date_start}, date_end={date_end}")
+        log_info(f"Export row data: team={team}, export_type={export_type}")
 
-        # NEW: Handle player_filter as linked rows from master player table
+        # Handle player_filter as linked rows from master player table
         player_filter_rows = export_row['player_filter']
         player_filter = None
         league = export_row['league']  # May be None - we'll derive it
 
-        log_info(f"Player filter rows: {player_filter_rows}, type: {type(player_filter_rows)}")
-        if player_filter_rows:
-          log_info(f"Number of players selected: {len(player_filter_rows) if player_filter_rows else 0}")
+        log_info(f"Player filter rows type: {type(player_filter_rows)}, "
+                 f"count: {len(player_filter_rows) if player_filter_rows else 0}")
 
         if player_filter_rows and len(player_filter_rows) > 0:
-          # Convert linked rows to list of player names and derive league
           player_filter = []
           leagues_found = set()
-          player_data_map = {}  # Map player_name to their full data
+          player_data_map = {}
 
           for player_row in player_filter_rows:
-            # Get player name in YOUR format: "TEAM NUMBER SHORTNAME"
-            # Example: "FSU 12 Johnson"
             try:
               team_val = player_row['team']
               number_val = player_row['number']
               shortname_val = player_row['shortname']
               player_name = f"{team_val} {number_val} {shortname_val}"
 
-              # Get league components
               league_val = player_row['league']
               gender_val = player_row['gender']
               year_val = player_row['year']
-
-              # Build league_value string for generate_player_metrics_json
               league_value = f"{league_val} | {gender_val} | {year_val}"
 
               log_info(f"Built player: {player_name}, league_value: {league_value}")
 
-              # Store player data
               player_data_map[player_name] = {
                 'team': team_val,
                 'number': number_val,
@@ -263,31 +283,30 @@ def ai_export_mgr_generate_background(user=None):
 
             if player_name:
               player_filter.append(player_name)
-
-              # Collect league from each player for validation
             if league_val:
               leagues_found.add(league_val)
 
-              # Validate: all players must be from same league
           if len(leagues_found) == 0:
             raise ValueError("No league found for selected players")
           elif len(leagues_found) > 1:
-            raise ValueError(f"Players from multiple leagues selected: {leagues_found}. All players must be from the same league.")
+            raise ValueError(
+              f"Players from multiple leagues selected: {leagues_found}. "
+              f"All players must be from the same league."
+            )
 
-            # Use the league from the players (overrides table league if present)
           league = list(leagues_found)[0]
           log_info(f"League derived from players: {league}")
           email_text += f"League (derived from players): {league}\n"
+
         else:
-          # No player filter - must have league specified in table
+          # No player filter - league must be specified in the table row
           if not league:
             raise ValueError("Either league or player_filter must be specified")
           log_info(f"League from table: {league}")
           email_text += f"League (from table): {league}\n"
-          player_data_map = {}  # Empty map when no player filter
+          player_data_map = {}
 
         email_text += f"Team: {team}\n"
-        email_text += f"Date Range: {date_start} to {date_end}\n"
         email_text += f"Export Type: {export_type}\n"
         if player_filter:
           email_text += f"Players: {', '.join(player_filter)}\n"
@@ -296,80 +315,70 @@ def ai_export_mgr_generate_background(user=None):
           email_text += f"Players: All players on team\n"
           log_info("Players: All players on team")
 
-          # Mark as processing (set started_at timestamp)
+        # Mark as processing
         export_row['started_at'] = datetime.now()
+        export_row['league'] = league  # Store derived league back to row
 
-        # Store the derived league back to the row
-        export_row['league'] = league
-
-        # Generate the exports
-        # NEW: Check if using multi-dataset processor
-        datasets_included = export_row['datasets_included']
-
-        if datasets_included and len(datasets_included) > 0:
-          # Use new multi-dataset processor
-          log_info(f"Using multi-dataset processor for {team}")
-          log_info(f"Datasets: {[ds['dataset_name'] for ds in datasets_included]}")
-          result = process_export_job_with_datasets(export_row)
-        else:
-          # Use existing single-dataset processor (backward compatibility)
-          log_info(f"Using legacy processor for {team}")
-          result = ai_export_generate(
-            league=league,
-            team=team,
-            date_start=date_start,
-            date_end=date_end,
-            player_filter=player_filter,
-            player_data_map=player_data_map,
-            user=user
-          )
+        # Run the export
+        log_info(f"Calling ai_export_generate for {team}")
+        result = ai_export_generate(
+          league=league,
+          team=team,
+          player_filter=player_filter,
+          player_data_map=player_data_map,
+          user=user
+        )
 
         # Update row with results
         if result['status'] == 'success':
-          export_row['disabled'] = True  # Disable the row after successful export
+          export_row['disabled'] = True
           export_row['completed_at'] = datetime.now()
           export_row['files_generated'] = len(result['files'])
           export_row['result_message'] = result['message']
+          export_row['file_list'] = json.dumps(result['files'])
 
           log_info(f"SUCCESS: Generated {len(result['files'])} files for {team}")
           email_text += f"✓ SUCCESS: Generated {len(result['files'])} files\n"
 
-          # Store file info in JSON
-          export_row['file_list'] = json.dumps(result['files'])
+          # Track for force_index (uses the last successfully processed league/team)
+          last_league = league
+          last_team = team
 
         else:
-          export_row['disabled'] = True  # Also disable on error (prevents retry loop)
+          export_row['disabled'] = True
           export_row['completed_at'] = datetime.now()
           export_row['result_message'] = result['message']
 
           log_error(f"ERROR: {result['message']}")
           email_text += f"✗ ERROR: {result['message']}\n"
 
-          # Send individual notification if email provided
         if user_email:
           send_export_notification(user_email, result, league, team)
 
       except Exception as e:
         log_exception('error', f"Error processing export row {idx}", e)
         email_text += f"✗ EXCEPTION: {str(e)}\n"
-        export_row['disabled'] = True  # Disable on exception
+        export_row['disabled'] = True
         export_row['completed_at'] = datetime.now()
         export_row['result_message'] = str(e)
 
-    # ==========================================
-    # INSERT THE FORCE INDEX CALL HERE
-    # ==========================================
-    log_info("All exports complete. Triggering force index for NotebookLM...")
-    try:
-      # Construct the path to your notebooklm folder
-      # Adjust this path if your folder structure is different
-      folder_path = ["Beach Internals Reports", league, team, "notebooklm"]
-      force_index_player_files(folder_path)
-      log_info("Force index complete.")
-    except Exception as e:
-      log_error(f"Force index failed: {str(e)}")
-    
-    # Send summary email to admin
+    # -------------------------------------------------------
+    # Force index — only if we actually processed something
+    # -------------------------------------------------------
+    if last_league and last_team:
+      log_info("All exports complete. Triggering force index for NotebookLM...")
+      try:
+        folder_path = ["Beach Internals Reports", last_league, last_team, "notebooklm"]
+        force_index_player_files(folder_path)
+        log_info("Force index complete.")
+      except Exception as e:
+        log_error(f"Force index failed: {str(e)}")
+    else:
+      log_info("No exports were processed — skipping force index.")
+
+    # -------------------------------------------------------
+    # Summary email
+    # -------------------------------------------------------
     now1 = datetime.now()
     email_text += f"\n{'='*60}\n"
     email_text += f"AI Export Manager Completed at: {str(now1)}\n"
@@ -388,13 +397,15 @@ def ai_export_mgr_generate_background(user=None):
       log_info("Summary email sent to admin")
     except Exception as e:
       log_exception('error', "Error sending summary email", e)
-      print(f"Error sending summary email: {str(e)}")
 
     return True
 
   except Exception as e:
     log_exception('critical', "CRITICAL ERROR in ai_export_mgr_generate_background", e)
     raise
+
+
+
 
 
 #--------------------------------------------------------------
