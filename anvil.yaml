@@ -44,11 +44,11 @@ db_schema:
       type: string
     - admin_ui: {order: 12, width: 200}
       client_hidden: false
-      name: start_date
+      name: date_start
       type: date
     - admin_ui: {order: 13, width: 200}
       client_hidden: false
-      name: end_date
+      name: date_end
       type: date
     - admin_ui: {order: 14, width: 200}
       client_hidden: false

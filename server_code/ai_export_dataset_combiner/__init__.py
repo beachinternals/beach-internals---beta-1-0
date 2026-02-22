@@ -63,6 +63,23 @@ format_set_level_data_as_json
 
 
 # ============================================================================
+# FUNCTION REGISTRY
+# Maps the function_name value stored in ai_export_dataset_list to the
+# actual Python function that generates that section's content.
+#
+# To add a new dataset type in the future:
+#   1. Write a new section-generator function in this file
+#      (follow the same signature as generate_aggregate_section)
+#   2. Add it to FUNCTION_REGISTRY at the bottom of this file
+#   3. Add a row in ai_export_dataset_list with that function_name value
+#   No other code changes needed.
+# ============================================================================
+
+# Populated at the bottom of this file after all functions are defined.
+# See the FUNCTION_REGISTRY block at the end of this module.
+
+
+# ============================================================================
 # CORE METRICS - the key metrics shown at the top of every aggregate section.
 # Order here controls the order they appear in the scorecard table.
 # The _n metrics are attempt counts for the corresponding core metric.
@@ -298,7 +315,7 @@ def generate_aggregate_section(ppr_df_full, player_name, league_value, team, ext
     return {
       'content': content,
       'scorecard': scorecard,
-    'summary': {
+      'summary': {
         'total_points': len(filtered_ppr),
         'total_sets': len(tri_df),
         'metrics_calculated': metrics_result['successful'],
@@ -556,129 +573,96 @@ def generate_combined_player_export(
 
   # ── Process each dataset slice ────────────────────────────────────────────
   for dataset in datasets_to_include:
-    dataset_id   = dataset['dataset_id']
-    dataset_name = dataset['dataset_name']
-    dataset_type = dataset['dataset_type']
+    dataset_id    = dataset['dataset_id']
+    dataset_name  = dataset['dataset_name']
+    function_name = dataset['function_name']
     section_title = dataset.get('output_section_title') or dataset_name
 
-    log_info(f"--- Processing slice: {dataset_name} (type={dataset_type}) ---")
+    log_info(f"--- Processing slice: {dataset_name} (function={function_name}) ---")
 
     try:
-      # Resolve the filters for this slice
-      extra_filters = resolve_dataset_filters(dataset)
-      filter_desc   = _describe_filters(extra_filters)
+      # Look up the function in the registry
+      section_fn = FUNCTION_REGISTRY.get(function_name)
 
-      # ── Aggregate (player-level) metrics ──────────────────────────────
-      if dataset_type == 'aggregate':
-        result = generate_aggregate_section(
-          ppr_df_full, player_name, league_value, team, extra_filters
+      if section_fn is None:
+        # Clear error message pointing back to the specific table row
+        log_error(
+          f"function_name='{function_name}' not found in FUNCTION_REGISTRY. "
+          f"Check ai_export_dataset_list row: dataset_id='{dataset_id}'. "
+          f"Valid names are: {list(FUNCTION_REGISTRY.keys())}"
         )
-
-        if result:
-          combined_content += [
-            f"## {section_title}",
-            f"",
-            f"**Data filter:** {filter_desc}",
-            f"**Points analyzed:** {result['points']} | **Sets:** {result['sets']}",
-            f"",
-          ]
-
-          # Core scorecard first
-          if result['scorecard']:
-            combined_content.append(result['scorecard'])
-
-          # Then detailed breakdown
-          combined_content += [
-            "### Detailed Metric Breakdown",
-            "",
-            result['content'],
-            "",
-            "---",
-            "",
-          ]
-
-          combined_summary['datasets_included'].append({
-            'dataset': dataset_name,
-            'success': True,
-            'filter_desc': filter_desc,
-            'summary': result['summary']
-          })
-
-        else:
-          log_info(f"No data for slice '{dataset_name}' — skipping section")
-          combined_content += [
-            f"## {section_title}",
-            f"",
-            f"**Data filter:** {filter_desc}",
-            f"",
-            f"*No data available for this filter combination.*",
-            f"",
-            f"---",
-            f"",
-          ]
-          combined_summary['datasets_included'].append({
-            'dataset': dataset_name,
-            'success': False,
-            'filter_desc': filter_desc,
-            'error': 'No data after filtering'
-          })
-
-      # ── Set-level metrics ─────────────────────────────────────────────
-      elif dataset_type == 'set_level':
-        result = generate_set_level_section(
-          ppr_df_full, player_name, league_value, team, extra_filters
-        )
-
-        if result:
-          combined_content += [
-            f"## {section_title}",
-            f"",
-            f"**Data filter:** {filter_desc}",
-            f"**Points analyzed:** {result['points']} | **Sets:** {result['sets']}",
-            f"",
-            result['content'],
-            "",
-            "---",
-            "",
-          ]
-          combined_summary['datasets_included'].append({
-            'dataset': dataset_name,
-            'success': True,
-            'filter_desc': filter_desc,
-            'summary': result['summary']
-          })
-        else:
-          log_info(f"No set-level data for slice '{dataset_name}' — skipping section")
-          combined_content += [
-            f"## {section_title}",
-            f"",
-            f"**Data filter:** {filter_desc}",
-            f"",
-            f"*No data available for this filter combination.*",
-            f"",
-            f"---",
-            f"",
-          ]
-          combined_summary['datasets_included'].append({
-            'dataset': dataset_name,
-            'success': False,
-            'filter_desc': filter_desc,
-            'error': 'No data after filtering'
-          })
-
-      # ── Unknown dataset type ──────────────────────────────────────────
-      else:
-        log_error(f"Unknown dataset_type='{dataset_type}' for dataset '{dataset_name}'")
         combined_summary['datasets_included'].append({
           'dataset': dataset_name,
           'success': False,
-          'error': f"Unknown dataset_type: {dataset_type}"
+          'error': (f"Unknown function_name: '{function_name}'. "
+                    f"Valid options: {list(FUNCTION_REGISTRY.keys())}")
+        })
+        continue  # Skip to next dataset, don't crash the whole export
+
+      # Resolve the filters for this slice from the dataset row
+      extra_filters = resolve_dataset_filters(dataset)
+      filter_desc   = _describe_filters(extra_filters)
+
+      # Call the registered function — all section functions share the same signature:
+      #   fn(ppr_df_full, player_name, league_value, team, extra_filters) -> dict or None
+      result = section_fn(ppr_df_full, player_name, league_value, team, extra_filters)
+
+      # ── Render result into document ───────────────────────────────────
+      if result:
+        combined_content += [
+          f"## {section_title}",
+          f"",
+          f"**Data filter:** {filter_desc}",
+          f"**Points analyzed:** {result['points']} | **Sets:** {result['sets']}",
+          f"",
+        ]
+
+        # Core scorecard — aggregate sections return one, set_level returns ""
+        if result.get('scorecard'):
+          combined_content.append(result['scorecard'])
+
+        # Main content for this section
+        combined_content += [
+          result['content'],
+          "",
+          "---",
+          "",
+        ]
+
+        combined_summary['datasets_included'].append({
+          'dataset': dataset_name,
+          'function': function_name,
+          'success': True,
+          'filter_desc': filter_desc,
+          'summary': result['summary']
+        })
+
+      else:
+        # Function ran but returned None — no data matched this filter
+        log_info(f"No data for slice '{dataset_name}' — adding placeholder section")
+        combined_content += [
+          f"## {section_title}",
+          f"",
+          f"**Data filter:** {filter_desc}",
+          f"",
+          f"*No data available for this filter combination.*",
+          f"",
+          f"---",
+          f"",
+        ]
+        combined_summary['datasets_included'].append({
+          'dataset': dataset_name,
+          'function': function_name,
+          'success': False,
+          'filter_desc': filter_desc,
+          'error': 'No data after filtering'
         })
 
     except Exception as e:
-      log_error(f"Exception processing dataset '{dataset_name}': {str(e)}")
+      log_error(f"Exception in dataset '{dataset_name}' (function='{function_name}'): {str(e)}")
       combined_summary['datasets_included'].append({
         'dataset': dataset_name,
+        'function': function_name,
         'success': False,
         'error': str(e)
       })
@@ -750,3 +734,29 @@ def generate_separate_dataset_files(
 
   log_info(f"Generated {len(results)} separate files")
   return results
+
+
+# ============================================================================
+# FUNCTION REGISTRY — populated here so all functions are defined first
+#
+# Keys must exactly match the function_name values in ai_export_dataset_list.
+#
+# All registered functions must have this signature:
+#   fn(ppr_df_full, player_name, league_value, team, extra_filters) -> dict or None
+#
+# Return dict must contain:
+#   'content'  : str   — markdown text for the section body
+#   'scorecard': str   — core metrics table (or "" if not applicable)
+#   'summary'  : dict  — summary info logged to ai_export_mgr
+#   'points'   : int   — number of PPR points in this slice
+#   'sets'     : int   — number of sets in this slice
+#
+# To add a new function:
+#   1. Write the function above (follow generate_aggregate_section as a template)
+#   2. Add one line here: 'your_function_name': your_function
+#   3. Add a row in ai_export_dataset_list with function_name = 'your_function_name'
+# ============================================================================
+FUNCTION_REGISTRY = {
+  'generate_aggregate_section':  generate_aggregate_section,
+  'generate_set_level_section':  generate_set_level_section,
+}
