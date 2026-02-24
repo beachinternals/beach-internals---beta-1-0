@@ -1927,12 +1927,17 @@ def report_player_passing_45_pass(lgy, team, **rpt_filters):
   ax.set_title("Percent Good Passes from Zone 5, Right", fontsize=35)
   z5_plt = anvil.mpl_util.plot_image()
 
-  cmin = min(el_area)
-  if cmin < 0:
+  if len(el_area) == 0:
     cmin = 0
-  cmax = max(el_area)
-  if cmax > 20:
-    cmax = 20
+    cmax = 10  # sensible default range when no data qualifies
+  else:
+    cmin = min(el_area)
+    if cmin < 0:
+      cmin = 0
+    cmax = max(el_area)
+    if cmax > 20:
+      cmax = 20
+
   
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   plot_court_background(fig,ax)

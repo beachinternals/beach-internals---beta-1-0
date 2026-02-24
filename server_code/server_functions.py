@@ -1240,8 +1240,9 @@ def get_player_data( disp_league, disp_gender, disp_year):
     player_data_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data'].get_bytes()))
     player_stats_df =  pd.read_csv(io.BytesIO( ppr_csv_row['player_data_stats'].get_bytes()))
   else:
+    # This ensures all callers get a consistent type and .at, .shape, etc. won't crash
     #print('No Rows Found')
-    return ["No Player Data Found"], ["No Player Stats Found"]
+    return pd.DataFrame(), pd.DataFrame()
 
   # somehow, we are getting a column called unamed: 0, so drop taht
   #print(player_data_df.to_dict())
