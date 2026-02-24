@@ -236,6 +236,16 @@ def ai_export_mgr_generate_background(user=None):
         # Extract parameters from the row
         team = export_row['team']
         export_type = export_row['export_type'] or 'full'
+        
+        # Read datasets_included from the row
+        datasets_included_rows = export_row['datasets_included']
+        if datasets_included_rows:
+          datasets_included = list(datasets_included_rows)  # convert Anvil iterator to list
+          log_info(f"datasets_included: {len(datasets_included)} datasets")
+        else:
+          datasets_included = []
+          log_info("No datasets_included - will use single aggregate fallback")
+  
         user_email = export_row['user_email']
 
         log_info(f"Export row data: team={team}, export_type={export_type}")
@@ -326,7 +336,8 @@ def ai_export_mgr_generate_background(user=None):
           team=team,
           player_filter=player_filter,
           player_data_map=player_data_map,
-          user=user
+          user=user,
+          datasets_included=datasets_included
         )
 
         # Update row with results
@@ -413,7 +424,7 @@ def ai_export_mgr_generate_background(user=None):
 #--------------------------------------------------------------
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def ai_export_generate(league, team, date_start=None, date_end=None, player_filter=None, player_data_map=None, user=None):
+def ai_export_generate(league, team, date_start=None, date_end=None, player_filter=None, player_data_map=None, user=None, datasets_included=None):
   """
     Generate NotebookLM-ready markdown files for AI analysis.
     
@@ -445,6 +456,7 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
 
     players = player_filter  # That's it!
     log_info(f"Generating exports for {len(players)} players: {players}")
+  
 
     # Verify we have player data
     if not player_data_map:
@@ -468,7 +480,8 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
           date_start=date_start,
           date_end=date_end,
           player_data=player_data,  # Pass individual player's data
-          user=user  # Pass user context
+          user=user,
+          datasets_included=datasets_included # Pass user context
         )
         if file_info:
           generated_files.append(file_info)
@@ -658,81 +671,208 @@ def get_team_players(league, team):
 
 #--------------------------------------------------------------
 # Core function to generate markdown for a single player
+# FIXED: Now reads datasets_included from ai_export_mgr row
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def generate_player_markdown(league, team, player, date_start=None, date_end=None, player_data=None, user=None):
+def generate_player_markdown(league, team, player, date_start=None, date_end=None, 
+                             player_data=None, user=None, datasets_included=None):
   """
-    Generate a single consolidated markdown file for one player using the NEW table-based format.
-    
-    Args:
-        league: League identifier
-        team: Team name
-        player: Player name in format "TEAM NUMBER SHORTNAME"
-        date_start: Optional start date
-        date_end: Optional end date
-        player_data: Dict with player's league, gender, year, etc.
-    
-    Returns file info dict with path and metadata.
-    """
+  Generate a single combined markdown file for one player.
+  Loops through each dataset row in datasets_included and appends
+  each section into one combined file.
+  
+  Args:
+      league: League identifier (e.g., 'NCAA')
+      team: Team name (e.g., 'STETSON')
+      player: Player name in format "TEAM NUMBER SHORTNAME"
+      date_start: Optional start date filter
+      date_end: Optional end date filter
+      player_data: Dict with player's league, gender, year, shortname, etc.
+      user: User context
+      datasets_included: List of rows from ai_export_dataset_list table
+  
+  Returns:
+      dict with file info, or None on failure
+  """
   log_info(f"Generating markdown for {player} ({team})")
 
-  # Use player_data if provided, otherwise parse from player name
+  # --- Build league_value string ---
   if player_data:
-    league_value = player_data['league_value']  # Already formatted: "NCAA | W | 2025"
+    league_value   = player_data['league_value']
     player_shortname = player_data['shortname']
-    log_info(f"Using player_data: league_value={league_value}, shortname={player_shortname}")
   else:
-    # Fallback: parse player name (shouldn't happen in normal use)
-    log_error(f"No player_data provided for {player} - using fallback!")
+    # Fallback: parse player name
     parts = player.split()
     if len(parts) >= 3:
-      player_team = parts[0]
-      player_number = parts[1]
-      player_shortname = ' '.join(parts[2:])  # Handle multi-word names
-      # Build league_value - this is a GUESS without player_data
-      league_value = f"{league} | W | 2025"  # HARDCODED FALLBACK - NOT IDEAL!
-      log_error(f"WARNING: Using hardcoded fallback league_value={league_value}. This may be incorrect!")
+      player_shortname = ' '.join(parts[2:])
+      league_value = f"{league} | W | 2026"   # best-guess fallback
+      log_error(f"WARNING: Using fallback league_value={league_value} for {player}")
     else:
       log_error(f"Invalid player name format: {player}")
       return None
 
-  # Build filters
-  json_filters = {
+  log_info(f"Using player_data: league_value={league_value}, shortname={player_shortname}")
+
+  # --- Base filters shared by all datasets ---
+  base_filters = {
     'player': player,
     'player_shortname': player_shortname
   }
-
-  # Add date filters if provided
   if date_start:
-    json_filters['start_date'] = date_start
+    base_filters['start_date'] = date_start
   if date_end:
-    json_filters['end_date'] = date_end
+    base_filters['end_date'] = date_end
 
-  log_info(f"Calling generate_player_metrics_markdown with league_value='{league_value}', team='{team}', filters={json_filters}")
+  # --- Decide which datasets to generate ---
+  # If no datasets_included passed, fall back to the single aggregate (old behaviour)
+  if not datasets_included:
+    log_info("No datasets_included provided - falling back to single aggregate dataset")
+    datasets_included = []   # will trigger fallback block below
 
-  # Call the NEW Markdown generator which creates proper tables (not JSON blocks)
-  result = generate_player_metrics_markdown(
-    league_value=league_value,
-    team=team,
-    use_direct_data=True,  # ADD THIS LINE
-    **json_filters
-  )
-  
-  if not result or 'media_obj' not in result:
+  # --- Generate each dataset section and collect markdown strings ---
+  combined_sections = []
+  datasets_summary = []
+  total_sets = 0
+  total_words = 0
+
+  if datasets_included:
+    # Sort by the 'order' column so sections appear in the right sequence
+    try:
+      sorted_datasets = sorted(datasets_included, key=lambda r: r['order'] if r['order'] else 99)
+    except Exception:
+      sorted_datasets = list(datasets_included)
+
+    for ds_row in sorted_datasets:
+      ds_name        = ds_row['dataset_name']
+      ds_type        = ds_row['dataset_type']      # 'aggregate' or 'set_level'
+      function_name  = ds_row['function_name']     # e.g. 'generate_aggregate_section'
+      ds_id          = ds_row['dataset_id']        # e.g. 'player_aggregate'
+      section_title  = ds_row['output_section_title'] or ds_name
+      comp_l1        = ds_row['comp_l1']           # e.g. 'Regular Season', 'Pre-Season', or ''
+      days_before    = ds_row['days_before']       # e.g. 7, or None
+      ds_date_start  = ds_row['date_start']        # dataset-level override, or ''
+      ds_date_end    = ds_row['date_end']          # dataset-level override, or ''
+
+      log_info(f"  Processing dataset: {ds_name} (type={ds_type}, fn={function_name})")
+
+      try:
+        # Build filters for this specific dataset
+        ds_filters = base_filters.copy()
+
+        # Apply comp_l1 filter if specified (e.g. 'Regular Season')
+        if comp_l1:
+          ds_filters['comp1'] = comp_l1
+
+        # Apply days_before filter if specified (e.g. last 7 days)
+        if days_before:
+          from datetime import datetime, timedelta
+          cutoff = datetime.now() - timedelta(days=int(days_before))
+          ds_filters['start_date'] = cutoff.strftime('%Y-%m-%d')
+          ds_filters.pop('end_date', None)  # remove end_date so we go to today
+
+        # Apply dataset-level date overrides if present
+        if ds_date_start:
+          ds_filters['start_date'] = ds_date_start
+        if ds_date_end:
+          ds_filters['end_date'] = ds_date_end
+
+        # --- Call the right generation function ---
+        if function_name == 'generate_player_metrics' or ds_type == 'aggregate':
+          log_info(f"  Calling generate_player_metrics_markdown for {ds_name}...")
+          result = generate_player_metrics_markdown(
+            league_value=league_value,
+            team=team,
+            use_direct_data=True,
+            **ds_filters
+          )
+          if result and 'media_obj' in result:
+            section_md = result['media_obj'].get_bytes().decode('utf-8')
+            sets_count = result['summary'].get('total_sets_analyzed', 0)
+          else:
+            log_error(f"  generate_player_metrics_markdown returned no result for {ds_name}")
+            section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
+            sets_count = 0
+
+        elif function_name == 'generate_set_level_section' or ds_type == 'set_level':
+          log_info(f"  Calling generate_set_level_metrics_markdown for {ds_name}...")
+          # This function should already exist in your codebase
+          result = generate_set_level_metrics_markdown(
+            league_value=league_value,
+            team=team,
+            use_direct_data=True,
+            **ds_filters
+          )
+          if result and 'media_obj' in result:
+            section_md = result['media_obj'].get_bytes().decode('utf-8')
+            sets_count = result['summary'].get('total_sets_analyzed', 0)
+          else:
+            log_error(f"  generate_set_level_metrics_markdown returned no result for {ds_name}")
+            section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
+            sets_count = 0
+
+        else:
+          log_error(f"  Unknown function_name '{function_name}' for dataset {ds_name} - skipping")
+          section_md = f"\n## {section_title}\n\n*Dataset type not supported: {function_name}*\n"
+          sets_count = 0
+
+        # Wrap the section with a clear header
+        section_header = f"\n\n---\n\n# DATASET: {section_title}\n\n"
+        combined_sections.append(section_header + section_md)
+        total_sets = max(total_sets, sets_count)   # use the max sets seen
+        total_words += len(section_md.split())
+
+        datasets_summary.append({
+          'dataset': ds_name,
+          'success': True,
+          'sets': sets_count
+        })
+        log_info(f"  ✓ Dataset {ds_name}: {sets_count} sets, {len(section_md.split())} words")
+
+      except Exception as e:
+        log_exception('error', f"Error generating dataset {ds_name} for {player}", e)
+        combined_sections.append(f"\n\n---\n\n# DATASET: {section_title}\n\n*Error generating this section: {str(e)}*\n")
+        datasets_summary.append({'dataset': ds_name, 'success': False, 'error': str(e)})
+
+  else:
+    # ---- Fallback: no datasets_included, just run the single aggregate (old behaviour) ----
+    log_info("Fallback: generating single aggregate markdown")
+    log_info(f"Calling generate_player_metrics_markdown with league_value='{league_value}', team='{team}', filters={base_filters}")
+    result = generate_player_metrics_markdown(
+      league_value=league_value,
+      team=team,
+      use_direct_data=True,
+      **base_filters
+    )
+    if not result or 'media_obj' not in result:
       log_error(f"Failed to generate metrics markdown for {player}")
       return None
-  
-  # Get the markdown content
-  markdown_content = result['media_obj'].get_bytes().decode('utf-8')
-  filename = result['filename']
-  
-  # Save to Google Drive
+
+    section_md = result['media_obj'].get_bytes().decode('utf-8')
+    combined_sections.append(section_md)
+    total_sets  = result['summary'].get('total_sets_analyzed', 0)
+    total_words = len(section_md.split())
+    datasets_summary.append({'dataset': 'Player Aggregate Statistics', 'success': True})
+
+  # --- Combine all sections into one markdown string ---
+  if not combined_sections:
+    log_error(f"No sections generated for {player}")
+    return None
+
+  full_markdown = ''.join(combined_sections)
+
+  # --- Build filename ---
+  player_safe = player.replace(' ', '_')
+  parsed_league = league_value.replace(' ', '').replace('|', '_').strip('_')
+  filename = f"{player_safe}_{parsed_league}_combined.md"
+  log_info(f"Generated filename: {filename}")
+  log_info(f"Combined markdown size: {len(full_markdown)} bytes, {total_words} words, {len(datasets_summary)} datasets")
+
+  # --- Save to Google Drive ---
   log_info(f"Saving markdown file: {filename}")
-  file_info = save_markdown_to_drive_updated(filename, markdown_content, league, team, player_data)
+  file_info = save_markdown_to_drive_updated(filename, full_markdown, league, team, player_data)
 
   if not file_info:
     log_error(f"Failed to save file for {player}")
-    print(f"Failed to save file for {player}")
     return None
 
   log_info(f"Successfully saved file for {player}: {file_info.get('url', 'No URL')}")
@@ -740,12 +880,21 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
   return {
     'player': player,
     'filename': filename,
-    'file_id': file_info.get('id', 'unknown'),
+    'file_id': file_info.get('id', 'saved_to_drive'),
     'file_url': file_info.get('url', None),
     'path': file_info.get('path', 'unknown'),
-    'sessions_count': result['summary']['total_sets_analyzed'],
-    'word_count': len(markdown_content.split())
+    'datasets': [d['dataset'] for d in datasets_summary],
+    'sessions_count': total_sets,
+    'word_count': total_words,
+    'summary': {
+      'player': player,
+      'league': league_value,
+      'team': team,
+      'datasets_included': datasets_summary,
+      'generation_timestamp': str(datetime.now())
+    }
   }
+
 
 
 #--------------------------------------------------------------
