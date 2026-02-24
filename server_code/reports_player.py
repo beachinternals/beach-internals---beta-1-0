@@ -703,6 +703,12 @@ def report_player_att_set(lgy, team, **rpt_filters):
   grouped = ppr_df.groupby(['distance_bin', 'height_bin'], as_index=False).apply(calculate_fbhe)
   #log_debug(f"      Sets: Grouped, pre filter: {grouped}")
   #log_debug(f"      Sets: Attempts distribution: {grouped['attempts'].value_counts().to_dict()}")
+
+  # In some pandas versions, apply() may not return columns if all groups are empty
+  for col in ['attempts', 'fbhe', 'URL']:
+    if col not in grouped.columns:
+      grouped[col] = 0 if col != 'URL' else ''
+  
   grouped = grouped[grouped['attempts'] > 0]  # Lowered threshold for debugging
   #log_debug(f"      Sets: Grouped, post > 0 filter: {grouped}")
 
@@ -721,7 +727,10 @@ def report_player_att_set(lgy, team, **rpt_filters):
   fig, ax = plt.subplots()
   norm = Normalize(vmin=vmin, vmax=vmax)
   cmap = plt.cm.RdYlGn
-  max_att = attempts_table['attempts'].max() if attempts_table['attempts'].max() > 0 else 1
+  if attempts_table.empty or attempts_table['attempts'].max() == 0:
+    max_att = 1
+  else:
+    max_att = attempts_table['attempts'].max()
   min_lw, max_lw = 1, 10
 
   if not attempts_table.empty:
