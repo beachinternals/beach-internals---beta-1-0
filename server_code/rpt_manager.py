@@ -888,12 +888,12 @@ def populate_filters_from_rpt_mgr_table(rpt_r, p_r):
         elif rpt_type == 'pair':
             rpt_filters['pair'] = p_r['pair']
     
-    if rpt_r['comp1'] is not None:
-        rpt_filters['comp_l1'] = rpt_r['comp1']
-    if rpt_r['comp2'] is not None:
-        rpt_filters['comp_l2'] = rpt_r['comp2']
-    if rpt_r['comp3'] is not None:
-        rpt_filters['comp_l3'] = rpt_r['comp3']
+    if rpt_r['comp_l1'] is not None:
+        rpt_filters['comp_l1'] = rpt_r['comp_l1']
+    if rpt_r['comp_l2'] is not None:
+        rpt_filters['comp_l2'] = rpt_r['comp_l2']
+    if rpt_r['comp_l3'] is not None:
+        rpt_filters['comp_l3'] = rpt_r['comp_l3']
 
     if rpt_r['set'] is not None:
         rpt_filters['set'] = rpt_r['set']

@@ -36,6 +36,11 @@ from generate_player_metrics_json_server import generate_player_metrics_json
 from generate_player_metrics_markdown import generate_player_metrics_markdown, generate_global_context_markdown
 from server_functions import write_to_nested_folder, write_to_nested_folder_with_sharing
 
+from generate_set_level_metrics import (
+generate_set_level_metrics_for_player,
+format_set_level_data_as_markdown
+)
+
 # ============================================================================
 # NEW: MULTI-DATASET SUPPORT IMPORTS
 # ============================================================================
@@ -761,7 +766,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
 
         # Apply comp_l1 filter if specified (e.g. 'Regular Season')
         if comp_l1:
-          ds_filters['comp1'] = comp_l1
+          ds_filters['comp_l1'] = comp_l1
 
         # Apply days_before filter if specified (e.g. last 7 days)
         if days_before:
@@ -794,22 +799,42 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
             sets_count = 0
 
         elif function_name == 'generate_set_level_section' or ds_type == 'set_level':
-          log_info(f"  Calling generate_set_level_metrics_markdown for {ds_name}...")
-          # This function should already exist in your codebase
-          result = generate_set_level_metrics_markdown(
-            league_value=league_value,
-            team=team,
-            use_direct_data=True,
-            **ds_filters
-          )
-          if result and 'media_obj' in result:
-            section_md = result['media_obj'].get_bytes().decode('utf-8')
-            sets_count = result['summary'].get('total_sets_analyzed', 0)
-          else:
-            log_error(f"  generate_set_level_metrics_markdown returned no result for {ds_name}")
-            section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
-            sets_count = 0
+          log_info(f"  Calling generate_set_level_metrics_for_player for {ds_name}...")
 
+          # Fetch PPR data for this player with dataset-specific filters
+          league_parts = league_value.split('|')
+          league_str = league_parts[0].strip()
+          gender_str = league_parts[1].strip()
+          year_str   = league_parts[2].strip()
+
+          ppr_df = get_filtered_ppr_data_direct(
+            league=league_str,
+            gender=gender_str,
+            year=year_str,
+              team=team,
+              **ds_filters
+          )
+
+          if ppr_df is None or len(ppr_df) == 0:
+              log_error(f"  No PPR data for set-level section {ds_name}")
+              section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
+              sets_count = 0
+          else:
+              log_info(f"  Loaded {len(ppr_df)} points for set-level calculation")
+              set_level_data = generate_set_level_metrics_for_player(
+                  ppr_df=ppr_df,
+                  player_name=player,
+                  league_value=league_value,
+                  team=team
+              )
+
+              if set_level_data:
+                  section_md = format_set_level_data_as_markdown(set_level_data)
+                  sets_count = set_level_data.get('summary', {}).get('total_sets', 0)
+              else:
+                  log_error(f"  generate_set_level_metrics_for_player returned no result for {ds_name}")
+                  section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
+                  sets_count = 0
         else:
           log_error(f"  Unknown function_name '{function_name}' for dataset {ds_name} - skipping")
           section_md = f"\n## {section_title}\n\n*Dataset type not supported: {function_name}*\n"
