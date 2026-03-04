@@ -3771,4 +3771,413 @@ def  player_consistency_report_new(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
   
   
-  
+# =============================================================================
+#
+#   player_tri_corr  —  Player Correlation Report
+#
+#   Calculates correlations between player set-level metrics and point %,
+#   and between individual point measurements and point outcome.
+#
+#   Add this function to reports_player.py
+#
+#   Also requires a row in the report_list table:
+#       function_name  = 'player_tri_corr'
+#       rpt_type       = 'player'
+#       (fill in titles/labels as desired)
+#
+# =============================================================================
+
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)
+def player_tri_corr(lgy, team, **rpt_filters):
+  '''
+  Player Correlation Report
+
+  Calculates what metrics correlate most strongly with winning points
+  for a specific player, using two analyses:
+
+    Section 1  —  Set-level correlations
+                  Uses generate_set_level_metrics_for_player() to build
+                  one row per set with calculated metrics + point_pct.
+                  Correlates every metric against point_pct (points won %).
+
+    Section 2  —  Point-level correlations (FBK / FBE)
+                  Uses the raw PPR rows for this player.
+                  Correlates physical measurements (speed, height, angle …)
+                  against whether the point was a first-ball kill or error.
+
+  INPUT Parameters:
+    lgy         : league|gender|year string  (e.g. "NCAA | W | 2026")
+    team        : team of the user calling the report
+    rpt_filters : dict of filters (must include 'player')
+
+  OUTPUT Return Parameters:
+    title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+  '''
+
+  # ---------------------------------------------------------------------------
+  #  Imports needed inside this function
+  # ---------------------------------------------------------------------------
+  from generate_set_level_metrics import generate_set_level_metrics_for_player
+
+  # ---------------------------------------------------------------------------
+  #  Initialise lists and unpack parameters
+  # ---------------------------------------------------------------------------
+  disp_league, disp_gender, disp_year = unpack_lgy(lgy)
+
+  title_list    = [''] * 10
+  label_list    = [''] * 10
+  image_list    = [''] * 10
+  df_list       = [''] * 10
+  df_desc_list  = [''] * 10
+  image_desc_list = [''] * 10
+
+  # Pull titles / labels from report_list table
+  try:
+    rpt_row = app_tables.report_list.get(function_name=inspect.currentframe().f_code.co_name)
+    if rpt_row:
+      title_list[0] = rpt_row['rpt_title']
+      title_list[1] = rpt_row['rpt_sub_title']
+      title_list[2] = rpt_row['rpt_section_title1']
+      title_list[3] = lgy
+      title_list[4] = rpt_row['team_name']
+      title_list[5] = rpt_row['rpt_type']
+      title_list[6] = rpt_row['filter_text']
+      title_list[7] = rpt_row['explain_text']
+
+      label_list[0] = rpt_row['box1_title']
+      label_list[1] = rpt_row['box2_title']
+      label_list[2] = rpt_row['box3_title']
+      label_list[3] = rpt_row['box4_title']
+      label_list[4] = rpt_row['box5_title']
+      label_list[5] = rpt_row['box6_title']
+  except Exception as e:
+    log_error(f"player_tri_corr: could not load report_list row: {e}")
+
+  disp_player = rpt_filters.get('player')
+  title_list[8] = disp_player
+
+  if not disp_player:
+    log_error("player_tri_corr: no player specified in rpt_filters")
+    return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+  # ---------------------------------------------------------------------------
+  #  Load and filter PPR data
+  # ---------------------------------------------------------------------------
+  ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
+  ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
+
+  # Keep only rows where this player appears
+  ppr_df = ppr_df[
+    (ppr_df['player_a1'] == disp_player) |
+    (ppr_df['player_a2'] == disp_player) |
+    (ppr_df['player_b1'] == disp_player) |
+    (ppr_df['player_b2'] == disp_player)
+    ]
+
+  if ppr_df.empty:
+    log_error(f"player_tri_corr: no PPR data found for player {disp_player}")
+    return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
+
+  # Save a copy for the point-level analysis in Section 2
+  ppr_save = ppr_df.copy()
+
+  log_info(f"player_tri_corr: {len(ppr_df)} points loaded for {disp_player}")
+
+  # ---------------------------------------------------------------------------
+  #  Build league_value string that generate_set_level_metrics_for_player needs
+  # ---------------------------------------------------------------------------
+  league_value = f"{disp_league} | {disp_gender} | {disp_year}"
+
+  # ===========================================================================
+  #
+  #   SECTION 1  —  Set-level metric correlations vs point_pct
+  #
+  # ===========================================================================
+
+  log_info("player_tri_corr: starting Section 1 – set-level correlations")
+
+  # --- 1a. Generate set-level metrics using the existing AI-export function ---
+  set_level_data = generate_set_level_metrics_for_player(
+    ppr_df=ppr_df,
+    player_name=disp_player,
+    league_value=league_value,
+    team=team
+  )
+
+  if not set_level_data or not set_level_data.get('sets'):
+    log_error(f"player_tri_corr: generate_set_level_metrics_for_player returned no data")
+  else:
+    # --- 1b. Define point outcomes that count as a WIN for the player's team --
+    won_outcomes  = ['TSA', 'FBK', 'TK']
+    lost_outcomes = ['TSE', 'FBE', 'TE']
+
+    # --- 1c. Flatten the nested sets structure into a plain DataFrame ----------
+    rows = []
+    for s in set_level_data['sets']:
+      video_id   = s['video_id']
+      set_number = s['set']
+
+      # Filter PPR to this exact set
+      set_df = ppr_df[
+        (ppr_df['video_id'] == video_id) &
+        (ppr_df['set']      == set_number)
+        ]
+
+      total_pts = len(set_df)
+      if total_pts == 0:
+        continue
+
+      # Count points WON by the player's team using point_outcome_team logic
+      if 'point_outcome_team' in set_df.columns and 'point_outcome' in set_df.columns:
+        player_is_outcome_team = set_df['point_outcome_team'].str.contains(
+          disp_player, na=False, regex=False
+        )
+        points_won = len(set_df[
+          (player_is_outcome_team  & set_df['point_outcome'].isin(won_outcomes)) |
+          (~player_is_outcome_team & set_df['point_outcome'].isin(lost_outcomes))
+          ])
+        point_pct = points_won / total_pts
+      else:
+        log_error(f"player_tri_corr: point_outcome_team column missing – skipping set {video_id}-{set_number}")
+        point_pct = None
+
+      # Build one flat row: metadata + every metric value
+      row = {
+        'date'        : s.get('date', ''),
+        'opponent'    : s.get('opponent_team', ''),
+        'partner'     : s.get('partner', ''),
+        'total_points': total_pts,
+        'points_won'  : points_won if point_pct is not None else None,
+        'point_pct'   : point_pct,
+      }
+
+      for metric_id, metric_info in s.get('metrics', {}).items():
+        row[metric_id] = metric_info['value']
+
+      rows.append(row)
+
+    if not rows:
+      log_error("player_tri_corr: no valid sets after flattening")
+    else:
+      set_df_flat = pd.DataFrame(rows)
+      log_info(f"player_tri_corr: {len(set_df_flat)} sets, {len(set_df_flat.columns)} columns")
+
+      # --- 1d. Pearson correlation of every metric column vs point_pct --------
+      if 'point_pct' not in set_df_flat.columns or set_df_flat['point_pct'].isna().all():
+        log_error("player_tri_corr: point_pct is all NaN – cannot correlate")
+      else:
+        # Keep only numeric columns for correlation
+        numeric_set_df = set_df_flat.select_dtypes(include=['float64', 'int64']).copy()
+
+        # Fill NaN with column means so correlation doesn't drop rows silently
+        numeric_set_df = numeric_set_df.fillna(numeric_set_df.mean())
+
+        if 'point_pct' not in numeric_set_df.columns:
+          log_error("player_tri_corr: point_pct not numeric – cannot correlate")
+        else:
+          # Drop columns with zero variance (can't correlate constants)
+          numeric_set_df = numeric_set_df.loc[:, numeric_set_df.std() > 0]
+
+          correlations = numeric_set_df.corrwith(numeric_set_df['point_pct'])
+          correlations = correlations.drop('point_pct', errors='ignore')
+          correlations = correlations.drop('points_won',  errors='ignore')
+          correlations = correlations.drop('total_points', errors='ignore')
+          correlations = correlations.dropna()
+          correlations = correlations.round(3)
+          correlations = correlations.sort_values(ascending=True)
+
+          # Bar chart — top 15 positive and negative correlations
+          top_corr = pd.concat([correlations.head(15), correlations.tail(15)])
+
+          fig_size = [15, 10]
+          plt.figure(figsize=fig_size)
+          top_corr.plot(kind='barh', ax=plt.gca(), legend=False)
+          plt.title(f'Set-Level Metric Correlations with Point % — {disp_player}')
+          plt.xlabel('Correlation Coefficient')
+          plt.axvline(x=0, color='black', linewidth=0.8)
+          plt.tight_layout()
+          image_list[0] = anvil.mpl_util.plot_image()
+          plt.close('all')
+
+          # Scatter plots — top 4 and bottom 4 correlated metrics
+          top_corr_df = top_corr.to_frame(name='Correlation').reset_index().rename(
+            columns={'index': 'Metric'}
+          )
+          top_4    = top_corr_df.tail(4)['Metric'].tolist()   # highest positive
+          bottom_4 = top_corr_df.head(4)['Metric'].tolist()   # most negative
+          scatter_vars = top_4 + bottom_4
+
+          fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=[15, 20])
+          axes = axes.flatten()
+
+          for i, var in enumerate(scatter_vars):
+            if var in numeric_set_df.columns:
+              axes[i].scatter(numeric_set_df[var], numeric_set_df['point_pct'], alpha=0.6)
+              axes[i].set_title(f'{var} vs Point %')
+              axes[i].set_xlabel(var)
+              axes[i].set_ylabel('Point %')
+            else:
+              axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
+              axes[i].set_axis_off()
+
+          plt.tight_layout()
+          image_list[1] = anvil.mpl_util.plot_image()
+          plt.close('all')
+
+          # Correlation table for display
+          top_corr_display = pd.concat([correlations.tail(10), correlations.head(10)])
+          top_corr_display = top_corr_display.sort_values(ascending=False)
+          top_corr_display = top_corr_display.to_frame(name='Correlation').reset_index().rename(
+            columns={'index': 'Metric'}
+          )
+          df_list[0] = top_corr_display.to_dict('records')
+
+          df_desc_list[0] = (
+            f"Set-level correlations with Point % for {disp_player}. "
+            f"Based on {len(set_df_flat)} sets. "
+            f"Positive = metric rises when player wins more points."
+          )
+
+  # ===========================================================================
+  #
+  #   SECTION 2  —  Point-level correlations vs FBK / FBE outcome
+  #
+  # ===========================================================================
+
+  log_info("player_tri_corr: starting Section 2 – point-level correlations")
+
+  ppr_df = ppr_save.copy()
+
+  # Clean column names
+  ppr_df.columns = [
+    col.replace(' ', '_').replace('.', '_').replace(':', '_')
+    for col in ppr_df.columns
+  ]
+  ppr_df = ppr_df.loc[:, ~ppr_df.columns.str.contains('^Unnamed')]
+
+  # Keep only first-ball plays: FBK and FBE
+  ppr_df = ppr_df[ppr_df['point_outcome'].isin(['FBK', 'FBE'])]
+
+  # Encode outcome: FBK = 1 (good), FBE = -1 (bad)
+  ppr_df['point_outcome'] = ppr_df['point_outcome'].map({'FBK': 1, 'FBE': -1})
+  ppr_df['point_outcome'] = pd.to_numeric(ppr_df['point_outcome'], errors='coerce')
+  ppr_df = ppr_df.dropna(subset=['point_outcome'])
+  ppr_df['point_outcome'] = ppr_df['point_outcome'].astype('int64')
+
+  if ppr_df.empty or ppr_df['point_outcome'].nunique() < 2:
+    log_error("player_tri_corr: insufficient FBK/FBE data for point-level analysis")
+  else:
+    log_info(f"player_tri_corr: {len(ppr_df)} FBK/FBE points for point-level analysis")
+
+    # Limit to numeric columns
+    ppr_df = ppr_df.select_dtypes(include=['int64', 'float64'])
+
+    # Desired measurement columns (same list as league_tri_corr)
+    desired_cols = [
+      'serve_src_x', 'serve_src_y', 'serve_src_zone_net',
+      'serve_dest_x', 'serve_dest_y', 'serve_dest_zone_depth', 'serve_dest_zone_net',
+      'serve_dist', 'serve_dur', 'serve_speed', 'serve_angle', 'serve_height',
+      'pass_src_x', 'pass_src_y', 'pass_src_zone_depth', 'pass_src_zone_net',
+      'pass_dest_x', 'pass_dest_y', 'pass_dest_zone_depth', 'pass_dest_zone_net',
+      'pass_dist', 'pass_dur', 'pass_speed', 'pass_angle', 'pass_height',
+      'pass_rtg_btd', 'pass_oos',
+      'set_src_x', 'set_src_y', 'set_src_zone_depth', 'set_src_zone_net',
+      'set_dest_x', 'set_dest_y', 'set_dest_zone_depth', 'set_dest_zone_net',
+      'set_dist', 'set_dur', 'set_speed', 'set_angle', 'set_height',
+      'att_src_x', 'att_src_y', 'att_src_zone_depth', 'att_src_zone_net',
+      'att_dest_x', 'att_dest_y', 'att_dest_zone_depth', 'att_dest_zone_net',
+      'att_dist', 'att_dur', 'att_speed', 'att_angle', 'att_height', 'att_touch_height',
+      'dig_src_x', 'dig_src_y', 'dig_src_zone_depth', 'dig_src_zone_net',
+      'dig_dest_x', 'dig_dest_y', 'dig_dest_zone_depth', 'dig_dest_zone_net',
+      'dig_dist', 'dig_dur', 'dig_speed', 'dig_angle', 'dig_height',
+      'point_outcome'
+    ]
+
+    numerical_cols = [col for col in desired_cols if col in ppr_df.columns]
+
+    # Clean infinite / very large values
+    for col in numerical_cols:
+      ppr_df[col] = ppr_df[col].replace([np.inf, -np.inf], np.nan)
+      if not ppr_df[col].isna().all():
+        max_val = ppr_df[col].quantile(0.99, interpolation='nearest')
+        ppr_df[col] = ppr_df[col].clip(upper=max_val, lower=-max_val)
+        ppr_df[col] = ppr_df[col].fillna(ppr_df[col].median())
+
+    # Pearson correlation of each measurement column vs point_outcome
+    corr_results = []
+    for col in numerical_cols:
+      if col == 'point_outcome':
+        continue
+      valid = ppr_df[[col, 'point_outcome']].dropna()
+      if len(valid) > 1 and valid['point_outcome'].nunique() > 1:
+        corr, p_value = stats.pearsonr(valid[col], valid['point_outcome'])
+        corr_results.append({
+          'Metric'     : col,
+          'Correlation': round(corr,    3),
+          'P-Value'    : round(p_value, 3),
+          'Note'       : ''
+        })
+      else:
+        corr_results.append({
+          'Metric'     : col,
+          'Correlation': None,
+          'P-Value'    : None,
+          'Note'       : 'Insufficient data'
+        })
+
+    corr_results_df = pd.DataFrame(corr_results)
+    corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
+
+    # Bar chart of significant correlations
+    sig_df = corr_results_df[corr_results_df['P-Value'] < 0.05]
+
+    fig_size = [15, 10]
+    if not sig_df.empty:
+      plt.figure(figsize=fig_size)
+      sns.barplot(x='Correlation', y='Metric', data=sig_df)
+      plt.title(f'Point-Level Correlations with FBK/FBE Outcome — {disp_player}')
+      plt.axvline(x=0, color='black', linewidth=0.8)
+      plt.tight_layout()
+
+    image_list[2] = anvil.mpl_util.plot_image()
+    plt.close('all')
+
+    # Scatter plots — top 4 and bottom 4 significant metrics
+    significant_metrics = sig_df['Metric'].tolist()
+    top_4    = significant_metrics[:4]
+    bottom_4 = significant_metrics[-4:] if len(significant_metrics) >= 4 else []
+    scatter_vars = top_4 + bottom_4
+
+    fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=[15, 20])
+    axes = axes.flatten()
+
+    for i, var in enumerate(scatter_vars):
+      if var in ppr_df.columns:
+        axes[i].scatter(ppr_df[var], ppr_df['point_outcome'], alpha=0.4)
+        axes[i].set_title(f'{var} vs Point Outcome  (FBE=-1, FBK=1)')
+        axes[i].set_xlabel(var)
+        axes[i].set_ylabel('Outcome')
+      else:
+        axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
+        axes[i].set_axis_off()
+
+    plt.tight_layout()
+    image_list[3] = anvil.mpl_util.plot_image()
+    plt.close('all')
+
+    # Correlation table — top 10 positive and top 10 negative, significant only
+    display_df = corr_results_df[corr_results_df['P-Value'] < 0.05].copy()
+    display_df = pd.concat([display_df.head(10), display_df.tail(10)])
+    display_df = display_df.sort_values(by='Correlation', ascending=False)
+    df_list[1] = display_df.to_dict('records')
+
+    df_desc_list[1] = (
+      f"Point-level correlations with first-ball outcome (FBK=1, FBE=-1) for {disp_player}. "
+      f"Based on {len(ppr_df)} first-ball points. "
+      f"Positive = measurement rises when outcome is a kill."
+    )
+
+  # ---------------------------------------------------------------------------
+  #  Return
+  # ---------------------------------------------------------------------------
+  return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
