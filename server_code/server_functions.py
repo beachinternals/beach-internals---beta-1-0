@@ -608,7 +608,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
     ppr_for_team_found = False
 
   #print(f"GET PPR DATA ppr team db: l/g/y: {disp_league},{disp_gender},{disp_year}, Team: {disp_team}, Rows:{m_ppr_df.shape[0]}")
-  if scout:
+  if scout  and disp_team != 'League':  # League already has all data, no need to add Scout:
     # now look for the scout data (league wide public data) and merge the two
     # print(f"League:{disp_league}, Gender:{disp_gender}, Year:{disp_year}, Team:{disp_team}, Player:{disp_player}")
     ppr_scout_row = app_tables.ppr_csv_tables.get( 
