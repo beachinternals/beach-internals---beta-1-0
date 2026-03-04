@@ -4031,6 +4031,7 @@ def player_tri_corr(lgy, team, **rpt_filters):
             columns={'index': 'Metric'}
           )
           df_list[0] = top_corr_display.to_dict('records')
+          df_list[2] = set_df_flat.to_dict('records')
 
           df_desc_list[0] = (
             f"Set-level correlations with Point % for {disp_player}. "
@@ -4074,21 +4075,11 @@ def player_tri_corr(lgy, team, **rpt_filters):
 
     # Desired measurement columns (same list as league_tri_corr)
     desired_cols = [
-      'serve_src_x', 'serve_src_y', 'serve_src_zone_net',
-      'serve_dest_x', 'serve_dest_y', 'serve_dest_zone_depth', 'serve_dest_zone_net',
       'serve_dist', 'serve_dur', 'serve_speed', 'serve_angle', 'serve_height',
-      'pass_src_x', 'pass_src_y', 'pass_src_zone_depth', 'pass_src_zone_net',
-      'pass_dest_x', 'pass_dest_y', 'pass_dest_zone_depth', 'pass_dest_zone_net',
       'pass_dist', 'pass_dur', 'pass_speed', 'pass_angle', 'pass_height',
       'pass_rtg_btd', 'pass_oos',
-      'set_src_x', 'set_src_y', 'set_src_zone_depth', 'set_src_zone_net',
-      'set_dest_x', 'set_dest_y', 'set_dest_zone_depth', 'set_dest_zone_net',
       'set_dist', 'set_dur', 'set_speed', 'set_angle', 'set_height',
-      'att_src_x', 'att_src_y', 'att_src_zone_depth', 'att_src_zone_net',
-      'att_dest_x', 'att_dest_y', 'att_dest_zone_depth', 'att_dest_zone_net',
       'att_dist', 'att_dur', 'att_speed', 'att_angle', 'att_height', 'att_touch_height',
-      'dig_src_x', 'dig_src_y', 'dig_src_zone_depth', 'dig_src_zone_net',
-      'dig_dest_x', 'dig_dest_y', 'dig_dest_zone_depth', 'dig_dest_zone_net',
       'dig_dist', 'dig_dur', 'dig_speed', 'dig_angle', 'dig_height',
       'point_outcome'
     ]
