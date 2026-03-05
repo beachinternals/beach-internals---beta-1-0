@@ -874,61 +874,105 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
 
 
 
-
 def populate_filters_from_rpt_mgr_table(rpt_r, p_r):
-    '''
-    Use the data in the report row, a row from rpt_mgr data table, to make the rpt_filters list that is used to filter the data
-    for player, pair, opp_pair, only set if the row is passed, otherwise passed as False
-    '''
-    rpt_filters = {}
-    rpt_type = rpt_r['rpt_type']
-    if p_r is not None:
-        if rpt_type == 'player':
-            rpt_filters['player'] = p_r['team'] + " " + p_r['number'] + ' ' + p_r['shortname']
-        elif rpt_type == 'pair':
-            rpt_filters['pair'] = p_r['pair']
+  '''
+    Use the data in the report row, a row from rpt_mgr data table, to make the rpt_filters list 
+    that is used to filter the data.
+    For player, pair, opp_pair, only set if the row is passed, otherwise passed as False.
     
-    if rpt_r['comp_l1'] is not None:
-        rpt_filters['comp_l1'] = rpt_r['comp_l1']
-    if rpt_r['comp_l2'] is not None:
-        rpt_filters['comp_l2'] = rpt_r['comp_l2']
-    if rpt_r['comp_l3'] is not None:
-        rpt_filters['comp_l3'] = rpt_r['comp_l3']
+    Special case: When the rpt_mgr team is 'League' AND the league is NCAA W 2026,
+    the ppr data is de-identified — player columns contain player_uuid values.
+    In that case, we look up the player_uuid from master_player instead of using 
+    the "team number shortname" format.
+    '''
+  rpt_filters = {}
+  rpt_type = rpt_r['rpt_type']
 
-    if rpt_r['set'] is not None:
-        rpt_filters['set'] = rpt_r['set']
-    if rpt_r['att_ht_low'] is not None:
-        rpt_filters['att_ht_low'] = rpt_r['att_ht_low']
-    if rpt_r['att_ht_high'] is not None:
-        rpt_filters['att_ht_high'] = rpt_r['att_ht_high']
-    if rpt_r['pass_ht_low'] is not None:
-        rpt_filters['pass_ht_low'] = rpt_r['pass_ht_low']
-    if rpt_r['pass_ht_high'] is not None:
-        rpt_filters['pass_ht_high'] = rpt_r['pass_ht_high']
-    if rpt_r['set_ht_low'] is not None:
-        rpt_filters['set_ht_low'] = rpt_r['set_ht_low']
-    if rpt_r['set_ht_high'] is not None:
-        rpt_filters['set_ht_high'] = rpt_r['set_ht_high']
-    if rpt_r['set_touch_type'] is not None:
-        rpt_filters['set_touch_type'] = rpt_r['set_touch_type']
-    if rpt_r['pass_oos'] is not None:
-        rpt_filters['pass_oos'] = rpt_r['pass_oos']
-    if rpt_r['serve_speed_high'] is not None:
-        rpt_filters['serve_speed_high'] = rpt_r['serve_speed_high']
-    if rpt_r['serve_speed_low'] is not None:
-        rpt_filters['serve_speed_low'] = rpt_r['serve_speed_low']
+  if p_r is not None:
+    if rpt_type == 'player':
+      # Check if this is a de-identified league (NCAA W 2026 is the first one)
+      # p_r is a row from master_player, so it has league, gender, year, team fields
+      p_league = p_r.get('league', '') if hasattr(p_r, 'get') else p_r['league']
+      p_gender = p_r.get('gender', '') if hasattr(p_r, 'get') else p_r['gender']
+      p_year   = str(p_r.get('year', ''))  if hasattr(p_r, 'get') else str(p_r['year'])
+      rpt_team = rpt_r['team']
 
-    today_date = date.today()
-    if rpt_r['days_hist'] and rpt_r['days_hist'] != 0:
-        rpt_filters['start_date'] = today_date - timedelta(days=rpt_r['days_hist'])
-        rpt_filters['end_date'] = today_date
-    else:
+      # De-identified leagues: ppr uses player_uuid instead of "team number shortname"
+      # Currently only NCAA W 2026, but structured as an if so you can add more later
+      is_deidentified_league = (
+        rpt_team == 'League' and 
+        p_league == 'NCAA' and 
+        p_gender == 'W' and 
+        p_year == '2026'
+      )
+
+      if is_deidentified_league:
+        # Look up the player_uuid from master_player
+        from anvil.tables import app_tables
+        player_row = app_tables.master_player.get(
+          league=p_league,
+          gender=p_gender,
+          year=str(p_year),
+          team=p_r['team'],
+          number=p_r['number'],
+          shortname=p_r['shortname']
+        )
+        if player_row and player_row['player_uuid']:
+          rpt_filters['player'] = player_row['player_uuid']
+          log_info(f"League de-id: mapped {p_r['shortname']} -> {player_row['player_uuid']}")
+        else:
+          # Fallback: log a warning and use the old format (will return 0 rows, but won't crash)
+          log_error(f"Could not find player_uuid for {p_r['team']} {p_r['number']} {p_r['shortname']} in master_player — using name format (will likely return no data)")
+          rpt_filters['player'] = p_r['team'] + " " + str(p_r['number']) + ' ' + p_r['shortname']
+      else:
+        # Normal case: use "team number shortname" format
+        rpt_filters['player'] = p_r['team'] + " " + str(p_r['number']) + ' ' + p_r['shortname']
+
+    elif rpt_type == 'pair':
+      rpt_filters['pair'] = p_r['pair']
+
+  if rpt_r['comp_l1'] is not None:
+    rpt_filters['comp_l1'] = rpt_r['comp_l1']
+  if rpt_r['comp_l2'] is not None:
+    rpt_filters['comp_l2'] = rpt_r['comp_l2']
+  if rpt_r['comp_l3'] is not None:
+    rpt_filters['comp_l3'] = rpt_r['comp_l3']
+
+  if rpt_r['set'] is not None:
+    rpt_filters['set'] = rpt_r['set']
+  if rpt_r['att_ht_low'] is not None:
+    rpt_filters['att_ht_low'] = rpt_r['att_ht_low']
+  if rpt_r['att_ht_high'] is not None:
+    rpt_filters['att_ht_high'] = rpt_r['att_ht_high']
+  if rpt_r['pass_ht_low'] is not None:
+    rpt_filters['pass_ht_low'] = rpt_r['pass_ht_low']
+  if rpt_r['pass_ht_high'] is not None:
+    rpt_filters['pass_ht_high'] = rpt_r['pass_ht_high']
+  if rpt_r['set_ht_low'] is not None:
+    rpt_filters['set_ht_low'] = rpt_r['set_ht_low']
+  if rpt_r['set_ht_high'] is not None:
+    rpt_filters['set_ht_high'] = rpt_r['set_ht_high']
+  if rpt_r['set_touch_type'] is not None:
+    rpt_filters['set_touch_type'] = rpt_r['set_touch_type']
+  if rpt_r['pass_oos'] is not None:
+    rpt_filters['pass_oos'] = rpt_r['pass_oos']
+  if rpt_r['serve_speed_high'] is not None:
+    rpt_filters['serve_speed_high'] = rpt_r['serve_speed_high']
+  if rpt_r['serve_speed_low'] is not None:
+    rpt_filters['serve_speed_low'] = rpt_r['serve_speed_low']
+
+  today_date = date.today()
+  if rpt_r['days_hist'] and rpt_r['days_hist'] != 0:
+      rpt_filters['start_date'] = today_date - timedelta(days=rpt_r['days_hist'])
+      rpt_filters['end_date'] = today_date
+  else:
         if rpt_r['start_date'] is not None:
             rpt_filters['start_date'] = rpt_r['start_date']
         if rpt_r['end_date'] is not None:
             rpt_filters['end_date'] = rpt_r['end_date']
 
-    return rpt_filters
+  return rpt_filters
+    
 
 @anvil.server.callable
 def test_rpt_mgr_new_rpts():
