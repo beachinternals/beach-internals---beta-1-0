@@ -1073,6 +1073,85 @@ db_schema:
       type: string
     server: full
     title: rpt_mgr
+  skill_level_def:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      client_hidden: false
+      name: level_id
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      client_hidden: false
+      name: level_name
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      client_hidden: false
+      name: description
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      client_hidden: false
+      name: active
+      type: bool
+    - admin_ui: {order: 4, width: 200}
+      client_hidden: false
+      name: min_points
+      type: number
+    - admin_ui: {order: 5, width: 200}
+      client_hidden: false
+      name: player_list
+      target: master_player
+      type: link_multiple
+    server: full
+    title: skill_level_def
+  skill_level_results:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      client_hidden: false
+      name: run_id
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      client_hidden: false
+      name: level_id
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      client_hidden: false
+      name: level_name
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      client_hidden: false
+      name: metric_id
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      client_hidden: false
+      name: mean_correlation
+      type: number
+    - admin_ui: {order: 5, width: 200}
+      client_hidden: false
+      name: mean_value
+      type: number
+    - admin_ui: {order: 6, width: 200}
+      client_hidden: false
+      name: n_players
+      type: number
+    - admin_ui: {order: 7, width: 200}
+      client_hidden: false
+      name: n_players_excluded
+      type: number
+    - admin_ui: {order: 8, width: 200}
+      client_hidden: false
+      name: mean_n_sets
+      type: number
+    - admin_ui: {order: 9, width: 200}
+      client_hidden: false
+      name: total_sets
+      type: number
+    - admin_ui: {order: 10, width: 200}
+      client_hidden: false
+      name: created_at
+      type: datetime
+    server: full
+    title: skill_level_results
   strength_weakness_criteria:
     client: none
     columns:

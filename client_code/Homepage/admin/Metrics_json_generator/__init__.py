@@ -380,3 +380,9 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
     anvil.alert(f"De-identification Test Results : {result}")
     pass
 
+  @anvil.handle("skill_level_button", "click")
+  def skill_level_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    result = anvil.server.call('run_skill_level_correlation_analysis')
+    pass
+

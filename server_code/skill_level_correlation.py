@@ -1,0 +1,778 @@
+"""
+Skill Level Correlation Analysis
+=================================
+Calculates Fisher Z-weighted correlations between set-level metrics
+and point_pct (points won %) across all defined skill levels.
+
+New Anvil data tables required:
+  skill_level_def     — defines each skill level and its player list
+  skill_level_results — stores the output of each analysis run
+
+How to call from browser:
+  anvil.server.call('run_skill_level_correlation_analysis')
+  This launches a background task and returns a task_id for polling.
+
+Author: Beach Volleyball Analytics
+"""
+
+import anvil.tables as tables
+import anvil.tables.query as q
+from anvil.tables import app_tables
+import anvil.server
+import pandas as pd
+import numpy as np
+from datetime import datetime
+import uuid
+
+from .logger_utils import log_debug, log_info, log_error, log_critical
+from server_functions import (
+get_ppr_data,
+monitor_performance,
+MONITORING_LEVEL_OFF,
+MONITORING_LEVEL_CRITICAL,
+MONITORING_LEVEL_IMPORTANT,
+MONITORING_LEVEL_DETAILED,
+MONITORING_LEVEL_VERBOSE
+)
+from generate_set_level_metrics import (
+get_core_metrics_from_dictionary,
+calculate_metric_for_set,
+get_set_metadata
+)
+
+
+# ============================================================================
+# CONSTANTS
+# ============================================================================
+
+# Point outcomes that count as a WIN for the player's team
+WON_OUTCOMES  = ['TSA', 'FBK', 'TK']
+LOST_OUTCOMES = ['TSE', 'FBE', 'TE']
+
+# Minimum sets needed per player for reliable correlation
+# 500 points / 37 points per set ≈ 13-14 sets minimum
+MIN_POINTS_DEFAULT = 500
+
+# De-identified leagues — ppr uses player_uuid instead of "team number shortname"
+# Add new leagues here as they are de-identified
+DEIDENTIFIED_LEAGUES = [
+  {'league': 'NCAA', 'gender': 'W', 'year': '2026'},
+]
+
+
+# ============================================================================
+# FISHER Z HELPERS
+# ============================================================================
+
+def fisher_z(r):
+  """
+  Convert a Pearson correlation coefficient to Fisher Z score.
+  Clips r to (-0.9999, 0.9999) to avoid arctanh blowing up at ±1.
+  """
+  r_clipped = float(np.clip(r, -0.9999, 0.9999))
+  return float(np.arctanh(r_clipped))
+
+
+def z_to_r(z):
+  """Convert a Fisher Z score back to a Pearson correlation coefficient."""
+  return float(np.tanh(z))
+
+
+def fisher_z_weighted_mean(correlations, weights):
+  """
+  Calculate a Fisher Z weighted mean correlation.
+
+  Args:
+    correlations : list of float  — Pearson r values per player
+    weights      : list of float  — weight per player (typically n_sets)
+
+  Returns:
+    float: weighted mean correlation (back in r space), or None if no valid data
+  """
+  valid = [
+    (r, w) for r, w in zip(correlations, weights)
+    if r is not None and w is not None and not np.isnan(r) and w > 0
+  ]
+  if not valid:
+    return None
+
+  z_values = [fisher_z(r) * w for r, w in valid]
+  total_weight = sum(w for _, w in valid)
+
+  if total_weight == 0:
+    return None
+
+  return z_to_r(sum(z_values) / total_weight)
+
+
+# ============================================================================
+# PLAYER IDENTIFIER HELPERS
+# ============================================================================
+
+def is_deidentified(league, gender, year):
+  """
+  Return True if this league/gender/year uses player_uuid in ppr_df
+  instead of 'team number shortname'.
+  """
+  year_str = str(year)
+  for d in DEIDENTIFIED_LEAGUES:
+    if d['league'] == league and d['gender'] == gender and d['year'] == year_str:
+      return True
+  return False
+
+
+def resolve_player_identifier(p_row):
+  """
+  Given a master_player row, return the string used to identify
+  this player in ppr_df — either player_uuid or 'team number shortname'.
+
+  Args:
+    p_row: Anvil row from master_player table
+
+  Returns:
+    str: player identifier for filtering ppr_df, or None on failure
+  """
+  league = p_row['league']
+  gender = p_row['gender']
+  year   = str(p_row['year'])
+
+  if is_deidentified(league, gender, year):
+    uid = p_row['player_uuid']
+    if uid:
+      log_debug(f"De-id league: using uuid {uid} for {p_row['shortname']}")
+      return uid
+    else:
+      log_error(f"No player_uuid for {p_row['team']} {p_row['number']} {p_row['shortname']}")
+      return None
+  else:
+    identifier = f"{p_row['team']} {p_row['number']} {p_row['shortname']}"
+    log_debug(f"Named league: using '{identifier}'")
+    return identifier
+
+
+# ============================================================================
+# PPR DATA FETCHING
+# ============================================================================
+
+def get_ppr_for_player_row(p_row):
+  """
+  Fetch the ppr_df for the league/gender/year of a master_player row.
+  Always fetches as team='League' to get all data.
+
+  Args:
+    p_row: Anvil row from master_player
+
+  Returns:
+    pd.DataFrame or None
+  """
+  league = p_row['league']
+  gender = p_row['gender']
+  year   = str(p_row['year'])
+
+  log_debug(f"Fetching ppr for {league} | {gender} | {year} | League")
+
+  try:
+    ppr_df = get_ppr_data(league, gender, year, 'League', scout=False)
+    if ppr_df is None or (isinstance(ppr_df, list)):
+      log_error(f"get_ppr_data returned no data for {league}|{gender}|{year}")
+      return None
+    if ppr_df.empty:
+      log_error(f"ppr_df is empty for {league}|{gender}|{year}")
+      return None
+    log_info(f"Fetched {len(ppr_df)} rows for {league}|{gender}|{year}")
+    return ppr_df
+  except Exception as e:
+    log_error(f"Error fetching ppr for {league}|{gender}|{year}: {e}")
+    return None
+
+
+# ============================================================================
+# SET-LEVEL DATA BUILDER
+# ============================================================================
+
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)
+def build_set_level_df_for_player(ppr_df, player_id, min_points):
+  """
+  Build a flat DataFrame with one row per set for this player.
+  Each row has all core metric values + point_pct (points won %).
+
+  Args:
+    ppr_df     : full ppr DataFrame for this league/year
+    player_id  : string identifier (uuid or 'team number shortname')
+    min_points : minimum total points for player to be included
+
+  Returns:
+    dict with keys:
+      'set_df'        : pd.DataFrame (one row per set) or None
+      'n_points'      : total points found for this player
+      'n_sets'        : sets included
+      'n_sets_excl'   : sets excluded (too few points in set)
+      'excluded'      : True if player excluded due to min_points
+  """
+  result = {
+    'set_df': None,
+    'n_points': 0,
+    'n_sets': 0,
+    'n_sets_excl': 0,
+    'excluded': False
+  }
+
+  # Filter ppr_df to rows involving this player
+  player_df = ppr_df[
+    (ppr_df['player_a1'] == player_id) |
+    (ppr_df['player_a2'] == player_id) |
+    (ppr_df['player_b1'] == player_id) |
+    (ppr_df['player_b2'] == player_id)
+    ]
+
+  if player_df.empty:
+    log_info(f"No ppr rows found for player {player_id}")
+    result['excluded'] = True
+    return result
+
+  n_points = len(player_df)
+  result['n_points'] = n_points
+
+  if n_points < min_points:
+    log_info(f"Player {player_id}: {n_points} points < {min_points} minimum — excluded")
+    result['excluded'] = True
+    return result
+
+  log_info(f"Player {player_id}: {n_points} points — proceeding")
+
+  # Get core metrics from dictionary (same as generate_set_level_metrics)
+  core_metrics = get_core_metrics_from_dictionary()
+  if not core_metrics:
+    log_error("No core metrics found in metric_dictionary")
+    return result
+
+  # Find all unique (video_id, set) combinations for this player
+  set_combos = player_df.groupby(['video_id', 'set']).size().reset_index(name='pt_count')
+
+  rows = []
+
+  for _, combo_row in set_combos.iterrows():
+    video_id  = combo_row['video_id']
+    set_num   = combo_row['set']
+    pt_count  = combo_row['pt_count']
+
+    # Skip sets that are too short to be real sets
+    if pt_count < 10:
+      log_debug(f"Skipping set {video_id}-{set_num}: only {pt_count} points")
+      result['n_sets_excl'] += 1
+      continue
+
+    # Filter to this set
+    set_df = player_df[
+      (player_df['video_id'] == video_id) &
+      (player_df['set']      == set_num)
+    ]
+
+    # ── Calculate point_pct ──────────────────────────────────────────────────
+    if 'point_outcome_team' not in set_df.columns or 'point_outcome' not in set_df.columns:
+      log_error(f"Missing point_outcome columns in set {video_id}-{set_num}")
+      result['n_sets_excl'] += 1
+      continue
+
+    player_is_outcome_team = set_df['point_outcome_team'].str.contains(
+      player_id, na=False, regex=False
+    )
+    points_won = len(set_df[
+      (player_is_outcome_team  & set_df['point_outcome'].isin(WON_OUTCOMES)) |
+      (~player_is_outcome_team & set_df['point_outcome'].isin(LOST_OUTCOMES))
+    ])
+    total_pts  = len(set_df)
+    point_pct  = points_won / total_pts if total_pts > 0 else None
+
+    if point_pct is None:
+      result['n_sets_excl'] += 1
+      continue
+
+    # ── Calculate core metrics for this set ─────────────────────────────────
+    row = {
+      'video_id'    : video_id,
+      'set'         : set_num,
+      'total_points': total_pts,
+      'points_won'  : points_won,
+      'point_pct'   : point_pct,
+    }
+
+    for metric_row in core_metrics:
+      metric_result = calculate_metric_for_set(metric_row, set_df, player_id)
+      if metric_result and metric_result['value'] is not None:
+        row[metric_result['metric_id']] = metric_result['value']
+
+    rows.append(row)
+    result['n_sets'] += 1
+
+  if not rows:
+    log_info(f"No valid sets built for player {player_id}")
+    return result
+
+  set_df_flat = pd.DataFrame(rows)
+  result['set_df'] = set_df_flat
+  log_info(f"Player {player_id}: built set_df with {len(set_df_flat)} sets, "
+           f"{len(set_df_flat.columns)} columns")
+  return result
+
+
+# ============================================================================
+# PLAYER-LEVEL CORRELATIONS
+# ============================================================================
+
+def calculate_player_correlations(set_df):
+  """
+  Calculate Pearson correlation of every metric column vs point_pct
+  for a single player's set-level DataFrame.
+
+  Skips _n columns (attempt counts) and non-numeric columns.
+
+  Args:
+    set_df: pd.DataFrame with one row per set
+
+  Returns:
+    dict: { metric_id: {'r': float, 'n': int} }
+         r = correlation, n = number of sets used
+  """
+  results = {}
+
+  if set_df is None or set_df.empty:
+    return results
+
+  if 'point_pct' not in set_df.columns:
+    log_error("point_pct column missing from set_df")
+    return results
+
+  # Keep only numeric columns
+  numeric_df = set_df.select_dtypes(include=['float64', 'int64', 'float32', 'int32']).copy()
+
+  # Drop housekeeping columns
+  drop_cols = ['point_pct', 'points_won', 'total_points', 'video_id', 'set']
+  numeric_df = numeric_df.drop(columns=[c for c in drop_cols if c in numeric_df.columns])
+
+  # Drop _n columns (attempt counts — not meaningful to correlate)
+  n_cols = [c for c in numeric_df.columns if c.endswith('_n')]
+  numeric_df = numeric_df.drop(columns=n_cols)
+
+  # Drop zero-variance columns
+  numeric_df = numeric_df.loc[:, numeric_df.std() > 0]
+
+  point_pct = set_df['point_pct'].fillna(set_df['point_pct'].mean())
+
+  for col in numeric_df.columns:
+    series = numeric_df[col].fillna(numeric_df[col].mean())
+    valid  = pd.concat([series, point_pct], axis=1).dropna()
+
+    if len(valid) < 4:   # Need at least 4 sets for any meaningful correlation
+      continue
+
+    try:
+      r = float(valid[col].corr(valid['point_pct']))
+      if not np.isnan(r):
+        results[col] = {'r': round(r, 4), 'n': len(valid)}
+    except Exception as e:
+      log_debug(f"Correlation failed for {col}: {e}")
+
+  return results
+
+
+# ============================================================================
+# LEVEL-LEVEL AGGREGATION
+# ============================================================================
+
+def aggregate_level_correlations(player_corr_list):
+  """
+  Aggregate per-player correlations into level-mean correlations
+  using Fisher Z weighting by number of sets.
+
+  Args:
+    player_corr_list: list of dicts from calculate_player_correlations()
+                      Each dict: { metric_id: {'r': float, 'n': int} }
+
+  Returns:
+    dict: { metric_id: {
+              'mean_r'         : float,   Fisher Z weighted mean
+              'n_players'      : int,     players contributing
+              'mean_n_sets'    : float,   average sets per player
+              'total_sets'     : int,     total sets across all players
+            } }
+  """
+  # Collect all metric ids seen
+  all_metrics = set()
+  for pc in player_corr_list:
+    all_metrics.update(pc.keys())
+
+  results = {}
+
+  for metric_id in all_metrics:
+    correlations = []
+    weights      = []
+    n_sets_list  = []
+
+    for pc in player_corr_list:
+      if metric_id in pc:
+        r = pc[metric_id]['r']
+        n = pc[metric_id]['n']
+        if r is not None and n is not None and n > 0:
+          correlations.append(r)
+          weights.append(n)       # weight by number of sets
+          n_sets_list.append(n)
+
+    if not correlations:
+      continue
+
+    mean_r = fisher_z_weighted_mean(correlations, weights)
+    if mean_r is None:
+      continue
+
+    results[metric_id] = {
+      'mean_r'       : round(mean_r, 4),
+      'n_players'    : len(correlations),
+      'mean_n_sets'  : round(sum(n_sets_list) / len(n_sets_list), 1),
+      'total_sets'   : sum(n_sets_list),
+    }
+
+  return results
+
+
+# ============================================================================
+# MAIN ANALYSIS FUNCTION — one skill level
+# ============================================================================
+
+@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
+def analyse_skill_level(level_row, run_id):
+  """
+  Run the full correlation analysis for one skill level.
+
+  Args:
+    level_row : Anvil row from skill_level_def table
+    run_id    : str — unique ID for this analysis run
+
+  Returns:
+    dict: {
+      'level_id'         : int,
+      'level_name'       : str,
+      'n_players_used'   : int,
+      'n_players_excl'   : int,
+      'metric_results'   : dict  from aggregate_level_correlations()
+      'player_summaries' : list  — one dict per player
+      'mean_values'      : dict  { metric_id: mean_value }
+    }
+  """
+  level_id   = level_row['level_id']
+  level_name = level_row['level_name']
+  min_points = level_row['min_points'] or MIN_POINTS_DEFAULT
+
+  log_info(f"=== Analysing level {level_id}: {level_name} ===")
+  log_info(f"Min points threshold: {min_points}")
+
+  player_rows = list(level_row['player_list'])  # linked master_player rows
+
+  if not player_rows:
+    log_error(f"No players defined for level {level_id} ({level_name})")
+    return None
+
+  log_info(f"Level {level_id}: {len(player_rows)} players defined")
+
+  # ── Cache ppr_df by league/gender/year to avoid re-fetching ─────────────
+  ppr_cache = {}   # key: "league|gender|year"
+
+  player_corr_list  = []   # one entry per included player
+  player_summaries  = []   # human-readable summary per player
+  n_excluded        = 0
+
+  # ── Per-player value lists for mean_values ───────────────────────────────
+  metric_value_lists = {}  # { metric_id: [values] }
+
+  for p_row in player_rows:
+    league = p_row['league']
+    gender = p_row['gender']
+    year   = str(p_row['year'])
+    cache_key = f"{league}|{gender}|{year}"
+
+    # Fetch ppr_df (use cache if already loaded)
+    if cache_key not in ppr_cache:
+      ppr_df = get_ppr_for_player_row(p_row)
+      ppr_cache[cache_key] = ppr_df
+    else:
+      ppr_df = ppr_cache[cache_key]
+
+    if ppr_df is None:
+      log_error(f"No ppr data for {cache_key} — skipping player {p_row['shortname']}")
+      n_excluded += 1
+      continue
+
+    # Resolve identifier (uuid or name string)
+    player_id = resolve_player_identifier(p_row)
+    if not player_id:
+      n_excluded += 1
+      continue
+
+    player_label = f"{p_row['team']} {p_row['number']} {p_row['shortname']}"
+
+    # Build set-level DataFrame for this player
+    build_result = build_set_level_df_for_player(ppr_df, player_id, min_points)
+
+    if build_result['excluded'] or build_result['set_df'] is None:
+      log_info(f"Player {player_label} excluded "
+               f"(points={build_result['n_points']}, min={min_points})")
+      n_excluded += 1
+      player_summaries.append({
+        'player'   : player_label,
+        'league'   : league,
+        'year'     : year,
+        'status'   : 'excluded',
+        'n_points' : build_result['n_points'],
+        'n_sets'   : 0,
+        'reason'   : 'below_min_points' if build_result['n_points'] < min_points else 'no_data'
+      })
+      continue
+
+    set_df     = build_result['set_df']
+    n_sets     = build_result['n_sets']
+    n_points   = build_result['n_points']
+
+    log_info(f"Player {player_label}: {n_sets} sets, {n_points} points")
+
+    # Calculate per-player correlations
+    player_corr = calculate_player_correlations(set_df)
+
+    if not player_corr:
+      log_info(f"Player {player_label}: no correlations calculated — excluding")
+      n_excluded += 1
+      continue
+
+    player_corr_list.append(player_corr)
+
+    # Collect metric values for level means
+    metric_cols = [c for c in set_df.columns
+                   if c not in ('video_id','set','total_points','points_won','point_pct')
+                   and not c.endswith('_n')]
+    for col in metric_cols:
+      vals = set_df[col].dropna().tolist()
+      if vals:
+        if col not in metric_value_lists:
+          metric_value_lists[col] = []
+        metric_value_lists[col].extend(vals)
+
+    player_summaries.append({
+      'player'       : player_label,
+      'league'       : league,
+      'year'         : year,
+      'status'       : 'included',
+      'n_points'     : n_points,
+      'n_sets'       : n_sets,
+      'n_metrics'    : len(player_corr),
+      'correlations' : player_corr   # per-metric {r, n}
+    })
+
+  log_info(f"Level {level_id}: {len(player_corr_list)} players included, "
+           f"{n_excluded} excluded")
+
+  if not player_corr_list:
+    log_error(f"Level {level_id}: no players with valid data — cannot aggregate")
+    return None
+
+  # ── Aggregate to level means ─────────────────────────────────────────────
+  metric_results = aggregate_level_correlations(player_corr_list)
+
+  # ── Mean metric values across all included players ───────────────────────
+  mean_values = {
+    metric_id: round(float(np.mean(vals)), 4)
+    for metric_id, vals in metric_value_lists.items()
+    if vals
+  }
+
+  log_info(f"Level {level_id}: aggregated {len(metric_results)} metrics")
+
+  return {
+    'level_id'         : level_id,
+    'level_name'       : level_name,
+    'n_players_used'   : len(player_corr_list),
+    'n_players_excl'   : n_excluded,
+    'metric_results'   : metric_results,
+    'player_summaries' : player_summaries,
+    'mean_values'      : mean_values,
+  }
+
+
+# ============================================================================
+# RESULTS WRITER
+# ============================================================================
+
+def save_level_results(level_result, run_id):
+  """
+  Save the aggregated results for one skill level to skill_level_results table.
+  One row per metric per level.
+
+  skill_level_results columns needed:
+    run_id, level_id, level_name, metric_id,
+    mean_correlation, mean_value,
+    n_players, n_players_excluded, mean_n_sets, total_sets,
+    created_at
+  """
+  if not level_result:
+    return
+
+  level_id   = level_result['level_id']
+  level_name = level_result['level_name']
+  n_excl     = level_result['n_players_excl']
+  created_at = datetime.now()
+
+  metric_results = level_result['metric_results']
+  mean_values    = level_result['mean_values']
+
+  rows_saved = 0
+
+  for metric_id, stats in metric_results.items():
+    try:
+      app_tables.skill_level_results.add_row(
+        run_id            = run_id,
+        level_id          = level_id,
+        level_name        = level_name,
+        metric_id         = metric_id,
+        mean_correlation  = stats['mean_r'],
+        mean_value        = mean_values.get(metric_id),
+        n_players         = stats['n_players'],
+        n_players_excluded= n_excl,
+        mean_n_sets       = stats['mean_n_sets'],
+        total_sets        = stats['total_sets'],
+        created_at        = created_at
+      )
+      rows_saved += 1
+    except Exception as e:
+      log_error(f"Error saving result for {metric_id} level {level_id}: {e}")
+
+  log_info(f"Level {level_id}: saved {rows_saved} metric result rows")
+
+
+# ============================================================================
+# BACKGROUND TASK
+# ============================================================================
+
+@anvil.server.background_task
+def run_skill_level_correlations():
+  """
+  Background task: loop over all active skill levels in skill_level_def,
+  run correlation analysis for each, save results to skill_level_results.
+  """
+  run_id = str(uuid.uuid4())[:8]   # short unique ID for this run
+  log_info(f"=== skill_level_correlations START | run_id={run_id} ===")
+
+  # Fetch active levels ordered by level_id
+  try:
+    level_rows = list(app_tables.skill_level_def.search(active=True))
+  except Exception as e:
+    log_critical(f"Could not fetch skill_level_def: {e}")
+    return {'status': 'error', 'message': str(e)}
+
+  level_rows = sorted(level_rows, key=lambda r: str(r['level_id']))
+  log_info(f"Found {len(level_rows)} active skill levels to process")
+
+  results_summary = []
+
+  for level_row in level_rows:
+    try:
+      level_result = analyse_skill_level(level_row, run_id)
+
+      if level_result:
+        save_level_results(level_result, run_id)
+        results_summary.append({
+          'level_id'       : level_result['level_id'],
+          'level_name'     : level_result['level_name'],
+          'n_players_used' : level_result['n_players_used'],
+          'n_players_excl' : level_result['n_players_excl'],
+          'n_metrics'      : len(level_result['metric_results']),
+          'status'         : 'ok'
+        })
+      else:
+        results_summary.append({
+          'level_id'  : level_row['level_id'],
+          'level_name': level_row['level_name'],
+          'status'    : 'failed'
+        })
+
+    except Exception as e:
+      log_critical(f"Error processing level {level_row['level_id']}: {e}")
+      results_summary.append({
+        'level_id'  : level_row['level_id'],
+        'level_name': level_row['level_name'],
+        'status'    : 'error',
+        'error'     : str(e)
+      })
+
+  log_info(f"=== skill_level_correlations COMPLETE | run_id={run_id} ===")
+  for s in results_summary:
+    log_info(f"  Level {s['level_id']} ({s['level_name']}): {s['status']} "
+             f"— {s.get('n_players_used','?')} players, {s.get('n_metrics','?')} metrics")
+
+  return {'status': 'complete', 'run_id': run_id, 'levels': results_summary}
+
+
+# ============================================================================
+# SERVER-CALLABLE ENTRY POINT
+# ============================================================================
+
+@anvil.server.callable
+def run_skill_level_correlation_analysis():
+  """
+  Called from browser to kick off the background analysis.
+  Returns task object that browser can poll.
+
+  Usage from browser:
+    task = anvil.server.call('run_skill_level_correlation_analysis')
+    # poll task.get_state(), task.get_return_value() etc.
+  """
+  log_info("run_skill_level_correlation_analysis called from browser")
+  task = anvil.server.launch_background_task('run_skill_level_correlations')
+  return task
+
+
+# ============================================================================
+# RESULTS RETRIEVAL
+# ============================================================================
+
+@anvil.server.callable
+def get_skill_level_results(run_id=None):
+  """
+  Retrieve results from skill_level_results table.
+
+  Args:
+    run_id: optional — if None, returns the most recent run
+
+  Returns:
+    list of dicts suitable for displaying in a DataGrid
+  """
+  try:
+    if run_id:
+      rows = list(app_tables.skill_level_results.search(run_id=run_id))
+    else:
+      # Get most recent run_id
+      all_rows = list(app_tables.skill_level_results.search(
+        tables.order_by('created_at', ascending=False)
+      ))
+      if not all_rows:
+        return []
+      latest_run_id = all_rows[0]['run_id']
+      rows = [r for r in all_rows if r['run_id'] == latest_run_id]
+
+    return [
+      {
+        'run_id'             : r['run_id'],
+        'level_id'           : r['level_id'],
+        'level_name'         : r['level_name'],
+        'metric_id'          : r['metric_id'],
+        'mean_correlation'   : r['mean_correlation'],
+        'mean_value'         : r['mean_value'],
+        'n_players'          : r['n_players'],
+        'n_players_excluded' : r['n_players_excluded'],
+        'mean_n_sets'        : r['mean_n_sets'],
+        'total_sets'         : r['total_sets'],
+        'created_at'         : str(r['created_at']),
+      }
+      for r in rows
+    ]
+
+  except Exception as e:
+    log_error(f"Error retrieving skill_level_results: {e}")
+    return []
