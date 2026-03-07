@@ -42,6 +42,46 @@ get_set_metadata
 
 
 # ============================================================================
+# ANALYSIS METRICS BUILDER
+# ============================================================================
+
+def get_analysis_metrics():
+  """
+  Return the full list of metric rows to calculate per set.
+
+  Combines:
+    1. All metric_dictionary rows where metric_category = 'core'
+    2. Any additional rows listed in EXTRA_METRIC_IDS (by metric_id),
+       regardless of their category.
+
+  Returns:
+    list of metric_dictionary row objects (duplicates removed)
+  """
+  core_metrics = get_core_metrics_from_dictionary()
+  core_ids     = {m['metric_id'] for m in core_metrics}
+
+  extra_metrics = []
+  for metric_id in EXTRA_METRIC_IDS:
+    if metric_id in core_ids:
+      log_debug(f"Extra metric '{metric_id}' already in core — skipping duplicate")
+      continue
+    try:
+      row = app_tables.metric_dictionary.get(metric_id=metric_id)
+      if row:
+        extra_metrics.append(row)
+        log_debug(f"Added extra metric: {metric_id}")
+      else:
+        log_error(f"Extra metric '{metric_id}' not found in metric_dictionary — skipping")
+    except Exception as e:
+      log_error(f"Error fetching extra metric '{metric_id}': {e}")
+
+  all_metrics = core_metrics + extra_metrics
+  log_info(f"Analysis metrics: {len(core_metrics)} core + {len(extra_metrics)} extra "
+           f"= {len(all_metrics)} total")
+  return all_metrics
+
+
+# ============================================================================
 # CONSTANTS
 # ============================================================================
 
@@ -57,6 +97,20 @@ MIN_POINTS_DEFAULT = 500
 # Add new leagues here as they are de-identified
 DEIDENTIFIED_LEAGUES = [
   {'league': 'NCAA', 'gender': 'W', 'year': '2026'},
+]
+
+# ---------------------------------------------------------------------------
+# EXTRA METRICS
+# ---------------------------------------------------------------------------
+# Metric IDs from metric_dictionary that are NOT category='core' but we still
+# want included in the skill-level correlation analysis.
+# Add new metric_ids here — no other code changes needed.
+# ---------------------------------------------------------------------------
+EXTRA_METRIC_IDS = [
+  'tcr_r',       # TCR when receiving serve
+  'tcr_s',       # TCR when serving
+  't_eff_r',     # Transition efficiency when receiving
+  't_eff_s'     # Transition efficiency when serving
 ]
 
 
@@ -240,10 +294,10 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
 
   log_info(f"Player {player_id}: {n_points} points — proceeding")
 
-  # Get core metrics from dictionary (same as generate_set_level_metrics)
-  core_metrics = get_core_metrics_from_dictionary()
+  # Get metrics to calculate: core + any extras defined in EXTRA_METRIC_IDS
+  core_metrics = get_analysis_metrics()
   if not core_metrics:
-    log_error("No core metrics found in metric_dictionary")
+    log_error("No metrics found — check metric_dictionary and EXTRA_METRIC_IDS")
     return result
 
   # Find all unique (video_id, set) combinations for this player
@@ -266,7 +320,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     set_df = player_df[
       (player_df['video_id'] == video_id) &
       (player_df['set']      == set_num)
-    ]
+      ]
 
     # ── Calculate point_pct ──────────────────────────────────────────────────
     if 'point_outcome_team' not in set_df.columns or 'point_outcome' not in set_df.columns:
@@ -280,7 +334,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     points_won = len(set_df[
       (player_is_outcome_team  & set_df['point_outcome'].isin(WON_OUTCOMES)) |
       (~player_is_outcome_team & set_df['point_outcome'].isin(LOST_OUTCOMES))
-    ])
+      ])
     total_pts  = len(set_df)
     point_pct  = points_won / total_pts if total_pts > 0 else None
 
