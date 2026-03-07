@@ -890,46 +890,25 @@ def populate_filters_from_rpt_mgr_table(rpt_r, p_r):
 
   if p_r is not None:
     if rpt_type == 'player':
-      # Check if this is a de-identified league (NCAA W 2026 is the first one)
-      # p_r is a row from master_player, so it has league, gender, year, team fields
-      p_league = p_r.get('league', '') if hasattr(p_r, 'get') else p_r['league']
-      p_gender = p_r.get('gender', '') if hasattr(p_r, 'get') else p_r['gender']
-      p_year   = str(p_r.get('year', ''))  if hasattr(p_r, 'get') else str(p_r['year'])
-      rpt_team = rpt_r['team']
-
-      # De-identified leagues: ppr uses player_uuid instead of "team number shortname"
-      # Currently only NCAA W 2026, but structured as an if so you can add more later
-      is_deidentified_league = (
-        rpt_team == 'League' and 
-        p_league == 'NCAA' and 
-        p_gender == 'W' and 
-        p_year == '2026'
+      # All leagues are now de-identified — always use player_uuid
+      player_row = app_tables.master_player.get(
+        league=p_r['league'],
+        gender=p_r['gender'],
+        year=p_r['year'],
+        team=p_r['team'],
+        number=p_r['number'],
+        shortname=p_r['shortname']
       )
-
-      if is_deidentified_league:
-        # Look up the player_uuid from master_player
-        from anvil.tables import app_tables
-        player_row = app_tables.master_player.get(
-          league=p_league,
-          gender=p_gender,
-          year=str(p_year),
-          team=p_r['team'],
-          number=p_r['number'],
-          shortname=p_r['shortname']
-        )
-        if player_row and player_row['player_uuid']:
-          rpt_filters['player'] = player_row['player_uuid']
-          log_info(f"League de-id: mapped {p_r['shortname']} -> {player_row['player_uuid']}")
-        else:
-          # Fallback: log a warning and use the old format (will return 0 rows, but won't crash)
-          log_error(f"Could not find player_uuid for {p_r['team']} {p_r['number']} {p_r['shortname']} in master_player — using name format (will likely return no data)")
-          rpt_filters['player'] = p_r['team'] + " " + str(p_r['number']) + ' ' + p_r['shortname']
+      if player_row and player_row['player_uuid']:
+        rpt_filters['player'] = player_row['player_uuid']
+        log_info(f"De-id lookup: mapped {p_r['shortname']} -> {player_row['player_uuid']}")
       else:
-        # Normal case: use "team number shortname" format
+        # Fallback: use old "team number shortname" format if no uuid found
+        log_error(f"No player_uuid found for {p_r['team']} {p_r['number']} {p_r['shortname']} — falling back to name format")
         rpt_filters['player'] = p_r['team'] + " " + str(p_r['number']) + ' ' + p_r['shortname']
-
     elif rpt_type == 'pair':
       rpt_filters['pair'] = p_r['pair']
+    
 
   if rpt_r['comp_l1'] is not None:
     rpt_filters['comp_l1'] = rpt_r['comp_l1']
