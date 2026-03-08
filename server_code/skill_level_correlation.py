@@ -349,7 +349,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     # ── Calculate core metrics for this set ─────────────────────────────────
     row = {
       'video_id'    : video_id,
-      'set'         : set_num,
+    'set'         : set_num,
       'total_points': total_pts,
       'points_won'  : points_won,
       'point_pct'   : point_pct,
@@ -660,14 +660,8 @@ def analyse_skill_level(level_row, run_id):
 
 def save_level_results(level_result, run_id):
   """
-  Save the aggregated results for one skill level to skill_level_results table.
+  Save the aggregated set-level results for one skill level to skill_level_results.
   One row per metric per level.
-
-  skill_level_results columns needed:
-    run_id, level_id, level_name, metric_id,
-    mean_correlation, mean_value,
-    n_players, n_players_excluded, mean_n_sets, total_sets,
-    created_at
   """
   if not level_result:
     return
@@ -685,23 +679,25 @@ def save_level_results(level_result, run_id):
   for metric_id, stats in metric_results.items():
     try:
       app_tables.skill_level_results.add_row(
-        run_id            = run_id,
-        level_id          = level_id,
-        level_name        = level_name,
-        metric_id         = metric_id,
-        mean_correlation  = stats['mean_r'],
-        mean_value        = mean_values.get(metric_id),
-        n_players         = stats['n_players'],
-        n_players_excluded= n_excl,
-        mean_n_sets       = stats['mean_n_sets'],
-        total_sets        = stats['total_sets'],
-        created_at        = created_at
+        run_id             = run_id,
+        level_id           = level_id,
+        level_name         = level_name,
+        metric_id          = metric_id,
+        mean_correlation   = stats['mean_r'],
+        mean_value         = mean_values.get(metric_id),
+        n_players          = stats['n_players'],
+        n_players_excluded = n_excl,
+        mean_n_sets        = stats['mean_n_sets'],
+        total_sets         = stats['total_sets'],
+        analysis_type      = 'set_level',
+        outcome_type       = 'point_pct',
+        created_at         = created_at,
       )
       rows_saved += 1
     except Exception as e:
       log_error(f"Error saving result for {metric_id} level {level_id}: {e}")
 
-  log_info(f"Level {level_id}: saved {rows_saved} metric result rows")
+  log_info(f"Level {level_id}: saved {rows_saved} set-level result rows")
 
 
 
@@ -782,7 +778,7 @@ def build_point_level_df(ppr_df, player_id, outcome_type):
   player_df = ppr_df[
     (ppr_df['att_player'] == player_id) &
     (ppr_df['point_outcome'].isin(target_outcomes))
-    ].copy()
+  ].copy()
 
   n_points = len(player_df)
   result['n_points'] = n_points
@@ -1030,28 +1026,24 @@ def save_point_level_results(point_result, run_id, analysis_type):
 def run_skill_level_correlations():
   """
   Background task: loop over all active skill levels in skill_level_def.
-  Runs BOTH analyses for each level:
-    1. Set-level   — metrics vs point_pct (points won % per set)
-    2. Point-level — physical measurements vs FBK/FBE and TK/TE outcomes
+  Runs three analyses per level, sharing one ppr_cache across all of them:
 
-  All three result types are saved to skill_level_results, distinguished
-  by the analysis_type column:
-    'set_level'         — set-level metric correlations (original analysis)
-    'point_level_fb'    — point-level first-ball correlations (FBK/FBE)
-    'point_level_trans' — point-level transition correlations (TK/TE)
+    1. set_level         — set-level metrics vs point_pct
+    2. point_level_fb    — point-level physical measurements vs FBK/FBE
+    3. point_level_trans — point-level physical measurements vs TK/TE
 
-  ppr_df is fetched once per league/gender/year/team combination and cached
-  across all three analyses to avoid redundant data fetching.
+  Cleanup: deletes ALL rows from skill_level_results before writing new ones,
+  so the table always holds exactly one run (the most recent).
 
-  team defaults to 'League' for the skill-level research analysis.
-  For future player-specific analysis, call analyse_point_level_for_level()
-  directly with the appropriate team name.
+  team = 'League' throughout — fetches all data regardless of team.
+  For player-specific analysis call analyse_point_level_for_level() directly.
   """
   run_id = str(uuid.uuid4())[:8]
-  team   = 'League'             # always 'League' for skill-level research
+  team   = 'League'
 
-  log_info(f"=== skill_level_correlations START | run_id={run_id} | team={team} ===")
+  log_info(f"=== skill_level_correlations START | run_id={run_id} ===")
 
+  # ── Fetch active levels ────────────────────────────────────────────────────
   try:
     level_rows = list(app_tables.skill_level_def.search(active=True))
   except Exception as e:
@@ -1061,8 +1053,19 @@ def run_skill_level_correlations():
   level_rows = sorted(level_rows, key=lambda r: str(r['level_id']))
   log_info(f"Found {len(level_rows)} active skill levels to process")
 
-  # Shared ppr cache — populated on first access, reused across all analyses
-  # Key: "league|gender|year|team"
+  # ── Delete previous results so we always have exactly one copy ────────────
+  try:
+    old_rows = list(app_tables.skill_level_results.search())
+    for row in old_rows:
+      row.delete()
+    log_info(f"Deleted {len(old_rows)} previous result rows")
+  except Exception as e:
+    log_error(f"Could not delete old results (continuing anyway): {e}")
+
+  # ── Shared ppr cache — one fetch per league/gender/year, reused by all 3 ──
+  # Key: "league|gender|year|League"
+  # analyse_skill_level() populates this cache as it runs.
+  # analyse_point_level_for_level() reads from it instead of re-fetching.
   ppr_cache = {}
 
   results_summary = []
@@ -1072,45 +1075,23 @@ def run_skill_level_correlations():
     level_name = level_row['level_name']
     level_ok   = True
 
-    # ── 1. Set-level analysis ──────────────────────────────────────────────
+    # ── 1. Set-level analysis (also primes ppr_cache) ─────────────────────
     try:
-      level_result = analyse_skill_level(level_row, run_id)
+      level_result = analyse_skill_level(level_row, run_id, ppr_cache=ppr_cache)
       if level_result:
         save_level_results(level_result, run_id)
-        n_players_set = level_result['n_players_used']
-        n_metrics_set = len(level_result['metric_results'])
-        log_info(f"Set-level OK: {level_id} — {n_players_set} players, "
-                 f"{n_metrics_set} metrics")
-
-        # Populate ppr_cache from what analyse_skill_level fetched
-        # (It fetches internally; we re-use those results for point-level)
-        # NOTE: analyse_skill_level uses get_ppr_for_player_row() internally
-        # and doesn't expose the cache. We prime the point-level cache here.
-        for p_row in list(level_row['player_list']):
-          league = p_row['league']
-          gender = p_row['gender']
-          year   = str(p_row['year'])
-          cache_key = f"{league}|{gender}|{year}|{team}"
-          if cache_key not in ppr_cache:
-            try:
-              df = get_ppr_data(league, gender, year, team, scout=False)
-              ppr_cache[cache_key] = df if (
-                df is not None and
-                not isinstance(df, list) and
-                not (hasattr(df, 'empty') and df.empty)
-              ) else None
-            except Exception as ce:
-              log_error(f"Cache prime failed for {cache_key}: {ce}")
-              ppr_cache[cache_key] = None
+        log_info(f"Set-level OK: {level_id} — "
+                 f"{level_result['n_players_used']} players, "
+                 f"{len(level_result['metric_results'])} metrics, "
+                 f"cache now has {len(ppr_cache)} key(s)")
       else:
-        log_error(f"Set-level analysis returned None for level {level_id}")
+        log_error(f"Set-level returned None for {level_id}")
         level_ok = False
-
     except Exception as e:
       log_critical(f"Set-level error for {level_id}: {e}")
       level_ok = False
 
-    # ── 2. Point-level: first ball (FBK / FBE) ────────────────────────────
+    # ── 2. Point-level: first ball (FBK=+1 / FBE=-1) ─────────────────────
     try:
       fb_result = analyse_point_level_for_level(
         level_row, ppr_cache, run_id,
@@ -1119,15 +1100,15 @@ def run_skill_level_correlations():
       )
       if fb_result:
         save_point_level_results(fb_result, run_id, analysis_type='point_level_fb')
-        log_info(f"Point FB OK: {level_id} — {fb_result['n_players_used']} players, "
+        log_info(f"Point FB OK: {level_id} — "
+                 f"{fb_result['n_players_used']} players, "
                  f"{len(fb_result['metric_results'])} metrics")
       else:
         log_error(f"Point-level first_ball returned None for {level_id}")
-
     except Exception as e:
       log_critical(f"Point-level first_ball error for {level_id}: {e}")
 
-    # ── 3. Point-level: transition (TK / TE) ─────────────────────────────
+    # ── 3. Point-level: transition (TK=+1 / TE=-1) ───────────────────────
     try:
       trans_result = analyse_point_level_for_level(
         level_row, ppr_cache, run_id,
@@ -1136,15 +1117,14 @@ def run_skill_level_correlations():
       )
       if trans_result:
         save_point_level_results(trans_result, run_id, analysis_type='point_level_trans')
-        log_info(f"Point TRANS OK: {level_id} — {trans_result['n_players_used']} players, "
+        log_info(f"Point TRANS OK: {level_id} — "
+                 f"{trans_result['n_players_used']} players, "
                  f"{len(trans_result['metric_results'])} metrics")
       else:
         log_error(f"Point-level transition returned None for {level_id}")
-
     except Exception as e:
       log_critical(f"Point-level transition error for {level_id}: {e}")
 
-    # ── Summary entry for this level ──────────────────────────────────────
     results_summary.append({
       'level_id'  : level_id,
       'level_name': level_name,
