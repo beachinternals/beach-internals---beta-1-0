@@ -97,6 +97,9 @@ MIN_POINTS_DEFAULT = 500
 # Add new leagues here as they are de-identified
 DEIDENTIFIED_LEAGUES = [
   {'league': 'NCAA', 'gender': 'W', 'year': '2026'},
+  {'league': 'NCAA', 'gender': 'W', 'year': '2025'},
+  {'league': 'NCAA', 'gender': 'W', 'year': '2024'},
+  {'league': 'FIVB', 'gender': 'W', 'year': '2024'},
 ]
 
 # ---------------------------------------------------------------------------
