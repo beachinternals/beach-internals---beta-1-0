@@ -324,7 +324,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     set_df = player_df[
       (player_df['video_id'] == video_id) &
       (player_df['set']      == set_num)
-      ]
+    ]
 
     # ── Calculate point_pct ──────────────────────────────────────────────────
     if 'point_outcome_team' not in set_df.columns or 'point_outcome' not in set_df.columns:
@@ -338,7 +338,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     points_won = len(set_df[
       (player_is_outcome_team  & set_df['point_outcome'].isin(WON_OUTCOMES)) |
       (~player_is_outcome_team & set_df['point_outcome'].isin(LOST_OUTCOMES))
-      ])
+    ])
     total_pts  = len(set_df)
     point_pct  = points_won / total_pts if total_pts > 0 else None
 
@@ -349,7 +349,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     # ── Calculate core metrics for this set ─────────────────────────────────
     row = {
       'video_id'    : video_id,
-    'set'         : set_num,
+      'set'         : set_num,
       'total_points': total_pts,
       'points_won'  : points_won,
       'point_pct'   : point_pct,
@@ -498,9 +498,9 @@ def aggregate_level_correlations(player_corr_list):
 # ============================================================================
 
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
-def analyse_skill_level(level_row, run_id):
+def analyse_skill_level(level_row, run_id, ppr_cache=None):
   """
-  Run the full correlation analysis for one skill level.
+  Run the full set-level correlation analysis for one skill level.
 
   Args:
     level_row : Anvil row from skill_level_def table
@@ -532,8 +532,9 @@ def analyse_skill_level(level_row, run_id):
 
   log_info(f"Level {level_id}: {len(player_rows)} players defined")
 
-  # ── Cache ppr_df by league/gender/year to avoid re-fetching ─────────────
-  ppr_cache = {}   # key: "league|gender|year"
+  # Use shared cache if provided (populated in-place for point-level reuse).
+  # Key: "league|gender|year|League" matches point-level cache key format.
+  _cache = ppr_cache if ppr_cache is not None else {}
 
   player_corr_list  = []   # one entry per included player
   player_summaries  = []   # human-readable summary per player
@@ -546,14 +547,14 @@ def analyse_skill_level(level_row, run_id):
     league = p_row['league']
     gender = p_row['gender']
     year   = str(p_row['year'])
-    cache_key = f"{league}|{gender}|{year}"
+    cache_key = f"{league}|{gender}|{year}|League"
 
-    # Fetch ppr_df (use cache if already loaded)
-    if cache_key not in ppr_cache:
+    # Fetch ppr_df (use shared cache if already loaded)
+    if cache_key not in _cache:
       ppr_df = get_ppr_for_player_row(p_row)
-      ppr_cache[cache_key] = ppr_df
+      _cache[cache_key] = ppr_df
     else:
-      ppr_df = ppr_cache[cache_key]
+      ppr_df = _cache[cache_key]
 
     if ppr_df is None:
       log_error(f"No ppr data for {cache_key} — skipping player {p_row['shortname']}")
@@ -808,17 +809,33 @@ def build_point_level_df(ppr_df, player_id, outcome_type):
 
   point_df = player_df[available_cols + ['outcome']].copy()
 
-  # Clean: replace inf/-inf, clip extreme outliers at p99, fill NaN with median
+  # Force numeric — some ppr columns may be stored as strings
   for col in available_cols:
+    point_df[col] = pd.to_numeric(point_df[col], errors='coerce')
+
+  # Drop columns that are entirely non-numeric (all NaN after conversion)
+  numeric_cols = [c for c in available_cols if not point_df[c].isna().all()]
+  point_df = point_df[numeric_cols + ['outcome']].copy()
+
+  if not numeric_cols:
+    log_error(f"No numeric measurement columns for player {player_id}")
+    result['excluded'] = True
+    return result
+
+  # Clean: replace inf/-inf, clip extreme outliers at p1/p99, fill NaN with median
+  for col in numeric_cols:
     point_df[col] = point_df[col].replace([np.inf, -np.inf], np.nan)
     if not point_df[col].isna().all():
       p99 = point_df[col].quantile(0.99)
       p01 = point_df[col].quantile(0.01)
-      point_df[col] = point_df[col].clip(lower=p01, upper=p99)
+      if p99 > p01:                          # skip if zero range
+        point_df[col] = point_df[col].clip(lower=p01, upper=p99)
       point_df[col] = point_df[col].fillna(point_df[col].median())
 
   # Drop zero-variance columns
-  point_df = point_df.loc[:, (point_df.std() > 0) | (point_df.columns == 'outcome')]
+  numeric_only = point_df.drop(columns=['outcome'])
+  keep_cols = list(numeric_only.columns[numeric_only.std() > 0]) + ['outcome']
+  point_df = point_df[keep_cols]
 
   result['point_df'] = point_df
   result['n_points'] = len(point_df)
