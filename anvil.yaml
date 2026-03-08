@@ -1076,11 +1076,11 @@ db_schema:
   skill_level_def:
     client: none
     columns:
-    - admin_ui: {order: 0, width: 200}
+    - admin_ui: {order: 0, width: 92}
       client_hidden: false
       name: level_id
       type: string
-    - admin_ui: {order: 1, width: 200}
+    - admin_ui: {order: 1, width: 124}
       client_hidden: false
       name: level_name
       type: string
@@ -1088,15 +1088,15 @@ db_schema:
       client_hidden: false
       name: description
       type: string
-    - admin_ui: {order: 3, width: 200}
+    - admin_ui: {order: 3, width: 106}
       client_hidden: false
       name: active
       type: bool
-    - admin_ui: {order: 4, width: 200}
+    - admin_ui: {order: 4, width: 109}
       client_hidden: false
       name: min_points
       type: number
-    - admin_ui: {order: 5, width: 200}
+    - admin_ui: {order: 5, width: 516}
       client_hidden: false
       name: player_list
       target: master_player
@@ -1150,6 +1150,14 @@ db_schema:
       client_hidden: false
       name: created_at
       type: datetime
+    - admin_ui: {order: 0.5, width: 200}
+      client_hidden: false
+      name: analysis_type
+      type: string
+    - admin_ui: {order: 2.5, width: 200}
+      client_hidden: false
+      name: outcome_type
+      type: string
     server: full
     title: skill_level_results
   strength_weakness_criteria:

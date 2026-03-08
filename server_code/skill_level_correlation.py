@@ -113,7 +113,8 @@ EXTRA_METRIC_IDS = [
   'tcr_r',       # TCR when receiving serve
   'tcr_s',       # TCR when serving
   't_eff_r',     # Transition efficiency when receiving
-  't_eff_s'     # Transition efficiency when serving
+  't_eff_s',     # Transition efficiency when serving
+  'opp_fbhe',    # Opponent first-ball hitting efficiency (defense measure)
 ]
 
 
@@ -703,6 +704,324 @@ def save_level_results(level_result, run_id):
   log_info(f"Level {level_id}: saved {rows_saved} metric result rows")
 
 
+
+
+# ============================================================================
+# POINT-LEVEL CORRELATION ANALYSIS
+# ============================================================================
+#
+# Answers: "What physical/tactical execution on individual points wins first-
+# ball (FBK) or transition (TK) opportunities?"
+#
+# Two separate correlation targets:
+#   first_ball : FBK=+1, FBE=-1  (first ball outcome)
+#   transition : TK=+1,  TE=-1   (transition outcome)
+#
+# team parameter is explicit throughout so this code can be used for both:
+#   team='League'  — skill-level / research analysis (all data)
+#   team='FSU'     — player-specific analysis (team-only data)
+# ============================================================================
+
+# Physical measurement columns in ppr_df to correlate against point outcome.
+# These are raw per-point measurements — no aggregation.
+POINT_LEVEL_COLUMNS = [
+  'serve_dist', 'serve_dur', 'serve_speed', 'serve_angle', 'serve_height',
+  'pass_dist',  'pass_dur',  'pass_speed',  'pass_angle',  'pass_height',
+  'pass_rtg_btd', 'pass_oos',
+  'set_dist',   'set_dur',   'set_speed',   'set_angle',   'set_height',
+  'att_dist',   'att_dur',   'att_speed',   'att_angle',
+  'att_height', 'att_touch_height',
+]
+
+# Minimum first-ball / transition points for a player to be included
+# Lower than set-level minimum because we're working with raw points not sets
+MIN_FB_POINTS    = 50   # minimum FBK+FBE rows
+MIN_TRANS_POINTS = 30   # minimum TK+TE rows (transition is rarer)
+
+
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)
+def build_point_level_df(ppr_df, player_id, outcome_type):
+  """
+  Build a flat DataFrame of individual points for point-level correlation.
+
+  Args:
+    ppr_df       : full ppr DataFrame for this league/year (already fetched)
+    player_id    : string identifier (uuid or 'team number shortname')
+    outcome_type : 'first_ball' — FBK/FBE rows only
+                   'transition' — TK/TE rows only
+
+  Returns:
+    dict with keys:
+      'point_df'   : pd.DataFrame (one row per qualifying point) or None
+      'n_points'   : number of qualifying points found
+      'excluded'   : True if below minimum threshold
+  """
+  result = {'point_df': None, 'n_points': 0, 'excluded': False}
+
+  # Filter to rows where this player is the attacker
+  # For first ball: att_player must be this player AND outcome is FBK or FBE
+  # For transition: same — TK and TE are outcomes where this player attacked
+  if outcome_type == 'first_ball':
+    target_outcomes = ['FBK', 'FBE']
+    encode_map      = {'FBK': 1, 'FBE': -1}
+    min_pts         = MIN_FB_POINTS
+  elif outcome_type == 'transition':
+    target_outcomes = ['TK', 'TE']
+    encode_map      = {'TK': 1, 'TE': -1}
+    min_pts         = MIN_TRANS_POINTS
+  else:
+    log_error(f"Unknown outcome_type: {outcome_type}")
+    return result
+
+  # Filter: player must be the attacker AND outcome must be one of our targets
+  if 'att_player' not in ppr_df.columns:
+    log_error("att_player column missing from ppr_df")
+    result['excluded'] = True
+    return result
+
+  player_df = ppr_df[
+    (ppr_df['att_player'] == player_id) &
+    (ppr_df['point_outcome'].isin(target_outcomes))
+    ].copy()
+
+  n_points = len(player_df)
+  result['n_points'] = n_points
+
+  if n_points < min_pts:
+    log_debug(f"Player {player_id}: {n_points} {outcome_type} points < {min_pts} — excluded")
+    result['excluded'] = True
+    return result
+
+  # Encode outcome as numeric
+  player_df['outcome'] = player_df['point_outcome'].map(encode_map)
+  player_df = player_df.dropna(subset=['outcome'])
+  player_df['outcome'] = player_df['outcome'].astype(int)
+
+  # Check we have both outcome values (can't correlate if all FBK or all FBE)
+  if player_df['outcome'].nunique() < 2:
+    log_debug(f"Player {player_id}: only one outcome value in {outcome_type} — excluded")
+    result['excluded'] = True
+    return result
+
+  # Keep only measurement columns that exist in this ppr_df + outcome
+  available_cols = [c for c in POINT_LEVEL_COLUMNS if c in player_df.columns]
+  if not available_cols:
+    log_error(f"No measurement columns found in ppr_df for player {player_id}")
+    result['excluded'] = True
+    return result
+
+  point_df = player_df[available_cols + ['outcome']].copy()
+
+  # Clean: replace inf/-inf, clip extreme outliers at p99, fill NaN with median
+  for col in available_cols:
+    point_df[col] = point_df[col].replace([np.inf, -np.inf], np.nan)
+    if not point_df[col].isna().all():
+      p99 = point_df[col].quantile(0.99)
+      p01 = point_df[col].quantile(0.01)
+      point_df[col] = point_df[col].clip(lower=p01, upper=p99)
+      point_df[col] = point_df[col].fillna(point_df[col].median())
+
+  # Drop zero-variance columns
+  point_df = point_df.loc[:, (point_df.std() > 0) | (point_df.columns == 'outcome')]
+
+  result['point_df'] = point_df
+  result['n_points'] = len(point_df)
+  log_debug(f"Player {player_id}: {len(point_df)} {outcome_type} points, "
+            f"{len(available_cols)} measurement columns")
+  return result
+
+
+@monitor_performance(level=MONITORING_LEVEL_DETAILED)
+def calculate_point_level_correlations(point_df):
+  """
+  Calculate Pearson correlation of each measurement column vs outcome (+1/-1).
+
+  Args:
+    point_df : DataFrame with measurement columns + 'outcome' column
+
+  Returns:
+    dict: { column_name: {'r': float, 'n': int, 'p': float} }
+          n = number of valid (non-NaN) rows used for that column
+  """
+  results = {}
+
+  if point_df is None or point_df.empty:
+    return results
+
+  from scipy import stats as scipy_stats
+
+  measure_cols = [c for c in point_df.columns if c != 'outcome']
+  outcome      = point_df['outcome']
+
+  for col in measure_cols:
+    valid = point_df[[col, 'outcome']].dropna()
+    if len(valid) < 10 or valid[col].std() == 0:
+      continue
+    try:
+      r, p = scipy_stats.pearsonr(valid[col], valid['outcome'])
+      if not np.isnan(r):
+        results[col] = {
+          'r': round(float(r), 4),
+          'n': len(valid),
+          'p': round(float(p), 4),
+        }
+    except Exception as e:
+      log_debug(f"Point-level correlation failed for {col}: {e}")
+
+  return results
+
+
+@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
+def analyse_point_level_for_level(level_row, ppr_cache, run_id, outcome_type, team):
+  """
+  Run point-level correlation analysis for one skill level and one outcome type.
+
+  Args:
+    level_row    : Anvil row from skill_level_def
+    ppr_cache    : dict cache of already-fetched ppr DataFrames {cache_key: df}
+                   Shared with set-level analysis to avoid double-fetching.
+    run_id       : str — unique ID for this run
+    outcome_type : 'first_ball' or 'transition'
+    team         : team to pass to get_ppr_data() — 'League' for research,
+                   specific team name for player-level analysis
+
+  Returns:
+    dict with metric_results and summary, or None on failure
+  """
+  level_id   = level_row['level_id']
+  level_name = level_row['level_name']
+
+  log_info(f"=== Point-level ({outcome_type}) analysis: level {level_id} ({level_name}) ===")
+
+  player_rows  = list(level_row['player_list'])
+  if not player_rows:
+    log_error(f"No players for level {level_id}")
+    return None
+
+  player_corr_list = []
+  n_excluded       = 0
+
+  for p_row in player_rows:
+    league = p_row['league']
+    gender = p_row['gender']
+    year   = str(p_row['year'])
+    cache_key = f"{league}|{gender}|{year}|{team}"
+
+    # Fetch ppr_df — use cache keyed by league+gender+year+team
+    if cache_key not in ppr_cache:
+      try:
+        ppr_df = get_ppr_data(league, gender, year, team, scout=False)
+        if ppr_df is None or isinstance(ppr_df, list) or (hasattr(ppr_df, 'empty') and ppr_df.empty):
+          log_error(f"No ppr data for {cache_key}")
+          ppr_cache[cache_key] = None
+        else:
+          ppr_cache[cache_key] = ppr_df
+          log_info(f"Cached ppr for {cache_key}: {len(ppr_df)} rows")
+      except Exception as e:
+        log_error(f"Error fetching ppr for {cache_key}: {e}")
+        ppr_cache[cache_key] = None
+
+    ppr_df = ppr_cache[cache_key]
+    if ppr_df is None:
+      n_excluded += 1
+      continue
+
+    player_id    = resolve_player_identifier(p_row)
+    player_label = f"{p_row['team']} {p_row['number']} {p_row['shortname']}"
+
+    if not player_id:
+      n_excluded += 1
+      continue
+
+    build_result = build_point_level_df(ppr_df, player_id, outcome_type)
+
+    if build_result['excluded'] or build_result['point_df'] is None:
+      log_debug(f"Player {player_label}: excluded from {outcome_type} "
+                f"(n={build_result['n_points']})")
+      n_excluded += 1
+      continue
+
+    point_df = build_result['point_df']
+    n_points = build_result['n_points']
+
+    corr = calculate_point_level_correlations(point_df)
+    if not corr:
+      log_info(f"Player {player_label}: no point-level correlations — skipping")
+      n_excluded += 1
+      continue
+
+    player_corr_list.append(corr)
+    log_info(f"Player {player_label}: {n_points} {outcome_type} points, "
+             f"{len(corr)} correlations")
+
+  if not player_corr_list:
+    log_error(f"Level {level_id} ({outcome_type}): no players with valid data")
+    return None
+
+  # Aggregate using Fisher Z weighting by n points (not n sets)
+  metric_results = aggregate_level_correlations(player_corr_list)
+
+  log_info(f"Level {level_id} ({outcome_type}): "
+           f"{len(player_corr_list)} players, {len(metric_results)} metrics aggregated")
+
+  return {
+    'level_id'       : level_id,
+    'level_name'     : level_name,
+    'outcome_type'   : outcome_type,
+    'n_players_used' : len(player_corr_list),
+    'n_players_excl' : n_excluded,
+    'metric_results' : metric_results,
+  }
+
+
+def save_point_level_results(point_result, run_id, analysis_type):
+  """
+  Save point-level correlation results to skill_level_results table.
+  Uses the same table as set-level results — distinguished by analysis_type column.
+
+  New columns needed in skill_level_results:
+    analysis_type : Text  — 'set_level', 'point_level_fb', 'point_level_trans'
+    outcome_type  : Text  — 'point_pct', 'first_ball', 'transition'
+
+  For existing set-level rows: analysis_type='set_level', outcome_type='point_pct'
+  For new point-level rows:    analysis_type as passed, outcome_type from result
+
+  Note: mean_value and mean_n_sets are not applicable for point-level results
+  and will be saved as None. total_sets = total points for point-level rows.
+  """
+  if not point_result:
+    return
+
+  level_id     = point_result['level_id']
+  level_name   = point_result['level_name']
+  outcome_type = point_result['outcome_type']
+  n_excl       = point_result['n_players_excl']
+  created_at   = datetime.now()
+  rows_saved   = 0
+
+  for metric_id, stats in point_result['metric_results'].items():
+    try:
+      app_tables.skill_level_results.add_row(
+        run_id             = run_id,
+        level_id           = level_id,
+        level_name         = level_name,
+        metric_id          = metric_id,
+        mean_correlation   = stats['mean_r'],
+        mean_value         = None,          # not applicable at point level
+        n_players          = stats['n_players'],
+        n_players_excluded = n_excl,
+        mean_n_sets        = stats.get('mean_n_sets'),   # here = mean points per player
+        total_sets         = stats.get('total_sets'),    # here = total points
+        analysis_type      = analysis_type,
+        outcome_type       = outcome_type,
+        created_at         = created_at,
+      )
+      rows_saved += 1
+    except Exception as e:
+      log_error(f"Error saving point-level result {metric_id} level {level_id}: {e}")
+
+  log_info(f"Level {level_id} ({outcome_type}): saved {rows_saved} point-level rows")
+
 # ============================================================================
 # BACKGROUND TASK
 # ============================================================================
@@ -710,13 +1029,29 @@ def save_level_results(level_result, run_id):
 @anvil.server.background_task
 def run_skill_level_correlations():
   """
-  Background task: loop over all active skill levels in skill_level_def,
-  run correlation analysis for each, save results to skill_level_results.
-  """
-  run_id = str(uuid.uuid4())[:8]   # short unique ID for this run
-  log_info(f"=== skill_level_correlations START | run_id={run_id} ===")
+  Background task: loop over all active skill levels in skill_level_def.
+  Runs BOTH analyses for each level:
+    1. Set-level   — metrics vs point_pct (points won % per set)
+    2. Point-level — physical measurements vs FBK/FBE and TK/TE outcomes
 
-  # Fetch active levels ordered by level_id
+  All three result types are saved to skill_level_results, distinguished
+  by the analysis_type column:
+    'set_level'         — set-level metric correlations (original analysis)
+    'point_level_fb'    — point-level first-ball correlations (FBK/FBE)
+    'point_level_trans' — point-level transition correlations (TK/TE)
+
+  ppr_df is fetched once per league/gender/year/team combination and cached
+  across all three analyses to avoid redundant data fetching.
+
+  team defaults to 'League' for the skill-level research analysis.
+  For future player-specific analysis, call analyse_point_level_for_level()
+  directly with the appropriate team name.
+  """
+  run_id = str(uuid.uuid4())[:8]
+  team   = 'League'             # always 'League' for skill-level research
+
+  log_info(f"=== skill_level_correlations START | run_id={run_id} | team={team} ===")
+
   try:
     level_rows = list(app_tables.skill_level_def.search(active=True))
   except Exception as e:
@@ -726,59 +1061,117 @@ def run_skill_level_correlations():
   level_rows = sorted(level_rows, key=lambda r: str(r['level_id']))
   log_info(f"Found {len(level_rows)} active skill levels to process")
 
+  # Shared ppr cache — populated on first access, reused across all analyses
+  # Key: "league|gender|year|team"
+  ppr_cache = {}
+
   results_summary = []
 
   for level_row in level_rows:
+    level_id   = level_row['level_id']
+    level_name = level_row['level_name']
+    level_ok   = True
+
+    # ── 1. Set-level analysis ──────────────────────────────────────────────
     try:
       level_result = analyse_skill_level(level_row, run_id)
-
       if level_result:
         save_level_results(level_result, run_id)
-        results_summary.append({
-          'level_id'       : level_result['level_id'],
-          'level_name'     : level_result['level_name'],
-          'n_players_used' : level_result['n_players_used'],
-          'n_players_excl' : level_result['n_players_excl'],
-          'n_metrics'      : len(level_result['metric_results']),
-          'status'         : 'ok'
-        })
+        n_players_set = level_result['n_players_used']
+        n_metrics_set = len(level_result['metric_results'])
+        log_info(f"Set-level OK: {level_id} — {n_players_set} players, "
+                 f"{n_metrics_set} metrics")
+
+        # Populate ppr_cache from what analyse_skill_level fetched
+        # (It fetches internally; we re-use those results for point-level)
+        # NOTE: analyse_skill_level uses get_ppr_for_player_row() internally
+        # and doesn't expose the cache. We prime the point-level cache here.
+        for p_row in list(level_row['player_list']):
+          league = p_row['league']
+          gender = p_row['gender']
+          year   = str(p_row['year'])
+          cache_key = f"{league}|{gender}|{year}|{team}"
+          if cache_key not in ppr_cache:
+            try:
+              df = get_ppr_data(league, gender, year, team, scout=False)
+              ppr_cache[cache_key] = df if (
+                df is not None and
+                not isinstance(df, list) and
+                not (hasattr(df, 'empty') and df.empty)
+              ) else None
+            except Exception as ce:
+              log_error(f"Cache prime failed for {cache_key}: {ce}")
+              ppr_cache[cache_key] = None
       else:
-        results_summary.append({
-          'level_id'  : level_row['level_id'],
-          'level_name': level_row['level_name'],
-          'status'    : 'failed'
-        })
+        log_error(f"Set-level analysis returned None for level {level_id}")
+        level_ok = False
 
     except Exception as e:
-      log_critical(f"Error processing level {level_row['level_id']}: {e}")
-      results_summary.append({
-        'level_id'  : level_row['level_id'],
-        'level_name': level_row['level_name'],
-        'status'    : 'error',
-        'error'     : str(e)
-      })
+      log_critical(f"Set-level error for {level_id}: {e}")
+      level_ok = False
+
+    # ── 2. Point-level: first ball (FBK / FBE) ────────────────────────────
+    try:
+      fb_result = analyse_point_level_for_level(
+        level_row, ppr_cache, run_id,
+        outcome_type='first_ball',
+        team=team,
+      )
+      if fb_result:
+        save_point_level_results(fb_result, run_id, analysis_type='point_level_fb')
+        log_info(f"Point FB OK: {level_id} — {fb_result['n_players_used']} players, "
+                 f"{len(fb_result['metric_results'])} metrics")
+      else:
+        log_error(f"Point-level first_ball returned None for {level_id}")
+
+    except Exception as e:
+      log_critical(f"Point-level first_ball error for {level_id}: {e}")
+
+    # ── 3. Point-level: transition (TK / TE) ─────────────────────────────
+    try:
+      trans_result = analyse_point_level_for_level(
+        level_row, ppr_cache, run_id,
+        outcome_type='transition',
+        team=team,
+      )
+      if trans_result:
+        save_point_level_results(trans_result, run_id, analysis_type='point_level_trans')
+        log_info(f"Point TRANS OK: {level_id} — {trans_result['n_players_used']} players, "
+                 f"{len(trans_result['metric_results'])} metrics")
+      else:
+        log_error(f"Point-level transition returned None for {level_id}")
+
+    except Exception as e:
+      log_critical(f"Point-level transition error for {level_id}: {e}")
+
+    # ── Summary entry for this level ──────────────────────────────────────
+    results_summary.append({
+      'level_id'  : level_id,
+      'level_name': level_name,
+      'status'    : 'ok' if level_ok else 'partial',
+    })
 
   log_info(f"=== skill_level_correlations COMPLETE | run_id={run_id} ===")
   for s in results_summary:
-    log_info(f"  Level {s['level_id']} ({s['level_name']}): {s['status']} "
-             f"— {s.get('n_players_used','?')} players, {s.get('n_metrics','?')} metrics")
+    log_info(f"  {s['level_id']} ({s['level_name']}): {s['status']}")
 
   return {'status': 'complete', 'run_id': run_id, 'levels': results_summary}
 
 
 # ============================================================================
-# SERVER-CALLABLE ENTRY POINT
+# SERVER-CALLABLE ENTRY POINTS
 # ============================================================================
 
 @anvil.server.callable
 def run_skill_level_correlation_analysis():
   """
-  Called from browser to kick off the background analysis.
-  Returns task object that browser can poll.
+  Launch the full background analysis (set-level + point-level).
+  Called from browser — returns a task object the browser can poll.
 
-  Usage from browser:
+  Usage:
     task = anvil.server.call('run_skill_level_correlation_analysis')
-    # poll task.get_state(), task.get_return_value() etc.
+    # poll: task.get_state()  ->  'completed' | 'failed' | 'running'
+    # result: task.get_return_value()
   """
   log_info("run_skill_level_correlation_analysis called from browser")
   task = anvil.server.launch_background_task('run_skill_level_correlations')
@@ -790,28 +1183,44 @@ def run_skill_level_correlation_analysis():
 # ============================================================================
 
 @anvil.server.callable
-def get_skill_level_results(run_id=None):
+def get_skill_level_results(run_id=None, analysis_type=None):
   """
   Retrieve results from skill_level_results table.
 
   Args:
-    run_id: optional — if None, returns the most recent run
+    run_id        : optional — if None, returns the most recent run
+    analysis_type : optional filter — one of:
+                      'set_level'         (original set-level correlations)
+                      'point_level_fb'    (first-ball point correlations)
+                      'point_level_trans' (transition point correlations)
+                    If None, returns all three types for the run.
 
   Returns:
-    list of dicts suitable for displaying in a DataGrid
+    list of dicts. Each dict has:
+      run_id, level_id, level_name, metric_id,
+      mean_correlation, mean_value,
+      n_players, n_players_excluded,
+      mean_n_sets,    <- for point-level rows: mean points per player
+      total_sets,     <- for point-level rows: total points across players
+      analysis_type, outcome_type,
+      created_at
   """
   try:
     if run_id:
-      rows = list(app_tables.skill_level_results.search(run_id=run_id))
+      all_rows = list(app_tables.skill_level_results.search(run_id=run_id))
     else:
-      # Get most recent run_id
+      # Most recent run — find the latest run_id first
       all_rows = list(app_tables.skill_level_results.search(
         tables.order_by('created_at', ascending=False)
       ))
       if not all_rows:
         return []
       latest_run_id = all_rows[0]['run_id']
-      rows = [r for r in all_rows if r['run_id'] == latest_run_id]
+      all_rows = [r for r in all_rows if r['run_id'] == latest_run_id]
+
+    # Optional filter by analysis_type
+    if analysis_type:
+      all_rows = [r for r in all_rows if r.get('analysis_type') == analysis_type]
 
     return [
       {
@@ -825,9 +1234,11 @@ def get_skill_level_results(run_id=None):
         'n_players_excluded' : r['n_players_excluded'],
         'mean_n_sets'        : r['mean_n_sets'],
         'total_sets'         : r['total_sets'],
+        'analysis_type'      : r.get('analysis_type', 'set_level'),
+        'outcome_type'       : r.get('outcome_type', 'point_pct'),
         'created_at'         : str(r['created_at']),
       }
-      for r in rows
+      for r in all_rows
     ]
 
   except Exception as e:
