@@ -719,9 +719,12 @@ def save_level_results(level_result, run_id):
 #   team='FSU'     — player-specific analysis (team-only data)
 # ============================================================================
 
-# Physical measurement columns in ppr_df to correlate against point outcome.
-# These are raw per-point measurements — no aggregation.
-POINT_LEVEL_COLUMNS = [
+# Physical measurement columns for first-ball analysis (FBK/FBE).
+# Angle columns are converted to abs() in build_point_level_df — direction
+# cancels out in correlation; magnitude is what matters.
+# att_height is replaced by att_height_pct (percentile within player's own
+# distribution) so we measure "was this a high attack FOR HER" not raw metres.
+FB_POINT_COLUMNS = [
   'serve_dist', 'serve_dur', 'serve_speed', 'serve_angle', 'serve_height',
   'pass_dist',  'pass_dur',  'pass_speed',  'pass_angle',  'pass_height',
   'pass_rtg_btd', 'pass_oos',
@@ -730,8 +733,22 @@ POINT_LEVEL_COLUMNS = [
   'att_height', 'att_touch_height',
 ]
 
+# Transition analysis uses only attack + dig metrics.
+# First-ball sequence (serve/pass/set) is not relevant to transition execution.
+# dig_angle treated as abs() same as all other angle columns.
+TRANS_POINT_COLUMNS = [
+  'att_dist',  'att_dur',  'att_speed',  'att_angle',
+  'att_height', 'att_touch_height',
+  'dig_dist',  'dig_dur',  'dig_speed',  'dig_angle',  'dig_height',
+]
+
+# Angle columns — raw values range roughly -90 to +90 (0 = straight across).
+# Positive/negative directions cancel in correlation so we use abs magnitude.
+ANGLE_COLUMNS = {
+  'serve_angle', 'pass_angle', 'set_angle', 'att_angle', 'dig_angle',
+}
+
 # Minimum first-ball / transition points for a player to be included
-# Lower than set-level minimum because we're working with raw points not sets
 MIN_FB_POINTS    = 50   # minimum FBK+FBE rows
 MIN_TRANS_POINTS = 30   # minimum TK+TE rows (transition is rarer)
 
@@ -800,35 +817,74 @@ def build_point_level_df(ppr_df, player_id, outcome_type):
     result['excluded'] = True
     return result
 
-  # Keep only measurement columns that exist in this ppr_df + outcome
-  available_cols = [c for c in POINT_LEVEL_COLUMNS if c in player_df.columns]
+  # Select column list based on outcome type:
+  #   first_ball — full sequence (serve/pass/set/att)
+  #   transition — attack + dig only (serve/pass/set describe first ball, not dig)
+  source_cols = FB_POINT_COLUMNS if outcome_type == 'first_ball' else TRANS_POINT_COLUMNS
+  available_cols = [c for c in source_cols if c in player_df.columns]
   if not available_cols:
-    log_error(f"No measurement columns found in ppr_df for player {player_id}")
+    log_error(f"No measurement columns found in ppr_df for player {player_id} "
+              f"({outcome_type})")
     result['excluded'] = True
     return result
 
   point_df = player_df[available_cols + ['outcome']].copy()
 
-  # Force numeric — some ppr columns may be stored as strings
+  # Force all measurement columns to numeric (some may be stored as strings)
   for col in available_cols:
     point_df[col] = pd.to_numeric(point_df[col], errors='coerce')
 
-  # Drop columns that are entirely non-numeric (all NaN after conversion)
-  numeric_cols = [c for c in available_cols if not point_df[c].isna().all()]
+  # ── Angle columns: replace raw value with abs(value) ─────────────────────
+  # Angle direction (left vs right) cancels in correlation; magnitude is the
+  # meaningful signal (how much angle was applied, regardless of direction).
+  # Original column is replaced and renamed with _abs suffix.
+  angle_renames = {}
+  for col in list(point_df.columns):
+    if col in ANGLE_COLUMNS:
+      abs_name = col.replace('_angle', '_angle_abs')
+      point_df[abs_name] = point_df[col].abs()
+      point_df = point_df.drop(columns=[col])
+      angle_renames[col] = abs_name
+  if angle_renames:
+    log_debug(f"Converted to abs angles: {list(angle_renames.values())}")
+
+  # ── att_height: replace raw metres with per-player percentile ────────────
+  # Raw metres reflects the player's physical stature, not how well she
+  # attacked. Percentile (0–1) answers "was this a high attack FOR HER?"
+  # We compute the percentile rank within this player's own att_height values.
+  if 'att_height' in point_df.columns:
+    raw_h = point_df['att_height']
+    n_valid = raw_h.notna().sum()
+    if n_valid >= 5:
+      # rank(pct=True) gives 0–1 percentile rank, method='average' for ties
+      point_df['att_height_pct'] = raw_h.rank(pct=True, method='average', na_option='keep')
+      point_df = point_df.drop(columns=['att_height'])
+      log_debug(f"att_height → att_height_pct "
+                f"(range {point_df['att_height_pct'].min():.2f}–"
+                f"{point_df['att_height_pct'].max():.2f})")
+    else:
+      point_df = point_df.drop(columns=['att_height'])
+      log_debug("att_height dropped — too few valid values for percentile")
+
+  # Refresh column list after transformations
+  numeric_cols = [c for c in point_df.columns if c != 'outcome']
+
+  # Drop columns that are still entirely non-numeric
+  numeric_cols = [c for c in numeric_cols if not point_df[c].isna().all()]
   point_df = point_df[numeric_cols + ['outcome']].copy()
 
   if not numeric_cols:
-    log_error(f"No numeric measurement columns for player {player_id}")
+    log_error(f"No numeric measurement columns remain for player {player_id}")
     result['excluded'] = True
     return result
 
-  # Clean: replace inf/-inf, clip extreme outliers at p1/p99, fill NaN with median
+  # Clean: replace inf/-inf, clip to p1/p99, fill NaN with median
   for col in numeric_cols:
     point_df[col] = point_df[col].replace([np.inf, -np.inf], np.nan)
     if not point_df[col].isna().all():
       p99 = point_df[col].quantile(0.99)
       p01 = point_df[col].quantile(0.01)
-      if p99 > p01:                          # skip if zero range
+      if p99 > p01:
         point_df[col] = point_df[col].clip(lower=p01, upper=p99)
       point_df[col] = point_df[col].fillna(point_df[col].median())
 
@@ -840,7 +896,7 @@ def build_point_level_df(ppr_df, player_id, outcome_type):
   result['point_df'] = point_df
   result['n_points'] = len(point_df)
   log_debug(f"Player {player_id}: {len(point_df)} {outcome_type} points, "
-            f"{len(available_cols)} measurement columns")
+            f"{len(keep_cols)-1} measurement columns after transforms")
   return result
 
 
