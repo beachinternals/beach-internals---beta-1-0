@@ -90,27 +90,26 @@ class btd_import(btd_importTemplate):
     self.ppr_playerb2_drop_down.items = ppr_player_list
 
     pass
-
-
+    
   def file_loader_1_change(self, file, **event_args):
     """This method is called when a new file is loaded into this FileLoader"""
-
     # Show processing notification
     with Notification("Processing and validating BTD file...", style="info", timeout=None):
-      # Call the server function that will analyze the file and return stats + cleaned CSV
-      # IMPORTANT: Now returns TWO values: statistics AND cleaned CSV
-      # The cleaned CSV has been validated and corrected for player/team assignments
-      statistics, cleaned_csv = anvil.server.call('update_btd_characteristics', file)
+      # Call the server function that will analyze the file and return stats + cleaned CSV + error
+      # Returns THREE values: statistics, cleaned CSV, and error message (or None)
+      statistics, cleaned_csv, error_message = anvil.server.call('update_btd_characteristics', file)
 
-    # Unpack the statistics
+      # Check if the server found a data quality problem in the file
+    if error_message:
+      Notification("File has data errors - see details below.", style="danger", timeout=3)
+      alert(f"BTD File Error - Please fix in Balltime and re-export:\n\n{error_message}")
+      return
+
+      # Unpack the statistics
     [playera1, playera2, playerb1, playerb2, num_serves, 
-     comp_score, per_action_players, per_coord, per_srv_players] = statistics
+    comp_score, per_action_players, per_coord, per_srv_players] = statistics
 
     # CRITICAL: Store the cleaned CSV for later use in save_button_click
-    # This cleaned CSV includes:
-    # - Normalized player names (removed 'None ' prefixes)
-    # - Corrected team assignments
-    # - 'changes' column documenting any corrections made
     self.cleaned_csv_file = cleaned_csv
 
     # Create the player_list from the extracted 4 players
@@ -150,18 +149,16 @@ class btd_import(btd_importTemplate):
         gender=disp_gender
       )
     ]
-
     ppr_player_list = []
     for i in ppr_list:
       ppr_player_list.append(i['team'] + " " + i['number'] + " " + i['shortname'])
     ppr_player_list.sort()
-
     self.ppr_playera1_drop_down.items = ppr_player_list
     self.ppr_playera2_drop_down.items = ppr_player_list
     self.ppr_playerb1_drop_down.items = ppr_player_list
     self.ppr_playerb2_drop_down.items = ppr_player_list
 
-    # Save the other values (using the unpacked variables, not return_value)
+      # Save the other values
     self.points_label.text = num_serves
     self.comp_score_label.text = comp_score
     self.per_players_label.text = per_action_players
@@ -173,10 +170,7 @@ class btd_import(btd_importTemplate):
     Notification("File processed successfully! Player/team assignments validated.", 
                  style="success", 
                  timeout=3)
-
-    # Done - event handlers don't need to return anything
     pass
-
 
   def save_file_button_click(self, **event_args):
     """This method is called when the button is clicked"""
