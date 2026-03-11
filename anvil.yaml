@@ -464,7 +464,8 @@ db_schema:
     - admin_ui: {order: 0, width: 200}
       name: metric_id
       type: string
-    - admin_ui: {order: 1, width: 200}
+    - admin_ui: {order: 1, width: 416}
+      client_hidden: false
       name: metric_name
       type: string
     - admin_ui: {order: 2, width: 200}
