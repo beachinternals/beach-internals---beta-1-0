@@ -476,7 +476,26 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
       log_error("player_data_map is missing")
       return {'status': 'error', 'message': 'Missing player data map', 'files': []}
 
-    generated_files = []  
+    generated_files = []
+
+    # --- Build de-identification lookup ONCE before the player loop ---
+    # We derive league/gender/year from the first player in player_data_map.
+    deident_lookup = None
+    if de_identified and player_data_map:
+      try:
+        first_player_data = next(iter(player_data_map.values()))
+        di_league = first_player_data.get('league', league)
+        di_gender = first_player_data.get('gender', '')
+        di_year   = str(first_player_data.get('year', ''))
+        if di_league and di_gender and di_year:
+          deident_lookup = build_deident_lookup(di_league, di_gender, di_year)
+          log_info(f"De-identification lookup built: "
+                   f"{len(deident_lookup.get('player_map', {}))} players, "
+                   f"{len(deident_lookup.get('team_map', {}))} teams")
+        else:
+          log_error("Cannot build de-ident lookup — missing league/gender/year in player_data_map")
+      except Exception as e:
+        log_exception('error', "Error building de-identification lookup", e)
 
     # Generate one consolidated markdown file per player
     for player in players:
@@ -492,10 +511,11 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
           player=player,
           date_start=date_start,
           date_end=date_end,
-          player_data=player_data,  # Pass individual player's data
+          player_data=player_data,
           user=user,
           datasets_included=datasets_included,
-          de_identified=de_identified  # NEW: pass de-identification flag
+          de_identified=de_identified,
+          deident_lookup=deident_lookup   # pre-built lookup, reused per player
         )
         if file_info:
           generated_files.append(file_info)
@@ -805,13 +825,149 @@ def generate_player_key_file(player_key_map):
 
 
 #--------------------------------------------------------------
+# NEW: Build a full UUID lookup map for ALL players in a league/gender/year
+# Called once per export run, then reused for every player's post-processing
+#--------------------------------------------------------------
+def build_deident_lookup(league, gender, year):
+  """
+  Query master_player for ALL players in this league/gender/year and build
+  a dict mapping "TEAM NUMBER SHORTNAME" -> "Player_<uuid>".
+
+  Also maps team names to "[Team_<uuid_prefix>]" so team names are redacted too.
+
+  Args:
+      league: e.g. 'NCAA'
+      gender: e.g. 'W'
+      year:   e.g. '2026' (string)
+
+  Returns:
+      dict with two keys:
+        'player_map'  : { "FSU 10 Danielle": "Player_abc123", ... }
+        'team_map'    : { "FSU": "[Team_abc123]", ... }
+        'shortname_map': { "Danielle": "Player_abc123", ... }
+                         (only for shortnames that are unique in this dataset)
+  """
+  log_info(f"Building de-identification lookup for {league}/{gender}/{year}...")
+  player_map   = {}
+  team_uuids   = {}   # team -> first uuid seen (for team redaction)
+  shortname_counts = {}  # shortname -> count (to detect non-unique shortnames)
+  shortname_map = {}
+
+  try:
+    rows = list(app_tables.master_player.search(
+      league=league,
+      gender=gender,
+      year=str(year)
+    ))
+    log_info(f"  Found {len(rows)} master_player rows for lookup")
+
+    for row in rows:
+      try:
+        uuid = str(row['player_uuid']) if row['player_uuid'] else None
+        if not uuid:
+          continue
+        t  = str(row['team'])
+        n  = str(row['number'])
+        sn = str(row['shortname'])
+        display = f"Player_{uuid}"
+
+        # Full "TEAM NUMBER SHORTNAME" pattern
+        player_map[f"{t} {n} {sn}"] = display
+
+        # Track team -> uuid prefix for team redaction
+        if t not in team_uuids:
+          team_uuids[t] = uuid[:6]
+
+        # Track shortname uniqueness
+        shortname_counts[sn] = shortname_counts.get(sn, 0) + 1
+        shortname_map[sn] = display   # may be overwritten if not unique
+
+      except Exception as e:
+        log_error(f"  Error processing master_player row: {e}")
+        continue
+
+    # Build team_map: team name -> redacted label
+    team_map = {t: f"[Team_{uid}]" for t, uid in team_uuids.items()}
+
+    # Only keep shortnames that are unique in this dataset (safe to replace)
+    unique_shortname_map = {
+      sn: disp
+      for sn, disp in shortname_map.items()
+      if shortname_counts[sn] == 1 and len(sn) > 3  # skip very short names
+    }
+
+    log_info(f"  Lookup built: {len(player_map)} players, "
+             f"{len(team_map)} teams, {len(unique_shortname_map)} unique shortnames")
+
+    return {
+      'player_map':    player_map,
+      'team_map':      team_map,
+      'shortname_map': unique_shortname_map
+    }
+
+  except Exception as e:
+    log_exception('error', "Error building de-identification lookup", e)
+    return {'player_map': {}, 'team_map': {}, 'shortname_map': {}}
+
+
+#--------------------------------------------------------------
+# NEW: Post-process markdown content to replace all real names with UUIDs
+#--------------------------------------------------------------
+def deidentify_markdown(content, deident_lookup):
+  """
+  Replace ALL player names, partner names, opponent names, and team names
+  in a markdown string using the pre-built lookup dict.
+
+  Replacement order:
+    1. Full "TEAM NUMBER SHORTNAME" patterns  (most specific — do first)
+    2. Unique shortnames                       (catches headers and paragraphs)
+    3. Team names                              (least specific — do last)
+
+  Args:
+      content: markdown string
+      deident_lookup: dict from build_deident_lookup()
+
+  Returns:
+      str: redacted markdown content
+  """
+  if not content or not deident_lookup:
+    return content
+
+  player_map    = deident_lookup.get('player_map', {})
+  team_map      = deident_lookup.get('team_map', {})
+  shortname_map = deident_lookup.get('shortname_map', {})
+
+  # 1. Replace full player names (e.g. "STETSON 10 Danielle")
+  for real_name, display in player_map.items():
+    content = content.replace(real_name, display)
+
+  # 2. Replace unique shortnames (e.g. "Danielle" in headers/paragraphs)
+  for shortname, display in shortname_map.items():
+    content = content.replace(shortname, display)
+
+  # 3. Replace team names (e.g. "STETSON" -> "[Team_abc123]")
+  #    Use word-boundary-like approach: only replace when followed by space,
+  #    newline, punctuation, or end of string to avoid partial matches.
+  import re
+  for team_name, display in team_map.items():
+    # Replace team name when it appears as a standalone word
+    content = re.sub(
+      r'\b' + re.escape(team_name) + r'\b',
+      display,
+      content
+    )
+
+  return content
+
+
+#--------------------------------------------------------------
 # Core function to generate markdown for a single player
 # FIXED: Now reads datasets_included from ai_export_mgr row
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def generate_player_markdown(league, team, player, date_start=None, date_end=None, 
                              player_data=None, user=None, datasets_included=None,
-                             de_identified=False):
+                             de_identified=False, deident_lookup=None):
   """
   Generate a single combined markdown file for one player.
   Loops through each dataset row in datasets_included and appends
@@ -942,8 +1098,6 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
             league_value=league_value,
             team=team,
             use_direct_data=True,
-            display_name=display_name if de_identified else None,    # NEW
-            display_team='[Team]' if de_identified else None,        # NEW
             **ds_filters
           )
           if result and 'media_obj' in result:
@@ -985,11 +1139,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
               )
 
               if set_level_data:
-                  section_md = format_set_level_data_as_markdown(
-                    set_level_data,
-                    display_name=display_name if de_identified else None,   # NEW
-                    display_team='[Team]' if de_identified else None        # NEW
-                  )
+                  section_md = format_set_level_data_as_markdown(set_level_data)
                   sets_count = set_level_data.get('summary', {}).get('total_sets', 0)
               else:
                   log_error(f"  generate_set_level_metrics_for_player returned no result for {ds_name}")
@@ -1026,8 +1176,6 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
       league_value=league_value,
       team=team,
       use_direct_data=True,
-      display_name=display_name if de_identified else None,    # NEW
-      display_team='[Team]' if de_identified else None,        # NEW
       **base_filters
     )
     if not result or 'media_obj' not in result:
@@ -1046,6 +1194,18 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
     return None
 
   full_markdown = ''.join(combined_sections)
+
+  # --- De-identification post-processing ---
+  # Replace ALL real player/team names in the content using the lookup map.
+  # This catches names that appear inside headers, partner lines, opponent
+  # lines, and any other free text — regardless of which generation function
+  # produced them.
+  if de_identified and deident_lookup:
+    log_info(f"Running de-identification post-processing on {len(full_markdown)} chars...")
+    full_markdown = deidentify_markdown(full_markdown, deident_lookup)
+    log_info("De-identification post-processing complete")
+  elif de_identified and not deident_lookup:
+    log_error("de_identified=True but no deident_lookup provided — content NOT fully redacted!")
 
   # --- Build filename ---
   # Use display_name: UUID-based if de_identified, real name otherwise
