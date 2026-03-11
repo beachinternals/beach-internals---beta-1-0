@@ -289,7 +289,7 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
       'value': value,
       'attempts': attempts
     }
-        
+
   except Exception as e:
     log_error(f"Error calculating metric {metric_id}: {str(e)}")
     return None
@@ -297,7 +297,7 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
 
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, team):
-    """
+  """
     Generate set-by-set metrics for a single player.
     
     Args:
@@ -315,234 +315,242 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
             'summary': {...}
         }
     """
-    log_info(f"Generating set-level metrics for {player_name}")
-    
-    core_metrics = get_core_metrics_from_dictionary()
-    
-    if len(core_metrics) == 0:
-        log_error("No core metrics found in metric_dictionary")
-        return None
-    
-    log_info(f"Will calculate {len(core_metrics)} core metrics per set")
-    
-    player_df = ppr_df[
-        (ppr_df['player_a1'] == player_name) | 
-        (ppr_df['player_a2'] == player_name) |
-        (ppr_df['player_b1'] == player_name) | 
-        (ppr_df['player_b2'] == player_name)
+  log_info(f"Generating set-level metrics for {player_name}")
+
+  core_metrics = get_core_metrics_from_dictionary()
+
+  if len(core_metrics) == 0:
+    log_error("No core metrics found in metric_dictionary")
+    return None
+
+  log_info(f"Will calculate {len(core_metrics)} core metrics per set")
+
+  player_df = ppr_df[
+    (ppr_df['player_a1'] == player_name) | 
+    (ppr_df['player_a2'] == player_name) |
+    (ppr_df['player_b1'] == player_name) | 
+    (ppr_df['player_b2'] == player_name)
     ]
-    
-    if len(player_df) == 0:
-        log_error(f"No data found for player {player_name}")
-        return None
-    
-    log_info(f"Found {len(player_df)} total points for player")
-    
-    set_combinations = player_df.groupby(['video_id', 'set']).size().reset_index(name='point_count')
-    log_info(f"Found {len(set_combinations)} unique sets for player")
-    
-    sets_data = []
-    sets_included = 0
-    sets_excluded = 0
-    
-    for idx, row in set_combinations.iterrows():
-        video_id = row['video_id']
-        set_num = row['set']
-        point_count = row['point_count']
-        
-        if point_count < 10:
-            log_info(f"Excluding set {video_id}-{set_num}: only {point_count} points (< 10 minimum)")
-            sets_excluded += 1
-            continue
-        
-        if point_count < 20:
-            log_info(f"Warning: Set {video_id}-{set_num} has {point_count} points (< 20 typical minimum)")
-        
-        if point_count > 50:
-            log_info(f"Warning: Set {video_id}-{set_num} has {point_count} points (> 50 typical maximum)")
-        
-        # Get metadata (includes weather via weather_id)
-        metadata = get_set_metadata(ppr_df, video_id, set_num, player_name)
-        if not metadata:
-            log_error(f"Could not get metadata for set {video_id}-{set_num}")
-            continue
-        
-        set_df = player_df[
-            (player_df['video_id'] == video_id) & 
-            (player_df['set'] == set_num)
-        ]
-        
-        set_metrics = {}
-        for metric_row in core_metrics:
-            metric_result = calculate_metric_for_set(metric_row, set_df, player_name)
-            if metric_result:
-                set_metrics[metric_result['metric_id']] = {
-                    'name': metric_result['metric_name'],
-                    'value': metric_result['value'],
-                    'attempts': metric_result['attempts']
-                }
-        
-        set_data = {
-            **metadata,
-            'metrics': set_metrics,
-            'metrics_calculated': len(set_metrics)
+
+  if len(player_df) == 0:
+    log_error(f"No data found for player {player_name}")
+    return None
+
+  log_info(f"Found {len(player_df)} total points for player")
+
+  set_combinations = player_df.groupby(['video_id', 'set']).size().reset_index(name='point_count')
+  log_info(f"Found {len(set_combinations)} unique sets for player")
+
+  sets_data = []
+  sets_included = 0
+  sets_excluded = 0
+
+  for idx, row in set_combinations.iterrows():
+    video_id = row['video_id']
+    set_num = row['set']
+    point_count = row['point_count']
+
+    if point_count < 10:
+      log_info(f"Excluding set {video_id}-{set_num}: only {point_count} points (< 10 minimum)")
+      sets_excluded += 1
+      continue
+
+    if point_count < 20:
+      log_info(f"Warning: Set {video_id}-{set_num} has {point_count} points (< 20 typical minimum)")
+
+    if point_count > 50:
+      log_info(f"Warning: Set {video_id}-{set_num} has {point_count} points (> 50 typical maximum)")
+
+      # Get metadata (includes weather via weather_id)
+    metadata = get_set_metadata(ppr_df, video_id, set_num, player_name)
+    if not metadata:
+      log_error(f"Could not get metadata for set {video_id}-{set_num}")
+      continue
+
+    set_df = player_df[
+      (player_df['video_id'] == video_id) & 
+      (player_df['set'] == set_num)
+      ]
+
+    set_metrics = {}
+    for metric_row in core_metrics:
+      metric_result = calculate_metric_for_set(metric_row, set_df, player_name)
+      if metric_result:
+        set_metrics[metric_result['metric_id']] = {
+          'name': metric_result['metric_name'],
+          'value': metric_result['value'],
+          'attempts': metric_result['attempts']
         }
-        
-        sets_data.append(set_data)
-        sets_included += 1
-        
-        log_debug(f"Processed set {video_id}-{set_num}: {point_count} points, {len(set_metrics)} metrics")
-    
-    log_info(f"Set-level processing complete: {sets_included} sets included, {sets_excluded} excluded")
-    
-    summary = {
-        'total_sets_analyzed': sets_included,
-        'total_sets_excluded': sets_excluded,
-        'total_points': int(player_df['point_no'].nunique()) if 'point_no' in player_df.columns else len(player_df),
-        'date_range': {
-            'start': str(player_df['game_date'].min()) if 'game_date' in player_df.columns else None,
-            'end': str(player_df['game_date'].max()) if 'game_date' in player_df.columns else None
-        },
-        'metrics_per_set': len(core_metrics)
+
+    set_data = {
+      **metadata,
+      'metrics': set_metrics,
+      'metrics_calculated': len(set_metrics)
     }
-    
-    return {
-        'player': player_name,
-        'league': league_value,
-        'team': team,
-        'sets': sets_data,
-        'summary': summary
-    }
+
+    sets_data.append(set_data)
+    sets_included += 1
+
+    log_debug(f"Processed set {video_id}-{set_num}: {point_count} points, {len(set_metrics)} metrics")
+
+  log_info(f"Set-level processing complete: {sets_included} sets included, {sets_excluded} excluded")
+
+  summary = {
+    'total_sets_analyzed': sets_included,
+    'total_sets_excluded': sets_excluded,
+    'total_points': int(player_df['point_no'].nunique()) if 'point_no' in player_df.columns else len(player_df),
+    'date_range': {
+      'start': str(player_df['game_date'].min()) if 'game_date' in player_df.columns else None,
+      'end': str(player_df['game_date'].max()) if 'game_date' in player_df.columns else None
+    },
+    'metrics_per_set': len(core_metrics)
+  }
+
+  return {
+    'player': player_name,
+    'league': league_value,
+    'team': team,
+    'sets': sets_data,
+    'summary': summary
+  }
 
 
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
-def format_set_level_data_as_markdown(set_level_data):
-    """
+def format_set_level_data_as_markdown(set_level_data, display_name=None, display_team=None):
+  """
     Format set-level data as markdown WITH WEATHER DATA IN HEADERS.
     
     Args:
         set_level_data: Output from generate_set_level_metrics_for_player
+        display_name (str): Optional. If provided, used in headers instead of
+                            real player name (for de-identification).
+        display_team (str): Optional. If provided, used in headers instead of
+                            real team name (for de-identification).
         
     Returns:
         str: Markdown formatted text
     """
-    if not set_level_data:
-        return ""
-    
-    log_info("Formatting set-level data as markdown...")
-    
-    md = []
-    
-    # Header
-    md.append(f"# {set_level_data['player']}")
+  if not set_level_data:
+    return ""
+
+  log_info("Formatting set-level data as markdown...")
+
+  # Resolve display values
+  content_name = display_name if display_name else set_level_data['player']
+  content_team = display_team if display_team else set_level_data['team']
+
+  md = []
+
+  # Header
+  md.append(f"# {content_name}")
+  md.append(f"")
+  md.append(f"**League:** {set_level_data['league']}")
+  md.append(f"**Team:** {content_team}")
+  md.append(f"")
+
+  # Summary
+  summary = set_level_data['summary']
+  md.append(f"## Performance Summary")
+  md.append(f"- Total Sets Analyzed: {summary['total_sets_analyzed']}")
+  md.append(f"- Total Sets Excluded: {summary['total_sets_excluded']}")
+  md.append(f"- Total Points: {summary['total_points']}")
+  if summary['date_range']['start']:
+    md.append(f"- Date Range: {summary['date_range']['start']} to {summary['date_range']['end']}")
+  md.append(f"- Core Metrics Per Set: {summary['metrics_per_set']}")
+  md.append(f"")
+  md.append(f"---")
+  md.append(f"")
+
+  # Individual sets
+  md.append(f"## Individual Set Performance")
+  md.append(f"")
+
+  for idx, set_data in enumerate(set_level_data['sets'], 1):
+    opponent_display = f"vs {set_data['opponent_team']}"
+    set_header = f"### {set_data['date']} | {opponent_display} | Set {set_data['set']}"
+
+    md.append(set_header)
     md.append(f"")
-    md.append(f"**League:** {set_level_data['league']}")
-    md.append(f"**Team:** {set_level_data['team']}")
+
+    # Match Information
+    md.append(f"**Match Information:**")
+    if set_data.get('match_time'):
+      md.append(f"- Time: {set_data['match_time']}")
+    if set_data.get('venue_name'):
+      md.append(f"- Venue: {set_data['venue_name']}")
+    if set_data.get('venue_id'):
+      md.append(f"- Venue ID: {set_data['venue_id']}")
+    md.append(f"- Competition: {set_data.get('comp_l1', '')} / {set_data.get('comp_l2', '')} / {set_data.get('comp_l3', '')}")
+    md.append(f"- Partner: {set_data['partner']}")
+    md.append(f"- Opponents: {set_data['opponent1']}, {set_data['opponent2']}")
+    md.append(f"- Total Points in Set: {set_data['total_points']}")
+    md.append(f"- Video ID: {set_data['video_id']}")
     md.append(f"")
-    
-    # Summary
-    summary = set_level_data['summary']
-    md.append(f"## Performance Summary")
-    md.append(f"- Total Sets Analyzed: {summary['total_sets_analyzed']}")
-    md.append(f"- Total Sets Excluded: {summary['total_sets_excluded']}")
-    md.append(f"- Total Points: {summary['total_points']}")
-    if summary['date_range']['start']:
-        md.append(f"- Date Range: {summary['date_range']['start']} to {summary['date_range']['end']}")
-    md.append(f"- Core Metrics Per Set: {summary['metrics_per_set']}")
+
+    # WEATHER DATA - Only show if available
+    weather = set_data.get('weather')
+    if weather and any(v is not None and not pd.isna(v) for v in weather.values()):
+      md.append(f"**Weather Conditions:**")
+
+      # Temperature
+      if weather.get('temperature_f') is not None and not pd.isna(weather.get('temperature_f')):
+        md.append(f"- Temperature: {weather['temperature_f']:.1f}°F")
+
+        # Wind Speed
+      if weather.get('wind_speed_mph') is not None and not pd.isna(weather.get('wind_speed_mph')):
+        wind_str = f"{weather['wind_speed_mph']:.1f} mph"
+        # Add gust if available
+        if weather.get('wind_gust_mph') is not None and not pd.isna(weather.get('wind_gust_mph')):
+          wind_str += f" (gusts to {weather['wind_gust_mph']:.1f} mph)"
+        md.append(f"- Wind: {wind_str}")
+
+        # Humidity
+      if weather.get('humidity_percent') is not None and not pd.isna(weather.get('humidity_percent')):
+        md.append(f"- Humidity: {weather['humidity_percent']:.0f}%")
+
+        # UV Index (if available)
+      if weather.get('uv_index') is not None and not pd.isna(weather.get('uv_index')):
+        md.append(f"- UV Index: {weather['uv_index']:.1f}")
+
+      md.append(f"")
+
+      # Core Metrics
+    md.append(f"**Core Metrics:**")
+    md.append(f"")
+
+    sorted_metrics = sorted(set_data['metrics'].items())
+
+    for metric_id, metric_info in sorted_metrics:
+      value = metric_info['value']
+      attempts = metric_info['attempts']
+
+      if value is None:
+        value_str = "No Data"
+      elif isinstance(value, float):
+        if value == 0.0:
+          value_str = "0.000"
+        else:
+          value_str = f"{value:.3f}"
+      elif value == 0:
+        value_str = "0"
+      else:
+        value_str = str(value)
+
+      if attempts is not None:
+        md.append(f"- **{metric_info['name']}**: {value_str} (n={attempts})")
+      else:
+        md.append(f"- **{metric_info['name']}**: {value_str}")
+
     md.append(f"")
     md.append(f"---")
     md.append(f"")
-    
-    # Individual sets
-    md.append(f"## Individual Set Performance")
-    md.append(f"")
-    
-    for idx, set_data in enumerate(set_level_data['sets'], 1):
-        opponent_display = f"vs {set_data['opponent_team']}"
-        set_header = f"### {set_data['date']} | {opponent_display} | Set {set_data['set']}"
-        
-        md.append(set_header)
-        md.append(f"")
-        
-        # Match Information
-        md.append(f"**Match Information:**")
-        if set_data.get('match_time'):
-            md.append(f"- Time: {set_data['match_time']}")
-        if set_data.get('venue_name'):
-            md.append(f"- Venue: {set_data['venue_name']}")
-        if set_data.get('venue_id'):
-            md.append(f"- Venue ID: {set_data['venue_id']}")
-        md.append(f"- Competition: {set_data.get('comp_l1', '')} / {set_data.get('comp_l2', '')} / {set_data.get('comp_l3', '')}")
-        md.append(f"- Partner: {set_data['partner']}")
-        md.append(f"- Opponents: {set_data['opponent1']}, {set_data['opponent2']}")
-        md.append(f"- Total Points in Set: {set_data['total_points']}")
-        md.append(f"- Video ID: {set_data['video_id']}")
-        md.append(f"")
-        
-        # WEATHER DATA - Only show if available
-        weather = set_data.get('weather')
-        if weather and any(v is not None and not pd.isna(v) for v in weather.values()):
-            md.append(f"**Weather Conditions:**")
-            
-            # Temperature
-            if weather.get('temperature_f') is not None and not pd.isna(weather.get('temperature_f')):
-                md.append(f"- Temperature: {weather['temperature_f']:.1f}°F")
-            
-            # Wind Speed
-            if weather.get('wind_speed_mph') is not None and not pd.isna(weather.get('wind_speed_mph')):
-                wind_str = f"{weather['wind_speed_mph']:.1f} mph"
-                # Add gust if available
-                if weather.get('wind_gust_mph') is not None and not pd.isna(weather.get('wind_gust_mph')):
-                    wind_str += f" (gusts to {weather['wind_gust_mph']:.1f} mph)"
-                md.append(f"- Wind: {wind_str}")
-            
-            # Humidity
-            if weather.get('humidity_percent') is not None and not pd.isna(weather.get('humidity_percent')):
-                md.append(f"- Humidity: {weather['humidity_percent']:.0f}%")
-            
-            # UV Index (if available)
-            if weather.get('uv_index') is not None and not pd.isna(weather.get('uv_index')):
-                md.append(f"- UV Index: {weather['uv_index']:.1f}")
-            
-            md.append(f"")
-        
-        # Core Metrics
-        md.append(f"**Core Metrics:**")
-        md.append(f"")
-        
-        sorted_metrics = sorted(set_data['metrics'].items())
-        
-        for metric_id, metric_info in sorted_metrics:
-            value = metric_info['value']
-            attempts = metric_info['attempts']
-            
-            if value is None:
-                value_str = "No Data"
-            elif isinstance(value, float):
-                if value == 0.0:
-                    value_str = "0.000"
-                else:
-                    value_str = f"{value:.3f}"
-            elif value == 0:
-                value_str = "0"
-            else:
-                value_str = str(value)
-            
-            if attempts is not None:
-                md.append(f"- **{metric_info['name']}**: {value_str} (n={attempts})")
-            else:
-                md.append(f"- **{metric_info['name']}**: {value_str}")
-        
-        md.append(f"")
-        md.append(f"---")
-        md.append(f"")
-    
-    return "\n".join(md)
+
+  return "\n".join(md)
 
 
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def format_set_level_data_as_json(set_level_data):
-    """
+  """
     Format set-level data as JSON.
     
     Args:
@@ -551,17 +559,17 @@ def format_set_level_data_as_json(set_level_data):
     Returns:
         str: JSON formatted text
     """
-    if not set_level_data:
-        return "{}"
-    
-    log_info("Formatting set-level data as JSON...")
-    
-    json_data = {
-        'player': set_level_data['player'],
-        'league': set_level_data['league'],
-        'team': set_level_data['team'],
-        'summary': set_level_data['summary'],
-        'sets': set_level_data['sets']
-    }
-    
-    return json.dumps(json_data, indent=2, default=str)
+  if not set_level_data:
+    return "{}"
+
+  log_info("Formatting set-level data as JSON...")
+
+  json_data = {
+    'player': set_level_data['player'],
+    'league': set_level_data['league'],
+    'team': set_level_data['team'],
+    'summary': set_level_data['summary'],
+    'sets': set_level_data['sets']
+  }
+
+  return json.dumps(json_data, indent=2, default=str)

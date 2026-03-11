@@ -757,7 +757,7 @@ def get_player_uuid(team, number, shortname, league=None, gender=None, year=None
     if gender:
       search_kwargs['gender'] = gender
     if year:
-      search_kwargs['year'] = str(year)
+      search_kwargs['year'] = str(year)  # master_player stores year as string
 
     rows = list(app_tables.master_player.search(**search_kwargs))
     if rows:
@@ -942,6 +942,8 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
             league_value=league_value,
             team=team,
             use_direct_data=True,
+            display_name=display_name if de_identified else None,    # NEW
+            display_team='[Team]' if de_identified else None,        # NEW
             **ds_filters
           )
           if result and 'media_obj' in result:
@@ -983,7 +985,11 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
               )
 
               if set_level_data:
-                  section_md = format_set_level_data_as_markdown(set_level_data)
+                  section_md = format_set_level_data_as_markdown(
+                    set_level_data,
+                    display_name=display_name if de_identified else None,   # NEW
+                    display_team='[Team]' if de_identified else None        # NEW
+                  )
                   sets_count = set_level_data.get('summary', {}).get('total_sets', 0)
               else:
                   log_error(f"  generate_set_level_metrics_for_player returned no result for {ds_name}")
@@ -1020,6 +1026,8 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
       league_value=league_value,
       team=team,
       use_direct_data=True,
+      display_name=display_name if de_identified else None,    # NEW
+      display_team='[Team]' if de_identified else None,        # NEW
       **base_filters
     )
     if not result or 'media_obj' not in result:
