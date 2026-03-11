@@ -59,13 +59,16 @@ db_schema:
   ai_export_mgr:
     client: none
     columns:
-    - admin_ui: {order: 0, width: 200}
+    - admin_ui: {order: 0, width: 101}
+      client_hidden: false
       name: league
       type: string
-    - admin_ui: {order: 1, width: 200}
+    - admin_ui: {order: 1, width: 95}
+      client_hidden: false
       name: team
       type: string
-    - admin_ui: {order: 4, width: 200}
+    - admin_ui: {order: 4, width: 126}
+      client_hidden: false
       name: export_type
       type: string
     - admin_ui: {order: 6, width: 200}
@@ -105,6 +108,10 @@ db_schema:
       name: datasets_included
       target: ai_export_dataset_list
       type: link_multiple
+    - admin_ui: {order: 6.25, width: 116}
+      client_hidden: false
+      name: de_identified
+      type: bool
     server: full
     title: ai_export_mgr
   ai_prompt_templates:

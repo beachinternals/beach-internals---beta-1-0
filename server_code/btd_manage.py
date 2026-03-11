@@ -368,7 +368,7 @@ def validate_player_mappings(league, gender, year, player_names):
     master_players = app_tables.master_player.search(
         league=league,
         gender=gender,
-        year=int(year)
+        year=str(year)
     )
     
     # Build lookup list

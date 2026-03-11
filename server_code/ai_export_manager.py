@@ -241,7 +241,7 @@ def ai_export_mgr_generate_background(user=None):
         # Extract parameters from the row
         team = export_row['team']
         export_type = export_row['export_type'] or 'full'
-        
+
         # Read datasets_included from the row
         datasets_included_rows = export_row['datasets_included']
         if datasets_included_rows:
@@ -250,7 +250,7 @@ def ai_export_mgr_generate_background(user=None):
         else:
           datasets_included = []
           log_info("No datasets_included - will use single aggregate fallback")
-  
+
         user_email = export_row['user_email']
 
         log_info(f"Export row data: team={team}, export_type={export_type}")
@@ -334,6 +334,13 @@ def ai_export_mgr_generate_background(user=None):
         export_row['started_at'] = datetime.now()
         export_row['league'] = league  # Store derived league back to row
 
+        # NEW: Read de_identified flag (defaults to False if column not yet added)
+        try:
+          de_identified = export_row['de_identified'] or False
+        except Exception:
+          de_identified = False
+        log_info(f"De-identified export: {de_identified}")
+
         # Run the export
         log_info(f"Calling ai_export_generate for {team}")
         result = ai_export_generate(
@@ -342,7 +349,8 @@ def ai_export_mgr_generate_background(user=None):
           player_filter=player_filter,
           player_data_map=player_data_map,
           user=user,
-          datasets_included=datasets_included
+          datasets_included=datasets_included,
+          de_identified=de_identified   # NEW: pass flag
         )
 
         # Update row with results
@@ -429,7 +437,7 @@ def ai_export_mgr_generate_background(user=None):
 #--------------------------------------------------------------
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def ai_export_generate(league, team, date_start=None, date_end=None, player_filter=None, player_data_map=None, user=None, datasets_included=None):
+def ai_export_generate(league, team, date_start=None, date_end=None, player_filter=None, player_data_map=None, user=None, datasets_included=None, de_identified=False):
   """
     Generate NotebookLM-ready markdown files for AI analysis.
     
@@ -486,7 +494,8 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
           date_end=date_end,
           player_data=player_data,  # Pass individual player's data
           user=user,
-          datasets_included=datasets_included # Pass user context
+          datasets_included=datasets_included,
+          de_identified=de_identified  # NEW: pass de-identification flag
         )
         if file_info:
           generated_files.append(file_info)
@@ -498,6 +507,57 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
 
     log_info(f"Successfully generated {len(generated_files)} markdown files")
     print(f"Successfully generated {len(generated_files)} markdown files")
+
+    # --- NEW: If de-identified, write the player key file to the same Drive folder ---
+    if de_identified and generated_files:
+      try:
+        # Build the key map from all successfully generated files
+        key_map = []
+        for f in generated_files:
+          if f.get('player_uuid'):  # Only include files that were actually de-identified
+            # Look up fullname from master_player using real player name
+            real_name = f.get('player_real', f['player'])
+            parts = real_name.split()
+            fullname = real_name  # fallback
+            if len(parts) >= 3:
+              try:
+                mp_rows = list(app_tables.master_player.search(
+                  team=parts[0], number=int(parts[1]), shortname=' '.join(parts[2:])
+                ))
+                if mp_rows:
+                  fullname = mp_rows[0]['fullname'] or real_name
+              except Exception:
+                pass
+            key_map.append({
+              'uuid': f['player_uuid'],
+              'fullname': fullname,
+              'shortname': parts[2] if len(parts) >= 3 else real_name,
+              'team': parts[0] if parts else team,
+              'number': parts[1] if len(parts) >= 2 else ''
+            })
+
+        if key_map:
+          key_content = generate_player_key_file(key_map)
+          # Save to same folder as the player files
+          # Derive folder from the first file's path
+          first_file_path = generated_files[0].get('path', '')
+          if first_file_path:
+            folder_parts = [p.strip() for p in first_file_path.split('/')]
+          else:
+            # Build default folder
+            from generate_player_metrics_markdown import generate_player_metrics_markdown as _md
+            folder_parts = ["Beach Internals Reports", league, team, "notebooklm-ai-export"]
+
+          import anvil.media
+          key_media = anvil.media.from_bytes(
+            key_content.encode('utf-8'),
+            content_type='text/markdown',
+            name='00_Player_Key.md'
+          )
+          write_to_nested_folder(folder_parts, '00_Player_Key.md', key_media)
+          log_info(f"Player key file written with {len(key_map)} entries")
+      except Exception as e:
+        log_exception('error', "Error writing player key file", e)
 
     return {
       'status': 'success',
@@ -675,12 +735,83 @@ def get_team_players(league, team):
 
 
 #--------------------------------------------------------------
+# NEW: Helper to look up player_uuid from master_player table
+#--------------------------------------------------------------
+def get_player_uuid(team, number, shortname, league=None, gender=None, year=None):
+  """
+  Look up the player_uuid field from master_player table.
+  Returns the uuid string, or None if not found.
+  
+  Args:
+      team: Player's team (e.g. 'FSU')
+      number: Player's jersey number (int)
+      shortname: Player's short name (e.g. 'Johnson')
+      league: Optional - narrows the search
+      gender: Optional - narrows the search
+      year: Optional - narrows the search
+  """
+  try:
+    search_kwargs = dict(team=team, number=number, shortname=shortname)
+    if league:
+      search_kwargs['league'] = league
+    if gender:
+      search_kwargs['gender'] = gender
+    if year:
+      search_kwargs['year'] = str(year)
+
+    rows = list(app_tables.master_player.search(**search_kwargs))
+    if rows:
+      uuid = rows[0]['player_uuid']
+      if uuid:
+        return str(uuid)
+      log_error(f"player_uuid is empty for {team} {number} {shortname}")
+    else:
+      log_error(f"No master_player row found for {team} {number} {shortname}")
+    return None
+  except Exception as e:
+    log_exception('error', f"Error looking up player_uuid for {team} {number} {shortname}", e)
+    return None
+
+
+#--------------------------------------------------------------
+# NEW: Generate the player key file (UUID -> real identity mapping)
+#--------------------------------------------------------------
+def generate_player_key_file(player_key_map):
+  """
+  Build the 00_Player_Key.md file content mapping UUIDs back to real players.
+  This file is saved in the same Drive folder as the de-identified exports.
+
+  Args:
+      player_key_map: list of dicts, each with keys:
+          uuid, fullname, shortname, team, number
+
+  Returns:
+      str: Markdown content for the key file
+  """
+  lines = []
+  lines.append("# Player Identity Key\n")
+  lines.append("This file maps de-identified UUIDs back to real player identities.\n")
+  lines.append(f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n\n")
+  lines.append("| UUID | Full Name | Short Name | Team | Number |\n")
+  lines.append("| :--- | :--- | :--- | :--- | :--- |\n")
+  for entry in player_key_map:
+    lines.append(
+      f"| {entry['uuid']} | {entry['fullname']} | {entry['shortname']} "
+      f"| {entry['team']} | {entry['number']} |\n"
+    )
+  lines.append("\n---\n")
+  lines.append("*Keep this file secure. Do not share with unauthorised parties.*\n")
+  return ''.join(lines)
+
+
+#--------------------------------------------------------------
 # Core function to generate markdown for a single player
 # FIXED: Now reads datasets_included from ai_export_mgr row
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def generate_player_markdown(league, team, player, date_start=None, date_end=None, 
-                             player_data=None, user=None, datasets_included=None):
+                             player_data=None, user=None, datasets_included=None,
+                             de_identified=False):
   """
   Generate a single combined markdown file for one player.
   Loops through each dataset row in datasets_included and appends
@@ -695,6 +826,8 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
       player_data: Dict with player's league, gender, year, shortname, etc.
       user: User context
       datasets_included: List of rows from ai_export_dataset_list table
+      de_identified: If True, replace player name with player_uuid in filename
+                     and markdown content. Real identity only in key file.
   
   Returns:
       dict with file info, or None on failure
@@ -717,6 +850,27 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
       return None
 
   log_info(f"Using player_data: league_value={league_value}, shortname={player_shortname}")
+
+  # --- De-identification: resolve display name and UUID ---
+  player_uuid = None
+  if de_identified:
+    if player_data:
+      player_uuid = get_player_uuid(
+        team=player_data['team'],
+        number=player_data['number'],
+        shortname=player_data['shortname'],
+        league=player_data.get('league'),
+        gender=player_data.get('gender'),
+        year=player_data.get('year')
+      )
+    if player_uuid:
+      display_name = f"Player_{player_uuid}"
+      log_info(f"De-identified: {player} -> {display_name}")
+    else:
+      log_error(f"De-identification requested but no UUID found for {player} - using real name")
+      display_name = player
+  else:
+    display_name = player
 
   # --- Base filters shared by all datasets ---
   base_filters = {
@@ -886,7 +1040,8 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
   full_markdown = ''.join(combined_sections)
 
   # --- Build filename ---
-  player_safe = player.replace(' ', '_')
+  # Use display_name: UUID-based if de_identified, real name otherwise
+  player_safe = display_name.replace(' ', '_')
   parsed_league = league_value.replace(' ', '').replace('|', '_').strip('_')
   filename = f"{player_safe}_{parsed_league}_combined.md"
   log_info(f"Generated filename: {filename}")
@@ -903,7 +1058,9 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
   log_info(f"Successfully saved file for {player}: {file_info.get('url', 'No URL')}")
 
   return {
-    'player': player,
+    'player': display_name,          # UUID-based name if de_identified
+    'player_real': player,           # Always the real name (for key file)
+    'player_uuid': player_uuid,      # None if not de_identified
     'filename': filename,
     'file_id': file_info.get('id', 'saved_to_drive'),
     'file_url': file_info.get('url', None),
@@ -912,7 +1069,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
     'sessions_count': total_sets,
     'word_count': total_words,
     'summary': {
-      'player': player,
+      'player': display_name,
       'league': league_value,
       'team': team,
       'datasets_included': datasets_summary,
