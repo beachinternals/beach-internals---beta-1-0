@@ -164,6 +164,107 @@ def fisher_z_weighted_mean(correlations, weights):
 
 
 # ============================================================================
+# FBHE DIFFERENTIAL — player's team vs opponent's team within a set
+# ============================================================================
+
+def calc_fbhe_diff(set_df, player_id):
+  """
+  Calculate the FBHE differential between the player's team and the opponent's
+  team for a single set.
+
+  FBHE = (FBK - FBE) / attempts
+  where attempts = serves received by the attacking team
+                 = rows where serve_player is on the other team
+                   minus service errors (TSE by that serve player)
+
+  The differential is:
+    fbhe_diff = player_team_fbhe - opponent_team_fbhe
+
+  A positive value means the player's team outperformed the opponent
+  on first-ball attack efficiency in this set.  We expect this to
+  correlate strongly with point_pct (point spread).
+
+  Args:
+    set_df    : pd.DataFrame filtered to a single set (all points)
+    player_id : str — player identifier used in player_a1/a2/b1/b2 columns
+
+  Returns:
+    float or None — fbhe_diff, or None if either team has < 5 attempts
+  """
+  MIN_ATT = 5   # require at least this many first-ball attempts per team
+
+  if set_df.empty:
+    return None
+
+  first_row = set_df.iloc[0]
+
+  # ── Determine which team string the player belongs to ────────────────────
+  player_a1 = first_row.get('player_a1', '')
+  player_a2 = first_row.get('player_a2', '')
+  teama     = first_row.get('teama', '')
+  teamb     = first_row.get('teamb', '')
+
+  if player_id in (player_a1, player_a2):
+    player_team   = teama
+    opponent_team = teamb
+  else:
+    player_team   = teamb
+    opponent_team = teama
+
+  if not player_team or not opponent_team:
+    return None
+
+  # ── Helper: FBHE for one team ──────────────────────────────────────────────
+  # Attacks happen when the OTHER team is serving.
+  # Attempts = all points where serve_player is on opponent_team
+  #            minus service errors by opponent_team
+  #            (TSE by the serve player means the rally never started)
+  def team_fbhe(attacking_team, serving_team):
+    # Rows where the serving team is serving (i.e. attacking_team receives)
+    # We identify "serving team's serve players" as rows where
+    # serve_player contains one of the serving team's player strings.
+    # Robust approach: serve_player is on serving team if
+    #   point_outcome_team != attacking_team when outcome is TSE,
+    # but simpler: use teama/teamb string match on serve_player.
+    # serve_player format is the same as player_id ('TEAM NUM NAME')
+    # so checking if serving_team is a prefix of serve_player is reliable.
+    serving_rows = set_df[
+      set_df['serve_player'].str.startswith(serving_team, na=False)
+      ]
+
+    total_serves  = len(serving_rows)
+    service_errors = len(serving_rows[
+      (serving_rows['point_outcome'] == 'TSE') &
+      (serving_rows['point_outcome_team'].str.startswith(serving_team, na=False))
+      ])
+    attempts = total_serves - service_errors
+
+    if attempts < MIN_ATT:
+      return None
+
+    # FBK and FBE by attacking_team
+    fbk = len(set_df[
+      (set_df['point_outcome'] == 'FBK') &
+      (set_df['point_outcome_team'].str.startswith(attacking_team, na=False))
+      ])
+    fbe = len(set_df[
+      (set_df['point_outcome'] == 'FBE') &
+      (set_df['point_outcome_team'].str.startswith(attacking_team, na=False))
+      ])
+
+    return (fbk - fbe) / attempts
+
+  # ── Calculate both sides ──────────────────────────────────────────────────
+  player_fbhe   = team_fbhe(attacking_team=player_team,   serving_team=opponent_team)
+  opponent_fbhe = team_fbhe(attacking_team=opponent_team, serving_team=player_team)
+
+  if player_fbhe is None or opponent_fbhe is None:
+    return None
+
+  return round(player_fbhe - opponent_fbhe, 4)
+
+
+# ============================================================================
 # PLAYER IDENTIFIER HELPERS
 # ============================================================================
 
@@ -179,7 +280,7 @@ def is_deidentified(league, gender, year):
   return False
 
 
-def resolve_player_identifier(p_row):
+  def resolve_player_identifier(p_row):
   """
   Given a master_player row, return the string used to identify
   this player in ppr_df — either player_uuid or 'team number shortname'.
@@ -281,7 +382,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     (ppr_df['player_a2'] == player_id) |
     (ppr_df['player_b1'] == player_id) |
     (ppr_df['player_b2'] == player_id)
-    ]
+  ]
 
   if player_df.empty:
     log_info(f"No ppr rows found for player {player_id}")
@@ -359,6 +460,15 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
       metric_result = calculate_metric_for_set(metric_row, set_df, player_id)
       if metric_result and metric_result['value'] is not None:
         row[metric_result['metric_id']] = metric_result['value']
+
+    # ── FBHE differential: player's team minus opponent's team ───────────────
+    # Captures relative first-ball advantage within each set.
+    # Expected to correlate strongly with point_pct because within a skill
+    # level both teams have similar absolute FBHE — the team that wins the
+    # FBHE battle in a specific set should win more points.
+    fbhe_diff_val = calc_fbhe_diff(set_df, player_id)
+    if fbhe_diff_val is not None:
+      row['fbhe_diff'] = fbhe_diff_val
 
     rows.append(row)
     result['n_sets'] += 1
@@ -847,6 +957,39 @@ def build_point_level_df(ppr_df, player_id, outcome_type):
       angle_renames[col] = abs_name
   if angle_renames:
     log_debug(f"Converted to abs angles: {list(angle_renames.values())}")
+
+  # ── Transition only: dig_angle_diff — how much the opponent redirected ──────
+  # dig_angle - att_angle measures the angular change from your attack to the
+  # opponent's dig. A large abs difference means the opponent had to redirect
+  # significantly (your attack was hard to handle cleanly / came from a sharp
+  # angle they couldn't absorb). Near-zero means the dig went the same direction
+  # as the attack.
+  #
+  # NOTE: on TK/TE rows, att_angle = YOUR attack, dig_angle = OPPONENT's dig.
+  # This is therefore "how deceptive was your attack for the opponent to dig."
+  #
+  # We create both:
+  #   dig_angle_diff     — signed (positive = dig more angled than attack)
+  #   dig_angle_diff_abs — magnitude only (how much total redirection occurred)
+  #
+  # We do this BEFORE the abs() conversion loop above has already run on
+  # dig_angle and att_angle — so we work from the abs versions if they exist,
+  # but ideally we want the raw signed values. We therefore compute this from
+  # the original player_df (still has raw att_angle and dig_angle) and join in.
+  if outcome_type == 'transition':
+    raw_att = pd.to_numeric(player_df['att_angle'], errors='coerce') if 'att_angle' in player_df.columns else None
+    raw_dig = pd.to_numeric(player_df['dig_angle'], errors='coerce') if 'dig_angle' in player_df.columns else None
+    if raw_att is not None and raw_dig is not None:
+      diff = raw_dig - raw_att
+      n_valid = diff.notna().sum()
+      if n_valid >= 10:
+        point_df['dig_angle_diff']     = diff.values
+        point_df['dig_angle_diff_abs'] = diff.abs().values
+        log_debug(f"dig_angle_diff added: {n_valid} valid rows, "
+                  f"mean diff={diff.mean():.1f}°, "
+                  f"mean abs diff={diff.abs().mean():.1f}°")
+      else:
+        log_debug("dig_angle_diff skipped — too few rows with both att_angle and dig_angle")
 
   # ── att_height: replace raw metres with per-player percentile ────────────
   # Raw metres reflects the player's physical stature, not how well she
