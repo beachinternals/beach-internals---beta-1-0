@@ -849,14 +849,11 @@ def build_deident_lookup(league, gender, year):
       dict with two keys:
         'player_map'  : { "FSU 10 Danielle": "Player_abc123", ... }
         'team_map'    : { "FSU": "[Team_abc123]", ... }
-        'shortname_map': { "Danielle": "Player_abc123", ... }
                          (only for shortnames that are unique in this dataset)
   """
   log_info(f"Building de-identification lookup for {league}/{gender}/{year}...")
   player_map   = {}
   team_uuids   = {}   # team -> first uuid seen (for team redaction)
-  shortname_counts = {}  # shortname -> count (to detect non-unique shortnames)
-  shortname_map = {}
 
   try:
     rows = list(app_tables.master_player.search(
@@ -899,10 +896,6 @@ def build_deident_lookup(league, gender, year):
         if t not in team_uuids:
           team_uuids[t] = uuid[:6]
 
-        # Track shortname uniqueness
-        shortname_counts[sn] = shortname_counts.get(sn, 0) + 1
-        shortname_map[sn] = display   # may be overwritten if not unique
-
       except Exception as e:
         log_error(f"  Error processing master_player row: {e}")
         continue
@@ -910,25 +903,16 @@ def build_deident_lookup(league, gender, year):
     # Build team_map: team name -> redacted label
     team_map = {t: f"[Team_{uid}]" for t, uid in team_uuids.items()}
 
-    # Only keep shortnames that are unique in this dataset (safe to replace)
-    unique_shortname_map = {
-      sn: disp
-      for sn, disp in shortname_map.items()
-      if shortname_counts[sn] == 1 and len(sn) > 3  # skip very short names
-    }
-
-    log_info(f"  Lookup built: {len(player_map)} players, "
-             f"{len(team_map)} teams, {len(unique_shortname_map)} unique shortnames")
+    log_info(f"  Lookup built: {len(player_map)} players, {len(team_map)} teams")
 
     return {
-      'player_map':    player_map,
-      'team_map':      team_map,
-      'shortname_map': unique_shortname_map
+      'player_map': player_map,
+      'team_map':   team_map
     }
 
   except Exception as e:
     log_exception('error', "Error building de-identification lookup", e)
-    return {'player_map': {}, 'team_map': {}, 'shortname_map': {}}
+    return {'player_map': {}, 'team_map': {}}
 
 
 #--------------------------------------------------------------
@@ -954,19 +938,20 @@ def deidentify_markdown(content, deident_lookup):
   if not content or not deident_lookup:
     return content
 
-  player_map    = deident_lookup.get('player_map', {})
-  team_map      = deident_lookup.get('team_map', {})
-  shortname_map = deident_lookup.get('shortname_map', {})
+  player_map = deident_lookup.get('player_map', {})
+  team_map   = deident_lookup.get('team_map', {})
 
   # 1. Replace full player names (e.g. "STETSON 10 Danielle")
+  #    This covers: report headers, partner names, opponent names.
+  #    Keys include both zero-padded and plain number variants.
   for real_name, display in player_map.items():
     content = content.replace(real_name, display)
 
-  # 2. Replace unique shortnames (e.g. "Danielle" in headers/paragraphs)
-  for shortname, display in shortname_map.items():
-    content = content.replace(shortname, display)
+  # NOTE: shortname-only replacement removed — it caused corruption by
+  # matching shortnames inside already-replaced UUID display strings.
+  # The full TEAM NUMBER SHORTNAME match above is sufficient.
 
-  # 3. Replace team names (e.g. "STETSON" -> "[Team_abc123]")
+  # 2. Replace team names (e.g. "STETSON" -> "[Team_abc123]")
   #    Use word-boundary-like approach: only replace when followed by space,
   #    newline, punctuation, or end of string to avoid partial matches.
   import re
