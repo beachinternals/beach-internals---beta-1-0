@@ -280,33 +280,33 @@ def is_deidentified(league, gender, year):
   return False
 
 
-  def resolve_player_identifier(p_row):
-    """
-    Given a master_player row, return the string used to identify
-    this player in ppr_df — either player_uuid or 'team number shortname'.
+def resolve_player_identifier(p_row):
+  """
+  Given a master_player row, return the string used to identify
+  this player in ppr_df — either player_uuid or 'team number shortname'.
 
-    Args:
-      p_row: Anvil row from master_player table
+  Args:
+    p_row: Anvil row from master_player table
 
-    Returns:
-      str: player identifier for filtering ppr_df, or None on failure
-    """
-    league = p_row['league']
-    gender = p_row['gender']
-    year   = str(p_row['year'])
+  Returns:
+    str: player identifier for filtering ppr_df, or None on failure
+  """
+  league = p_row['league']
+  gender = p_row['gender']
+  year   = str(p_row['year'])
 
-    if is_deidentified(league, gender, year):
-      uid = p_row['player_uuid']
-      if uid:
-        log_debug(f"De-id league: using uuid {uid} for {p_row['shortname']}")
-        return uid
-      else:
-        log_error(f"No player_uuid for {p_row['team']} {p_row['number']} {p_row['shortname']}")
-        return None
+  if is_deidentified(league, gender, year):
+    uid = p_row['player_uuid']
+    if uid:
+      log_debug(f"De-id league: using uuid {uid} for {p_row['shortname']}")
+      return uid
     else:
-      identifier = f"{p_row['team']} {p_row['number']} {p_row['shortname']}"
-      log_debug(f"Named league: using '{identifier}'")
-      return identifier
+      log_error(f"No player_uuid for {p_row['team']} {p_row['number']} {p_row['shortname']}")
+      return None
+  else:
+    identifier = f"{p_row['team']} {p_row['number']} {p_row['shortname']}"
+    log_debug(f"Named league: using '{identifier}'")
+    return identifier
 
 
 # ============================================================================
@@ -382,7 +382,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     (ppr_df['player_a2'] == player_id) |
     (ppr_df['player_b1'] == player_id) |
     (ppr_df['player_b2'] == player_id)
-  ]
+    ]
 
   if player_df.empty:
     log_info(f"No ppr rows found for player {player_id}")
@@ -425,7 +425,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     set_df = player_df[
       (player_df['video_id'] == video_id) &
       (player_df['set']      == set_num)
-    ]
+      ]
 
     # ── Calculate point_pct ──────────────────────────────────────────────────
     if 'point_outcome_team' not in set_df.columns or 'point_outcome' not in set_df.columns:
@@ -439,7 +439,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     points_won = len(set_df[
       (player_is_outcome_team  & set_df['point_outcome'].isin(WON_OUTCOMES)) |
       (~player_is_outcome_team & set_df['point_outcome'].isin(LOST_OUTCOMES))
-    ])
+      ])
     total_pts  = len(set_df)
     point_pct  = points_won / total_pts if total_pts > 0 else None
 
@@ -1440,3 +1440,4 @@ def get_skill_level_results(run_id=None, analysis_type=None):
   except Exception as e:
     log_error(f"Error retrieving skill_level_results: {e}")
     return []
+
