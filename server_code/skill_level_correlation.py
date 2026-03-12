@@ -173,95 +173,103 @@ def calc_fbhe_diff(set_df, player_id):
   team for a single set.
 
   FBHE = (FBK - FBE) / attempts
-  where attempts = serves received by the attacking team
-                 = rows where serve_player is on the other team
-                   minus service errors (TSE by that serve player)
+  where attempts = serves by the serving team minus their service errors (TSE).
 
-  The differential is:
-    fbhe_diff = player_team_fbhe - opponent_team_fbhe
+  fbhe_diff = player_team_fbhe - opponent_team_fbhe
 
-  A positive value means the player's team outperformed the opponent
-  on first-ball attack efficiency in this set.  We expect this to
-  correlate strongly with point_pct (point spread).
+  Positive = player's team won the first-ball battle in this set.
+  Expected to show strong positive correlation with point_pct, because
+  within a skill level absolute FBHE is similar — the team that wins
+  the FBHE differential in a set wins more points.
+
+  Works for both named and de-identified leagues:
+  - player_a1/a2/b1/b2 hold the same identifier as serve_player
+    (UUID in de-id leagues, 'TEAM NUM NAME' in named leagues)
+  - point_outcome_team is a concatenation of the two player UUIDs
+    (or team name string) — so we test membership with str.contains(uuid)
+    which is the same pattern used throughout calc_player_data.py
 
   Args:
     set_df    : pd.DataFrame filtered to a single set (all points)
-    player_id : str — player identifier used in player_a1/a2/b1/b2 columns
+    player_id : str — UUID or name string matching player_a1/a2/b1/b2
 
   Returns:
-    float or None — fbhe_diff, or None if either team has < 5 attempts
+    float or None — fbhe_diff, or None if either team has < 5 FB attempts
   """
-  MIN_ATT = 5   # require at least this many first-ball attempts per team
+  MIN_ATT = 5
 
   if set_df.empty:
     return None
 
   first_row = set_df.iloc[0]
 
-  # ── Determine which team string the player belongs to ────────────────────
-  player_a1 = first_row.get('player_a1', '')
-  player_a2 = first_row.get('player_a2', '')
-  teama     = first_row.get('teama', '')
-  teamb     = first_row.get('teamb', '')
+  # ── Build team membership sets from player_a1/a2/b1/b2 ───────────────────
+  # These columns always hold the same identifier format as serve_player,
+  # so isin() works correctly for both UUID and named leagues.
+  pa1 = first_row.get('player_a1', '')
+  pa2 = first_row.get('player_a2', '')
+  pb1 = first_row.get('player_b1', '')
+  pb2 = first_row.get('player_b2', '')
 
-  if player_id in (player_a1, player_a2):
-    player_team   = teama
-    opponent_team = teamb
-  else:
-    player_team   = teamb
-    opponent_team = teama
+  team_a_ids = {p for p in [pa1, pa2] if p}
+  team_b_ids = {p for p in [pb1, pb2] if p}
 
-  if not player_team or not opponent_team:
+  if not team_a_ids or not team_b_ids:
     return None
 
-  # ── Helper: FBHE for one team ──────────────────────────────────────────────
-  # Attacks happen when the OTHER team is serving.
-  # Attempts = all points where serve_player is on opponent_team
-  #            minus service errors by opponent_team
-  #            (TSE by the serve player means the rally never started)
-  def team_fbhe(attacking_team, serving_team):
-    # Rows where the serving team is serving (i.e. attacking_team receives)
-    # We identify "serving team's serve players" as rows where
-    # serve_player contains one of the serving team's player strings.
-    # Robust approach: serve_player is on serving team if
-    #   point_outcome_team != attacking_team when outcome is TSE,
-    # but simpler: use teama/teamb string match on serve_player.
-    # serve_player format is the same as player_id ('TEAM NUM NAME')
-    # so checking if serving_team is a prefix of serve_player is reliable.
-    serving_rows = set_df[
-      set_df['serve_player'].str.startswith(serving_team, na=False)
-      ]
+  # Determine which set of ids is the player's team
+  if player_id in team_a_ids:
+    my_ids  = team_a_ids
+    opp_ids = team_b_ids
+  else:
+    my_ids  = team_b_ids
+    opp_ids = team_a_ids
 
-    total_serves  = len(serving_rows)
-    service_errors = len(serving_rows[
-      (serving_rows['point_outcome'] == 'TSE') &
-      (serving_rows['point_outcome_team'].str.startswith(serving_team, na=False))
-      ])
-    attempts = total_serves - service_errors
+  # ── Helper: calculate FBHE for one attacking team ─────────────────────────
+  #
+  # The attacking team attacks when the OPPONENT is serving.
+  # Attempts = rows where serve_player is in the serving (opponent) id set,
+  #            minus service errors on those rows (TSE = rally never started).
+  #
+  # FBK / FBE are identified by point_outcome_team containing the attacking
+  # player's uuid — same str.contains pattern used in calc_player_data.py.
+  # We use the first player in the attacking set as the contains-anchor
+  # (either attacker uuid will uniquely identify their team in that string).
+  #
+  def team_fbhe(attacking_ids, serving_ids):
+    # Pick any one attacking player uuid to use as the team anchor
+    attacking_anchor = next(iter(attacking_ids))
+
+    # All rows where the serving team is serving
+    serving_rows = set_df[set_df['serve_player'].isin(serving_ids)]
+
+    total_serves   = len(serving_rows)
+    service_errors = len(serving_rows[serving_rows['point_outcome'] == 'TSE'])
+    attempts       = total_serves - service_errors
 
     if attempts < MIN_ATT:
       return None
 
-    # FBK and FBE by attacking_team
+    # FBK and FBE credited to the attacking team
     fbk = len(set_df[
       (set_df['point_outcome'] == 'FBK') &
-      (set_df['point_outcome_team'].str.startswith(attacking_team, na=False))
+      (set_df['point_outcome_team'].str.contains(attacking_anchor, na=False, regex=False))
       ])
     fbe = len(set_df[
       (set_df['point_outcome'] == 'FBE') &
-      (set_df['point_outcome_team'].str.startswith(attacking_team, na=False))
+      (set_df['point_outcome_team'].str.contains(attacking_anchor, na=False, regex=False))
       ])
 
     return (fbk - fbe) / attempts
 
-  # ── Calculate both sides ──────────────────────────────────────────────────
-  player_fbhe   = team_fbhe(attacking_team=player_team,   serving_team=opponent_team)
-  opponent_fbhe = team_fbhe(attacking_team=opponent_team, serving_team=player_team)
+  # ── Calculate both sides and return the differential ─────────────────────
+  my_fbhe  = team_fbhe(attacking_ids=my_ids,  serving_ids=opp_ids)
+  opp_fbhe = team_fbhe(attacking_ids=opp_ids, serving_ids=my_ids)
 
-  if player_fbhe is None or opponent_fbhe is None:
+  if my_fbhe is None or opp_fbhe is None:
     return None
 
-  return round(player_fbhe - opponent_fbhe, 4)
+  return round(my_fbhe - opp_fbhe, 4)
 
 
 # ============================================================================
@@ -382,7 +390,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     (ppr_df['player_a2'] == player_id) |
     (ppr_df['player_b1'] == player_id) |
     (ppr_df['player_b2'] == player_id)
-    ]
+  ]
 
   if player_df.empty:
     log_info(f"No ppr rows found for player {player_id}")
@@ -425,7 +433,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     set_df = player_df[
       (player_df['video_id'] == video_id) &
       (player_df['set']      == set_num)
-      ]
+    ]
 
     # ── Calculate point_pct ──────────────────────────────────────────────────
     if 'point_outcome_team' not in set_df.columns or 'point_outcome' not in set_df.columns:
@@ -439,7 +447,7 @@ def build_set_level_df_for_player(ppr_df, player_id, min_points):
     points_won = len(set_df[
       (player_is_outcome_team  & set_df['point_outcome'].isin(WON_OUTCOMES)) |
       (~player_is_outcome_team & set_df['point_outcome'].isin(LOST_OUTCOMES))
-      ])
+    ])
     total_pts  = len(set_df)
     point_pct  = points_won / total_pts if total_pts > 0 else None
 
@@ -1440,4 +1448,3 @@ def get_skill_level_results(run_id=None, analysis_type=None):
   except Exception as e:
     log_error(f"Error retrieving skill_level_results: {e}")
     return []
-
