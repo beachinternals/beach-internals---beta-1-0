@@ -480,6 +480,7 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
 
     # --- Build de-identification lookup ONCE before the player loop ---
     # We derive league/gender/year from the first player in player_data_map.
+    # Uses print() so this always shows up even if log limit is hit later.
     deident_lookup = None
     if de_identified and player_data_map:
       try:
@@ -487,14 +488,18 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
         di_league = first_player_data.get('league', league)
         di_gender = first_player_data.get('gender', '')
         di_year   = str(first_player_data.get('year', ''))
+        print(f"DE-IDENT: building lookup for {di_league}/{di_gender}/{di_year}")
         if di_league and di_gender and di_year:
           deident_lookup = build_deident_lookup(di_league, di_gender, di_year)
-          log_info(f"De-identification lookup built: "
-                   f"{len(deident_lookup.get('player_map', {}))} players, "
-                   f"{len(deident_lookup.get('team_map', {}))} teams")
+          n_players = len(deident_lookup.get('player_map', {}))
+          n_teams   = len(deident_lookup.get('team_map', {}))
+          print(f"DE-IDENT: lookup built — {n_players} player keys, {n_teams} teams")
+          log_info(f"De-identification lookup built: {n_players} player keys, {n_teams} teams")
         else:
+          print(f"DE-IDENT ERROR: missing league/gender/year — di_league={di_league}, di_gender={di_gender}, di_year={di_year}")
           log_error("Cannot build de-ident lookup — missing league/gender/year in player_data_map")
       except Exception as e:
+        print(f"DE-IDENT ERROR: {str(e)}")
         log_exception('error', "Error building de-identification lookup", e)
 
     # Generate one consolidated markdown file per player
@@ -871,8 +876,24 @@ def build_deident_lookup(league, gender, year):
         sn = str(row['shortname'])
         display = f"Player_{uuid}"
 
-        # Full "TEAM NUMBER SHORTNAME" pattern
+        # Full "TEAM NUMBER SHORTNAME" pattern.
+        # Store BOTH the raw number string from the table AND the plain
+        # integer version, so we match regardless of zero-padding.
+        # e.g. table has "05" -> keys "FSU 05 EJ" AND "FSU 5 EJ"
+        # e.g. table has "5"  -> keys "FSU 5 EJ"  AND "FSU 05 EJ"
         player_map[f"{t} {n} {sn}"] = display
+        try:
+          n_int = int(n)
+          # Add plain integer version (no zero-pad)
+          plain = str(n_int)
+          if plain != n:
+            player_map[f"{t} {plain} {sn}"] = display
+          # Add zero-padded version (2 digits)
+          padded = f"{n_int:02d}"
+          if padded != n and padded != plain:
+            player_map[f"{t} {padded} {sn}"] = display
+        except ValueError:
+          pass  # number wasn't numeric, skip variants
 
         # Track team -> uuid prefix for team redaction
         if t not in team_uuids:
@@ -1201,10 +1222,14 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
   # lines, and any other free text — regardless of which generation function
   # produced them.
   if de_identified and deident_lookup:
+    n_player_keys = len(deident_lookup.get('player_map', {}))
+    print(f"DE-IDENT POST-PROCESS: running on {len(full_markdown)} chars, {n_player_keys} player keys")
     log_info(f"Running de-identification post-processing on {len(full_markdown)} chars...")
     full_markdown = deidentify_markdown(full_markdown, deident_lookup)
+    print(f"DE-IDENT POST-PROCESS: complete for {display_name}")
     log_info("De-identification post-processing complete")
   elif de_identified and not deident_lookup:
+    print(f"DE-IDENT WARNING: de_identified=True but deident_lookup is None — {player} NOT redacted!")
     log_error("de_identified=True but no deident_lookup provided — content NOT fully redacted!")
 
   # --- Build filename ---
