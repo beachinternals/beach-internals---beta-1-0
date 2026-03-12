@@ -281,32 +281,32 @@ def is_deidentified(league, gender, year):
 
 
   def resolve_player_identifier(p_row):
-  """
-  Given a master_player row, return the string used to identify
-  this player in ppr_df — either player_uuid or 'team number shortname'.
+    """
+    Given a master_player row, return the string used to identify
+    this player in ppr_df — either player_uuid or 'team number shortname'.
 
-  Args:
-    p_row: Anvil row from master_player table
+    Args:
+      p_row: Anvil row from master_player table
 
-  Returns:
-    str: player identifier for filtering ppr_df, or None on failure
-  """
-  league = p_row['league']
-  gender = p_row['gender']
-  year   = str(p_row['year'])
+    Returns:
+      str: player identifier for filtering ppr_df, or None on failure
+    """
+    league = p_row['league']
+    gender = p_row['gender']
+    year   = str(p_row['year'])
 
-  if is_deidentified(league, gender, year):
-    uid = p_row['player_uuid']
-    if uid:
-      log_debug(f"De-id league: using uuid {uid} for {p_row['shortname']}")
-      return uid
+    if is_deidentified(league, gender, year):
+      uid = p_row['player_uuid']
+      if uid:
+        log_debug(f"De-id league: using uuid {uid} for {p_row['shortname']}")
+        return uid
+      else:
+        log_error(f"No player_uuid for {p_row['team']} {p_row['number']} {p_row['shortname']}")
+        return None
     else:
-      log_error(f"No player_uuid for {p_row['team']} {p_row['number']} {p_row['shortname']}")
-      return None
-  else:
-    identifier = f"{p_row['team']} {p_row['number']} {p_row['shortname']}"
-    log_debug(f"Named league: using '{identifier}'")
-    return identifier
+      identifier = f"{p_row['team']} {p_row['number']} {p_row['shortname']}"
+      log_debug(f"Named league: using '{identifier}'")
+      return identifier
 
 
 # ============================================================================
