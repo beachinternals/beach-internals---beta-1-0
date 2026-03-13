@@ -871,44 +871,50 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
   log_debug("rpt_mgr_scouting_rpts returned successfully")
   return return_text, report_infos
 
-
-
-
 def populate_filters_from_rpt_mgr_table(rpt_r, p_r):
   '''
     Use the data in the report row, a row from rpt_mgr data table, to make the rpt_filters list 
     that is used to filter the data.
     For player, pair, opp_pair, only set if the row is passed, otherwise passed as False.
     
-    Special case: When the rpt_mgr team is 'League' AND the league is NCAA W 2026,
-    the ppr data is de-identified — player columns contain player_uuid values.
-    In that case, we look up the player_uuid from master_player instead of using 
-    the "team number shortname" format.
+    De-identification logic:
+      - When rpt_mgr team is 'League', the ppr data is de-identified — player columns 
+        contain player_uuid values. Look up player_uuid from master_player.
+      - For all other teams (e.g. 'STETSON'), ppr data uses real names in 
+        "team number shortname" format. Use that directly — no UUID lookup needed.
     '''
   rpt_filters = {}
   rpt_type = rpt_r['rpt_type']
+  disp_team = rpt_r['team']  # The team set in rpt_mgr, e.g. 'STETSON' or 'League'
 
   if p_r is not None:
     if rpt_type == 'player':
-      # All leagues are now de-identified — always use player_uuid
-      player_row = app_tables.master_player.get(
-        league=p_r['league'],
-        gender=p_r['gender'],
-        year=p_r['year'],
-        team=p_r['team'],
-        number=p_r['number'],
-        shortname=p_r['shortname']
-      )
-      if player_row and player_row['player_uuid']:
-        rpt_filters['player'] = player_row['player_uuid']
-        log_info(f"De-id lookup: mapped {p_r['shortname']} -> {player_row['player_uuid']}")
+
+      if disp_team == 'League':
+        # League data is de-identified — player columns contain player_uuid
+        # Look up the uuid from master_player
+        player_row = app_tables.master_player.get(
+          league=p_r['league'],
+          gender=p_r['gender'],
+          year=p_r['year'],
+          team=p_r['team'],
+          number=p_r['number'],
+          shortname=p_r['shortname']
+        )
+        if player_row and player_row['player_uuid']:
+          rpt_filters['player'] = player_row['player_uuid']
+          log_info(f"De-id lookup (League): mapped {p_r['shortname']} -> {player_row['player_uuid']}")
+        else:
+          log_error(f"No player_uuid found for {p_r['team']} {p_r['number']} {p_r['shortname']} in League data")
+          rpt_filters['player'] = p_r['team'] + " " + str(p_r['number']) + ' ' + p_r['shortname']
+
       else:
-        # Fallback: use old "team number shortname" format if no uuid found
-        log_error(f"No player_uuid found for {p_r['team']} {p_r['number']} {p_r['shortname']} — falling back to name format")
+        # Team-specific data (e.g. STETSON) — ppr uses real "team number shortname" format
         rpt_filters['player'] = p_r['team'] + " " + str(p_r['number']) + ' ' + p_r['shortname']
+        log_info(f"Team report ({disp_team}): using name format for {rpt_filters['player']}")
+
     elif rpt_type == 'pair':
       rpt_filters['pair'] = p_r['pair']
-    
 
   if rpt_r['comp_l1'] is not None:
     rpt_filters['comp_l1'] = rpt_r['comp_l1']
@@ -942,15 +948,19 @@ def populate_filters_from_rpt_mgr_table(rpt_r, p_r):
 
   today_date = date.today()
   if rpt_r['days_hist'] and rpt_r['days_hist'] != 0:
-      rpt_filters['start_date'] = today_date - timedelta(days=rpt_r['days_hist'])
-      rpt_filters['end_date'] = today_date
+    rpt_filters['start_date'] = today_date - timedelta(days=rpt_r['days_hist'])
+    rpt_filters['end_date'] = today_date
   else:
-        if rpt_r['start_date'] is not None:
-            rpt_filters['start_date'] = rpt_r['start_date']
-        if rpt_r['end_date'] is not None:
-            rpt_filters['end_date'] = rpt_r['end_date']
+    if rpt_r['start_date'] is not None:
+      rpt_filters['start_date'] = rpt_r['start_date']
+    if rpt_r['end_date'] is not None:
+      rpt_filters['end_date'] = rpt_r['end_date']
 
   return rpt_filters
+
+
+
+
     
 
 @anvil.server.callable
