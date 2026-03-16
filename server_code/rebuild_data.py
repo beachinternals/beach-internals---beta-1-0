@@ -207,8 +207,8 @@ def call_build_ppr_data():
   return task
 
 @anvil.server.callable
-def call_build_all_ppr_data():
-  task = anvil.server.launch_background_task('build_ppr_data2')
+def call_build_all_ppr_data(disp_league, disp_gender, disp_year):
+  task = anvil.server.launch_background_task('build_ppr_data2',disp_league, disp_gender, disp_year)
   return task
 
 
@@ -220,61 +220,102 @@ def build_ppr_data1():
   return task
 
 @anvil.server.background_task
-def build_ppr_data2():
-  task = calculate_ppr_data(True)
+def build_ppr_data2(disp_league, disp_gender, disp_year):
+  task = calculate_ppr_data(True,disp_league, disp_gender, disp_year)
   return task
 
 @anvil.server.callable
-def calculate_ppr_data(rebuild):
+def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
+  """
+  Calculate PPR data from BTD files.
+  
+  Parameters:
+    rebuild      : True = rebuild all ppr files, False = only process new/updated files
+    disp_league  : Filter to a specific league (empty string = all leagues)
+    disp_gender  : Filter to a specific gender (empty string = all genders)
+    disp_year    : Filter to a specific year   (empty string = all years)
+  """
   now = datetime.now()
-  email_text = "Calculate PPR Data \n Called at:" + str(now) + "\n"
 
-  # build data for all new files, for all leagues
+  # Determine if we are running for all leagues or just one
+  all_leagues = (disp_league == '' and disp_gender == '' and disp_year == '')
 
-  # do the btd -> ppr conversion for all btf files
-  dict = {'league':[str()],
-          'gender':[str()],
-          'year':[str()],
-          'team':[str()]
-         }
+  email_text = "Calculate PPR Data \n Called at: " + str(now) + "\n"
+  if all_leagues:
+    email_text += "Mode: ALL leagues\n"
+  else:
+    email_text += f"Mode: Single league -> League:{disp_league}  Gender:{disp_gender}  Year:{disp_year}\n"
+
+  # ----------------------------------------------------------------
+  # Step 1: Load all BTD file records into a dataframe so we can
+  #         get the unique list of league / gender / year / team
+  # ----------------------------------------------------------------
+  dict = {
+    'league': [str()],
+    'gender': [str()],
+    'year':   [str()],
+    'team':   [str()]
+  }
   btd_df = pd.DataFrame.from_records(dict)
+
   i = 0
   for btd_file_r in app_tables.btd_files.search():
-    # make a quick df of the values needed
-    btd_df.at[i,'league'] = btd_file_r['league']
-    btd_df.at[i,'gender'] = btd_file_r['gender']
-    btd_df.at[i,'year'] = btd_file_r['year']
-    btd_df.at[i,'team'] = btd_file_r['team']
-    i = i + 1
+    btd_df.at[i, 'league'] = btd_file_r['league']
+    btd_df.at[i, 'gender'] = btd_file_r['gender']
+    btd_df.at[i, 'year']   = str(btd_file_r['year'])   # make sure year is a string for comparison
+    btd_df.at[i, 'team']   = btd_file_r['team']
+    i += 1
 
-  # now we need to make this unique  
-  #print(btd_df)
+  # Get unique values
   league_list = pd.unique(btd_df['league'])
   gender_list = pd.unique(btd_df['gender'])
-  year_list = pd.unique(btd_df['year'])
-  team_list = pd.unique(btd_df['team'])
+  year_list   = pd.unique(btd_df['year'])
+  team_list   = pd.unique(btd_df['team'])
 
-  # loop over league
+  r_val        = None
+  email_status = None
+
+  # ----------------------------------------------------------------
+  # Step 2: Loop over the combinations, skipping any that don't
+  #         match the requested league/gender/year (unless all_leagues)
+  # ----------------------------------------------------------------
   for c_league in league_list:
-    # loop ober gender
-    #print(f"processing for league: {c_league}")
     for c_gender in gender_list:
-      #print(f"processing for gender: {c_gender}")
-      # loop over year
       for c_year in year_list:
-        # loop over team
-        #print(f"processing for year: {c_year}")
-        for c_team in team_list:
-          # CALL BTD > PPR 
-          email_text = email_text + ' Generating PPR Files for ' + c_league + " "+ c_gender +" "+ c_year +" "+ c_team +"\n"
-          #print(email_text)
-          r_val = anvil.server.launch_background_task('generate_ppr_files', c_league, c_gender, c_year, c_team, rebuild )
 
-    #now, send an email with the updates
+        # Check if this combination matches what was requested
+        if all_leagues:
+          process_this = True
+        else:
+          process_this = (
+            c_league == disp_league and
+            c_gender == disp_gender and
+            str(c_year) == str(disp_year)
+          )
+
+        if not process_this:
+          continue  # skip this combination
+
+        # Now loop over teams for this league/gender/year
+        for c_team in team_list:
+          email_text += f"  Generating PPR Files for: {c_league} {c_gender} {c_year} {c_team}\n"
+          r_val = anvil.server.launch_background_task(
+            'generate_ppr_files', c_league, c_gender, c_year, c_team, rebuild
+          )
+
+  # ----------------------------------------------------------------
+  # Step 3: Send a summary email
+  # ----------------------------------------------------------------
   internals_email = 'beachinternals@gmail.com'
-  email_text = email_text + "Completed at:" + str(now) + "\n"
-  email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Rebuild Data',text=email_text)
-  
+  now_end = datetime.now()
+  email_text += f"Completed at: {str(now_end)}  (compute time: {str(now_end - now)})\n"
+
+  email_status = anvil.email.send(
+    to=internals_email,
+    from_address="no-reply",
+    subject='Beach Internals - Rebuild PPR Data',
+    text=email_text
+  )
 
   return r_val, email_status
 

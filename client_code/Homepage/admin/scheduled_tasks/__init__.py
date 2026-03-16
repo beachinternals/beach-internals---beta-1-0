@@ -44,7 +44,15 @@ class scheduled_tasks(scheduled_tasksTemplate):
 
   def rebuild_all_button_click(self, **event_args):
     """This method is called when the button is clicked"""
-    return_text = anvil.server.call('call_build_all_ppr_data')
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+
+    return_text = anvil.server.call('call_build_all_ppr_data',disp_league,disp_gender,disp_year)
     alert(return_text)
     pass
 
