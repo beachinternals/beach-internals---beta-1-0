@@ -244,7 +244,7 @@ def btd_to_ppr_df(btd_df, flist_r):
                   'att_angular_zone':blank,
     'dig_player':blank,'dig_yn':yn,'dig_src_x':zero,'dig_src_y':zero,'dig_src_t':zero,'dig_src_zone_depth':blank,'dig_src_zone_net':zero,
                   'dig_dest_x':zero,'dig_dest_y':zero,'dig_dest_t':zero,'dig_dest_zone_depth':blank,'dig_dest_zone_net':zero,
-                  'dig_dist':zero,'dig_dur':zero,'dig_speed':zero,'dig_angle':zero,'dig_action_id':zero,'dig_height':zero,'dig_quality':zero,
+                  'dig_dist':zero,'dig_dur':zero,'dig_speed':zero,'dig_angle':zero,'dig_action_id':zero,'dig_height':zero,'dig_quality':zero,'dig_type':blank,
     'point_outcome':blank,'point_outcome_team':blank,'tactic':blank,'last_action_id':zero
   }
 
@@ -332,7 +332,7 @@ def btd_to_ppr_df(btd_df, flist_r):
       if ppr_row == -1:
         continue
       touch_since_serve += 1
-      ppr_df = save_dig_info(ppr_df, btd_r, ppr_row)
+      ppr_df = save_dig_info(ppr_df, btd_r, ppr_row, teama, teamb)
 
     #print(f"TOuches since serve:{touch_since_serve}, Player:{btd_r['player']}, action type:{btd_r['action_type']}")
     if touch_since_serve == 5 or ( btd_r['player'] in serve_team and btd_r['action_type'] != "serve" ):
@@ -434,7 +434,7 @@ def save_att_info( ppr_df, btd_r, ppr_row):
 
   return ppr_df
 
-def save_dig_info( ppr_df, btd_r, ppr_row):
+def save_dig_info( ppr_df, btd_r, ppr_row, teama, teamb):
   
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_action_id'))] = int(btd_r['action_id'])
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_src_t'))] = btd_r['action_time']
@@ -446,6 +446,17 @@ def save_dig_info( ppr_df, btd_r, ppr_row):
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_yn'))] = "Y"  
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_dest_t'))] = ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('dig_src_t'))]
   #print(f"saving Dig info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
+
+  # Determine dig type — block_recovery if same team attacked, defensive if opponent attacked
+  att_player = ppr_df.iloc[(ppr_row, ppr_df.columns.get_loc('att_player'))]
+  dig_player = btd_r['player']
+  if att_player != 'empty' and dig_player != ' ':
+    if (att_player in teama and dig_player in teama) or \
+    (att_player in teamb and dig_player in teamb):
+      ppr_df.iloc[(ppr_row, ppr_df.columns.get_loc('dig_type'))] = 'block_recovery'
+    else:
+      ppr_df.iloc[(ppr_row, ppr_df.columns.get_loc('dig_type'))] = 'defensive'
+      
   return ppr_df
 
 def calc_dig_midpoint(att_src_x, att_src_y, dig_src_x, dig_src_y):
