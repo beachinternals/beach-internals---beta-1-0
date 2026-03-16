@@ -1049,6 +1049,16 @@ def calc_error_density_obj(ppr_df, disp_player):
     'total_points': total_points
   }
 
+def calc_dig_quality_obj(ppr_df, player):
+  digs = ppr_df[(ppr_df['dig_yn'] == 'Y') & 
+    (ppr_df['dig_player'] == player)]
+  dq = digs['dig_quality'].dropna()
+  n = len(dq)
+  return {
+    'dig_quality_avg': round(dq.mean(), 3) if n > 0 else None,
+    'dig_n': n,
+    'status': n > 0
+  }
 
 def _create_empty_error_dict():
   """

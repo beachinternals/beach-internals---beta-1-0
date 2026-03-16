@@ -385,6 +385,7 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
         'calc_angle_attacks_obj': calc_angle_attacks_obj,
         'count_good_passes_obj' : count_good_passes_obj,
         'calc_att_height_metrics' : calc_att_height_metrics,
+        'calc_dig_quality_obj' : calc_dig_quality_obj,
         # Add pandas/numpy for metric calculations
         'pd': pd,
         'np': np
