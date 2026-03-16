@@ -244,7 +244,7 @@ def btd_to_ppr_df(btd_df, flist_r):
                   'att_angular_zone':blank,
     'dig_player':blank,'dig_yn':yn,'dig_src_x':zero,'dig_src_y':zero,'dig_src_t':zero,'dig_src_zone_depth':blank,'dig_src_zone_net':zero,
                   'dig_dest_x':zero,'dig_dest_y':zero,'dig_dest_t':zero,'dig_dest_zone_depth':blank,'dig_dest_zone_net':zero,
-                  'dig_dist':zero,'dig_dur':zero,'dig_speed':zero,'dig_angle':zero,'dig_action_id':zero,'dig_height':zero,
+                  'dig_dist':zero,'dig_dur':zero,'dig_speed':zero,'dig_angle':zero,'dig_action_id':zero,'dig_height':zero,'dig_quality':zero,
     'point_outcome':blank,'point_outcome_team':blank,'tactic':blank,'last_action_id':zero
   }
 
@@ -338,6 +338,18 @@ def btd_to_ppr_df(btd_df, flist_r):
     if touch_since_serve == 5 or ( btd_r['player'] in serve_team and btd_r['action_type'] != "serve" ):
       in_trans = True
 
+    # --- Backfill dig_dest_t from the current action's time ---
+    # If there was a dig this point and dig_dest_t hasn't been set yet,
+    # the current action is the "next touch after the dig" — use its action_time
+    if ppr_row >= 0:
+      current_dig_dest_t = ppr_df.iloc[(ppr_row, ppr_df.columns.get_loc('dig_dest_t'))]
+      has_dig = ppr_df.iloc[(ppr_row, ppr_df.columns.get_loc('dig_yn'))] == "Y"
+      # 0 means not yet set (it was initialized to zero)
+      if has_dig and (current_dig_dest_t == 0 or current_dig_dest_t == 'empty'):
+        if btd_r['action_type'] != 'dig':  # don't use the dig's own time
+          if isinstance(btd_r.get('action_time'), (float, int)):
+            ppr_df.iloc[(ppr_row, ppr_df.columns.get_loc('dig_dest_t'))] = btd_r['action_time']
+        
     # save the previous row
     last_player = btd_r['player']
     last_quality = btd_r['quality']
@@ -436,6 +448,69 @@ def save_dig_info( ppr_df, btd_r, ppr_row):
   #print(f"saving Dig info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
   return ppr_df
 
+def calc_dig_midpoint(att_src_x, att_src_y, dig_src_x, dig_src_y):
+  # The ideal dig destination is the midpoint between where the attacker hit
+  # the ball (att_src) and where the defender dug it (dig_src).
+  # This gives the setter the most options — equidistant from both players.
+  if att_src_x is not None and att_src_y is not None and dig_src_x is not None and dig_src_y is not None:
+    mid_x = (att_src_x + dig_src_x) / 2
+    mid_y = (att_src_y + dig_src_y) / 2
+    return mid_x, mid_y
+  else:
+    return None, None
+
+
+def calc_dig_quality(att_src_x, att_src_y, dig_src_x, dig_src_y,
+                     dig_dest_x, dig_dest_y, dig_height):
+  # Calculate a dig quality score from 0.0 (poor) to 1.0 (excellent).
+  #
+  # Two components:
+  #   position_score  — how close the dig destination is to the ideal midpoint
+  #   height_modifier — penalty if the dig was too low or too high
+  #
+  # Combined: dig_quality = position_score * height_modifier
+
+  # --- Guard: need all coordinates ---
+  if any(v is None for v in [att_src_x, att_src_y, dig_src_x, dig_src_y, dig_dest_x, dig_dest_y]):
+    return None
+
+  # --- Position score ---
+  mid_x, mid_y = calc_dig_midpoint(att_src_x, att_src_y, dig_src_x, dig_src_y)
+
+  # Distance from dig destination to the ideal midpoint
+  dist_to_ideal = calc_dist(dig_dest_x, mid_x, dig_dest_y, mid_y)
+
+  if dist_to_ideal is None:
+    return None
+
+  # Max meaningful distance: if the dig lands more than 5m from ideal, score = 0
+  # This is a tuning parameter — adjust based on your data
+  max_dist = 5.0
+  position_score = max(0.0, 1.0 - (dist_to_ideal / max_dist))
+
+  # --- Height modifier ---
+  # dig_height is in meters (from calc_height parabolic formula)
+  # Good dig height = 3m to 5m — gives setter enough time, not too loopy
+  # Tuning parameters based on our previous discussion:
+  #   < 1m  → 0.5  (very low, partner has almost no time)
+  #   1-3m  → 0.8  (low but playable)
+  #   3-5m  → 1.0  (ideal)
+  #   5m+   → 0.8  (too high, slower transition)
+  if dig_height is None or dig_height == 0:
+    # No height data — don't penalize, just use position score alone
+    height_modifier = 0.9  # slight discount for unknown
+  elif dig_height < 1.0:
+    height_modifier = 0.5
+  elif dig_height < 3.0:
+    height_modifier = 0.8
+  elif dig_height <= 5.0:
+    height_modifier = 1.0
+  else:
+    height_modifier = 0.8
+
+  dig_quality = position_score * height_modifier
+  return round(dig_quality, 3)
+  
 def save_point(ppr_df, ppr_row, point_code, out_team, action ):
   ppr_df.at[ppr_row,'point_outcome'] = point_code
   ppr_df.at[ppr_row,'point_outcome_team'] = out_team
@@ -618,7 +693,7 @@ def calc_ppr_data(ppr_df):
       #if att_angle_obj.get('success'):
       ppr_df.at[index,'att_angular_zone'] = att_angle_obj.get('angular_zone')
       #print(f"Attack Angular Zone: {ppr_df.at[index,'att_angular_zone']}")
-        
+
     if ppr_r['dig_yn'] == "Y":
       ppr_df.at[index,'dig_dist'] = calc_dist(ppr_r['dig_src_x'],ppr_r['dig_src_y'],ppr_r['dig_dest_x'],ppr_r['dig_dest_y'])
       ppr_df.at[index,'dig_src_zone_depth'] = zone_depth(ppr_r['dig_src_y'])
@@ -626,10 +701,19 @@ def calc_ppr_data(ppr_df):
       ppr_df.at[index,'dig_dest_zone_depth'] = zone_depth(ppr_r['dig_dest_y'])
       ppr_df.at[index,'dig_dest_zone_net'] = zone_net(ppr_r['dig_src_x'])
       ppr_df.at[index,'dig_angle'] = calc_angle(ppr_r['dig_src_x'],ppr_r['dig_dest_x'],ppr_r['dig_src_y'],ppr_r['dig_dest_y'])
-      if isinstance(ppr_r['dig_dest_t'],(float,int)):
-        ppr_df.at[index,'dig_dur'] = calc_dur(ppr_r['dig_src_t'],ppr_r['dig_dest_t'])
-        ppr_df.at[index,'dig_speed'] = calc_speed(ppr_df.at[index,'dig_dist'],ppr_df.at[index,'dig_dur'])
+      if isinstance(ppr_r['dig_dest_t'],(float,int)) and ppr_r['dig_dest_t'] != 0:
+        ppr_df.at[index,'dig_dur']    = calc_dur(ppr_r['dig_src_t'],ppr_r['dig_dest_t'])
+        ppr_df.at[index,'dig_speed']  = calc_speed(ppr_df.at[index,'dig_dist'],ppr_df.at[index,'dig_dur'])
         ppr_df.at[index,'dig_height'] = calc_height(ppr_r['dig_src_t'],ppr_r['dig_dest_t'])
+
+      # Calculate dig quality — needs att_src coords and dig height
+      # att_src is where the attacker hit the ball = the start of the attack line
+      ppr_df.at[index,'dig_quality'] = calc_dig_quality(
+        ppr_r['att_src_x'], ppr_r['att_src_y'],
+        ppr_r['dig_src_x'], ppr_r['dig_src_y'],
+        ppr_r['dig_dest_x'], ppr_r['dig_dest_y'],
+        ppr_df.at[index,'dig_height']   # use the freshly calculated value
+      )
     
   return ppr_df
 
