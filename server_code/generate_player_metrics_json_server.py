@@ -359,7 +359,7 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
         data_filter_clean = data_filter_clean.replace('"', '"').replace('"', '"')
 
         # Set up minimal namespace for eval
-        filter_namespace = {'ppr_df': ppr_df}
+        filter_namespace = {'ppr_df': ppr_df, 'disp_player': player_name}
         filtered_ppr = eval(data_filter_clean, filter_namespace)
       else:
         filtered_ppr = ppr_df
