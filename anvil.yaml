@@ -1229,6 +1229,14 @@ db_schema:
       client_hidden: false
       name: outcome_type
       type: string
+    - admin_ui: {order: 4.5, width: 200}
+      client_hidden: false
+      name: p_combined
+      type: number
+    - admin_ui: {order: 4.75, width: 200}
+      client_hidden: false
+      name: is_significant
+      type: bool
     server: full
     title: skill_level_results
   strength_weakness_criteria:

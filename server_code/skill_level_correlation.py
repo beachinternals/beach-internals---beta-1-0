@@ -23,6 +23,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import uuid
+from scipy import stats as scipy_stats
 
 from .logger_utils import log_debug, log_info, log_error, log_critical
 from server_functions import (
@@ -555,25 +556,26 @@ def calculate_player_correlations(set_df):
 # ============================================================================
 # LEVEL-LEVEL AGGREGATION
 # ============================================================================
-
 def aggregate_level_correlations(player_corr_list):
   """
   Aggregate per-player correlations into level-mean correlations
   using Fisher Z weighting by number of sets.
-
+ 
   Args:
     player_corr_list: list of dicts from calculate_player_correlations()
                       Each dict: { metric_id: {'r': float, 'n': int} }
-
+ 
   Returns:
     dict: { metric_id: {
-              'mean_r'         : float,   Fisher Z weighted mean
-              'n_players'      : int,     players contributing
-              'mean_n_sets'    : float,   average sets per player
-              'total_sets'     : int,     total sets across all players
+              'mean_r'        : float,   Fisher Z weighted mean r
+              'weighted_z'    : float,   the combined Fisher Z (before converting back)
+              'p_combined'    : float,   two-tailed p-value for the combined Z
+              'is_significant': bool,    True if p_combined < 0.05
+              'n_players'     : int,     players contributing
+              'mean_n_sets'   : float,   average sets per player
+              'total_sets'    : int,     total sets across all players
             } }
   """
-  # Collect all metric ids seen
   all_metrics = set()
   for pc in player_corr_list:
     all_metrics.update(pc.keys())
@@ -591,24 +593,56 @@ def aggregate_level_correlations(player_corr_list):
         n = pc[metric_id]['n']
         if r is not None and n is not None and n > 0:
           correlations.append(r)
-          weights.append(n)       # weight by number of sets
+          weights.append(n)
           n_sets_list.append(n)
 
     if not correlations:
       continue
 
-    mean_r = fisher_z_weighted_mean(correlations, weights)
-    if mean_r is None:
+    # ── Fisher Z weighted mean ───────────────────────────────────────────────
+    valid = [
+      (r, w) for r, w in zip(correlations, weights)
+      if r is not None and w is not None and not np.isnan(r) and w > 0
+    ]
+    if not valid:
       continue
 
+    z_values     = [fisher_z(r) * w for r, w in valid]
+    total_weight = sum(w for _, w in valid)
+
+    if total_weight == 0:
+      continue
+
+    weighted_z = sum(z_values) / total_weight
+    mean_r     = z_to_r(weighted_z)
+
+    # ── Combined p-value from the weighted Z ─────────────────────────────────
+    # The standard error of a Fisher Z based on total weight (sum of n_sets)
+    # is 1 / sqrt(total_weight - len(valid))  when combining across players.
+    # Two-tailed test: does the combined correlation differ from zero?
+    n_groups = len(valid)
+    se = 1.0 / np.sqrt(total_weight - n_groups) if total_weight > n_groups else None
+
+    if se and se > 0:
+      z_stat      = weighted_z / se
+      p_combined  = float(2 * (1 - scipy_stats.norm.cdf(abs(z_stat))))
+      is_sig      = p_combined < 0.05
+    else:
+      p_combined  = None
+      is_sig      = False
+
     results[metric_id] = {
-      'mean_r'       : round(mean_r, 4),
-      'n_players'    : len(correlations),
-      'mean_n_sets'  : round(sum(n_sets_list) / len(n_sets_list), 1),
-      'total_sets'   : sum(n_sets_list),
+      'mean_r'        : round(mean_r, 4),
+      'weighted_z'    : round(weighted_z, 4),
+      'p_combined'    : round(p_combined, 4) if p_combined is not None else None,
+      'is_significant': is_sig,
+      'n_players'     : len(correlations),
+      'mean_n_sets'   : round(sum(n_sets_list) / len(n_sets_list), 1),
+      'total_sets'    : sum(n_sets_list),
     }
 
   return results
+  
 
 
 # ============================================================================
@@ -776,7 +810,6 @@ def analyse_skill_level(level_row, run_id, ppr_cache=None):
 # ============================================================================
 # RESULTS WRITER
 # ============================================================================
-
 def save_level_results(level_result, run_id):
   """
   Save the aggregated set-level results for one skill level to skill_level_results.
@@ -808,6 +841,8 @@ def save_level_results(level_result, run_id):
         n_players_excluded = n_excl,
         mean_n_sets        = stats['mean_n_sets'],
         total_sets         = stats['total_sets'],
+        p_combined         = stats.get('p_combined'),     # NEW
+        is_significant     = stats.get('is_significant', False),  # NEW
         analysis_type      = 'set_level',
         outcome_type       = 'point_pct',
         created_at         = created_at,
@@ -817,6 +852,7 @@ def save_level_results(level_result, run_id):
       log_error(f"Error saving result for {metric_id} level {level_id}: {e}")
 
   log_info(f"Level {level_id}: saved {rows_saved} set-level result rows")
+
 
 
 
