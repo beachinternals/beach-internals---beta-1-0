@@ -236,10 +236,8 @@ def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
     disp_year    : Filter to a specific year   (empty string = all years)
   """
   now = datetime.now()
-
   # Determine if we are running for all leagues or just one
   all_leagues = (disp_league == '' and disp_gender == '' and disp_year == '')
-
   email_text = "Calculate PPR Data \n Called at: " + str(now) + "\n"
   if all_leagues:
     email_text += "Mode: ALL leagues\n"
@@ -257,7 +255,6 @@ def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
     'team':   [str()]
   }
   btd_df = pd.DataFrame.from_records(dict)
-
   i = 0
   for btd_file_r in app_tables.btd_files.search():
     btd_df.at[i, 'league'] = btd_file_r['league']
@@ -271,7 +268,6 @@ def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
   gender_list = pd.unique(btd_df['gender'])
   year_list   = pd.unique(btd_df['year'])
   team_list   = pd.unique(btd_df['team'])
-
   r_val        = None
   email_status = None
 
@@ -292,16 +288,18 @@ def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
             c_gender == disp_gender and
             str(c_year) == str(disp_year)
           )
-
         if not process_this:
           continue  # skip this combination
 
-        # Now loop over teams for this league/gender/year
+        # -- Step 2a: Generate per-team PPR files --
         for c_team in team_list:
           email_text += f"  Generating PPR Files for: {c_league} {c_gender} {c_year} {c_team}\n"
           r_val = anvil.server.launch_background_task(
             'generate_ppr_files', c_league, c_gender, c_year, c_team, rebuild
           )
+
+        # NOTE: League merged table is built separately via calculate_league_ppr()
+        # Run that AFTER this function completes to avoid timing issues.
 
   # ----------------------------------------------------------------
   # Step 3: Send a summary email
@@ -309,14 +307,12 @@ def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
   internals_email = 'beachinternals@gmail.com'
   now_end = datetime.now()
   email_text += f"Completed at: {str(now_end)}  (compute time: {str(now_end - now)})\n"
-
   email_status = anvil.email.send(
     to=internals_email,
     from_address="no-reply",
     subject='Beach Internals - Rebuild PPR Data',
     text=email_text
   )
-
   return r_val, email_status
 
 @anvil.server.callable
@@ -801,3 +797,66 @@ def trigger_nightly_check():
   return {"status": "Nightly check triggered"}
 
 
+
+@anvil.server.callable
+def calc_league_ppr(disp_league='', disp_gender='', disp_year=''):
+  anvil.server.launch_background_task('calculate_league_ppr',disp_league,disp_gender,disp_year)
+  return {"status": "Calcualte League PPR Triggered"}
+
+@anvil.server.background_task
+def calculate_league_ppr(disp_league='', disp_gender='', disp_year=''):
+  """
+  Build the 'League' merged PPR table for each league/gender/year combination.
+  Run this AFTER calculate_ppr_data() has fully completed.
+
+  For each unique league/gender/year found in btd_files, calls
+  make_master_ppr with data_set='League', which concatenates all teams'
+  already-computed PPR files into one combined table in ppr_csv_tables
+  with team='League'.
+
+  Parameters:
+    disp_league : Filter to a specific league (empty = all)
+    disp_gender : Filter to a specific gender (empty = all)
+    disp_year   : Filter to a specific year   (empty = all)
+  """
+  now = datetime.now()
+  all_leagues = (disp_league == '' and disp_gender == '' and disp_year == '')
+  email_text = "Calculate League PPR Tables\nCalled at: " + str(now) + "\n"
+  if all_leagues:
+    email_text += "Mode: ALL leagues\n"
+  else:
+    email_text += f"Mode: {disp_league} {disp_gender} {disp_year}\n"
+
+  # --- Get unique league/gender/year combinations from btd_files ---
+  seen = set()
+  combinations = []
+  for btd_file_r in app_tables.btd_files.search():
+    key = (btd_file_r['league'], btd_file_r['gender'], str(btd_file_r['year']))
+    if key not in seen:
+      seen.add(key)
+      combinations.append(key)
+
+  r_val = None
+  for (c_league, c_gender, c_year) in combinations:
+    # Apply filters if provided
+    if not all_leagues:
+      if (c_league != disp_league or
+          c_gender != disp_gender or
+          str(c_year) != str(disp_year)):
+        continue
+
+    email_text += f"  Building League table: {c_league} {c_gender} {c_year}\n"
+    r_val = anvil.server.launch_background_task(
+      'make_master_ppr', c_league, c_gender, c_year, c_league, 'League'
+    )
+
+  internals_email = 'beachinternals@gmail.com'
+  now_end = datetime.now()
+  email_text += f"Completed at: {str(now_end)}  (compute time: {str(now_end - now)})\n"
+  anvil.email.send(
+    to=internals_email,
+    from_address="no-reply",
+    subject='Beach Internals - Build League PPR Tables',
+    text=email_text
+  )
+  return r_val

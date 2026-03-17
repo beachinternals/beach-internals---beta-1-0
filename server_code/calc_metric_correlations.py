@@ -5,278 +5,206 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 from datetime import datetime
-import json
+from server_functions import get_ppr_data
+
 
 # ─────────────────────────────────────────────────────────────────
-#  HELPER: calculate goodpass for a single player from ppr_df
+#  HELPER: load PPR dataframe for a league/gender/year
+#  Delegates to get_ppr_data() in server_functions.py
+#  Uses team='League' (full dataset, safe for correlation)
+#  scout=False because League already contains all data
 # ─────────────────────────────────────────────────────────────────
-def _calc_goodpass(ppr_df, player):
-  """
-  Good pass = 1 - out_of_system rate.
-  Filters to rows where this player is the passer.
-  Returns float or None if no data.
-  """
-  df = ppr_df[ppr_df['pass_player'].str.strip() == player.strip()]
-  # Exclude service aces (player never touched the ball)
-  df = df[df['point_outcome'] != 'TSA']
-  total = df.shape[0]
-  if total < 5:   # minimum attempts threshold
+def _load_ppr_df(league, gender, year):
+  try:
+    ppr_df = get_ppr_data(league, gender, year, 'League', scout=False)
+    # get_ppr_data returns [" "] (a list) when no data found
+    if isinstance(ppr_df, list):
+      print(f"  No PPR data found for {league} {gender} {year}")
+      return None
+    print(f"  Loaded PPR: {league} {gender} {year} — {ppr_df.shape[0]} rows")
+    return ppr_df
+  except Exception as e:
+    print(f"  Error loading PPR for {league} {gender} {year}: {e}")
     return None
-  oos = df[df['pass_oos'] == 1].shape[0]   # pass_oos = 1 means out of system
-  return 1.0 - (oos / total)
 
 
 # ─────────────────────────────────────────────────────────────────
-#  HELPER: calculate fbhe for a single player from ppr_df
+#  HELPERS: per-metric calculations (all use player_uuid)
 # ─────────────────────────────────────────────────────────────────
-def _calc_fbhe(ppr_df, player):
-  """
-  FBHE = (kills - errors) / attempts on first ball attacks.
-  Filters to rows where this player is the attacker,
-  on first ball (not transition).
-  Returns float or None if no data.
-  """
-  df = ppr_df[ppr_df['att_player'].str.strip() == player.strip()]
-  # First ball only: exclude transition points (TK, TE)
-  df = df[~df['point_outcome'].isin(['TK', 'TE'])]
-  # Also exclude service aces/errors (no attack happened)
-  df = df[~df['point_outcome'].isin(['TSA', 'TSE'])]
-  attempts = df.shape[0]
-  if attempts < 5:
+def _calc_goodpass(ppr_df, player_uuid):
+  """Good pass = 1 - out_of_system rate for this passer."""
+  df = ppr_df[ppr_df['pass_player'].str.strip() == player_uuid.strip()]
+  df = df[df['point_outcome'] != 'TSA']
+  if df.shape[0] < 5:
+    return None
+  oos = df[df['pass_oos'] == 1].shape[0]
+  return 1.0 - (oos / df.shape[0])
+
+
+def _calc_fbhe(ppr_df, player_uuid):
+  """FBHE = (kills - errors) / attempts, first ball attacks only."""
+  df = ppr_df[ppr_df['att_player'].str.strip() == player_uuid.strip()]
+  df = df[~df['point_outcome'].isin(['TK', 'TE', 'TSA', 'TSE'])]
+  if df.shape[0] < 5:
     return None
   kills  = df[df['point_outcome'] == 'FBK'].shape[0]
   errors = df[df['point_outcome'] == 'FBE'].shape[0]
-  return (kills - errors) / attempts
+  return (kills - errors) / df.shape[0]
 
 
-# ─────────────────────────────────────────────────────────────────
-#  HELPER: calculate dig_quality (mean) for a single player
-# ─────────────────────────────────────────────────────────────────
-def _calc_dig_quality_mean(ppr_df, player):
+def _calc_dig_quality_mean(ppr_df, player_uuid):
   """
-  Mean dig quality score (0.0 - 1.0) for this player's digs.
-  Filters to rows where this player is the server (srv flag)
-  since tcr_s measures transition when serving.
-  Returns float or None if no data.
+  Mean dig quality (0.0-1.0) for this player's digs in transition
+  when serving — matches the tcr_s context.
   """
-  df = ppr_df[ppr_df['serve_player'].str.strip() == player.strip()]
-  # Only rows where a dig actually happened
+  df = ppr_df[ppr_df['serve_player'].str.strip() == player_uuid.strip()]
   df = df[df['dig_yn'] == 'Y']
-  # Only transition points (dig leads to transition)
   df = df[df['point_outcome'].isin(['TK', 'TE'])]
-  # Drop rows with no dig quality score
   df = df[df['dig_quality'].notna() & (df['dig_quality'] != 0)]
   if df.shape[0] < 5:
     return None
   return df['dig_quality'].mean()
 
 
-# ─────────────────────────────────────────────────────────────────
-#  HELPER: calculate tcr_s for a single player from ppr_df
-# ─────────────────────────────────────────────────────────────────
-def _calc_tcr_s(ppr_df, player):
+def _calc_tcr_s(ppr_df, player_uuid):
   """
-  TCR-S = transition conversion rate when this player is the server.
-  = (transition kills won + opp transition errors) / all transition points
-  while this player's team is serving.
-  Returns float or None if no data.
+  TCR-S = transition points won / all transition points
+  when this player is the server.
   """
-  df = ppr_df[ppr_df['serve_player'].str.strip() == player.strip()]
-  # Only transition points
+  df = ppr_df[ppr_df['serve_player'].str.strip() == player_uuid.strip()]
   df = df[df['point_outcome'].isin(['TK', 'TE'])]
-  total = df.shape[0]
-  if total < 5:
+  if df.shape[0] < 5:
     return None
-
-  # Points won by our team
-  # point_outcome_team contains the player string for the winning team
-  # We check if our player's team fragment is in the outcome team string
-  player_team_fragment = player.strip()[:-1]   # e.g. "STETSON 35 Liz" → "STETSON 35 Li"
-  # More reliable: use player name minus last char as team fragment
-  # (matches the convention used elsewhere in the codebase)
-  won = df[df['point_outcome_team'].str.contains(player_team_fragment, na=False)]
-  pts_won = won.shape[0]
-  return pts_won / total
+  won = df[df['point_outcome_team'].str.contains(player_uuid.strip(), na=False)]
+  return won.shape[0] / df.shape[0]
 
 
 # ─────────────────────────────────────────────────────────────────
-#  HELPER: load and parse ppr_csv for a given league/gender/year/team
+#  DISPATCHER: route metric name to its calculation function
+#  To add a new metric later: just add an elif here
 # ─────────────────────────────────────────────────────────────────
-def _load_ppr_df(league, gender, year, team='League'):
-  """
-  Loads the combined PPR dataframe from ppr_csv_tables.
-  Uses team='League' for the full league dataset (all players).
-  Returns DataFrame or None.
-  """
-  rows = app_tables.ppr_csv_tables.search(
-    league=league,
-    gender=gender,
-    year=year,
-    team=team
-  )
-  row = None
-  for r in rows:
-    row = r
-    break
-
-  if row is None:
-    print(f"No PPR data found for {league} {gender} {year} team={team}")
-    return None
-
-  ppr_json = row['player_data']
-  if not ppr_json:
-    print(f"player_data is empty for {league} {gender} {year}")
-    return None
-
-  try:
-    ppr_df = pd.DataFrame(json.loads(ppr_json))
-    return ppr_df
-  except Exception as e:
-    print(f"Error parsing PPR JSON: {e}")
+def _calc_metric(metric_name, ppr_df, player_uuid):
+  if metric_name == 'goodpass':
+    return _calc_goodpass(ppr_df, player_uuid)
+  elif metric_name == 'fbhe':
+    return _calc_fbhe(ppr_df, player_uuid)
+  elif metric_name == 'dig_quality':
+    return _calc_dig_quality_mean(ppr_df, player_uuid)
+  elif metric_name == 'tcr_s':
+    return _calc_tcr_s(ppr_df, player_uuid)
+  else:
+    print(f"  Unknown metric: {metric_name}")
     return None
 
 
 # ─────────────────────────────────────────────────────────────────
-#  MAIN CALLABLE: run all active correlation definitions
+#  MAIN CALCULATION
+#  No league/gender/year args — everything is driven by skill_level_def
+#  which contains linked master_player rows that carry league/gender/year
 # ─────────────────────────────────────────────────────────────────
 @anvil.server.callable
-def calc_metric_correlations(league, gender, year):
+def calc_metric_correlations():
   """
   For each active row in metric_correlation_def,
   and for each skill level in skill_level_def,
-  calculate the Pearson correlation between the two metrics
-  across the players in that skill level.
+  calculate Pearson correlation between the two metrics
+  across all players in that skill level.
 
-  Results are stored in metric_correlation_results.
-  Existing results for this league/gender/year are deleted first (fresh run).
+  Player league/gender/year comes from the linked master_player rows
+  in skill_level_def.player_list.  PPR data is loaded as team='League'
+  and cached — only reloaded when league/gender/year changes.
 
-  Args:
-    league (str): e.g. 'NCAA'
-    gender (str): e.g. 'W'
-    year   (int): e.g. 2026
-
-  Returns:
-    str: summary message
+  All existing results are deleted first (full recalculate).
+  Returns a summary string.
   """
-  print(f"=== calc_metric_correlations: {league} {gender} {year} ===")
+  print("=== calc_metric_correlations: starting ===")
 
-  # --- Load PPR data (full league dataset) ---
-  ppr_df = _load_ppr_df(league, gender, year, team='League')
-  if ppr_df is None:
-    return f"ERROR: No PPR data found for {league} {gender} {year}"
-
-  print(f"PPR data loaded: {ppr_df.shape[0]} rows")
-
-  # --- Get active correlation definitions ---
+  # --- Active correlation pairs ---
   corr_defs = [r for r in app_tables.metric_correlation_def.search() if r['active']]
   if not corr_defs:
-    return "No active correlation definitions found in metric_correlation_def"
-
+    return "No active correlation definitions found"
   print(f"Found {len(corr_defs)} active correlation definitions")
 
-  # --- Get skill levels ---
+  # --- Skill levels ---
   skill_levels = list(app_tables.skill_level_def.search())
   if not skill_levels:
     return "No skill levels found in skill_level_def"
-
   print(f"Found {len(skill_levels)} skill levels")
 
-  # --- Delete existing results for this league/gender/year ---
-  existing = app_tables.metric_correlation_results.search(
-    # NOTE: metric_correlation_results has no league/gender/year columns
-    # since skill_level_def crosses those boundaries.
-    # We delete all rows linked to each corr_def and skill_level combo.
-    # Simplest: delete all rows (full recalculate each run).
-  )
+  # --- Wipe existing results ---
   count_deleted = 0
-  for row in existing:
+  for row in app_tables.metric_correlation_results.search():
     row.delete()
     count_deleted += 1
   print(f"Deleted {count_deleted} existing result rows")
 
-  # --- Main calculation loop ---
-  results_saved = 0
+  results_saved   = 0
   results_skipped = 0
 
   for corr_def in corr_defs:
     upstream_metric   = corr_def['metric_upstream']
     downstream_metric = corr_def['metric_downstream']
-    print(f"\n--- Processing: {upstream_metric} → {downstream_metric} ---")
+    print(f"\n--- {upstream_metric} → {downstream_metric} ---")
 
     for skill_row in skill_levels:
       skill_level_name = skill_row['level_name']
+      player_list      = skill_row['player_list']  # linked rows from master_player
 
-      # Get the list of players in this skill level
-      # skill_level_def stores players as a JSON list or comma-separated string
-      # Adjust parsing based on how your table stores this
-      try:
-        player_list_raw = skill_row['player_list']   # adjust column name if different
-        if isinstance(player_list_raw, str):
-          # Try JSON first, fall back to comma-split
-          try:
-            player_list = json.loads(player_list_raw)
-          except Exception:
-            player_list = [p.strip() for p in player_list_raw.split(',') if p.strip()]
-        elif isinstance(player_list_raw, list):
-          player_list = player_list_raw
-        else:
-          player_list = []
-      except Exception as e:
-        print(f"  Error reading player_list for {skill_level_name}: {e}")
-        continue
-
-      if len(player_list) < 3:
-        print(f"  Skipping {skill_level_name}: only {len(player_list)} players (need ≥ 3)")
+      if not player_list or len(player_list) < 3:
+        print(f"  Skipping {skill_level_name}: fewer than 3 players")
         results_skipped += 1
         continue
 
-      # Calculate per-player metric values
       upstream_values   = []
       downstream_values = []
 
-      for player in player_list:
-        # --- Calculate upstream metric ---
-        if upstream_metric == 'goodpass':
-          up_val = _calc_goodpass(ppr_df, player)
-        elif upstream_metric == 'dig_quality':
-          up_val = _calc_dig_quality_mean(ppr_df, player)
-        else:
-          print(f"  Unknown upstream metric: {upstream_metric}")
-          up_val = None
+      # Cache the PPR dataframe — only reload when league/gender/year changes
+      current_lgy    = None
+      current_ppr_df = None
 
-        # --- Calculate downstream metric ---
-        if downstream_metric == 'fbhe':
-          down_val = _calc_fbhe(ppr_df, player)
-        elif downstream_metric == 'tcr_s':
-          down_val = _calc_tcr_s(ppr_df, player)
-        else:
-          print(f"  Unknown downstream metric: {downstream_metric}")
-          down_val = None
+      for player_row in player_list:
+        try:
+          league      = player_row['league']
+          gender      = player_row['gender']
+          year        = player_row['year']
+          player_uuid = player_row['player_uuid']
+        except Exception as e:
+          print(f"  Error reading master_player row: {e}")
+          continue
 
-        # Only use this player if both values are available
+        lgy = f"{league}|{gender}|{year}"
+        if lgy != current_lgy:
+          current_ppr_df = _load_ppr_df(league, gender, year)
+          current_lgy    = lgy
+
+        if current_ppr_df is None:
+          continue
+
+        up_val   = _calc_metric(upstream_metric,   current_ppr_df, player_uuid)
+        down_val = _calc_metric(downstream_metric, current_ppr_df, player_uuid)
+
         if up_val is not None and down_val is not None:
           upstream_values.append(up_val)
           downstream_values.append(down_val)
 
+      # --- Correlate ---
       n = len(upstream_values)
       print(f"  {skill_level_name}: {n} players with valid data")
 
       if n < 3:
-        print(f"  Skipping: not enough valid player data points")
+        print(f"  Skipping: insufficient valid data")
         results_skipped += 1
         continue
 
-      # --- Pearson correlation ---
       try:
         r, p = stats.pearsonr(upstream_values, downstream_values)
         is_significant = bool(p < 0.05)
-        print(f"  r={r:.3f}, p={p:.4f}, significant={is_significant}")
+        print(f"  r={r:.3f}  p={p:.4f}  n={n}  sig={is_significant}")
       except Exception as e:
-        print(f"  Correlation calculation failed: {e}")
+        print(f"  Correlation failed: {e}")
         results_skipped += 1
         continue
 
-      # --- Save to results table ---
       app_tables.metric_correlation_results.add_row(
         corr_def       = corr_def,
         skill_level    = skill_level_name,
@@ -289,36 +217,67 @@ def calc_metric_correlations(league, gender, year):
       )
       results_saved += 1
 
-  summary = (f"Done. Saved {results_saved} correlation results, "
-             f"skipped {results_skipped} (insufficient data).")
+  summary = (f"Done. {results_saved} results saved, "
+             f"{results_skipped} skipped (insufficient data).")
   print(summary)
   return summary
 
 
 # ─────────────────────────────────────────────────────────────────
-#  CALLABLE: fetch results for display
+#  BACKGROUND TASK + LAUNCHER
+# ─────────────────────────────────────────────────────────────────
+@anvil.server.background_task
+def bg_calc_metric_correlations():
+  result = calc_metric_correlations()
+  anvil.server.task_state['status']  = 'complete'
+  anvil.server.task_state['message'] = result
+
+
+@anvil.server.callable
+def launch_metric_correlations():
+  """
+  Browser calls this — no arguments needed.
+  Returns task_id for polling.
+  """
+  task = anvil.server.launch_background_task('bg_calc_metric_correlations')
+  return task.get_id()
+
+
+@anvil.server.callable
+def get_correlation_task_status(task_id):
+  """Poll whether the background task finished. Returns dict with done/status/message."""
+  try:
+    task = anvil.server.get_background_task(task_id)
+    if task.is_completed():
+      state = task.get_state()
+      return {'done': True,  'status': state.get('status', 'complete'), 'message': state.get('message', 'Done')}
+    elif task.get_error():
+      return {'done': True,  'status': 'error',   'message': str(task.get_error())}
+    else:
+      return {'done': False, 'status': 'running', 'message': 'Calculating...'}
+  except Exception as e:
+    return {'done': True, 'status': 'error', 'message': str(e)}
+
+
+# ─────────────────────────────────────────────────────────────────
+#  FETCH RESULTS FOR DISPLAY
 # ─────────────────────────────────────────────────────────────────
 @anvil.server.callable
 def get_metric_correlation_results():
-  """
-  Returns all correlation results as a list of dicts,
-  sorted by correlation strength (strongest first).
-  Ready to drop into a DataGrid or DataFrame.
-  """
+  """Returns all results as list of dicts, sorted by correlation strength."""
   results = []
   for row in app_tables.metric_correlation_results.search():
-    corr_def = row['corr_def']
+    cd = row['corr_def']
     results.append({
-      'upstream'      : corr_def['metric_upstream']   if corr_def else '',
-      'downstream'    : corr_def['metric_downstream']  if corr_def else '',
-      'description'   : corr_def['description']        if corr_def else '',
-      'skill_level'   : row['skill_level'],    # column in metric_correlation_results (not skill_level_def)
+      'upstream'      : cd['metric_upstream']  if cd else '',
+      'downstream'    : cd['metric_downstream'] if cd else '',
+      'description'   : cd['description']       if cd else '',
+      'skill_level'   : row['skill_level'],
       'correlation'   : row['correlation'],
       'p_value'       : row['p_value'],
       'n_players'     : row['n_players'],
       'is_significant': row['is_significant'],
       'calculated_at' : str(row['calculated_at']),
     })
-
   results.sort(key=lambda x: abs(x['correlation'] or 0), reverse=True)
   return results

@@ -398,3 +398,9 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
     result = anvil.server.call('run_skill_level_correlation_analysis','point_level_trans')
     pass
 
+  @anvil.handle("causual_button", "click")
+  def causual_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    result = anvil.server.call('launch_metric_correlations')
+    pass
+

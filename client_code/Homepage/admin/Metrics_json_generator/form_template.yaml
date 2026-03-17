@@ -58,6 +58,11 @@ components_by_slot:
         name: skill_level_set_button
         properties: {role: outlined-button, text: Skill Level Set Correlation}
         type: Button
+      - event_bindings: {}
+        layout_properties: {grid_position: 'KMOIUF,SHIJYN'}
+        name: causual_button
+        properties: {role: outlined-button, text: Causal Correlations}
+        type: Button
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
       properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40}', role: outlined-card}

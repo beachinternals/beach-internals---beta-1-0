@@ -71,9 +71,14 @@ components:
     properties: {align: right, text: Run Merge PPR}
     type: Label
   - event_bindings: {click: outlined_button_3_click}
-    layout_properties: {grid_position: 'YVKKFQ,NHRAUN NQGGJX,UILDEV'}
+    layout_properties: {grid_position: 'YVKKFQ,NHRAUN NQGGJX,UILDEV FBMDZP,VLBRGZ'}
     name: outlined_button_3
     properties: {role: outlined-button, text: Merge PPR}
+    type: Button
+  - event_bindings: {}
+    layout_properties: {grid_position: 'YVKKFQ,NHRAUN NQGGJX,UILDEV EQBYER,ABTQND'}
+    name: merge_league_button
+    properties: {role: outlined-button, text: Merge League Data}
     type: Button
   - layout_properties: {grid_position: 'YVKKFQ,NHRAUN ZCPKCU,SUHCJJ'}
     name: label_7

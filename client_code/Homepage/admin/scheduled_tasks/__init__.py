@@ -146,3 +146,17 @@ class scheduled_tasks(scheduled_tasksTemplate):
     return_value = anvil.server.call('daily_performance_summary_client')
     pass
 
+  @handle("merge_league_button", "click")
+  def merge_league_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    return_value = anvil.server.call('calc_league_ppr', disp_league, disp_gender, disp_year)
+    pass
+
