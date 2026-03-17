@@ -458,6 +458,69 @@ db_schema:
       type: string
     server: full
     title: master_player
+  metric_correlation_def:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      client_hidden: false
+      name: active
+      type: bool
+    - admin_ui: {order: 1, width: 200}
+      client_hidden: false
+      name: metric_upstream
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      client_hidden: false
+      name: metric_downstream
+      type: string
+    - admin_ui: {order: 3, width: 392}
+      client_hidden: false
+      name: description
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      client_hidden: false
+      name: notes
+      type: string
+    server: full
+    title: metric_correlation_def
+  metric_correlation_results:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      client_hidden: false
+      name: corr_def
+      target: metric_correlation_def
+      type: link_single
+    - admin_ui: {order: 1, width: 200}
+      client_hidden: false
+      name: skill_level
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      client_hidden: false
+      name: correlation
+      type: number
+    - admin_ui: {order: 3, width: 200}
+      client_hidden: false
+      name: p_value
+      type: number
+    - admin_ui: {order: 4, width: 200}
+      client_hidden: false
+      name: n_players
+      type: number
+    - admin_ui: {order: 5, width: 200}
+      client_hidden: false
+      name: is_significant
+      type: bool
+    - admin_ui: {order: 6, width: 200}
+      client_hidden: false
+      name: calculated_at
+      type: datetime
+    - admin_ui: {order: 7, width: 200}
+      client_hidden: false
+      name: notes
+      type: string
+    server: full
+    title: metric_correlation_results
   metric_dictionary:
     client: none
     columns:
