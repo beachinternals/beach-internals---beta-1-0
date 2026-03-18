@@ -430,66 +430,75 @@ def calc_player_eso( ppr_df, disp_player ):
   return calc_player_eso_obj(ppr_df,disp_player)
   
 def calc_player_eso_obj( ppr_df, disp_player ):
-  # pass this a query of rows, figures the FBHE for the display player as the attacker
-  # initialize the vector
+  # pass this a query of rows, figures the ESO for the display player
   #
   # ppr_df - the data frame (ppr format)
-  # disp_player - player striing
-  # play_type: 'att', 'pass', 'srv'
-  # video_yn : True of False is desire the url at item 5.  
+  # disp_player - player string
+  #
+  # Always returns 'eso' and 'attempts' keys so metric dictionary formulas
+  # never get a KeyError, even when no data is available.
 
-  # limit to attacks by our player
-  #print(f"fbhe funct: ppr_df shape:{ppr_df.shape}")
-
-  # limit the ppr_df to player with this disp_player
-  ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player) | 
-                   (ppr_df['player_a2'] == disp_player) | 
-                   (ppr_df['player_b1'] == disp_player) | 
-                   (ppr_df['player_b2'] == disp_player) ]
-                     
-  if ppr_df.shape[0] == 0:      # Then no data passed!
+  if ppr_df.shape[0] == 0:
     return {
-      'status':False,
-      'error_msg':'No Rows in Dataframe'
+      'status': False,
+      'error_msg': 'No Rows in Dataframe',
+      'eso': None,
+      'attempts': 0,
+      'fbk': 0,
+      'tk': 0,
+      'eso_string': ''
     }
-  else:
-    # limit to only serve receive
-    ppr_df = filter_serve_receive_only_player(ppr_df, disp_player)
-    #print(f"eso : size of serve receive db: {ppr_df.shape[0]}")
-    
-    if ppr_df.shape[0] == 0:      # Then no data passed!
-      return {
-        'status':False,
-        'error_msg':'No Rows in Dataframe after filter for serve receive only'
-      }
 
-    # now take out any service errors
-    ppr_df = ppr_df[ ppr_df['point_outcome'] != 'TSE']
+  # limit to only serve receive for this player
+  ppr_df = filter_serve_receive_only_player(ppr_df, disp_player)
 
-    #print(f"eso : size of serve receive db without service errors: {ppr_df.shape[0]}")
-
-    # PPR_DF HOW HAS ALL SERVES WE ARE INTERESTED IN.
-    eso_attempts = ppr_df.shape[0]
-    eso_fbk = ppr_df[ ppr_df['point_outcome'] == 'FBK'].shape[0]
-    eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( ppr_df['point_outcome_team'].str.contains(disp_player) ) ].shape[0]
-    if eso_attempts != 0:
-      eso = float((eso_fbk+eso_tk)/eso_attempts)
-      eso = round(eso,3)
-    else:
-      eso = None
-      
-    #print(f"eos: results, eso={eso}, fbk = {eso_fbk}, tk={eso_tk}, attemtps={eso_attempts}")
-
+  if ppr_df.shape[0] == 0:
     return {
-    'status':True,
-    'video_url':'No Video in Code Yet',
+      'status': False,
+      'error_msg': 'No Rows in Dataframe after filter for serve receive only',
+      'eso': None,
+      'attempts': 0,
+      'fbk': 0,
+      'tk': 0,
+      'eso_string': ''
+    }
+
+  # now take out any service errors
+  ppr_df = ppr_df[ ppr_df['point_outcome'] != 'TSE']
+
+  eso_attempts = ppr_df.shape[0]
+
+  if eso_attempts == 0:
+    return {
+      'status': False,
+      'error_msg': 'No Rows after removing service errors',
+      'eso': 0.0,
+      'attempts': 0,
+      'fbk': 0,
+      'tk': 0,
+      'eso_string': ''
+    }
+
+  eso_fbk = ppr_df[ ppr_df['point_outcome'] == 'FBK'].shape[0]
+  eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( ppr_df['point_outcome_team'].str.contains(disp_player) ) ].shape[0]
+
+  eso = round(float((eso_fbk + eso_tk) / eso_attempts), 3)
+
+  return {
+    'status': True,
+    'video_url': 'No Video in Code Yet',
     'player': disp_player,
     'eso': eso,
     'attempts': eso_attempts,
     'fbk': eso_fbk,
-    'tk' : eso_tk,
-    'eso_string': '' if eso is None else f'{eso:.1%}' if isinstance(eso, (int, float)) else str(eso)
+    'tk': eso_tk,
+    'eso_string': f'{eso:.1%}'
   }
+
+
+# This is a convenience alias - keeps any code using calc_player_eso() working
+def calc_player_eso( ppr_df, disp_player ):
+  return calc_player_eso_obj(ppr_df, disp_player)
 
 
 def calc_team_eso( ppr_df, disp_team ):
