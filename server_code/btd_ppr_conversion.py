@@ -473,53 +473,88 @@ def calc_dig_midpoint(att_src_x, att_src_y, dig_src_x, dig_src_y):
 
 def calc_dig_quality(att_src_x, att_src_y, dig_src_x, dig_src_y,
                      dig_dest_x, dig_dest_y, dig_height):
-  # Calculate a dig quality score from 0.0 (poor) to 1.0 (excellent).
-  #
-  # Two components:
-  #   position_score  — how close the dig destination is to the ideal midpoint
-  #   height_modifier — penalty if the dig was too low or too high
-  #
-  # Combined: dig_quality = position_score * height_modifier
+  """
+  Calculate a dig quality score from 0.0 (poor) to 1.0 (excellent).
 
-  # --- Guard: need all coordinates ---
-  if any(v is None for v in [att_src_x, att_src_y, dig_src_x, dig_src_y, dig_dest_x, dig_dest_y]):
+  Formula: weighted average of height_score and position_score
+    dig_quality = (height_score * 0.70) + (position_score * 0.30)
+
+  Weighting rationale: point-level correlation analysis (March 2026)
+  confirmed dig_height (r=+0.102) predicts transition wins while
+  dig destination position showed no significant signal. Height is
+  the dominant component; position is a secondary refinement.
+
+  Returns None when dig_height is missing — dig_dur and dig_height
+  are always populated together (verified in data), so if one is
+  missing both are missing. Do not estimate from position alone.
+
+  Args:
+    att_src_x/y  : attacker position (x, y) in meters
+    dig_src_x/y  : dig contact point (x, y) in meters
+    dig_dest_x/y : dig destination (x, y) in meters
+    dig_height   : dig apex height in meters (from parabolic formula)
+
+  Returns:
+    float 0.0–1.0, or None if height data unavailable
+  """
+
+  # --- Guard: need coordinates for position score ---
+  if any(v is None for v in [att_src_x, att_src_y, dig_src_x, dig_src_y,
+                             dig_dest_x, dig_dest_y]):
     return None
 
-  # --- Position score ---
-  mid_x, mid_y = calc_dig_midpoint(att_src_x, att_src_y, dig_src_x, dig_src_y)
+  # --- Guard: height missing → return None (don't estimate) ---
+  # dig_height and dig_dur are always populated together; if height
+  # is missing there is no duration data to fall back on either.
+  if dig_height is None or dig_height == 0:
+    return None
 
-  # Distance from dig destination to the ideal midpoint
+  # --- Outlier cap ---
+  # Parabolic formula produces garbage on bad timestamps (observed max
+  # of 106m in data). Cap at 10m — anything above is a data error.
+  dig_height = min(dig_height, 10.0)
+
+  # --- Height score (0.0 – 1.0) ---
+  # Based on how much time the dig gives the setter.
+  # Calibrated to beach volleyball transition timing:
+  #   < 1m  → 0.20  (very low — almost no setter time)
+  #   1–2m  → 0.50  (low but playable)
+  #   2–3m  → 0.75  (acceptable)
+  #   3–5m  → 1.00  (ideal — confirmed by data as optimal range)
+  #   5m+   → 0.85  (high but workable — slightly slow transition)
+  if dig_height < 1.0:
+    height_score = 0.20
+  elif dig_height < 2.0:
+    height_score = 0.50
+  elif dig_height < 3.0:
+    height_score = 0.75
+  elif dig_height <= 5.0:
+    height_score = 1.00
+  else:
+    height_score = 0.85
+
+  # --- Position score (0.0 – 1.0) ---
+  # How close the dig destination is to the ideal midpoint between
+  # attacker and digger — the location that gives the setter the most
+  # options. Position showed no significant correlation in point-level
+  # analysis but is retained as a secondary component (30% weight)
+  # as it captures a real aspect of dig quality.
+  mid_x, mid_y = calc_dig_midpoint(att_src_x, att_src_y, dig_src_x, dig_src_y)
   dist_to_ideal = calc_dist(dig_dest_x, mid_x, dig_dest_y, mid_y)
 
   if dist_to_ideal is None:
-    return None
+    # Position unavailable — fall back to height score only
+    return round(height_score, 3)
 
-  # Max meaningful distance: if the dig lands more than 5m from ideal, score = 0
-  # This is a tuning parameter — adjust based on your data
+  # Max meaningful distance: 5m from ideal → score = 0
   max_dist = 5.0
   position_score = max(0.0, 1.0 - (dist_to_ideal / max_dist))
 
-  # --- Height modifier ---
-  # dig_height is in meters (from calc_height parabolic formula)
-  # Good dig height = 3m to 5m — gives setter enough time, not too loopy
-  # Tuning parameters based on our previous discussion:
-  #   < 1m  → 0.5  (very low, partner has almost no time)
-  #   1-3m  → 0.8  (low but playable)
-  #   3-5m  → 1.0  (ideal)
-  #   5m+   → 0.8  (too high, slower transition)
-  if dig_height is None or dig_height == 0:
-    # No height data — don't penalize, just use position score alone
-    height_modifier = 0.9  # slight discount for unknown
-  elif dig_height < 1.0:
-    height_modifier = 0.5
-  elif dig_height < 3.0:
-    height_modifier = 0.8
-  elif dig_height <= 5.0:
-    height_modifier = 1.0
-  else:
-    height_modifier = 0.8
+  # --- Weighted average ---
+  HEIGHT_WEIGHT   = 0.70
+  POSITION_WEIGHT = 0.30
 
-  dig_quality = position_score * height_modifier
+  dig_quality = (height_score * HEIGHT_WEIGHT) + (position_score * POSITION_WEIGHT)
   return round(dig_quality, 3)
   
 def save_point(ppr_df, ppr_row, point_code, out_team, action ):
