@@ -582,6 +582,10 @@ db_schema:
     - admin_ui: {order: 12.25, width: 200}
       name: data_range_min
       type: number
+    - admin_ui: {order: 10.375, width: 200}
+      client_hidden: false
+      name: attempts_path
+      type: string
     server: full
     title: metric_dictionary
   performance_log:
