@@ -107,7 +107,7 @@ def generate_player_metrics_json(league_value, team, **json_filters):
                           if k not in ['player', 'player_shortname']},
       'total_points_analyzed': len(ppr_df),
       'total_sets_analyzed': len(tri_df) if len(tri_df) > 0 else 0,
-      'dictionary_version': '1.0'
+      'dictionary_version': '10.0'
     }
 
     # Calculate all metrics
