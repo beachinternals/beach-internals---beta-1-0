@@ -2,6 +2,7 @@
 SERVER FUNCTION: generate_player_metrics_json()
 ===============================================
 Updated with logger_utils integration
+Updated with attempts_path support for automatic attempt-gating
 """
 
 import anvil.tables as tables
@@ -93,7 +94,7 @@ def generate_player_metrics_json(league_value, team, **json_filters):
       log_error("No data found for the specified filters", with_traceback=False)
       raise ValueError("No data found for the specified filters")
 
-      # Build metadata
+    # Build metadata
     metadata = {
       'generated_at': datetime.now().isoformat(),
       'player_name': player_name,
@@ -113,7 +114,7 @@ def generate_player_metrics_json(league_value, team, **json_filters):
     log_info("Starting metric calculations...")
     metrics_result = calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name)
     log_info(f"✓ Calculated {metrics_result['successful']} / {metrics_result['total_calculated']} metrics")
-    log_info(f"  ({metrics_result['insufficient_data']} metrics had insufficient data)")
+    log_info(f"  ({metrics_result['insufficient_data']} metrics suppressed - below min attempts)")
 
     # Build final JSON structure
     log_info("Building JSON output structure...")
@@ -151,6 +152,7 @@ def generate_player_metrics_json(league_value, team, **json_filters):
   except Exception as e:
     log_error(f"JSON generation failed: {str(e)}", with_traceback=True)
     raise
+
 
 def get_filtered_ppr_data(league, gender, year, team, **filters):
   """
@@ -232,7 +234,7 @@ def get_filtered_ppr_data(league, gender, year, team, **filters):
   except Exception as e:
     log_error(f"Error in get_filtered_ppr_data: {str(e)}", with_traceback=True)
     return pd.DataFrame()
-    
+
 
 def get_filtered_triangle_data(league, gender, year, team, **filters):
   """
@@ -265,7 +267,7 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
       gender, 
       year,
       date_checked,
-      disp_start_date,
+    disp_start_date,
       disp_end_date
     )
 
@@ -310,119 +312,185 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
 
 def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
   """
-    Calculate all metrics from the dictionary.
-    
-    Args:
-        metric_dict (DataFrame): Metric dictionary
-        ppr_df (DataFrame): Point-by-point data
-        tri_df (DataFrame): Triangle (set-level) data
-        player_name (str): Player to analyze
-    
-    Returns:
-        dict: {
-            'metrics': dict organized by category,
-            'total_calculated': int,
-            'successful': int,
-            'insufficient_data': int
-        }
-    """
+  Calculate all metrics from the dictionary.
+
+  Uses attempts_path column (if present and populated) to:
+    - Fetch the attempt count alongside the metric value
+    - Suppress the metric value if attempts < min_attempts_for_ci
+    - Always write the attempts count so AI can explain why a value is missing
+
+  If attempts_path is blank/null for a metric, no gating is applied and
+  the value is always written.
+
+  Args:
+      metric_dict (DataFrame): Metric dictionary (must include attempts_path column)
+      ppr_df (DataFrame): Point-by-point data
+      tri_df (DataFrame): Triangle (set-level) data
+      player_name (str): Player to analyze
+
+  Returns:
+      dict: {
+          'metrics': dict organized by category,
+          'total_calculated': int,
+          'successful': int,
+          'insufficient_data': int
+      }
+  """
 
   metrics_output = {}
   total_calculated = 0
   successful = 0
   insufficient_data = 0
 
+  # Cache for executed function namespaces.
+  # Key = "function_name||data_filter" so metrics sharing the same function
+  # and filter (e.g. fbhe and fbso both use fbhe_obj with no filter) only
+  # run exec() once.
+  function_cache = {}
+
   log_info(f"Calculating {len(metric_dict)} metrics for {player_name}...")
 
-  # Loop through dictionary
   for idx, metric_row in metric_dict.iterrows():
-    metric_id = metric_row['metric_id']
-    category = metric_row['metric_category']
+    metric_id     = metric_row['metric_id']
+    category      = metric_row['metric_category']
     function_name = metric_row['function_name']
-    result_path = metric_row['result_path']
-    data_filter = metric_row['data_filter']
+    result_path   = metric_row['result_path']
+    data_filter   = metric_row['data_filter']
+
+    # attempts_path is the new column - handle gracefully if not yet in table
+    attempts_path = metric_row.get('attempts_path', None)
+    min_attempts  = metric_row.get('min_attempts_for_ci', 5)
 
     if pd.isna(function_name):
       continue
 
     total_calculated += 1
 
-    # Progress logging every 50 metrics
     if total_calculated % 50 == 0:
       log_info(f"Progress: {total_calculated}/{len(metric_dict)} metrics calculated...")
 
     try:
+      # ------------------------------------------------------------------
       # Apply data filter if specified
+      # ------------------------------------------------------------------
       if pd.notna(data_filter) and data_filter.strip():
-        # Sanitize quotes - replace Unicode quotes with regular quotes
-        data_filter_clean = data_filter.replace(''', "'").replace(''', "'")
-        data_filter_clean = data_filter_clean.replace('"', '"').replace('"', '"')
-
-        # Set up minimal namespace for eval
+        # Sanitize smart quotes
+        data_filter_clean = data_filter.replace('\u2018', "'").replace('\u2019', "'")
+        data_filter_clean = data_filter_clean.replace('\u201c', '"').replace('\u201d', '"')
         filter_namespace = {'ppr_df': ppr_df, 'disp_player': player_name}
         filtered_ppr = eval(data_filter_clean, filter_namespace)
       else:
         filtered_ppr = ppr_df
 
-      # Set up local namespace for eval
-      local_namespace = {
-        'ppr_df': filtered_ppr,
-        'tri_df': tri_df,
-        'disp_player': player_name,
-        # Import your metric functions here
-        'fbhe_obj': fbhe_obj,
-        'calc_player_eso_obj': calc_player_eso_obj,
-        'calc_ev_obj': calc_ev_obj,
-        'calc_knock_out_obj': calc_knock_out_obj,
-        'count_oos_obj': count_oos_obj,
-        'calc_trans_obj': calc_trans_obj,
-        'calc_error_density_obj': calc_error_density_obj,
-        'find_ellipse_area': find_ellipse_area,
-        # New functions
-        'consistency_sd_match': consistency_sd_match,
-        'consistency_sd_set2set': consistency_sd_set2set,
-        'calc_serve_pct_obj': calc_serve_pct_obj,
-        'calc_angle_attacks_obj': calc_angle_attacks_obj,
-        'count_good_passes_obj' : count_good_passes_obj,
-        'calc_att_height_metrics' : calc_att_height_metrics,
-        'calc_dig_quality_obj' : calc_dig_quality_obj,
-        # Add pandas/numpy for metric calculations
-        'pd': pd,
-        'np': np
-      }
+      # ------------------------------------------------------------------
+      # Execute the metric function (cached per function+filter combination)
+      # ------------------------------------------------------------------
+      cache_key = f"{function_name}||{data_filter}"
 
-      # Execute function
-      exec(function_name, local_namespace)
+      if cache_key not in function_cache:
+        local_namespace = {
+          'ppr_df': filtered_ppr,
+          'tri_df': tri_df,
+          'disp_player': player_name,
+          # Metric calculation functions
+          'fbhe_obj': fbhe_obj,
+          'calc_player_eso_obj': calc_player_eso_obj,
+          'calc_ev_obj': calc_ev_obj,
+          'calc_knock_out_obj': calc_knock_out_obj,
+          'count_oos_obj': count_oos_obj,
+          'calc_trans_obj': calc_trans_obj,
+          'calc_error_density_obj': calc_error_density_obj,
+          'find_ellipse_area': find_ellipse_area,
+          'consistency_sd_match': consistency_sd_match,
+          'consistency_sd_set2set': consistency_sd_set2set,
+          'calc_serve_pct_obj': calc_serve_pct_obj,
+          'calc_angle_attacks_obj': calc_angle_attacks_obj,
+          'count_good_passes_obj': count_good_passes_obj,
+          'calc_att_height_metrics': calc_att_height_metrics,
+          'calc_dig_quality_obj': calc_dig_quality_obj,
+          'pd': pd,
+          'np': np
+        }
+        exec(function_name, local_namespace)
+        function_cache[cache_key] = local_namespace
+      else:
+        local_namespace = function_cache[cache_key]
 
-      # Extract result using result_path
-      result_var_name = function_name.split('=')[0].strip()
-      func_result = local_namespace[result_var_name]
-
-      # Extract the metric value
+      # ------------------------------------------------------------------
+      # Extract the metric value via result_path
+      # ------------------------------------------------------------------
       if pd.notna(result_path) and result_path.strip():
         metric_value = eval(result_path, local_namespace)
       else:
-        metric_value = func_result
+        result_var_name = function_name.split('=')[0].strip()
+        metric_value = local_namespace[result_var_name]
 
-      # Store in output organized by category
+      # ------------------------------------------------------------------
+      # Extract attempts count via attempts_path (new column)
+      # attempts_path blank/null  => no gating, always write value
+      # attempts_path populated   => fetch count, gate on min_attempts_for_ci
+      # ------------------------------------------------------------------
+      has_attempts_path = (
+        attempts_path is not None
+        and not (isinstance(attempts_path, float) and pd.isna(attempts_path))
+        and str(attempts_path).strip() != ''
+      )
+
+      attempts_value = None
+      if has_attempts_path:
+        try:
+          attempts_value = eval(str(attempts_path).strip(), local_namespace)
+        except Exception as ae:
+          log_debug(f"Metric {metric_id}: could not evaluate attempts_path '{attempts_path}': {ae}")
+
+      # ------------------------------------------------------------------
+      # Gate: suppress value if below minimum attempts
+      # ------------------------------------------------------------------
+      min_att = int(min_attempts) if pd.notna(min_attempts) else 5
+      value_suppressed = False
+
+      if has_attempts_path and attempts_value is not None:
+        if attempts_value < min_att:
+          value_suppressed = True
+          insufficient_data += 1
+          log_debug(
+            f"Metric {metric_id} suppressed: "
+            f"{attempts_value} attempts < {min_att} minimum"
+          )
+
+      # ------------------------------------------------------------------
+      # Store result - always write attempts so AI knows why value is None
+      # ------------------------------------------------------------------
       if category not in metrics_output:
         metrics_output[category] = {}
 
       metrics_output[category][metric_id] = {
-        'value': float(metric_value) if isinstance(metric_value, (int, float, np.number)) else metric_value,
+        'value': None if value_suppressed else (
+          float(metric_value) if isinstance(metric_value, (int, float, np.number))
+          else metric_value
+        ),
+        'attempts': int(attempts_value) if attempts_value is not None else None,
+        'min_attempts': min_att if has_attempts_path else None,
+        'sufficient_data': not value_suppressed,
         'metric_name': metric_row['metric_name'],
-        'parent_metric': metric_row['parent_metric'] if pd.notna(metric_row.get('parent_metric')) else None
+        'parent_metric': (
+          metric_row['parent_metric']
+          if pd.notna(metric_row.get('parent_metric')) else None
+        )
       }
 
-      successful += 1
+      if not value_suppressed:
+        successful += 1
 
     except Exception as e:
-      # Metric calculation failed (likely insufficient data)
       insufficient_data += 1
       log_debug(f"Metric {metric_id} failed: {str(e)}")
       continue
 
-  log_info(f"Calculation complete: {successful} successful, {insufficient_data} failed")
+  log_info(
+    f"Calculation complete: {successful} successful, "
+    f"{insufficient_data} suppressed/failed"
+  )
 
   return {
     'metrics': metrics_output,
@@ -432,17 +500,16 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
   }
 
 
-
 def generate_filter_hash(filters):
-    """Generate a short hash of filters for filename."""
-    filter_items = []
-    for k, v in sorted(filters.items()):
-        if k not in ['player', 'player_shortname']:
-            filter_items.append(f"{k}:{v}")
-    
-    if not filter_items:
-        return "all"
-    
-    filter_string = "_".join(filter_items)
-    hash_obj = hashlib.md5(filter_string.encode())
-    return hash_obj.hexdigest()[:8]
+  """Generate a short hash of filters for filename."""
+  filter_items = []
+  for k, v in sorted(filters.items()):
+    if k not in ['player', 'player_shortname']:
+      filter_items.append(f"{k}:{v}")
+
+  if not filter_items:
+    return "all"
+
+  filter_string = "_".join(filter_items)
+  hash_obj = hashlib.md5(filter_string.encode())
+  return hash_obj.hexdigest()[:8]

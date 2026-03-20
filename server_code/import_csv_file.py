@@ -28,7 +28,7 @@ def sanitize_quotes(text):
   text = text.replace('`', "'").replace('\u00b4', "'")       # Backtick/acute
 
   return text
-  
+
 
 @anvil.server.callable
 def import_metric_dictionary_from_csv(csv_file):
@@ -84,9 +84,10 @@ def import_metric_dictionary_from_csv(csv_file):
           log_info(f"Importing first row: metric_id={row.get('metric_id')}, name={row.get('metric_name')}")
 
         # Sanitize critical fields that contain code/formulas
-        function_name_clean = sanitize_quotes(row.get('function_name', ''))
-        result_path_clean = sanitize_quotes(row.get('result_path', ''))
-        data_filter_clean = sanitize_quotes(row.get('data_filter', ''))
+        function_name_clean      = sanitize_quotes(row.get('function_name', ''))
+        result_path_clean        = sanitize_quotes(row.get('result_path', ''))
+        attempts_path_clean      = sanitize_quotes(row.get('attempts_path', ''))
+        data_filter_clean        = sanitize_quotes(row.get('data_filter', ''))
         calculation_formula_clean = sanitize_quotes(row.get('calculation_formula', ''))
 
         # Add row to table
@@ -102,6 +103,7 @@ def import_metric_dictionary_from_csv(csv_file):
           data_filter=data_filter_clean,
           return_type=row.get('return_type', ''),
           result_path=result_path_clean,
+          attempts_path=attempts_path_clean,
           function_name=function_name_clean,
           calculation_formula=calculation_formula_clean,
           data_range_min=to_number(row.get('data_range_min')),
@@ -148,13 +150,11 @@ def cleanup_metric_dictionary_quotes():
 
   def sanitize_quotes(text):
     """Replace ALL types of Unicode quotes with regular ASCII quotes."""
-    # Check for None or empty without using pandas
     if text is None or text == '' or text == 'nan':
       return text
 
     text = str(text)
-      
-    # Replace using Unicode code points (more reliable than copying characters)
+
     # Single quotes
     text = text.replace('\u2018', "'")  # Left single quote
     text = text.replace('\u2019', "'")  # Right single quote
@@ -180,10 +180,11 @@ def cleanup_metric_dictionary_quotes():
   log_info("Starting quote cleanup...")
 
   for row in app_tables.metric_dictionary.search():
-    # Clean the critical fields
-    row['function_name'] = sanitize_quotes(row['function_name'])
-    row['result_path'] = sanitize_quotes(row['result_path'])
-    row['data_filter'] = sanitize_quotes(row['data_filter'])
+    # Clean all code/path fields including the new attempts_path
+    row['function_name']       = sanitize_quotes(row['function_name'])
+    row['result_path']         = sanitize_quotes(row['result_path'])
+    row['attempts_path']       = sanitize_quotes(row['attempts_path'])
+    row['data_filter']         = sanitize_quotes(row['data_filter'])
     row['calculation_formula'] = sanitize_quotes(row['calculation_formula'])
 
     updated_count += 1
