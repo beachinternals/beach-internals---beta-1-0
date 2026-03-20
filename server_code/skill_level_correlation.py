@@ -1268,6 +1268,8 @@ def save_point_level_results(point_result, run_id, analysis_type):
         n_players_excluded = n_excl,
         mean_n_sets        = stats.get('mean_n_sets'),   # here = mean points per player
         total_sets         = stats.get('total_sets'),    # here = total points
+        p_combined         = stats.get('p_combined'),
+        is_significant     = stats.get('is_significant', False),
         analysis_type      = analysis_type,
         outcome_type       = outcome_type,
         created_at         = created_at,
