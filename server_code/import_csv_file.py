@@ -111,7 +111,8 @@ def import_metric_dictionary_from_csv(csv_file):
           coach_speak_elite=row.get('coach_speak_elite', ''),
           coach_speak_good=row.get('coach_speak_good', ''),
           coach_speak_average=row.get('coach_speak_average', ''),
-          coach_speak_poor=row.get('coach_speak_poor', '')
+          coach_speak_poor=row.get('coach_speak_poor', ''),
+          coach_view=row.get('coach_view', '')
         )
 
         imported_count += 1

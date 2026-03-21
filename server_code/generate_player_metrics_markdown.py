@@ -230,12 +230,12 @@ def generate_descriptive_header(player_name, metadata, metrics_by_category):
            f"This report is designed for use by coaches, players, and analysts to identify strengths, "
            f"target areas for improvement, and track performance trends over time.")
   paragraphs.append(para3)
-    
+
   return "\n\n".join(paragraphs)
 
 
 def filter_metrics_by_attempts(metrics_dict, metric_dict_df):
-    """
+  """
     Filter out metrics where attempts (_n suffix) is 0, unless it's a core metric.
     
     Logic:
@@ -251,52 +251,52 @@ def filter_metrics_by_attempts(metrics_dict, metric_dict_df):
     Returns:
         dict: Filtered metrics dictionary
     """
-    filtered_metrics = {}
-    metrics_to_skip = set()
-    
-    # First pass: identify metrics with zero attempts
-    for metric_id, metric_info in metrics_dict.items():
-        if metric_id.endswith('_n'):
-            # This is an attempts metric
-            value = metric_info.get('value')
-            if value == 0 or value == 0.0:
-                # Zero attempts - mark the parent metric for removal
-                parent_id = metric_id[:-2]  # Remove '_n' suffix
-                metrics_to_skip.add(parent_id)
-                metrics_to_skip.add(metric_id)
-    
+  filtered_metrics = {}
+  metrics_to_skip = set()
+
+  # First pass: identify metrics with zero attempts
+  for metric_id, metric_info in metrics_dict.items():
+    if metric_id.endswith('_n'):
+      # This is an attempts metric
+      value = metric_info.get('value')
+      if value == 0 or value == 0.0:
+        # Zero attempts - mark the parent metric for removal
+        parent_id = metric_id[:-2]  # Remove '_n' suffix
+        metrics_to_skip.add(parent_id)
+        metrics_to_skip.add(metric_id)
+
     # Second pass: filter metrics
-    for metric_id, metric_info in metrics_dict.items():
-        # Skip if marked for removal
-        if metric_id in metrics_to_skip:
-            continue
-        
-        # Check if this is a core metric
-        metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
-        is_core = False
-        if len(metric_row) > 0:
-            parent_metric = metric_row.iloc[0].get('parent_metric')
-            is_core = pd.isna(parent_metric) or parent_metric == ''
-        
-        value = metric_info.get('value')
-        
-        # Core metrics are always kept
-        if is_core:
-            filtered_metrics[metric_id] = metric_info
-            continue
-        
-        # For non-core metrics, skip if value is exactly 0 (integer)
-        if isinstance(value, int) and value == 0:
-            continue
-        
-        # Keep everything else (including 0.0 floats)
-        filtered_metrics[metric_id] = metric_info
-    
-    return filtered_metrics
+  for metric_id, metric_info in metrics_dict.items():
+    # Skip if marked for removal
+    if metric_id in metrics_to_skip:
+      continue
+
+      # Check if this is a core metric
+    metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
+    is_core = False
+    if len(metric_row) > 0:
+      parent_metric = metric_row.iloc[0].get('parent_metric')
+      is_core = pd.isna(parent_metric) or parent_metric == ''
+
+    value = metric_info.get('value')
+
+    # Core metrics are always kept
+    if is_core:
+      filtered_metrics[metric_id] = metric_info
+      continue
+
+      # For non-core metrics, skip if value is exactly 0 (integer)
+    if isinstance(value, int) and value == 0:
+      continue
+
+      # Keep everything else (including 0.0 floats)
+    filtered_metrics[metric_id] = metric_info
+
+  return filtered_metrics
 
 
 def organize_metrics_hierarchically(metrics_dict, metric_dict_df):
-    """
+  """
     Organize metrics into hierarchical structure based on metric_id patterns.
     
     Args:
@@ -311,53 +311,53 @@ def organize_metrics_hierarchically(metrics_dict, metric_dict_df):
             }
         }
     """
-    core_metrics = []
-    derived_metrics = {}
-    
-    for metric_id, metric_info in metrics_dict.items():
-        # Get full row from dictionary
-        metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
-        if len(metric_row) == 0:
-            continue
-        
-        metric_row = metric_row.iloc[0]
-        parent_metric = metric_row.get('parent_metric')
-        
-        # Check if core metric (no parent)
-        if pd.isna(parent_metric) or parent_metric == '':
-            core_metrics.append((metric_id, metric_info, metric_row))
-        else:
-            # Derived metric - organize by parent
-            if parent_metric not in derived_metrics:
-                derived_metrics[parent_metric] = []
-            derived_metrics[parent_metric].append((metric_id, metric_info, metric_row))
-    
+  core_metrics = []
+  derived_metrics = {}
+
+  for metric_id, metric_info in metrics_dict.items():
+    # Get full row from dictionary
+    metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
+    if len(metric_row) == 0:
+      continue
+
+    metric_row = metric_row.iloc[0]
+    parent_metric = metric_row.get('parent_metric')
+
+    # Check if core metric (no parent)
+    if pd.isna(parent_metric) or parent_metric == '':
+      core_metrics.append((metric_id, metric_info, metric_row))
+    else:
+      # Derived metric - organize by parent
+      if parent_metric not in derived_metrics:
+        derived_metrics[parent_metric] = []
+      derived_metrics[parent_metric].append((metric_id, metric_info, metric_row))
+
     # If parent_metric column isn't populated, infer from metric_id
-    if not derived_metrics:
-        # Fallback: infer hierarchy from metric_id naming
-        for metric_id, metric_info in metrics_dict.items():
-            metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
-            if len(metric_row) == 0:
-                continue
-            
-            metric_row = metric_row.iloc[0]
-            
-            # Simple heuristic: if metric_id has no underscore/number suffix, it's core
-            if not any(c.isdigit() for c in metric_id) and '_' not in metric_id:
-                if (metric_id, metric_info, metric_row) not in core_metrics:
-                    core_metrics.append((metric_id, metric_info, metric_row))
-            else:
-                # Try to infer parent from name
-                parent_name = metric_id.split('_')[0].split('1')[0].split('2')[0].split('3')[0].split('4')[0].split('5')[0]
-                if parent_name not in derived_metrics:
-                    derived_metrics[parent_name] = []
-                derived_metrics[parent_name].append((metric_id, metric_info, metric_row))
-    
-    return {'core': core_metrics, 'derived': derived_metrics}
+  if not derived_metrics:
+    # Fallback: infer hierarchy from metric_id naming
+    for metric_id, metric_info in metrics_dict.items():
+      metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
+      if len(metric_row) == 0:
+        continue
+
+      metric_row = metric_row.iloc[0]
+
+      # Simple heuristic: if metric_id has no underscore/number suffix, it's core
+      if not any(c.isdigit() for c in metric_id) and '_' not in metric_id:
+        if (metric_id, metric_info, metric_row) not in core_metrics:
+          core_metrics.append((metric_id, metric_info, metric_row))
+      else:
+        # Try to infer parent from name
+        parent_name = metric_id.split('_')[0].split('1')[0].split('2')[0].split('3')[0].split('4')[0].split('5')[0]
+        if parent_name not in derived_metrics:
+          derived_metrics[parent_name] = []
+        derived_metrics[parent_name].append((metric_id, metric_info, metric_row))
+
+  return {'core': core_metrics, 'derived': derived_metrics}
 
 
 def create_hierarchical_metrics_tables(metrics_dict, metric_dict_df, category_name):
-    """
+  """
     Create hierarchically organized Markdown tables for a category.
     
     Args:
@@ -368,66 +368,66 @@ def create_hierarchical_metrics_tables(metrics_dict, metric_dict_df, category_na
     Returns:
         str: Markdown formatted tables with hierarchy
     """
-    if not metrics_dict:
-        return ""
-    
-    md = f"## {category_name} Metrics\n\n"
-    
-    # Filter metrics by attempts
-    filtered_metrics = filter_metrics_by_attempts(metrics_dict, metric_dict_df)
-    
-    if not filtered_metrics:
-        md += "*No metrics with sufficient data for this category.*\n\n"
-        return md
-    
-    # Organize hierarchically
-    hierarchy = organize_metrics_hierarchically(filtered_metrics, metric_dict_df)
-    
-    # Display core metrics first
-    if hierarchy['core']:
-        md += "### Core Performance Indicators\n\n"
-        md += "| Metric | Value | Context/Goal |\n"
-        md += "| :--- | :--- | :--- |\n"
-        
-        for metric_id, metric_info, metric_row in sorted(hierarchy['core'], key=lambda x: x[0]):
-            metric_name = metric_info.get('metric_name', metric_id)
-            value = format_metric_value(metric_info.get('value'), metric_row)
-            context = determine_metric_context(metric_row)
-            md += f"| {metric_name} | {value} | {context} |\n"
-        
-        md += "\n"
-    
-    # Display derived metrics grouped by parent
-    if hierarchy['derived']:
-        md += "### Detailed Breakdowns\n\n"
-        
-        for parent_name in sorted(hierarchy['derived'].keys()):
-            child_metrics = hierarchy['derived'][parent_name]
-            
-            # Create a more readable parent name
-            parent_display = parent_name.replace('_', ' ').title()
-            md += f"#### {parent_display}\n\n"
-            md += "| Metric | Value | Context/Goal |\n"
-            md += "| :--- | :--- | :--- |\n"
-            
-            for metric_id, metric_info, metric_row in sorted(child_metrics, key=lambda x: x[0]):
-                metric_name = metric_info.get('metric_name', metric_id)
-                value = format_metric_value(metric_info.get('value'), metric_row)
-                context = determine_metric_context(metric_row)
-                
-                # Indent child metrics slightly in name
-                if '_' in metric_id or any(c.isdigit() for c in metric_id):
-                    metric_name = "  " + metric_name  # Visual indent
-                
-                md += f"| {metric_name} | {value} | {context} |\n"
-            
-            md += "\n"
-    
+  if not metrics_dict:
+    return ""
+
+  md = f"## {category_name} Metrics\n\n"
+
+  # Filter metrics by attempts
+  filtered_metrics = filter_metrics_by_attempts(metrics_dict, metric_dict_df)
+
+  if not filtered_metrics:
+    md += "*No metrics with sufficient data for this category.*\n\n"
     return md
+
+    # Organize hierarchically
+  hierarchy = organize_metrics_hierarchically(filtered_metrics, metric_dict_df)
+
+  # Display core metrics first
+  if hierarchy['core']:
+    md += "### Core Performance Indicators\n\n"
+    md += "| Metric | Value | Context/Goal |\n"
+    md += "| :--- | :--- | :--- |\n"
+
+    for metric_id, metric_info, metric_row in sorted(hierarchy['core'], key=lambda x: x[0]):
+      metric_name = metric_info.get('metric_name', metric_id)
+      value = format_metric_value(metric_info.get('value'), metric_row)
+      context = determine_metric_context(metric_row)
+      md += f"| {metric_name} | {value} | {context} |\n"
+
+    md += "\n"
+
+    # Display derived metrics grouped by parent
+  if hierarchy['derived']:
+    md += "### Detailed Breakdowns\n\n"
+
+    for parent_name in sorted(hierarchy['derived'].keys()):
+      child_metrics = hierarchy['derived'][parent_name]
+
+      # Create a more readable parent name
+      parent_display = parent_name.replace('_', ' ').title()
+      md += f"#### {parent_display}\n\n"
+      md += "| Metric | Value | Context/Goal |\n"
+      md += "| :--- | :--- | :--- |\n"
+
+      for metric_id, metric_info, metric_row in sorted(child_metrics, key=lambda x: x[0]):
+        metric_name = metric_info.get('metric_name', metric_id)
+        value = format_metric_value(metric_info.get('value'), metric_row)
+        context = determine_metric_context(metric_row)
+
+        # Indent child metrics slightly in name
+        if '_' in metric_id or any(c.isdigit() for c in metric_id):
+          metric_name = "  " + metric_name  # Visual indent
+
+        md += f"| {metric_name} | {value} | {context} |\n"
+
+      md += "\n"
+
+  return md
 
 
 def create_metrics_table(metrics_dict, metric_dict_df):
-    """
+  """
     Create a Markdown table from metrics dictionary.
     
     Args:
@@ -437,15 +437,15 @@ def create_metrics_table(metrics_dict, metric_dict_df):
     Returns:
         str: Markdown table
     """
-    if not metrics_dict:
-        return ""
-    
-    md = "| Metric | Value | Context/Goal |\n"
-    md += "| :--- | :--- | :--- |\n"
-    
-    # Sort metrics by metric_id for consistency
-    for metric_id in sorted(metrics_dict.keys()):
-        metric_info = metrics_dict[metric_id]
+  if not metrics_dict:
+    return ""
+
+  md = "| Metric | Value | Context/Goal |\n"
+  md += "| :--- | :--- | :--- |\n"
+
+  # Sort metrics by metric_id for consistency
+  for metric_id in sorted(metrics_dict.keys()):
+    metric_info = metrics_dict[metric_id]
         value = metric_info.get('value')
         metric_name = metric_info.get('metric_name', metric_id)
         
@@ -464,98 +464,302 @@ def create_metrics_table(metrics_dict, metric_dict_df):
     return md
 
 
+def format_metric_line(metric_id, metric_info, metric_dict_df):
+    """
+    Format a single metric as a markdown list line.
+
+    Outputs:
+      - metric_name (metric_id): value (n=attempts) [insufficient if suppressed]
+
+    Args:
+        metric_id: str
+        metric_info: dict with value, attempts, sufficient_data, metric_name
+        metric_dict_df: full metric dictionary DataFrame
+
+    Returns:
+        str: single markdown list line
+    """
+    metric_name = metric_info.get('metric_name', metric_id)
+    value       = metric_info.get('value')
+    attempts    = metric_info.get('attempts')
+    sufficient  = metric_info.get('sufficient_data', True)
+    min_att     = metric_info.get('min_attempts')
+
+    # Format value
+    if not sufficient or value is None:
+        if attempts is not None and min_att is not None:
+            value_str = f"insufficient data (n={attempts}, min={min_att})"
+        else:
+            value_str = "insufficient data"
+    elif isinstance(value, float):
+        if abs(value) < 0.001 and value != 0:
+            value_str = f"{value:.4f}".rstrip('0').rstrip('.')
+        elif abs(value) < 1:
+            value_str = f"{value:.3f}".rstrip('0').rstrip('.')
+        else:
+            value_str = f"{value:.2f}".rstrip('0').rstrip('.')
+    else:
+        value_str = str(value)
+
+    # Attempts string
+    att_str = f" (n={attempts})" if attempts is not None else ""
+
+    return f"- **{metric_name}** (`{metric_id}`): {value_str}{att_str}"
+
+
+def generate_coach_view_sections(metrics_by_category, metric_dict_df):
+    """
+    Generate the coach-view organized metrics sections.
+
+    Groups all calculated metrics by their coach_view column value,
+    then presents them in the order defined by COACH_VIEW_ORDER.
+    Within each section, metrics are grouped by zone number (extracted
+    from metric_id) and ordered by attempt volume descending.
+
+    Args:
+        metrics_by_category: dict from calculate_all_metrics — keyed by
+                              metric_category (core, situation, etc.)
+        metric_dict_df: full metric dictionary DataFrame (must include
+                        coach_view column)
+
+    Returns:
+        str: Markdown content for all coach-view sections
+    """
+
+    # ── Coach view section order and display names ────────────────────────
+    COACH_VIEW_ORDER = [
+        ('attacking',                  '1. Attacking — Overall'),
+        ('attacking_net',              '1b. Attacking — Along the Net'),
+        ('attacking_angle',            '1c. Attacking — By Angle'),
+        ('attacking_sets',             '1d. Attacking — By Set Type'),
+        ('attacking_style',            '1e. Attacking — By Attack Style'),
+        ('attacking_situation',        '1f. Attacking — By Situation'),
+        ('attacking_serve',            '1g. Attacking — By Serve Destination'),
+        ('attacking_serve_source',     '1h. Attacking — By Serve Source'),
+        ('serve_receive',              '2a. Serve Receive — Overall'),
+        ('serve_receive_body',         '2b. Serve Receive — By Body Position'),
+        ('serve_receive_source_body',  '2c. Serve Receive — Source × Body'),
+        ('transition',                 '3a. Transition — Overall'),
+        ('transition_serving',         '3b. Transition — When Serving'),
+        ('transition_receiving',       '3c. Transition — When Receiving'),
+        ('serving',                    '4a. Serving — Overall'),
+        ('serving_source',             '4b. Serving — By Source Zone'),
+        ('serving_opp_fbhe',           '4c. Serving — Opponent FBHE'),
+        ('serving_opp_net',            '4d. Serving — Opponent FBHE by Net Zone'),
+        ('serving_opp_fbhe_source',    '4e. Serving — Opponent FBHE by Destination'),
+        ('serving_opp_fbhe_pass',      '4f. Serving — Opponent Pass Area'),
+        ('errors',                     '5. Errors'),
+        ('consistency_match',          '6a. Consistency — During Match'),
+        ('consistency_set2set',        '6b. Consistency — Set to Set'),
+    ]
+
+    # ── Flatten all metrics into one dict keyed by metric_id ─────────────
+    all_metrics = {}
+    for cat_metrics in metrics_by_category.values():
+        all_metrics.update(cat_metrics)
+
+    # ── Build lookup: metric_id → coach_view ─────────────────────────────
+    cv_lookup = {}
+    if 'coach_view' in metric_dict_df.columns:
+        for _, row in metric_dict_df.iterrows():
+            mid = row['metric_id']
+            cv  = row.get('coach_view', '')
+            if pd.notna(cv) and str(cv).strip():
+                cv_lookup[mid] = str(cv).strip()
+
+    # ── Group calculated metrics by coach_view ────────────────────────────
+    cv_groups = {}
+    unassigned = {}
+    for metric_id, metric_info in all_metrics.items():
+        cv = cv_lookup.get(metric_id, '')
+        if cv:
+            cv_groups.setdefault(cv, {})[metric_id] = metric_info
+        else:
+            unassigned[metric_id] = metric_info
+
+    # ── Helper: extract zone number from metric_id ────────────────────────
+    def zone_key(metric_id):
+        """Return zone int (1-5) if found in metric_id, else 0 for sorting."""
+        import re
+        # Look for trailing digit 1-5 or _N_ pattern
+        m = re.search(r'(?:^|[_])([1-5])(?:[_]|$)', metric_id)
+        if m:
+            return int(m.group(1))
+        # Also catch fbhe1, fbhe2 etc
+        m = re.search(r'(\d)$', metric_id.split('_')[0])
+        if m and int(m.group(1)) in range(1, 6):
+            return int(m.group(1))
+        return 0
+
+    # ── Helper: sort metrics within a section ────────────────────────────
+    def sort_metrics(metrics_dict):
+        """Sort by zone number first, then by attempt volume descending."""
+        def sort_key(item):
+            metric_id, metric_info = item
+            attempts = metric_info.get('attempts') or 0
+            return (zone_key(metric_id), -attempts)
+        return sorted(metrics_dict.items(), key=sort_key)
+
+    # ── Build output ──────────────────────────────────────────────────────
+    md = []
+
+    for cv_key, section_title in COACH_VIEW_ORDER:
+        section_metrics = cv_groups.get(cv_key, {})
+
+        # Skip empty sections
+        if not section_metrics:
+            continue
+
+        md.append(f"## {section_title}\n")
+
+        for metric_id, metric_info in sort_metrics(section_metrics):
+            # Only show metrics with sufficient data OR show suppressed ones
+            # with their reason — both are useful to AI
+            line = format_metric_line(metric_id, metric_info, metric_dict_df)
+            md.append(line)
+
+        md.append("")  # blank line between sections
+
+    # ── Any metrics without a coach_view assignment ───────────────────────
+    if unassigned:
+        md.append("## Other Metrics\n")
+        for metric_id, metric_info in sort_metrics(unassigned):
+            md.append(format_metric_line(metric_id, metric_info, metric_dict_df))
+        md.append("")
+
+    return "\n".join(md)
+
+
+def generate_metric_index(metrics_by_category, metric_dict_df):
+    """
+    Generate a flat alphabetical index of all metrics.
+
+    Provides a fast lookup path for any analysis template regardless
+    of which coach_view section a metric appears in.
+
+    Returns:
+        str: Markdown content for the metric index section
+    """
+    # Flatten all metrics
+    all_metrics = {}
+    for cat_metrics in metrics_by_category.values():
+        all_metrics.update(cat_metrics)
+
+    md = ["## Metric Index\n",
+          "*Alphabetical index of all calculated metrics for fast lookup.*\n"]
+
+    for metric_id in sorted(all_metrics.keys()):
+        metric_info = all_metrics[metric_id]
+        md.append(format_metric_line(metric_id, metric_info, metric_dict_df))
+
+    md.append("")
+    return "\n".join(md)
+
+
 def generate_markdown_content(player_name, metadata, metrics_by_category, metric_dict_df):
     """
     Generate complete Markdown content for player export.
-    
+
+    Structure:
+      1. Header + descriptive paragraphs
+      2. Data collection details
+      3. Metric Index (flat alphabetical — fast lookup for any template)
+      4. Coach View Sections (organized by coach_view column)
+      5. Calculation summary + reference notes
+
     Args:
         player_name: Player name
         metadata: Metadata dict
-        metrics_by_category: Dict of metrics organized by category
+        metrics_by_category: Dict of metrics organized by metric_category
         metric_dict_df: Full metric dictionary DataFrame
-    
+
     Returns:
         str: Complete Markdown content
     """
     md_content = []
-    
-    # Header
-    md_content.append(f"# {player_name} - Performance Metrics Analysis\n")
-    
-    # Generate descriptive header paragraphs (2-3 paragraphs)
-    header_paragraphs = generate_descriptive_header(player_name, metadata, metrics_by_category)
+
+    # ── Header ────────────────────────────────────────────────────────────
+    md_content.append(f"# {player_name} — Performance Analysis\n")
+
+    header_paragraphs = generate_descriptive_header(
+        player_name, metadata, metrics_by_category
+    )
     md_content.append(header_paragraphs)
     md_content.append("\n")
-    
-    # Detailed metadata section
+
+    # ── Data collection details ───────────────────────────────────────────
     md_content.append("## Data Collection Details\n")
     md_content.append(f"- **Report Generated**: {metadata['generated_at']}")
-    md_content.append(f"- **League**: {metadata['league']} {metadata['gender']} {metadata['year']}")
+    md_content.append(
+        f"- **League**: {metadata['league']} {metadata['gender']} {metadata['year']}"
+    )
     md_content.append(f"- **Team**: {metadata['team']}")
-    md_content.append(f"- **Data Points Analyzed**: {metadata['total_points_analyzed']} rally outcomes")
-    md_content.append(f"- **Match Sets Analyzed**: {metadata['total_sets_analyzed']} competitive sets")
-    md_content.append(f"- **Metric Dictionary Version**: {metadata['dictionary_version']}")
-    
-    # Show filters if any applied
+    md_content.append(
+        f"- **Data Points Analyzed**: {metadata['total_points_analyzed']} rally outcomes"
+    )
+    md_content.append(
+        f"- **Match Sets Analyzed**: {metadata['total_sets_analyzed']} competitive sets"
+    )
+    md_content.append(
+        f"- **Metric Dictionary Version**: {metadata['dictionary_version']}"
+    )
+
     filters = metadata.get('filters_applied', {})
     if filters:
         md_content.append("\n**Data Filters Applied:**")
         for key, value in filters.items():
             filter_name = key.replace('_', ' ').title()
             md_content.append(f"- {filter_name}: {value}")
-    
+
     md_content.append("\n")
-    
-    # Metrics by category
-    md_content.append("## Performance Metrics\n")
-    
-    # Define category order for logical flow
-    preferred_order = [
-        'Passing',
-        'Setting', 
-        'Attacking',
-        'Serving',
-        'Defense',
-        'Blocking',
-        'Consistency',
-        'Psychological',
-        'Spatial',
-        'Transition',
-        'Other'
-    ]
-    
-    # Sort categories - preferred first, then alphabetically
-    categories = list(metrics_by_category.keys())
-    ordered_categories = [c for c in preferred_order if c in categories]
-    remaining_categories = sorted([c for c in categories if c not in ordered_categories])
-    all_categories = ordered_categories + remaining_categories
-    
-    for category in all_categories:
-        metrics = metrics_by_category[category]
-        
-        if not metrics:
-            continue
-        
-        # Use new hierarchical table generator
-        category_tables = create_hierarchical_metrics_tables(metrics, metric_dict_df, category)
-        md_content.append(category_tables)
-    
-    # Summary statistics
+
+    # ── Flat metric index ─────────────────────────────────────────────────
+    md_content.append("---\n")
+    md_content.append(generate_metric_index(metrics_by_category, metric_dict_df))
+
+    # ── Coach view sections ───────────────────────────────────────────────
+    md_content.append("---\n")
+    md_content.append("# Performance Metrics — Coach View\n")
+    md_content.append(
+        "*Metrics organized by the Coach View Template. "
+        "See `01_Coach_View_Template.md` for interpretation guidance.*\n"
+    )
+    md_content.append(
+        generate_coach_view_sections(metrics_by_category, metric_dict_df)
+    )
+
+    # ── Calculation summary ───────────────────────────────────────────────
     md_content.append("---\n")
     md_content.append("## Calculation Summary\n")
-    md_content.append(f"- **Total Metrics Calculated**: {metadata['summary_stats']['total_metrics_calculated']}")
-    md_content.append(f"- **Metrics with Sufficient Data**: {metadata['summary_stats']['metrics_with_sufficient_data']}")
-    md_content.append(f"- **Metrics Below Minimum Attempts**: {metadata['summary_stats']['metrics_below_min_attempts']}")
+    md_content.append(
+        f"- **Total Metrics Calculated**: "
+        f"{metadata['summary_stats']['total_metrics_calculated']}"
+    )
+    md_content.append(
+        f"- **Metrics with Sufficient Data**: "
+        f"{metadata['summary_stats']['metrics_with_sufficient_data']}"
+    )
+    md_content.append(
+        f"- **Metrics Below Minimum Attempts**: "
+        f"{metadata['summary_stats']['metrics_below_min_attempts']}"
+    )
     md_content.append("\n")
-    
-    # Footer with cross-references
+
+    # ── Footer ────────────────────────────────────────────────────────────
     md_content.append("---\n")
     md_content.append("## Reference Notes\n\n")
-    md_content.append("*Definitions for FBHE (First Ball High Efficiency), ESO (Expected Sideout), ")
-    md_content.append("and other advanced metrics are located in `00_Global_Context_Philosophy.md`.*\n\n")
-    md_content.append(f"*Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ")
-    md_content.append(f"using metric dictionary version {metadata['dictionary_version']}*\n")
-    
+    md_content.append(
+        "*Metric definitions, level benchmarks, and interpretation guidance are in "
+        "`00_Global_Context_Philosophy.md`. "
+        "Coach View organization is defined in `01_Coach_View_Template.md`. "
+        "Scouting analysis uses `02_Scouting_Template.md`. "
+        "Statistical analysis uses `03_Statistical_View_Template.md`.*\n\n"
+    )
+    md_content.append(
+        f"*Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} "
+        f"using metric dictionary version {metadata['dictionary_version']}*\n"
+    )
+
     return "\n".join(md_content)
 
 
