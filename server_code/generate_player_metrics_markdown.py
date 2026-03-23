@@ -446,22 +446,22 @@ def create_metrics_table(metrics_dict, metric_dict_df):
   # Sort metrics by metric_id for consistency
   for metric_id in sorted(metrics_dict.keys()):
     metric_info = metrics_dict[metric_id]
-        value = metric_info.get('value')
-        metric_name = metric_info.get('metric_name', metric_id)
+    value = metric_info.get('value')
+    metric_name = metric_info.get('metric_name', metric_id)
         
-        # Get full metric row for context
-        metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
-        if len(metric_row) > 0:
+    # Get full metric row for context
+    metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
+    if len(metric_row) > 0:
             context = determine_metric_context(metric_row.iloc[0])
             formatted_value = format_metric_value(value, metric_row.iloc[0])
-        else:
+    else:
             context = "Performance metric"
             formatted_value = format_metric_value(value)
         
-        md += f"| {metric_name} | {formatted_value} | {context} |\n"
+    md += f"| {metric_name} | {formatted_value} | {context} |\n"
     
-    md += "\n"
-    return md
+  md += "\n"
+  return md
 
 
 def format_metric_line(metric_id, metric_info, metric_dict_df):
