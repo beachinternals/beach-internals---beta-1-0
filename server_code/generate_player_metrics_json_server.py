@@ -21,7 +21,7 @@ import io
 from logger_utils import log_info, log_error, log_debug, log_critical
 
 from server_functions import *
-from metric_calc_functions import *
+from metric_functions import build_metric_namespace
 
 
 @anvil.server.callable
@@ -112,7 +112,7 @@ def generate_player_metrics_json(league_value, team, **json_filters):
 
     # Calculate all metrics
     log_info("Starting metric calculations...")
-    metrics_result = calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name)
+    metrics_result = calculate_all_metrics(metric_dict, ppr_df, player_name)
     log_info(f"✓ Calculated {metrics_result['successful']} / {metrics_result['total_calculated']} metrics")
     log_info(f"  ({metrics_result['insufficient_data']} metrics suppressed - below min attempts)")
 
@@ -267,7 +267,7 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
       gender, 
       year,
       date_checked,
-    disp_start_date,
+      disp_start_date,
       disp_end_date
     )
 
@@ -308,9 +308,9 @@ def get_filtered_triangle_data(league, gender, year, team, **filters):
   except Exception as e:
     log_error(f"Error in get_filtered_triangle_data: {str(e)}", with_traceback=True)
     return pd.DataFrame()
-    
 
-def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
+
+def calculate_all_metrics(metric_dict, ppr_df, player_name):
   """
   Calculate all metrics from the dictionary.
 
@@ -325,7 +325,6 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
   Args:
       metric_dict (DataFrame): Metric dictionary (must include attempts_path column)
       ppr_df (DataFrame): Point-by-point data
-      tri_df (DataFrame): Triangle (set-level) data
       player_name (str): Player to analyze
 
   Returns:
@@ -342,10 +341,11 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
   successful = 0
   insufficient_data = 0
 
-  # Cache for executed function namespaces.
-  # Key = "function_name||data_filter" so metrics sharing the same function
-  # and filter (e.g. fbhe and fbso both use fbhe_obj with no filter) only
-  # run exec() once.
+  # Cache executed namespaces by "function_name||data_filter".
+  # Many metrics share the same underlying function (e.g. fbhe_obj runs once
+  # and produces fbhe_result, fbso_result etc. that multiple metric rows read).
+  # Without the cache, each metric gets a fresh namespace and cross-references
+  # like attempts_path = 'fbhe_result.points' fail with NameError.
   function_cache = {}
 
   log_info(f"Calculating {len(metric_dict)} metrics for {player_name}...")
@@ -383,9 +383,18 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
         filtered_ppr = ppr_df
 
       # ------------------------------------------------------------------
-      # Execute the metric function (cached per function+filter combination)
+      # Execute the metric function — cached per function+filter combination.
+      # Metrics sharing the same function+filter reuse the namespace so that
+      # results created by one exec() (e.g. fbhe_result) are visible to
+      # subsequent metrics that reference them in result_path or attempts_path.
       # ------------------------------------------------------------------
-      local_namespace = build_metric_namespace(filtered_ppr, player_name)
+      cache_key = f"{function_name}||{data_filter}"
+      if cache_key not in function_cache:
+        local_namespace = build_metric_namespace(filtered_ppr, player_name)
+        exec(function_name, local_namespace)
+        function_cache[cache_key] = local_namespace
+      else:
+        local_namespace = function_cache[cache_key]
 
       # ------------------------------------------------------------------
       # Extract the metric value via result_path

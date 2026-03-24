@@ -928,7 +928,7 @@ def generate_player_metrics_markdown(league_value, team, use_direct_data=False, 
         
         # Calculate all metrics
         log_info("Starting metric calculations...")
-        metrics_result = calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name)
+        metrics_result = calculate_all_metrics(metric_dict, ppr_df, player_name)
         log_info(f"✓ Calculated {metrics_result['successful']} / {metrics_result['total_calculated']} metrics")
         log_info(f"  ({metrics_result['insufficient_data']} metrics had insufficient data)")
         
