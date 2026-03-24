@@ -238,6 +238,18 @@ def ai_export_mgr_generate_background(user=None):
         email_text += f"Processing export {idx} of {total_rows}\n"
         email_text += f"{'='*60}\n"
 
+        # -------------------------------------------------------
+        # CHECK DAY OF WEEK - skip if not scheduled for today
+        # -------------------------------------------------------
+        today = datetime.now()
+        day_of_week = today.strftime("%A")  # e.g. "Monday", "Tuesday"
+        export_dow = export_row['dow'] or 'Everyday'
+        if export_dow not in [day_of_week, 'Everyday']:
+          log_info(f"SKIPPING: Export for {export_row['team']} not scheduled for {day_of_week} (set to {export_dow})")
+          email_text += f"Skipped - not scheduled for {day_of_week}\n"
+          continue
+          # -------------------------------------------------------
+
         # Extract parameters from the row
         team = export_row['team']
         export_type = export_row['export_type'] or 'full'
@@ -355,7 +367,7 @@ def ai_export_mgr_generate_background(user=None):
 
         # Update row with results
         if result['status'] == 'success':
-          export_row['disabled'] = True
+          #export_row['disabled'] = True
           export_row['completed_at'] = datetime.now()
           export_row['files_generated'] = len(result['files'])
           export_row['result_message'] = result['message']
@@ -369,7 +381,7 @@ def ai_export_mgr_generate_background(user=None):
           last_team = team
 
         else:
-          export_row['disabled'] = True
+          #export_row['disabled'] = True
           export_row['completed_at'] = datetime.now()
           export_row['result_message'] = result['message']
 
