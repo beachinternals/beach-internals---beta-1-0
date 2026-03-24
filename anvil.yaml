@@ -112,6 +112,10 @@ db_schema:
       client_hidden: false
       name: de_identified
       type: bool
+    - admin_ui: {order: 4.25, width: 200}
+      client_hidden: false
+      name: dow
+      type: string
     server: full
     title: ai_export_mgr
   ai_prompt_templates:
