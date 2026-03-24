@@ -453,30 +453,35 @@ def calculate_all_metrics(metric_dict, ppr_df, tri_df, player_name):
         if attempts_value < min_att:
           value_suppressed = True
           insufficient_data += 1
-          log_debug(
-            f"Metric {metric_id} suppressed: "
-            f"{attempts_value} attempts < {min_att} minimum"
-          )
+          #log_debug(
+          #  f"Metric {metric_id} suppressed: "
+          #  f"{attempts_value} attempts < {min_att} minimum"
+          #)
 
       # ------------------------------------------------------------------
       # Store result - always write attempts so AI knows why value is None
       # ------------------------------------------------------------------
+      # Store in output organized by category
       if category not in metrics_output:
         metrics_output[category] = {}
 
+      # --- Extract video links if video_path is set in dictionary ---
+      video_links = ''
+      video_path = metric_row.get('video_path', None)
+      if pd.notna(video_path) and str(video_path).strip():
+        try:
+          raw_video = eval(str(video_path), local_namespace)
+          # Only store if it looks like real links, not placeholder values
+          if raw_video and str(raw_video).strip() not in ('N/A', 'No Data Available', ''):
+            video_links = str(raw_video).strip()
+        except Exception as ve:
+          log_debug(f"video_path eval failed for {metric_id}: {ve}")
+
       metrics_output[category][metric_id] = {
-        'value': None if value_suppressed else (
-          float(metric_value) if isinstance(metric_value, (int, float, np.number))
-          else metric_value
-        ),
-        'attempts': int(attempts_value) if attempts_value is not None else None,
-        'min_attempts': min_att if has_attempts_path else None,
-        'sufficient_data': not value_suppressed,
+        'value': float(metric_value) if isinstance(metric_value, (int, float, np.number)) else metric_value,
         'metric_name': metric_row['metric_name'],
-        'parent_metric': (
-          metric_row['parent_metric']
-          if pd.notna(metric_row.get('parent_metric')) else None
-        )
+        'parent_metric': metric_row['parent_metric'] if pd.notna(metric_row.get('parent_metric')) else None,
+        'video_links': video_links
       }
 
       if not value_suppressed:

@@ -291,32 +291,28 @@ class FBHEResult:
 
 def build_video_links(ppr_df: pd.DataFrame) -> str:
   """
-    Builds a concatenated string of HTML links for video playback based on the provided DataFrame.
-    
-    This function groups the rows by 'video_id', collects unique non-zero action IDs from specified columns 
-    in the order they first appear, and constructs an HTML link for each group that opens in a new window/tab.
-    Links are joined with spaces for readability.
-    
-    Parameters:
-    - ppr_df (pd.DataFrame): The DataFrame containing play-by-play data with columns like 'video_id', 
-                             'serve_action_id', 'pass_action_id', 'set_action_id', 'att_action_id', 
-                             and 'dig_action_id'.
-    
-    Returns:
-    - str: A string of concatenated HTML links, e.g., '<a href="url1" target="_blank">G0</a> <a href="url2" target="_blank">G1</a>'.
-           Returns an empty string if no valid links can be built.
-    """
+  Builds compact video links showing play count per game.
+  Format: [G12](url) [G8](url2)  where number = plays in that game file.
+
+  Parameters:
+  - ppr_df (pd.DataFrame): play-by-play data with video_id and action ID columns
+
+  Returns:
+  - str: space-separated markdown links e.g. '[G12](url1) [G5](url2)'
+         Returns empty string if no valid links can be built.
+  """
   if ppr_df.empty:
     return ""
 
-  groups = ppr_df.groupby('video_id')
+  action_columns = ['serve_action_id', 'pass_action_id', 
+                    'set_action_id', 'att_action_id', 'dig_action_id']
   links = []
-  action_columns = ['serve_action_id', 'pass_action_id', 'set_action_id', 'att_action_id', 'dig_action_id']
 
-  for idx, (video_id, group) in enumerate(groups):
+  for video_id, group in ppr_df.groupby('video_id'):
     if pd.isna(video_id) or video_id == "No Video Id":
       continue
 
+    # Collect unique non-zero action IDs in order they appear
     actions = []
     seen = set()
     for _, row in group.iterrows():
@@ -332,9 +328,8 @@ def build_video_links(ppr_df: pd.DataFrame) -> str:
 
     action_ids = ','.join(actions)
     url = f"https://app.balltime.com/video/{video_id}?actionIds={action_ids}"
-    link = '[G]('+url+')'
-    #link = f'<a href="{url}" target="_blank">G{idx}</a>'
-    links.append(link)
+    count = len(actions)
+    links.append(f'[G{count}]({url})')
 
   return ' '.join(links)
 

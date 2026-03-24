@@ -84,11 +84,12 @@ def import_metric_dictionary_from_csv(csv_file):
           log_info(f"Importing first row: metric_id={row.get('metric_id')}, name={row.get('metric_name')}")
 
         # Sanitize critical fields that contain code/formulas
-        function_name_clean      = sanitize_quotes(row.get('function_name', ''))
-        result_path_clean        = sanitize_quotes(row.get('result_path', ''))
-        attempts_path_clean      = sanitize_quotes(row.get('attempts_path', ''))
-        data_filter_clean        = sanitize_quotes(row.get('data_filter', ''))
+        function_name_clean       = sanitize_quotes(row.get('function_name', ''))
+        result_path_clean         = sanitize_quotes(row.get('result_path', ''))
+        attempts_path_clean       = sanitize_quotes(row.get('attempts_path', ''))
+        data_filter_clean         = sanitize_quotes(row.get('data_filter', ''))
         calculation_formula_clean = sanitize_quotes(row.get('calculation_formula', ''))
+        video_path_clean          = sanitize_quotes(row.get('video_path', ''))
 
         # Add row to table
         app_tables.metric_dictionary.add_row(
@@ -112,7 +113,8 @@ def import_metric_dictionary_from_csv(csv_file):
           coach_speak_good=row.get('coach_speak_good', ''),
           coach_speak_average=row.get('coach_speak_average', ''),
           coach_speak_poor=row.get('coach_speak_poor', ''),
-          coach_view=row.get('coach_view', '')
+          coach_view=row.get('coach_view', ''),
+          video_path=video_path_clean
         )
 
         imported_count += 1
@@ -187,6 +189,7 @@ def cleanup_metric_dictionary_quotes():
     row['attempts_path']       = sanitize_quotes(row['attempts_path'])
     row['data_filter']         = sanitize_quotes(row['data_filter'])
     row['calculation_formula'] = sanitize_quotes(row['calculation_formula'])
+    row['video_path']          = sanitize_quotes(row['video_path'])
 
     updated_count += 1
 

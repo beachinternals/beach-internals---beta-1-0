@@ -426,41 +426,92 @@ def create_hierarchical_metrics_tables(metrics_dict, metric_dict_df, category_na
   return md
 
 
-def create_metrics_table(metrics_dict, metric_dict_df):
+def create_hierarchical_metrics_tables(metrics_dict, metric_dict_df, category_name):
   """
-    Create a Markdown table from metrics dictionary.
-    
-    Args:
-        metrics_dict: Dict of {metric_id: {'value': ..., 'metric_name': ...}}
-        metric_dict_df: Full metric dictionary DataFrame for context
-    
-    Returns:
-        str: Markdown table
+    Create hierarchically organized Markdown tables for a category.
+    Includes a Plays column when any metric in the group has video links.
     """
   if not metrics_dict:
     return ""
 
-  md = "| Metric | Value | Context/Goal |\n"
-  md += "| :--- | :--- | :--- |\n"
+  md = f"## {category_name} Metrics\n\n"
 
-  # Sort metrics by metric_id for consistency
-  for metric_id in sorted(metrics_dict.keys()):
-    metric_info = metrics_dict[metric_id]
-    value = metric_info.get('value')
-    metric_name = metric_info.get('metric_name', metric_id)
-        
-    # Get full metric row for context
-    metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
-    if len(metric_row) > 0:
-            context = determine_metric_context(metric_row.iloc[0])
-            formatted_value = format_metric_value(value, metric_row.iloc[0])
+  filtered_metrics = filter_metrics_by_attempts(metrics_dict, metric_dict_df)
+
+  if not filtered_metrics:
+    md += "*No metrics with sufficient data for this category.*\n\n"
+    return md
+
+  hierarchy = organize_metrics_hierarchically(filtered_metrics, metric_dict_df)
+
+  # --- Core metrics ---
+  if hierarchy['core']:
+    # Check for video links in core metrics
+    core_has_video = any(
+      metric_info.get('video_links', '')
+      for _, metric_info, _ in hierarchy['core']
+    )
+
+    md += "### Core Performance Indicators\n\n"
+    if core_has_video:
+      md += "| Metric | Value | Context/Goal | Plays |\n"
+      md += "| :--- | :--- | :--- | :--- |\n"
     else:
-            context = "Performance metric"
-            formatted_value = format_metric_value(value)
-        
-    md += f"| {metric_name} | {formatted_value} | {context} |\n"
-    
-  md += "\n"
+      md += "| Metric | Value | Context/Goal |\n"
+      md += "| :--- | :--- | :--- |\n"
+
+    for metric_id, metric_info, metric_row in sorted(hierarchy['core'], key=lambda x: x[0]):
+      metric_name = metric_info.get('metric_name', metric_id)
+      value = format_metric_value(metric_info.get('value'), metric_row)
+      context = determine_metric_context(metric_row)
+      video_links = metric_info.get('video_links', '')
+
+      if core_has_video:
+        md += f"| {metric_name} | {value} | {context} | {video_links} |\n"
+      else:
+        md += f"| {metric_name} | {value} | {context} |\n"
+
+    md += "\n"
+
+    # --- Derived/breakdown metrics ---
+  if hierarchy['derived']:
+    md += "### Detailed Breakdowns\n\n"
+
+    for parent_name in sorted(hierarchy['derived'].keys()):
+      child_metrics = hierarchy['derived'][parent_name]
+
+      # Check for video links in this group
+      group_has_video = any(
+        metric_info.get('video_links', '')
+        for _, metric_info, _ in child_metrics
+      )
+
+      parent_display = parent_name.replace('_', ' ').title()
+      md += f"#### {parent_display}\n\n"
+
+      if group_has_video:
+        md += "| Metric | Value | Context/Goal | Plays |\n"
+        md += "| :--- | :--- | :--- | :--- |\n"
+      else:
+        md += "| Metric | Value | Context/Goal |\n"
+        md += "| :--- | :--- | :--- |\n"
+
+      for metric_id, metric_info, metric_row in sorted(child_metrics, key=lambda x: x[0]):
+        metric_name = metric_info.get('metric_name', metric_id)
+        value = format_metric_value(metric_info.get('value'), metric_row)
+        context = determine_metric_context(metric_row)
+        video_links = metric_info.get('video_links', '')
+
+        if '_' in metric_id or any(c.isdigit() for c in metric_id):
+          metric_name = "  " + metric_name
+
+        if group_has_video:
+          md += f"| {metric_name} | {value} | {context} | {video_links} |\n"
+        else:
+          md += f"| {metric_name} | {value} | {context} |\n"
+
+      md += "\n"
+
   return md
 
 
