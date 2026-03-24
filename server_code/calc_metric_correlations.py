@@ -7,6 +7,7 @@ from scipy import stats
 from datetime import datetime
 from server_functions import get_ppr_data
 
+from metric_functions import METRIC_FUNCTION_REGISTRY
 
 # ─────────────────────────────────────────────────────────────────
 #  HELPER: load PPR dataframe for a league/gender/year
@@ -84,17 +85,11 @@ def _calc_tcr_s(ppr_df, player_uuid):
 #  To add a new metric later: just add an elif here
 # ─────────────────────────────────────────────────────────────────
 def _calc_metric(metric_name, ppr_df, player_uuid):
-  if metric_name == 'goodpass':
-    return _calc_goodpass(ppr_df, player_uuid)
-  elif metric_name == 'fbhe':
-    return _calc_fbhe(ppr_df, player_uuid)
-  elif metric_name == 'dig_quality':
-    return _calc_dig_quality_mean(ppr_df, player_uuid)
-  elif metric_name == 'tcr_s':
-    return _calc_tcr_s(ppr_df, player_uuid)
-  else:
-    print(f"  Unknown metric: {metric_name}")
+  fn = METRIC_FUNCTION_REGISTRY.get(metric_name)
+  if fn is None:
+    print(f"  Unknown metric: {metric_name} — add it to METRIC_FUNCTION_REGISTRY in metric_functions.py")
     return None
+  return fn(ppr_df, player_uuid)
 
 
 # ─────────────────────────────────────────────────────────────────
