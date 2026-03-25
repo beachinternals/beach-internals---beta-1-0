@@ -17,6 +17,29 @@ import traceback
 from logger_utils import log_info, log_error, log_critical, log_debug, log_row
 
 # ============================================================================
+#
+#  AUTH HELPER — INTERNALS only
+#  rpt_mgr_generate triggers the full report pipeline for all teams.
+#  test_rpt_mgr_new_rpts is a test/debug function.
+#  Both are INTERNALS admin only.
+#
+# ============================================================================
+
+def _require_internals():
+  """
+  Verify the caller is logged in AND is on the INTERNALS team.
+  Raises Exception if not authorized. Returns user row.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS':
+    raise Exception("Access denied: this function is for admins only.")
+  return user
+
+
+
+# ============================================================================
 # PERFORMANCE MONITORING IMPORTS - ADD THIS BLOCK
 # ============================================================================
 from server_functions import (
@@ -35,6 +58,7 @@ from report_generate_and_store import *
 
 @anvil.server.callable
 def rpt_mgr_generate():
+  _require_internals()
   # Client callable function to call the background function to generate reports
   anvil.server.launch_background_task('rpt_mgr_generate_background')
   return
@@ -965,6 +989,7 @@ def populate_filters_from_rpt_mgr_table(rpt_r, p_r):
 
 @anvil.server.callable
 def test_rpt_mgr_new_rpts():
+    _require_internals()
     rpt_r = {
         'rpt_type': 'player',
         'Report Description': 'Attacking Summary',

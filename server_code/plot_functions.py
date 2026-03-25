@@ -19,14 +19,12 @@ from logger_utils import log_info, log_error, log_critical, log_debug
 # Import other beachinternals moudles
 from server_functions import *
 
-
 #-----------------------------------------------
 #
 #.   Plot Fucntions 
 #
 #----------------------------------------------
 
-@anvil.server.callable
 def plot_lines_on_court( ppr_df, action, plt_num, plt_title=''):
   # 
   # line drawing of the serve from source to destination
@@ -35,14 +33,14 @@ def plot_lines_on_court( ppr_df, action, plt_num, plt_title=''):
   #. a little documentation ...
   #plot(x, y, color='green', marker='o', linestyle='dashed',
   #   linewidth=2, markersize=12)
-  
+
   # we want a line drawing with on line for each serve, or each instance.
 
   err = ''
   kill = ''
   line_style = ['solid','dashed','dashdot'] # set a line style of solid for hard driven, or fast, dashed for off spped or slow.
   l_style = line_style[0] # default is a solid line, mainly for serves.
-  
+
   if action == 'srv':
     x1 = 'serve_src_x'
     x2 = 'serve_dest_x'
@@ -73,7 +71,7 @@ def plot_lines_on_court( ppr_df, action, plt_num, plt_title=''):
   # Plot it in the normal Matplotlib way
   fig, ax = plt.subplots(figsize=(10,18)) # cretae a figure
   #plt.figure(plt_num, figsize=(10,18))
-  
+
   for index, ppr_r in ppr_df.iterrows():
     line_color = 'blue'
     l_style = line_style[1] if (action == 'att' and ppr_r['att_speed'] < 6 ) else line_style[0] # if off speed shot, set the line style to dotted, else solid
@@ -115,7 +113,6 @@ def plot_lines_on_court( ppr_df, action, plt_num, plt_title=''):
 
   return anvil.mpl_util.plot_image()
 
-@anvil.server.callable
 def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_ellispe, point_outcome ):
   # this enters with an array of x, y, and outcomes, but some x and y are na, so we need to drop them, but
   #
@@ -134,7 +131,7 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
     plot_point_color = vectorize_pt_color(pt_color)
   else:
     plot_point_color = 'c'
-  
+
   #print(f"plot_points_on_the_court : plot_point_color: {plot_point_color}")
   #print(f"plot_set_dest: {len(x)}, {len(y)} x and y: {x}, {y}")
   point_size = np.full(len(x),75) # numpy array of size len(x), filled with character 2
@@ -153,7 +150,7 @@ def plot_points_on_the_court( ppr_x,ppr_y, plt_num, video_id, action_num, plot_e
       xy_center = (el_mean[0],el_mean[1])
       ellipse = patches.Ellipse(xy = xy_center, width = el_width, height = el_height, angle = el_angle, edgecolor='b', facecolor='blue', linewidth=2, label="1 Std Dev Ellipse", alpha=0.05)
       ax.add_patch(ellipse)
-    
+
   plot_court_background(fig,ax)
 
   # Return this plot as a PNG image in a Media object
@@ -271,10 +268,8 @@ def plot_attack_zones( ppr_df, plt_num):
   
   pz1.plot()
 
-
   # Return this plot as a PNG image in a Media object
   return anvil.mpl_util.plot_image()
-
 
 def plot_pass_clusters(ppr_df, disp_player, category):
   """
@@ -424,8 +419,6 @@ def plot_pass_clusters(ppr_df, disp_player, category):
 
     
 
-
-
 def calculate_standard_deviation_ellipse(points, confidence=1.0):
    """
    Calculate and plot the standard deviation ellipse for a set of 2D points.
@@ -465,8 +458,6 @@ def calculate_standard_deviation_ellipse(points, confidence=1.0):
 
    return mean, width, height, angle
 
-
-
 def calculate_ellipse_area(width, height):
    """
    Calculate the area of an ellipse.
@@ -479,7 +470,6 @@ def calculate_ellipse_area(width, height):
        float: The area of the ellipse.
    """
    return math.pi * (width / 2) * (height / 2)
-
 
 # Grok generated version of this routine
 def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_label, line_value, plot_mean, mean_val, std_val, bar_width=0.5):
@@ -575,8 +565,6 @@ def plot_bar_graph(x_categories, y_values, title, xlabel, ylabel, size, line_lab
   finally:
     plt.close('all')
 
-
-@anvil.server.callable
 def plot_histogram(player_data_df, plot_var, var_name, l_min, l_max):
   # given all this, look into the player_data csv stored in the csv_list datafile, then graph the FBHE Histogram
 
@@ -614,9 +602,6 @@ def plot_histogram(player_data_df, plot_var, var_name, l_min, l_max):
 
   return stat_text, plt_v
 
-
-
-@anvil.server.callable
 def find_clusters(ppr_df, disp_player, category):
   """
     Find clusters of kills or errors using DBSCAN and return cluster labels and densities metrics.
@@ -691,4 +676,3 @@ def find_clusters(ppr_df, disp_player, category):
   except Exception as e:
     log_error(f"Error in find_kill_error_clusters: {str(e)}")
     return {'error': str(e)}
-

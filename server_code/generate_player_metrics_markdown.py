@@ -23,6 +23,41 @@ import re
 # Import your logging utilities
 from logger_utils import log_info, log_error, log_debug, log_critical
 
+# ============================================================================
+#
+#  AUTH HELPERS
+#  _require_own_team(team) — logged-in AND requesting own team's data
+#  _require_internals()    — INTERNALS team only
+#
+# ============================================================================
+
+def _require_own_team(team):
+  """
+  Verify the caller is logged in AND is either on the INTERNALS team
+  (can access any team) or requesting their own team's data only.
+  Returns the user row or raises Exception.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS' and team != user['team']:
+    raise Exception("Access denied: you can only access your own team's data.")
+  return user
+
+def _require_internals():
+  """
+  Verify the caller is logged in AND is on the INTERNALS team.
+  Raises Exception if not authorized. Returns user row.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS':
+    raise Exception("Access denied: this function is for admins only.")
+  return user
+
+
+
 from server_functions import *
 from metric_calc_functions import *
 from generate_player_metrics_json_server import calculate_all_metrics
@@ -814,7 +849,6 @@ def generate_markdown_content(player_name, metadata, metrics_by_category, metric
     return "\n".join(md_content)
 
 
-@anvil.server.callable
 def generate_player_metrics_markdown(league_value, team, use_direct_data=False, **json_filters):
     """
     Generate comprehensive player metrics MARKDOWN file (instead of JSON).
@@ -976,7 +1010,6 @@ def generate_player_metrics_markdown(league_value, team, use_direct_data=False, 
         raise
 
 
-@anvil.server.callable
 def generate_global_context_markdown():
     """
     Generate the global context/philosophy file for beach volleyball metrics.

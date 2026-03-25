@@ -174,14 +174,12 @@ def deidentify_league_ppr(master_ppr_df, c_league, c_gender, c_year):
 
   return master_ppr_df
 
-
 # =============================================================================
 #
 #   create_master_ppr  (callable entry point — launches background task)
 #
 # =============================================================================
 
-@anvil.server.callable
 def create_master_ppr(user_league, user_gender, user_year, user_team, data_set):
   # main idea here is to go thru the datafiles table, limited by league, gender, year, and team.
   # then just append all the different ppr csv files together into a master. Then write this to a csv file
@@ -198,12 +196,10 @@ def create_master_ppr(user_league, user_gender, user_year, user_team, data_set):
   task = anvil.server.launch_background_task('make_master_ppr', user_league, user_gender, user_year, user_team, data_set)
   return task
 
-
 @anvil.server.background_task
 def make_master_ppr(user_league, user_gender, user_year, user_team, data_set):
   task = make_master_ppr_not_background(user_league, user_gender, user_year, user_team, data_set)
   return task
-
 
 # =============================================================================
 #
@@ -216,7 +212,6 @@ def make_master_ppr(user_league, user_gender, user_year, user_team, data_set):
 #
 # =============================================================================
 
-@anvil.server.callable
 def make_master_ppr_not_background(user_league, user_gender, user_year, user_team, data_set):
 
   log_info(f"make_master_ppr_not_background: started for {user_league}/{user_gender}/{user_year}, team={user_team}, data_set={data_set}")
@@ -278,7 +273,6 @@ def make_master_ppr_not_background(user_league, user_gender, user_year, user_tea
 
   log_info(f"make_master_ppr_not_background: complete for {user_league}/{user_gender}/{user_year}/{user_team}")
   return True
-
 
 # =============================================================================
 #

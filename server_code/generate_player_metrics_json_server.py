@@ -20,11 +20,45 @@ import io
 # Import your logging utilities
 from logger_utils import log_info, log_error, log_debug, log_critical
 
+# ============================================================================
+#
+#  AUTH HELPERS
+#  _require_own_team(team) — logged-in AND requesting own team's data
+#  _require_internals()    — INTERNALS team only
+#
+# ============================================================================
+
+def _require_own_team(team):
+  """
+  Verify the caller is logged in AND is either on the INTERNALS team
+  (can access any team) or requesting their own team's data only.
+  Returns the user row or raises Exception.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS' and team != user['team']:
+    raise Exception("Access denied: you can only access your own team's data.")
+  return user
+
+def _require_internals():
+  """
+  Verify the caller is logged in AND is on the INTERNALS team.
+  Raises Exception if not authorized. Returns user row.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS':
+    raise Exception("Access denied: this function is for admins only.")
+  return user
+
+
+
 from server_functions import *
 from metric_functions import build_metric_namespace
 
 
-@anvil.server.callable
 def generate_player_metrics_json(league_value, team, **json_filters):
   """
     Generate comprehensive player metrics JSON file.
