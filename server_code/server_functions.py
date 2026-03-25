@@ -40,6 +40,36 @@ import uuid
 # Create logger with formatting
 from logger_utils import log_info, log_error, log_critical, log_debug
 
+# ============================================================================
+#
+#  AUTH HELPERS
+#  Add these once here; import or copy into other server modules as needed.
+#  _require_login()     — any logged-in user
+#  _require_internals() — INTERNALS team only (admin functions)
+#
+# ============================================================================
+
+def _require_login():
+  """Verify the caller is logged in. Returns user row or raises Exception."""
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  return user
+
+def _require_internals():
+  """
+  Verify the caller is logged in AND is on the INTERNALS team.
+  Raises Exception if not authorized. Returns user row.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS':
+    raise Exception("Access denied: this function is for admins only.")
+  return user
+
+
+
 import json
 import requests
 from faker import Faker
@@ -145,6 +175,7 @@ def set_monitoring_level(level: int):
     Returns:
         String describing the new level
     """
+  _require_internals()
   global CURRENT_MONITORING_LEVEL
 
   level_names = {
@@ -165,6 +196,7 @@ def set_monitoring_level(level: int):
 @anvil.server.callable
 def get_monitoring_level():
   """Get current monitoring level and description"""
+  _require_internals()
   level_names = {
     0: "OFF", 1: "CRITICAL", 2: "IMPORTANT", 3: "DETAILED", 4: "VERBOSE"
   }
@@ -192,7 +224,7 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
   # 3 = attempts
   # 4 = first ball sideout (FBSO)
   # 5 = URL
-  
+
   fbhe_list = [ 0.0, 0, 0, 0, 0, " " ]    # FBHE
 
   # limit to attacks by our player
@@ -209,7 +241,7 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
 
     #if 'STANFORD' in disp_player:
       #print(f"Size of DB in calc_fbhe:{ppr_df.shape[0]}, Disp Player:{disp_player}")
-      
+
     # to build the video link, need a quick loop over rows:
     video_list = [*range(0,ppr_df.shape[0],1)]
     #print(f"video list: {video_list}")
@@ -240,7 +272,7 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
           video_list[i] = str(video_list[i]) + ',' + str(r['dig_action_id']) if r['dig_action_id'] != 0 else video_list[i]
           video_link = video_link+ video_list[i]
           #print(f"Add to existing Link i: {i}, Video Link: {video_link}")
-      
+
         video_btd_id = r['video_id']
 
       video_link = video_link + ")" if len(video_link) != 0 else video_link
@@ -248,7 +280,7 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
         video_link = ""
     else:
       video_link = "N/A"
-    
+
     #print(f"player :{disp_player}, ppr df size:{ppr_df.shape}")
     fbhe_list[3] = ppr_df.shape[0]  # number of attempts
     fbhe_list[1] = ppr_df[ppr_df.point_outcome == "FBK"].shape[0] # kills
@@ -259,7 +291,7 @@ def fbhe( ppr_df, disp_player, play_type, video_yn ):
     fbhe_list[4] = float("{:.3f}".format(fbhe_list[4]))    
     fbhe_list[5] = video_link
     #print(f"fbhe Funct: fbhe_list:{fbhe_list}")
-  
+
   return fbhe_list
 
 #-------------------------------------------------------------------------------
@@ -364,12 +396,12 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
 
     # calculate the total number of points the player is involved with
   ppr_df = ppr_df[ (ppr_df['player_a1'] == disp_player ) | 
-                   (ppr_df['player_a2'] == disp_player ) | 
-                   (ppr_df['player_b1'] == disp_player ) | 
-                   (ppr_df['player_b2'] == disp_player ) ]
+    (ppr_df['player_a2'] == disp_player ) | 
+    (ppr_df['player_b1'] == disp_player ) | 
+    (ppr_df['player_b2'] == disp_player ) ]
   all_points = len(ppr_df)
-                   
-    # Filter based on play_type
+
+  # Filter based on play_type
   disp_player = disp_player.strip()
   if play_type == "att":
     ppr_df = ppr_df[ppr_df['att_player'].str.strip() == disp_player]
@@ -423,7 +455,7 @@ Return as an object
 '''
 def calc_player_eso( ppr_df, disp_player ):
   return calc_player_eso_obj(ppr_df,disp_player)
-  
+
 def calc_player_eso_obj( ppr_df, disp_player ):
   # pass this a query of rows, figures the ESO for the display player
   #
@@ -580,8 +612,8 @@ def filter_serve_receive_only_team(df, disp_team):
   filtered_df = df[~df['serve_player'].isin(exclude_players)]
   return filtered_df
 
-  
-  
+
+
 def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):  
   #
   # fetch the appropriate ppr table(s) from the ppr_csv table given the league and team, and if scout data
@@ -592,7 +624,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
   #  disp_team = 'League'
   #  scout = False
   #  #print(f"Fetching Data for INTERNALS: {disp_team}")
-    
+
   #print(f"Searching Team Rows: L:{disp_league}, G:{disp_gender},Y:{disp_year},T:{disp_team}")
   ppr_csv_row = app_tables.ppr_csv_tables.get( 
     q.all_of(
@@ -600,7 +632,7 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
       gender = disp_gender,
       year = disp_year,
       team = disp_team
-      ) )
+    ) )
 
   if ppr_csv_row:
     m_ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
@@ -643,11 +675,11 @@ def get_ppr_data( disp_league, disp_gender, disp_year, disp_team, scout ):
 
 
 def ppr_df_limit( m_ppr_df, 
-                          comp_l1_checked, disp_comp_l1, 
-                          comp_l2_checked, disp_comp_l2, 
-                          comp_l3_checked, disp_comp_l3, 
-                          date_checked, disp_start_date, disp_end_date
-                         ):
+                  comp_l1_checked, disp_comp_l1, 
+                  comp_l2_checked, disp_comp_l2, 
+                  comp_l3_checked, disp_comp_l3, 
+                  date_checked, disp_start_date, disp_end_date
+                ):
   #
   # take an imput ppr_df, and limit it by competition level and date
   if comp_l1_checked:
@@ -664,7 +696,7 @@ def ppr_df_limit( m_ppr_df,
     m_ppr_df['game_date'] = m_ppr_df['game_date'].dt.date
     m_ppr_df = m_ppr_df.loc[(m_ppr_df['game_date'] >= disp_start_date) & (m_ppr_df['game_date'] <= disp_end_date) ]
     #print(f"Limitiing by Dates:{disp_start_date},{disp_end_date}")
-    
+
   return m_ppr_df
 
 
@@ -687,11 +719,11 @@ def calc_trans( ppr_df, disp_player, flag ):
   # filter for serve or receive, or all
   # first, make sue we have point relating to this player
   ppr_df = ppr_df[(( ppr_df['player_a1'].str.strip() == disp_player.strip() ) |
-                  ( ppr_df['player_a2'].str.strip() == disp_player.strip() ) |
+                   ( ppr_df['player_a2'].str.strip() == disp_player.strip() ) |
                    ( ppr_df['player_b1'].str.strip() == disp_player.strip() ) |
-                  ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) &
-                  (( ppr_df['point_outcome'] == 'TK') | 
-                  ( ppr_df['point_outcome'] == 'TE' ))
+                   ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) &
+    (( ppr_df['point_outcome'] == 'TK') | 
+     ( ppr_df['point_outcome'] == 'TE' ))
     ]
   total_trans = ppr_df.shape[0]
   #print(f"All Point Ooutcome Teams:{ppr_df['point_outcome_team']}")
@@ -1226,6 +1258,7 @@ def point_totals(ppr_df, disp_player):
 @anvil.server.callable
 def unpack_league( league_string):
   # unpack 'FIVB | M | 2024' into 'FIVB' "M" '2024'
+  _require_login()
   # unpack the league data
   str_loc = league_string.index('|')
   disp_league = league_string[:str_loc-1].strip()
@@ -1272,6 +1305,7 @@ def get_player_data( disp_league, disp_gender, disp_year):
 @anvil.server.callable
 def get_team_num(disp_player):
   # when we want just "FSU 12" when given 'FSU 12 Alexis'
+  _require_login()
 
   # break disp_player down into its components
   first_space = disp_player.find(' ')
@@ -1295,6 +1329,7 @@ def count_out_of_system(ppr_df,disp_player,action):
   #  2 = number of attempts
   #
   #  action = 'pass', 'att', 'srv'
+  _require_login()
 
   oos_vector = [0,0,0]
   if action == 'att':
@@ -1933,6 +1968,7 @@ def calc_point_diff( ppr_df, disp_player):
 
 @anvil.server.callable
 def calc_consistency_match_table( m_ppr_df, disp_player ):
+  _require_login()
   # calculate hte consistency table for the during match parameters
   # create the output dataframe - This is speficif to the report
   df_dict = {' ':['All','1a','1b','2a','2b','3a','3b','Mean','St Dev','Percentile'],
@@ -2085,6 +2121,7 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
 
 @anvil.server.callable
 def calc_consistency_s2s_table( m_ppr_df, disp_player ):
+  _require_login()
   # now move on to consistency by set
   '''
     - Create a list of video'id's for this player
@@ -2212,6 +2249,7 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
 # Server-side code
 @anvil.server.callable
 def get_form_url(form_name, params):
+  _require_login()
   # Server-side alternative (if needed)
   print(f" get form url, form name {form_name}")
   target_url  = anvil.get_url(form_name, query=params)
@@ -3099,6 +3137,7 @@ def test_gemini_api():
   """
     Test function to verify Gemini API connectivity.
     """
+  _require_internals()
   test_data = {
     "dataframes": {
       "df_1": [
@@ -3243,6 +3282,7 @@ def generate_ai_pdf_summary(report_id, summary, ai_form='player_ai_summary'):
 @anvil.server.callable
 def test_ai_images_flag():
   """Test the rpt_mgr.send_ai_images flag with real report data."""
+  _require_internals()
 
   try:
     log_info("=== Starting AI Images Flag Test ===")
@@ -3406,6 +3446,7 @@ def generate_player_uuid():
     Format: PLYR-xxxxxxxx (8 random hex characters)
     Called from client when adding a new player to master_player.
     """
+  _require_login()
   short_id = uuid.uuid4().hex[:8]  # 8 random hex chars
   return f"PLYR-{short_id}"
 
@@ -3416,6 +3457,7 @@ def backfill_player_uuids():
     Safe to run multiple times — only touches rows where player_uuid is blank/None.
     Returns a count of rows updated.
     """
+  _require_internals()
   import uuid
   updated = 0
   skipped = 0
@@ -3446,6 +3488,7 @@ def test_deidentification(league, gender, year):
         result = anvil.server.call('test_deidentification', 'NCAA', 'W', '2025')
         alert(result)
     """
+  _require_internals()
   lines = []
   lines.append(f"=== De-identification Test: {league} | {gender} | {year} ===\n")
 

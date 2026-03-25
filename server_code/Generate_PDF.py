@@ -21,6 +21,36 @@ from scouting_reports import *
 from player_reports import *
 from logger_utils import log_info, log_error, log_critical, log_debug
 
+# ============================================================================
+#
+#  AUTH HELPERS
+#  _require_login()    — any logged-in user
+#  _require_own_team() — logged-in AND requesting own team's data (INTERNALS exempt)
+#
+# ============================================================================
+
+def _require_login():
+  """Verify the caller is logged in. Returns user row or raises Exception."""
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  return user
+
+def _require_own_team(team):
+  """
+  Verify the caller is logged in AND is either on the INTERNALS team
+  (can access any team) or requesting their own team's data only.
+  Returns the user row or raises Exception.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS' and team != user['team']:
+    raise Exception("Access denied: you can only access your own team's data.")
+  return user
+
+
+
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -35,7 +65,7 @@ def generate_pdf_report(rpt_form, report_id):
     Returns:
         dict: {'pdf': BlobMedia, 'json_file_name': str or None, 'error': str or None}
     """
-
+  _require_login()
 
   # Get report data row
   rpt_data_row = app_tables.report_data.get(report_id=report_id)
@@ -211,7 +241,7 @@ def strip_urls_safe(obj, path="root"):
 
   else:
     return obj
-    
+
 # -----------------------------------------------------------------------------
 # Generate JSON from report_data_row
 # -----------------------------------------------------------------------------
@@ -388,12 +418,12 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     if not include_nulls:
       log_debug("Stripping nulls from report_data")
       report_data = strip_nulls_safe(report_data)
-      
+
     # Optionally strip URLs
     if not include_urls:
       log_debug("Stripping URLs from report_data")
       report_data = strip_urls_safe(report_data)
-      
+
     # Convert to JSON media
     json_str = json.dumps(report_data, indent=2, default=str)
     json_bytes = json_str.encode('utf-8')
@@ -404,7 +434,6 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
   except Exception as e:
     log_critical(f"CRITICAL ERROR in generate_json_report: {e}")
     return (None, str(e))  # ERROR: return None and error message
-    
 
 
 
@@ -413,7 +442,8 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
 
 
 
-  
+
+
 
 
 
@@ -463,11 +493,13 @@ def parse_markdown_table(markdown_text):
 
 @anvil.server.callable
 def create_pdf(email, text1):
+  _require_login()
   pdf = PDFRenderer.render_form('Homepage.PDF_Rpt', email, text1)
   return pdf
 
 @anvil.server.callable
 def send_pdf_email(email, email_message, pdf ):
+  _require_login()
   pdf = create_pdf(email, text1 )
   anvil.email.send(
     from_address='no-reply',
@@ -487,24 +519,25 @@ def send_pdf_email(email, email_message, pdf ):
 #----------------------------------------------------------------------
 @anvil.server.callable
 def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year, 
-                    disp_team, disp_pair, disp_player,
-                    comp_l1_checked, disp_comp_l1,
-                    comp_l2_checked, disp_comp_l2,
-                    comp_l3_checked, disp_comp_l3,
-                    date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text
-                    ):
+                       disp_team, disp_pair, disp_player,
+                       comp_l1_checked, disp_comp_l1,
+                       comp_l2_checked, disp_comp_l2,
+                       comp_l3_checked, disp_comp_l3,
+                       date_checked, disp_start_date, disp_end_date,
+                       scout, explain_text
+                      ):
+  _require_own_team(disp_team)
 
   # call report function
   #print(f'Calling Function:{fnct_name}')
   table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
-                    disp_team, disp_pair, disp_player,
-                    comp_l1_checked, disp_comp_l1,
-                    comp_l2_checked, disp_comp_l2,
-                    comp_l3_checked, disp_comp_l3,
-                    date_checked, disp_start_date, disp_end_date,
-                    scout, explain_text
-                    )
+                                                                                                                             disp_team, disp_pair, disp_player,
+                                                                                                                             comp_l1_checked, disp_comp_l1,
+                                                                                                                             comp_l2_checked, disp_comp_l2,
+                                                                                                                             comp_l3_checked, disp_comp_l3,
+                                                                                                                             date_checked, disp_start_date, disp_end_date,
+                                                                                                                             scout, explain_text
+                                                                                                                            )
 
   # calculate the query text
   filter_text = f"""
@@ -566,6 +599,7 @@ def create_scouting_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, d
                     scout, explain_text, title_text,
                     srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                     ):
+  _require_own_team(disp_team)
 
   # call report function
   #print(f'Calling Function:{fnct_name}')
@@ -659,6 +693,7 @@ def render_3court_plot_to_pdf(fnct_name, rpt_form, disp_league, disp_gender, dis
                     scout, explain_text, title_text,
                     srv_fr, srv_to_1,srv_to_2,srv_to_3,srv_to_4,srv_to_5 
                     ):
+  _require_own_team(disp_team)
 
   # call report function
   #print(f'Calling Function:{fnct_name}')
@@ -728,6 +763,7 @@ def render_3court_plot_to_pdf(fnct_name, rpt_form, disp_league, disp_gender, dis
   
 @anvil.server.callable
 def send_email(email_subj, email_body, email_attachment, email_to, email_from):
+  _require_login()
   if not email_to:
     email_to = anvil.users.get_user()['email']
 
@@ -755,6 +791,7 @@ def render_all_rpts_pdf_callable(
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text, player_pair, user_email
                     ):
+  _require_own_team(disp_team)
   # just kick off the background task to do this
   return_value = anvil.server.launch_background_task('render_all_rpts_pdf_background',
                     disp_league, disp_gender, disp_year, 
@@ -983,6 +1020,7 @@ def create_player_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, dis
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                     ):
+  _require_own_team(disp_team)
 
   # call report function
   #print(f'Calling Function:{fnct_name}')
@@ -1047,6 +1085,7 @@ def create_dashboard_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, 
                     date_checked, disp_start_date, disp_end_date,
                     scout, explain_text
                     ):
+  _require_own_team(disp_team)
 
   # call report function
   #print(f'Calling Function:{fnct_name}')
@@ -1109,7 +1148,7 @@ def create_matchup_pdf_reports(
       disp_pair_b, 
       disp_team 
 ):
-
+  _require_own_team(disp_team)
 
   # call report function
   #print(f'Calling Function:{fnct_name}')
