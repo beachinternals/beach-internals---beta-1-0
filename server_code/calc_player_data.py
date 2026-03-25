@@ -28,6 +28,28 @@ MONITORING_LEVEL_VERBOSE
 # import error logging funcitons
 from logger_utils import log_info, log_error, log_critical, log_debug
 
+# ============================================================================
+#
+#  AUTH HELPER
+#  All callables in this file are INTERNALS only — they trigger
+#  league-wide data recalculations.
+#
+# ============================================================================
+
+def _require_internals():
+  """
+  Verify the caller is logged in AND is on the INTERNALS team.
+  Raises Exception if not authorized. Returns user row.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS':
+    raise Exception("Access denied: this function is for admins only.")
+  return user
+
+
+
 from server_functions import *
 from datetime import datetime, timedelta, date
 from plot_functions import *
@@ -38,6 +60,7 @@ from plot_functions import *
 
 @anvil.server.callable
 def calc_all_player_data():
+  _require_internals()
   # caluclate the plaeyr data for ALL leagues
   # so seach th eleague data base, then loop thru them
 
@@ -50,6 +73,7 @@ def calc_all_player_data():
 # begin with the server callable task, this then provides status and calls the background task
 @anvil.server.callable
 def calc_player_data_background( c_league, c_gender, c_year):
+  _require_internals()
   # 
   # calculate the player data files for all teams in the league, gender, year given
   #
@@ -173,14 +197,14 @@ def calculate_player_data_not_background(c_league, c_gender, c_year):
                  'cons_fbhe_sd_s2s':None,'cons_tcr_sd_s2s':None,'cons_ed_sd_s2s':None,'cons_ko_sd_s2s':None,'cons_pass_sd_s2s':None,'cons_pts_sd_s2s':None ,
                  'knockout':None, 'goodpass':None,
                  'eso':None,'t_eff':None,'t_eff_r':None,'t_eff_s':None,'point_per':None , 't_create':None, 't_create_s':None, 't_create_r':None
-                 }
+                }
   #print(f"Player Dict:{player_dict}")
   player_df = pd.DataFrame.from_records(player_dict)
   #player_df = pd.DataFrame(player_dict, columns=['player', 'fbhe', 'fbhe1','fbhe2','fbhe3','fbhe4','fbhe5'])
-  
+
   for i in  range(1,num_players):
     player_df.loc[max(player_df.index)+1] = player_dict
-  
+
   # create the player_data_stats dataframe
   player_stats_dict = {'fbhe_mean':[float()],'fbhe_stdev':[float()], 'fbhe_range_mean':[float()],'fbhe_range_stdev':[float()],
                        'fbhe1_mean':[float()],'fbhe2_mean':[float()],'fbhe3_mean':[float()],'fbhe4_mean':[float()],'fbhe5_mean':[float()],

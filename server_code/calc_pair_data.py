@@ -19,17 +19,39 @@ from datetime import datetime, timedelta, date
 # PERFORMANCE MONITORING IMPORTS
 # ============================================================================
 from server_functions import (
-  monitor_performance,
-  MONITORING_LEVEL_OFF,
-  MONITORING_LEVEL_CRITICAL,
-  MONITORING_LEVEL_IMPORTANT,
-  MONITORING_LEVEL_DETAILED,
-  MONITORING_LEVEL_VERBOSE
+monitor_performance,
+MONITORING_LEVEL_OFF,
+MONITORING_LEVEL_CRITICAL,
+MONITORING_LEVEL_IMPORTANT,
+MONITORING_LEVEL_DETAILED,
+MONITORING_LEVEL_VERBOSE
 )
 from server_functions import *
 
 # import error logging funcitons
 from logger_utils import log_info, log_error, log_critical, log_debug
+
+# ============================================================================
+#
+#  AUTH HELPER
+#  All callables in this file are INTERNALS only — they trigger
+#  league-wide data recalculations.
+#
+# ============================================================================
+
+def _require_internals():
+  """
+  Verify the caller is logged in AND is on the INTERNALS team.
+  Raises Exception if not authorized. Returns user row.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS':
+    raise Exception("Access denied: this function is for admins only.")
+  return user
+
+
 
 # Import other modules
 from pair_functions import *
@@ -42,18 +64,20 @@ from plot_functions import *
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
 def calc_all_pair_data():
+  _require_internals()
   # caluclate the plaeyr data for ALL leagues
   # so seach th eleague data base, then loop thru them
 
   # for each row:
   for l_row in app_tables.ppr_csv_tables.search(team='League'):
     task = calc_pair_data_background(l_row['league'],l_row['gender'],l_row['year'])
-        
+
   return task
 
 # begin with the server callable task, this then provides status and calls the background task
 @anvil.server.callable
 def calc_pair_data_background( c_league, c_gender, c_year):
+  _require_internals()
   # 
   # calculate the player data files for all teams in the league, gender, year given
   #
@@ -63,7 +87,7 @@ def calc_pair_data_background( c_league, c_gender, c_year):
 
   # check return status
   #print(f' Background Task, Task id:{task.get_id()} return Status:{task.get_termination_status()}')
-  
+
   return task
 
 #----------------------------
@@ -76,7 +100,7 @@ def calculate_pair_data( c_league, c_gender, c_year):
   return calculate_pair_data_not_background(c_league, c_gender, c_year)
 
 def calculate_pair_data_not_background(c_league, c_gender, c_year):
-  
+
   result_string = "Calculate Pair Data server module Called for "+c_league+c_gender+c_year
 
   c_team = "League"    # only updating the league tables
@@ -87,7 +111,7 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
       gender = c_gender,
       year = c_year,
       team = c_team
-      ) )
+    ) )
 
   if ppr_csv_row:
     ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
@@ -104,39 +128,39 @@ def calculate_pair_data_not_background(c_league, c_gender, c_year):
   #if c_league == "NCAA" and c_gender == 'W' and c_year == 2025 :
   #  print(f" Limitng {c_league}, {c_gender}, {c_year} to Regular Season")
   #  ppr_df = ppr_df[ ppr_df['comp_l1'] == 'Regular Season' ]
-  
+
   # build the ppr_dataframe out tpo the proper number of rows, equal total points,
   # His should make a blank (except for flist_r values) ppr dataframe with the correct number of rows (maybe one extra due to a 0 start)
 
   pair_dict = {'pair':[str()],'player':[str()], 'team':[str()],
-                 'fbhe':None,'fbhe1':None,'fbhe2':None,'fbhe3':None,'fbhe4':None,'fbhe5':None,'fbhe_range':None,
-                 'fbhe_n':None,'fbhe1_n':None,'fbhe2_n':None,'fbhe3_n':None,'fbhe4_n':None,'fbhe5_n':None,
-                 'fbhe_behind':None,'fbhe_behind_per':None,'fbhe_behind_n':None,
-                 'fbhe_option':None, 'fbhe_option_per':None,'fbhe_option_n':None,
-                 'fbhe_tempo':None,'fbhe_tempo_per':None,'fbhe_tempo_n':None,
-                 'fbhe_poke':None,'fbhe_poke_per':None,'fbhe_poke_n':None,
-                 'fbhe_shoot':None,'fbhe_shoot_per':None,'fbhe_shoot_n':None,
-                 'fbhe_bang':None,'fbhe_bang_per':None,'fbhe_bang_n':None,
-                 'fbhe_oos':None,'fbhe_oos_n':None,'fbhe_oos_per':None,
-                 'fbhe_insys':None,'fbhe_insys_n':None,'fbhe_insys_per':None,
-                 'fbhe_srv1':None,'fbhe_srv3':None,'fbhe_srv5':None,
-                 'fbhe_srv1_n':None,'fbhe_srv3_n':None,'fbhe_srv5_n':None,
-                 'err_den':None,'tcr':None,'tcr_r':None,'tcr_s':None,'expected':None,
-                 'srv_n':None,'srv_fbhe':None,'srv_ace_per':None,'srv_err_per':None,
-                 'srv1_n':None,'srv1_fbhe':None,'srv1_ace_per':None,'srv1_err_per':None,
-                 'srv3_n':None,'srv3_fbhe':None,'srv3_ace_per':None,'srv3_err_per':None,
-                 'srv5_n':None,'srv5_fbhe':None,'srv5_ace_per':None,'srv5_err_per':None ,     
-                 'fbhe_1_1c':None,'fbhe_1_1c_n':None,'fbhe_1_1c_ea':None,'fbhe_1_1d':None,'fbhe_1_1d_n':None,'fbhe_1_1d_ea':None,'fbhe_1_1e':None,'fbhe_1_1e_n':None,'fbhe_1_1e_ea':None,
-                 'fbhe_1_2c':None,'fbhe_1_2c_n':None,'fbhe_1_2c_ea':None,'fbhe_1_2d':None,'fbhe_1_2d_n':None,'fbhe_1_2d_ea':None,'fbhe_1_2e':None,'fbhe_1_2e_n':None,'fbhe_1_2e_ea':None,
-                 'fbhe_1_3c':None,'fbhe_1_3c_n':None,'fbhe_1_3c_ea':None,'fbhe_1_3d':None,'fbhe_1_3d_n':None,'fbhe_1_3d_ea':None,'fbhe_1_3e':None,'fbhe_1_3e_n':None,'fbhe_1_3e_ea':None,
-                 'fbhe_1_4c':None,'fbhe_1_4c_n':None,'fbhe_1_4c_ea':None,'fbhe_1_4d':None,'fbhe_1_4d_n':None,'fbhe_1_4d_ea':None,'fbhe_1_4e':None,'fbhe_1_4e_n':None,'fbhe_1_4e_ea':None,
-                 'fbhe_1_5c':None,'fbhe_1_5c_n':None,'fbhe_1_5c_ea':None,'fbhe_1_5d':None,'fbhe_1_5d_n':None,'fbhe_1_5d_ea':None,'fbhe_1_5e':None,'fbhe_1_5e_n':None,'fbhe_1_5e_ea':None,
-                 'fbhe_3_1c':None,'fbhe_3_1c_n':None,'fbhe_3_1c_ea':None,'fbhe_3_1d':None,'fbhe_3_1d_n':None,'fbhe_3_1d_ea':None,'fbhe_3_1e':None,'fbhe_3_1e_n':None,'fbhe_3_1e_ea':None,
-                 'fbhe_3_2c':None,'fbhe_3_2c_n':None,'fbhe_3_2c_ea':None,'fbhe_3_2d':None,'fbhe_3_2d_n':None,'fbhe_3_2d_ea':None,'fbhe_3_2e':None,'fbhe_3_2e_n':None,'fbhe_3_2e_ea':None,
-                 'fbhe_3_3c':None,'fbhe_3_3c_n':None,'fbhe_3_3c_ea':None,'fbhe_3_3d':None,'fbhe_3_3d_n':None,'fbhe_3_3d_ea':None,'fbhe_3_3e':None,'fbhe_3_3e_n':None,'fbhe_3_3e_ea':None,
-                 'fbhe_3_4c':None,'fbhe_3_4c_n':None,'fbhe_3_4c_ea':None,'fbhe_3_4d':None,'fbhe_3_4d_n':None,'fbhe_3_4d_ea':None,'fbhe_3_4e':None,'fbhe_3_4e_n':None,'fbhe_3_4e_ea':None,
-                 'fbhe_3_5c':None,'fbhe_3_5c_n':None,'fbhe_3_5c_ea':None,'fbhe_3_5d':None,'fbhe_3_5d_n':None,'fbhe_3_5d_ea':None,'fbhe_3_5e':None,'fbhe_3_5e_n':None,'fbhe_3_5e_ea':None,
-                 'fbhe_5_1c':None,'fbhe_5_1c_n':None,'fbhe_5_1c_ea':None,'fbhe_5_1d':None,'fbhe_5_1d_n':None,'fbhe_5_1d_ea':None,'fbhe_5_1e':None,'fbhe_5_1e_n':None,'fbhe_5_1e_ea':None,
+               'fbhe':None,'fbhe1':None,'fbhe2':None,'fbhe3':None,'fbhe4':None,'fbhe5':None,'fbhe_range':None,
+               'fbhe_n':None,'fbhe1_n':None,'fbhe2_n':None,'fbhe3_n':None,'fbhe4_n':None,'fbhe5_n':None,
+               'fbhe_behind':None,'fbhe_behind_per':None,'fbhe_behind_n':None,
+               'fbhe_option':None, 'fbhe_option_per':None,'fbhe_option_n':None,
+               'fbhe_tempo':None,'fbhe_tempo_per':None,'fbhe_tempo_n':None,
+               'fbhe_poke':None,'fbhe_poke_per':None,'fbhe_poke_n':None,
+               'fbhe_shoot':None,'fbhe_shoot_per':None,'fbhe_shoot_n':None,
+               'fbhe_bang':None,'fbhe_bang_per':None,'fbhe_bang_n':None,
+               'fbhe_oos':None,'fbhe_oos_n':None,'fbhe_oos_per':None,
+               'fbhe_insys':None,'fbhe_insys_n':None,'fbhe_insys_per':None,
+               'fbhe_srv1':None,'fbhe_srv3':None,'fbhe_srv5':None,
+               'fbhe_srv1_n':None,'fbhe_srv3_n':None,'fbhe_srv5_n':None,
+               'err_den':None,'tcr':None,'tcr_r':None,'tcr_s':None,'expected':None,
+               'srv_n':None,'srv_fbhe':None,'srv_ace_per':None,'srv_err_per':None,
+               'srv1_n':None,'srv1_fbhe':None,'srv1_ace_per':None,'srv1_err_per':None,
+               'srv3_n':None,'srv3_fbhe':None,'srv3_ace_per':None,'srv3_err_per':None,
+               'srv5_n':None,'srv5_fbhe':None,'srv5_ace_per':None,'srv5_err_per':None ,     
+               'fbhe_1_1c':None,'fbhe_1_1c_n':None,'fbhe_1_1c_ea':None,'fbhe_1_1d':None,'fbhe_1_1d_n':None,'fbhe_1_1d_ea':None,'fbhe_1_1e':None,'fbhe_1_1e_n':None,'fbhe_1_1e_ea':None,
+               'fbhe_1_2c':None,'fbhe_1_2c_n':None,'fbhe_1_2c_ea':None,'fbhe_1_2d':None,'fbhe_1_2d_n':None,'fbhe_1_2d_ea':None,'fbhe_1_2e':None,'fbhe_1_2e_n':None,'fbhe_1_2e_ea':None,
+               'fbhe_1_3c':None,'fbhe_1_3c_n':None,'fbhe_1_3c_ea':None,'fbhe_1_3d':None,'fbhe_1_3d_n':None,'fbhe_1_3d_ea':None,'fbhe_1_3e':None,'fbhe_1_3e_n':None,'fbhe_1_3e_ea':None,
+               'fbhe_1_4c':None,'fbhe_1_4c_n':None,'fbhe_1_4c_ea':None,'fbhe_1_4d':None,'fbhe_1_4d_n':None,'fbhe_1_4d_ea':None,'fbhe_1_4e':None,'fbhe_1_4e_n':None,'fbhe_1_4e_ea':None,
+               'fbhe_1_5c':None,'fbhe_1_5c_n':None,'fbhe_1_5c_ea':None,'fbhe_1_5d':None,'fbhe_1_5d_n':None,'fbhe_1_5d_ea':None,'fbhe_1_5e':None,'fbhe_1_5e_n':None,'fbhe_1_5e_ea':None,
+               'fbhe_3_1c':None,'fbhe_3_1c_n':None,'fbhe_3_1c_ea':None,'fbhe_3_1d':None,'fbhe_3_1d_n':None,'fbhe_3_1d_ea':None,'fbhe_3_1e':None,'fbhe_3_1e_n':None,'fbhe_3_1e_ea':None,
+               'fbhe_3_2c':None,'fbhe_3_2c_n':None,'fbhe_3_2c_ea':None,'fbhe_3_2d':None,'fbhe_3_2d_n':None,'fbhe_3_2d_ea':None,'fbhe_3_2e':None,'fbhe_3_2e_n':None,'fbhe_3_2e_ea':None,
+               'fbhe_3_3c':None,'fbhe_3_3c_n':None,'fbhe_3_3c_ea':None,'fbhe_3_3d':None,'fbhe_3_3d_n':None,'fbhe_3_3d_ea':None,'fbhe_3_3e':None,'fbhe_3_3e_n':None,'fbhe_3_3e_ea':None,
+               'fbhe_3_4c':None,'fbhe_3_4c_n':None,'fbhe_3_4c_ea':None,'fbhe_3_4d':None,'fbhe_3_4d_n':None,'fbhe_3_4d_ea':None,'fbhe_3_4e':None,'fbhe_3_4e_n':None,'fbhe_3_4e_ea':None,
+               'fbhe_3_5c':None,'fbhe_3_5c_n':None,'fbhe_3_5c_ea':None,'fbhe_3_5d':None,'fbhe_3_5d_n':None,'fbhe_3_5d_ea':None,'fbhe_3_5e':None,'fbhe_3_5e_n':None,'fbhe_3_5e_ea':None,
+               'fbhe_5_1c':None,'fbhe_5_1c_n':None,'fbhe_5_1c_ea':None,'fbhe_5_1d':None,'fbhe_5_1d_n':None,'fbhe_5_1d_ea':None,'fbhe_5_1e':None,'fbhe_5_1e_n':None,'fbhe_5_1e_ea':None,
                  'fbhe_5_2c':None,'fbhe_5_2c_n':None,'fbhe_5_2c_ea':None,'fbhe_5_2d':None,'fbhe_5_2d_n':None,'fbhe_5_2d_ea':None,'fbhe_5_2e':None,'fbhe_5_2e_n':None,'fbhe_5_2e_ea':None,
                  'fbhe_5_3c':None,'fbhe_5_3c_n':None,'fbhe_5_3c_ea':None,'fbhe_5_3d':None,'fbhe_5_3d_n':None,'fbhe_5_3d_ea':None,'fbhe_5_3e':None,'fbhe_5_3e_n':None,'fbhe_5_3e_ea':None,
                  'fbhe_5_4c':None,'fbhe_5_4c_n':None,'fbhe_5_4c_ea':None,'fbhe_5_4d':None,'fbhe_5_4d_n':None,'fbhe_5_4d_ea':None,'fbhe_5_4e':None,'fbhe_5_4e_n':None,'fbhe_5_4e_ea':None,

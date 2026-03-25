@@ -53,6 +53,41 @@ from generate_set_level_metrics import (
 generate_set_level_metrics_for_player
 )
 
+# ============================================================================
+#
+#  AUTH HELPERS
+#  _require_internals()    — INTERNALS team only (batch/admin operations)
+#  _require_own_team(team) — logged-in AND requesting own team's data
+#
+# ============================================================================
+
+def _require_internals():
+  """
+  Verify the caller is logged in AND is on the INTERNALS team.
+  Raises Exception if not authorized. Returns user row.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS':
+    raise Exception("Access denied: this function is for admins only.")
+  return user
+
+def _require_own_team(team):
+  """
+  Verify the caller is logged in AND is either on the INTERNALS team
+  (can access any team) or requesting their own team's data only.
+  Returns the user row or raises Exception.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS' and team != user['team']:
+    raise Exception("Access denied: you can only access your own team's data.")
+  return user
+
+
+
 # This is a server module for generating NotebookLM-ready markdown files
 # with player performance data in JSON format
 # Uses ai_export_mgr table for control (similar to rpt_mgr table for reports)
@@ -149,6 +184,7 @@ def ai_export_mgr_generate():
     Returns:
         True when complete
     """
+  _require_internals()
   log_info("AI Export Manager - Generate Called")
   print("Starting AI Export Manager...")
   now = datetime.now()
@@ -464,6 +500,7 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
     Returns:
         Dictionary with status and list of generated files
     """
+  _require_own_team(team)
 
   try:
     log_info(f"Starting AI export for {team} in {league}")
@@ -481,7 +518,7 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
 
     players = player_filter  # That's it!
     log_info(f"Generating exports for {len(players)} players: {players}")
-  
+
 
     # Verify we have player data
     if not player_data_map:
@@ -689,6 +726,7 @@ def ai_export_add_request(team, player_filter=None, date_start=None, date_end=No
     Returns:
         The created row
     """
+  _require_own_team(team)
   try:
     # Derive league from player_filter if provided
     league = None

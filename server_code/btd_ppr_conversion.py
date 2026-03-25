@@ -17,16 +17,38 @@ from datetime import datetime, timedelta, date
 # PERFORMANCE MONITORING IMPORTS
 # ============================================================================
 from server_functions import (
-  monitor_performance,
-  MONITORING_LEVEL_OFF,
-  MONITORING_LEVEL_CRITICAL,
-  MONITORING_LEVEL_IMPORTANT,
-  MONITORING_LEVEL_DETAILED,
-  MONITORING_LEVEL_VERBOSE
+monitor_performance,
+MONITORING_LEVEL_OFF,
+MONITORING_LEVEL_CRITICAL,
+MONITORING_LEVEL_IMPORTANT,
+MONITORING_LEVEL_DETAILED,
+MONITORING_LEVEL_VERBOSE
 )
 
 # import error logging funcitons
 from logger_utils import log_info, log_error, log_critical, log_debug
+
+# ============================================================================
+#
+#  AUTH HELPER
+#  All callables in this file are admin/INTERNALS only — they trigger
+#  data pipeline rebuilds that touch all league data.
+#
+# ============================================================================
+
+def _require_internals():
+  """
+  Verify the caller is logged in AND is on the INTERNALS team.
+  Raises Exception if not authorized. Returns user row.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS':
+    raise Exception("Access denied: this function is for admins only.")
+  return user
+
+
 
 # Import other modules
 # Add with other imports at top
@@ -37,6 +59,7 @@ from weather_integration import get_or_create_weather
 
 @anvil.server.callable
 def make_all_ppr_files():
+  _require_internals()
   # make a quick loop to make all the ppr files
 
   leagues = [
@@ -49,18 +72,19 @@ def make_all_ppr_files():
 
   for i in leagues:
     task = anvil.server.call('make_ppr_files', leagues.at[i,'league'], r['gender'],r['year'],)
-  
+
 
   return task
-  
+
 
 # rather than in the user's browser.
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def make_ppr_files( u_league, u_gender, u_year, u_team, rebuild):
+  _require_internals()
   # call the background task
   task = anvil.server.launch_background_task('generate_ppr_files',u_league, u_gender, u_year, u_team, rebuild)
-  
+
   return task
 
 # ############# server function to loop thru btd_file database and create and store the corresponding ppr file
@@ -71,6 +95,7 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild 
 
 @anvil.server.callable
 def generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild  ): 
+  _require_internals()
   # select rows from the btd_files database and limit it to league, gender, and year and team
   # this routine calculates ppr files for all btd files for this l,g,y,t
   btd_row = app_tables.btd_files.search(
@@ -83,11 +108,11 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
   print(f"generate_ppr_files_not_background: {user_league}, {user_gender}, {user_year},{user_team},{rebuild}")
   return_string = 'generate_ppr_files_not_background: '+user_league+', '+user_gender+',  '+ user_year+', '+user_team+', '+str(rebuild)
   new_data = False # flag to indicate that new data was found to help night processing do the rest of the tasts
-  
+
   for flist_r in btd_row:
     #print(f"In loop over rows, number of points in btd row: {flist_r['points']}")
     calc_ppr = False
-    
+
     if rebuild:
       # call the function to return the ppr file given the btd file
       ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
@@ -106,29 +131,29 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
     if calc_ppr:
       # clean up the ppr_df databale, just in case.
       ppr_df = ppr_df.replace({float('nan'): None})
-    
+
       # We now have a complete ppr datafile.  THree more steps:
       # 1) Transpose some points (so we always serve from close, first ball attack from the far court) Transpose first, makes zone's much easier
       ppr_df = transpose_ppr_coord(ppr_df)
-    
+
       # 2) Cacluate the data (speed, distance, etc...)
       ppr_df = calc_ppr_data(ppr_df)
 
       # 3) Calculate offensive tactic
       ppr_df = calc_tactic(ppr_df)
-      
+
       # Add weather to PPR (fetches weather once for entire match)
       ppr_df = add_weather_to_ppr(ppr_df, flist_r)
-      
+
       # 4) Error check the ppr file for consistency, maybe raise errors into an email/text message??
       ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
       #print(f"Error String: {error_string}")
-    
+
       # 5) Lastly, save the ppr csv file back into the btd_files database
       # first, I need to cahnge the ppr_file dataframe to a csv file.
       ppr_csv_file = pd.DataFrame.to_csv(ppr_df)
       ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
-      
+
       # Extract weather_id from ppr_df (all rows have same weather)
       weather_id = ppr_df['weather_id'].iloc[0] if 'weather_id' in ppr_df.columns else None
 
@@ -145,7 +170,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
     else:
       True
       #print(f"Not processing file:{flist_r['filename']}")
-      
+
   return return_string, new_data
 
 # ############ server function to convert a btd file to a ppr file
@@ -1159,6 +1184,4 @@ def calc_attack_angles( att_x, att_y, att_angle ):
       'angular_zone':'',
       'err_msg':'a passed parameter is None '
     }
-
-
   
