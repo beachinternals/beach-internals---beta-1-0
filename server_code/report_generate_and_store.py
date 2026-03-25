@@ -28,12 +28,12 @@ from typing import Tuple, List, Dict, Any
 # PERFORMANCE MONITORING IMPORTS
 # ============================================================================
 from server_functions import (
-  monitor_performance,
-  MONITORING_LEVEL_OFF,
-  MONITORING_LEVEL_CRITICAL,
-  MONITORING_LEVEL_IMPORTANT,
-  MONITORING_LEVEL_DETAILED,
-  MONITORING_LEVEL_VERBOSE
+monitor_performance,
+MONITORING_LEVEL_OFF,
+MONITORING_LEVEL_CRITICAL,
+MONITORING_LEVEL_IMPORTANT,
+MONITORING_LEVEL_DETAILED,
+MONITORING_LEVEL_VERBOSE
 )
 
 # import error logging funcitons
@@ -49,8 +49,49 @@ from reports_scouting import *
 from confidence_intervals import *
 
 
+# ============================================================================
+#
+#  AUTH HELPERS
+#  Call _require_login() for any logged-in user.
+#  Call _require_own_team(team) for team-scoped functions.
+#
+# ============================================================================
 
-# Cache for valid function names
+def _require_login():
+  """
+  Verify the caller is logged in.
+  Returns the user row. Raises Exception if not logged in.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  return user
+
+
+def _require_own_team(team):
+  """
+  Verify the caller is logged in AND is either:
+    - on the INTERNALS team (can access any team's data), or
+    - requesting data for their own team only.
+
+  Returns the user row. Raises Exception if not authorized.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  user_team = user['team']
+  if user_team != 'INTERNALS' and team != user_team:
+    raise Exception("Access denied: you can only access your own team's data.")
+  return user
+
+
+# ============================================================================
+#
+#  Valid function name cache
+#  Prevents calling arbitrary Python functions via generate_and_store_report.
+#
+# ============================================================================
+
 _valid_functions_cache = None
 
 def get_valid_functions() -> set:
@@ -60,7 +101,7 @@ def get_valid_functions() -> set:
     _valid_functions_cache = {row['function_name'] for row in tables.app_tables.report_list.search()}
   return _valid_functions_cache
 
-  
+
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
 #
 #        Generate and Store Report
@@ -70,20 +111,24 @@ def get_valid_functions() -> set:
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters) -> str:
   """
-    Generate a report using the specified function, store results in report_data table, and return the report ID.
-    
-    Args:
-        fnct_name: Name of the report function to call.
-        lgy: League identifier.
-        team: Team identifier.
-        **rpt_filters: Additional report filters.
-    
-    Returns:
-        report_id: Unique ID of the stored report.
-    
-    Raises:
-        ValueError: If function name is invalid or data processing fails.
-    """
+  Generate a report using the specified function, store results in report_data table,
+  and return the report ID.
+
+  Args:
+      fnct_name: Name of the report function to call (must be in report_list table).
+      lgy: League/gender/year string (e.g. "NCAA | W | 2025").
+      team: Team identifier. Must match the logged-in user's team unless INTERNALS.
+      **rpt_filters: Additional report filters.
+
+  Returns:
+      report_id: Unique ID of the stored report (UUID string).
+
+  Raises:
+      Exception: If not authenticated, not authorized, or function name is invalid.
+  """
+  # --- Auth check ---
+  _require_own_team(team)
+
   # Initialize result lists
   title_list: List[str] = []
   label_list: List[str] = []
@@ -96,6 +141,7 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
   log_info(f"Generating report: fnct_name: {fnct_name}, lgy: {lgy}, team: {team}, filters: {rpt_filters}")
 
   # Validate function name against report_list table
+  # This also prevents calling arbitrary Python functions via this endpoint
   valid_functions = get_valid_functions()
   if fnct_name not in valid_functions:
     log_error(f"Function name '{fnct_name}' not found in report_list table")
@@ -115,14 +161,14 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
         log_error(f"Error executing {fnct_name}: {str(e)}")
         title_list.append(f"Execution Error: {fnct_name}")
 
-    # Close any open matplotlib plots
+  # Close any open matplotlib plots
   try:
     import matplotlib.pyplot as plt
     plt.close('all')
   except ImportError:
-    pass  # Matplotlib may not be used
+    pass
 
-    # Generate unique report ID
+  # Generate unique report ID
   report_id = str(uuid.uuid4())
 
   # Store in report_data table
@@ -136,7 +182,7 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
   for i, title in enumerate(title_list[:10]):
     rpt_data_row[f'title_{i+1}'] = title
 
-    # Store league in title_4
+  # Store league in title_4
   rpt_data_row['title_4'] = lgy
 
   # Store filter text in title_7
@@ -152,12 +198,12 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
   # Store pair in title_10
   rpt_data_row['title_10'] = rpt_filters.get('pair')
 
-    # Store labels (max 10)
+  # Store labels (max 10)
   rpt_data_row['no_label'] = min(len(label_list), 10)
   for i, label in enumerate(label_list[:10]):
     rpt_data_row[f'label_{i+1}'] = label
 
-    # Store images (max 10, only non-string types)
+  # Store images (max 10, only non-string types)
   no_images = 0
   for i, image in enumerate(image_list[:10]):
     if not isinstance(image, str):
@@ -197,69 +243,76 @@ def generate_and_store_report(fnct_name: str, lgy: str, team: str, **rpt_filters
   log_info(f"Stored report with ID: {report_id}")
   return report_id
 
-  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
-  #
-  #        Get Report Data
-  #
-  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+#
+#        Get Report Data
+#
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
 @anvil.server.callable
 def get_report_data(report_id):
+  """
+  Retrieve a stored report by its ID.
+  Any logged-in user can call this — report IDs are UUIDs (hard to guess).
+  """
+  _require_login()
 
   row = app_tables.report_data.get(report_id=report_id)
 
-  title_list = ['','','','','','','','','','']
-  label_list = ['','','','','','','','','','']
-  image_list = ['','','','','','','','','','']
-  df_list = ['','','','','','','','','','']
-  df_desc_list = ['','','','','','','','','','']
-  image_desc_list = ['','','','','','','','','','']
+  title_list = ['', '', '', '', '', '', '', '', '', '']
+  label_list = ['', '', '', '', '', '', '', '', '', '']
+  image_list = ['', '', '', '', '', '', '', '', '', '']
+  df_list = ['', '', '', '', '', '', '', '', '', '']
+  df_desc_list = ['', '', '', '', '', '', '', '', '', '']
+  image_desc_list = ['', '', '', '', '', '', '', '', '', '']
 
   if not row:
     return None
   else:
-    for i in range(0,row['no_title']):
-      title_var = 'title_'+str(i+1)
+    for i in range(0, row['no_title']):
+      title_var = 'title_' + str(i + 1)
       title_list[i] = row[title_var]
 
-    for i in range(0,row['no_label']):
-      label_var = 'label_'+str(i+1)
+    for i in range(0, row['no_label']):
+      label_var = 'label_' + str(i + 1)
       label_list[i] = row[label_var]
 
-    for i in range(0,row['no_image']):
-      image_var = 'image_'+str(i+1)
+    for i in range(0, row['no_image']):
+      image_var = 'image_' + str(i + 1)
       image_list[i] = row[image_var]
 
-    for i in range(0,row['no_df']):
-      df_var = 'df_'+str(i+1)
+    for i in range(0, row['no_df']):
+      df_var = 'df_' + str(i + 1)
       mkdn_file = row[df_var].get_bytes().decode('utf-8')
       df_list[i] = mkdn_file
 
-    for i in range(0,row['no_df_desc']):
-      df_desc_var = 'df_desc_'+str(i+1)
+    for i in range(0, row['no_df_desc']):
+      df_desc_var = 'df_desc_' + str(i + 1)
       df_desc_list[i] = row[df_desc_var]
 
-    for i in range(0,row['no_image_desc']):
-      image_desc_var = 'image_desc_'+str(i+1)
+    for i in range(0, row['no_image_desc']):
+      image_desc_var = 'image_desc_' + str(i + 1)
       image_desc_list[i] = row[image_desc_var]
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
-
-  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
-  #
-  #        Generic Report Stub - Copy this as a starting Point
-  #
-  #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
+#
+#        Generic Report Stub - Copy this as a starting Point
+#
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=---=-=-=-=-=-=-=-=--=-=-=-=-
 def report_test(lgy, team, **rpt_filters):
   """
   Test report function - serves as a stub/template for other report functions.
-  
+  Note: NOT decorated with @anvil.server.callable. Called indirectly via
+  generate_and_store_report, which handles auth.
+
   Args:
     lgy: League+gender+year string
     team: Team identifier
     **rpt_filters: Additional report filters
-    
+
   Returns:
     tuple: (title_list, label_list, image_list, df_list, df_desc_list, image_desc_list)
   """
@@ -267,17 +320,17 @@ def report_test(lgy, team, **rpt_filters):
   title_list, label_list, df_desc_list, image_desc_list = setup_report_basics(lgy, team)
 
   # Initialize the calculated lists
-  image_list = ['','','','','','','','','','']
-  df_list = ['','','','','','','','','','']
+  image_list = ['', '', '', '', '', '', '', '', '', '']
+  df_list = ['', '', '', '', '', '', '', '', '', '']
 
   # Unpack lgy into league, gender, year
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
   # Fetch the ppr dataframe, and/or player stats, and/or tri-data
-  # comment some in our out based on this reports needs.
+  # comment some in or out based on this report's needs.
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
   player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
-  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None ) #date checked, start date, end date
+  #tri_df, tri_df_found = get_tri_data( disp_league, disp_gender, disp_year, False, None, None )
 
   # Filter the ppr dataframe
   ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
@@ -289,7 +342,6 @@ def report_test(lgy, team, **rpt_filters):
 
   # Example: Create a simple DataFrame from filtered data
   if not ppr_df.empty:
-    # Convert first 10 rows to dict format for storage
     sample_data = ppr_df.head(10).to_dict('records')
     df_list[0] = sample_data
 
@@ -305,7 +357,6 @@ def report_test(lgy, team, **rpt_filters):
     df_list[1] = summary_data
 
   # Example: You would generate actual plots/images here
-  # For now, just adding placeholder descriptions
   if not ppr_df.empty:
     _ = None
     # image_list[0] = your_generated_plot_here
@@ -318,12 +369,8 @@ def report_test(lgy, team, **rpt_filters):
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
 
+def make_filter_text(lgy, **rpt_filters):
 
-
-  
-
-def make_filter_text( lgy, **rpt_filters):
-  
   filter_text = f"""
 Data Filters:
 - Date Created : {datetime.today().strftime('%Y-%m-%d')}
@@ -355,7 +402,7 @@ Data Filters:
   if rpt_filters.get("set_touch_type") is not None and rpt_filters.get("set_touch_type") != "":
     filter_text += f"- Set Touch Type = {str(rpt_filters['set_touch_type'])}\n"
   if rpt_filters.get("pass_oos") is not None and rpt_filters.get("pass_oos") != "":
-    filter_text += f"- Pass = {' Out System Only' if rpt_filters['pass_oos'] == 1 else ' In of System Only' }\n"
+    filter_text += f"- Pass = {' Out System Only' if rpt_filters['pass_oos'] == 1 else ' In of System Only'}\n"
   if rpt_filters.get("att_ht_low") is not None and rpt_filters.get("att_ht_low") != "":
     filter_text += f"- Attack Height, Low  = {str(rpt_filters['att_ht_low'])}\n"
   if rpt_filters.get("att_ht_high") is not None and rpt_filters.get("att_ht_high") != "":
@@ -373,5 +420,4 @@ Data Filters:
   if rpt_filters.get("srv_to") is not None and rpt_filters.get("srv_to") != "":
     filter_text += f"- Serve to (Zones) = {str(rpt_filters['srv_to'])}\n"
 
-  #print(f" Filter Text: \n {filter_text}")
   return filter_text

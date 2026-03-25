@@ -37,206 +37,202 @@ from calc_traingle_scoring import *
 from s_w_report import *
 
 
-# functions to update / rebuild all the data files
+# ============================================================================
+#
+#  AUTH HELPER
+#  All callable functions in this file are admin/INTERNALS only.
+#  Call _require_internals() as the first line of every @anvil.server.callable.
+#
+# ============================================================================
 
-#-------------------------------------------------------------------------
-#
-#        Set this up as three to call like a half hour apart
-#
-#.       1) btd > ppr                        : call_build_ppr > build_ppr
-#        2) Merge ppr files                  : call_merge_ppr > merge_ppr
-#        3) Calculate data and tri files     : call_calc_player_data > calc_player_data
-#        4) create reports
-#
-#-------------------------------------------------------------------------
+def _require_internals():
+  """
+  Verify the caller is logged in AND is on the INTERNALS team.
+  Raises a plain Exception (shown to the user) if not authorized.
+  Returns the user row in case the caller needs it.
+  """
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS':
+    raise Exception("Access denied: this function is for admins only.")
+  return user
 
-#--------------------------------------------------------------------------------------
+
+# ============================================================================
 #
-#         Night Processing
+#  Night Processing
 #
-#  A single night processing routine that runs everything in sequence
-#  This limits processor time (as opposed to multiple background jobs)
+#  A single night processing routine that runs everything in sequence.
+#  This limits processor time (as opposed to multiple background jobs).
 #
-#--------------------------------------------------------------------------------------
+#  Order:
+#    1) btd > ppr                      : call_build_ppr > build_ppr
+#    2) Merge ppr files                : call_merge_ppr > merge_ppr
+#    3) Calculate data and tri files   : call_calc_player_data > calc_player_data
+#    4) create reports
+#
+# ============================================================================
+
 @anvil.server.callable
-def night_processing_callable(c_league,c_gender,c_year,rebuild_all, all_leagues):
-  # this one we can call from the browser for testing
-  # allows to call for just one league or all
-  # all_leagues  = True for all leagues
-  # rebuild_all = True to rebuild the ppr files for all btd file
-  return anvil.server.launch_background_task('night_processing_backgound',c_league,c_gender,c_year,rebuild_all, all_leagues)
+def night_processing_callable(c_league, c_gender, c_year, rebuild_all, all_leagues):
+  # This one we can call from the browser for testing.
+  # all_leagues = True for all leagues
+  # rebuild_all = True to rebuild the ppr files for all btd files
+  _require_internals()
+  return anvil.server.launch_background_task(
+    'night_processing_backgound', c_league, c_gender, c_year, rebuild_all, all_leagues
+  )
 
 @anvil.server.background_task
 def night_processing_cron():
-  # this stub to put into the cron with the parameters desired
-  return anvil.server.launch_background_task('night_processing_backgound','','','',False,True)
+  # Stub called by the cron scheduler — runs server-side, no auth check needed
+  return anvil.server.launch_background_task('night_processing_backgound', '', '', '', False, True)
 
 
 @anvil.server.background_task
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
-def night_processing_backgound(d_league,d_gender,d_year,rebuild_all, all_leagues):
-  # call all the different night processing tasks in sequence, league by leaguye
+def night_processing_backgound(d_league, d_gender, d_year, rebuild_all, all_leagues):
+  # call all the different night processing tasks in sequence, league by league
 
-  # set up email text
   now = datetime.now()
-  email_message = 'Night Processing Started at :' + str( now ) + "\n"
-  email_message = email_message +'All Leagues:'+str(all_leagues)+'.  Rebuild All:'+str(rebuild_all)+'   League:'+d_league+'   Gender:'+d_gender+'.  Year:'+d_year+'\n'
+  email_message = 'Night Processing Started at :' + str(now) + "\n"
+  email_message += 'All Leagues:' + str(all_leagues) + '.  Rebuild All:' + str(rebuild_all)
+  email_message += '   League:' + d_league + '   Gender:' + d_gender + '.  Year:' + d_year + '\n'
 
-  # do the btd -> ppr conversion for all btd files
-  dict = {'league':[str()],
-          'gender':[str()],
-          'year':[str()],
-          'team':[str()],
-          'update':[str()]
-         }
+  dict = {
+    'league': [str()], 'gender': [str()], 'year': [str()],
+    'team': [str()], 'update': [str()]
+  }
   btd_df = pd.DataFrame.from_records(dict)
   i = 0
   for btd_file_r in app_tables.btd_files.search():
-    # make a quick df of the values needed
-    btd_df.at[i,'league'] = btd_file_r['league']
-    btd_df.at[i,'gender'] = btd_file_r['gender']
-    btd_df.at[i,'year'] = btd_file_r['year']
-    btd_df.at[i,'team'] = btd_file_r['team']
-    btd_df.at[i,'update'] = 'No'   # use this to mark an update so that we need to rebuild for this league
-    i = i + 1
+    btd_df.at[i, 'league'] = btd_file_r['league']
+    btd_df.at[i, 'gender'] = btd_file_r['gender']
+    btd_df.at[i, 'year'] = btd_file_r['year']
+    btd_df.at[i, 'team'] = btd_file_r['team']
+    btd_df.at[i, 'update'] = 'No'
+    i += 1
 
-  # now we need to make this unique  
-  #print(btd_df)
   league_list = pd.unique(btd_df['league'])
   gender_list = pd.unique(btd_df['gender'])
   year_list = pd.unique(btd_df['year'])
   team_list = pd.unique(btd_df['team'])
 
   for c_league in league_list:
-    # loop ober gender
-    #print(f"processing for league: {c_league}")
     for c_gender in gender_list:
-      #print(f"processing for gender: {c_gender}")
-      # loop over year
       for c_year in year_list:
-        # loop over team
-        #print(f"processing for year: {c_year}")
-        #print(f"Checking all league iff statement, All League: {str(all_leagues)}")
-        #print(f" c :{c_league}, d:{d_league} c :{c_gender}, d:{d_gender}, c:{c_year}, d:{d_year}")
         new_league_data = False
         new_team_data = False
-        if ( all_leagues) or ((c_league == d_league) and (c_gender == d_gender) and (c_year == d_year)):
+        if (all_leagues) or ((c_league == d_league) and (c_gender == d_gender) and (c_year == d_year)):
           for c_team in team_list:
-            email_message = email_message + 'Generating PPR files for: '+c_league+' '+c_gender+' '+c_year+' '+c_team+'\n'
-            #print(email_message)
-            r_value, new_team_data = generate_ppr_files_not_background(c_league, c_gender, c_year, c_team, rebuild_all  ) # modify this to return true if there are update, false if not
-            #email_message = email_message + '        '+str(r_value) + ' New Data Found =' + str(new_team_data) + "\n"
+            email_message += 'Generating PPR files for: ' + c_league + ' ' + c_gender + ' ' + c_year + ' ' + c_team + '\n'
+            r_value, new_team_data = generate_ppr_files_not_background(c_league, c_gender, c_year, c_team, rebuild_all)
 
-            # now merge the data for this league
-            #-------------------------------------
             if new_team_data:
               new_league_data = True
-              email_message = email_message + ' Merging PPR Files for ' + c_league +" "+ c_gender +" "+ c_year +" "+ c_team + "\n"
-              #print(email_message)
-              r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Private' )
-              r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'Scouting' )   
-              # anytime a team has new data, need to build the league file
-              email_message = email_message + ' Merging PPR Files for ' + c_league + ' '+ c_gender + ' '+ c_year+' League'+ "\n"
-              r_val =  make_master_ppr_not_background( c_league, c_gender, c_year, c_team, 'League' )
+              email_message += ' Merging PPR Files for ' + c_league + " " + c_gender + " " + c_year + " " + c_team + "\n"
+              r_val = make_master_ppr_not_background(c_league, c_gender, c_year, c_team, 'Private')
+              r_val = make_master_ppr_not_background(c_league, c_gender, c_year, c_team, 'Scouting')
+              email_message += ' Merging PPR Files for ' + c_league + ' ' + c_gender + ' ' + c_year + ' League' + "\n"
+              r_val = make_master_ppr_not_background(c_league, c_gender, c_year, c_team, 'League')
 
         if new_league_data:
-          # now calculate player data
-          #-----------------------------
-          email_message = email_message + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
+          # Calculate Player Data
+          email_message += ' Calculating Player Data for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
           r_val = calculate_player_data_not_background(c_league, c_gender, c_year)
-          email_message = email_message + '        '+str(r_val)+"\n"
+          email_message += '        ' + str(r_val) + "\n"
 
           # Calculate Pair Table (MOVED BEFORE TRIANGLE DATA)
-          #-----------------------
-          email_message = email_message + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-          r_val = build_pair_df( c_league, c_gender, c_year)
-          email_message = email_message + '        '+str(r_val) + "\n"
+          email_message += ' Building Pair Table for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          r_val = build_pair_df(c_league, c_gender, c_year)
+          email_message += '        ' + str(r_val) + "\n"
 
           # Load Pair Data into master_pair table (MOVED BEFORE TRIANGLE DATA)
-          #-----------------------
-          email_message = email_message + ' Loading Pair data into master_pair table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          email_message += ' Loading Pair data into master_pair table for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
           r_val = load_pair_data_table_for_league(c_league, c_gender, c_year)
-          email_message = email_message + '        '+str(r_val) + "\n"
+          email_message += '        ' + str(r_val) + "\n"
 
           # Calculate Triangle Data (MOVED AFTER PAIR TABLE IS LOADED)
-          #------------------------
-          email_message = email_message + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-          r_val = calculate_triangle_scoring_not_background( c_league, c_gender, c_year)
-          email_message = email_message + '        '+str(r_val) + "\n"
+          email_message += ' Calculating Triangle Data for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          r_val = calculate_triangle_scoring_not_background(c_league, c_gender, c_year)
+          email_message += '        ' + str(r_val) + "\n"
 
           # Calculate Pair Data
-          #-----------------------
-          email_message = email_message + ' Building Pair Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-          r_val = calculate_pair_data_not_background( c_league, c_gender, c_year)
-          email_message = email_message + '        '+str(r_val) + "\n"
+          email_message += ' Building Pair Data for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          r_val = calculate_pair_data_not_background(c_league, c_gender, c_year)
+          email_message += '        ' + str(r_val) + "\n"
 
-          # calculate pair data
-          email_message = email_message + ' Building Pair Data & Stats for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-          r_val = calc_s_w_player( c_league, c_gender, c_year )
-          email_message = email_message + '        '+str(r_val) + "\n"
+          # Pair Data & Stats
+          email_message += ' Building Pair Data & Stats for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          r_val = calc_s_w_player(c_league, c_gender, c_year)
+          email_message += '        ' + str(r_val) + "\n"
 
-          # calculate the strength and weaknesses
-          email_message = email_message + ' Building Strengths & Weaknesses for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-          r_val = calc_s_w_player( c_league, c_gender, c_year )
-          email_message = email_message + '        '+str(r_val) + "\n"
+          # Strengths & Weaknesses
+          email_message += ' Building Strengths & Weaknesses for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          r_val = calc_s_w_player(c_league, c_gender, c_year)
+          email_message += '        ' + str(r_val) + "\n"
         else:
-          email_message = email_message + 'No New data Found for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
+          email_message += 'No New data Found for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
 
-  # the very last thing, load the pair's data table
-  email_message = email_message + ' Loading Pair data Table ' + "\n"
+  # The very last thing — load the pair's data table
+  email_message += ' Loading Pair data Table \n'
   r_val = load_pair_data_table()
-  email_message = email_message + '        '+str(r_val) + "\n"
+  email_message += '        ' + str(r_val) + "\n"
 
-  #now, send an email with the updates
   internals_email = 'beachinternals@gmail.com'
   now1 = datetime.now()
-  email_message = email_message + "Night Processing Completed at:" + str(now1) + ' Compute time: '+str(now1-now)+ "\n"
-  email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Night Processing',text=email_message)
-
+  email_message += "Night Processing Completed at:" + str(now1) + ' Compute time: ' + str(now1 - now) + "\n"
+  anvil.email.send(
+    to=internals_email, from_address="no-reply",
+    subject='Beach Internals - Night Processing', text=email_message
+  )
   return True
 
-#--------------------------------------------------------------------
+
+# ============================================================================
 #
-#        Build PPR data
-#        Convert btd to ppr and save in ppr_csv table
+#  Build PPR Data
+#  Convert btd to ppr and save in ppr_csv table
 #
-#-------------------------------------------------------------------
+# ============================================================================
+
 @anvil.server.callable
 def call_build_ppr_data():
-  task = anvil.server.launch_background_task('build_ppr_data1')
-  return task
+  """Launch PPR build for new files only. INTERNALS only."""
+  _require_internals()
+  return anvil.server.launch_background_task('build_ppr_data1')
 
 @anvil.server.callable
 def call_build_all_ppr_data(disp_league, disp_gender, disp_year):
-  task = anvil.server.launch_background_task('build_ppr_data2',disp_league, disp_gender, disp_year)
-  return task
+  """Launch PPR rebuild for a specific or all league/gender/year. INTERNALS only."""
+  _require_internals()
+  return anvil.server.launch_background_task('build_ppr_data2', disp_league, disp_gender, disp_year)
 
 
 @anvil.server.background_task
 def build_ppr_data1():
-  # this just call the background task with the 
-  task = calculate_ppr_data(False)
-
-  return task
+  return calculate_ppr_data(False)
 
 @anvil.server.background_task
 def build_ppr_data2(disp_league, disp_gender, disp_year):
-  task = calculate_ppr_data(True,disp_league, disp_gender, disp_year)
-  return task
+  return calculate_ppr_data(True, disp_league, disp_gender, disp_year)
+
 
 @anvil.server.callable
 def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
   """
-  Calculate PPR data from BTD files.
-  
+  Calculate PPR data from BTD files. INTERNALS only.
+
   Parameters:
     rebuild      : True = rebuild all ppr files, False = only process new/updated files
     disp_league  : Filter to a specific league (empty string = all leagues)
     disp_gender  : Filter to a specific gender (empty string = all genders)
     disp_year    : Filter to a specific year   (empty string = all years)
   """
+  _require_internals()
+
   now = datetime.now()
-  # Determine if we are running for all leagues or just one
   all_leagues = (disp_league == '' and disp_gender == '' and disp_year == '')
   email_text = "Calculate PPR Data \n Called at: " + str(now) + "\n"
   if all_leagues:
@@ -244,26 +240,19 @@ def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
   else:
     email_text += f"Mode: Single league -> League:{disp_league}  Gender:{disp_gender}  Year:{disp_year}\n"
 
-  # ----------------------------------------------------------------
-  # Step 1: Load all BTD file records into a dataframe so we can
-  #         get the unique list of league / gender / year / team
-  # ----------------------------------------------------------------
   dict = {
-    'league': [str()],
-    'gender': [str()],
-    'year':   [str()],
-    'team':   [str()]
+    'league': [str()], 'gender': [str()],
+    'year':   [str()], 'team':   [str()]
   }
   btd_df = pd.DataFrame.from_records(dict)
   i = 0
   for btd_file_r in app_tables.btd_files.search():
     btd_df.at[i, 'league'] = btd_file_r['league']
     btd_df.at[i, 'gender'] = btd_file_r['gender']
-    btd_df.at[i, 'year']   = str(btd_file_r['year'])   # make sure year is a string for comparison
+    btd_df.at[i, 'year']   = str(btd_file_r['year'])
     btd_df.at[i, 'team']   = btd_file_r['team']
     i += 1
 
-  # Get unique values
   league_list = pd.unique(btd_df['league'])
   gender_list = pd.unique(btd_df['gender'])
   year_list   = pd.unique(btd_df['year'])
@@ -271,15 +260,9 @@ def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
   r_val        = None
   email_status = None
 
-  # ----------------------------------------------------------------
-  # Step 2: Loop over the combinations, skipping any that don't
-  #         match the requested league/gender/year (unless all_leagues)
-  # ----------------------------------------------------------------
   for c_league in league_list:
     for c_gender in gender_list:
       for c_year in year_list:
-
-        # Check if this combination matches what was requested
         if all_leagues:
           process_this = True
         else:
@@ -289,287 +272,252 @@ def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
             str(c_year) == str(disp_year)
           )
         if not process_this:
-          continue  # skip this combination
+          continue
 
-        # -- Step 2a: Generate per-team PPR files --
         for c_team in team_list:
           email_text += f"  Generating PPR Files for: {c_league} {c_gender} {c_year} {c_team}\n"
           r_val = anvil.server.launch_background_task(
             'generate_ppr_files', c_league, c_gender, c_year, c_team, rebuild
           )
-
         # NOTE: League merged table is built separately via calculate_league_ppr()
         # Run that AFTER this function completes to avoid timing issues.
 
-  # ----------------------------------------------------------------
-  # Step 3: Send a summary email
-  # ----------------------------------------------------------------
   internals_email = 'beachinternals@gmail.com'
   now_end = datetime.now()
   email_text += f"Completed at: {str(now_end)}  (compute time: {str(now_end - now)})\n"
   email_status = anvil.email.send(
-    to=internals_email,
-    from_address="no-reply",
-    subject='Beach Internals - Rebuild PPR Data',
-    text=email_text
+    to=internals_email, from_address="no-reply",
+    subject='Beach Internals - Rebuild PPR Data', text=email_text
   )
   return r_val, email_status
 
+
+# ============================================================================
+#
+#  Merge PPR Data
+#
+# ============================================================================
+
 @anvil.server.callable
 def call_merge_ppr_data():
-  task = anvil.server.launch_background_task('merge_ppr_data1')
-  return task
+  """Launch PPR merge as background task. INTERNALS only."""
+  _require_internals()
+  return anvil.server.launch_background_task('merge_ppr_data1')
 
 @anvil.server.background_task
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def merge_ppr_data1():
-  # this just call the background task with the 
-  task = merge_ppr_data()
-  return task
-  
+  return merge_ppr_data()
+
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def merge_ppr_data():
+  """Merge all PPR files across all leagues/teams. INTERNALS only."""
+  _require_internals()
+
   now = datetime.now()
   email_text = "Merging PPR Data \n Called at:" + str(now) + "\n"
-  
-  # build data for all new files, for all leagues
 
-  # do the btd -> ppr conversion for all btf files
-  dict = {'league':[str()],
-          'gender':[str()],
-          'year':[str()],
-          'team':[str()]
-         }
+  dict = {'league': [str()], 'gender': [str()], 'year': [str()], 'team': [str()]}
   btd_df = pd.DataFrame.from_records(dict)
   i = 0
   for btd_file_r in app_tables.btd_files.search():
-    # make a quick df of the values needed
-    btd_df.at[i,'league'] = btd_file_r['league']
-    btd_df.at[i,'gender'] = btd_file_r['gender']
-    btd_df.at[i,'year'] = btd_file_r['year']
-    btd_df.at[i,'team'] = btd_file_r['team']
-    i = i + 1
+    btd_df.at[i, 'league'] = btd_file_r['league']
+    btd_df.at[i, 'gender'] = btd_file_r['gender']
+    btd_df.at[i, 'year'] = btd_file_r['year']
+    btd_df.at[i, 'team'] = btd_file_r['team']
+    i += 1
 
-  # now we need to make this unique  
-  #print(btd_df)
   league_list = pd.unique(btd_df['league'])
   gender_list = pd.unique(btd_df['gender'])
   year_list = pd.unique(btd_df['year'])
   team_list = pd.unique(btd_df['team'])
 
-  
+  r_val = None
   for c_league in league_list:
-    for c_gender in gender_list:  
+    for c_gender in gender_list:
       for c_year in year_list:
         for c_team in team_list:
-          # now loop and call the merge function
-          email_text = email_text + ' Merging PPR Files for' + c_league +" "+ c_gender +" "+ c_year +" "+ c_team + "\n"
+          email_text += ' Merging PPR Files for' + c_league + " " + c_gender + " " + c_year + " " + c_team + "\n"
           print(email_text)
-          r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'Private' )
-          r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'Scouting' )
+          r_val = anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'Private')
+          r_val = anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'Scouting')
           if c_team == 'INTERNALS':
-            email_text = email_text + ' Merging PPR Files for' + ' '+c_league + " "+c_gender +" "+ c_year +" "+ c_team + ' League'+"\n"
-            #print(email_text)
-            r_val =  anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'League' )
+            email_text += ' Merging PPR Files for' + ' ' + c_league + " " + c_gender + " " + c_year + " " + c_team + ' League' + "\n"
+            r_val = anvil.server.launch_background_task('make_master_ppr', c_league, c_gender, c_year, c_team, 'League')
 
-  #now, send an email with the updates
   internals_email = 'beachinternals@gmail.com'
-  email_text = email_text + "Completed at:" + str(now) + "\n"
-  email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Merge PPR Data',text=email_text)
-  
+  email_text += "Completed at:" + str(now) + "\n"
+  email_status = anvil.email.send(
+    to=internals_email, from_address="no-reply",
+    subject='Beach Internals - Merge PPR Data', text=email_text
+  )
   return r_val, email_status
+
+
+# ============================================================================
+#
+#  Calculate Player / Triangle / Pair Data
+#
+# ============================================================================
 
 @anvil.server.callable
 def call_calculate_data():
-  task = anvil.server.launch_background_task('calculate_data')
-  return task
+  """Launch all downstream calculations as background task. INTERNALS only."""
+  _require_internals()
+  return anvil.server.launch_background_task('calculate_data')
 
 @anvil.server.background_task
 def calculate_data():
-  # this just call the background task with the 
-  task = calculate_data1()
-  return task
-  
+  return calculate_data1()
+
 @anvil.server.callable
 def calculate_data1():
+  """Run player data, triangle data, and pair table calcs for all leagues. INTERNALS only."""
+  _require_internals()
+
   now = datetime.now()
   email_text = "Calculate PPR Data \n Called at:" + str(now) + "\n"
-  
-  # build data for all new files, for all leagues
 
-  # do the btd -> ppr conversion for all btf files
-  dict = {'league':[str()],
-          'gender':[str()],
-          'year':[str()],
-          'team':[str()]
-         }
+  dict = {'league': [str()], 'gender': [str()], 'year': [str()], 'team': [str()]}
   btd_df = pd.DataFrame.from_records(dict)
   i = 0
   for btd_file_r in app_tables.btd_files.search():
-    # make a quick df of the values needed
-    btd_df.at[i,'league'] = btd_file_r['league']
-    btd_df.at[i,'gender'] = btd_file_r['gender']
-    btd_df.at[i,'year'] = btd_file_r['year']
-    i = i + 1
+    btd_df.at[i, 'league'] = btd_file_r['league']
+    btd_df.at[i, 'gender'] = btd_file_r['gender']
+    btd_df.at[i, 'year'] = btd_file_r['year']
+    i += 1
 
-  # now we need to make this unique  
-  #print(btd_df)
   league_list = pd.unique(btd_df['league'])
   gender_list = pd.unique(btd_df['gender'])
   year_list = pd.unique(btd_df['year'])
-  
+
+  r_val = None
   for c_league in league_list:
-    for c_gender in gender_list:  
+    for c_gender in gender_list:
       for c_year in year_list:
-        # now make the player data and triange data
-        email_text = email_text + ' Calculating Player Data for ' + c_league + ' '+ c_gender + ' '+ c_year+"\n"
-        r_val = calculate_player_data( c_league, c_gender, c_year)
-        email_text = email_text + ' Calculating Triangle Data for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-        r_val = calculate_triangle_scoring( c_league, c_gender, c_year)
-        email_text = email_text + ' Building Pair Table for ' + c_league + ' '+ c_gender + ' '+ c_year +"\n"
-        r_val = build_pair_table_background( c_league, c_gender, c_year)
+        email_text += ' Calculating Player Data for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+        r_val = calculate_player_data(c_league, c_gender, c_year)
+        email_text += ' Calculating Triangle Data for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+        r_val = calculate_triangle_scoring(c_league, c_gender, c_year)
+        email_text += ' Building Pair Table for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+        r_val = build_pair_table_background(c_league, c_gender, c_year)
 
-  #now, send an email with the updates
   internals_email = 'beachinternals@gmail.com'
-  email_text = email_text + "Completed at:" + str(now) + "\n"
-  email_status = anvil.email.send(to=internals_email,from_address="no-reply",subject='Beach Internals - Calculate player and Triangle Data',text=email_text)
-  
-
+  email_text += "Completed at:" + str(now) + "\n"
+  email_status = anvil.email.send(
+    to=internals_email, from_address="no-reply",
+    subject='Beach Internals - Calculate player and Triangle Data', text=email_text
+  )
   return r_val, email_status
 
+
 @anvil.server.callable
-def build_pair_table(c_league,c_gender,c_year):
-  return anvil.server.launch_background_task('build_pair_table_background',c_league,c_gender,c_year)
+def build_pair_table(c_league, c_gender, c_year):
+  """Build pair table for a specific league. INTERNALS only."""
+  _require_internals()
+  return anvil.server.launch_background_task('build_pair_table_background', c_league, c_gender, c_year)
 
 @anvil.server.callable
 def build_pair_data_table():
+  """Rebuild the full pair data table. INTERNALS only."""
+  _require_internals()
   return anvil.server.launch_background_task('build_pair_data_background')
 
-  
+
 @anvil.server.background_task
 def build_pair_table_background(c_league, c_gender, c_year):
-  return build_pair_df(c_league,c_gender,c_year)
+  return build_pair_df(c_league, c_gender, c_year)
 
-def build_pair_df(c_league,c_gender,c_year):
-  # call the background taks
-  # build the pair table for each league based on the ppr.league table
-
-  # get the ppr file
-  c_team = "League"    # only updating the league tables
+def build_pair_df(c_league, c_gender, c_year):
+  """
+  Internal helper — builds the pair table from the league PPR file.
+  Not callable from the browser.
+  """
+  c_team = "League"
   print(f"League:{c_league}, Gender:{c_gender}, Year:{c_year}, Team:{c_team}")
-  ppr_csv_row = app_tables.ppr_csv_tables.get( 
-    q.all_of(
-      league = c_league,
-      gender = c_gender,
-      year = c_year,
-      team = c_team
-      ) )
+  ppr_csv_row = app_tables.ppr_csv_tables.get(
+    q.all_of(league=c_league, gender=c_gender, year=c_year, team=c_team)
+  )
 
   if ppr_csv_row:
-    ppr_df =  pd.read_csv(io.BytesIO( ppr_csv_row['ppr_csv'].get_bytes()))
+    ppr_df = pd.read_csv(io.BytesIO(ppr_csv_row['ppr_csv'].get_bytes()))
     if ppr_df.shape[0] == 0:
       return ["No Rows"]
   else:
-    #print('No Rows Found')
     return ["No Rows"]
 
-  # extract team a and team b lists
-  team_list_a = ppr_df[['teama','player_a1','player_a2']]
-  team_list_a = team_list_a.rename( columns={'teama':'team', 'player_a1':'player1', 'player_a2':'player2'} )
-  #print(f"Team List A: {team_list_a}")
-  
-  team_list_b = ppr_df[['teamb','player_b1','player_b2']]
-  team_list_b = team_list_b.rename( columns={'teamb':'team', 'player_b1':'player1','player_b2':'player2'} )
-  #print(f"Team List B: {team_list_b}")
-  
-  team_list = pd.concat([team_list_a,team_list_b])
-  #print(f"Pair List Concat:{team_list}")
-  
-  team_list = team_list.drop_duplicates()
-  #print(f"Pair List Unique:{team_list}")
-  
-  team_list = team_list.sort_values(by=['team'])
-  #print(f"Pair List Sort:{team_list}")
+  team_list_a = ppr_df[['teama', 'player_a1', 'player_a2']]
+  team_list_a = team_list_a.rename(columns={'teama': 'team', 'player_a1': 'player1', 'player_a2': 'player2'})
 
-  # save it back to the ppr_csv table
-  # first, I need to cahnge the ppr_file dataframe to a csv file.
+  team_list_b = ppr_df[['teamb', 'player_b1', 'player_b2']]
+  team_list_b = team_list_b.rename(columns={'teamb': 'team', 'player_b1': 'player1', 'player_b2': 'player2'})
+
+  team_list = pd.concat([team_list_a, team_list_b])
+  team_list = team_list.drop_duplicates()
+  team_list = team_list.sort_values(by=['team'])
+
   tmp = pd.DataFrame(team_list)
-  #print(f"TMP: pair list in a dataframe:{tmp}")
   pair_csv_file = pd.DataFrame.to_csv(tmp)
   print(f"Pair list being updated for: {c_league}, {c_gender}, {c_year}")
-  pair_media = anvil.BlobMedia(content_type="text/plain", content=pair_csv_file.encode(), name="pair_table.csv")
-  ppr_csv_row.update(pair_list = pair_media, pair_list_date=datetime.now())
-
+  pair_media = anvil.BlobMedia(
+    content_type="text/plain", content=pair_csv_file.encode(), name="pair_table.csv"
+  )
+  ppr_csv_row.update(pair_list=pair_media, pair_list_date=datetime.now())
   return True
 
-#----------------------------------------------------------------------------------
+
 @anvil.server.callable
 def load_pair_data_table_not_background():
+  """Load pair data into the master_pair table (all leagues). INTERNALS only."""
+  _require_internals()
   return anvil.server.launch_background_task('build_pair_data_background')
-  
+
 @anvil.server.background_task
 def build_pair_data_background():
   return load_pair_data_table()
 
 def load_pair_data_table():
-  # here we put the pair dataframe into the pairs table in Anvil, using the pair_list in the 'league' entries
-
-  # dump the contents of the master_pairs table in anvil
-  #app_tables.master_pair.delete_all_rows()
-  
-  # get a set of rows from ppr_ccv table for team = league, loop thru the rows
-
-  for lrow in app_tables.ppr_csv_tables.search( team=q.like("League") ):
+  """
+  Internal helper — loads pair data from ppr_csv_tables into master_pair (all leagues).
+  Not callable from the browser.
+  """
+  for lrow in app_tables.ppr_csv_tables.search(team=q.like("League")):
     show_print = True if (lrow['league'] == 'AVP') else False
     print(f"Processing : {lrow['league']}, {lrow['gender']},{lrow['year']}")
     if show_print:
       print(f"pair list : {type(lrow['pair_list'])}")
       print(f"pair list : {lrow['pair_list']}")
     if lrow['pair_list']:
-      pair_df =  pd.read_csv(io.BytesIO( lrow['pair_list'].get_bytes()))
+      pair_df = pd.read_csv(io.BytesIO(lrow['pair_list'].get_bytes()))
       if pair_df.shape[0] == 0:
         if show_print:
           print(f"load_pair_data_table: Pair List Df Empty : {lrow['league']}, {lrow['gender']},{lrow['year']}")
         return ["No Pair List Found"]
-      
-      # loop thru the rows in in teh pair-list
-      #print(pair_df)
+
       for index, p in pair_df.iterrows():
-        # create a new row in the master_pair table
-        #print(f"Row; {p}")
         team_delim = p[1].find(' ')
         if team_delim == -1:
           if show_print:
             print(f"Load Pair Table, no space found looking for Team: {p[1]}")
-          a=b
+          a = b  # intentional crash — preserve original behavior
         pair_team = p[1][:team_delim].strip()
         if show_print:
-          print(f"load_pair_data_table: Looking for:{lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}, Team: {pair_team}")
-        #print(f"Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
-        if not app_tables.master_pair.get( league = lrow['league'],
-                                        gender = lrow['gender'],
-                                        year = lrow['year'],
-                                        player1 = p[2],
-                                        player2 = p[3],
-                                        pair = p[1],
-                                        team = pair_team
-                                        ):
-          # add a row for this pair
+          print(f"load_pair_data_table: Looking for:{lrow['league']}, {lrow['gender']},{lrow['year']} "
+                f"p0 Index: {p[0]}, Pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}, Team: {pair_team}")
+        if not app_tables.master_pair.get(
+          league=lrow['league'], gender=lrow['gender'], year=lrow['year'],
+          player1=p[2], player2=p[3], pair=p[1], team=pair_team
+        ):
           if show_print:
-            print(f"load_pair_data_table: Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}") 
-          app_tables.master_pair.add_row( league = lrow['league'],
-                                        gender = lrow['gender'],
-                                        year = lrow['year'],
-                                        player1 = p[2],
-                                        player2 = p[3],
-                                        pair = p[1],
-                                        team = pair_team
-                                        )
-
+            print(f"load_pair_data_table: Adding to master pair list: {lrow['league']}, {lrow['gender']},{lrow['year']} "
+                  f"p0 Index: {p[0]}, Team: {p[1]}, Player1: {p[2]}, Player2: {p[3]}")
+          app_tables.master_pair.add_row(
+            league=lrow['league'], gender=lrow['gender'], year=lrow['year'],
+            player1=p[2], player2=p[3], pair=p[1], team=pair_team
+          )
     else:
       print(f"No Pair List Data Frame Found : {lrow['league']}, {lrow['gender']},{lrow['year']}")
-      #return False
 
   return True
 
@@ -577,94 +525,72 @@ def load_pair_data_table():
 def load_pair_data_table_for_league(c_league, c_gender, c_year):
   """
   Load pair data into master_pair table for a specific league/gender/year.
-  This is called during night processing for each league individually,
-  BEFORE calculate_triangle_scoring which needs the pairs in the table.
-  
-  Args:
-      c_league (str): League identifier (e.g., 'NCAA')
-      c_gender (str): Gender ('M' or 'W')
-      c_year (int): Year (e.g., 2026)
-      
-  Returns:
-      bool or list: True if successful, or list with error message
+  Called during night processing for each league individually,
+  BEFORE calculate_triangle_scoring (which needs pairs already in the table).
+  Internal helper — not callable from the browser.
   """
-  # Get the specific league row from ppr_csv_tables
   lrow = app_tables.ppr_csv_tables.get(
-    league=c_league,
-    gender=c_gender, 
-    year=c_year,
-    team=q.like("League")
+    league=c_league, gender=c_gender, year=c_year, team=q.like("League")
   )
-  
+
   if not lrow:
     print(f"load_pair_data_table_for_league: No league row found for {c_league} {c_gender} {c_year}")
     return ["No League Row Found"]
-  
+
   show_print = (c_league == 'AVP')
   print(f"load_pair_data_table_for_league: Processing {c_league}, {c_gender}, {c_year}")
-  
+
   if not lrow['pair_list']:
     print(f"load_pair_data_table_for_league: No Pair List Data for {c_league}, {c_gender}, {c_year}")
     return ["No Pair List Found"]
-  
-  # Read the pair list from the CSV stored in the database
+
   pair_df = pd.read_csv(io.BytesIO(lrow['pair_list'].get_bytes()))
-  
+
   if pair_df.shape[0] == 0:
     print(f"load_pair_data_table_for_league: Pair List Df Empty for {c_league}, {c_gender}, {c_year}")
     return ["No Pair List Found"]
-  
-  # Loop through the pairs and add them to master_pair table if not already there
+
   pairs_added = 0
   for index, p in pair_df.iterrows():
-    # Extract team from pair name (first word before space)
     team_delim = p[1].find(' ')
     if team_delim == -1:
       if show_print:
         print(f"load_pair_data_table_for_league: No space found looking for Team in: {p[1]}")
       continue
-      
+
     pair_team = p[1][:team_delim].strip()
-    
-    # Check if this pair already exists in master_pair
+
     if not app_tables.master_pair.get(
-      league=c_league,
-      gender=c_gender,
-      year=c_year,
-      player1=p[2],
-      player2=p[3],
-      pair=p[1],
-      team=pair_team
+      league=c_league, gender=c_gender, year=c_year,
+      player1=p[2], player2=p[3], pair=p[1], team=pair_team
     ):
-      # Add the pair to master_pair table
       if show_print:
         print(f"load_pair_data_table_for_league: Adding pair: {p[1]}, Player1: {p[2]}, Player2: {p[3]}")
-      
       app_tables.master_pair.add_row(
-        league=c_league,
-        gender=c_gender,
-        year=c_year,
-        player1=p[2],
-        player2=p[3],
-        pair=p[1],
-        team=pair_team
+        league=c_league, gender=c_gender, year=c_year,
+        player1=p[2], player2=p[3], pair=p[1], team=pair_team
       )
       pairs_added += 1
-  
+
   print(f"load_pair_data_table_for_league: Added {pairs_added} pairs for {c_league} {c_gender} {c_year}")
   return True
 
 
+# ============================================================================
+#
+#  Nightly Data Consistency Check
+#
+# ============================================================================
 
 @anvil.server.background_task
 def check_inconsistent_data():
   """
-    Nightly task to check for inconsistent data in btd_files and master_player tables,
-    including duplicate video_id in btd_files and near-duplicate numbers in master_player
-    only for league='NCAA', and send an email report to beachinternals@gmail.com.
-    
-    UPDATED: Now filters to only check data for the current year (set below).
-    """
+  Nightly background task — checks btd_files and master_player for inconsistencies
+  and emails a report to beachinternals@gmail.com.
+  Runs server-side via scheduler — no auth check needed here.
+
+  UPDATED: Filters to only check data for the current year (set below).
+  """
   try:
     # SET THE YEAR TO CHECK HERE - Change this value to check a different year
     current_year = '2026'
@@ -672,19 +598,18 @@ def check_inconsistent_data():
     log_info("Starting nightly data consistency check at %s", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     issues = []
 
-    # Check btd_files for per_xy == 0, points < 25, and duplicate video_id
+    # Check btd_files for per_xy == 0, points < 25, errors > 20, duplicate video_id
     # Filtered for current_year only
     btd_issues = []
-    btd_rows = list(app_tables.btd_files.search(year=current_year))  # Convert to list for multiple passes
+    btd_rows = list(app_tables.btd_files.search(year=current_year))
 
-    # Check per_xy and points
-    for row in btd_rows: 
+    for row in btd_rows:
       row_issues = []
       if row['per_xy'] == 0:
         row_issues.append("per_xy is 0")
       if row['points'] is not None and row['points'] < 25:
         row_issues.append(f"points ({row['points']}) < 25")
-      if row['no_errors'] > 20 :
+      if row['no_errors'] > 20:
         row_issues.append(f"errors > 20 {row['error_str']}")
       if row_issues:
         league = str(row['league'] or 'None')
@@ -697,16 +622,15 @@ def check_inconsistent_data():
           f"(league={league}, gender={gender}, year={year}, team={team}, filename={filename})"
         )
 
-        # Check for duplicate video_id
     video_id_counts = {}
     for row in btd_rows:
       video_id = row['video_id']
       if video_id is not None:
-        video_id = str(video_id)  # Ensure string for consistency
+        video_id = str(video_id)
         video_id_counts[video_id] = video_id_counts.get(video_id, []) + [row]
 
     for video_id, rows in video_id_counts.items():
-      if len(rows) > 1:  # Duplicates found
+      if len(rows) > 1:
         row_ids = [row.get_id() for row in rows]
         for row in rows:
           league = str(row['league'] or 'None')
@@ -722,8 +646,8 @@ def check_inconsistent_data():
     if btd_issues:
       issues.append("<h3>btd_files Issues</h3><ul>" + "".join(f"<li>{issue}</li>" for issue in btd_issues) + "</ul>")
 
-      # Check master_player for single-digit number and near-duplicates (NCAA only)
-      # Filtered for current_year only
+    # Check master_player for single-digit numbers and near-duplicates (NCAA only)
+    # Filtered for current_year only
     mp_issues = []
     mp_rows = list(app_tables.master_player.search(year=current_year))
     groups = {}
@@ -741,13 +665,11 @@ def check_inconsistent_data():
       for row in rows:
         number = row['number']
         row_id = row.get_id()
-        # Single-digit number check (all leagues)
         if number and number.isdigit() and len(number) == 1:
           mp_issues.append(
             f"Row ID {row_id}: Single-digit number '{number}' without leading zero "
             f"(league={league}, gender={gender}, year={year}, team={team})"
           )
-          # Near-duplicate number check (league='NCAA' only)
         if league == 'NCAA':
           for other_row in rows:
             if row is other_row:
@@ -762,7 +684,6 @@ def check_inconsistent_data():
     if mp_issues:
       issues.append("<h3>master_player Issues</h3><ul>" + "".join(f"<li>{issue}</li>" for issue in mp_issues) + "</ul>")
 
-      # Prepare email content
     email_body = (
       f"<h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')} ({current_year} Data Only)</h2>"
       f"<p>Found the following inconsistencies in the database:</p>{''.join(issues)}"
@@ -772,7 +693,6 @@ def check_inconsistent_data():
       f"<p>No inconsistencies found in btd_files or master_player tables for year {current_year}.</p>"
     )
 
-    # Send email
     anvil.email.send(
       to="beachinternals@gmail.com",
       subject=f"Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')}",
@@ -788,20 +708,27 @@ def check_inconsistent_data():
       html=f"<h2>Error in Nightly Data Consistency Check</h2><p>An error occurred: {str(e)}</p>"
     )
 
+
 @anvil.server.callable
 def trigger_nightly_check():
-  """
-    Callable function to launch the background task (for testing or manual triggering).
-    """
+  """Launch the nightly consistency check manually. INTERNALS only."""
+  _require_internals()
   anvil.server.launch_background_task('check_inconsistent_data')
   return {"status": "Nightly check triggered"}
 
 
+# ============================================================================
+#
+#  League PPR Table Builder
+#
+# ============================================================================
 
 @anvil.server.callable
 def calc_league_ppr(disp_league='', disp_gender='', disp_year=''):
-  anvil.server.launch_background_task('calculate_league_ppr',disp_league,disp_gender,disp_year)
-  return {"status": "Calcualte League PPR Triggered"}
+  """Build the League merged PPR table for each league/gender/year. INTERNALS only."""
+  _require_internals()
+  anvil.server.launch_background_task('calculate_league_ppr', disp_league, disp_gender, disp_year)
+  return {"status": "Calculate League PPR Triggered"}
 
 @anvil.server.background_task
 def calculate_league_ppr(disp_league='', disp_gender='', disp_year=''):
@@ -827,7 +754,6 @@ def calculate_league_ppr(disp_league='', disp_gender='', disp_year=''):
   else:
     email_text += f"Mode: {disp_league} {disp_gender} {disp_year}\n"
 
-  # --- Get unique league/gender/year combinations from btd_files ---
   seen = set()
   combinations = []
   for btd_file_r in app_tables.btd_files.search():
@@ -838,7 +764,6 @@ def calculate_league_ppr(disp_league='', disp_gender='', disp_year=''):
 
   r_val = None
   for (c_league, c_gender, c_year) in combinations:
-    # Apply filters if provided
     if not all_leagues:
       if (c_league != disp_league or
           c_gender != disp_gender or
@@ -854,9 +779,7 @@ def calculate_league_ppr(disp_league='', disp_gender='', disp_year=''):
   now_end = datetime.now()
   email_text += f"Completed at: {str(now_end)}  (compute time: {str(now_end - now)})\n"
   anvil.email.send(
-    to=internals_email,
-    from_address="no-reply",
-    subject='Beach Internals - Build League PPR Tables',
-    text=email_text
+    to=internals_email, from_address="no-reply",
+    subject='Beach Internals - Build League PPR Tables', text=email_text
   )
   return r_val
