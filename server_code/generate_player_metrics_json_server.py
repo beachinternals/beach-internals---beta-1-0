@@ -21,18 +21,14 @@ import io
 from logger_utils import log_info, log_error, log_debug, log_critical
 
 # ============================================================================
-#
 #  AUTH HELPERS
-#  _require_own_team(team) — logged-in AND requesting own team's data
-#  _require_internals()    — INTERNALS team only
-#
 # ============================================================================
 
 def _require_own_team(team):
   """
-  Verify the caller is logged in AND is either on the INTERNALS team
-  (can access any team) or requesting their own team's data only.
-  Returns the user row or raises Exception.
+  Verify the caller is logged in AND requesting their own team's data.
+  INTERNALS team can access any team's data.
+  Returns user row or raises Exception.
   """
   user = anvil.users.get_user()
   if not user:
@@ -41,17 +37,90 @@ def _require_own_team(team):
     raise Exception("Access denied: you can only access your own team's data.")
   return user
 
-def _require_internals():
+
+# ============================================================================
+#
+#  INPUT VALIDATION HELPER
+#
+#  _validate_league_params() — validates league, gender, team against live data
+#  _validate_lgy_string()    — parses and validates "NCAA | W | 2025" strings
+#
+#  Leagues are read dynamically from app_tables.league_list, so adding a new
+#  league to that table is all that's needed — no code change required here.
+#
+#  Team is validated against app_tables.subscriptions. INTERNALS is always
+#  allowed regardless of subscription records.
+#
+# ============================================================================
+
+VALID_GENDERS = {'M', 'W'}
+
+def _get_valid_leagues():
+  """Return the set of valid league names from the league_list table."""
+  try:
+    return {row['league'] for row in app_tables.league_list.search()}
+  except Exception:
+    # If table is unreachable, fail open rather than block all requests
+    return None
+
+def _get_valid_teams():
+  """Return the set of valid team names from the subscriptions table."""
+  try:
+    return {row['team'] for row in app_tables.subscriptions.search()}
+  except Exception:
+    return None
+
+def _validate_league_params(league=None, gender=None, team=None):
   """
-  Verify the caller is logged in AND is on the INTERNALS team.
-  Raises Exception if not authorized. Returns user row.
+  Validate user-supplied league, gender, and/or team parameters.
+  Year is intentionally not validated here.
+  Raises ValueError with a clear message if any value is invalid.
+
+  Usage:
+    _validate_league_params(league=league, gender=gender, team=team)
   """
-  user = anvil.users.get_user()
-  if not user:
-    raise Exception("Please log in to continue.")
-  if user['team'] != 'INTERNALS':
-    raise Exception("Access denied: this function is for admins only.")
-  return user
+  if league is not None:
+    if not isinstance(league, str) or not league.strip():
+      raise ValueError("League must be a non-empty string.")
+    valid_leagues = _get_valid_leagues()
+    if valid_leagues is not None and league.strip() not in valid_leagues:
+      raise ValueError(f"Invalid league: {repr(league)}. Must be one of {sorted(valid_leagues)}.")
+
+  if gender is not None:
+    if not isinstance(gender, str) or gender.strip().upper() not in VALID_GENDERS:
+      raise ValueError(f"Invalid gender: {repr(gender)}. Must be one of {sorted(VALID_GENDERS)}.")
+
+  if team is not None:
+    if not isinstance(team, str) or not team.strip():
+      raise ValueError("Team must be a non-empty string.")
+    if re.search(r'[<>]', team):
+      raise ValueError(f"Invalid team name: {repr(team)}.")
+    # INTERNALS can access any team — skip subscription check
+    if team.strip() != 'INTERNALS':
+      valid_teams = _get_valid_teams()
+      if valid_teams is not None and team.strip() not in valid_teams:
+        raise ValueError(f"Invalid team: {repr(team)}. Team is not registered in the system.")
+
+
+def _validate_lgy_string(lgy):
+  """
+  Parse and validate an lgy string in format "NCAA | W | 2025" or "NCAA|W|2025".
+  Validates league and gender. Year is not validated.
+  Raises ValueError if format or values are invalid.
+  Returns (league, gender, year_str) as cleaned values.
+  """
+  if not isinstance(lgy, str) or '|' not in lgy:
+    raise ValueError(
+      f"Invalid league/gender/year format: {repr(lgy)}. Expected 'LEAGUE | GENDER | YEAR'."
+    )
+  parts = [p.strip() for p in lgy.split('|')]
+  if len(parts) != 3:
+    raise ValueError(
+      f"Invalid league/gender/year format: {repr(lgy)}. Expected exactly 3 parts separated by '|'."
+    )
+  league, gender, year_str = parts
+  _validate_league_params(league=league, gender=gender)
+  return league, gender, year_str
 
 
 
@@ -71,6 +140,9 @@ def generate_player_metrics_json(league_value, team, **json_filters):
     Returns:
         dict: {'media_obj': BlobMedia, 'filename': str, 'summary': dict}
     """
+  _require_own_team(team)
+  _validate_lgy_string(league_value)
+  _validate_league_params(team=team)
 
   try:
     log_info("=== JSON Generation Started ===")

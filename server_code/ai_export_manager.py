@@ -87,6 +87,91 @@ def _require_own_team(team):
   return user
 
 
+# ============================================================================
+#
+#  INPUT VALIDATION HELPER
+#
+#  _validate_league_params() — validates league, gender, team against live data
+#  _validate_lgy_string()    — parses and validates "NCAA | W | 2025" strings
+#
+#  Leagues are read dynamically from app_tables.league_list, so adding a new
+#  league to that table is all that's needed — no code change required here.
+#
+#  Team is validated against app_tables.subscriptions. INTERNALS is always
+#  allowed regardless of subscription records.
+#
+# ============================================================================
+
+VALID_GENDERS = {'M', 'W'}
+
+def _get_valid_leagues():
+  """Return the set of valid league names from the league_list table."""
+  try:
+    return {row['league'] for row in app_tables.league_list.search()}
+  except Exception:
+    # If table is unreachable, fail open rather than block all requests
+    return None
+
+def _get_valid_teams():
+  """Return the set of valid team names from the subscriptions table."""
+  try:
+    return {row['team'] for row in app_tables.subscriptions.search()}
+  except Exception:
+    return None
+
+def _validate_league_params(league=None, gender=None, team=None):
+  """
+  Validate user-supplied league, gender, and/or team parameters.
+  Year is intentionally not validated here.
+  Raises ValueError with a clear message if any value is invalid.
+
+  Usage:
+    _validate_league_params(league=league, gender=gender, team=team)
+  """
+  if league is not None:
+    if not isinstance(league, str) or not league.strip():
+      raise ValueError("League must be a non-empty string.")
+    valid_leagues = _get_valid_leagues()
+    if valid_leagues is not None and league.strip() not in valid_leagues:
+      raise ValueError(f"Invalid league: {repr(league)}. Must be one of {sorted(valid_leagues)}.")
+
+  if gender is not None:
+    if not isinstance(gender, str) or gender.strip().upper() not in VALID_GENDERS:
+      raise ValueError(f"Invalid gender: {repr(gender)}. Must be one of {sorted(VALID_GENDERS)}.")
+
+  if team is not None:
+    if not isinstance(team, str) or not team.strip():
+      raise ValueError("Team must be a non-empty string.")
+    if re.search(r'[<>]', team):
+      raise ValueError(f"Invalid team name: {repr(team)}.")
+    # INTERNALS can access any team — skip subscription check
+    if team.strip() != 'INTERNALS':
+      valid_teams = _get_valid_teams()
+      if valid_teams is not None and team.strip() not in valid_teams:
+        raise ValueError(f"Invalid team: {repr(team)}. Team is not registered in the system.")
+
+
+def _validate_lgy_string(lgy):
+  """
+  Parse and validate an lgy string in format "NCAA | W | 2025" or "NCAA|W|2025".
+  Validates league and gender. Year is not validated.
+  Raises ValueError if format or values are invalid.
+  Returns (league, gender, year_str) as cleaned values.
+  """
+  if not isinstance(lgy, str) or '|' not in lgy:
+    raise ValueError(
+      f"Invalid league/gender/year format: {repr(lgy)}. Expected 'LEAGUE | GENDER | YEAR'."
+    )
+  parts = [p.strip() for p in lgy.split('|')]
+  if len(parts) != 3:
+    raise ValueError(
+      f"Invalid league/gender/year format: {repr(lgy)}. Expected exactly 3 parts separated by '|'."
+    )
+  league, gender, year_str = parts
+  _validate_league_params(league=league, gender=gender)
+  return league, gender, year_str
+
+
 
 # This is a server module for generating NotebookLM-ready markdown files
 # with player performance data in JSON format
@@ -501,6 +586,7 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
         Dictionary with status and list of generated files
     """
   _require_own_team(team)
+  _validate_league_params(league=league, team=team)
 
   try:
     log_info(f"Starting AI export for {team} in {league}")
@@ -727,6 +813,7 @@ def ai_export_add_request(team, player_filter=None, date_start=None, date_end=No
         The created row
     """
   _require_own_team(team)
+  _validate_league_params(team=team)
   try:
     # Derive league from player_filter if provided
     league = None
