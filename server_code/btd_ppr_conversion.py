@@ -95,7 +95,7 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild 
 
 @anvil.server.callable
 def generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild  ): 
-  _require_internals()
+  #_require_internals()
   # select rows from the btd_files database and limit it to league, gender, and year and team
   # this routine calculates ppr files for all btd files for this l,g,y,t
   btd_row = app_tables.btd_files.search(

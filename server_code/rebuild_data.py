@@ -230,7 +230,7 @@ def calculate_ppr_data(rebuild, disp_league='', disp_gender='', disp_year=''):
     disp_gender  : Filter to a specific gender (empty string = all genders)
     disp_year    : Filter to a specific year   (empty string = all years)
   """
-  _require_internals()
+  #_require_internals()
 
   now = datetime.now()
   all_leagues = (disp_league == '' and disp_gender == '' and disp_year == '')
@@ -313,7 +313,7 @@ def merge_ppr_data1():
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def merge_ppr_data():
   """Merge all PPR files across all leagues/teams. INTERNALS only."""
-  _require_internals()
+  #_require_internals()
 
   now = datetime.now()
   email_text = "Merging PPR Data \n Called at:" + str(now) + "\n"
@@ -374,7 +374,7 @@ def calculate_data():
 @anvil.server.callable
 def calculate_data1():
   """Run player data, triangle data, and pair table calcs for all leagues. INTERNALS only."""
-  _require_internals()
+  #_require_internals()
 
   now = datetime.now()
   email_text = "Calculate PPR Data \n Called at:" + str(now) + "\n"
