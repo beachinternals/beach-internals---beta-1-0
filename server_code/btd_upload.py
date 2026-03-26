@@ -135,14 +135,14 @@ def update_btd_characteristics( file ):
 
   # Validate the uploaded file is a CSV
   if not file.name.lower().endswith('.csv'):
-    return [f"Invalid file type: only .csv files are accepted."]
+    return None, None, "Invalid file type: only .csv files are accepted."
 
   # Read the BTD CSV file
   file_obj = io.BytesIO( file.get_bytes() )
   try:
     btd_df = pd.read_csv(file_obj)
   except Exception as e:
-    return [f"Could not read CSV file: {str(e)}"]
+    return None, None, f"Could not read CSV file: {str(e)}"
 
   #----------
   #
@@ -231,4 +231,13 @@ def update_btd_characteristics( file ):
 
   # now let's try to set the self.item data bindings to display this new data
 
-  return [playera1, playera2, playerb1, playerb2, num_serves, comp_score, per_action_players, per_coord, per_srv_players]
+  # Convert dataframe back to CSV for storage
+  cleaned_csv_string = btd_df.to_csv(index=False)
+  cleaned_csv_media = anvil.BlobMedia(
+    content_type="text/csv",
+    content=cleaned_csv_string.encode("utf-8"),
+    name=file.name
+  )
+
+  statistics = [playera1, playera2, playerb1, playerb2, num_serves, comp_score, per_action_players, per_coord, per_srv_players]
+  return statistics, cleaned_csv_media, None
