@@ -38,15 +38,16 @@ def add_weather_to_ppr(ppr_df, btd_row):
   log_debug(f"add_weather_to_ppr called for file: {btd_row['filename']}")
 
   # Get required fields from btd_row (use dictionary-style access)
-  venue_id = btd_row['venue_id'] 
-  match_date = btd_row['date'] 
-  match_time = btd_row['match_time'] 
+  venue_id   = btd_row['venue_id']
+  venue_name = btd_row['venue_name']   # get_or_create_weather expects venue_name
+  match_date = btd_row['date']
+  match_time = btd_row['match_time']
 
   # Validate: catches None, "", and missing columns
   # This makes it backwards compatible with old files
-  if not venue_id or not match_date or not match_time:
+  if not venue_name or not match_date or not match_time:
     log_info(f"Skipping weather for {btd_row['filename']}: "
-             f"venue_id={venue_id}, date={match_date}, time={match_time} "
+             f"venue_name={venue_name}, date={match_date}, time={match_time} "
              f"(missing/empty fields - backwards compatible)")
 
     # Add empty weather columns (pandas will create if they don't exist)
@@ -74,10 +75,10 @@ def add_weather_to_ppr(ppr_df, btd_row):
 
     # Get or create weather (checks cache first!)
   try:
-    log_debug(f"Attempting to get/create weather: venue_id={venue_id}, "
+    log_debug(f"Attempting to get/create weather: venue_name={venue_name}, "
               f"date={match_date}, time={match_time}")
 
-    weather_id = get_or_create_weather(venue_id, match_date, match_time)
+    weather_id = get_or_create_weather(venue_name, match_date, match_time)
 
     if weather_id:
       # Success! Now get the weather data to copy fields
@@ -117,7 +118,7 @@ def add_weather_to_ppr(ppr_df, btd_row):
       ppr_df['humidity_percent'] = None
       #ppr_df['uv_index'] = None
       log_error(f"Failed to fetch weather for {btd_row['filename']}: "
-                f"venue_id={venue_id}, date={match_date}, time={match_time}")
+                f"venue_name={venue_name}, date={match_date}, time={match_time}")
 
   except Exception as e:
     # Catch any errors and log them

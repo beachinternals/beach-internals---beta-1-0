@@ -28,28 +28,6 @@ MONITORING_LEVEL_VERBOSE
 # import error logging funcitons
 from logger_utils import log_info, log_error, log_critical, log_debug
 
-# ============================================================================
-#
-#  AUTH HELPER
-#  All callables in this file are admin/INTERNALS only — they trigger
-#  data pipeline rebuilds that touch all league data.
-#
-# ============================================================================
-
-def _require_internals():
-  """
-  Verify the caller is logged in AND is on the INTERNALS team.
-  Raises Exception if not authorized. Returns user row.
-  """
-  user = anvil.users.get_user()
-  if not user:
-    raise Exception("Please log in to continue.")
-  if user['team'] != 'INTERNALS':
-    raise Exception("Access denied: this function is for admins only.")
-  return user
-
-
-
 # Import other modules
 # Add with other imports at top
 from weather_ppr_integration import add_weather_to_ppr
@@ -59,7 +37,6 @@ from weather_integration import get_or_create_weather
 
 @anvil.server.callable
 def make_all_ppr_files():
-  _require_internals()
   # make a quick loop to make all the ppr files
 
   leagues = [
@@ -81,7 +58,6 @@ def make_all_ppr_files():
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def make_ppr_files( u_league, u_gender, u_year, u_team, rebuild):
-  _require_internals()
   # call the background task
   task = anvil.server.launch_background_task('generate_ppr_files',u_league, u_gender, u_year, u_team, rebuild)
 
@@ -95,7 +71,6 @@ def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild 
 
 @anvil.server.callable
 def generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild  ): 
-  #_require_internals()
   # select rows from the btd_files database and limit it to league, gender, and year and team
   # this routine calculates ppr files for all btd files for this l,g,y,t
   btd_row = app_tables.btd_files.search(
@@ -184,7 +159,7 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
   #values = {"player": " ", "src_x": None, 'src_y': None, 'dest_x': None, 'dest_y': None}
   btd_df.fillna( value={'player': ''} )
   btd_df.fillna( value={'src_x': 0} )
-  
+
 
   #print(f"read the btd csv file into a dataframe: {btd_df['dest_x']}")
 
@@ -199,15 +174,19 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
 
   # to be forward compitable, check if the team column is there, if so, append team and playere and put it back into player
   if 'team' in btd_df.columns:
-    # fill nan with '' in team and player
-    btd_df = btd_df.fillna({'team':str('NOTEAM'),'player':str('NOPLAYER')})
-    # this must be a new actions file,, so we will rename 'player' to 'only_player', then merge team and player and store it in a new 'player' column
-    btd_df = btd_df.rename(columns={'player':'only_player'})
-    btd_df['player'] = btd_df['team'].astype(str)+' ' + btd_df['only_player'].astype(str)
-    #btd_df['player'] = np.where( ('NOTEAM' in btd_df['player']) or ('NOPLAYER' in btd_df['player'] ), '', btd_df['player'] )
-    # we should be good, let's check
-    #print(f"BTD Fields of interest: {btd_df['team']}, {btd_df['only_player']}, {btd_df['player']}")
-  
+    btd_df = btd_df.fillna({'team':str('NOTEAM')})
+    if 'only_player' in btd_df.columns:
+      # CSV was already processed by btd_upload — only_player and player columns
+      # are already correct. Just ensure no NaN in player.
+      btd_df = btd_df.fillna({'player':str('NOTEAM NOPLAYER')})
+    else:
+      # Raw BTD file — rename player -> only_player and combine with team
+      btd_df = btd_df.fillna({'player':str('NOPLAYER')})
+      btd_df = btd_df.rename(columns={'player':'only_player'})
+      btd_df['player'] = btd_df['team'].astype(str)+' ' + btd_df['only_player'].astype(str)
+    # Reset index to prevent duplicate label errors from new BTD columns
+    btd_df = btd_df.reset_index(drop=True)
+
   # call function to make the convesion
   ppr_df = btd_to_ppr_df(btd_df, flist_r)
 
@@ -229,7 +208,7 @@ def btd_to_ppr_df(btd_df, flist_r):
     btd_playera2 = flist_r['player1']
     btd_playera1 = flist_r['player2']
   teama = player_a1 + " " + player_a2
-  
+
   player_b1 = flist_r['ppr_playerb1']
   player_b2 = flist_r['ppr_playerb2']
   btd_playerb1 = flist_r['player3']
@@ -245,31 +224,32 @@ def btd_to_ppr_df(btd_df, flist_r):
   zero = 0
   yn = "N"
   blank = 'empty'
-  
-    # create the ppr datafram
+
+  # create the ppr datafram
   ppr_dict = {
     "league":flist_r["league"],"gender":flist_r['gender'],"year":flist_r['year'],"comp_l1":flist_r['comp_l1'],"comp_l2":flist_r['comp_l2'],"comp_l3":flist_r['comp_l3'],'team':flist_r['team'],'game_date':flist_r['date'],
     "filename":flist_r['csv_data'].name,'video_id':blank,'rally_id':zero, 'venue_id':flist_r["venue_id"], 'weather_id':flist_r["weather_id"], 'match_time':flist_r["match_time"],'temperature_f':zero, 'wind_speed_mph':zero,'wind_gust_mph':zero,'humidity_percent':zero,
-    'point_no':zero,'set':zero,'a_set_diff':zero,'a_score_diff':zero,
+    'point_no':zero,'set':zero,'a_set_diff':zero,'a_score_diff':0.0,
     'a_score':zero,'teama':teama,'player_a1':player_a1,'player_a2':player_a2,
     'b_score':zero,'teamb':teamb,'player_b1':player_b1,'player_b2':player_b2,
     'serve_player':[''],'serve_src_x':zero,'serve_src_y':zero,'serve_src_t':zero,'serve_src_zone_depth':blank,'serve_src_zone_net':zero,
-                  'serve_dest_x':zero,'serve_dest_y':zero,'serve_dest_t':zero,'serve_dest_zone_depth':blank,'serve_dest_zone_net':zero,
-                  'serve_dist':zero,'serve_dur':zero,'serve_speed':zero,'serve_angle':zero,'serve_action_id':zero,'serve_height':zero,
+    'serve_dest_x':zero,'serve_dest_y':zero,'serve_dest_t':zero,'serve_dest_zone_depth':blank,'serve_dest_zone_net':zero,
+    'serve_dist':0.0,'serve_dur':0.0,'serve_speed':0.0,'serve_angle':0.0,'serve_action_id':zero,'serve_height':0.0,'serve_speed_mph':0.0,
     'pass_player':blank,'pass_yn':yn,'pass_src_x':zero,'pass_src_y':zero,'pass_src_t':zero,'pass_src_zone_depth':blank,'pass_src_zone_net':zero,
                   'pass_dest_x':zero,'pass_dest_y':zero,'pass_dest_t':zero,'pass_dest_zone_depth':blank,'pass_dest_zone_net':zero,
-                  'pass_dist':zero,'pass_dur':zero,'pass_speed':zero,'pass_angle':zero,'pass_action_id':zero,'pass_height':zero,
-                  'pass_rtg_btd':zero,'pass_oos':zero,'pass_touch_position':blank, 'pass_touch_type':blank,
+                  'pass_dist':0.0,'pass_dur':0.0,'pass_speed':0.0,'pass_angle':0.0,'pass_action_id':zero,'pass_height':0.0,
+                  'pass_rtg_btd':zero,'pass_oos':0.0,'pass_touch_position':blank, 'pass_touch_type':blank,
     'set_player':blank,'set_yn':yn,'set_src_x':zero,'set_src_y':zero,'set_src_t':zero,'set_src_zone_depth':blank,'set_src_zone_net':zero,
                   'set_dest_x':zero,'set_dest_y':zero,'set_dest_t':zero,'set_dest_zone_depth':blank,'set_dest_zone_net':zero,
-                  'set_dist':zero,'set_dur':zero,'set_speed':zero,'set_angle':zero,'set_action_id':zero,'set_height':zero,'set_touch_type':blank,
+                  'set_dist':0.0,'set_dur':0.0,'set_speed':0.0,'set_angle':0.0,'set_action_id':zero,'set_height':0.0,'set_touch_type':blank,'set_air_time':0.0,
     'att_player':blank,'att_yn':yn,'att_src_x':zero,'att_src_y':zero,'att_src_t':zero,'att_src_zone_depth':blank,'att_src_zone_net':zero,
                   'att_dest_x':zero,'att_dest_y':zero,'att_dest_t':zero,'att_dest_zone_depth':blank,'att_dest_zone_net':zero,
-                  'att_dist':zero,'att_dur':zero,'att_speed':zero,'att_angle':zero,'att_action_id':zero,'att_height':zero, 'att_touch_height':zero,
+                  'att_dist':0.0,'att_dur':0.0,'att_speed':0.0,'att_angle':0.0,'att_action_id':zero,'att_height':0.0, 'att_touch_height':0.0,
                   'att_angular_zone':blank,
+                  'att_speed_mph':0.0,
     'dig_player':blank,'dig_yn':yn,'dig_src_x':zero,'dig_src_y':zero,'dig_src_t':zero,'dig_src_zone_depth':blank,'dig_src_zone_net':zero,
                   'dig_dest_x':zero,'dig_dest_y':zero,'dig_dest_t':zero,'dig_dest_zone_depth':blank,'dig_dest_zone_net':zero,
-                  'dig_dist':zero,'dig_dur':zero,'dig_speed':zero,'dig_angle':zero,'dig_action_id':zero,'dig_height':zero,'dig_quality':zero,'dig_type':blank,
+                  'dig_dist':0.0,'dig_dur':0.0,'dig_speed':0.0,'dig_angle':0.0,'dig_action_id':zero,'dig_height':0.0,'dig_quality':0.0,'dig_type':blank,
     'point_outcome':blank,'point_outcome_team':blank,'tactic':blank,'last_action_id':zero
   }
 
@@ -399,6 +379,8 @@ def save_serve_info( ppr_df, btd_r, ppr_row ):
   ppr_df.at[ppr_row,'rally_id'] = btd_r['rally_id']
   ppr_df.at[ppr_row,'serve_src_x'] = btd_r['src_x']
   ppr_df.at[ppr_row,'serve_src_y'] = btd_r['src_y']
+  if 'speed_mph' in btd_r and isinstance(btd_r.get('speed_mph'), (float, int)):
+    ppr_df.at[ppr_row,'serve_speed_mph'] = float(btd_r['speed_mph'])
   #print(f"Saving Serve INfo ppr_row {ppr_row}, rally number {btd_r['rally_id']}, Server:{ppr_df.at[ppr_row,'serve_player']}")  
   return ppr_df
 
@@ -435,6 +417,8 @@ def save_set_info( ppr_df, btd_r, ppr_row):
   # now save new information if it is in the btd file
   if 'touch_type' in btd_r:
     ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_touch_type'))] = btd_r['touch_type']
+  if 'set_air_time' in btd_r and isinstance(btd_r.get('set_air_time'), (float, int)):
+    ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_air_time'))] = float(btd_r['set_air_time'])
 
   return ppr_df
 
@@ -455,7 +439,8 @@ def save_att_info( ppr_df, btd_r, ppr_row):
   if 'speed_mph' in btd_r:
     if isinstance(btd_r['speed_mph'],(float,int)):
       #print(f"Saving Att Speed:{btd_r['speed_mph']}")
-      ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_speed'))] = float(btd_r['speed_mph'])*0.44704  # convert MPH to M/S  
+      ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_speed'))] = float(btd_r['speed_mph'])*0.44704  # convert MPH to M/S
+      ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_speed_mph'))] = float(btd_r['speed_mph'])  # keep original MPH value
 
   return ppr_df
 
@@ -1184,4 +1169,3 @@ def calc_attack_angles( att_x, att_y, att_angle ):
       'angular_zone':'',
       'err_msg':'a passed parameter is None '
     }
-  

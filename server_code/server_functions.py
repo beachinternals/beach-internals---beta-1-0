@@ -164,7 +164,7 @@ def monitor_performance(func=None, level=MONITORING_LEVEL_IMPORTANT):
     return decorator(func)
 
 
-@anvil.server.callable
+#@anvil.server.callable
 def set_monitoring_level(level: int):
   """
     Change the current monitoring level.
@@ -175,7 +175,7 @@ def set_monitoring_level(level: int):
     Returns:
         String describing the new level
     """
-  _require_internals()
+  #_require_internals()
   global CURRENT_MONITORING_LEVEL
 
   level_names = {
@@ -193,10 +193,10 @@ def set_monitoring_level(level: int):
   return f"Monitoring level set to {level}: {level_names[level]}"
 
 
-@anvil.server.callable
+#@anvil.server.callable
 def get_monitoring_level():
   """Get current monitoring level and description"""
-  _require_internals()
+  #_require_internals()
   level_names = {
     0: "OFF", 1: "CRITICAL", 2: "IMPORTANT", 3: "DETAILED", 4: "VERBOSE"
   }
@@ -1320,7 +1320,7 @@ def get_team_num(disp_player):
 
   return team+' '+number
 
-@anvil.server.callable
+#@anvil.server.callable
 def count_out_of_system(ppr_df,disp_player,action):
   #
   # out of system vector:
@@ -1329,7 +1329,7 @@ def count_out_of_system(ppr_df,disp_player,action):
   #  2 = number of attempts
   #
   #  action = 'pass', 'att', 'srv'
-  _require_login()
+  #_require_login()
 
   oos_vector = [0,0,0]
   if action == 'att':
@@ -1966,9 +1966,9 @@ def calc_point_diff( ppr_df, disp_player):
   return pts_earned_ratio
   
 
-@anvil.server.callable
+#@anvil.server.callable
 def calc_consistency_match_table( m_ppr_df, disp_player ):
-  _require_login()
+  #_require_login()
   # calculate hte consistency table for the during match parameters
   # create the output dataframe - This is speficif to the report
   df_dict = {' ':['All','1a','1b','2a','2b','3a','3b','Mean','St Dev','Percentile'],
@@ -2119,9 +2119,9 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
     
   return cons_table, no_data
 
-@anvil.server.callable
+#@anvil.server.callable
 def calc_consistency_s2s_table( m_ppr_df, disp_player ):
-  _require_login()
+  #_require_login()
   # now move on to consistency by set
   '''
     - Create a list of video'id's for this player
