@@ -11,6 +11,7 @@ import json
 import traceback
 import pandas as pd
 import io
+import re
 
 # ============================================================================
 # LOGGING IMPORTS
