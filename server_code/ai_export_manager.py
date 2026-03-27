@@ -568,7 +568,7 @@ def ai_export_mgr_generate_background(user=None):
 #--------------------------------------------------------------
 # Direct callable function (for manual/immediate exports)
 #--------------------------------------------------------------
-@anvil.server.callable
+#@anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def ai_export_generate(league, team, date_start=None, date_end=None, player_filter=None, player_data_map=None, user=None, datasets_included=None, de_identified=False):
   """
@@ -585,7 +585,7 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
     Returns:
         Dictionary with status and list of generated files
     """
-  _require_own_team(team)
+  #_require_own_team(team)
   _validate_league_params(league=league, team=team)
 
   try:
