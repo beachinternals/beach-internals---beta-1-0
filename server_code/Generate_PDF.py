@@ -55,7 +55,7 @@ def _require_own_team(team):
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
-@anvil.server.callable
+#@anvil.server.callable
 def generate_pdf_report(rpt_form, report_id):
   """
     Generate a PDF report and return it as a BlobMedia object.
@@ -65,7 +65,7 @@ def generate_pdf_report(rpt_form, report_id):
     Returns:
         dict: {'pdf': BlobMedia, 'json_file_name': str or None, 'error': str or None}
     """
-  _require_login()
+  #_require_login()
 
   # Get report data row
   rpt_data_row = app_tables.report_data.get(report_id=report_id)
