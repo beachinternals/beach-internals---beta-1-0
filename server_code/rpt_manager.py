@@ -59,8 +59,9 @@ from report_generate_and_store import *
 @anvil.server.callable
 def rpt_mgr_generate():
   _require_internals()
-  # Client callable function to call the background function to generate reports
-  anvil.server.launch_background_task('rpt_mgr_generate_background')
+  # Pass current user to background task so PDFRenderer has a session
+  user = anvil.users.get_user()
+  anvil.server.launch_background_task('rpt_mgr_generate_background', user)
   return
 
 #--------------------------------------------------------------
@@ -70,7 +71,10 @@ def rpt_mgr_generate():
 #---------------------------------------------------------------
 @anvil.server.background_task
 @monitor_performance(level=MONITORING_LEVEL_CRITICAL)
-def rpt_mgr_generate_background():
+def rpt_mgr_generate_background(user=None):
+  # Establish user session so PDFRenderer works in background context
+  if user:
+    anvil.users.force_login(user)
   # Generate reports from the report mgt data file
   now = datetime.now()
   email_text = f'Report Manager Started at {now} \n \n'

@@ -55,7 +55,7 @@ def _require_own_team(team):
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
 
-#@anvil.server.callable
+@anvil.server.callable
 def generate_pdf_report(rpt_form, report_id):
   """
     Generate a PDF report and return it as a BlobMedia object.
@@ -65,7 +65,8 @@ def generate_pdf_report(rpt_form, report_id):
     Returns:
         dict: {'pdf': BlobMedia, 'json_file_name': str or None, 'error': str or None}
     """
-  #_require_login()
+  # Note: No auth check here — called from both browser and background tasks.
+  # Auth is enforced at the entry points (rpt_mgr_generate, pdf_button_click).
 
   # Get report data row
   rpt_data_row = app_tables.report_data.get(report_id=report_id)
@@ -241,7 +242,7 @@ def strip_urls_safe(obj, path="root"):
 
   else:
     return obj
-
+    
 # -----------------------------------------------------------------------------
 # Generate JSON from report_data_row
 # -----------------------------------------------------------------------------
@@ -418,12 +419,12 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
     if not include_nulls:
       log_debug("Stripping nulls from report_data")
       report_data = strip_nulls_safe(report_data)
-
+      
     # Optionally strip URLs
     if not include_urls:
       log_debug("Stripping URLs from report_data")
       report_data = strip_urls_safe(report_data)
-
+      
     # Convert to JSON media
     json_str = json.dumps(report_data, indent=2, default=str)
     json_bytes = json_str.encode('utf-8')
@@ -434,6 +435,7 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
   except Exception as e:
     log_critical(f"CRITICAL ERROR in generate_json_report: {e}")
     return (None, str(e))  # ERROR: return None and error message
+    
 
 
 
@@ -442,8 +444,7 @@ def generate_json_report(rpt_form, report_id, include_images=False, include_urls
 
 
 
-
-
+  
 
 
 
@@ -519,25 +520,25 @@ def send_pdf_email(email, email_message, pdf ):
 #----------------------------------------------------------------------
 @anvil.server.callable
 def create_pdf_reports(fnct_name, rpt_form, disp_league, disp_gender, disp_year, 
-                       disp_team, disp_pair, disp_player,
-                       comp_l1_checked, disp_comp_l1,
-                       comp_l2_checked, disp_comp_l2,
-                       comp_l3_checked, disp_comp_l3,
-                       date_checked, disp_start_date, disp_end_date,
-                       scout, explain_text
-                      ):
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    ):
   _require_own_team(disp_team)
 
   # call report function
   #print(f'Calling Function:{fnct_name}')
   table_data1, table_data2, table_data3, table_data4, table_data5, table_data6, table_data7, table_data8 = anvil.server.call(fnct_name, disp_league, disp_gender, disp_year, 
-                                                                                                                             disp_team, disp_pair, disp_player,
-                                                                                                                             comp_l1_checked, disp_comp_l1,
-                                                                                                                             comp_l2_checked, disp_comp_l2,
-                                                                                                                             comp_l3_checked, disp_comp_l3,
-                                                                                                                             date_checked, disp_start_date, disp_end_date,
-                                                                                                                             scout, explain_text
-                                                                                                                            )
+                    disp_team, disp_pair, disp_player,
+                    comp_l1_checked, disp_comp_l1,
+                    comp_l2_checked, disp_comp_l2,
+                    comp_l3_checked, disp_comp_l3,
+                    date_checked, disp_start_date, disp_end_date,
+                    scout, explain_text
+                    )
 
   # calculate the query text
   filter_text = f"""
