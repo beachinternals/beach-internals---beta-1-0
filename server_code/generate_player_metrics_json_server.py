@@ -567,7 +567,10 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
         'value': float(metric_value) if isinstance(metric_value, (int, float, np.number)) else metric_value,
         'metric_name': metric_row['metric_name'],
         'parent_metric': metric_row['parent_metric'] if pd.notna(metric_row.get('parent_metric')) else None,
-        'video_links': video_links
+        'video_links': video_links,
+        'attempts': attempts_value,
+        'sufficient_data': not value_suppressed,
+        'min_attempts': min_att
       }
 
       if not value_suppressed:

@@ -698,11 +698,49 @@ def generate_coach_view_sections(metrics_by_category, metric_dict_df):
 
         md.append(f"## {section_title}\n")
 
+        # Check if any metric in this section has video links
+        section_has_video = any(
+          metric_info.get('video_links', '')
+          for _, metric_info in sort_metrics(section_metrics)
+        )
+
+        if section_has_video:
+          md.append("| Metric | Value | n | Plays |")
+          md.append("| :--- | :--- | :--- | :--- |")
+        else:
+          md.append("| Metric | Value | n |")
+          md.append("| :--- | :--- | :--- |")
+
         for metric_id, metric_info in sort_metrics(section_metrics):
-            # Only show metrics with sufficient data OR show suppressed ones
-            # with their reason — both are useful to AI
-            line = format_metric_line(metric_id, metric_info, metric_dict_df)
-            md.append(line)
+          metric_name = metric_info.get('metric_name', metric_id)
+          value       = metric_info.get('value')
+          attempts    = metric_info.get('attempts')
+          sufficient  = metric_info.get('sufficient_data', True)
+          min_att     = metric_info.get('min_attempts')
+          video_links = metric_info.get('video_links', '')
+
+          # Format value
+          if not sufficient or value is None:
+            if attempts is not None and min_att is not None:
+              value_str = f"insufficient data (n={attempts}, min={min_att})"
+            else:
+              value_str = "insufficient data"
+          elif isinstance(value, float):
+            if abs(value) < 0.001 and value != 0:
+              value_str = f"{value:.4f}".rstrip('0').rstrip('.')
+            elif abs(value) < 1:
+              value_str = f"{value:.3f}".rstrip('0').rstrip('.')
+            else:
+              value_str = f"{value:.2f}".rstrip('0').rstrip('.')
+          else:
+            value_str = str(value)
+
+          att_str = str(attempts) if attempts is not None else "-"
+
+          if section_has_video:
+            md.append(f"| {metric_name} | {value_str} | {att_str} | {video_links} |")
+          else:
+            md.append(f"| {metric_name} | {value_str} | {att_str} |")
 
         md.append("")  # blank line between sections
 
