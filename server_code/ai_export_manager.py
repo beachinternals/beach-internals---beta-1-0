@@ -1224,7 +1224,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
 
         # Apply days_before filter if specified (e.g. last 7 days)
         if days_before:
-          from datetime import datetime, timedelta
+          #from datetime import datetime, timedelta
           cutoff = datetime.now() - timedelta(days=int(days_before))
           ds_filters['start_date'] = cutoff.strftime('%Y-%m-%d')
           ds_filters.pop('end_date', None)  # remove end_date so we go to today
@@ -2071,7 +2071,7 @@ def force_index_player_files(folder_path):
   for file in current_folder.list_files():
     # 1. Update the description (This is a metadata 'touch')
     # We add a timestamp so Google sees a 'change'
-    import datetime
+    #import datetime
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     file.description = f"Indexed for NotebookLM at {timestamp}"
 
