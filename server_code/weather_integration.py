@@ -189,12 +189,14 @@ def fetch_weather_for_match(venue_name, match_date, match_time):
     log_debug(f"Found venue: {venue_name} at lat={lat}, lon={lon}")
 
     # 3. Check if weather already exists
+    # Use search() instead of get() to safely handle any duplicate rows
     fetch_hour = get_fetch_hour(match_time)
-    existing_weather = app_tables.weather_data.get(
+    existing_list = list(app_tables.weather_data.search(
       venue_name=venue_name,
       weather_date=match_date,
       time_range=match_time
-    )
+    ))
+    existing_weather = existing_list[0] if existing_list else None
 
     if existing_weather:
       log_info(f"Weather data already exists for {venue_name} on {match_date} at {match_time} (cached)")
@@ -364,17 +366,31 @@ def get_or_create_weather(venue_name, match_date, match_time):
   log_debug(f"get_or_create_weather: {venue_name}, {match_date}, {match_time}")
 
   # Check if weather already exists
-  existing = app_tables.weather_data.get(
+  # NOTE: Use search() instead of get() to safely handle duplicate rows.
+  # If duplicates exist, .get() crashes with "More than one row matched".
+  # .search() returns all matches; we just take the first one.
+  existing_rows = list(app_tables.weather_data.search(
     venue_name=venue_name,
     weather_date=match_date,
     time_range=match_time
-  )
+  ))
+
+  if len(existing_rows) > 1:
+    # Duplicates found - log a warning and use the first one
+    log_error(f"WARNING: {len(existing_rows)} duplicate weather records found for "
+              f"{venue_name} / {match_date} / {match_time}. Using first record. "
+              f"Consider running cleanup to remove duplicates.")
+    existing = existing_rows[0]
+  elif len(existing_rows) == 1:
+    existing = existing_rows[0]
+  else:
+    existing = None
 
   if existing:
     log_debug(f"Found existing weather record: {existing.get_id()}")
     return existing.get_id()
 
-    # Fetch new weather data
+  # Fetch new weather data
   log_info(f"No existing weather found, fetching new data for {venue_name} on {match_date}")
   result = fetch_weather_for_match(venue_name, match_date, match_time)
 
@@ -565,6 +581,75 @@ def update_ppr_weather_batch(league, year):
 # ============================================================================
 # ADMIN/TESTING FUNCTIONS
 # ============================================================================
+
+@anvil.server.callable
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
+def cleanup_duplicate_weather_records():
+  """
+    Find and remove duplicate weather records from the weather_data table.
+
+    A duplicate = more than one row with the same (venue_name, weather_date, time_range).
+    Keeps the FIRST record found, deletes the rest.
+
+    Run this once from the admin page to clean up the database.
+
+    Returns:
+        dict with keys:
+            'success': bool
+            'duplicates_found': int   - number of duplicate groups
+            'records_deleted': int    - total rows deleted
+            'details': list of str    - one line per duplicate group
+  """
+  log_info("Starting cleanup of duplicate weather records...")
+
+  stats = {
+    'success': True,
+    'duplicates_found': 0,
+    'records_deleted': 0,
+    'details': []
+  }
+
+  try:
+    all_records = list(app_tables.weather_data.search())
+    log_info(f"Total weather records in table: {len(all_records)}")
+
+    # Group by the three fields that should be unique
+    groups = {}
+    for row in all_records:
+      key = (row['venue_name'], row['weather_date'], row['time_range'])
+      if key not in groups:
+        groups[key] = []
+      groups[key].append(row)
+
+    # Delete all but the first in each group that has duplicates
+    for key, rows in groups.items():
+      if len(rows) > 1:
+        venue_name, weather_date, time_range = key
+        stats['duplicates_found'] += 1
+        to_delete = rows[1:]  # keep rows[0], delete the rest
+        msg = (f"Duplicate: {venue_name} / {weather_date} / {time_range} "
+               f"- keeping 1, deleting {len(to_delete)}")
+        log_error(msg)
+        stats['details'].append(msg)
+        for dup_row in to_delete:
+          dup_row.delete()
+          stats['records_deleted'] += 1
+
+    if stats['duplicates_found'] == 0:
+      log_info("No duplicate weather records found - table is clean")
+      stats['details'].append("No duplicates found - table is clean")
+    else:
+      log_info(f"Cleanup complete: {stats['duplicates_found']} duplicate groups, "
+               f"{stats['records_deleted']} records deleted")
+
+  except Exception as e:
+    log_error(f"Error during duplicate cleanup: {str(e)}")
+    log_error(traceback.format_exc())
+    stats['success'] = False
+    stats['details'].append(f"Error: {str(e)}")
+
+  return stats
+
 
 @anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
