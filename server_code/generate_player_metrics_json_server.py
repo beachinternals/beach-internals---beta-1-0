@@ -472,8 +472,8 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
 
     total_calculated += 1
 
-    if total_calculated % 50 == 0:
-      log_info(f"Progress: {total_calculated}/{len(metric_dict)} metrics calculated...")
+    #if total_calculated % 50 == 0:
+    #  log_info(f"Progress: {total_calculated}/{len(metric_dict)} metrics calculated...")
 
     try:
       # ------------------------------------------------------------------

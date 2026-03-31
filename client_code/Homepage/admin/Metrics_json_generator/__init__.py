@@ -368,7 +368,7 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
   @anvil.handle("ai_export", "click")
   def ai_export_click(self, **event_args):
     """This method is called when the button is clicked"""
-    with anvil.Notification("Importing metrics... this may take a minute"):
+    with anvil.Notification("Starting AI Export Manager... this may take a minute"):
       result = anvil.server.call('ai_export_mgr_generate')
 
     pass

@@ -237,7 +237,7 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
   metric_name = metric_row['metric_name']
   function_name = metric_row['function_name']
 
-  log_debug(f"Calculating metric: {metric_id} ({metric_name})")
+  #log_debug(f"Calculating metric: {metric_id} ({metric_name})")
 
   if not function_name or function_name.strip() == '':
     log_debug(f"No function_name for metric {metric_id}, skipping")
