@@ -404,11 +404,11 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
   # Filter based on play_type
   disp_player = disp_player.strip()
   if play_type == "att":
-    ppr_df = ppr_df[ppr_df['att_player'].str.strip() == disp_player]
+    ppr_df = ppr_df[ (ppr_df['att_player'].str.strip() == disp_player) & (ppr_df['att_yn'] == 'Y') ]
   elif play_type == "srv":
-    ppr_df = ppr_df[ppr_df['serve_player'].str.strip() == disp_player]
+    ppr_df = ppr_df[ (ppr_df['serve_player'].str.strip() == disp_player) & (ppr_df['att_yn'] == 'Y') ]
   elif play_type == "pass":
-    ppr_df = ppr_df[ppr_df['pass_player'].str.strip() == disp_player]
+    ppr_df = ppr_df[ (ppr_df['pass_player'].str.strip() == disp_player ) & (ppr_df['att_yn'] == 'Y') ]
   elif play_type == "both":
     ppr_df = ppr_df[ (ppr_df['pass_player'].str.strip() == disp_player) & (ppr_df['att_player'].str.strip() == disp_player) & (ppr_df['att_yn'] == 'Y')]
   else:
@@ -506,9 +506,14 @@ def calc_player_eso_obj( ppr_df, disp_player ):
       'eso_string': ''
     }
 
-  eso_fbk = ppr_df[ ppr_df['point_outcome'] == 'FBK'].shape[0]
-  eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( ppr_df['point_outcome_team'].str.contains(disp_player) ) ].shape[0]
+  eso_fbk = ppr_df[ (ppr_df['point_outcome'] == 'FBK') & ( ppr_df['att_player'] == disp_player) ].shape[0]
+  eso_fb_att =  ppr_df[ ((ppr_df['point_outcome'] == 'FBK') | (ppr_df['point_outcome'] == 'FBE') ) &
+                         ( ppr_df['att_player'] == disp_player) ].shape[0]
+  eso_tk = ppr_df[ (ppr_df['point_outcome'] == 'TK') & ( ppr_df['point_outcome_team'].str.contains(disp_player) ) ].shape[0]/2
+  eso_tran_att = ppr_df[ ((ppr_df['point_outcome'] == 'TK') | (ppr_df['point_outcome'] == 'TK') ) & 
+                         ( ppr_df['point_outcome_team'].str.contains(disp_player) ) ].shape[0]/2
 
+  eso_attempts = eso_fb_att + eso_tran_att
   eso = round(float((eso_fbk + eso_tk) / eso_attempts), 3)
 
   return {
@@ -791,16 +796,19 @@ def calc_trans_obj( ppr_df, disp_player, flag ):
   #                 ( ppr_df['player_b2'].str.strip() == disp_player.strip() ) ) ]
 
   # if the flag is passes at srv or receive, limit the data
-  # for transition calculations, we need to take out the service errors and aces
-  ppr_df = ppr_df[ (ppr_df['point_outcome'] != 'TSA')]
-  ppr_df = ppr_df[ (ppr_df['point_outcome'] != 'TSE') ]
-  #print(f"ppr_df without service aces and errors {ppr_df.shape[0]} rows")
+
   if flag == 'srv':
     ppr_df = ppr_df[ ppr_df['serve_player'].str.strip() == disp_player.strip()]
   elif flag == 'rcv':
     ppr_df = ppr_df[ ppr_df['pass_player'].str.strip() == disp_player.strip()]
   elif flag == 'att':
     ppr_df = ppr_df[ ppr_df['att_player'].str.strip() == disp_player.strip()]
+  else:
+    ppr_df = ppr_df[ (ppr_df['player_a1'].str.strip() == disp_player.strip()) | 
+                     (ppr_df['player_a2'].str.strip() == disp_player.strip()) | 
+                     (ppr_df['player_b1'].str.strip() == disp_player.strip()) | 
+                     (ppr_df['player_b2'].str.strip() == disp_player.strip()) 
+      ]
 
   # need to record the total points
   all_total_pts = ppr_df.shape[0]
