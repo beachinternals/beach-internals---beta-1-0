@@ -2041,10 +2041,10 @@ def calc_consistency_match_table( m_ppr_df, disp_player ):
 
       # calculate fbhe 
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
-      fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
-      cons_table.at[index,'FBHE'] = fbhe_vector[0] if fbhe_vector[3] != 0 else None # fbhe
-      fb_vector[index] = fbhe_vector[0]
-      cons_table.at[index,'Att'] = fbhe_vector[3]  # attack attempts
+      fbhe_result = fbhe_obj( tmp_df, disp_player, 'att', True )
+      cons_table.at[index,'FBHE'] = fbhe_result.fbhe if fbhe_result.attempts != 0 else None # fbhe
+      fb_vector[index] = fbhe_result.fbhe
+      cons_table.at[index,'Att'] = fbhe_result.attempts  # attack attempts
       cons_table.at[index,'Points'] = tmp_df.shape[0]
 
       # calcualte tcr
@@ -2182,9 +2182,9 @@ def calc_consistency_s2s_table( m_ppr_df, disp_player ):
         
       # calculate fbhe 
       #print(f"Calling fbhe:{m_ppr_df.shape}, {disp_player}, index ")
-      fbhe_vector = fbhe( tmp_df, disp_player, 'att', True )
-      cons2_table.at[index,'Att'] = float(fbhe_vector[3])  # attack attempts
-      cons2_table.at[index,'FBHE'] = float(fbhe_vector[0]) if fbhe_vector[3] != 0 else None # fbhe
+      fbhe_result = fbhe_obj( tmp_df, disp_player, 'att', True )
+      cons2_table.at[index,'Att'] = float(fbhe_result.attempts)  # attack attempts
+      cons2_table.at[index,'FBHE'] = float(fbhe_result.fbhe) if fbhe_result.attempts != 0 else None # fbhe
       cons2_table.at[index,'FBHE'] = float('{:.3}'.format(float(cons2_table.at[index,'FBHE'])))
       cons2_table.at[index,'Points'] = tmp_df.shape[0]
       stat_table.at[index,'FBHE'] = cons2_table.at[index,'FBHE']
