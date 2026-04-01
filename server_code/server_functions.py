@@ -399,7 +399,7 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
     (ppr_df['player_a2'] == disp_player ) | 
     (ppr_df['player_b1'] == disp_player ) | 
     (ppr_df['player_b2'] == disp_player ) ]
-  all_points = len(ppr_df)
+
 
   # Filter based on play_type
   disp_player = disp_player.strip()
@@ -414,6 +414,7 @@ def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str,
   else:
     raise ValueError("Invalid play_type. Must be 'att', 'srv', or 'pass'.")
 
+  all_points = len(ppr_df)
   if ppr_df.empty:
     return FBHEResult(0.0, 0, 0, 0, 0.0, " No Data Available ", 0)
 
