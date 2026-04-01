@@ -333,7 +333,7 @@ def calc_serve_pct_obj(ppr_df, player_name):
   from types import SimpleNamespace
 
   # Filter for player's serves
-  serves = ppr_df[ ppr_df['serve_player'] == player_name ].copy()
+  serves = ppr_df[ ppr_df['serve_player'] == player_name.strip() ].copy()
 
   total_serves = len(serves)
 
