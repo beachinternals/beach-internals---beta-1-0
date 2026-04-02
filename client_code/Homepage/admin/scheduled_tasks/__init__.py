@@ -160,3 +160,19 @@ class scheduled_tasks(scheduled_tasksTemplate):
     return_value = anvil.server.call('calc_league_ppr', disp_league, disp_gender, disp_year)
     pass
 
+  @handle("outlined_button_6", "click")
+  def outlined_button_6_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index('|')
+    disp_league = league_value[:str_loc-1].strip()
+    league_value = league_value[str_loc+1:]
+    str_loc = league_value.index('|')
+    disp_gender = league_value[:str_loc-1].strip()
+    disp_year = league_value[str_loc+1:].strip()
+    with anvil.Notification("Starting Weather Backfill... this may take a minute"):
+      # Step 1: Dry run first - see what would be updated, no changes made
+      return_value = anvil.server.call('backfill_weather_for_old_files_background',disp_league, disp_gender, disp_year)
+    pass
+

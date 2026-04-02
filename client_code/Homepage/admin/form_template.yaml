@@ -46,7 +46,7 @@ components_by_slot:
       - event_bindings: {}
         layout_properties: {grid_position: 'SVHWXN,YORXIR'}
         name: link_2
-        properties: {text: 'Mertic JSON '}
+        properties: {text: AI Export}
         type: Link
       - event_bindings: {}
         layout_properties: {grid_position: 'CBLWSK,DHEBLE'}

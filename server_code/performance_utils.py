@@ -282,6 +282,11 @@ def generate_night_processing_summary(send_email=True, recipient_email=None):
   if send_email and recipient_email:
     send_summary_email(stats, recipient_email)
 
+  # Purge logs now that summary is safely emailed
+  purge_stats = purge_processed_logs(cutoff_time)
+  stats["purge_stats"] = purge_stats
+  log_info(f"Log purge complete: {purge_stats}")
+
   return stats
 
 
@@ -442,3 +447,63 @@ def test_performance_summary():
     print(f"  {key}: {value}")
 
   return stats
+
+# ============================================================================
+# LOG PURGE
+# ============================================================================
+def purge_processed_logs(cutoff_time):
+  """
+  Delete performance and error log records older than cutoff_time.
+  Called automatically at the end of generate_night_processing_summary,
+  AFTER the email summary has been sent so no data is lost.
+
+  Args:
+      cutoff_time: datetime - delete records with timestamp BEFORE this time
+
+  Returns:
+      dict: { performance_log_deleted, error_log_deleted, errors }
+  """
+  result = {
+    'performance_log_deleted': 0,
+    'error_log_deleted': 0,
+    'errors': []
+  }
+
+  # --- Purge performance_log ---
+  try:
+    perf_rows = list(app_tables.performance_log.search())
+    old_perf = [r for r in perf_rows if r['timestamp'] and r['timestamp'] < cutoff_time]
+    for row in old_perf:
+      row.delete()
+      result['performance_log_deleted'] += 1
+    log_info(f"Purged {result['performance_log_deleted']} performance_log records older than {cutoff_time}")
+  except Exception as e:
+    log_error(f"Error purging performance_log: {e}")
+    result['errors'].append(f"performance_log: {str(e)}")
+
+  # --- Purge error_log ---
+  try:
+    err_rows = list(app_tables.error_log.search())
+    old_errs = [r for r in err_rows if r['timestamp'] and r['timestamp'] < cutoff_time]
+    for row in old_errs:
+      row.delete()
+      result['error_log_deleted'] += 1
+    log_info(f"Purged {result['error_log_deleted']} error_log records older than {cutoff_time}")
+  except Exception as e:
+    log_error(f"Error purging error_log: {e}")
+    result['errors'].append(f"error_log: {str(e)}")
+
+  return result
+
+
+@anvil.server.callable
+def test_purge_logs():
+  """
+  Test the log purge manually from the Anvil console without running
+  the full nightly summary. Useful for a one-time cleanup of old records.
+  """
+  cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
+  print(f"Purging records older than: {cutoff_time}")
+  result = purge_processed_logs(cutoff_time)
+  print(f"Purge result: {result}")
+  return result
