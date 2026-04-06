@@ -1325,6 +1325,55 @@ db_schema:
       type: number
     server: full
     title: subscriptions
+  teams:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      client_hidden: false
+      name: team
+      type: string
+    - admin_ui: {order: 1, width: 200}
+      client_hidden: false
+      name: team_full_name
+      type: string
+    - admin_ui: {order: 2, width: 200}
+      client_hidden: false
+      name: team_uuid
+      type: string
+    - admin_ui: {order: 3, width: 200}
+      client_hidden: false
+      name: admin_email
+      type: string
+    - admin_ui: {order: 4, width: 200}
+      client_hidden: false
+      name: credits_total
+      type: number
+    - admin_ui: {order: 5, width: 200}
+      client_hidden: false
+      name: credits_used
+      type: number
+    - admin_ui: {order: 6, width: 200}
+      client_hidden: false
+      name: 'logo_gdrive_id  '
+      type: string
+    - admin_ui: {order: 7, width: 200}
+      client_hidden: false
+      name: primary_color
+      type: string
+    - admin_ui: {order: 8, width: 200}
+      client_hidden: false
+      name: is_internals
+      type: bool
+    - admin_ui: {order: 9, width: 200}
+      client_hidden: false
+      name: active
+      type: bool
+    - admin_ui: {order: 10, width: 200}
+      client_hidden: false
+      name: created_at
+      type: datetime
+    server: full
+    title: teams
   users:
     client: none
     columns:
