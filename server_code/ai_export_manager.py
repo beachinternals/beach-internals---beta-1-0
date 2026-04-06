@@ -1671,36 +1671,51 @@ def build_markdown_content(player, team, league, sessions_data, date_start=None,
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def save_markdown_to_drive_updated(filename, content, league, team, player_data=None):
-  """Simple version - uses existing write_to_nested_folder."""
+  """Save combined markdown to ai_player_files table instead of Google Drive"""
   try:
-    from server_functions import write_to_nested_folder
+    from datetime import timezone
 
-    # Build folder path
-    if player_data:
-      league_str = f"{player_data['league']}{player_data['gender']}{player_data['year']}"
-    else:
-      league_str = league
+    # Build player_uuid from filename
+    # Filename format: Player_PLYR-2878eccb_MARK_W_2026_combined.md
+    parts = filename.replace('_combined.md', '').split('_')
+    player_uuid = parts[1] if len(parts) > 1 else None
 
-    folder_path = [league_str, team, 'PlayerAI']
+    if not player_uuid:
+      log_error(f"Could not extract player_uuid from filename: {filename}")
+      return None
 
-    # Create media with text/markdown MIME type
+    # Create media object
     media = anvil.BlobMedia('text/markdown', content.encode('utf-8'))
 
-    # Use your existing function
-    result = write_to_nested_folder(folder_path, filename, media)
-
-    log_info(f"✓ File saved: {filename}")
+    existing = app_tables.ai_player_files.get(
+      player_uuid=player_uuid,
+      team=team          # ← match on BOTH player AND team
+    )
+    if existing:
+      existing['combined_file'] = media
+      existing['updated_at'] = datetime.now(timezone.utc)
+    else:
+      app_tables.ai_player_files.add_row(
+        player_uuid=player_uuid,
+        team=team,         # ← save which team generated this
+        combined_file=media,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
+      )
+      log_info(f"Created ai_player_files: {player_uuid}")
 
     return {
-      'id': 'saved_to_drive',
+      'id': player_uuid,
       'url': None,
-      'path': ' / '.join(folder_path),
-      'result': str(result)
+      'path': 'ai_player_files table',
+      'result': 'saved to table'
     }
 
   except Exception as e:
-    log_error(f"Error: {str(e)}")
+    log_error(f"Error saving to ai_player_files: {str(e)}")
     return None
+
+
 
 
 
