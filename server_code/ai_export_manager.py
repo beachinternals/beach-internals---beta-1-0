@@ -1671,12 +1671,12 @@ def build_markdown_content(player, team, league, sessions_data, date_start=None,
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def save_markdown_to_drive_updated(filename, content, league, team, player_data=None):
-  """Save combined markdown to ai_player_files table instead of Google Drive"""
+  """Save combined markdown to ai_player_files table - one row per player+team"""
   try:
     from datetime import timezone
 
-    # Build player_uuid from filename
-    # Filename format: Player_PLYR-2878eccb_MARK_W_2026_combined.md
+    # Extract player_uuid from filename
+    # Format: Player_PLYR-2878eccb_MARK_W_2026_combined.md
     parts = filename.replace('_combined.md', '').split('_')
     player_uuid = parts[1] if len(parts) > 1 else None
 
@@ -1687,22 +1687,24 @@ def save_markdown_to_drive_updated(filename, content, league, team, player_data=
     # Create media object
     media = anvil.BlobMedia('text/markdown', content.encode('utf-8'))
 
+    # One row per player_uuid + team — always overwrite
     existing = app_tables.ai_player_files.get(
       player_uuid=player_uuid,
-      team=team          # ← match on BOTH player AND team
+      team=team
     )
     if existing:
       existing['combined_file'] = media
       existing['updated_at'] = datetime.now(timezone.utc)
+      log_info(f"Updated ai_player_files: {player_uuid} / {team}")
     else:
       app_tables.ai_player_files.add_row(
         player_uuid=player_uuid,
-        team=team,         # ← save which team generated this
+        team=team,
         combined_file=media,
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc)
       )
-      log_info(f"Created ai_player_files: {player_uuid}")
+      log_info(f"Created ai_player_files: {player_uuid} / {team}")
 
     return {
       'id': player_uuid,
@@ -1714,6 +1716,7 @@ def save_markdown_to_drive_updated(filename, content, league, team, player_data=
   except Exception as e:
     log_error(f"Error saving to ai_player_files: {str(e)}")
     return None
+    
 
 
 
