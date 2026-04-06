@@ -118,6 +118,28 @@ db_schema:
       type: string
     server: full
     title: ai_export_mgr
+  ai_player_files:
+    client: none
+    columns:
+    - admin_ui: {order: 0, width: 200}
+      client_hidden: false
+      name: player
+      target: master_player
+      type: link_single
+    - admin_ui: {order: 1, width: 200}
+      client_hidden: false
+      name: 'combined_file '
+      type: media
+    - admin_ui: {order: 2, width: 200}
+      client_hidden: false
+      name: created_at
+      type: datetime
+    - admin_ui: {order: 3, width: 200}
+      client_hidden: false
+      name: updated_at
+      type: datetime
+    server: full
+    title: ai_player_files
   ai_prompt_templates:
     client: none
     columns:

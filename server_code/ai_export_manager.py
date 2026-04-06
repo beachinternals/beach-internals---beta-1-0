@@ -2008,33 +2008,55 @@ def process_export_job_markdown(export_row):
         )
 
       if result and result['media_obj']:
-        # Upload to Google Drive
-        log_info(f"Uploading to Drive: {result['filename']}")
-        upload_result = write_to_nested_folder_with_sharing(
-          output_folder,
-          result['filename'],
-          result['media_obj']
+        # Get player_uuid from master_player
+        master_row = app_tables.master_player.get(
+          league=league,
+          gender=gender,
+          year=year,
+          team=player_team,
+          number=int(player_number)
         )
 
-        # Count words
-        md_content = result['media_obj'].get_bytes().decode('utf-8')
-        word_count = len(md_content.split())
+        if master_row and master_row['player_uuid']:
+          player_uuid = master_row['player_uuid']
+        else:
+          # Fallback - generate one and save it
+          import uuid
+          player_uuid = f"PLYR-{str(uuid.uuid4())[:8]}"
+          if master_row:
+            master_row['player_uuid'] = player_uuid
+          log_info(f"Generated new uuid for {player_name}: {player_uuid}")
 
-        # Track file info (matches your existing format from CSV)
+        # Save to ai_player_files table
+        from datetime import timezone
+        existing = app_tables.ai_player_files.get(player_uuid=player_uuid)
+        if existing:
+          existing['combined_file'] = result['media_obj']
+          existing['updated_at'] = datetime.now(timezone.utc)
+          log_info(f"Updated ai_player_files: {player_uuid}")
+        else:
+          app_tables.ai_player_files.add_row(
+            player_uuid=player_uuid,
+            combined_file=result['media_obj'],
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
+          )
+          log_info(f"Created ai_player_files: {player_uuid}")
+
+        # Keep file_info for result tracking
         file_info = {
           'player': player_name,
-          'filename': result['filename'],
-          'file_id': 'saved_to_drive',
+          'filename': f"{player_uuid}_combined.md",
+          'file_id': player_uuid,
           'file_url': None,
-          'path': ' / '.join(output_folder),
+          'path': 'ai_player_files table',
           'sessions_count': result['summary']['total_sets_analyzed'],
-          'word_count': word_count
+          'word_count': len(result['media_obj'].get_bytes().decode('utf-8').split())
         }
 
         file_list.append(file_info)
         files_generated += 1
-
-        log_info(f"✓ Generated: {result['filename']} ({word_count} words)")
+        log_info(f"✓ Saved: {player_name} as {player_uuid}")
 
       else:
         log_error(f"Failed to generate Markdown for {player_name}")
