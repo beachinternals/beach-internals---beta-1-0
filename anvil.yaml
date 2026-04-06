@@ -460,6 +460,22 @@ db_schema:
     - admin_ui: {order: 6.25, width: 200}
       name: player_uuid
       type: string
+    - admin_ui: {order: 6.75, width: 200}
+      client_hidden: false
+      name: handedness
+      type: string
+    - admin_ui: {order: 6.875, width: 200}
+      client_hidden: false
+      name: primary_role
+      type: string
+    - admin_ui: {order: 6.9375, width: 200}
+      client_hidden: false
+      name: height_cm
+      type: number
+    - admin_ui: {order: 6.96875, width: 200}
+      client_hidden: false
+      name: notes
+      type: string
     server: full
     title: master_player
   metric_correlation_def:
