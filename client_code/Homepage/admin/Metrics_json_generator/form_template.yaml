@@ -63,6 +63,11 @@ components_by_slot:
         name: causual_button
         properties: {role: outlined-button, text: Causal Correlations}
         type: Button
+      - event_bindings: {}
+        layout_properties: {grid_position: 'LNAXBL,MDMGRQ'}
+        name: outlined_button_2
+        properties: {role: outlined-button, text: Download Metrics Dictionary Markdown}
+        type: Button
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
       properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40}', role: outlined-card}

@@ -404,3 +404,10 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
     result = anvil.server.call('launch_metric_correlations')
     pass
 
+  @anvil.handle("outlined_button_2", "click")
+  def outlined_button_2_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    md_media = anvil.server.call('generate_slim_metric_dictionary_md')
+    anvil.media.download(md_media)
+    pass
+

@@ -202,3 +202,34 @@ def cleanup_metric_dictionary_quotes():
     'success': True,
     'updated': updated_count
   }
+
+
+@anvil.server.callable
+def generate_slim_metric_dictionary_md():
+  """
+    Converts the metric_dictionary Anvil table into a slimmed-down Markdown 
+    file optimized for AI context caching.
+    """
+  # Define columns critical for AI logic
+  cols_to_include = [
+    'metric_id', 'metric_name', 'coach_view', 
+    'coach_speak_elite', 'coach_speak_good', 
+    'coach_speak_average', 'coach_speak_poor'
+  ]
+
+  # Header for Markdown Table
+  md_output = "| " + " | ".join(cols_to_include) + " |\n"
+  md_output += "| " + " | ".join(["---"] * len(cols_to_include)) + " |\n"
+
+  # Rows
+  for row in app_tables.metric_dictionary.search():
+    row_data = []
+    for col in cols_to_include:
+      val = str(row[col]) if row[col] is not None else ""
+      # Sanitize for MD table (remove pipes and newlines)
+      val = val.replace("|", "\\|").replace("\n", " ")
+      row_data.append(val)
+    md_output += "| " + " | ".join(row_data) + " |\n"
+
+    # Return as downloadable Media Object
+  return BlobMedia("text/markdown", md_output.encode('utf-8'), name="metric_dictionary_logic.md")
