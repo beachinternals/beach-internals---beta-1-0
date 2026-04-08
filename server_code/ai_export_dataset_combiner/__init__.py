@@ -10,6 +10,10 @@ Each dataset row in ai_export_dataset_list can specify its own filters:
   - date_start, date_end        : explicit date range (overridden by days_before)
 
 Datasets are processed in 'order' column sequence and appended into one file per player.
+
+UPDATED: Added ai_optimized flag support for token-efficient combined files.
+         When ai_optimized=True, each dataset section uses the dense format,
+         and the combined file header is also compact.
 """
 
 import anvil.tables as tables
@@ -56,34 +60,69 @@ format_set_level_data_as_json
 # HELPER: Format aggregate metrics as markdown
 # ============================================================================
 
-def format_aggregate_metrics_as_markdown(metrics_dict, player_name):
+def format_aggregate_metrics_as_markdown(metrics_dict, player_name, ai_optimized=False):
   """
   Format aggregate metrics dictionary as markdown text.
+
+  Args:
+      metrics_dict: dict of {category: {metric_id: metric_info}}
+      player_name: Player name (used in human format headers)
+      ai_optimized (bool): If True, emit dense [category] + key:value lines.
+                           If False (default), emit original bulleted format.
   """
   lines = []
 
-  for category in sorted(metrics_dict.keys()):
-    lines.append(f"### {category}")
-    lines.append("")
+  if ai_optimized:
+    # ── DENSE FORMAT ─────────────────────────────────────────────────────
+    for category in sorted(metrics_dict.keys()):
+      lines.append(f"[{category}]")
+      metrics_in_category = metrics_dict[category]
+      parts = []
+      for metric_id in sorted(metrics_in_category.keys()):
+        metric_info = metrics_in_category[metric_id]
+        metric_value = metric_info['value']
+        sufficient = metric_info.get('sufficient_data', True)
 
-    metrics_in_category = metrics_dict[category]
-    for metric_id in sorted(metrics_in_category.keys()):
-      metric_info = metrics_in_category[metric_id]
-      metric_name = metric_info['metric_name']
-      metric_value = metric_info['value']
-      parent_metric = metric_info.get('parent_metric')
+        if not sufficient or metric_value is None:
+          continue  # skip insufficient in optimized mode
 
-      if isinstance(metric_value, float):
-        formatted_value = f"{metric_value:.3f}"
-      else:
-        formatted_value = str(metric_value)
+        if isinstance(metric_value, float):
+          formatted_value = f"{metric_value:.3f}".rstrip('0').rstrip('.')
+        else:
+          formatted_value = str(metric_value)
 
-      if parent_metric and parent_metric != metric_id:
-        lines.append(f"- **{metric_name}** (`{metric_id}` | parent: `{parent_metric}`): {formatted_value}")
-      else:
-        lines.append(f"- **{metric_name}** (`{metric_id}`): {formatted_value}")
+        attempts = metric_info.get('attempts')
+        att_str = f"(n={attempts})" if attempts is not None else ""
+        parts.append(f"{metric_id}:{formatted_value}{att_str}")
 
-    lines.append("")
+      if parts:
+        lines.append(" ".join(parts))
+      lines.append("")
+
+  else:
+    # ── HUMAN FORMAT (original) ───────────────────────────────────────────
+    for category in sorted(metrics_dict.keys()):
+      lines.append(f"### {category}")
+      lines.append("")
+
+      metrics_in_category = metrics_dict[category]
+      for metric_id in sorted(metrics_in_category.keys()):
+        metric_info = metrics_in_category[metric_id]
+        metric_name = metric_info['metric_name']
+        metric_value = metric_info['value']
+        parent_metric = metric_info.get('parent_metric')
+
+        if isinstance(metric_value, float):
+          formatted_value = f"{metric_value:.3f}"
+        else:
+          formatted_value = str(metric_value)
+
+        if parent_metric and parent_metric != metric_id:
+          lines.append(f"- **{metric_name}** (`{metric_id}` | parent: `{parent_metric}`): {formatted_value}")
+        else:
+          lines.append(f"- **{metric_name}** (`{metric_id}`): {formatted_value}")
+
+      lines.append("")
 
   return "\n".join(lines)
 
@@ -154,7 +193,6 @@ def apply_dataset_filters(ppr_df, dataset):
   date_start  = dataset.get('date_start')  or None
   date_end    = dataset.get('date_end')    or None
 
-  # Find the date column in ppr_df (try common names)
   date_col = None
   for col in ['date', 'match_date', 'game_date']:
     if col in filtered_df.columns:
@@ -244,7 +282,8 @@ def generate_combined_player_export(
   league_value,
   team,
   datasets_to_include,
-  output_format='markdown'
+  output_format='markdown',
+  ai_optimized=False
 ):
   """
   Generate combined export for a single player across multiple datasets.
@@ -253,7 +292,7 @@ def generate_combined_player_export(
     1. Read dataset-specific filters from ai_export_dataset_list
        (comp_l1, comp_l2, comp_l3, days_before, date_start, date_end)
     2. Apply those filters to ppr_df
-    3. Get triangle data with the same comp filters (used for consistency metrics)
+    3. Get triangle data with the same comp filters
     4. Calculate metrics on the filtered data
     5. Append the section to the combined output
 
@@ -264,6 +303,8 @@ def generate_combined_player_export(
       team: e.g. "STETSON"
       datasets_to_include: List of rows from ai_export_dataset_list (sorted by order)
       output_format: 'markdown' or 'json'
+      ai_optimized (bool): If True, use dense token-efficient format throughout.
+                           If False (default), use human-readable format.
 
   Returns:
       dict: {
@@ -274,11 +315,11 @@ def generate_combined_player_export(
           'summary': dict
       }
   """
-  log_info(f"Generating combined export for {player_name}, format={output_format}")
+  log_info(f"Generating combined export for {player_name}, format={output_format}, ai_optimized={ai_optimized}")
   log_info(f"Full ppr_df size (player-filtered): {len(ppr_df)} points")
   log_info(f"Datasets: {[ds['dataset_name'] for ds in datasets_to_include]}")
 
-  # Parse league components (needed for triangle data queries)
+  # Parse league components
   league_parts = league_value.split('|')
   league_str = league_parts[0].strip()
   gender     = league_parts[1].strip()
@@ -293,18 +334,27 @@ def generate_combined_player_export(
     'generation_timestamp': str(datetime.now())
   }
 
-  # File-level header (written once at the top)
+  # ── File-level header (written once at the top) ──────────────────────────
   if output_format == 'markdown':
-    combined_content.append(f"# Player Performance Report: {player_name}")
-    combined_content.append(f"")
-    combined_content.append(f"**League:** {league_value}")
-    combined_content.append(f"**Team:** {team}")
-    combined_content.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    combined_content.append(f"")
-    combined_content.append(f"---")
-    combined_content.append(f"")
+    if ai_optimized:
+      # Single compact header line
+      combined_content.append(
+        f"PLAYER|{player_name}|{league_value}|{team}|"
+        f"generated:{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+      )
+      combined_content.append("# Decode metric codes using the metric_dictionary file.")
+      combined_content.append("")
+    else:
+      combined_content.append(f"# Player Performance Report: {player_name}")
+      combined_content.append(f"")
+      combined_content.append(f"**League:** {league_value}")
+      combined_content.append(f"**Team:** {team}")
+      combined_content.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+      combined_content.append(f"")
+      combined_content.append(f"---")
+      combined_content.append(f"")
 
-  # Load metric dictionary ONCE (shared across all datasets - avoids repeated DB calls)
+  # Load metric dictionary ONCE (shared across all datasets)
   log_info("Loading metric dictionary (once, shared across datasets)...")
   dict_rows = list(app_tables.metric_dictionary.search())
   col_names = [col['name'] for col in app_tables.metric_dictionary.list_columns()]
@@ -331,11 +381,16 @@ def generate_combined_player_export(
 
       if len(dataset_ppr_df) == 0:
         log_error(f"No data after filters for '{dataset_name}' - skipping section")
-        combined_content.append(f"---")
-        combined_content.append(f"# DATASET: {section_title}")
-        combined_content.append(f"")
-        combined_content.append(f"*No data available for these filter criteria.*")
-        combined_content.append(f"")
+
+        if ai_optimized:
+          combined_content.append(f"DATASET|{section_title}|NO_DATA")
+        else:
+          combined_content.append(f"---")
+          combined_content.append(f"# DATASET: {section_title}")
+          combined_content.append(f"")
+          combined_content.append(f"*No data available for these filter criteria.*")
+          combined_content.append(f"")
+
         combined_summary['datasets_included'].append({
           'dataset': dataset_name,
           'success': False,
@@ -346,14 +401,8 @@ def generate_combined_player_export(
 
       # ----------------------------------------------------------------
       # STEP 2: Get triangle data with the SAME comp filters
-      #
-      # Triangle data (tri_df) stores one row per set and is used by
-      # calculate_all_metrics for consistency metrics - things like
-      # "standard deviation of FBHE across sets" or "set-to-set variance".
-      # If we filter ppr_df to Regular Season only, the tri_df should
-      # also be Regular Season only so the consistency metrics match.
       # ----------------------------------------------------------------
-      tri_filters = {'player': player_name}   # Always filter to this player
+      tri_filters = {'player': player_name}
       if filters_applied.get('comp_l1'):
         tri_filters['comp_l1'] = filters_applied['comp_l1']
       if filters_applied.get('comp_l2'):
@@ -368,25 +417,32 @@ def generate_combined_player_export(
       # STEP 3: Generate section content
       # ----------------------------------------------------------------
       if dataset_type == 'aggregate':
-        # Calculate all metrics on the filtered ppr_df
         log_info(f"Calculating aggregate metrics ({len(dataset_ppr_df)} pts, {len(tri_df)} sets)...")
         metrics_result = calculate_all_metrics(metric_dict, dataset_ppr_df, tri_df, player_name)
         log_info(f"Metrics: {metrics_result['successful']} calculated, {metrics_result['insufficient_data']} insufficient data")
 
         section_content = format_aggregate_metrics_as_markdown(
           metrics_result['metrics'],
-          player_name
+          player_name,
+          ai_optimized=ai_optimized
         )
 
         if output_format == 'markdown':
-          combined_content.append(f"---")
-          combined_content.append(f"# DATASET: {section_title}")
-          combined_content.append(f"")
-          if filters_applied:
-            filter_desc = ", ".join([f"{k}: {v}" for k, v in filters_applied.items()])
-            combined_content.append(f"*Filters applied: {filter_desc}*")
-          combined_content.append(f"*Data Points: {len(dataset_ppr_df)} | Sets Analyzed: {len(tri_df)}*")
-          combined_content.append(f"")
+          if ai_optimized:
+            # Compact section divider
+            filter_desc = "|".join(f"{k}:{v}" for k, v in filters_applied.items()) if filters_applied else "all"
+            combined_content.append(f"DATASET|{section_title}|pts:{len(dataset_ppr_df)}|sets:{len(tri_df)}|filters:{filter_desc}")
+            combined_content.append("")
+          else:
+            combined_content.append(f"---")
+            combined_content.append(f"# DATASET: {section_title}")
+            combined_content.append(f"")
+            if filters_applied:
+              filter_desc = ", ".join([f"{k}: {v}" for k, v in filters_applied.items()])
+              combined_content.append(f"*Filters applied: {filter_desc}*")
+            combined_content.append(f"*Data Points: {len(dataset_ppr_df)} | Sets Analyzed: {len(tri_df)}*")
+            combined_content.append(f"")
+
           combined_content.append(section_content)
           combined_content.append(f"")
 
@@ -402,11 +458,10 @@ def generate_combined_player_export(
         })
 
       elif dataset_type == 'set_level':
-        # Generate set-by-set detail using the filtered ppr_df
         log_info(f"Generating set-level metrics ({len(dataset_ppr_df)} pts)...")
 
         set_level_data = generate_set_level_metrics_for_player(
-          ppr_df=dataset_ppr_df,     # ← filtered df, not the full ppr_df
+          ppr_df=dataset_ppr_df,
           player_name=player_name,
           league_value=league_value,
           team=team
@@ -414,15 +469,26 @@ def generate_combined_player_export(
 
         if set_level_data:
           if output_format == 'markdown':
-            set_md = format_set_level_data_as_markdown(set_level_data)
-            combined_content.append(f"---")
-            combined_content.append(f"# DATASET: {section_title}")
-            combined_content.append(f"")
-            if filters_applied:
-              filter_desc = ", ".join([f"{k}: {v}" for k, v in filters_applied.items()])
-              combined_content.append(f"*Filters applied: {filter_desc}*")
-            combined_content.append(f"*Data Points: {len(dataset_ppr_df)}*")
-            combined_content.append(f"")
+            # Pass ai_optimized flag through to the formatter
+            set_md = format_set_level_data_as_markdown(
+              set_level_data,
+              ai_optimized=ai_optimized
+            )
+
+            if ai_optimized:
+              filter_desc = "|".join(f"{k}:{v}" for k, v in filters_applied.items()) if filters_applied else "all"
+              combined_content.append(f"DATASET|{section_title}|pts:{len(dataset_ppr_df)}|filters:{filter_desc}")
+              combined_content.append("")
+            else:
+              combined_content.append(f"---")
+              combined_content.append(f"# DATASET: {section_title}")
+              combined_content.append(f"")
+              if filters_applied:
+                filter_desc = ", ".join([f"{k}: {v}" for k, v in filters_applied.items()])
+                combined_content.append(f"*Filters applied: {filter_desc}*")
+              combined_content.append(f"*Data Points: {len(dataset_ppr_df)}*")
+              combined_content.append(f"")
+
             combined_content.append(set_md)
             combined_content.append(f"")
 
@@ -436,11 +502,16 @@ def generate_combined_player_export(
           })
         else:
           log_error(f"generate_set_level_metrics_for_player returned no data")
-          combined_content.append(f"---")
-          combined_content.append(f"# DATASET: {section_title}")
-          combined_content.append(f"")
-          combined_content.append(f"*Error generating this section: no set-level data returned*")
-          combined_content.append(f"")
+
+          if ai_optimized:
+            combined_content.append(f"DATASET|{section_title}|ERROR:no_set_data")
+          else:
+            combined_content.append(f"---")
+            combined_content.append(f"# DATASET: {section_title}")
+            combined_content.append(f"")
+            combined_content.append(f"*Error generating this section: no set-level data returned*")
+            combined_content.append(f"")
+
           combined_summary['datasets_included'].append({
             'dataset': dataset_name,
             'success': False,
@@ -460,11 +531,16 @@ def generate_combined_player_export(
       err_msg = str(e)
       log_error(f"Error processing dataset '{dataset_name}': {err_msg}")
       log_error(traceback.format_exc())
-      combined_content.append(f"---")
-      combined_content.append(f"# DATASET: {section_title}")
-      combined_content.append(f"")
-      combined_content.append(f"*Error generating this section: {err_msg}*")
-      combined_content.append(f"")
+
+      if ai_optimized:
+        combined_content.append(f"DATASET|{section_title}|ERROR:{err_msg[:80]}")
+      else:
+        combined_content.append(f"---")
+        combined_content.append(f"# DATASET: {section_title}")
+        combined_content.append(f"")
+        combined_content.append(f"*Error generating this section: {err_msg}*")
+        combined_content.append(f"")
+
       combined_summary['datasets_included'].append({
         'dataset': dataset_name,
         'success': False,
@@ -478,7 +554,9 @@ def generate_combined_player_export(
 
   if output_format == 'markdown':
     final_content = "\n".join(combined_content)
-    filename = f"{safe_name}_combined_md.md"
+    # Include _opt suffix in filename so it's easy to tell which format
+    opt_suffix = "_opt" if ai_optimized else ""
+    filename = f"{safe_name}_combined{opt_suffix}.md"
     mime_type = 'text/plain'
 
   elif output_format == 'json':
@@ -488,7 +566,7 @@ def generate_combined_player_export(
       'team': team,
       'generated': str(datetime.now()),
       'summary': combined_summary,
-      'datasets': {}   # TODO: populate with actual JSON dataset content if needed
+      'datasets': {}
     }
     final_content = json.dumps(json_obj, indent=2, default=str)
     filename = f"{safe_name}_combined.json"

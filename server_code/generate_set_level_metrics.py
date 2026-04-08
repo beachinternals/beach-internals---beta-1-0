@@ -6,10 +6,12 @@ It reads the metric_dictionary to determine which metrics to calculate and uses
 the existing calculation functions.
 
 UPDATED: Now includes weather data fetched via weather_id from PPR
+UPDATED: Added ai_optimized flag for token-efficient output format
 
 Author: Beach Volleyball Analytics
 Created: 2026-02-05
 Updated: 2026-02-07 - Added weather integration via weather_id
+Updated: 2026-04-08 - Added ai_optimized dense format
 """
 
 import anvil.tables as tables
@@ -237,13 +239,11 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
   metric_name = metric_row['metric_name']
   function_name = metric_row['function_name']
 
-  #log_debug(f"Calculating metric: {metric_id} ({metric_name})")
-
   if not function_name or function_name.strip() == '':
     log_debug(f"No function_name for metric {metric_id}, skipping")
     return None
 
-  try:
+    try:
     disp_player = player_name
     ppr_df = ppr_df_filtered
 
@@ -361,7 +361,7 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
     if point_count > 50:
       log_info(f"Warning: Set {video_id}-{set_num} has {point_count} points (> 50 typical maximum)")
 
-      # Get metadata (includes weather via weather_id)
+    # Get metadata (includes weather via weather_id)
     metadata = get_set_metadata(ppr_df, video_id, set_num, player_name)
     if not metadata:
       log_error(f"Could not get metadata for set {video_id}-{set_num}")
@@ -415,27 +415,90 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
   }
 
 
-@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
-def format_set_level_data_as_markdown(set_level_data, display_name=None, display_team=None):
+# ============================================================================
+# FORMAT HELPERS
+# ============================================================================
+
+def _fmt_val(value):
+  """Format a metric value compactly (shared by both output modes)."""
+  if value is None:
+    return "N/A"
+  elif isinstance(value, float):
+    if value == 0.0:
+      return "0.000"
+    else:
+      return f"{value:.3f}"
+  elif value == 0:
+    return "0"
+  else:
+    return str(value)
+
+
+def _fmt_weather_dense(weather):
   """
-    Format set-level data as markdown WITH WEATHER DATA IN HEADERS.
-    
-    Args:
-        set_level_data: Output from generate_set_level_metrics_for_player
-        display_name (str): Optional. If provided, used in headers instead of
-                            real player name (for de-identification).
-        display_team (str): Optional. If provided, used in headers instead of
-                            real team name (for de-identification).
-        
-    Returns:
-        str: Markdown formatted text
-    """
+  Format weather as a single compact string for ai_optimized mode.
+  Example: "temp:72F wind:12mph gust:18mph hum:65%"
+  Returns empty string if no weather data.
+  """
+  if not weather:
+    return ""
+  
+  parts = []
+  t = weather.get('temperature_f')
+  if t is not None and not pd.isna(t):
+    parts.append(f"temp:{t:.0f}F")
+  w = weather.get('wind_speed_mph')
+  if w is not None and not pd.isna(w):
+    parts.append(f"wind:{w:.0f}mph")
+  g = weather.get('wind_gust_mph')
+  if g is not None and not pd.isna(g):
+    parts.append(f"gust:{g:.0f}mph")
+  h = weather.get('humidity_percent')
+  if h is not None and not pd.isna(h):
+    parts.append(f"hum:{h:.0f}%")
+  uv = weather.get('uv_index')
+  if uv is not None and not pd.isna(uv):
+    parts.append(f"uv:{uv:.1f}")
+  
+  return " ".join(parts)
+
+
+# ============================================================================
+# FORMAT: HUMAN-READABLE (original, ai_optimized=False)
+# ============================================================================
+
+@monitor_performance(level=MONITORING_LEVEL_CRITICAL)
+def format_set_level_data_as_markdown(set_level_data, display_name=None, display_team=None, ai_optimized=False):
+  """
+  Format set-level data as markdown.
+
+  Args:
+      set_level_data: Output from generate_set_level_metrics_for_player
+      display_name (str): Optional. If provided, used in headers instead of
+                          real player name (for de-identification).
+      display_team (str): Optional. If provided, used in headers instead of
+                          real team name (for de-identification).
+      ai_optimized (bool): If True, use dense token-efficient format.
+                           If False (default), use human-readable format.
+      
+  Returns:
+      str: Markdown formatted text
+  """
   if not set_level_data:
     return ""
 
-  log_info("Formatting set-level data as markdown...")
+  if ai_optimized:
+    return _format_set_level_dense(set_level_data, display_name, display_team)
+  else:
+    return _format_set_level_human(set_level_data, display_name, display_team)
 
-  # Resolve display values
+
+def _format_set_level_human(set_level_data, display_name=None, display_team=None):
+  """
+  Original human-readable format — unchanged from previous version.
+  """
+  log_info("Formatting set-level data as markdown (human)...")
+
   content_name = display_name if display_name else set_level_data['player']
   content_team = display_team if display_team else set_level_data['team']
 
@@ -492,49 +555,30 @@ def format_set_level_data_as_markdown(set_level_data, display_name=None, display
     if weather and any(v is not None and not pd.isna(v) for v in weather.values()):
       md.append(f"**Weather Conditions:**")
 
-      # Temperature
       if weather.get('temperature_f') is not None and not pd.isna(weather.get('temperature_f')):
         md.append(f"- Temperature: {weather['temperature_f']:.1f}°F")
 
-        # Wind Speed
       if weather.get('wind_speed_mph') is not None and not pd.isna(weather.get('wind_speed_mph')):
         wind_str = f"{weather['wind_speed_mph']:.1f} mph"
-        # Add gust if available
         if weather.get('wind_gust_mph') is not None and not pd.isna(weather.get('wind_gust_mph')):
           wind_str += f" (gusts to {weather['wind_gust_mph']:.1f} mph)"
         md.append(f"- Wind: {wind_str}")
 
-        # Humidity
       if weather.get('humidity_percent') is not None and not pd.isna(weather.get('humidity_percent')):
         md.append(f"- Humidity: {weather['humidity_percent']:.0f}%")
 
-        # UV Index (if available)
       if weather.get('uv_index') is not None and not pd.isna(weather.get('uv_index')):
         md.append(f"- UV Index: {weather['uv_index']:.1f}")
 
       md.append(f"")
 
-      # Core Metrics
+    # Core Metrics
     md.append(f"**Core Metrics:**")
     md.append(f"")
 
-    sorted_metrics = sorted(set_data['metrics'].items())
-
-    for metric_id, metric_info in sorted_metrics:
-      value = metric_info['value']
+    for metric_id, metric_info in sorted(set_data['metrics'].items()):
+      value_str = _fmt_val(metric_info['value'])
       attempts = metric_info['attempts']
-
-      if value is None:
-        value_str = "No Data"
-      elif isinstance(value, float):
-        if value == 0.0:
-          value_str = "0.000"
-        else:
-          value_str = f"{value:.3f}"
-      elif value == 0:
-        value_str = "0"
-      else:
-        value_str = str(value)
 
       if attempts is not None:
         md.append(f"- **{metric_info['name']}**: {value_str} (n={attempts})")
@@ -544,6 +588,80 @@ def format_set_level_data_as_markdown(set_level_data, display_name=None, display
     md.append(f"")
     md.append(f"---")
     md.append(f"")
+
+  return "\n".join(md)
+
+
+def _format_set_level_dense(set_level_data, display_name=None, display_team=None):
+  """
+  AI-optimized dense format.
+
+  Structure per set:
+    SET|2026-03-15|vs OPPONENT|S2|pts:18|comp:NCAA/RegSeason|temp:72F wind:12mph gust:18mph hum:65%
+    metric_id:value(n=att) metric_id:value ...
+
+  Header block:
+    PLAYER|league|team|sets:N|pts:N|dates:start..end
+  """
+  log_info("Formatting set-level data as markdown (ai_optimized dense)...")
+
+  content_name = display_name if display_name else set_level_data['player']
+  content_team = display_team if display_team else set_level_data['team']
+
+  summary = set_level_data['summary']
+  date_start = summary['date_range']['start'] or ''
+  date_end   = summary['date_range']['end'] or ''
+  date_str   = f"{date_start}..{date_end}" if date_start else "all"
+
+  md = []
+
+  # ── Compact file header ──────────────────────────────────────────────────
+  md.append(f"PLAYER|{content_name}|{set_level_data['league']}|{content_team}|"
+            f"sets:{summary['total_sets_analyzed']}|pts:{summary['total_points']}|dates:{date_str}")
+  md.append(f"")
+
+  # ── Legend (written once) ────────────────────────────────────────────────
+  md.append("# Set-Level Metrics")
+  md.append("# Format: SET|date|opponent|set_no|pts:N|comp:l1/l2[|weather]")
+  md.append("# Metrics line: metric_id:value(n=attempts) ...")
+  md.append("# Decode metric_id codes using the metric_dictionary file.")
+  md.append("")
+
+  # ── Individual sets ──────────────────────────────────────────────────────
+  for set_data in set_level_data['sets']:
+    # Build weather string (empty if none)
+    weather_str = _fmt_weather_dense(set_data.get('weather'))
+
+    # Competition context  (only include non-empty levels)
+    comp_parts = [
+      set_data.get('comp_l1', ''),
+      set_data.get('comp_l2', ''),
+    ]
+    comp_str = "/".join(p for p in comp_parts if p)
+
+    # SET header line — one line, no blank lines around it
+    set_line = (
+      f"SET|{set_data['date']}|vs {set_data['opponent_team']}|"
+      f"S{set_data['set']}|pts:{set_data['total_points']}|comp:{comp_str}"
+    )
+    if weather_str:
+      set_line += f"|{weather_str}"
+    md.append(set_line)
+
+    # Metrics — all on ONE line, space-separated, sorted by metric_id
+    metric_parts = []
+    for metric_id, metric_info in sorted(set_data['metrics'].items()):
+      value_str = _fmt_val(metric_info['value'])
+      attempts = metric_info['attempts']
+      if attempts is not None:
+        metric_parts.append(f"{metric_id}:{value_str}(n={attempts})")
+      else:
+        metric_parts.append(f"{metric_id}:{value_str}")
+
+    if metric_parts:
+      md.append(" ".join(metric_parts))
+    
+    md.append("")  # blank line between sets
 
   return "\n".join(md)
 

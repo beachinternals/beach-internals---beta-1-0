@@ -5,6 +5,8 @@ Modified version that generates Markdown exports instead of JSON,
 optimized for NotebookLM consumption.
 
 Based on generate_player_metrics_json.py but outputs structured Markdown.
+
+UPDATED: Added ai_optimized flag for token-efficient dense output.
 """
 
 import anvil.tables as tables
@@ -272,19 +274,6 @@ def generate_descriptive_header(player_name, metadata, metrics_by_category):
 def filter_metrics_by_attempts(metrics_dict, metric_dict_df):
   """
     Filter out metrics where attempts (_n suffix) is 0, unless it's a core metric.
-    
-    Logic:
-    - Core metrics (parent_metric is empty/NaN) are ALWAYS kept
-    - For derived metrics, if metric_id_n = 0, remove both metric_id and metric_id_n
-    - Keep metrics with value 0.0 (valid zero result)
-    - Remove metrics with value 0 (integer, indicating no attempts)
-    
-    Args:
-        metrics_dict: Dict of {metric_id: {'value': ..., 'metric_name': ...}}
-        metric_dict_df: Full metric dictionary DataFrame
-        
-    Returns:
-        dict: Filtered metrics dictionary
     """
   filtered_metrics = {}
   metrics_to_skip = set()
@@ -292,21 +281,17 @@ def filter_metrics_by_attempts(metrics_dict, metric_dict_df):
   # First pass: identify metrics with zero attempts
   for metric_id, metric_info in metrics_dict.items():
     if metric_id.endswith('_n'):
-      # This is an attempts metric
       value = metric_info.get('value')
       if value == 0 or value == 0.0:
-        # Zero attempts - mark the parent metric for removal
-        parent_id = metric_id[:-2]  # Remove '_n' suffix
+        parent_id = metric_id[:-2]
         metrics_to_skip.add(parent_id)
         metrics_to_skip.add(metric_id)
 
-    # Second pass: filter metrics
+  # Second pass: filter metrics
   for metric_id, metric_info in metrics_dict.items():
-    # Skip if marked for removal
     if metric_id in metrics_to_skip:
       continue
 
-      # Check if this is a core metric
     metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
     is_core = False
     if len(metric_row) > 0:
@@ -315,16 +300,13 @@ def filter_metrics_by_attempts(metrics_dict, metric_dict_df):
 
     value = metric_info.get('value')
 
-    # Core metrics are always kept
     if is_core:
       filtered_metrics[metric_id] = metric_info
       continue
 
-      # For non-core metrics, skip if value is exactly 0 (integer)
     if isinstance(value, int) and value == 0:
       continue
 
-      # Keep everything else (including 0.0 floats)
     filtered_metrics[metric_id] = metric_info
 
   return filtered_metrics
@@ -333,24 +315,11 @@ def filter_metrics_by_attempts(metrics_dict, metric_dict_df):
 def organize_metrics_hierarchically(metrics_dict, metric_dict_df):
   """
     Organize metrics into hierarchical structure based on metric_id patterns.
-    
-    Args:
-        metrics_dict: Filtered metrics dictionary
-        metric_dict_df: Full metric dictionary DataFrame
-        
-    Returns:
-        dict: Hierarchical structure {
-            'core': [(metric_id, info, row), ...],
-            'derived': {
-                'parent_name': [(metric_id, info, row), ...]
-            }
-        }
     """
   core_metrics = []
   derived_metrics = {}
 
   for metric_id, metric_info in metrics_dict.items():
-    # Get full row from dictionary
     metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
     if len(metric_row) == 0:
       continue
@@ -358,18 +327,14 @@ def organize_metrics_hierarchically(metrics_dict, metric_dict_df):
     metric_row = metric_row.iloc[0]
     parent_metric = metric_row.get('parent_metric')
 
-    # Check if core metric (no parent)
     if pd.isna(parent_metric) or parent_metric == '':
       core_metrics.append((metric_id, metric_info, metric_row))
     else:
-      # Derived metric - organize by parent
       if parent_metric not in derived_metrics:
         derived_metrics[parent_metric] = []
       derived_metrics[parent_metric].append((metric_id, metric_info, metric_row))
 
-    # If parent_metric column isn't populated, infer from metric_id
   if not derived_metrics:
-    # Fallback: infer hierarchy from metric_id naming
     for metric_id, metric_info in metrics_dict.items():
       metric_row = metric_dict_df[metric_dict_df['metric_id'] == metric_id]
       if len(metric_row) == 0:
@@ -377,12 +342,10 @@ def organize_metrics_hierarchically(metrics_dict, metric_dict_df):
 
       metric_row = metric_row.iloc[0]
 
-      # Simple heuristic: if metric_id has no underscore/number suffix, it's core
       if not any(c.isdigit() for c in metric_id) and '_' not in metric_id:
         if (metric_id, metric_info, metric_row) not in core_metrics:
           core_metrics.append((metric_id, metric_info, metric_row))
       else:
-        # Try to infer parent from name
         parent_name = metric_id.split('_')[0].split('1')[0].split('2')[0].split('3')[0].split('4')[0].split('5')[0]
         if parent_name not in derived_metrics:
           derived_metrics[parent_name] = []
@@ -393,79 +356,9 @@ def organize_metrics_hierarchically(metrics_dict, metric_dict_df):
 
 def create_hierarchical_metrics_tables(metrics_dict, metric_dict_df, category_name):
   """
-    Create hierarchically organized Markdown tables for a category.
-    
-    Args:
-        metrics_dict: Dict of metrics for this category
-        metric_dict_df: Full metric dictionary DataFrame
-        category_name: Name of the category (e.g., 'Attacking')
-        
-    Returns:
-        str: Markdown formatted tables with hierarchy
-    """
-  if not metrics_dict:
-    return ""
-
-  md = f"## {category_name} Metrics\n\n"
-
-  # Filter metrics by attempts
-  filtered_metrics = filter_metrics_by_attempts(metrics_dict, metric_dict_df)
-
-  if not filtered_metrics:
-    md += "*No metrics with sufficient data for this category.*\n\n"
-    return md
-
-    # Organize hierarchically
-  hierarchy = organize_metrics_hierarchically(filtered_metrics, metric_dict_df)
-
-  # Display core metrics first
-  if hierarchy['core']:
-    md += "### Core Performance Indicators\n\n"
-    md += "| Metric | Value | Context/Goal |\n"
-    md += "| :--- | :--- | :--- |\n"
-
-    for metric_id, metric_info, metric_row in sorted(hierarchy['core'], key=lambda x: x[0]):
-      metric_name = metric_info.get('metric_name', metric_id)
-      value = format_metric_value(metric_info.get('value'), metric_row)
-      context = determine_metric_context(metric_row)
-      md += f"| {metric_name} | {value} | {context} |\n"
-
-    md += "\n"
-
-    # Display derived metrics grouped by parent
-  if hierarchy['derived']:
-    md += "### Detailed Breakdowns\n\n"
-
-    for parent_name in sorted(hierarchy['derived'].keys()):
-      child_metrics = hierarchy['derived'][parent_name]
-
-      # Create a more readable parent name
-      parent_display = parent_name.replace('_', ' ').title()
-      md += f"#### {parent_display}\n\n"
-      md += "| Metric | Value | Context/Goal |\n"
-      md += "| :--- | :--- | :--- |\n"
-
-      for metric_id, metric_info, metric_row in sorted(child_metrics, key=lambda x: x[0]):
-        metric_name = metric_info.get('metric_name', metric_id)
-        value = format_metric_value(metric_info.get('value'), metric_row)
-        context = determine_metric_context(metric_row)
-
-        # Indent child metrics slightly in name
-        if '_' in metric_id or any(c.isdigit() for c in metric_id):
-          metric_name = "  " + metric_name  # Visual indent
-
-        md += f"| {metric_name} | {value} | {context} |\n"
-
-      md += "\n"
-
-  return md
-
-
-def create_hierarchical_metrics_tables(metrics_dict, metric_dict_df, category_name):
+  Create hierarchically organized Markdown tables for a category.
+  Includes a Plays column when any metric in the group has video links.
   """
-    Create hierarchically organized Markdown tables for a category.
-    Includes a Plays column when any metric in the group has video links.
-    """
   if not metrics_dict:
     return ""
 
@@ -481,7 +374,6 @@ def create_hierarchical_metrics_tables(metrics_dict, metric_dict_df, category_na
 
   # --- Core metrics ---
   if hierarchy['core']:
-    # Check for video links in core metrics
     core_has_video = any(
       metric_info.get('video_links', '')
       for _, metric_info, _ in hierarchy['core']
@@ -508,14 +400,13 @@ def create_hierarchical_metrics_tables(metrics_dict, metric_dict_df, category_na
 
     md += "\n"
 
-    # --- Derived/breakdown metrics ---
+  # --- Derived/breakdown metrics ---
   if hierarchy['derived']:
     md += "### Detailed Breakdowns\n\n"
 
     for parent_name in sorted(hierarchy['derived'].keys()):
       child_metrics = hierarchy['derived'][parent_name]
 
-      # Check for video links in this group
       group_has_video = any(
         metric_info.get('video_links', '')
         for _, metric_info, _ in child_metrics
@@ -553,17 +444,6 @@ def create_hierarchical_metrics_tables(metrics_dict, metric_dict_df, category_na
 def format_metric_line(metric_id, metric_info, metric_dict_df):
   """
     Format a single metric as a markdown list line.
-
-    Outputs:
-      - metric_name (metric_id): value (n=attempts) [insufficient if suppressed]
-
-    Args:
-        metric_id: str
-        metric_info: dict with value, attempts, sufficient_data, metric_name
-        metric_dict_df: full metric dictionary DataFrame
-
-    Returns:
-        str: single markdown list line
     """
   metric_name = metric_info.get('metric_name', metric_id)
   value       = metric_info.get('value')
@@ -571,7 +451,6 @@ def format_metric_line(metric_id, metric_info, metric_dict_df):
   sufficient  = metric_info.get('sufficient_data', True)
   min_att     = metric_info.get('min_attempts')
 
-  # Format value
   if not sufficient or value is None:
     if attempts is not None and min_att is not None:
       value_str = f"insufficient data (n={attempts}, min={min_att})"
@@ -587,32 +466,24 @@ def format_metric_line(metric_id, metric_info, metric_dict_df):
   else:
     value_str = str(value)
 
-    # Attempts string
   att_str = f" (n={attempts})" if attempts is not None else ""
 
   return f"- **{metric_name}** (`{metric_id}`): {value_str}{att_str}"
 
 
-def generate_coach_view_sections(metrics_by_category, metric_dict_df):
+def generate_coach_view_sections(metrics_by_category, metric_dict_df, ai_optimized=False):
   """
     Generate the coach-view organized metrics sections.
 
-    Groups all calculated metrics by their coach_view column value,
-    then presents them in the order defined by COACH_VIEW_ORDER.
-    Within each section, metrics are grouped by zone number (extracted
-    from metric_id) and ordered by attempt volume descending.
-
     Args:
-        metrics_by_category: dict from calculate_all_metrics — keyed by
-                              metric_category (core, situation, etc.)
-        metric_dict_df: full metric dictionary DataFrame (must include
-                        coach_view column)
+        metrics_by_category: dict from calculate_all_metrics
+        metric_dict_df: full metric dictionary DataFrame
+        ai_optimized (bool): If True, emit dense key:value lines instead of tables.
 
     Returns:
         str: Markdown content for all coach-view sections
     """
 
-  # ── Coach view section order and display names ────────────────────────
   COACH_VIEW_ORDER = [
     ('attacking',                  '1. Attacking — Overall'),
     ('attacking_net',              '1b. Attacking — Along the Net'),
@@ -639,12 +510,12 @@ def generate_coach_view_sections(metrics_by_category, metric_dict_df):
     ('consistency_set2set',        '6b. Consistency — Set to Set'),
   ]
 
-  # ── Flatten all metrics into one dict keyed by metric_id ─────────────
+  # Flatten all metrics
   all_metrics = {}
   for cat_metrics in metrics_by_category.values():
     all_metrics.update(cat_metrics)
 
-    # ── Build lookup: metric_id → coach_view ─────────────────────────────
+  # Build coach_view lookup
   cv_lookup = {}
   if 'coach_view' in metric_dict_df.columns:
     for _, row in metric_dict_df.iterrows():
@@ -653,7 +524,7 @@ def generate_coach_view_sections(metrics_by_category, metric_dict_df):
       if pd.notna(cv) and str(cv).strip():
         cv_lookup[mid] = str(cv).strip()
 
-    # ── Group calculated metrics by coach_view ────────────────────────────
+  # Group by coach_view
   cv_groups = {}
   unassigned = {}
   for metric_id, metric_info in all_metrics.items():
@@ -663,69 +534,171 @@ def generate_coach_view_sections(metrics_by_category, metric_dict_df):
     else:
       unassigned[metric_id] = metric_info
 
-    # ── Helper: extract zone number from metric_id ────────────────────────
   def zone_key(metric_id):
-    """Return zone int (1-5) if found in metric_id, else 0 for sorting."""
-    import re
-    # Look for trailing digit 1-5 or _N_ pattern
     m = re.search(r'(?:^|[_])([1-5])(?:[_]|$)', metric_id)
     if m:
       return int(m.group(1))
-      # Also catch fbhe1, fbhe2 etc
     m = re.search(r'(\d)$', metric_id.split('_')[0])
     if m and int(m.group(1)) in range(1, 6):
       return int(m.group(1))
     return 0
 
-    # ── Helper: sort metrics within a section ────────────────────────────
   def sort_metrics(metrics_dict):
-    """Sort by zone number first, then by attempt volume descending."""
     def sort_key(item):
       metric_id, metric_info = item
       attempts = metric_info.get('attempts') or 0
       return (zone_key(metric_id), -attempts)
     return sorted(metrics_dict.items(), key=sort_key)
 
-    # ── Build output ──────────────────────────────────────────────────────
   md = []
 
   for cv_key, section_title in COACH_VIEW_ORDER:
     section_metrics = cv_groups.get(cv_key, {})
-
-    # Skip empty sections
     if not section_metrics:
       continue
 
-    md.append(f"## {section_title}\n")
+    if ai_optimized:
+      # ── DENSE: section header + one metric per short line ───────────────
+      md.append(f"[{cv_key}]")
+      metric_parts = []
+      for metric_id, metric_info in sort_metrics(section_metrics):
+        value       = metric_info.get('value')
+        attempts    = metric_info.get('attempts')
+        sufficient  = metric_info.get('sufficient_data', True)
 
-    # Check if any metric in this section has video links
-    section_has_video = any(
-      metric_info.get('video_links', '')
-      for _, metric_info in sort_metrics(section_metrics)
-    )
+        if not sufficient or value is None:
+          continue  # skip insufficient in ai_optimized — saves tokens
 
-    if section_has_video:
-      md.append("| Metric | Value | n | Plays |")
-      md.append("| :--- | :--- | :--- | :--- |")
-    else:
-      md.append("| Metric | Value | n |")
-      md.append("| :--- | :--- | :--- |")
-
-    for metric_id, metric_info in sort_metrics(section_metrics):
-      metric_name = metric_info.get('metric_name', metric_id)
-      value       = metric_info.get('value')
-      attempts    = metric_info.get('attempts')
-      sufficient  = metric_info.get('sufficient_data', True)
-      min_att     = metric_info.get('min_attempts')
-      video_links = metric_info.get('video_links', '')
-
-      # Format value
-      if not sufficient or value is None:
-        if attempts is not None and min_att is not None:
-          value_str = f"insufficient data (n={attempts}, min={min_att})"
+        # Format value
+        if isinstance(value, float):
+          if abs(value) < 0.001 and value != 0:
+            value_str = f"{value:.4f}".rstrip('0').rstrip('.')
+          elif abs(value) < 1:
+            value_str = f"{value:.3f}".rstrip('0').rstrip('.')
+          else:
+            value_str = f"{value:.2f}".rstrip('0').rstrip('.')
         else:
-          value_str = "insufficient data"
-      elif isinstance(value, float):
+          value_str = str(value)
+
+        att_str = f"(n={attempts})" if attempts is not None else ""
+        metric_parts.append(f"{metric_id}:{value_str}{att_str}")
+
+      # Put all metrics for this section on ONE line
+      if metric_parts:
+        md.append(" ".join(metric_parts))
+      md.append("")
+
+    else:
+      # ── HUMAN: table format (original) ──────────────────────────────────
+      md.append(f"## {section_title}\n")
+
+      section_has_video = any(
+        metric_info.get('video_links', '')
+        for _, metric_info in sort_metrics(section_metrics)
+      )
+
+      if section_has_video:
+        md.append("| Metric | Value | n | Plays |")
+        md.append("| :--- | :--- | :--- | :--- |")
+      else:
+        md.append("| Metric | Value | n |")
+        md.append("| :--- | :--- | :--- |")
+
+      for metric_id, metric_info in sort_metrics(section_metrics):
+        metric_name = metric_info.get('metric_name', metric_id)
+        value       = metric_info.get('value')
+        attempts    = metric_info.get('attempts')
+        sufficient  = metric_info.get('sufficient_data', True)
+        min_att     = metric_info.get('min_attempts')
+        video_links = metric_info.get('video_links', '')
+
+        if not sufficient or value is None:
+          if attempts is not None and min_att is not None:
+            value_str = f"insufficient data (n={attempts}, min={min_att})"
+          else:
+            value_str = "insufficient data"
+        elif isinstance(value, float):
+          if abs(value) < 0.001 and value != 0:
+            value_str = f"{value:.4f}".rstrip('0').rstrip('.')
+          elif abs(value) < 1:
+            value_str = f"{value:.3f}".rstrip('0').rstrip('.')
+          else:
+            value_str = f"{value:.2f}".rstrip('0').rstrip('.')
+        else:
+          value_str = str(value)
+
+        att_str = str(attempts) if attempts is not None else "-"
+
+        if section_has_video:
+          md.append(f"| {metric_name} | {value_str} | {att_str} | {video_links} |")
+        else:
+          md.append(f"| {metric_name} | {value_str} | {att_str} |")
+
+      md.append("")
+
+  # Unassigned metrics
+  if unassigned:
+    if ai_optimized:
+      md.append("[other]")
+      parts = []
+      for metric_id, metric_info in sort_metrics(unassigned):
+        value = metric_info.get('value')
+        attempts = metric_info.get('attempts')
+        sufficient = metric_info.get('sufficient_data', True)
+        if not sufficient or value is None:
+          continue
+        if isinstance(value, float):
+          value_str = f"{value:.3f}".rstrip('0').rstrip('.')
+        else:
+          value_str = str(value)
+        att_str = f"(n={attempts})" if attempts is not None else ""
+        parts.append(f"{metric_id}:{value_str}{att_str}")
+      if parts:
+        md.append(" ".join(parts))
+      md.append("")
+    else:
+      md.append("## Other Metrics\n")
+      for metric_id, metric_info in sort_metrics(unassigned):
+        md.append(format_metric_line(metric_id, metric_info, metric_dict_df))
+      md.append("")
+
+  return "\n".join(md)
+
+
+def generate_metric_index(metrics_by_category, metric_dict_df, ai_optimized=False):
+  """
+    Generate a flat alphabetical index of all metrics.
+
+    Args:
+        metrics_by_category: dict from calculate_all_metrics
+        metric_dict_df: full metric dictionary DataFrame
+        ai_optimized (bool): If True, emit compact key:value pairs instead of
+                             bullet lines. Insufficient metrics are omitted.
+
+    Returns:
+        str: Markdown content for the metric index section
+    """
+  all_metrics = {}
+  for cat_metrics in metrics_by_category.values():
+    all_metrics.update(cat_metrics)
+
+  if ai_optimized:
+    # Dense: "metric_id:value(n=att)" all on sorted lines, 10 per line
+    md = ["# Aggregate Metrics",
+          "# Format: metric_id:value(n=attempts)  — decode via metric_dictionary file",
+          ""]
+
+    parts = []
+    for metric_id in sorted(all_metrics.keys()):
+      metric_info = all_metrics[metric_id]
+      value      = metric_info.get('value')
+      attempts   = metric_info.get('attempts')
+      sufficient = metric_info.get('sufficient_data', True)
+
+      if not sufficient or value is None:
+        continue  # skip insufficient — saves tokens
+
+      if isinstance(value, float):
         if abs(value) < 0.001 and value != 0:
           value_str = f"{value:.4f}".rstrip('0').rstrip('.')
         elif abs(value) < 1:
@@ -735,172 +708,168 @@ def generate_coach_view_sections(metrics_by_category, metric_dict_df):
       else:
         value_str = str(value)
 
-      att_str = str(attempts) if attempts is not None else "-"
+      att_str = f"(n={attempts})" if attempts is not None else ""
+      parts.append(f"{metric_id}:{value_str}{att_str}")
 
-      if section_has_video:
-        md.append(f"| {metric_name} | {value_str} | {att_str} | {video_links} |")
-      else:
-        md.append(f"| {metric_name} | {value_str} | {att_str} |")
+    # Group into rows of 8 for readability without wasting tokens
+    ROW_SIZE = 8
+    for i in range(0, len(parts), ROW_SIZE):
+      md.append(" ".join(parts[i:i + ROW_SIZE]))
 
-    md.append("")  # blank line between sections
-
-    # ── Any metrics without a coach_view assignment ───────────────────────
-  if unassigned:
-    md.append("## Other Metrics\n")
-    for metric_id, metric_info in sort_metrics(unassigned):
-      md.append(format_metric_line(metric_id, metric_info, metric_dict_df))
     md.append("")
+    return "\n".join(md)
 
-  return "\n".join(md)
+  else:
+    # Human: original bullet-list format
+    md = ["## Metric Index\n",
+          "*Alphabetical index of all calculated metrics for fast lookup.*\n"]
 
+    for metric_id in sorted(all_metrics.keys()):
+      metric_info = all_metrics[metric_id]
+      md.append(format_metric_line(metric_id, metric_info, metric_dict_df))
 
-def generate_metric_index(metrics_by_category, metric_dict_df):
-  """
-    Generate a flat alphabetical index of all metrics.
-
-    Provides a fast lookup path for any analysis template regardless
-    of which coach_view section a metric appears in.
-
-    Returns:
-        str: Markdown content for the metric index section
-    """
-  # Flatten all metrics
-  all_metrics = {}
-  for cat_metrics in metrics_by_category.values():
-    all_metrics.update(cat_metrics)
-
-  md = ["## Metric Index\n",
-        "*Alphabetical index of all calculated metrics for fast lookup.*\n"]
-
-  for metric_id in sorted(all_metrics.keys()):
-    metric_info = all_metrics[metric_id]
-    md.append(format_metric_line(metric_id, metric_info, metric_dict_df))
-
-  md.append("")
-  return "\n".join(md)
+    md.append("")
+    return "\n".join(md)
 
 
-def generate_markdown_content(player_name, metadata, metrics_by_category, metric_dict_df):
+def generate_markdown_content(player_name, metadata, metrics_by_category, metric_dict_df, ai_optimized=False):
   """
     Generate complete Markdown content for player export.
-
-    Structure:
-      1. Header + descriptive paragraphs
-      2. Data collection details
-      3. Metric Index (flat alphabetical — fast lookup for any template)
-      4. Coach View Sections (organized by coach_view column)
-      5. Calculation summary + reference notes
 
     Args:
         player_name: Player name
         metadata: Metadata dict
         metrics_by_category: Dict of metrics organized by metric_category
         metric_dict_df: Full metric dictionary DataFrame
+        ai_optimized (bool): If True, use dense token-efficient format throughout.
 
     Returns:
         str: Complete Markdown content
     """
   md_content = []
 
-  # ── Header ────────────────────────────────────────────────────────────
-  md_content.append(f"# {player_name} — Performance Analysis\n")
+  if ai_optimized:
+    # ── AI OPTIMIZED HEADER ────────────────────────────────────────────────
+    # Compact single-line header instead of paragraphs
+    md_content.append(
+      f"PLAYER|{player_name}|{metadata['league']}|{metadata['gender']}|"
+      f"{metadata['year']}|{metadata['team']}|"
+      f"pts:{metadata['total_points_analyzed']}|sets:{metadata['total_sets_analyzed']}|"
+      f"generated:{metadata['generated_at']}"
+    )
+    filters = metadata.get('filters_applied', {})
+    if filters:
+      filter_str = " ".join(f"{k}:{v}" for k, v in filters.items())
+      md_content.append(f"FILTERS|{filter_str}")
+    md_content.append("")
 
-  header_paragraphs = generate_descriptive_header(
-    player_name, metadata, metrics_by_category
-  )
-  md_content.append(header_paragraphs)
-  md_content.append("\n")
+    # Metric index (dense)
+    md_content.append(generate_metric_index(metrics_by_category, metric_dict_df, ai_optimized=True))
 
-  # ── Data collection details ───────────────────────────────────────────
-  md_content.append("## Data Collection Details\n")
-  md_content.append(f"- **Report Generated**: {metadata['generated_at']}")
-  md_content.append(
+    # Coach view sections (dense)
+    md_content.append("# Coach View Sections")
+    md_content.append("# Format: [section_key] then metric_id:value(n=att) ...")
+    md_content.append("")
+    md_content.append(generate_coach_view_sections(metrics_by_category, metric_dict_df, ai_optimized=True))
+
+    # Compact summary footer
+    md_content.append(
+      f"SUMMARY|metrics_calculated:{metadata['summary_stats']['total_metrics_calculated']}|"
+      f"sufficient:{metadata['summary_stats']['metrics_with_sufficient_data']}|"
+      f"insufficient:{metadata['summary_stats']['metrics_below_min_attempts']}"
+    )
+
+  else:
+    # ── HUMAN READABLE (original format) ──────────────────────────────────
+    md_content.append(f"# {player_name} — Performance Analysis\n")
+
+    header_paragraphs = generate_descriptive_header(
+      player_name, metadata, metrics_by_category
+    )
+    md_content.append(header_paragraphs)
+    md_content.append("\n")
+
+    md_content.append("## Data Collection Details\n")
+    md_content.append(f"- **Report Generated**: {metadata['generated_at']}")
+    md_content.append(
       f"- **League**: {metadata['league']} {metadata['gender']} {metadata['year']}"
-  )
-  md_content.append(f"- **Team**: {metadata['team']}")
-  md_content.append(
-        f"- **Data Points Analyzed**: {metadata['total_points_analyzed']} rally outcomes"
-  )
-  md_content.append(
-        f"- **Match Sets Analyzed**: {metadata['total_sets_analyzed']} competitive sets"
-  )
-  md_content.append(
-        f"- **Metric Dictionary Version**: {metadata['dictionary_version']}"
+    )
+    md_content.append(f"- **Team**: {metadata['team']}")
+    md_content.append(
+      f"- **Data Points Analyzed**: {metadata['total_points_analyzed']} rally outcomes"
+    )
+    md_content.append(
+      f"- **Match Sets Analyzed**: {metadata['total_sets_analyzed']} competitive sets"
+    )
+    md_content.append(
+      f"- **Metric Dictionary Version**: {metadata['dictionary_version']}"
     )
 
-  filters = metadata.get('filters_applied', {})
-  if filters:
-        md_content.append("\n**Data Filters Applied:**")
-        for key, value in filters.items():
-            filter_name = key.replace('_', ' ').title()
-            md_content.append(f"- {filter_name}: {value}")
+    filters = metadata.get('filters_applied', {})
+    if filters:
+      md_content.append("\n**Data Filters Applied:**")
+      for key, value in filters.items():
+        filter_name = key.replace('_', ' ').title()
+        md_content.append(f"- {filter_name}: {value}")
 
-  md_content.append("\n")
+    md_content.append("\n")
 
-    # ── Flat metric index ─────────────────────────────────────────────────
-  md_content.append("---\n")
-  md_content.append(generate_metric_index(metrics_by_category, metric_dict_df))
+    md_content.append("---\n")
+    md_content.append(generate_metric_index(metrics_by_category, metric_dict_df, ai_optimized=False))
 
-    # ── Coach view sections ───────────────────────────────────────────────
-  md_content.append("---\n")
-  md_content.append("# Performance Metrics — Coach View\n")
-  md_content.append(
-        "*Metrics organized by the Coach View Template. "
-        "See `01_Coach_View_Template.md` for interpretation guidance.*\n"
+    md_content.append("---\n")
+    md_content.append("# Performance Metrics — Coach View\n")
+    md_content.append(
+      "*Metrics organized by the Coach View Template. "
+      "See `01_Coach_View_Template.md` for interpretation guidance.*\n"
     )
-  md_content.append(
-        generate_coach_view_sections(metrics_by_category, metric_dict_df)
+    md_content.append(
+      generate_coach_view_sections(metrics_by_category, metric_dict_df, ai_optimized=False)
     )
 
-    # ── Calculation summary ───────────────────────────────────────────────
-  md_content.append("---\n")
-  md_content.append("## Calculation Summary\n")
-  md_content.append(
-        f"- **Total Metrics Calculated**: "
-        f"{metadata['summary_stats']['total_metrics_calculated']}"
+    md_content.append("---\n")
+    md_content.append("## Calculation Summary\n")
+    md_content.append(
+      f"- **Total Metrics Calculated**: "
+      f"{metadata['summary_stats']['total_metrics_calculated']}"
     )
-  md_content.append(
-        f"- **Metrics with Sufficient Data**: "
-        f"{metadata['summary_stats']['metrics_with_sufficient_data']}"
+    md_content.append(
+      f"- **Metrics with Sufficient Data**: "
+      f"{metadata['summary_stats']['metrics_with_sufficient_data']}"
     )
-  md_content.append(
-        f"- **Metrics Below Minimum Attempts**: "
-        f"{metadata['summary_stats']['metrics_below_min_attempts']}"
+    md_content.append(
+      f"- **Metrics Below Minimum Attempts**: "
+      f"{metadata['summary_stats']['metrics_below_min_attempts']}"
     )
-  md_content.append("\n")
+    md_content.append("\n")
 
-    # ── Footer ────────────────────────────────────────────────────────────
-  md_content.append("---\n")
-  md_content.append("## Reference Notes\n\n")
-  md_content.append(
-        "*Metric definitions, level benchmarks, and interpretation guidance are in "
-        "`00_Global_Context_Philosophy.md`. "
-        "Coach View organization is defined in `01_Coach_View_Template.md`. "
-        "Scouting analysis uses `02_Scouting_Template.md`. "
-        "Statistical analysis uses `03_Statistical_View_Template.md`.*\n\n"
+    md_content.append("---\n")
+    md_content.append("## Reference Notes\n\n")
+    md_content.append(
+      "*Metric definitions, level benchmarks, and interpretation guidance are in "
+      "`00_Global_Context_Philosophy.md`. "
+      "Coach View organization is defined in `01_Coach_View_Template.md`. "
+      "Scouting analysis uses `02_Scouting_Template.md`. "
+      "Statistical analysis uses `03_Statistical_View_Template.md`.*\n\n"
     )
-  md_content.append(
-        f"*Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} "
-        f"using metric dictionary version {metadata['dictionary_version']}*\n"
+    md_content.append(
+      f"*Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} "
+      f"using metric dictionary version {metadata['dictionary_version']}*\n"
     )
 
   return "\n".join(md_content)
 
 
-def generate_player_metrics_markdown(league_value, team, use_direct_data=False, **json_filters):
-    """
+def generate_player_metrics_markdown(league_value, team, use_direct_data=False, ai_optimized=False, **json_filters):
+  """
     Generate comprehensive player metrics MARKDOWN file (instead of JSON).
-    
-    This is the modified version optimized for NotebookLM:
-    - Structured Markdown format
-    - Token-efficient (only meaningful metrics)
-    - 3-sentence overview at top
-    - Standardized tables with context
-    - Cross-references to global philosophy
     
     Args:
         league_value (str): League|Gender|Year format (e.g., "AVP|W|2024")
         team (str): Team name
+        use_direct_data (bool): If True, bypass user check (for background jobs)
+        ai_optimized (bool): If True, use token-efficient dense format.
+                             If False (default), use human-readable format.
         **json_filters: Filter parameters (player, start_date, end_date, etc.)
     
     Returns:
@@ -910,168 +879,154 @@ def generate_player_metrics_markdown(league_value, team, use_direct_data=False, 
             'summary': dict with metadata
         }
     """
-    
-    try:
-        log_info("=== MARKDOWN Generation Started ===")
-        log_info(f"Player: {json_filters.get('player')}")
-        log_info(f"League: {league_value}")
-        log_info(f"Team: {team}")
-        
-        # Parse league value
-        str_loc = league_value.index("|")
-        league = league_value[: str_loc - 1].strip()
-        league_value = league_value[str_loc + 1 :]
-        str_loc = league_value.index("|")
-        gender = league_value[: str_loc - 1].strip()
-        year = str(int(league_value[str_loc + 1 :].strip()))
-        
-        log_info(f"Parsed - League: {league}, Gender: {gender}, Year: {year}")
-        
-        # Get player name (required)
-        player_name = json_filters.get('player')
-        if not player_name:
-            log_error("Player name not provided", with_traceback=False)
-            raise ValueError("Player name is required")
-        
-        player_shortname = json_filters.get('player_shortname', 'player')
-        
-        # Load metric dictionary
-        log_info("Loading metric dictionary from database...")
-        dict_rows = list(app_tables.metric_dictionary.search())
-        
-        if len(dict_rows) == 0:
-            log_error("No metrics found in metric_dictionary table", with_traceback=False)
-            raise ValueError("Metric dictionary is empty")
-        
-        # Get column names from the table schema
-        column_names = [col['name'] for col in app_tables.metric_dictionary.list_columns()]
-        
-        # Convert to DataFrame
-        metric_dict = pd.DataFrame([
-            {col: row[col] for col in column_names}
-            for row in dict_rows
-        ])
-        log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary")
-        
-        # Get PPR data with filters
-        log_info("Retrieving and filtering PPR data...")
-        if use_direct_data:
-          # Import the direct access function from ai_export_manager
-          from ai_export_manager import get_filtered_ppr_data_direct
-          ppr_df = get_filtered_ppr_data_direct(league, gender, year, team, **json_filters)
-        else:
-          ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
-        log_info(f"✓ Loaded {len(ppr_df)} points from PPR data")
-        
-        # NOTE: tri_df removed — set counting now uses ppr_df directly.
-        # get_filtered_triangle_data() was counting unfiltered sets across all
-        # players; ppr_df gives the correct player-specific set count.
 
-        if len(ppr_df) == 0:
-            log_error("No data found for the specified filters", with_traceback=False)
-            raise ValueError("No data found for the specified filters")
+  try:
+    log_info("=== MARKDOWN Generation Started ===")
+    log_info(f"Player: {json_filters.get('player')}")
+    log_info(f"League: {league_value}")
+    log_info(f"Team: {team}")
+    log_info(f"ai_optimized: {ai_optimized}")
 
-        # Count points for this player only (for metadata display)
-        # Note: full ppr_df is still passed to calculate_all_metrics - metric
-        # functions handle their own player filtering internally via disp_player
-        player_mask = (
-            (ppr_df['player_a1'] == player_name) |
-            (ppr_df['player_a2'] == player_name) |
-            (ppr_df['player_b1'] == player_name) |
-            (ppr_df['player_b2'] == player_name)
-        )
-        player_ppr_count = len(ppr_df[player_mask])
+    # Parse league value
+    str_loc = league_value.index("|")
+    league = league_value[: str_loc - 1].strip()
+    league_value = league_value[str_loc + 1 :]
+    str_loc = league_value.index("|")
+    gender = league_value[: str_loc - 1].strip()
+    year = str(int(league_value[str_loc + 1 :].strip()))
 
-        # Count unique sets for this player from ppr_df.
-        # A set = unique (video_id, set) combination.
-        # Exclude sets with fewer than 10 points — these are likely counting
-        # artifacts from the point-based set boundary detection.
-        set_point_counts = (
-            ppr_df[player_mask]
-            .groupby(['video_id', 'set'])
-            .size()
-            .reset_index(name='point_count')
-        )
-        player_set_count = int(
-            set_point_counts[set_point_counts['point_count'] >= 10].shape[0]
-        )
-        log_info(f"✓ Counted {player_set_count} sets for {player_name} (>=10 points each)")
+    log_info(f"Parsed - League: {league}, Gender: {gender}, Year: {year}")
 
-        # Build metadata
-        metadata = {
-            'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'player_name': player_name,
-            'player_shortname': player_shortname,
-            'league': league,
-            'gender': gender,
-            'year': year,
-            'team': team,
-            'filters_applied': {k: str(v) for k, v in json_filters.items() 
-                                if k not in ['player', 'player_shortname']},
-            'total_points_analyzed': player_ppr_count,
-            'total_sets_analyzed': player_set_count,
-            'dictionary_version': '1.0'
-        }
-        
-        # Calculate all metrics
-        log_info("Starting metric calculations...")
-        metrics_result = calculate_all_metrics(metric_dict, ppr_df, player_name)
-        log_info(f"✓ Calculated {metrics_result['successful']} / {metrics_result['total_calculated']} metrics")
-        log_info(f"  ({metrics_result['insufficient_data']} metrics had insufficient data)")
-        
-        # Add summary stats to metadata
-        metadata['summary_stats'] = {
-            'total_metrics_calculated': metrics_result['total_calculated'],
-            'metrics_with_sufficient_data': metrics_result['successful'],
-            'metrics_below_min_attempts': metrics_result['insufficient_data']
-        }
-        
-        # Generate Markdown content
-        log_info("Building Markdown output...")
-        markdown_content = generate_markdown_content(
-            player_name,
-            metadata,
-            metrics_result['metrics'],
-            metric_dict
-        )
-        
-        # Generate filename
-        safe_name = sanitize_name_for_filename(player_name)
-        # Remove timestamp - use consistent filename
-        filename = f"{safe_name}_{league}_{gender}_{year}.md"
-        # Example: STETSON_35_Liz_NCAA_W_2026.md
-        log_info(f"Generated filename: {filename}")
-        
-        # Create media object
-        log_info(f"Markdown size: {len(markdown_content)} bytes")
-        media_obj = anvil.BlobMedia(
-            'text/markdown',
-            markdown_content.encode('utf-8'),
-            name=filename
-        )
-        
-        log_info("=== MARKDOWN Generation Complete ===")
-        
-        return {
-            'media_obj': media_obj,
-            'filename': filename,
-            'summary': metadata
-        }
-    
-    except Exception as e:
-        log_error(f"Markdown generation failed: {str(e)}", with_traceback=True)
-        raise
+    # Get player name (required)
+    player_name = json_filters.get('player')
+    if not player_name:
+      log_error("Player name not provided", with_traceback=False)
+      raise ValueError("Player name is required")
+
+    player_shortname = json_filters.get('player_shortname', 'player')
+
+    # Load metric dictionary
+    log_info("Loading metric dictionary from database...")
+    dict_rows = list(app_tables.metric_dictionary.search())
+
+    if len(dict_rows) == 0:
+      log_error("No metrics found in metric_dictionary table", with_traceback=False)
+      raise ValueError("Metric dictionary is empty")
+
+    column_names = [col['name'] for col in app_tables.metric_dictionary.list_columns()]
+
+    metric_dict = pd.DataFrame([
+      {col: row[col] for col in column_names}
+      for row in dict_rows
+    ])
+    log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary")
+
+    # Get PPR data with filters
+    log_info("Retrieving and filtering PPR data...")
+    if use_direct_data:
+      from ai_export_manager import get_filtered_ppr_data_direct
+      ppr_df = get_filtered_ppr_data_direct(league, gender, year, team, **json_filters)
+    else:
+      ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
+    log_info(f"✓ Loaded {len(ppr_df)} points from PPR data")
+
+    if len(ppr_df) == 0:
+      log_error("No data found for the specified filters", with_traceback=False)
+      raise ValueError("No data found for the specified filters")
+
+      # Count points / sets for this player
+    player_mask = (
+      (ppr_df['player_a1'] == player_name) |
+      (ppr_df['player_a2'] == player_name) |
+      (ppr_df['player_b1'] == player_name) |
+      (ppr_df['player_b2'] == player_name)
+    )
+    player_ppr_count = len(ppr_df[player_mask])
+
+    set_point_counts = (
+      ppr_df[player_mask]
+        .groupby(['video_id', 'set'])
+        .size()
+        .reset_index(name='point_count')
+    )
+    player_set_count = int(
+      set_point_counts[set_point_counts['point_count'] >= 10].shape[0]
+    )
+    log_info(f"✓ Counted {player_set_count} sets for {player_name} (>=10 points each)")
+
+    # Build metadata
+    metadata = {
+      'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+      'player_name': player_name,
+      'player_shortname': player_shortname,
+      'league': league,
+      'gender': gender,
+      'year': year,
+      'team': team,
+      'filters_applied': {k: str(v) for k, v in json_filters.items() 
+                          if k not in ['player', 'player_shortname']},
+      'total_points_analyzed': player_ppr_count,
+      'total_sets_analyzed': player_set_count,
+      'dictionary_version': '1.0'
+    }
+
+    # Calculate all metrics
+    log_info("Starting metric calculations...")
+    metrics_result = calculate_all_metrics(metric_dict, ppr_df, player_name)
+    log_info(f"✓ Calculated {metrics_result['successful']} / {metrics_result['total_calculated']} metrics")
+    log_info(f"  ({metrics_result['insufficient_data']} metrics had insufficient data)")
+
+    metadata['summary_stats'] = {
+      'total_metrics_calculated': metrics_result['total_calculated'],
+      'metrics_with_sufficient_data': metrics_result['successful'],
+      'metrics_below_min_attempts': metrics_result['insufficient_data']
+    }
+
+    # Generate Markdown content
+    log_info("Building Markdown output...")
+    markdown_content = generate_markdown_content(
+      player_name,
+      metadata,
+      metrics_result['metrics'],
+      metric_dict,
+      ai_optimized=ai_optimized
+    )
+
+    # Generate filename (include _opt suffix for optimized files)
+    safe_name = sanitize_name_for_filename(player_name)
+    opt_suffix = "_opt" if ai_optimized else ""
+    filename = f"{safe_name}_{league}_{gender}_{year}{opt_suffix}.md"
+    log_info(f"Generated filename: {filename}")
+
+    log_info(f"Markdown size: {len(markdown_content)} bytes")
+    media_obj = anvil.BlobMedia(
+      'text/markdown',
+      markdown_content.encode('utf-8'),
+      name=filename
+    )
+
+    log_info("=== MARKDOWN Generation Complete ===")
+
+    return {
+      'media_obj': media_obj,
+      'filename': filename,
+      'summary': metadata
+    }
+
+  except Exception as e:
+    log_error(f"Markdown generation failed: {str(e)}", with_traceback=True)
+    raise
 
 
 def generate_global_context_markdown():
-    """
+  """
     Generate the global context/philosophy file for beach volleyball metrics.
     This should be generated once and referenced by all player Markdown files.
     
     Returns:
         anvil.BlobMedia: The global context Markdown file
     """
-    content = """# Beach Volleyball Analytics - Global Context & Philosophy
+  content = """# Beach Volleyball Analytics - Global Context & Philosophy
 
 ## Core Metric Definitions
 
@@ -1239,156 +1194,149 @@ This document represents the canonical definitions for:
 
 *This document serves as the reference guide for all player-specific performance reports and metric analyses.*
 """
-    
-    return anvil.BlobMedia(
-        'text/markdown',
-        content.encode('utf-8'),
-        name='00_Global_Context_Philosophy.md'
-    )
+
+  return anvil.BlobMedia(
+    'text/markdown',
+    content.encode('utf-8'),
+    name='00_Global_Context_Philosophy.md'
+  )
 
 
 # Keep the original helper functions from generate_player_metrics_json.py
 # These remain unchanged:
 
 def get_filtered_ppr_data(league, gender, year, team, **filters):
-    """
+  """
     Retrieve and filter point-by-point data.
     (Original function - unchanged)
     """
-    try:
-        current_user = anvil.users.get_user()
-        if not current_user:
-            log_error("No user logged in", with_traceback=False)
-            return pd.DataFrame()
-        
-        user_team = current_user['team']
-        log_info(f"User team from login: {user_team}")
-        
-        if user_team == 'INTERNALS':
-            search_team = 'League'
-            log_info(f"INTERNALS user - using team='{search_team}'")
-        else:
-            search_team = user_team
-        
-        log_info(f"Querying PPR data for {league}/{gender}/{year}/team={search_team}...")
-        
-        ppr_rows = list(app_tables.ppr_csv_tables.search(
-            league=league,
-            gender=gender,
-            year=year,
-            team=search_team
-        ))
-        
-        if len(ppr_rows) == 0:
-            log_error(f"No PPR data found for {league}/{gender}/{year}/team={search_team}", with_traceback=False)
-            return pd.DataFrame()
-        
-        log_info(f"Found {len(ppr_rows)} PPR data record(s)")
-        
-        ppr_row = ppr_rows[0]
-        column_names = [col['name'] for col in app_tables.ppr_csv_tables.list_columns()]
-        
-        if 'ppr_csv' not in column_names:
-            log_error("ppr_csv column not found in ppr_csv_tables", with_traceback=False)
-            return pd.DataFrame()
-        
-        ppr_csv_data = ppr_row['ppr_csv']
-        
-        if hasattr(ppr_csv_data, 'get_bytes'):
-            ppr_csv_string = ppr_csv_data.get_bytes().decode('utf-8')
-            log_debug("Loaded ppr_csv from Media object")
-        else:
-            ppr_csv_string = ppr_csv_data
-            log_debug("Loaded ppr_csv as string")
-        
-        ppr_df = pd.read_csv(io.StringIO(ppr_csv_string))
-        log_info(f"Loaded {len(ppr_df)} raw points from PPR")
-        
-        log_info("Applying filters using filter_ppr_df()...")
-        ppr_df = filter_ppr_df(ppr_df, **filters)
-        log_info(f"After filtering: {len(ppr_df)} points retained")
-        
-        return ppr_df
-    
-    except Exception as e:
-        log_error(f"Error in get_filtered_ppr_data: {str(e)}", with_traceback=True)
-        return pd.DataFrame()
+  try:
+    current_user = anvil.users.get_user()
+    if not current_user:
+      log_error("No user logged in", with_traceback=False)
+      return pd.DataFrame()
+
+    user_team = current_user['team']
+    log_info(f"User team from login: {user_team}")
+
+    if user_team == 'INTERNALS':
+      search_team = 'League'
+      log_info(f"INTERNALS user - using team='{search_team}'")
+    else:
+      search_team = user_team
+
+    log_info(f"Querying PPR data for {league}/{gender}/{year}/team={search_team}...")
+
+    ppr_rows = list(app_tables.ppr_csv_tables.search(
+      league=league,
+      gender=gender,
+      year=year,
+      team=search_team
+    ))
+
+    if len(ppr_rows) == 0:
+      log_error(f"No PPR data found for {league}/{gender}/{year}/team={search_team}", with_traceback=False)
+      return pd.DataFrame()
+
+    log_info(f"Found {len(ppr_rows)} PPR data record(s)")
+
+    ppr_row = ppr_rows[0]
+    column_names = [col['name'] for col in app_tables.ppr_csv_tables.list_columns()]
+
+    if 'ppr_csv' not in column_names:
+      log_error("ppr_csv column not found in ppr_csv_tables", with_traceback=False)
+      return pd.DataFrame()
+
+    ppr_csv_data = ppr_row['ppr_csv']
+
+    if hasattr(ppr_csv_data, 'get_bytes'):
+      ppr_csv_string = ppr_csv_data.get_bytes().decode('utf-8')
+      log_debug("Loaded ppr_csv from Media object")
+    else:
+      ppr_csv_string = ppr_csv_data
+      log_debug("Loaded ppr_csv as string")
+
+    ppr_df = pd.read_csv(io.StringIO(ppr_csv_string))
+    log_info(f"Loaded {len(ppr_df)} raw points from PPR")
+
+    log_info("Applying filters using filter_ppr_df()...")
+    ppr_df = filter_ppr_df(ppr_df, **filters)
+    log_info(f"After filtering: {len(ppr_df)} points retained")
+
+    return ppr_df
+
+  except Exception as e:
+    log_error(f"Error in get_filtered_ppr_data: {str(e)}", with_traceback=True)
+    return pd.DataFrame()
 
 
 def get_filtered_triangle_data(league, gender, year, team, **filters):
-    """
+  """
     Retrieve and filter triangle (set-level) data.
     (Original function - unchanged)
     """
-    try:
-        log_info("Querying triangle data...")
-        
-        has_dates = 'start_date' in filters and 'end_date' in filters
-        
-        if has_dates:
-            date_checked = True
-            disp_start_date = filters['start_date']
-            disp_end_date = filters['end_date']
-            log_info(f"Using date range: {disp_start_date} to {disp_end_date}")
-        else:
-            date_checked = False
-            disp_start_date = None
-            disp_end_date = None
-            log_info("No date range specified - retrieving all triangle data")
-        
-        tri_df, tri_found = get_tri_data(
-            league,
-            gender,
-            year,
-            date_checked,
-            disp_start_date,
-            disp_end_date
-        )
-        
-        if not tri_found or len(tri_df) == 0:
-            log_info("No triangle data found")
-            return pd.DataFrame()
-        
-        log_info(f"Loaded {len(tri_df)} raw sets from triangle data")
-        
-        player_name = filters.get('player')
-        if player_name and 'player' in tri_df.columns:
-            tri_df = tri_df[tri_df['player'] == player_name]
-            log_debug(f"After player filter: {len(tri_df)} sets")
-        elif player_name:
-            if 'player1' in tri_df.columns and 'player2' in tri_df.columns:
-                tri_df = tri_df[(tri_df['player1'] == player_name) | (tri_df['player2'] == player_name)]
-                log_debug(f"After player filter (player1/player2): {len(tri_df)} sets")
-        
-        if 'comp_l1' in filters and 'comp_l1' in tri_df.columns:
-            tri_df = tri_df[tri_df['comp_l1'] == filters['comp_l1']]
-            log_debug(f"After comp_l1 filter: {len(tri_df)} sets")
-        
-        if 'comp_l2' in filters and 'comp_l2' in tri_df.columns:
-            tri_df = tri_df[tri_df['comp_l2'] == filters['comp_l2']]
-            log_debug(f"After comp_l2 filter: {len(tri_df)} sets")
-        
-        if 'comp_l3' in filters and 'comp_l3' in tri_df.columns:
-            tri_df = tri_df[tri_df['comp_l3'] == filters['comp_l3']]
-            log_debug(f"After comp_l3 filter: {len(tri_df)} sets")
-        
-        log_info(f"After all filtering: {len(tri_df)} sets")
-        return tri_df
-    
-    except Exception as e:
-        log_error(f"Error in get_filtered_triangle_data: {str(e)}", with_traceback=True)
-        return pd.DataFrame()
+  try:
+    log_info("Querying triangle data...")
 
+    has_dates = 'start_date' in filters and 'end_date' in filters
 
-"""
-Helper function to add to generate_player_metrics_markdown.py
+    if has_dates:
+      date_checked = True
+      disp_start_date = filters['start_date']
+      disp_end_date = filters['end_date']
+      log_info(f"Using date range: {disp_start_date} to {disp_end_date}")
+    else:
+      date_checked = False
+      disp_start_date = None
+      disp_end_date = None
+      log_info("No date range specified - retrieving all triangle data")
 
-This function extracts just the content portion of the player metrics markdown
-without the top-level headers, so it can be combined with other datasets.
-"""
+    tri_df, tri_found = get_tri_data(
+      league,
+      gender,
+      year,
+      date_checked,
+      disp_start_date,
+      disp_end_date
+    )
+
+    if not tri_found or len(tri_df) == 0:
+      log_info("No triangle data found")
+      return pd.DataFrame()
+
+    log_info(f"Loaded {len(tri_df)} raw sets from triangle data")
+
+    player_name = filters.get('player')
+    if player_name and 'player' in tri_df.columns:
+      tri_df = tri_df[tri_df['player'] == player_name]
+      log_debug(f"After player filter: {len(tri_df)} sets")
+    elif player_name:
+      if 'player1' in tri_df.columns and 'player2' in tri_df.columns:
+        tri_df = tri_df[(tri_df['player1'] == player_name) | (tri_df['player2'] == player_name)]
+        log_debug(f"After player filter (player1/player2): {len(tri_df)} sets")
+
+    if 'comp_l1' in filters and 'comp_l1' in tri_df.columns:
+      tri_df = tri_df[tri_df['comp_l1'] == filters['comp_l1']]
+      log_debug(f"After comp_l1 filter: {len(tri_df)} sets")
+
+    if 'comp_l2' in filters and 'comp_l2' in tri_df.columns:
+      tri_df = tri_df[tri_df['comp_l2'] == filters['comp_l2']]
+      log_debug(f"After comp_l2 filter: {len(tri_df)} sets")
+
+    if 'comp_l3' in filters and 'comp_l3' in tri_df.columns:
+      tri_df = tri_df[tri_df['comp_l3'] == filters['comp_l3']]
+      log_debug(f"After comp_l3 filter: {len(tri_df)} sets")
+
+    log_info(f"After all filtering: {len(tri_df)} sets")
+    return tri_df
+
+  except Exception as e:
+    log_error(f"Error in get_filtered_triangle_data: {str(e)}", with_traceback=True)
+    return pd.DataFrame()
+
 
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def generate_player_metrics_markdown_content(ppr_df, player_name, league_value, team):
+def generate_player_metrics_markdown_content(ppr_df, player_name, league_value, team, ai_optimized=False):
   """
     Generate player metrics markdown content WITHOUT the top-level file headers.
     This is used when combining multiple datasets into one file.
@@ -1398,6 +1346,7 @@ def generate_player_metrics_markdown_content(ppr_df, player_name, league_value, 
         player_name: Player name
         league_value: League string
         team: Team name
+        ai_optimized (bool): If True, use dense token-efficient format.
         
     Returns:
         dict: {
@@ -1405,14 +1354,10 @@ def generate_player_metrics_markdown_content(ppr_df, player_name, league_value, 
             'summary': dict (summary statistics)
         }
     """
-  log_info(f"Generating player metrics content (no headers) for {player_name}")
-
-  # Call the existing generate_player_metrics_markdown function
-  # but extract just the content portion
+  log_info(f"Generating player metrics content (no headers) for {player_name}, ai_optimized={ai_optimized}")
 
   from generate_player_metrics_json_server import generate_player_metrics_json
 
-  # Generate the JSON data first
   json_result = generate_player_metrics_json(
     league_value=league_value,
     team=team,
@@ -1425,10 +1370,8 @@ def generate_player_metrics_markdown_content(ppr_df, player_name, league_value, 
 
   player_data = json_result['data']
 
-  # Format as markdown (without top-level headers)
   md_lines = []
 
-  # Performance categories
   categories = [
     ('attacking', 'Attacking'),
     ('passing', 'Passing'),
@@ -1439,26 +1382,37 @@ def generate_player_metrics_markdown_content(ppr_df, player_name, league_value, 
 
   for cat_key, cat_name in categories:
     if cat_key in player_data and player_data[cat_key]:
-      md_lines.append(f"### {cat_name}")
-      md_lines.append("")
-
       cat_data = player_data[cat_key]
-      for metric_key, metric_data in cat_data.items():
-        if isinstance(metric_data, dict):
-          value = metric_data.get('value', 'N/A')
-          attempts = metric_data.get('attempts', '')
-          metric_name = metric_data.get('name', metric_key)
 
-          if attempts:
-            md_lines.append(f"- **{metric_name}**: {value} (n={attempts})")
-          else:
-            md_lines.append(f"- **{metric_name}**: {value}")
-
-      md_lines.append("")
+      if ai_optimized:
+        # Dense: [category] then metric_id:value(n=att)
+        md_lines.append(f"[{cat_key}]")
+        parts = []
+        for metric_key, metric_data in cat_data.items():
+          if isinstance(metric_data, dict):
+            value = metric_data.get('value', 'N/A')
+            attempts = metric_data.get('attempts', '')
+            att_str = f"(n={attempts})" if attempts else ""
+            parts.append(f"{metric_key}:{value}{att_str}")
+        if parts:
+          md_lines.append(" ".join(parts))
+        md_lines.append("")
+      else:
+        # Human: original bulleted format
+        md_lines.append(f"### {cat_name}")
+        md_lines.append("")
+        for metric_key, metric_data in cat_data.items():
+          if isinstance(metric_data, dict):
+            value = metric_data.get('value', 'N/A')
+            attempts = metric_data.get('attempts', '')
+            metric_name = metric_data.get('name', metric_key)
+            if attempts:
+              md_lines.append(f"- **{metric_name}**: {value} (n={attempts})")
+            else:
+              md_lines.append(f"- **{metric_name}**: {value}")
+        md_lines.append("")
 
   content = "\n".join(md_lines)
-
-  # Extract summary
   summary = json_result.get('summary', {})
 
   return {

@@ -1925,6 +1925,9 @@ def process_export_job_markdown(export_row):
 
   log_info(f"Processing MARKDOWN export for {export_row['team']} ({export_row['league']})")
 
+  ai_optimized = bool(export_row['ai_optimized'])
+  log_info(f"ai_optimized: {ai_optimized}")
+
   # Extract export parameters
   league = export_row['league']
   team = export_row['team']
@@ -2289,7 +2292,8 @@ def process_export_job_with_datasets(export_row):
         league_value=league_value,
         team=team,
         datasets_to_include=datasets_to_include,
-        output_format=output_format
+        output_format=output_format,
+        ai_optimized=ai_optimized  
       )
 
       if result['success'] and result['media_obj']:
