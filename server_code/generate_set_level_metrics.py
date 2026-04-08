@@ -243,7 +243,7 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
     log_debug(f"No function_name for metric {metric_id}, skipping")
     return None
 
-    try:
+  try:
     disp_player = player_name
     ppr_df = ppr_df_filtered
 
