@@ -515,7 +515,7 @@ def calc_player_eso_obj( ppr_df, disp_player ):
                          ( ppr_df['point_outcome_team'].str.contains(disp_player) ) ].shape[0]/2
 
   eso_attempts = eso_fb_att + eso_tran_att
-  eso = round(float((eso_fbk + eso_tk) / eso_attempts), 3)
+  eso = round(float((eso_fbk + eso_tk) / eso_attempts), 3) if eso_attempts > 0 else None
 
   return {
     'status': True,

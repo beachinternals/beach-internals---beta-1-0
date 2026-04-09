@@ -1302,7 +1302,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
               )
 
               if set_level_data:
-                  section_md = format_set_level_data_as_markdown(set_level_data)
+                  section_md = format_set_level_data_as_markdown(set_level_data,ai_optimized=ai_optimized)
                   sets_count = set_level_data.get('summary', {}).get('total_sets', 0)
               else:
                   log_error(f"  generate_set_level_metrics_for_player returned no result for {ds_name}")
