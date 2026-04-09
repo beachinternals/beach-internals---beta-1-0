@@ -475,6 +475,13 @@ def ai_export_mgr_generate_background(user=None):
           de_identified = False
         log_info(f"De-identified export: {de_identified}")
 
+        # NEW: Read ai_optimized flag (defaults to False if column not yet added)
+        try:
+          ai_optimized = bool(export_row['ai_optimized'])
+        except Exception:
+          ai_optimized = False
+        log_info(f"ai_optimized: {ai_optimized}")
+        
         # Run the export
         log_info(f"Calling ai_export_generate for {team}")
         result = ai_export_generate(
@@ -666,7 +673,8 @@ def ai_export_generate(league, team,
           user=user,
           datasets_included=datasets_included,
           deident_lookup=deident_lookup,   
-          de_identified=de_identified
+          de_identified=de_identified,
+          ai_optimized=ai_optimized
         )
         if file_info:
           generated_files.append(file_info)
@@ -1252,6 +1260,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
             league_value=league_value,
             team=team,
             use_direct_data=True,
+            ai_optimized=ai_optimized,
             **ds_filters
           )
           if result and 'media_obj' in result:
@@ -1330,6 +1339,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
       league_value=league_value,
       team=team,
       use_direct_data=True,
+      ai_optimized=ai_optimized,
       **base_filters
     )
     if not result or 'media_obj' not in result:
@@ -2028,6 +2038,7 @@ def process_export_job_markdown(export_row):
         result = generate_player_metrics_markdown(
           league_value=league_value,
           team=team,
+          ai_optimized=ai_optimized,
           **player_filters
         )
       else:
