@@ -484,7 +484,8 @@ def ai_export_mgr_generate_background(user=None):
           player_data_map=player_data_map,
           user=user,
           datasets_included=datasets_included,
-          de_identified=de_identified   # NEW: pass flag
+          de_identified=de_identified,
+          ai_optimized=ai_optimized 
         )
 
         # Update row with results
@@ -571,7 +572,16 @@ def ai_export_mgr_generate_background(user=None):
 #--------------------------------------------------------------
 #@anvil.server.callable
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def ai_export_generate(league, team, date_start=None, date_end=None, player_filter=None, player_data_map=None, user=None, datasets_included=None, de_identified=False):
+def ai_export_generate(league, team, 
+                       date_start=None, 
+                       date_end=None, 
+                       player_filter=None, 
+                       player_data_map=None, 
+                       user=None, 
+                       datasets_included=None, 
+                       de_identified=False,
+                       ai_optimized=False
+                      ):
   """
     Generate NotebookLM-ready markdown files for AI analysis.
     
@@ -655,8 +665,8 @@ def ai_export_generate(league, team, date_start=None, date_end=None, player_filt
           player_data=player_data,
           user=user,
           datasets_included=datasets_included,
-          de_identified=de_identified,
-          deident_lookup=deident_lookup   # pre-built lookup, reused per player
+          deident_lookup=deident_lookup,   
+          de_identified=de_identified
         )
         if file_info:
           generated_files.append(file_info)
@@ -1111,7 +1121,7 @@ def deidentify_markdown(content, deident_lookup):
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def generate_player_markdown(league, team, player, date_start=None, date_end=None, 
                              player_data=None, user=None, datasets_included=None,
-                             de_identified=False, deident_lookup=None):
+                             de_identified=False, deident_lookup=None, ai_optimized=False):
   """
   Generate a single combined markdown file for one player.
   Loops through each dataset row in datasets_included and appends
