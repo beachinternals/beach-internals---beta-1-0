@@ -114,7 +114,8 @@ def import_metric_dictionary_from_csv(csv_file):
           coach_speak_average=row.get('coach_speak_average', ''),
           coach_speak_poor=row.get('coach_speak_poor', ''),
           coach_view=row.get('coach_view', ''),
-          video_path=video_path_clean
+          video_path=video_path_clean,
+          drill_down_report=row.get('drill_down_report', '')
         )
 
         imported_count += 1
