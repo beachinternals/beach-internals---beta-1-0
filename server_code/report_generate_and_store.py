@@ -344,7 +344,7 @@ def get_report_data(report_id):
   Retrieve a stored report by its ID.
   Any logged-in user can call this — report IDs are UUIDs (hard to guess).
   """
-  _require_login()
+  #_require_login()
 
   row = app_tables.report_data.get(report_id=report_id)
 
