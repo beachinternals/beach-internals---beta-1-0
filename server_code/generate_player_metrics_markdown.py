@@ -1400,7 +1400,7 @@ def generate_player_metrics_markdown_content(ppr_df, player_name, league_value, 
 
 
 def generate_no_data_section(player_name, dataset_label, metadata, reason=None):
-    """
+  """
   Generate a markdown section for when a dataset has no data.
   Used so the output file is still complete and readable even when
   a filtered dataset (e.g. last 7 days) returns no points.
@@ -1414,7 +1414,7 @@ def generate_no_data_section(player_name, dataset_label, metadata, reason=None):
   Returns:
       str: Markdown content for the no-data section
   """
-    lines = []
+  lines = []
   lines.append(f"## {dataset_label}")
   lines.append("")
   lines.append(f"**Player**: {player_name}  ")

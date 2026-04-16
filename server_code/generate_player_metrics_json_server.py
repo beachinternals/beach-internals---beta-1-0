@@ -213,7 +213,7 @@ def generate_player_metrics_json(league_value, team, **json_filters):
       'filters_applied': {k: str(v) for k, v in json_filters.items() 
                           if k not in ['player', 'player_shortname']},
       'total_points_analyzed': len(ppr_df),
-      'total_sets_analyzed': count_player_sets_from_ppr(ppr_df, player_name),,
+      'total_sets_analyzed': count_player_sets_from_ppr(ppr_df, player_name),
       'dictionary_version': '10.0'
     }
 
