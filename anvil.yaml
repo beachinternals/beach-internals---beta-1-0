@@ -7,36 +7,36 @@ db_schema:
       client_hidden: null
       name: ID
       type: string
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 1, width: 126}
+      client_hidden: false
       name: dataset_id
       type: string
     - admin_ui: {width: 200}
       client_hidden: null
       name: dataset_name
       type: string
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 3, width: 101}
+      client_hidden: false
       name: dataset_type
       type: string
     - admin_ui: {width: 200}
       client_hidden: null
       name: function_name
       type: string
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 5, width: 508}
+      client_hidden: false
       name: description
       type: string
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 6, width: 79}
+      client_hidden: false
       name: active
       type: bool
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 7, width: 55}
+      client_hidden: false
       name: order
       type: number
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 8, width: 324}
+      client_hidden: false
       name: output_section_title
       type: string
     - admin_ui: {width: 200}
@@ -138,6 +138,10 @@ db_schema:
       client_hidden: false
       name: ai_optimized
       type: bool
+    - admin_ui: {order: 2.5, width: 200}
+      client_hidden: false
+      name: Note
+      type: string
     server: full
     title: ai_export_mgr
   ai_player_files:
