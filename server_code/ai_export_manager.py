@@ -29,6 +29,7 @@ MONITORING_LEVEL_IMPORTANT,
 MONITORING_LEVEL_DETAILED,
 MONITORING_LEVEL_VERBOSE
 )
+from server_functions import get_ppr_data
 
 # ============================================================================
 # EXISTING METRIC GENERATION IMPORT
@@ -183,52 +184,28 @@ def _validate_lgy_string(lgy):
 #--------------------------------------------------------------
 def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
   """
-    Get PPR data directly using team parameter, bypassing user check.
-    This is for scheduled/background tasks where no user is logged in.
-    """
+  Background task version — no logged-in user, uses team parameter directly.
+  Delegates to get_ppr_data() in server_functions.py.
+  """
   try:
-    # Determine search_team (same logic as original function)
-    # For INTERNALS, use 'League', otherwise use the team as-is
-    if team == 'INTERNALS':
-      search_team = 'League'
-      log_info(f"INTERNALS team - using search_team='League'")
-    else:
-      search_team = team
-      log_info(f"Using search_team='{search_team}'")
+    search_team = 'League' if team == 'INTERNALS' else team
 
-    log_info(f"Querying PPR data for {league}/{gender}/{year}/team={search_team}...")
+    log_info(f"Loading PPR data for {league}/{gender}/{year}/team={search_team} (scout=True)...")
 
-    # Query ppr_csv_tables directly
-    ppr_rows = list(app_tables.ppr_csv_tables.search(
-      league=league,
-      gender=gender,
-      year=year,
-      team=search_team
-    ))
+    ppr_df = get_ppr_data(
+      disp_league=league,
+      disp_gender=gender,
+      disp_year=str(year),
+      disp_team=search_team,
+      scout=True
+    )
 
-    if len(ppr_rows) == 0:
-      log_error(f"No PPR data found for {league}/{gender}/{year}/team={search_team}")
+    if not isinstance(ppr_df, pd.DataFrame) or ppr_df.shape[0] == 0:
+      log_error(f"No PPR data returned for {league}/{gender}/{year}/team={search_team}")
       return pd.DataFrame()
 
-    log_info(f"Found {len(ppr_rows)} PPR data record(s)")
+    log_info(f"Loaded {len(ppr_df)} raw points from PPR (team + scout)")
 
-    # Get the first row
-    ppr_row = ppr_rows[0]
-
-    # Load the CSV data
-    ppr_csv_data = ppr_row['ppr_csv']
-
-    if hasattr(ppr_csv_data, 'get_bytes'):
-      ppr_csv_string = ppr_csv_data.get_bytes().decode('utf-8')
-      log_debug("Loaded ppr_csv from Media object")
-    else:
-      ppr_csv_string = ppr_csv_data
-      log_debug("Loaded ppr_csv as string")
-
-    ppr_df = pd.read_csv(io.StringIO(ppr_csv_string))
-    log_info(f"Loaded {len(ppr_df)} raw points from PPR")
-
-    # Apply filters using the existing filter function
     from server_functions import filter_ppr_df
     log_info("Applying filters...")
     ppr_df = filter_ppr_df(ppr_df, **filters)
@@ -237,7 +214,7 @@ def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
     return ppr_df
 
   except Exception as e:
-    log_exception('error', f"Error in get_filtered_ppr_data_direct", e)
+    log_error(f"Error in get_filtered_ppr_data_direct: {str(e)}", with_traceback=True)
     return pd.DataFrame()
 
 #--------------------------------------------------------------
@@ -1501,10 +1478,11 @@ def get_player_sessions(league, team, player, date_start=None, date_end=None, pl
         
     log_info(f"Retrieved {len(ppr_df)} PPR data points")
         
-        # Get triangle data
-    log_info("Retrieving triangle data...")
-    tri_df = get_filtered_triangle_data(league_part, gender, year, team, **json_filters)
-    log_info(f"Retrieved {len(tri_df)} triangle data sets")
+    # Get triangle data
+    # tri_df sunset — sets counted directly from PPR data
+    tri_df = pd.DataFrame()
+    num_sets = count_player_sets_from_ppr(ppr_df, player_name)
+    log_info(f"✓ Counted {num_sets} sets for {player_name} from PPR data")
         
         # Load metric dictionary
     log_info("Loading metric dictionary...")
@@ -1528,7 +1506,7 @@ def get_player_sessions(league, team, player, date_start=None, date_end=None, pl
             'year': year,
             'team': team,
             'total_points_analyzed': len(ppr_df),
-            'total_sets_analyzed': len(tri_df),
+            'total_sets_analyzed': count_player_sets_from_ppr(ppr_df, player_name),
         }
         
         # Build metrics dict organized by category

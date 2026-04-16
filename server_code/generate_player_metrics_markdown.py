@@ -921,19 +921,52 @@ def generate_player_metrics_markdown(league_value, team, use_direct_data=False, 
     ])
     log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary")
 
-    # Get PPR data with filters
-    log_info("Retrieving and filtering PPR data...")
-    if use_direct_data:
-      from ai_export_manager import get_filtered_ppr_data_direct
-      ppr_df = get_filtered_ppr_data_direct(league, gender, year, team, **json_filters)
-    else:
-      ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
-    log_info(f"✓ Loaded {len(ppr_df)} points from PPR data")
 
+    # --- GRACEFUL NO-DATA HANDLING ---
     if len(ppr_df) == 0:
-      log_error("No data found for the specified filters", with_traceback=False)
-      raise ValueError("No data found for the specified filters")
+      log_info(f"No data for {player_name} with these filters — writing no-data section")
 
+      # Build minimal metadata so the section still has context
+      no_data_metadata = {
+        'league': league,
+        'gender': gender,
+        'year': year,
+        'team': team,
+        'generated_at': datetime.now().isoformat(),
+        'filters_applied': {k: str(v) for k, v in json_filters.items()
+                            if k not in ['player', 'player_shortname']}
+      }
+
+      # Pick a label — use date range if present, otherwise generic
+      filters_applied = no_data_metadata['filters_applied']
+      if 'start_date' in filters_applied and 'end_date' in filters_applied:
+        dataset_label = f"Date Range: {filters_applied['start_date']} to {filters_applied['end_date']}"
+      else:
+        dataset_label = "Filtered Dataset"
+
+      no_data_content = generate_no_data_section(
+        player_name=player_name,
+        dataset_label=dataset_label,
+        metadata=no_data_metadata
+      )
+
+      safe_name = sanitize_name_for_filename(player_name)
+      filename = f"{safe_name}_{league}_{gender}_{year}_no_data.md"
+
+      media_obj = anvil.BlobMedia(
+        'text/markdown',
+        no_data_content.encode('utf-8'),
+        name=filename
+      )
+
+      return {
+        'media_obj': media_obj,
+        'filename': filename,
+        'summary': {**no_data_metadata, 'total_points_analyzed': 0, 'total_sets_analyzed': 0},
+        'no_data': True   # caller can check this flag if needed
+      }
+    # --- END NO-DATA HANDLING ---
+    
       # Count points / sets for this player
     player_mask = (
       (ppr_df['player_a1'] == player_name) |
@@ -1272,67 +1305,12 @@ def get_filtered_ppr_data(league, gender, year, team, **filters):
 
 def get_filtered_triangle_data(league, gender, year, team, **filters):
   """
-    Retrieve and filter triangle (set-level) data.
-    (Original function - unchanged)
-    """
-  try:
-    log_info("Querying triangle data...")
-
-    has_dates = 'start_date' in filters and 'end_date' in filters
-
-    if has_dates:
-      date_checked = True
-      disp_start_date = filters['start_date']
-      disp_end_date = filters['end_date']
-      log_info(f"Using date range: {disp_start_date} to {disp_end_date}")
-    else:
-      date_checked = False
-      disp_start_date = None
-      disp_end_date = None
-      log_info("No date range specified - retrieving all triangle data")
-
-    tri_df, tri_found = get_tri_data(
-      league,
-      gender,
-      year,
-      date_checked,
-      disp_start_date,
-      disp_end_date
-    )
-
-    if not tri_found or len(tri_df) == 0:
-      log_info("No triangle data found")
-      return pd.DataFrame()
-
-    log_info(f"Loaded {len(tri_df)} raw sets from triangle data")
-
-    player_name = filters.get('player')
-    if player_name and 'player' in tri_df.columns:
-      tri_df = tri_df[tri_df['player'] == player_name]
-      log_debug(f"After player filter: {len(tri_df)} sets")
-    elif player_name:
-      if 'player1' in tri_df.columns and 'player2' in tri_df.columns:
-        tri_df = tri_df[(tri_df['player1'] == player_name) | (tri_df['player2'] == player_name)]
-        log_debug(f"After player filter (player1/player2): {len(tri_df)} sets")
-
-    if 'comp_l1' in filters and 'comp_l1' in tri_df.columns:
-      tri_df = tri_df[tri_df['comp_l1'] == filters['comp_l1']]
-      log_debug(f"After comp_l1 filter: {len(tri_df)} sets")
-
-    if 'comp_l2' in filters and 'comp_l2' in tri_df.columns:
-      tri_df = tri_df[tri_df['comp_l2'] == filters['comp_l2']]
-      log_debug(f"After comp_l2 filter: {len(tri_df)} sets")
-
-    if 'comp_l3' in filters and 'comp_l3' in tri_df.columns:
-      tri_df = tri_df[tri_df['comp_l3'] == filters['comp_l3']]
-      log_debug(f"After comp_l3 filter: {len(tri_df)} sets")
-
-    log_info(f"After all filtering: {len(tri_df)} sets")
-    return tri_df
-
-  except Exception as e:
-    log_error(f"Error in get_filtered_triangle_data: {str(e)}", with_traceback=True)
-    return pd.DataFrame()
+  DEPRECATED: Triangle data (tri_df) has been sunset.
+  Set counting now happens directly from PPR data via count_player_sets_from_ppr().
+  This stub returns an empty DataFrame so existing callers don't break.
+  """
+  log_info("get_filtered_triangle_data: tri_df is sunset — returning empty DataFrame")
+  return pd.DataFrame()
 
 
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
@@ -1419,3 +1397,48 @@ def generate_player_metrics_markdown_content(ppr_df, player_name, league_value, 
     'content': content,
     'summary': summary
   }
+
+
+def generate_no_data_section(player_name, dataset_label, metadata, reason=None):
+    """
+  Generate a markdown section for when a dataset has no data.
+  Used so the output file is still complete and readable even when
+  a filtered dataset (e.g. last 7 days) returns no points.
+  
+  Args:
+      player_name: Player name
+      dataset_label: Human-readable label for this dataset (e.g. "Last 7 Days")
+      metadata: Dict with league, gender, year, team, filters_applied, etc.
+      reason: Optional specific reason string (e.g. "No matches in date range")
+  
+  Returns:
+      str: Markdown content for the no-data section
+  """
+    lines = []
+  lines.append(f"## {dataset_label}")
+  lines.append("")
+  lines.append(f"**Player**: {player_name}  ")
+  lines.append(f"**League**: {metadata.get('league','')} {metadata.get('gender','')} {metadata.get('year','')}  ")
+  lines.append(f"**Team**: {metadata.get('team','')}  ")
+  lines.append(f"**Generated**: {metadata.get('generated_at', datetime.now().isoformat())}  ")
+
+  # Show what filters were applied so user knows why there is no data
+  filters = metadata.get('filters_applied', {})
+  if filters:
+    lines.append(f"**Filters Applied**: {', '.join(f'{k}: {v}' for k,v in filters.items())}  ")
+
+  lines.append("")
+  lines.append("> **No data available for this dataset.**  ")
+
+  if reason:
+    lines.append(f"> {reason}  ")
+  else:
+    lines.append("> No match points were found after applying the selected filters.  ")
+    lines.append("> This may mean the player had no matches in the selected date range,  ")
+    lines.append("> competition level, or other filter criteria.")
+
+  lines.append("")
+  lines.append("---")
+  lines.append("")
+
+  return "\n".join(lines)

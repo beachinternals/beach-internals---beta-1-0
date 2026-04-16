@@ -410,14 +410,16 @@ def generate_combined_player_export(
       if filters_applied.get('comp_l3'):
         tri_filters['comp_l3'] = filters_applied['comp_l3']
 
-      tri_df = get_filtered_triangle_data(league_str, gender, year, team, **tri_filters)
-      log_info(f"Triangle data: {len(tri_df)} sets")
+      # tri_df sunset — sets counted directly from PPR data
+      tri_df = pd.DataFrame()
+      num_sets = count_player_sets_from_ppr(ppr_df, player_name)
+      log_info(f"✓ Counted {num_sets} sets for {player_name} from PPR data")
 
       # ----------------------------------------------------------------
       # STEP 3: Generate section content
       # ----------------------------------------------------------------
       if dataset_type == 'aggregate':
-        log_info(f"Calculating aggregate metrics ({len(dataset_ppr_df)} pts, {len(tri_df)} sets)...")
+        log_info(f"Calculating aggregate metrics ({len(dataset_ppr_df)} pts, {num_sets} sets)...")
         metrics_result = calculate_all_metrics(metric_dict, dataset_ppr_df, tri_df, player_name)
         log_info(f"Metrics: {metrics_result['successful']} calculated, {metrics_result['insufficient_data']} insufficient data")
 

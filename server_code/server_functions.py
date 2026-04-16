@@ -3562,3 +3562,37 @@ def test_deidentification(league, gender, year):
     lines.append(f"After re-identification:\n  {restored}")
 
   return "\n".join(lines)
+
+
+def count_player_sets_from_ppr(ppr_df, player_name, min_points=10):
+  """
+  Count valid sets for a player directly from PPR data.
+  Replaces get_tri_data() for set counting purposes.
+  
+  A valid set = a unique video_id + set combination where the player
+  appears in player_a1/a2/b1/b2 and has >= min_points points.
+  
+  Args:
+      ppr_df: Full PPR dataframe (all points, not pre-filtered to player)
+      player_name: Player name string e.g. "UNF 12 Alex"
+      min_points: Minimum points to count as a valid set (default 10)
+  
+  Returns:
+      int: Number of valid sets
+  """
+  if ppr_df is None or len(ppr_df) == 0:
+    return 0
+
+  player_df = ppr_df[
+    (ppr_df['player_a1'] == player_name) |
+    (ppr_df['player_a2'] == player_name) |
+    (ppr_df['player_b1'] == player_name) |
+    (ppr_df['player_b2'] == player_name)
+    ]
+
+  if len(player_df) == 0:
+    return 0
+
+  set_counts = player_df.groupby(['video_id', 'set']).size()
+  valid_sets = set_counts[set_counts >= min_points]
+  return len(valid_sets)

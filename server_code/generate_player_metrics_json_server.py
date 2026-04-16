@@ -193,8 +193,9 @@ def generate_player_metrics_json(league_value, team, **json_filters):
 
     # Get triangle data (for set-to-set consistency)
     log_info("Retrieving triangle data...")
-    tri_df = get_filtered_triangle_data(league, gender, year, team, **json_filters)
-    log_info(f"✓ Loaded {len(tri_df)} sets from triangle data")
+    tri_df = pd.DataFrame()  # tri_df sunset — sets counted from PPR directly
+    num_sets = count_player_sets_from_ppr(ppr_df, player_name)
+    log_info(f"✓ Counted {num_sets} sets for {player_name} (>=10 points each, from PPR)")
 
     if len(ppr_df) == 0:
       log_error("No data found for the specified filters", with_traceback=False)
@@ -212,7 +213,7 @@ def generate_player_metrics_json(league_value, team, **json_filters):
       'filters_applied': {k: str(v) for k, v in json_filters.items() 
                           if k not in ['player', 'player_shortname']},
       'total_points_analyzed': len(ppr_df),
-      'total_sets_analyzed': len(tri_df) if len(tri_df) > 0 else 0,
+      'total_sets_analyzed': count_player_sets_from_ppr(ppr_df, player_name),,
       'dictionary_version': '10.0'
     }
 
@@ -262,77 +263,44 @@ def generate_player_metrics_json(league_value, team, **json_filters):
 
 def get_filtered_ppr_data(league, gender, year, team, **filters):
   """
-    Retrieve and filter point-by-point data.
-    
-    Uses logged-in user's team to determine which PPR data to access.
-    
-    Returns:
-        DataFrame: Filtered PPR data
-    """
+  Retrieve and filter PPR data, including Scout data.
+  Delegates to get_ppr_data() in server_functions.py which already
+  handles team + Scout appending correctly.
+  """
   try:
-    # Get the logged-in user's team from the users table
-    current_user = anvil.users.get_user()
-    if not current_user:
-      log_error("No user logged in", with_traceback=False)
+    # Determine the team to search for
+    # If user is logged in, use their team; otherwise use the team parameter
+    try:
+      current_user = anvil.users.get_user()
+      if current_user and current_user['team']:
+        search_team = current_user['team']
+        if search_team == 'INTERNALS':
+          search_team = 'League'
+      else:
+        search_team = team
+    except:
+      search_team = team  # Background task — no logged-in user
+
+    log_info(f"Loading PPR data for {league}/{gender}/{year}/team={search_team} (scout=True)...")
+
+    # Use the existing get_ppr_data which already handles Scout appending
+    ppr_df = get_ppr_data(
+      disp_league=league,
+      disp_gender=gender,
+      disp_year=str(year),
+      disp_team=search_team,
+      scout=True          # <-- this is what was missing!
+    )
+
+    if not isinstance(ppr_df, pd.DataFrame) or ppr_df.shape[0] == 0:
+      log_error(f"No PPR data returned for {league}/{gender}/{year}/team={search_team}")
       return pd.DataFrame()
 
-    user_team = current_user['team']
-    log_info(f"User team from login: {user_team}")
+    log_info(f"Loaded {len(ppr_df)} raw points from PPR (team + scout)")
 
-    # Special handling for INTERNALS users
-    if user_team == 'INTERNALS':
-      search_team = 'League'
-      log_info(f"INTERNALS user - using team='{search_team}'")
-    else:
-      search_team = user_team
-
-    log_info(f"Querying PPR data for {league}/{gender}/{year}/team={search_team}...")
-
-    # Get data from the user's team row
-    ppr_rows = list(app_tables.ppr_csv_tables.search(
-      league=league,
-      gender=gender,
-      year=year,
-      team=search_team
-    ))
-
-    if len(ppr_rows) == 0:
-      log_error(f"No PPR data found for {league}/{gender}/{year}/team={search_team}", with_traceback=False)
-      return pd.DataFrame()
-
-    log_info(f"Found {len(ppr_rows)} PPR data record(s)")
-
-    # Get the first (or only) row
-    ppr_row = ppr_rows[0]
-
-    # Get column names from table schema
-    column_names = [col['name'] for col in app_tables.ppr_csv_tables.list_columns()]
-
-    # Check if ppr_csv column exists
-    if 'ppr_csv' not in column_names:
-      log_error("ppr_csv column not found in ppr_csv_tables", with_traceback=False)
-      return pd.DataFrame()
-
-    # Load the CSV data - handle Media object
-    ppr_csv_data = ppr_row['ppr_csv']
-
-    if hasattr(ppr_csv_data, 'get_bytes'):
-      # It's a Media object - get the bytes and decode
-      ppr_csv_string = ppr_csv_data.get_bytes().decode('utf-8')
-      log_debug("Loaded ppr_csv from Media object")
-    else:
-      # It's already a string
-      ppr_csv_string = ppr_csv_data
-      log_debug("Loaded ppr_csv as string")
-
-    ppr_df = pd.read_csv(io.StringIO(ppr_csv_string))
-
-    log_info(f"Loaded {len(ppr_df)} raw points from PPR")
-
-    # Use existing filter_ppr_df function to apply filters
-    log_info("Applying filters using filter_ppr_df()...")
+    # Apply filters
+    log_info("Applying filters...")
     ppr_df = filter_ppr_df(ppr_df, **filters)
-
     log_info(f"After filtering: {len(ppr_df)} points retained")
 
     return ppr_df
@@ -344,76 +312,12 @@ def get_filtered_ppr_data(league, gender, year, team, **filters):
 
 def get_filtered_triangle_data(league, gender, year, team, **filters):
   """
-    Retrieve and filter triangle (set-level) data.
-    
-    Returns:
-        DataFrame: Filtered triangle data
-    """
-  try:
-    log_info("Querying triangle data...")
-
-    # Get date range from filters (optional)
-    has_dates = 'start_date' in filters and 'end_date' in filters
-
-    if has_dates:
-      date_checked = True
-      disp_start_date = filters['start_date']
-      disp_end_date = filters['end_date']
-      log_info(f"Using date range: {disp_start_date} to {disp_end_date}")
-    else:
-      # No date filtering - get all data
-      date_checked = False
-      disp_start_date = None
-      disp_end_date = None
-      log_info("No date range specified - retrieving all triangle data")
-
-    # Get triangle data using existing server function
-    tri_df, tri_found = get_tri_data(
-      league, 
-      gender, 
-      year,
-      date_checked,
-      disp_start_date,
-      disp_end_date
-    )
-
-    # Check if data was found
-    if not tri_found or len(tri_df) == 0:
-      log_info("No triangle data found")
-      return pd.DataFrame()
-
-    log_info(f"Loaded {len(tri_df)} raw sets from triangle data")
-
-    # Filter by player (required for player-specific metrics)
-    player_name = filters.get('player')
-    if player_name and 'player' in tri_df.columns:
-      tri_df = tri_df[tri_df['player'] == player_name]
-      log_debug(f"After player filter: {len(tri_df)} sets")
-    elif player_name:
-      # If player column doesn't exist, check for player1/player2 columns
-      if 'player1' in tri_df.columns and 'player2' in tri_df.columns:
-        tri_df = tri_df[(tri_df['player1'] == player_name) | (tri_df['player2'] == player_name)]
-        log_debug(f"After player filter (player1/player2): {len(tri_df)} sets")
-
-    # Apply competition level filters (if not already applied by get_tri_data)
-    if 'comp_l1' in filters and 'comp_l1' in tri_df.columns:
-      tri_df = tri_df[tri_df['comp_l1'] == filters['comp_l1']]
-      log_debug(f"After comp_l1 filter: {len(tri_df)} sets")
-
-    if 'comp_l2' in filters and 'comp_l2' in tri_df.columns:
-      tri_df = tri_df[tri_df['comp_l2'] == filters['comp_l2']]
-      log_debug(f"After comp_l2 filter: {len(tri_df)} sets")
-
-    if 'comp_l3' in filters and 'comp_l3' in tri_df.columns:
-      tri_df = tri_df[tri_df['comp_l3'] == filters['comp_l3']]
-      log_debug(f"After comp_l3 filter: {len(tri_df)} sets")
-
-    log_info(f"After all filtering: {len(tri_df)} sets")
-    return tri_df
-
-  except Exception as e:
-    log_error(f"Error in get_filtered_triangle_data: {str(e)}", with_traceback=True)
-    return pd.DataFrame()
+  DEPRECATED: Triangle data (tri_df) has been sunset.
+  Set counting now happens directly from PPR data via count_player_sets_from_ppr().
+  This stub returns an empty DataFrame so existing callers don't break.
+  """
+  log_info("get_filtered_triangle_data: tri_df is sunset — returning empty DataFrame")
+  return pd.DataFrame()
 
 
 def calculate_all_metrics(metric_dict, ppr_df, player_name):
