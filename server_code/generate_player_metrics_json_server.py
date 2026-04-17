@@ -184,12 +184,12 @@ def generate_player_metrics_json(league_value, team, **json_filters):
       {col: row[col] for col in column_names}
       for row in dict_rows
     ])
-    log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary")
+    log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary - json_server.py")
 
     # Get PPR data with filters
     log_info(f"Retrieving and filtering PPR data... {league},{gender},{year},{team}")
     ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
-    log_info(f"✓ Loaded {len(ppr_df)} points from PPR data")
+    log_info(f"✓ Loaded {len(ppr_df)} points from PPR data - json_server.py")
 
     # Get triangle data (for set-to-set consistency)
     log_info("Retrieving triangle data...")

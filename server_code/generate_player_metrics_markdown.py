@@ -919,62 +919,26 @@ def generate_player_metrics_markdown(league_value, team, use_direct_data=False, 
       {col: row[col] for col in column_names}
       for row in dict_rows
     ])
-    log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary")
+    log_info(f"✓ Loaded {len(metric_dict)} metrics from dictionary - markdown.py")
 
+    # Get PPR data with filters
+    log_info("Retrieving and filtering PPR data...")
+    if use_direct_data:
+      from ai_export_manager import get_filtered_ppr_data_direct
+      ppr_df = get_filtered_ppr_data_direct(league, gender, year, team, **json_filters)
+    else:
+      ppr_df = get_filtered_ppr_data(league, gender, year, team, **json_filters)
+    log_info(f"✓ Loaded {len(ppr_df)} points from PPR data (all players in matching matches)")
 
-    # --- GRACEFUL NO-DATA HANDLING ---
-    if len(ppr_df) == 0:
-      log_info(f"No data for {player_name} with these filters — writing no-data section")
-
-      # Build minimal metadata so the section still has context
-      no_data_metadata = {
-        'league': league,
-        'gender': gender,
-        'year': year,
-        'team': team,
-        'generated_at': datetime.now().isoformat(),
-        'filters_applied': {k: str(v) for k, v in json_filters.items()
-                            if k not in ['player', 'player_shortname']}
-      }
-
-      # Pick a label — use date range if present, otherwise generic
-      filters_applied = no_data_metadata['filters_applied']
-      if 'start_date' in filters_applied and 'end_date' in filters_applied:
-        dataset_label = f"Date Range: {filters_applied['start_date']} to {filters_applied['end_date']}"
-      else:
-        dataset_label = "Filtered Dataset"
-
-      no_data_content = generate_no_data_section(
-        player_name=player_name,
-        dataset_label=dataset_label,
-        metadata=no_data_metadata
-      )
-
-      safe_name = sanitize_name_for_filename(player_name)
-      filename = f"{safe_name}_{league}_{gender}_{year}_no_data.md"
-
-      media_obj = anvil.BlobMedia(
-        'text/markdown',
-        no_data_content.encode('utf-8'),
-        name=filename
-      )
-
-      return {
-        'media_obj': media_obj,
-        'filename': filename,
-        'summary': {**no_data_metadata, 'total_points_analyzed': 0, 'total_sets_analyzed': 0},
-        'no_data': True   # caller can check this flag if needed
-      }
-    # --- END NO-DATA HANDLING ---
-    
-      # Count points / sets for this player
+    # Filter down to just this player's rows for counting and metrics
+    player_name_stripped = player_name.strip()
     player_mask = (
-      (ppr_df['player_a1'] == player_name) |
-      (ppr_df['player_a2'] == player_name) |
-      (ppr_df['player_b1'] == player_name) |
-      (ppr_df['player_b2'] == player_name)
+      (ppr_df['player_a1'].str.strip() == player_name_stripped) |
+      (ppr_df['player_a2'].str.strip() == player_name_stripped) |
+      (ppr_df['player_b1'].str.strip() == player_name_stripped) |
+      (ppr_df['player_b2'].str.strip() == player_name_stripped)
     )
-    player_ppr_count = len(ppr_df[player_mask])
+    player_ppr_count = int(player_mask.sum())
 
     set_point_counts = (
       ppr_df[player_mask]
@@ -985,8 +949,45 @@ def generate_player_metrics_markdown(league_value, team, use_direct_data=False, 
     player_set_count = int(
       set_point_counts[set_point_counts['point_count'] >= 10].shape[0]
     )
-    log_info(f"✓ Counted {player_set_count} sets for {player_name} (>=10 points each)")
+    log_info(f"✓ Player '{player_name}' appears in {player_ppr_count} points across {player_set_count} valid sets")
 
+    # --- GRACEFUL NO-DATA HANDLING --- (checked AFTER player filter)
+    if player_ppr_count == 0:
+      log_info(f"No data for {player_name} with these filters — writing no-data section")
+      no_data_metadata = {
+        'league': league,
+        'gender': gender,
+        'year': year,
+        'team': team,
+        'generated_at': datetime.now().isoformat(),
+        'filters_applied': {k: str(v) for k, v in json_filters.items()
+                            if k not in ['player', 'player_shortname']}
+      }
+      filters_applied = no_data_metadata['filters_applied']
+      if 'start_date' in filters_applied and 'end_date' in filters_applied:
+        dataset_label = f"Date Range: {filters_applied['start_date']} to {filters_applied['end_date']}"
+      else:
+        dataset_label = "Filtered Dataset"
+      no_data_content = generate_no_data_section(
+        player_name=player_name,
+        dataset_label=dataset_label,
+        metadata=no_data_metadata
+      )
+      safe_name = sanitize_name_for_filename(player_name)
+      filename = f"{safe_name}_{league}_{gender}_{year}_no_data.md"
+      media_obj = anvil.BlobMedia(
+        'text/markdown',
+        no_data_content.encode('utf-8'),
+        name=filename
+      )
+      return {
+        'media_obj': media_obj,
+        'filename': filename,
+        'summary': {**no_data_metadata, 'total_points_analyzed': 0, 'total_sets_analyzed': 0},
+        'no_data': True
+      }
+    # --- END NO-DATA HANDLING ---
+    
     # Build metadata
     metadata = {
       'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
