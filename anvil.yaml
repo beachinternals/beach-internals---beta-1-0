@@ -80,7 +80,7 @@ db_schema:
       client_hidden: null
       name: export_type
       type: string
-    - admin_ui: {width: 200}
+    - admin_ui: {order: 4.25, width: 101}
       client_hidden: false
       name: dow
       type: string
@@ -102,12 +102,12 @@ db_schema:
       client_hidden: false
       name: de_identified
       type: bool
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 6.5, width: 140}
+      client_hidden: false
       name: disabled
       type: bool
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 7, width: 81}
+      client_hidden: false
       name: status
       type: string
     - admin_ui: {width: 200}
@@ -134,13 +134,17 @@ db_schema:
       client_hidden: null
       name: result_message
       type: string
-    - admin_ui: {order: 6.75, width: 200}
+    - admin_ui: {order: 6.75, width: 131}
       client_hidden: false
       name: ai_optimized
       type: bool
     - admin_ui: {order: 2.5, width: 200}
       client_hidden: false
       name: Note
+      type: string
+    - admin_ui: {order: 6.875, width: 133}
+      client_hidden: false
+      name: output_location
       type: string
     server: full
     title: ai_export_mgr

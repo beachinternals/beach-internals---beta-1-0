@@ -458,7 +458,15 @@ def ai_export_mgr_generate_background(user=None):
         except Exception:
           ai_optimized = False
         log_info(f"ai_optimized: {ai_optimized}")
-        
+
+        # Read output_location flag — controls whether output goes to data table or Google Drive
+        # Values: 'data_table' (default) or 'drive'
+        try:
+          output_location = export_row['output_location'] or 'data_table'
+        except Exception:
+          output_location = 'data_table'
+        log_info(f"output_location: {output_location}")
+
         # Run the export
         log_info(f"Calling ai_export_generate for {team}")
         result = ai_export_generate(
@@ -469,7 +477,8 @@ def ai_export_mgr_generate_background(user=None):
           user=user,
           datasets_included=datasets_included,
           de_identified=de_identified,
-          ai_optimized=ai_optimized 
+          ai_optimized=ai_optimized,
+          output_location=output_location
         )
 
         # Update row with results
@@ -564,7 +573,8 @@ def ai_export_generate(league, team,
                        user=None, 
                        datasets_included=None, 
                        de_identified=False,
-                       ai_optimized=False
+                       ai_optimized=False,
+                       output_location='data_table'
                       ):
   """
     Generate NotebookLM-ready markdown files for AI analysis.
@@ -651,7 +661,8 @@ def ai_export_generate(league, team,
           datasets_included=datasets_included,
           deident_lookup=deident_lookup,   
           de_identified=de_identified,
-          ai_optimized=ai_optimized
+          ai_optimized=ai_optimized,
+          output_location=output_location
         )
         if file_info:
           generated_files.append(file_info)
@@ -1106,7 +1117,8 @@ def deidentify_markdown(content, deident_lookup):
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def generate_player_markdown(league, team, player, date_start=None, date_end=None, 
                              player_data=None, user=None, datasets_included=None,
-                             de_identified=False, deident_lookup=None, ai_optimized=False):
+                             de_identified=False, deident_lookup=None, ai_optimized=False,
+                             output_location='data_table'):
   """
   Generate a single combined markdown file for one player.
   Loops through each dataset row in datasets_included and appends
@@ -1360,9 +1372,12 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
   log_info(f"Generated filename: {filename}")
   log_info(f"Combined markdown size: {len(full_markdown)} bytes, {total_words} words, {len(datasets_summary)} datasets")
 
-  # --- Save to Google Drive ---
-  log_info(f"Saving markdown file: {filename}")
-  file_info = save_markdown_to_drive_updated(filename, full_markdown, league, team, player_data)
+  # --- Save to data table or Google Drive based on output_location flag ---
+  log_info(f"Saving markdown file: {filename} (output_location={output_location})")
+  if output_location == 'drive':
+    file_info = save_markdown_to_drive(filename, full_markdown, league, team, player_data)
+  else:
+    file_info = save_markdown_to_drive_updated(filename, full_markdown, league, team, player_data)
 
   if not file_info:
     log_error(f"Failed to save file for {player}")
@@ -1665,7 +1680,50 @@ def build_markdown_content(player, team, league, sessions_data, date_start=None,
 
 
 #--------------------------------------------------------------
-# Save markdown file to Google Drive
+# Save markdown file to Google Drive (output_location = 'drive')
+#--------------------------------------------------------------
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
+def save_markdown_to_drive(filename, content, league, team, player_data=None):
+  """
+  Save markdown file to Google Drive using write_to_nested_folder.
+
+  Folder structure: [league+gender+year] / [team] / notebooklm-ai-export
+  Example: NCAAW2026 / STETSON / notebooklm-ai-export
+
+  Returns dict with id, url, path, result — same shape as save_markdown_to_drive_updated.
+  """
+  try:
+    # Build the league/gender/year folder name from player_data if available
+    if player_data:
+      lg = player_data.get('league', league)
+      gender = player_data.get('gender', 'W')
+      year = str(player_data.get('year', ''))
+      league_folder = f"{lg}{gender}{year}"
+    else:
+      # Fallback: use league as-is
+      league_folder = league
+
+    folder_path = [league_folder, team, 'notebooklm-ai-export']
+    log_info(f"Saving to Google Drive folder: {' / '.join(folder_path)}")
+
+    media = anvil.BlobMedia('text/markdown', content.encode('utf-8'), name=filename)
+    result = write_to_nested_folder(folder_path, filename, media)
+    log_info(f"write_to_nested_folder result: {result}")
+
+    return {
+      'id': 'saved_to_drive',
+      'url': None,
+      'path': ' / '.join(folder_path),
+      'result': str(result)
+    }
+
+  except Exception as e:
+    log_error(f"Error saving to Google Drive: {str(e)}")
+    return None
+
+
+#--------------------------------------------------------------
+# Save markdown file to Google Drive (output_location = 'data_table')
 #--------------------------------------------------------------
 @monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
 def save_markdown_to_drive_updated(filename, content, league, team, player_data=None):
