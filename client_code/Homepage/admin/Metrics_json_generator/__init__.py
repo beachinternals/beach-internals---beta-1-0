@@ -411,3 +411,9 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
     anvil.media.download(md_media)
     pass
 
+  @anvil.handle("outlined_button_3", "click")
+  def outlined_button_3_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    result = anvil.server.call('calc_threshold_analysis')
+    pass  # Write Code Here
+

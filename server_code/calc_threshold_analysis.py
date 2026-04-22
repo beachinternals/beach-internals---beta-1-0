@@ -371,37 +371,37 @@ def _segmented_regression(x, y, n_bootstrap=200, min_pct=0.15):
       return float(res[0]) if len(res) else float(np.sum((y - X @ c) ** 2))
 
         # Grid search
-        grid    = np.linspace(x_lo, x_hi, 100)
-        rss_g   = [rss_at(g) for g in grid]
-        best_i  = int(np.argmin(rss_g))
+    grid    = np.linspace(x_lo, x_hi, 100)
+    rss_g   = [rss_at(g) for g in grid]
+    best_i  = int(np.argmin(rss_g))
 
         # Refine
-        lo_b = grid[max(0, best_i - 5)]
-        hi_b = grid[min(99, best_i + 5)]
-        opt  = minimize_scalar(rss_at, bounds=(lo_b, hi_b), method='bounded')
-        psi  = float(opt.x if opt.success else grid[best_i])
+    lo_b = grid[max(0, best_i - 5)]
+    hi_b = grid[min(99, best_i + 5)]
+    opt  = minimize_scalar(rss_at, bounds=(lo_b, hi_b), method='bounded')
+    psi  = float(opt.x if opt.success else grid[best_i])
 
         # Fit piecewise model at best psi
-        h    = np.maximum(0, x - psi)
-        Xpw  = np.column_stack([np.ones(n), x, h])
-        c_pw, _, _, _ = np.linalg.lstsq(Xpw, y, rcond=None)
-        b0, b1, b2 = float(c_pw[0]), float(c_pw[1]), float(c_pw[2])
+    h    = np.maximum(0, x - psi)
+    Xpw  = np.column_stack([np.ones(n), x, h])
+    c_pw, _, _, _ = np.linalg.lstsq(Xpw, y, rcond=None)
+    b0, b1, b2 = float(c_pw[0]), float(c_pw[1]), float(c_pw[2])
 
         # F-test vs plain linear model
-        Xlin = np.column_stack([np.ones(n), x])
-        c_ln, _, _, _ = np.linalg.lstsq(Xlin, y, rcond=None)
-        rss_lin = float(np.sum((y - Xlin @ c_ln) ** 2))
-        rss_seg = float(np.sum((y - Xpw  @ c_pw) ** 2))
-        df2     = n - 4
-        p_chg   = 1.0
-        if rss_lin > rss_seg > 0 and df2 > 0:
+    Xlin = np.column_stack([np.ones(n), x])
+    c_ln, _, _, _ = np.linalg.lstsq(Xlin, y, rcond=None)
+    rss_lin = float(np.sum((y - Xlin @ c_ln) ** 2))
+    rss_seg = float(np.sum((y - Xpw  @ c_pw) ** 2))
+    df2     = n - 4
+    p_chg   = 1.0
+    if rss_lin > rss_seg > 0 and df2 > 0:
             f     = ((rss_lin - rss_seg) / 1.0) / (rss_seg / df2)
             p_chg = float(1 - stats.f.cdf(f, 1, df2))
 
         # Bootstrap CI on breakpoint
-        rng   = np.random.default_rng(42)
-        boots = []
-        for _ in range(n_bootstrap):
+    rng   = np.random.default_rng(42)
+    boots = []
+    for _ in range(n_bootstrap):
             idx  = rng.integers(0, n, n)
             xb, yb = x[idx], y[idx]
             lo_bb = np.percentile(xb, min_pct * 100)
@@ -418,15 +418,15 @@ def _segmented_regression(x, y, n_bootstrap=200, min_pct=0.15):
                           else float(np.sum((yb - Xb @ cb) ** 2)))
             boots.append(float(gb[int(np.argmin(rb))]))
 
-        ci_lo = float(np.percentile(boots, 2.5))  if boots else psi
-        ci_hi = float(np.percentile(boots, 97.5)) if boots else psi
+    ci_lo = float(np.percentile(boots, 2.5))  if boots else psi
+    ci_hi = float(np.percentile(boots, 97.5)) if boots else psi
 
-        below = y[x <= psi]
-        above = y[x >  psi]
-        ob    = float(np.mean(below)) if len(below) else None
-        oa    = float(np.mean(above)) if len(above) else None
+    below = y[x <= psi]
+    above = y[x >  psi]
+    ob    = float(np.mean(below)) if len(below) else None
+    oa    = float(np.mean(above)) if len(above) else None
 
-        result.update({
+    result.update({
             'breakpoint':       round(psi, 3),
             'breakpoint_ci_lo': round(ci_lo, 3),
             'breakpoint_ci_hi': round(ci_hi, 3),
@@ -438,14 +438,14 @@ def _segmented_regression(x, y, n_bootstrap=200, min_pct=0.15):
             'outcome_above':    round(oa, 4) if oa is not None else None,
             'outcome_change':   round(oa - ob, 4) if (ob is not None and oa is not None) else None,
         })
-        print(f"    Breakpoint={psi:.2f} [{ci_lo:.2f}–{ci_hi:.2f}]  "
+    print(f"    Breakpoint={psi:.2f} [{ci_lo:.2f}–{ci_hi:.2f}]  "
               f"p_change={p_chg:.4f}  "
               + (f"outcome {ob:.3f}→{oa:.3f}" if ob is not None else ""))
 
-    except Exception as e:
+  except Exception as e:
         print(f"  Segmented failed: {e}")
 
-    return result
+  return result
 
 
 # ─────────────────────────────────────────────────────────────────

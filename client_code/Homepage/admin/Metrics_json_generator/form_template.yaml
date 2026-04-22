@@ -64,6 +64,11 @@ components_by_slot:
         properties: {role: outlined-button, text: Causal Correlations}
         type: Button
       - event_bindings: {}
+        layout_properties: {grid_position: 'LZPYBR,BJDXCN'}
+        name: outlined_button_3
+        properties: {role: outlined-button, text: Threshold Correlations}
+        type: Button
+      - event_bindings: {}
         layout_properties: {grid_position: 'LNAXBL,MDMGRQ'}
         name: outlined_button_2
         properties: {role: outlined-button, text: Download Metrics Dictionary Markdown}
