@@ -132,12 +132,54 @@ DIG_DUR_MAX       =  5.0    # safety cap; max observed is 4.87s
 # TSE/TSA are opponent transition events — no dig data for our player
 TRANSITION_OUTCOMES = ('TK', 'TE')
 
+# Speed column resolution:
+#   preferred  = the _mph column added when Balltime started tracking speed directly
+#   fallback   = the m/s distance/time column present in all files
+#   multiplier = factor to convert fallback to mph (None = no reliable fallback)
+#
+# NOTE: serve_speed (m/s) is NOT a reliable fallback — values are ~0.7 m/s
+#       (walking pace) and do not convert cleanly to mph. Older serve data
+#       is skipped when serve_speed_mph is absent.
+#       att_speed (m/s) converts cleanly: att_speed * 2.237 = att_speed_mph exactly.
+
 # Player column to use when filtering PPR rows by event type
 _PLAYER_COL = {
   'first_ball': 'att_player',
   'transition': 'att_player',
   'serve':      'serve_player',
 }
+
+_SPEED_COL_MAP = {
+  'att_speed_mph':   ('att_speed_mph',  'att_speed', 2.237),
+  'serve_speed_mph': ('serve_speed_mph', None,        None),
+}
+
+
+def _resolve_physical_col(physical_col, df):
+  """
+  Return (actual_col, multiplier) for a given logical metric name.
+
+  For speed metrics, prefers the direct _mph column from Balltime.
+  Falls back to the m/s column (with unit conversion) only when the
+  _mph column is absent AND a reliable fallback exists (att_speed only).
+
+  For non-speed metrics (heights, durations) returns the column as-is.
+
+  Returns (None, None) if no usable column is found in this dataframe.
+  """
+  if physical_col in _SPEED_COL_MAP:
+    preferred, fallback, mult = _SPEED_COL_MAP[physical_col]
+    if preferred in df.columns:
+      return preferred, 1.0          # direct mph — no conversion needed
+    elif fallback and fallback in df.columns:
+      return fallback, mult          # m/s fallback — multiply to get mph
+    else:
+      return None, None              # no usable column in this file
+  else:
+    # Non-speed metric (pass_height, dig_dur, att_touch_height etc.)
+    if physical_col in df.columns:
+      return physical_col, 1.0
+    return None, None
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -229,82 +271,61 @@ def _get_player_name(player_row):
 # ─────────────────────────────────────────────────────────────────
 def _get_player_events(ppr_df, player_name, physical_col, outcome_col, event_type):
   """
-    Returns (x_array, y_array) of clean (physical, outcome) pairs
-    for one player.  Returns (None, None) on any failure or if
-    the player has no qualifying events.
+  Return (x_array, y_array) for one player, or (None, None).
 
-    All data quality filters are applied here:
-      serve      — speed > 0, dur > 0, speed < 75 mph
-      first_ball — att_yn == Y, metric-specific bounds
-      transition — outcome in TK/TE, dig_dur > 0 and < 5
-    """
+  x values are always in consistent units (mph for speed metrics).
+  If the preferred _mph column is missing, falls back to m/s with
+  conversion where reliable (att_speed only).
+  Silently returns (None, None) for missing/unusable columns.
+  """
   try:
     pcol = _PLAYER_COL.get(event_type, 'att_player')
 
-    # ── Step 1: event type base filter ──
+    # Resolve which column to actually read, and any unit conversion needed
+    actual_col, multiplier = _resolve_physical_col(physical_col, ppr_df)
+    if actual_col is None:
+      return None, None   # column not available in this file — skip silently
+
+    # Build the event filter mask and apply metric-specific quality filters
     if event_type == 'first_ball':
-      mask = (
-        (ppr_df[pcol] == player_name) &
-        (ppr_df['att_yn'] == 'Y')
-      )
+      mask = ((ppr_df[pcol] == player_name) &
+              (ppr_df['att_yn'] == 'Y'))
+      df = ppr_df[mask][[actual_col, outcome_col]].copy().dropna()
+      if physical_col == 'att_speed_mph':
+        df = df[(df[actual_col] > ATT_SPEED_MIN) & (df[actual_col] < ATT_SPEED_MAX)]
+      elif physical_col == 'att_touch_height':
+        df = df[df[actual_col] < ATT_TOUCH_HT_MAX]
+      elif physical_col == 'pass_height':
+        df = df[(df[actual_col] > PASS_HEIGHT_MIN) & (df[actual_col] < PASS_HEIGHT_MAX)]
+
     elif event_type == 'transition':
-      mask = (
-        (ppr_df[pcol] == player_name) &
-        (ppr_df['point_outcome'].isin(TRANSITION_OUTCOMES)) &
-        (ppr_df['dig_dur'] > DIG_DUR_MIN) &
-        (ppr_df['dig_dur'] < DIG_DUR_MAX)
-      )
+      mask = ((ppr_df[pcol] == player_name) &
+              (ppr_df['point_outcome'].isin(TRANSITION_OUTCOMES)) &
+              (ppr_df['dig_dur'] > DIG_DUR_MIN) &
+              (ppr_df['dig_dur'] < DIG_DUR_MAX))
+      df = ppr_df[mask][[actual_col, outcome_col]].copy().dropna()
+
     elif event_type == 'serve':
-      mask = (
-        (ppr_df[pcol] == player_name) &
-        (ppr_df['serve_speed_mph'] > SERVE_SPEED_MIN) &
-        (ppr_df['serve_dur']       > SERVE_DUR_MIN) &
-        (ppr_df['serve_speed_mph'] < SERVE_SPEED_MAX)
-      )
+      mask = ((ppr_df[pcol] == player_name) &
+              (ppr_df[actual_col] > SERVE_SPEED_MIN) &
+              (ppr_df[actual_col] < SERVE_SPEED_MAX))
+      # Also require serve_dur > 0 if that column exists (removes corrupt records)
+      if 'serve_dur' in ppr_df.columns:
+        mask = mask & (ppr_df['serve_dur'] > SERVE_DUR_MIN)
+      df = ppr_df[mask][[actual_col, outcome_col]].copy().dropna()
+
     else:
-      print(f"  Unknown event_type: {event_type}")
       return None, None
 
-    df = ppr_df[mask]
-
-    if df.empty:
+    if len(df) == 0:
       return None, None
 
-      # Check both columns exist
-    if physical_col not in df.columns:
-      print(f"  Column '{physical_col}' not in PPR")
-      return None, None
-    if outcome_col not in df.columns:
-      print(f"  Column '{outcome_col}' not in PPR")
-      return None, None
+    x = df[actual_col].to_numpy(float)
+    if multiplier != 1.0:
+      x = x * multiplier    # convert m/s → mph so units are consistent
 
-    df = df[[physical_col, outcome_col]].copy().dropna()
-
-    # ── Step 2: metric-specific quality filters ──
-    if physical_col == 'att_speed_mph':
-      df = df[(df[physical_col] > ATT_SPEED_MIN) &
-        (df[physical_col] < ATT_SPEED_MAX)]
-
-    elif physical_col == 'att_touch_height':
-      df = df[df[physical_col] < ATT_TOUCH_HT_MAX]
-
-    elif physical_col == 'pass_height':
-      df = df[(df[physical_col] > PASS_HEIGHT_MIN) &
-        (df[physical_col] < PASS_HEIGHT_MAX)]
-
-    elif physical_col == 'serve_speed_mph':
-      # Already filtered above in the base mask — no extra step needed
-      pass
-
-    elif physical_col == 'dig_dur':
-      # Already filtered above in the base mask — no extra step needed
-      pass
-
-    if df.empty:
-      return None, None
-
-    return (df[physical_col].to_numpy(dtype=float),
-            df[outcome_col].to_numpy(dtype=float))
+    y = df[outcome_col].to_numpy(float)
+    return x, y
 
   except Exception as e:
     print(f"  Event error for {player_name}: {e}")
