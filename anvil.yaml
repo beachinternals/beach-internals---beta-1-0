@@ -1832,10 +1832,6 @@ db_schema:
       client_hidden: false
       name: physical_mean
       type: number
-    - admin_ui: {order: 8, width: 200}
-      client_hidden: false
-      name: physical_p25
-      type: string
     - admin_ui: {order: 9, width: 200}
       client_hidden: false
       name: physical_p75
@@ -1936,6 +1932,10 @@ db_schema:
       client_hidden: false
       name: notes
       type: string
+    - admin_ui: {order: 8, width: 200}
+      client_hidden: false
+      name: physical_p25
+      type: number
     indexes: []
     server: full
     title: threshold_analysis_results

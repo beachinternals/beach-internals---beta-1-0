@@ -207,20 +207,19 @@ def _add_outcome_cols(df):
 #  HELPER: extract player name from master_player row
 # ─────────────────────────────────────────────────────────────────
 def _get_player_name(player_row):
-  """
-    Returns the PPR-format name string from a master_player row.
-    Tries player_name field first, then constructs from components.
+  """Return PPR-format name string from a master_player linked row.
+    
+    master_player columns: team, number, shortname, fullname
+    PPR format is: "TEAM NUMBER SHORTNAME"  e.g. "STETSON 22 Zoe"
     """
   try:
-    if player_row.get('player_name'):
-      return player_row['player_name']
-    team  = player_row.get('team', '')
-    num   = player_row.get('jersey_number', '')
-    fname = player_row.get('first_name', '')
-    if team and fname:
-      return f"{team} {num} {fname}".strip()
-  except Exception:
-    pass
+    team      = player_row['team']      or ''
+    number    = player_row['number']    or ''
+    shortname = player_row['shortname'] or ''
+    if team and shortname:
+      return f"{team} {number} {shortname}".strip()
+  except Exception as e:
+    print(f"  _get_player_name error: {e}")
   return None
 
 
