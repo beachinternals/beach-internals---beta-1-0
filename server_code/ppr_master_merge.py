@@ -79,9 +79,11 @@ def deidentify_ppr(ppr_df, league, gender, year):
   ppr_df = ppr_df.reset_index(drop=True)
     
   # Step 1 — Capture original team strings BEFORE any substitution
-  orig_teama = (ppr_df['player_a1'].fillna('') + ppr_df['player_a2'].fillna('')
+  # Use space separator to match point_outcome_team format
+  # e.g. "FSU 08 Julia FSU 11 Brooke" — space between the two players
+  orig_teama = (ppr_df['player_a1'].fillna('') + ' ' + ppr_df['player_a2'].fillna('')
                 if 'player_a1' in ppr_df.columns else pd.Series('', index=ppr_df.index))
-  orig_teamb = (ppr_df['player_b1'].fillna('') + ppr_df['player_b2'].fillna('')
+  orig_teamb = (ppr_df['player_b1'].fillna('') + ' ' + ppr_df['player_b2'].fillna('')
                 if 'player_b1' in ppr_df.columns else pd.Series('', index=ppr_df.index))
 
   # Step 2 — Substitute individual player name columns
