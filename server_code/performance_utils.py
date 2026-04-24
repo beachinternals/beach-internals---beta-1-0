@@ -283,7 +283,10 @@ def generate_night_processing_summary(send_email=True, recipient_email=None):
     send_summary_email(stats, recipient_email)
 
   # Purge logs now that summary is safely emailed
-  purge_stats = purge_processed_logs(cutoff_time)
+  # we need to purge most everything, getting way too may, so we'll use purge_time
+  purge_time = datetime.now(timezone.utc) - timedelta(hours=0)
+  purge_stats = purge_processed_logs(purge_time)
+  
   stats["purge_stats"] = purge_stats
   log_info(f"Log purge complete: {purge_stats}")
 

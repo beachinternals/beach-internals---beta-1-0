@@ -43,7 +43,93 @@ def create_master_ppr( user_league, user_gender, user_year, user_team, data_set 
   # pass this off to a background task!
   task = anvil.server.launch_background_task('make_master_ppr',user_league, user_gender, user_year, user_team, data_set )
   return task
+  
+def deidentify_ppr(ppr_df, league, gender, year):
+  """
+  Replace all player name fields in the PPR dataframe with player_uuid values.
+  Uses master_player table to build the name -> uuid mapping.
+  Also replaces team strings (player1+player2 concatenated) with uuid versions.
+  Only called for League-level PPR builds.
+  year is always a string.
+  """
+  # Build lookup: "TEAM 1 Shortname" -> "PLYR-xxxxxxxx"
+  to_uuid = {}
+  player_rows = app_tables.master_player.search(
+    league=league,
+    gender=gender,
+    year=year
+  )
 
+  for row in player_rows:
+    uuid = row['player_uuid']
+    if not uuid:
+      continue
+    number = str(row['number'] or '')
+    real_id = f"{row['team']} {number} {row['shortname']}".strip()
+    to_uuid[real_id] = uuid
+
+  n_mapped = len(to_uuid)
+  print(f"  deidentify_ppr: {n_mapped} players in substitution map")
+
+  if n_mapped == 0:
+    print(f"  deidentify_ppr: WARNING — no players found for {league} {gender} {year}, skipping")
+    return ppr_df
+
+  # Reset index to ensure unique integer index (concat can create duplicates)
+  ppr_df = ppr_df.reset_index(drop=True)
+    
+  # Step 1 — Capture original team strings BEFORE any substitution
+  orig_teama = (ppr_df['player_a1'].fillna('') + ppr_df['player_a2'].fillna('')
+                if 'player_a1' in ppr_df.columns else pd.Series('', index=ppr_df.index))
+  orig_teamb = (ppr_df['player_b1'].fillna('') + ppr_df['player_b2'].fillna('')
+                if 'player_b1' in ppr_df.columns else pd.Series('', index=ppr_df.index))
+
+  # Step 2 — Substitute individual player name columns
+  player_cols = [
+    'player_a1', 'player_a2', 'player_b1', 'player_b2',
+    'serve_player', 'pass_player', 'set_player',
+    'att_player', 'dig_player'
+  ]
+
+  n_replaced = 0
+  n_not_found = 0
+
+  for col in player_cols:
+    if col not in ppr_df.columns:
+      continue
+    for idx, val in ppr_df[col].items():
+      if not isinstance(val, str) or val in ('', 'empty', 'nan'):
+        continue
+      if val in to_uuid:
+        ppr_df.at[idx, col] = to_uuid[val]
+        n_replaced += 1
+      elif not val.startswith('PLYR-'):
+        n_not_found += 1
+
+  print(f"  deidentify_ppr: {n_replaced} player substitutions, {n_not_found} names not in map")
+
+  # Step 3 — Rebuild teama and teamb from substituted player columns
+  for team_col, p1_col, p2_col in [('teama', 'player_a1', 'player_a2'),
+                                   ('teamb', 'player_b1', 'player_b2')]:
+    if all(c in ppr_df.columns for c in [team_col, p1_col, p2_col]):
+      ppr_df[team_col] = ppr_df[p1_col].fillna('') + ppr_df[p2_col].fillna('')
+
+  # Step 4 — Remap point_outcome_team using original team strings captured in Step 1
+  if 'point_outcome_team' in ppr_df.columns:
+    def remap_outcome_team(row):
+      val = row['point_outcome_team']
+      if not isinstance(val, str) or val == '':
+        return val
+      idx = row.name
+      if val == orig_teama.at[idx]:
+        return row['teama']
+      elif val == orig_teamb.at[idx]:
+        return row['teamb']
+      return val  # already a UUID or unrecognized
+    ppr_df['point_outcome_team'] = ppr_df.apply(remap_outcome_team, axis=1)
+
+  return ppr_df
+  
 @anvil.server.background_task
 def make_master_ppr( user_league, user_gender, user_year, user_team, data_set ):
   task = make_master_ppr_not_background(user_league, user_gender, user_year, user_team, data_set)
@@ -106,6 +192,9 @@ def make_master_ppr_not_background(user_league, user_gender, user_year, user_tea
   #print(master_ppr_df)
   # so we should now have te master ppr_df for the given league, gender, year, and team
   # write this to a data file
+  # De-identify the League PPR before saving
+  if data_set == "League" and not master_ppr_df.empty:
+    master_ppr_df = deidentify_ppr(master_ppr_df, user_league, user_gender, user_year)
 
   create_master_ppr_table(master_ppr_df, user_league, user_gender, user_year, user_team )
 
