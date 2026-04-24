@@ -249,17 +249,15 @@ def _add_outcome_cols(df):
 #  HELPER: extract player name from master_player row
 # ─────────────────────────────────────────────────────────────────
 def _get_player_name(player_row):
-  """Return PPR-format name string from a master_player linked row.
-    
-    master_player columns: team, number, shortname, fullname
-    PPR format is: "TEAM NUMBER SHORTNAME"  e.g. "STETSON 22 Zoe"
-    """
+  """
+  Return the player identifier used in the League PPR file.
+  League PPR files are de-identified — player columns contain player_uuid
+  (e.g. 'PLYR-59357f7b'), not display names.
+  """
   try:
-    team      = player_row['team']      or ''
-    number    = player_row['number']    or ''
-    shortname = player_row['shortname'] or ''
-    if team and shortname:
-      return f"{team} {number} {shortname}".strip()
+    uuid = player_row['player_uuid']
+    if uuid:
+      return uuid.strip()
   except Exception as e:
     print(f"  _get_player_name error: {e}")
   return None
