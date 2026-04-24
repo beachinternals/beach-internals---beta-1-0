@@ -10,31 +10,11 @@ import traceback
 
 def add_weather_to_ppr(ppr_df, btd_row):
   """
-    Fetch weather and add weather_id and weather data to all rows in ppr_df
-    
-    This function is called during BTD→PPR conversion, after all PPR data
-    has been calculated but before storing the CSV file.
-    
-    Args:
-        ppr_df (DataFrame): PPR dataframe with all calculated data
-        btd_row: Row from btd_files table containing venue_id, date, match_time
-        
-    Returns:
-        DataFrame: ppr_df with weather columns populated:
-            - weather_id: Link to weather_data table
-            - temperature_f: Temperature in Fahrenheit
-            - wind_speed_mph: Wind speed in mph
-            - wind_gust_mph: Wind gust speed in mph
-            - humidity_percent: Humidity percentage
-            - uv_index: UV index (may be None from Open-Meteo archive)
-        
-    Notes:
-        - All rows in ppr_df get the SAME weather data (one match = one weather)
-        - Backwards compatible: skips if venue_id/match_time are missing/empty
-        - Caches weather: won't re-fetch if weather already exists
-        - Weather data is denormalized into PPR for easy analysis
-    """
-
+  Fetch weather and add weather_id and weather data to all rows in ppr_df.
+  Called during BTD->PPR conversion after all PPR data is calculated.
+  Skips fetch if weather already exists in the dataframe.
+  year is always a string.
+  """
   log_debug(f"add_weather_to_ppr called for file: {btd_row['filename']}")
 
   # Get required fields from btd_row
@@ -42,130 +22,70 @@ def add_weather_to_ppr(ppr_df, btd_row):
   match_date = btd_row['date']
   match_time = btd_row['match_time']
 
-  # Check if weather is already in the PPR dataframe
+  # If weather already in the PPR rows, skip — no need to fetch again
   already_has_weather = (
     'weather_id' in ppr_df.columns and
     ppr_df['weather_id'].notna().any() and
     (ppr_df['weather_id'] != '').any()
   )
-
   if already_has_weather:
-    log_debug(f"Weather already present in PPR for {btd_row['filename']}, skipping fetch")
+    log_debug(f"Weather already present for {btd_row['filename']}, skipping fetch")
     return ppr_df
 
-  # No weather yet — check if we have enough info to fetch it
-  if not venue_name or not match_date or not match_time:
-    log_info(f"Skipping weather for {btd_row['filename']}: "
-             f"venue_name={venue_name}, date={match_date}, time={match_time} "
-             f"(missing/empty fields)")
+  # Helper to stamp empty weather columns and return
+  def set_empty_weather():
     ppr_df['weather_id']       = None
     ppr_df['temperature_f']    = None
     ppr_df['wind_speed_mph']   = None
     ppr_df['wind_gust_mph']    = None
     ppr_df['humidity_percent'] = None
     return ppr_df
+
+  # No weather yet — check if we have enough info to fetch
+  if not venue_name or not match_date or not match_time:
+    log_info(f"Skipping weather for {btd_row['filename']}: "
+             f"venue={venue_name}, date={match_date}, time={match_time} "
+             f"(missing fields)")
+    return set_empty_weather()
 
   # Validate match_time format
   valid_times = ["8am-12pm", "12pm-4pm", "4pm-8pm"]
   if match_time not in valid_times:
     log_error(f"Invalid match_time '{match_time}' for {btd_row['filename']}")
-    ppr_df['weather_id']       = None
-    ppr_df['temperature_f']    = None
-    ppr_df['wind_speed_mph']   = None
-    ppr_df['wind_gust_mph']    = None
-    ppr_df['humidity_percent'] = None
-    return ppr_df
+    return set_empty_weather()
 
   # All good — fetch weather
   try:
-    ...  # rest of the existing fetch code stays exactly the same
-  # Validate: catches None, "", and missing columns
-  # This makes it backwards compatible with old files
-    if not venue_name or not match_date or not match_time:
-      log_info(f"Skipping weather for {btd_row['filename']}: "
-             f"venue_name={venue_name}, date={match_date}, time={match_time} "
-             f"(missing/empty fields - backwards compatible)")
+    log_debug(f"Fetching weather: venue={venue_name}, date={match_date}, time={match_time}")
+    weather_id = get_or_create_weather(venue_name, match_date, match_time)
 
-      # Add empty weather columns (pandas will create if they don't exist)
-      ppr_df['weather_id'] = None
-      ppr_df['temperature_f'] = None
-      ppr_df['wind_speed_mph'] = None
-      ppr_df['wind_gust_mph'] = None
-      ppr_df['humidity_percent'] = None
-      #ppr_df['uv_index'] = None
-
-      return ppr_df
-
-    # Validate match_time format
-    valid_times = ["8am-12pm", "12pm-4pm", "4pm-8pm"]
-    if match_time not in valid_times:
-      log_error(f"Invalid match_time '{match_time}' for {btd_row['filename']} "
-              f"(must be one of: {valid_times})")
-      ppr_df['weather_id'] = None
-      ppr_df['temperature_f'] = None
-      ppr_df['wind_speed_mph'] = None
-      ppr_df['wind_gust_mph'] = None
-      ppr_df['humidity_percent'] = None
-      #ppr_df['uv_index'] = None
-      return ppr_df
-
-    # Get or create weather (checks cache first!)
-    try:
-      log_debug(f"Attempting to get/create weather: venue_name={venue_name}, "
-              f"date={match_date}, time={match_time}")
-
-      weather_id = get_or_create_weather(venue_name, match_date, match_time)
-
-      if weather_id:
-        # Success! Now get the weather data to copy fields
-        from anvil.tables import app_tables
-        weather_row = app_tables.weather_data.get_by_id(weather_id)
-
-        if weather_row:
-          # Add weather_id to ALL rows in ppr_df
-          ppr_df['weather_id'] = weather_id
-  
-          # Add weather data fields to ALL rows
-          ppr_df['temperature_f'] = weather_row['temperature_f']
-          ppr_df['wind_speed_mph'] = weather_row['wind_speed_mph']
-          ppr_df['wind_gust_mph'] = weather_row['wind_gust_mph']
-          ppr_df['humidity_percent'] = weather_row['humidity_percent']
-          #ppr_df['uv_index'] = weather_row['uv_index']
-
-          log_info(f"✓ Weather ID {weather_id} and data added to {len(ppr_df)} PPR rows: "
-                 f"{btd_row['filename']}, venue={venue_id}, "
-                 f"date={match_date}, time={match_time}, "
-                 f"temp={weather_row['temperature_f']}°F, wind={weather_row['wind_speed_mph']}mph")
-        else:
-          # Shouldn't happen, but handle it
-          log_error(f"Weather ID {weather_id} returned but could not fetch weather row")
-        ppr_df['weather_id'] = weather_id
-        ppr_df['temperature_f'] = None
-        ppr_df['wind_speed_mph'] = None
-        ppr_df['wind_gust_mph'] = None
-        ppr_df['humidity_percent'] = None
-        #ppr_df['uv_index'] = None
-    else:
-      # Weather fetch failed
-      ppr_df['weather_id'] = None
-      ppr_df['temperature_f'] = None
-      ppr_df['wind_speed_mph'] = None
-      ppr_df['wind_gust_mph'] = None
-      ppr_df['humidity_percent'] = None
-      #ppr_df['uv_index'] = None
+    if not weather_id:
       log_error(f"Failed to fetch weather for {btd_row['filename']}: "
-                f"venue_name={venue_name}, date={match_date}, time={match_time}")
+                f"venue={venue_name}, date={match_date}, time={match_time}")
+      return set_empty_weather()
+
+    # Got a weather_id — fetch the data row
+    from anvil.tables import app_tables
+    weather_row = app_tables.weather_data.get_by_id(weather_id)
+
+    if not weather_row:
+      log_error(f"Weather ID {weather_id} returned but row not found")
+      return set_empty_weather()
+
+    # Stamp all PPR rows with weather data
+    ppr_df['weather_id']       = weather_id
+    ppr_df['temperature_f']    = weather_row['temperature_f']
+    ppr_df['wind_speed_mph']   = weather_row['wind_speed_mph']
+    ppr_df['wind_gust_mph']    = weather_row['wind_gust_mph']
+    ppr_df['humidity_percent'] = weather_row['humidity_percent']
+
+    log_info(f"✓ Weather added to {len(ppr_df)} PPR rows for {btd_row['filename']}: "
+             f"temp={weather_row['temperature_f']}F, wind={weather_row['wind_speed_mph']}mph")
 
   except Exception as e:
-    # Catch any errors and log them
     log_error(f"Exception in add_weather_to_ppr for {btd_row['filename']}: {str(e)}")
     log_error(traceback.format_exc())
-    ppr_df['weather_id'] = None
-    ppr_df['temperature_f'] = None
-    ppr_df['wind_speed_mph'] = None
-    ppr_df['wind_gust_mph'] = None
-    ppr_df['humidity_percent'] = None
-    #ppr_df['uv_index'] = None
+    return set_empty_weather()
 
   return ppr_df
 
