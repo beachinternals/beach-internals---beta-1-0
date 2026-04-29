@@ -184,37 +184,76 @@ def _validate_lgy_string(lgy):
 #--------------------------------------------------------------
 def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
   """
-  Background task version — no logged-in user, uses team parameter directly.
-  Delegates to get_ppr_data() in server_functions.py.
+  Get PPR data directly using team parameter, bypassing user check.
+  This is for scheduled/background tasks where no user is logged in.
+  
+  Loads the team's own PPR row PLUS Scout row and merges them,
+  exactly like get_ppr_data() in server_functions.py with scout=True.
+  
+  'team' is passed as-is — INTERNALS has its own row just like any other team.
+  No special mapping is needed.
   """
   try:
-    search_team = 'League' if team == 'INTERNALS' else team
+    from server_functions import filter_ppr_df
 
-    log_info(f"Loading PPR data for {league}/{gender}/{year}/team={search_team} (scout=True)...")
+    log_info(f"Loading PPR data for {league}/{gender}/{year}/team={team} (scout=True)...")
 
-    ppr_df = get_ppr_data(
-      disp_league=league,
-      disp_gender=gender,
-      disp_year=str(year),
-      disp_team=search_team,
-      scout=True
-    )
+    combined_df = None
 
-    if not isinstance(ppr_df, pd.DataFrame) or ppr_df.shape[0] == 0:
-      log_error(f"No PPR data returned for {league}/{gender}/{year}/team={search_team}")
+    # Step 1: Load the team's own PPR row (e.g. INTERNALS, FSU, TOP20B, etc.)
+    team_rows = list(app_tables.ppr_csv_tables.search(
+      league=league,
+      gender=gender,
+      year=str(year),
+      team=team
+    ))
+
+    if len(team_rows) > 0:
+      ppr_csv_data = team_rows[0]['ppr_csv']
+      if hasattr(ppr_csv_data, 'get_bytes'):
+        ppr_csv_string = ppr_csv_data.get_bytes().decode('utf-8')
+      else:
+        ppr_csv_string = ppr_csv_data
+      combined_df = pd.read_csv(io.StringIO(ppr_csv_string))
+      log_info(f"Loaded {len(combined_df)} points from team row '{team}'")
+    else:
+      log_info(f"No row found for team='{team}' — will use Scout only")
+
+    # Step 2: Load Scout row and merge
+    scout_rows = list(app_tables.ppr_csv_tables.search(
+      league=league,
+      gender=gender,
+      year=str(year),
+      team='Scout'
+    ))
+
+    if len(scout_rows) > 0:
+      scout_csv_data = scout_rows[0]['ppr_csv']
+      if hasattr(scout_csv_data, 'get_bytes'):
+        scout_csv_string = scout_csv_data.get_bytes().decode('utf-8')
+      else:
+        scout_csv_string = scout_csv_data
+      scout_df = pd.read_csv(io.StringIO(scout_csv_string))
+      log_info(f"Loaded {len(scout_df)} points from Scout row")
+      combined_df = pd.concat([combined_df, scout_df], ignore_index=True) if combined_df is not None else scout_df
+    else:
+      log_info("No Scout row found")
+
+    if combined_df is None or len(combined_df) == 0:
+      log_error(f"No PPR data found for {league}/{gender}/{year}/team={team} (+ Scout)")
       return pd.DataFrame()
 
-    log_info(f"Loaded {len(ppr_df)} raw points from PPR (team + scout)")
+    log_info(f"Loaded {len(combined_df)} raw points from PPR (team + scout)")
 
-    from server_functions import filter_ppr_df
+    # Step 3: Apply filters
     log_info("Applying filters...")
-    ppr_df = filter_ppr_df(ppr_df, **filters)
+    ppr_df = filter_ppr_df(combined_df, **filters)
     log_info(f"After filtering: {len(ppr_df)} points retained")
 
     return ppr_df
 
   except Exception as e:
-    log_error(f"Error in get_filtered_ppr_data_direct: {str(e)}", with_traceback=True)
+    log_exception('error', "Error in get_filtered_ppr_data_direct", e)
     return pd.DataFrame()
 
 #--------------------------------------------------------------

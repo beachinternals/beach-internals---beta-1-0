@@ -274,8 +274,6 @@ def get_filtered_ppr_data(league, gender, year, team, **filters):
       current_user = anvil.users.get_user()
       if current_user and current_user['team']:
         search_team = current_user['team']
-        if search_team == 'INTERNALS':
-          search_team = 'League'
       else:
         search_team = team
     except:

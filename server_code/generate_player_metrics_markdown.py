@@ -1253,11 +1253,7 @@ def get_filtered_ppr_data(league, gender, year, team, **filters):
     user_team = current_user['team']
     log_info(f"User team from login: {user_team}")
 
-    if user_team == 'INTERNALS':
-      search_team = 'League'
-      log_info(f"INTERNALS user - using team='{search_team}'")
-    else:
-      search_team = user_team
+    search_team = user_team
 
     log_info(f"Querying PPR data for {league}/{gender}/{year}/team={search_team}...")
 
