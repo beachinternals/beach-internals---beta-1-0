@@ -94,6 +94,7 @@ def import_metric_dictionary_from_csv(csv_file):
         # Add row to table
         app_tables.metric_dictionary.add_row(
           metric_id=row.get('metric_id', ''),
+          coach_alias=row.get('coach_alias', ''),          # ← NEW COLUMN
           metric_name=row.get('metric_name', ''),
           metric_type=row.get('metric_type', ''),
           metric_role=row.get('metric_role', ''),
@@ -208,13 +209,17 @@ def cleanup_metric_dictionary_quotes():
 @anvil.server.callable
 def generate_slim_metric_dictionary_md():
   """
-    Converts the metric_dictionary Anvil table into a slimmed-down Markdown 
-    file optimized for AI context caching.
-    """
+  Converts the metric_dictionary Anvil table into a slimmed-down Markdown 
+  file optimized for AI context caching.
+  
+  Includes coach_alias so AI responses can use plain-language metric names
+  that coaches will recognize.
+  """
   # Define columns critical for AI logic
+  # coach_alias added so the AI can refer to metrics by the name coaches use
   cols_to_include = [
-    'metric_id', 'metric_name', 'coach_view', 
-    'coach_speak_elite', 'coach_speak_good', 
+    'metric_id', 'coach_alias', 'metric_name', 'coach_view',
+    'coach_speak_elite', 'coach_speak_good',
     'coach_speak_average', 'coach_speak_poor'
   ]
 
@@ -232,5 +237,5 @@ def generate_slim_metric_dictionary_md():
       row_data.append(val)
     md_output += "| " + " | ".join(row_data) + " |\n"
 
-    # Return as downloadable Media Object
+  # Return as downloadable Media Object
   return BlobMedia("text/markdown", md_output.encode('utf-8'), name="metric_dictionary_logic.md")
