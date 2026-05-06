@@ -629,6 +629,14 @@ db_schema:
       client_hidden: null
       name: photo
       type: media
+    - admin_ui: {order: 6.375, width: 200}
+      client_hidden: false
+      name: comp_level_rank
+      type: number
+    - admin_ui: {order: 6.4375, width: 200}
+      client_hidden: false
+      name: comp_level_score
+      type: number
     server: full
     title: master_player
   metric_correlation_def:
