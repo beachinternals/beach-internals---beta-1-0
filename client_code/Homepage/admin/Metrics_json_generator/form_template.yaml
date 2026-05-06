@@ -73,6 +73,10 @@ components_by_slot:
         name: outlined_button_2
         properties: {role: outlined-button, text: Download Metrics Dictionary Markdown}
         type: Button
+      - layout_properties: {grid_position: 'BBWOCE,SBPAGG'}
+        name: file_loader_1
+        properties: {text: Import Comp Level to Master Player Table}
+        type: FileLoader
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
       properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40}', role: outlined-card}

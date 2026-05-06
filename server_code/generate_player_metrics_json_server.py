@@ -298,8 +298,13 @@ def get_filtered_ppr_data(league, gender, year, team, **filters):
 
     # Apply filters
     log_info("Applying filters...")
-    ppr_df = filter_ppr_df(ppr_df, **filters)
-    log_info(f"After filtering: {len(ppr_df)} points retained")
+    try:
+      ppr_df = filter_ppr_df(combined_df, **filters)
+      log_info(f"After filtering: {len(ppr_df)} points retained")
+    except ValueError as e:
+      log_info(f"No data after filtering (normal if no recent data): {e}")
+      return pd.DataFrame()
+
 
     return ppr_df
 

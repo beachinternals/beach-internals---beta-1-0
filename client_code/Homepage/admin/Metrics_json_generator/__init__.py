@@ -417,3 +417,27 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
     result = anvil.server.call('launch_threshold_analysis')
     pass  # Write Code Here
 
+  @anvil.handle("outlined_button_4", "click")
+  def outlined_button_4_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    pass  # Write Code Here
+
+  @anvil.handle("file_loader_1", "change")
+  def file_loader_1_change(self, **event_args):
+    print('running file loader 1')
+    csv_file = event_args.get('file')
+    if csv_file:
+      # Read the file content as text before sending to server
+      csv_text = csv_file.get_bytes().decode('utf-8')
+      with anvil.Notification("Importing Competition Level... this may take a minute"):
+        result = anvil.server.call('import_comp_level_from_csv', csv_text)
+      if result['success']:
+        anvil.alert(f"✓ Successfully imported {result['imported']} Competitive Levels!")
+        if result['errors']:
+          print(f"Errors encountered: {len(result['errors'])}")
+          for error in result['errors'][:10]:
+            print(f"  - {error}")
+      else:
+        anvil.alert(f"Import failed: {result['errors'][0] if result['errors'] else 'Unknown error'}")
+
+

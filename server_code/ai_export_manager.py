@@ -247,8 +247,13 @@ def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
 
     # Step 3: Apply filters
     log_info("Applying filters...")
-    ppr_df = filter_ppr_df(combined_df, **filters)
-    log_info(f"After filtering: {len(ppr_df)} points retained")
+    try:
+      ppr_df = filter_ppr_df(combined_df, **filters)
+      log_info(f"After filtering: {len(ppr_df)} points retained")
+    except ValueError as e:
+      log_info(f"No data after filtering (normal if no recent data): {e}")
+      return pd.DataFrame()
+
 
     return ppr_df
 
@@ -755,9 +760,9 @@ def ai_export_generate(league, team,
             folder_parts = ["Beach Internals Reports", league, team, "notebooklm-ai-export"]
 
           import anvil.media
-          key_media = anvil.media.from_bytes(
+          key_media = anvil.BlobMedia(
+            'text/markdown',
             key_content.encode('utf-8'),
-            content_type='text/markdown',
             name='00_Player_Key.md'
           )
           write_to_nested_folder(folder_parts, '00_Player_Key.md', key_media)
@@ -1284,6 +1289,24 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
         # --- Call the right generation function ---
         if function_name == 'generate_player_metrics' or ds_type == 'aggregate':
           log_info(f"  Calling generate_player_metrics_markdown for {ds_name}...")
+
+          # Pre-check: fetch PPR data first to avoid crashing on empty dataset
+          league_parts = league_value.split('|')
+          pre_ppr = get_filtered_ppr_data_direct(
+            league=league_parts[0].strip(),
+            gender=league_parts[1].strip(),
+            year=league_parts[2].strip(),
+            team=team,
+            **ds_filters
+          )
+          if pre_ppr is None or len(pre_ppr) == 0:
+            log_info(f"  No data for {ds_name} — skipping")
+            section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
+            sets_count = 0
+            combined_sections.append(f"\n\n---\n\n# DATASET: {section_title}\n\n" + section_md)
+            datasets_summary.append({'dataset': ds_name, 'success': True, 'sets': 0})
+            continue
+
           result = generate_player_metrics_markdown(
             league_value=league_value,
             team=team,
@@ -1291,6 +1314,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
             ai_optimized=ai_optimized,
             **ds_filters
           )
+
           if result and 'media_obj' in result:
             section_md = result['media_obj'].get_bytes().decode('utf-8')
             sets_count = result['summary'].get('total_sets_analyzed', 0)

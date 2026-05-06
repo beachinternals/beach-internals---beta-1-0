@@ -3,6 +3,7 @@ from anvil.tables import app_tables
 from anvil import BlobMedia
 import csv
 import io
+import pandas as pd
 
 from logger_utils import log_info, log_error, log_debug, log_critical
 
@@ -239,3 +240,196 @@ def generate_slim_metric_dictionary_md():
 
   # Return as downloadable Media Object
   return BlobMedia("text/markdown", md_output.encode('utf-8'), name="metric_dictionary_logic.md")
+
+"""
+Import Competitive Level (comp_level) Data into master_player
+
+Reads a CSV containing player rankings from an external source (e.g., TVR)
+and updates the master_player table with two new columns:
+  - comp_level_rank  : integer rank (1 = best)
+  - comp_level_score : float score
+
+Matching strategy (in order of preference):
+  1. player_uuid  — most reliable, used when present in both CSV and table
+  2. league + team + number — fallback for rows without player_uuid
+
+The CSV is expected to have at minimum these columns:
+  player_uuid, league, team, number, tvr_rank, tvr
+
+Usage (call from a server module or a DataMgr form):
+    result = import_comp_level_from_csv(csv_text)
+    print(result['summary'])
+
+Author: Beach Volleyball Analytics
+Created: 2026-05
+"""
+
+
+# ============================================================================
+# MAIN IMPORT FUNCTION
+# ============================================================================
+@anvil.server.callable
+def import_comp_level_from_csv(csv_text):
+  """
+  Read comp_level data from CSV text and update master_player rows.
+
+  Args:
+      csv_text (str): Raw CSV content (read from an uploaded file or a string).
+
+  Returns:
+      dict: {
+          'updated'  : int  - rows successfully updated,
+          'skipped'  : int  - rows in CSV with no match in master_player,
+          'no_data'  : int  - rows where tvr_rank AND tvr were both blank,
+          'errors'   : int  - rows that raised an exception,
+          'detail'   : list - one string per row describing what happened,
+          'summary'  : str  - human-readable summary paragraph
+      }
+  """
+  log_info("Starting comp_level import from CSV...")
+
+  # ── Load CSV ──────────────────────────────────────────────────────────────
+  try:
+    df = pd.read_csv(io.StringIO(csv_text))
+  except Exception as e:
+    msg = f"Could not parse CSV: {e}"
+    log_error(msg)
+    return {
+      'success':  False,
+      'imported': 0,
+      'skipped':  0,
+      'no_data':  0,
+      'errors':   [msg],
+      'summary':  msg
+    }
+
+  log_info(f"CSV loaded: {len(df)} rows, columns: {list(df.columns)}")
+
+  # ── Validate required columns ─────────────────────────────────────────────
+  required = {'league', 'team', 'number'}
+  missing = required - set(df.columns)
+  if missing:
+    msg = f"CSV is missing required columns: {missing}"
+    log_error(msg)
+    return {
+      'success':  False,
+      'imported': 0,
+      'skipped':  0,
+      'no_data':  0,
+      'errors':   [msg],
+      'summary':  msg
+    }
+
+  has_uuid_col = 'player_uuid' in df.columns
+
+  # ── Counters & detail log ─────────────────────────────────────────────────
+  imported = 0   # rows successfully written (was 'updated')
+  skipped  = 0
+  no_data  = 0
+  errors   = []  # list of error strings (was a count)
+
+  # ── Process each row ──────────────────────────────────────────────────────
+  for idx, row in df.iterrows():
+
+    # --- Extract rank / score (either tvr_rank/tvr or comp_level_rank/comp_level_score) ---
+    rank_val  = _safe_int(row.get('tvr_rank')  or row.get('comp_level_rank'))
+    score_val = _safe_float(row.get('tvr')     or row.get('comp_level_score'))
+
+    if rank_val is None and score_val is None:
+      # Nothing to import for this row
+      no_data += 1
+      log_debug(f"Row {idx}: no rank or score data — skipped")
+      continue
+
+    # --- Find matching master_player row ---
+    player_row = None
+    match_method = None
+
+    # Try player_uuid first
+    if has_uuid_col:
+      uuid_val = str(row.get('player_uuid', '') or '').strip()
+      if uuid_val and uuid_val not in ('nan', ''):
+        try:
+          player_row = app_tables.master_player.get(player_uuid=uuid_val)
+          if player_row:
+            match_method = f"player_uuid={uuid_val}"
+        except Exception as e:
+          log_debug(f"Row {idx}: uuid lookup failed ({e}), will try fallback")
+
+    # Fallback: league + team + number
+    if not player_row:
+      try:
+        league_val = str(row.get('league', '') or '').strip()
+        team_val   = str(row.get('team',   '') or '').strip()
+        number_val = _safe_int(row.get('number'))
+
+        if league_val and team_val and number_val is not None:
+          player_row = app_tables.master_player.get(
+            league=league_val,
+            team=team_val,
+            number=number_val
+          )
+          if player_row:
+            match_method = f"league={league_val} team={team_val} number={number_val}"
+      except Exception as e:
+        log_debug(f"Row {idx}: fallback lookup failed ({e})")
+
+    if not player_row:
+      skipped += 1
+      name_hint = str(row.get('fullname') or row.get('shortname') or f"row {idx}")
+      log_debug(f"Row {idx} ({name_hint}): no matching player in master_player — skipped")
+      continue
+
+    # --- Update the row ---
+    try:
+      player_row['comp_level_rank']  = rank_val
+      player_row['comp_level_score'] = score_val
+      imported += 1
+      name_hint = str(row.get('fullname') or row.get('shortname') or f"row {idx}")
+      log_debug(f"Updated {name_hint}: rank={rank_val}, score={score_val}")
+    except Exception as e:
+      name_hint = str(row.get('fullname') or row.get('shortname') or f"row {idx}")
+      errors.append(f"Row {idx} ({name_hint}): error writing to table — {e}")
+      log_error(f"Row {idx}: write error — {e}")
+
+  # ── Summary ───────────────────────────────────────────────────────────────
+  summary = (
+    f"comp_level import complete. "
+    f"Imported: {imported} | Skipped (no match): {skipped} | "
+    f"No data: {no_data} | Errors: {len(errors)} | Total CSV rows: {len(df)}"
+  )
+  log_info(summary)
+
+  return {
+    'success':  len(errors) == 0,
+    'imported': imported,
+    'skipped':  skipped,
+    'no_data':  no_data,
+    'errors':   errors,
+    'summary':  summary
+  }
+
+
+# ============================================================================
+# SAFE TYPE HELPERS
+# ============================================================================
+
+def _safe_int(val):
+  """Return int or None."""
+  try:
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+      return None
+    return int(float(val))
+  except (ValueError, TypeError):
+    return None
+
+
+def _safe_float(val):
+  """Return float or None."""
+  try:
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+      return None
+    f = float(val)
+    return round(f, 4)
+  except (ValueError, TypeError):
+    return None
