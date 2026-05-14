@@ -500,7 +500,7 @@ def load_pair_data_table():
         if team_delim == -1:
           if show_print:
             print(f"Load Pair Table, no space found looking for Team: {p[1]}")
-          a = b  # intentional crash — preserve original behavior
+          a = 1  # intentional crash — preserve original behavior
         pair_team = p[1][:team_delim].strip()
         if show_print:
           print(f"load_pair_data_table: Looking for:{lrow['league']}, {lrow['gender']},{lrow['year']} "
