@@ -801,6 +801,14 @@ db_schema:
       client_hidden: false
       name: coach_alias
       type: string
+    - admin_ui: {width: 200}
+      client_hidden: false
+      name: set_level_whole
+      type: bool
+    - admin_ui: {order: 10.609375, width: 200}
+      client_hidden: false
+      name: set_level_half
+      type: bool
     server: full
     title: metric_dictionary
   performance_log:
