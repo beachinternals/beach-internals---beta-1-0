@@ -49,25 +49,53 @@ from metric_calc_functions import *
 # CORE HELPER FUNCTIONS
 # ============================================================================
 
-@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
-def get_core_metrics_from_dictionary():
+
+def flag_is_yes(raw):
   """
-  Query metric_dictionary table to get all core metrics.
+  Interpret a metric_dictionary flag column as a boolean.
+  None / blank / 'No' -> False.  'Yes' (any case) / True / 1 -> True.
+  Treating None as False is required: a newly-added Anvil column is
+  None on every existing row until populated.
+  """
+  if raw is None:
+    return False
+  if isinstance(raw, bool):
+    return raw
+  s = str(raw).strip().lower()
+  return s in ('yes', 'y', 'true', '1')
+
+@monitor_performance(level=MONITORING_LEVEL_IMPORTANT)
+def get_set_level_metrics_from_dictionary(half=False):
+  """
+  Query metric_dictionary for the metrics to calculate at set level,
+  driven by the set_level_whole / set_level_half flag columns
+  (NOT the old 'core' category + hard-coded extras).
+
+  Args:
+      half (bool): If False, select metrics flagged for WHOLE-set
+                   calculation (set_level_whole = Yes).
+                   If True, select metrics flagged for HALF-set
+                   calculation (set_level_half = Yes).
 
   Returns:
-      list: List of metric rows with metric_category='core'
+      list: metric_dictionary rows whose relevant flag is Yes.
   """
-  log_info("Querying metric_dictionary for core metrics...")
+  flag_col = 'set_level_half' if half else 'set_level_whole'
+  log_info(f"Querying metric_dictionary for set-level metrics ({flag_col})...")
 
   try:
-    core_metrics = list(app_tables.metric_dictionary.search(
-      metric_category='core'
-    ))
-    log_info(f"Found {len(core_metrics)} core metrics in dictionary")
-    return core_metrics
+    # Fetch all rows, then filter in Python. We do NOT filter inside
+    # .search() because the flag is a Yes/No/blank string maintained in
+    # Numbers, and blank/None rows would behave inconsistently server-side.
+    all_metrics = list(app_tables.metric_dictionary.search())
+    selected = [m for m in all_metrics if flag_is_yes(m[flag_col])]
+
+    log_info(f"Found {len(selected)} metrics flagged {flag_col}=Yes "
+             f"(of {len(all_metrics)} in dictionary)")
+    return selected
 
   except Exception as e:
-    log_error(f"Error querying metric_dictionary: {str(e)}")
+    log_error(f"Error querying metric_dictionary for set-level metrics: {str(e)}")
     return []
 
 
@@ -432,7 +460,7 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
   """
   log_info(f"Generating set-level metrics for {player_name}")
 
-  core_metrics = get_core_metrics_from_dictionary()
+  core_metrics = get_set_level_metrics_from_dictionary(half=False)
   if len(core_metrics) == 0:
     log_error("No core metrics found in metric_dictionary")
     return None

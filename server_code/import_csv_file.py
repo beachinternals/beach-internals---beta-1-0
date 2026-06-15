@@ -79,7 +79,17 @@ def import_metric_dictionary_from_csv(csv_file):
             return float(value)
           except:
             return None
-
+            
+        def to_flag(value):
+          # Yes/No flag columns (set_level_whole, set_level_half).
+          # Blank/None/No -> 'No'.  'Yes' (any case) -> 'Yes'.
+          # Stored as a normalized string so the table is consistent
+          # whether the cell came from Numbers as Yes/No or blank.
+          if value is None:
+            return 'No'
+          s = str(value).strip().lower()
+          return 'Yes' if s in ('yes', 'y', 'true', '1') else 'No'
+  
         # DEBUG: Show what we're trying to import
         if row_num == 2:  # First data row
           log_info(f"Importing first row: metric_id={row.get('metric_id')}, name={row.get('metric_name')}")
@@ -117,7 +127,9 @@ def import_metric_dictionary_from_csv(csv_file):
           coach_speak_poor=row.get('coach_speak_poor', ''),
           coach_view=row.get('coach_view', ''),
           video_path=video_path_clean,
-          drill_down_report=row.get('drill_down_report', '')
+          drill_down_report=row.get('drill_down_report', ''),
+          set_level_whole=to_flag(row.get('set_level_whole')),
+          set_level_half=to_flag(row.get('set_level_half'))
         )
 
         imported_count += 1
