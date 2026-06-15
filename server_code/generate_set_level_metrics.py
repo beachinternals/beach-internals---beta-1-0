@@ -48,7 +48,9 @@ from metric_calc_functions import *
 # ============================================================================
 # CORE HELPER FUNCTIONS
 # ============================================================================
-
+def get_core_metrics_from_dictionary():
+  """DEPRECATED shim — see get_set_level_metrics_from_dictionary."""
+  return get_set_level_metrics_from_dictionary(half=False)
 
 def flag_is_yes(raw):
   """
