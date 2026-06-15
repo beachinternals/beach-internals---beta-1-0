@@ -3596,3 +3596,125 @@ def count_player_sets_from_ppr(ppr_df, player_name, min_points=10):
   set_counts = player_df.groupby(['video_id', 'set']).size()
   valid_sets = set_counts[set_counts >= min_points]
   return len(valid_sets)
+
+
+@dataclass
+class SrvDestResult:
+  """
+  Holds a player's serve-destination VOLUME distribution (kind=volume).
+  No outcome attached, so percentages are clean at any sample size.
+
+  Attributes:
+  - n_att (int):        total serve attempts by the player
+  - n_inplay (int):     serves that landed in play (n_att minus TSE errors).
+                        This is the denominator for grid_pct.
+  - serve_errors (int): terminal serve errors (TSE) — excluded from the grid
+  - srv_err_rate (float): serve_errors / n_att, rounded to 3
+  - grid (dict):        {label: count} for in-play serves.
+                        label = "{src}_{net}{depth}" e.g. "3_4d"
+                        (source 3 -> net 4, depth D). A/B depth folds into C.
+                        Unlocated-but-source-known serves use "{src}_other".
+  - grid_pct (dict):    same keys as grid, each count / n_inplay, rounded to 3
+  - other (int):        total serves that could not be placed on the net/depth
+                        grid (source-known 'other' + no-source)
+  - other_break (dict): {'src_known': k, 'no_src': m}; k went to {src}_other
+                        cells in the grid, m had no source at all
+  """
+  n_att: int
+  n_inplay: int
+  serve_errors: int
+  srv_err_rate: float
+  grid: dict
+  grid_pct: dict
+  other: int
+  other_break: dict
+
+
+def srv_dest_obj(ppr_df, disp_player):
+  """
+  Serve destination volume distribution for one player.
+
+  Identifier-agnostic, exactly like fbhe_obj: filters serve_player against
+  disp_player. The caller passes a name string for team dataframes, or a
+  player_uuid for the de-identified league dataframe — whichever matches
+  that dataframe's serve_player column.
+
+  Rules (validated against real PPR data):
+  - TSE (terminal serve error) -> counted as serve_errors, EXCLUDED from grid
+    and from the n_inplay denominator. Reported separately as srv_err_rate.
+  - TSA (ace) -> stays in denominator; located on the grid if its zone was
+    captured, else falls to 'other' (about half of aces are unlocated).
+  - Depth A/B (very short) folds into C, so C = all short serves.
+  - Serve with missing net/depth zone -> '{src}_other' if source known,
+    else the global no-source bucket (other_break['no_src']).
+
+  Returns: SrvDestResult
+  """
+  if isinstance(ppr_df, pd.Series):
+    ppr_df = ppr_df.to_frame().T
+
+  empty = SrvDestResult(0, 0, 0, 0.0, {}, {}, 0, {'src_known': 0, 'no_src': 0})
+  if ppr_df.empty:
+    return empty
+
+  disp_player = disp_player.strip()
+  serves = ppr_df[ppr_df['serve_player'].str.strip() == disp_player]
+  n_att = len(serves)
+  if n_att == 0:
+    return empty
+
+  serve_errors    = 0
+  other_src_known = 0
+  other_no_src    = 0
+  grid = {}
+
+  for _, r in serves.iterrows():
+    # 1. terminal serve error: did not land in play
+    if str(r['point_outcome']).strip() == 'TSE':
+      serve_errors += 1
+      continue
+
+    src  = str(r['serve_src_zone_net']).strip()
+    dnet = str(r['serve_dest_zone_net']).strip()
+    ddep = str(r['serve_dest_zone_depth']).strip().upper()
+    src_known = src not in ('', '0', 'nan', 'None')
+
+    # 2. unlocated destination -> 'other' (per-source if we know the source)
+    if dnet in ('', '0', 'nan', 'None') or ddep in ('', 'NAN', 'NONE'):
+      if src_known:
+        lbl = f"{src}_other"
+        grid[lbl] = grid.get(lbl, 0) + 1
+        other_src_known += 1
+      else:
+        other_no_src += 1
+      continue
+
+    # 3. fold very-short A/B into C (C = all short serves)
+    if ddep in ('A', 'B'):
+      ddep = 'C'
+    if ddep not in ('C', 'D', 'E'):
+      if src_known:
+        lbl = f"{src}_other"
+        grid[lbl] = grid.get(lbl, 0) + 1
+        other_src_known += 1
+      else:
+        other_no_src += 1
+      continue
+
+    # 4. place on the grid
+    lbl = f"{src}_{dnet}{ddep.lower()}"
+    grid[lbl] = grid.get(lbl, 0) + 1
+
+  n_inplay = n_att - serve_errors
+  grid_pct = {k: round(v / n_inplay, 3) for k, v in grid.items()} if n_inplay else {}
+
+  return SrvDestResult(
+    n_att=n_att,
+    n_inplay=n_inplay,
+    serve_errors=serve_errors,
+    srv_err_rate=round(serve_errors / n_att, 3) if n_att else 0.0,
+    grid=grid,
+    grid_pct=grid_pct,
+    other=other_src_known + other_no_src,
+    other_break={'src_known': other_src_known, 'no_src': other_no_src},
+  )
