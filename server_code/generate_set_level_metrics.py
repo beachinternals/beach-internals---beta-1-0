@@ -364,6 +364,35 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name, league_value):
 # METRIC CALCULATION FOR A SINGLE SET
 # ============================================================================
 
+def _build_distribution_payload(dist_obj):
+  """
+  Turn a SrvDestResult into the payload the formatters consume.
+
+  Returns a dict with:
+    - 'cells_full' : the per-source grid_pct (e.g. {'3_4d': 0.11, ...})
+                     — the complete vector, used by the JSON emitter.
+    - 'cells_dest' : 15-deep destination roll-up summed over source
+                     (e.g. {'4d': 0.21, ...}) — used by the dense line.
+    - 'n'          : n_inplay (denominator / sample size for the line).
+    - 'err_rate'   : srv_err_rate, shown alongside the distribution.
+  Sparse by nature: zero cells simply don't appear.
+  """
+  grid_pct = getattr(dist_obj, 'grid_pct', {}) or {}
+
+  # Roll up per-source cells ('3_4d') to destination-only ('4d').
+  # 'other' cells ('3_other') roll up to a single 'other'.
+  dest = {}
+  for label, pct in grid_pct.items():
+    d = label.split('_', 1)[1]          # '3_4d' -> '4d' ; '3_other' -> 'other'
+    dest[d] = round(dest.get(d, 0.0) + pct, 3)
+
+  return {
+    'cells_full': dict(grid_pct),
+    'cells_dest': dest,
+    'n':          getattr(dist_obj, 'n_inplay', None),
+    'err_rate':   getattr(dist_obj, 'srv_err_rate', None),
+  }
+  
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
   """
@@ -401,8 +430,9 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
     return_type = metric_row['return_type']
     result_path = metric_row['result_path']
 
-    value    = None
-    attempts = None
+    value        = None
+    attempts     = None
+    distribution = None   # only populated for return_type == 'distribution'
 
     if return_type == 'object':
       parts = result_path.split('.')
@@ -426,11 +456,25 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
           attempts = (result_dict.get('attempts', None)
                       or result_dict.get('total_points', None))
 
+    elif return_type == 'distribution':
+      # result_path names the SrvDestResult-style object in exec_context,
+      # e.g. "srv_dest_result". The object carries grid_pct (per-source
+      # cells like '3_4d') plus n_inplay and srv_err_rate. We store the
+      # rolled-up views in 'distribution'; the formatter decides what to print.
+      obj_name = result_path.split('.')[0].strip()
+      if obj_name in exec_context:
+        dist_obj     = exec_context[obj_name]
+        distribution = _build_distribution_payload(dist_obj)
+        # keep attempts populated with the in-play n so any scalar-only
+        # consumer still sees a sane sample size
+        attempts = getattr(dist_obj, 'n_inplay', None)
+
     return {
-      'metric_id':   metric_id,
-      'metric_name': metric_name,
-      'value':       value,
-      'attempts':    attempts
+      'metric_id':    metric_id,
+      'metric_name':  metric_name,
+      'value':        value,
+      'attempts':     attempts,
+      'distribution': distribution   # None for normal metrics
     }
 
   except Exception as e:
@@ -526,9 +570,10 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
       metric_result = calculate_metric_for_set(metric_row, set_df, player_name)
       if metric_result:
         set_metrics[metric_result['metric_id']] = {
-          'name':     metric_result['metric_name'],
-          'value':    metric_result['value'],
-          'attempts': metric_result['attempts']
+          'name':         metric_result['metric_name'],
+          'value':        metric_result['value'],
+          'attempts':     metric_result['attempts'],
+          'distribution': metric_result.get('distribution')
         }
 
     set_data = {

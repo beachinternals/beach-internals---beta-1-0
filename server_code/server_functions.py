@@ -525,7 +525,7 @@ def calc_player_eso_obj( ppr_df, disp_player ):
     'attempts': eso_attempts,
     'fbk': eso_fbk,
     'tk': eso_tk,
-    'eso_string': f'{eso:.1%}'
+    'eso_string': f'{eso:.1%}' if eso is not None else 'N/A'
   }
 
 
