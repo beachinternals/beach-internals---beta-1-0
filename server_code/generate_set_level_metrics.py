@@ -104,7 +104,55 @@ def get_set_level_metrics_from_dictionary(half=False):
 # ============================================================================
 # COMP LEVEL LOOKUP
 # ============================================================================
+def get_player_uuid(player_name, league_value):
+  """
+  Look up player_uuid from master_player for a name string
+  ("TEAM NUMBER SHORTNAME"). Mirrors get_comp_level_for_player's
+  parse + query. Returns the uuid string, or a safe placeholder
+  (and logs an error) if not found — NEVER returns the real name,
+  so de-identified files cannot leak even on a lookup miss.
+  """
+  placeholder = "PLYR-UNKNOWN"
 
+  if not player_name or not isinstance(player_name, str):
+    return placeholder
+
+  parts = player_name.strip().split()
+  if len(parts) < 3:
+    log_error(f"get_player_uuid: cannot parse '{player_name}'")
+    return placeholder
+
+  team_part   = parts[0]
+  number_part = parts[1]
+  short_part  = " ".join(parts[2:])
+
+  try:
+    lgy_parts = [p.strip() for p in league_value.split('|')]
+    if len(lgy_parts) != 3:
+      log_error(f"get_player_uuid: cannot parse league '{league_value}'")
+      return placeholder
+    league_str, gender_str, year_str = lgy_parts
+  except Exception as e:
+    log_error(f"get_player_uuid: league parse failed '{league_value}': {e}")
+    return placeholder
+
+  try:
+    results = list(app_tables.master_player.search(
+      league=league_str, gender=gender_str, year=year_str,
+      team=team_part, number=number_part, shortname=short_part
+    ))
+    if not results:
+      log_error(f"get_player_uuid: no master_player match for '{player_name}'")
+      return placeholder
+    uuid_val = results[0]['player_uuid']
+    if not uuid_val:
+      log_error(f"get_player_uuid: player '{player_name}' has no player_uuid")
+      return placeholder
+    return uuid_val.strip()
+  except Exception as e:
+    log_error(f"get_player_uuid: lookup failed for '{player_name}': {e}")
+    return placeholder
+    
 def get_comp_level_for_player(player_name, league_value):
   """
   Look up comp_level_rank and comp_level_score from master_player for a
@@ -317,7 +365,13 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name, league_value):
   comp_partner  = get_comp_level_for_player(partner,     league_value)
   comp_opp1     = get_comp_level_for_player(opponent1,   league_value)
   comp_opp2     = get_comp_level_for_player(opponent2,   league_value)
-
+  
+  # ── Resolve player_uuids (de-identification chokepoint) ───────────────
+  uuid_player = get_player_uuid(player_name, league_value)
+  uuid_partner = get_player_uuid(partner,   league_value) if partner   else "PLYR-NONE"
+  uuid_opp1   = get_player_uuid(opponent1,  league_value) if opponent1 else "PLYR-NONE"
+  uuid_opp2   = get_player_uuid(opponent2,  league_value) if opponent2 else "PLYR-NONE"
+  
   metadata = {
     'video_id':      video_id,
     'set':           set_number,
@@ -328,6 +382,10 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name, league_value):
     'venue_name':    first_row.get('venue_name', ''),
     'team':          team,
     'partner':       partner,
+    'player_uuid':    uuid_player,
+    'partner_uuid':   uuid_partner,
+    'opponent1_uuid': uuid_opp1,
+    'opponent2_uuid': uuid_opp2,
     'opponent_team': opponent_team,
     'opponent1':     opponent1,
     'opponent2':     opponent2,
@@ -827,12 +885,13 @@ def _format_set_level_dense(set_level_data, display_name=None, display_team=None
   for set_data in set_level_data['sets']:
     weather_str = _fmt_weather_dense(set_data.get('weather'))
 
-    comp_parts = [set_data.get('comp_l1',''), set_data.get('comp_l2','')]
+    comp_parts = [set_data.get('comp_l1',''), set_data.get('comp_l2',''), set_data.get('comp_l3','')]
     comp_str   = "/".join(p for p in comp_parts if p)
 
-    # SET line
+    # SET line — opponent identified by the two opponent uuids (no team name)
+    opp_uuids = f"{set_data.get('opponent1_uuid','PLYR-NONE')} {set_data.get('opponent2_uuid','PLYR-NONE')}"
     set_line = (
-      f"SET|{set_data['date']}|vs {set_data['opponent_team']}|"
+      f"SET|{set_data['date']}|vs {opp_uuids}|"
       f"S{set_data['set']}|pts:{set_data['total_points']}|comp:{comp_str}"
     )
     if weather_str:
@@ -842,21 +901,21 @@ def _format_set_level_dense(set_level_data, display_name=None, display_team=None
     # ── Competitive Level line ─────────────────────────────────────────
     comp = set_data.get('comp_level', {})
 
-    def _cl_dense(role_key, name):
-      """Format one player's comp_level as 'name:rank/score' or 'name:N/A'."""
+    def _cl_dense(role_key, ident):
+      """Format one player's comp_level as 'uuid:rank/score' or 'uuid:N/A'."""
       d = comp.get(role_key, {})
       rank  = d.get('comp_level_rank')
       score = d.get('comp_level_score')
       if rank is None and score is None:
-        return f"{name}:N/A"
+        return f"{ident}:N/A"
       r_str = str(rank)  if rank  is not None else "?"
       s_str = f"{score:.2f}" if score is not None else "?"
-      return f"{name}:{r_str}/{s_str}"
+      return f"{ident}:{r_str}/{s_str}"
 
-    cl_player  = _cl_dense('player',   set_data['player'].split()[-1])   # shortname only
-    cl_partner = _cl_dense('partner',  set_data['partner'].split()[-1] if set_data['partner'] else 'partner')
-    cl_opp1    = _cl_dense('opponent1',set_data['opponent1'].split()[-1] if set_data['opponent1'] else 'opp1')
-    cl_opp2    = _cl_dense('opponent2',set_data['opponent2'].split()[-1] if set_data['opponent2'] else 'opp2')
+    cl_player  = _cl_dense('player',   set_data.get('player_uuid',    'player'))
+    cl_partner = _cl_dense('partner',  set_data.get('partner_uuid',   'partner'))
+    cl_opp1    = _cl_dense('opponent1',set_data.get('opponent1_uuid', 'opp1'))
+    cl_opp2    = _cl_dense('opponent2',set_data.get('opponent2_uuid', 'opp2'))
 
     # Only emit CL line if at least one player has real data
     any_comp = any(
@@ -879,6 +938,22 @@ def _format_set_level_dense(set_level_data, display_name=None, display_team=None
 
     if metric_parts:
       md.append(" ".join(metric_parts))
+
+    # ── Serve destination distribution (Option D: all non-zero source_dest cells) ──
+    for metric_id, metric_info in sorted(set_data['metrics'].items()):
+      dist = metric_info.get('distribution')
+      if not dist:
+        continue
+      cells = [(k, v) for k, v in dist.get('cells_full', {}).items() if v >= 0.005]
+      cells.sort(key=lambda it: (it[0].split('_')[0], -it[1]))  # by source, then desc pct
+      if cells:
+        cell_str = " ".join(f"{k}:{v:.2f}" for k, v in cells)
+        n        = dist.get('n')
+        err      = dist.get('err_rate')
+        head     = f"SRVDEST|n={n}"
+        if err is not None:
+          head += f"|err:{err:.3f}"
+        md.append(f"{head}|{cell_str}")
 
     md.append("")  # blank line between sets
 
