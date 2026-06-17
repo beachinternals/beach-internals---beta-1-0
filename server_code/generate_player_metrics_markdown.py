@@ -716,7 +716,28 @@ def generate_metric_index(metrics_by_category, metric_dict_df, ai_optimized=Fals
     for i in range(0, len(parts), ROW_SIZE):
       md.append(" ".join(parts[i:i + ROW_SIZE]))
 
+    # ── Distribution metrics (generic) ────────────────────────────────────
+    # Any metric carrying a 'distribution' payload emits its own line, not a
+    # scalar token. Generic over metric_id so future distribution metrics
+    # (attack angle, pass zone, etc.) flow through with no code change.
+    for metric_id in sorted(all_metrics.keys()):
+      metric_info = all_metrics[metric_id]
+      dist = metric_info.get('distribution')
+      if not dist:
+        continue
+      cells = [(k, v) for k, v in dist.get('cells_full', {}).items() if v >= 0.005]
+      cells.sort(key=lambda it: (it[0].split('_')[0], -it[1]))
+      if cells:
+        cell_str = " ".join(f"{k}:{v:.2f}" for k, v in cells)
+        n   = dist.get('n')
+        err = dist.get('err_rate')
+        head = f"DIST|{metric_id}|n={n}"
+        if err is not None:
+          head += f"|err:{err:.3f}"
+        md.append(f"{head}|{cell_str}")
+
     md.append("")
+    
     return "\n".join(md)
 
   else:
