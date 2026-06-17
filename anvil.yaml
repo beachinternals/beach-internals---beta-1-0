@@ -809,6 +809,10 @@ db_schema:
       client_hidden: false
       name: set_level_half
       type: string
+    - admin_ui: {order: 10.638671875, width: 200}
+      client_hidden: false
+      name: correlation
+      type: string
     server: full
     title: metric_dictionary
   performance_log:

@@ -81,7 +81,7 @@ def import_metric_dictionary_from_csv(csv_file):
             return None
             
         def to_flag(value):
-          # Yes/No flag columns (set_level_whole, set_level_half).
+          # Yes/No flag columns (set_level_whole, set_level_half, correlation).
           # Blank/None/No -> 'No'.  'Yes' (any case) -> 'Yes'.
           # Stored as a normalized string so the table is consistent
           # whether the cell came from Numbers as Yes/No or blank.
@@ -129,7 +129,8 @@ def import_metric_dictionary_from_csv(csv_file):
           video_path=video_path_clean,
           drill_down_report=row.get('drill_down_report', ''),
           set_level_whole=to_flag(row.get('set_level_whole')),
-          set_level_half=to_flag(row.get('set_level_half'))
+          set_level_half=to_flag(row.get('set_level_half')),
+          correlation=to_flag(row.get('correlation'))
         )
 
         imported_count += 1

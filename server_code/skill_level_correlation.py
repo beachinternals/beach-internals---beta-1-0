@@ -38,7 +38,8 @@ MONITORING_LEVEL_VERBOSE
 from generate_set_level_metrics import (
 get_core_metrics_from_dictionary,
 calculate_metric_for_set,
-get_set_metadata
+get_set_metadata,
+flag_is_yes
 )
 
 
@@ -58,28 +59,14 @@ def get_analysis_metrics():
   Returns:
     list of metric_dictionary row objects (duplicates removed)
   """
-  core_metrics = get_core_metrics_from_dictionary()
-  core_ids     = {m['metric_id'] for m in core_metrics}
-
-  extra_metrics = []
-  for metric_id in EXTRA_METRIC_IDS:
-    if metric_id in core_ids:
-      log_debug(f"Extra metric '{metric_id}' already in core — skipping duplicate")
-      continue
-    try:
-      row = app_tables.metric_dictionary.get(metric_id=metric_id)
-      if row:
-        extra_metrics.append(row)
-        log_debug(f"Added extra metric: {metric_id}")
-      else:
-        log_error(f"Extra metric '{metric_id}' not found in metric_dictionary — skipping")
-    except Exception as e:
-      log_error(f"Error fetching extra metric '{metric_id}': {e}")
-
-  all_metrics = core_metrics + extra_metrics
-  log_info(f"Analysis metrics: {len(core_metrics)} core + {len(extra_metrics)} extra "
-           f"= {len(all_metrics)} total")
-  return all_metrics
+  # Correlation analysis selects on the metric_dictionary 'correlation' flag,
+  # its own first-class concern — independent of set_level_whole/half (which
+  # control AI-export emission) and of metric_category (which groups for
+  # display). Retired metrics simply aren't flagged; no stale list to rot.
+  all_metrics = list(app_tables.metric_dictionary.search())
+  analysis_metrics = [m for m in all_metrics if flag_is_yes(m['correlation'])]
+  log_info(f"Correlation analysis: {len(analysis_metrics)} metrics flagged correlation=Yes")
+  return analysis_metrics
 
 
 # ============================================================================
@@ -101,21 +88,6 @@ DEIDENTIFIED_LEAGUES = [
   {'league': 'NCAA', 'gender': 'W', 'year': '2025'},
   {'league': 'NCAA', 'gender': 'W', 'year': '2024'},
   {'league': 'FIVB', 'gender': 'W', 'year': '2024'},
-]
-
-# ---------------------------------------------------------------------------
-# EXTRA METRICS
-# ---------------------------------------------------------------------------
-# Metric IDs from metric_dictionary that are NOT category='core' but we still
-# want included in the skill-level correlation analysis.
-# Add new metric_ids here — no other code changes needed.
-# ---------------------------------------------------------------------------
-EXTRA_METRIC_IDS = [
-  'tcr_r',       # TCR when receiving serve
-  'tcr_s',       # TCR when serving
-  't_eff_r',     # Transition efficiency when receiving
-  't_eff_s',     # Transition efficiency when serving
-  'opp_fbhe',    # Opponent first-ball hitting efficiency (defense measure)
 ]
 
 
