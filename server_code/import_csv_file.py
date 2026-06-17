@@ -221,38 +221,95 @@ def cleanup_metric_dictionary_quotes():
 
 
 @anvil.server.callable
+@anvil.server.callable
 def generate_slim_metric_dictionary_md():
   """
-  Converts the metric_dictionary Anvil table into a slimmed-down Markdown 
+  Converts the metric_dictionary Anvil table into a slimmed-down Markdown
   file optimized for AI context caching.
-  
-  Includes coach_alias so AI responses can use plain-language metric names
-  that coaches will recognize.
+
+  Scalar metrics -> one table row each (as before).
+  Distribution metrics (return_type='distribution') -> excluded from the
+  table and instead documented in a DISTRIBUTION LEGEND appended after it,
+  which teaches the AI how to decode any DIST| line. One legend covers all
+  cells of all distribution families, and scales to future families.
   """
-  # Define columns critical for AI logic
-  # coach_alias added so the AI can refer to metrics by the name coaches use
   cols_to_include = [
     'metric_id', 'coach_alias', 'metric_name', 'coach_view',
     'coach_speak_elite', 'coach_speak_good',
     'coach_speak_average', 'coach_speak_poor'
   ]
 
-  # Header for Markdown Table
   md_output = "| " + " | ".join(cols_to_include) + " |\n"
   md_output += "| " + " | ".join(["---"] * len(cols_to_include)) + " |\n"
 
-  # Rows
+  # Collect distribution rows to document separately
+  distribution_rows = []
+
   for row in app_tables.metric_dictionary.search():
+    if str(row['return_type']).strip() == 'distribution':
+      distribution_rows.append(row)
+      continue  # not a table row — documented in the legend below
+
     row_data = []
     for col in cols_to_include:
       val = str(row[col]) if row[col] is not None else ""
-      # Sanitize for MD table (remove pipes and newlines)
       val = val.replace("|", "\\|").replace("\n", " ")
       row_data.append(val)
     md_output += "| " + " | ".join(row_data) + " |\n"
 
-  # Return as downloadable Media Object
-  return BlobMedia("text/markdown", md_output.encode('utf-8'), name="metric_dictionary_logic.md")
+  # ── Distribution legend (only if any distribution metrics exist) ────────
+  if distribution_rows:
+    md_output += _build_distribution_legend(distribution_rows)
+
+  return BlobMedia("text/markdown", md_output.encode('utf-8'),
+                   name="metric_dictionary_logic.md")
+
+
+def _build_distribution_legend(distribution_rows):
+  """
+  Build the legend that teaches the AI to decode DIST| lines.
+  Generated from the distribution rows present, so adding a new distribution
+  family to the dictionary automatically adds its entry here.
+  """
+  L = []
+  L.append("\n\n## DISTRIBUTION METRICS\n")
+  L.append("Some metrics are VOLUME DISTRIBUTIONS, not single numbers. They "
+           "appear in data files on their own line, not as a scalar token:\n")
+  L.append("```")
+  L.append("DIST|<metric_id>|n=<total>|err:<rate>|<cell>:<pct> <cell>:<pct> ...")
+  L.append("```")
+  L.append("- Each cell is a fraction of n (the cells for one metric sum to ~1.0).")
+  L.append("- Cells that round to 0.00 are omitted (sparse). Absent = ~zero.")
+  L.append("- `n` is the sample size; weight conclusions by it.")
+  L.append("- `err:` (when present) is a rate reported alongside, not part of the distribution.\n")
+
+  L.append("### Cell code convention\n")
+  L.append("Serve-destination cells use `{source}_{width}{depth}` "
+           "(e.g. `3_4d` = served from source 3, landed width 4 depth D):\n")
+  L.append("**Serve source** (where the server stands on the endline):")
+  L.append("- `1` = Left endline | `3` = Middle | `5` = Right endline")
+  L.append("- `0` = serve origin NOT captured (tracking gap) — landing still known")
+  L.append("")
+  L.append("**Destination width** (attacker's perspective, left→right):")
+  L.append("- `1` = Left Pin | `2` = Left Slot | `3` = Middle | `4` = Right Slot | `5` = Right Pin")
+  L.append("")
+  L.append("**Destination depth** (legal serves land only C/D/E; A/B fold into C):")
+  L.append("- `c` = Mid-Short (4–6m) — includes any short serve | `d` = Mid-Deep (6–8m) | `e` = Deep Baseline (8m+)")
+  L.append("")
+  L.append("**`other`** (e.g. `3_other`) = served from that source but the LANDING "
+           "zone was not captured (a serve in play, location unknown — often an "
+           "untracked ace). Counts in n; just unplaceable on the grid.\n")
+
+  L.append("### Distribution families present\n")
+  for row in distribution_rows:
+    mid   = str(row['metric_id'])
+    alias = str(row['coach_alias']) if row['coach_alias'] else mid
+    desc  = str(row['metric_name']) if row['metric_name'] else ""
+    desc  = desc.replace("\n", " ")
+    L.append(f"- **{mid}** ({alias}): {desc}")
+  L.append("")
+
+  return "\n".join(L)
 
 """
 Import Competitive Level (comp_level) Data into master_player
