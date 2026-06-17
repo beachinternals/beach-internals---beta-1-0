@@ -3629,7 +3629,30 @@ class SrvDestResult:
   other: int
   other_break: dict
 
+def build_distribution_payload(dist_obj):
+  """
+  Turn a SrvDestResult into the payload the formatters consume.
+  Shared by set-level and aggregate generation.
 
+  Returns a dict with:
+    - 'cells_full' : per-source grid_pct (e.g. {'3_4d': 0.11, ...}) — full vector
+    - 'cells_dest' : 15-deep destination roll-up summed over source ({'4d':0.21,...})
+    - 'n'          : n_inplay (denominator / sample size)
+    - 'err_rate'   : srv_err_rate
+  Sparse by nature: zero cells simply don't appear.
+  """
+  grid_pct = getattr(dist_obj, 'grid_pct', {}) or {}
+  dest = {}
+  for label, pct in grid_pct.items():
+    d = label.split('_', 1)[1]          # '3_4d' -> '4d' ; '3_other' -> 'other'
+    dest[d] = round(dest.get(d, 0.0) + pct, 3)
+  return {
+    'cells_full': dict(grid_pct),
+    'cells_dest': dest,
+    'n':          getattr(dist_obj, 'n_inplay', None),
+    'err_rate':   getattr(dist_obj, 'srv_err_rate', None),
+  }
+  
 def srv_dest_obj(ppr_df, disp_player):
   """
   Serve destination volume distribution for one player.

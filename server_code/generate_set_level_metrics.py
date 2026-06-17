@@ -122,9 +122,15 @@ def get_player_uuid(player_name, league_value):
     log_error(f"get_player_uuid: cannot parse '{player_name}'")
     return placeholder
 
-  team_part   = parts[0]
-  number_part = parts[1]
-  short_part  = " ".join(parts[2:])
+  # Anchor on jersey number — handles multi-word team names.
+  num_idx = next((i for i, p in enumerate(parts) if p.isdigit()), None)
+  if num_idx is None or num_idx == 0 or num_idx == len(parts) - 1:
+    log_error(f"get_player_uuid: cannot parse '{player_name}' (no clear number token)")
+    return placeholder
+
+  team_part   = " ".join(parts[:num_idx])
+  number_part = parts[num_idx]
+  short_part  = " ".join(parts[num_idx+1:])
 
   try:
     lgy_parts = [p.strip() for p in league_value.split('|')]
@@ -183,9 +189,17 @@ def get_comp_level_for_player(player_name, league_value):
     log_debug(f"Cannot parse player_name '{player_name}' for comp_level lookup")
     return empty
 
-  team_part   = parts[0]            # "FSU"
-  number_part = parts[1]            # "35"  — string, not int
-  short_part  = " ".join(parts[2:]) # "Trusty" (handles multi-word shortnames)
+  # Anchor on the jersey number (first all-digit token): team is everything
+  # before it, shortname everything after. Handles multi-word team names
+  # ("SANTA CLARA", "SOUTHERN MISS") and multi-word shortnames.
+  num_idx = next((i for i, p in enumerate(parts) if p.isdigit()), None)
+  if num_idx is None or num_idx == 0 or num_idx == len(parts) - 1:
+    log_debug(f"Cannot parse player_name '{player_name}' (no clear number token)")
+    return empty
+
+  team_part   = " ".join(parts[:num_idx])      # "SANTA CLARA"
+  number_part = parts[num_idx]                 # "11"
+  short_part  = " ".join(parts[num_idx+1:])    # "Avery"
 
   # ── Split lgy into league, gender, year ───────────────────────────────
   # lgy format: "NCAA | W | 2026"
@@ -421,35 +435,6 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name, league_value):
 # ============================================================================
 # METRIC CALCULATION FOR A SINGLE SET
 # ============================================================================
-
-def _build_distribution_payload(dist_obj):
-  """
-  Turn a SrvDestResult into the payload the formatters consume.
-
-  Returns a dict with:
-    - 'cells_full' : the per-source grid_pct (e.g. {'3_4d': 0.11, ...})
-                     — the complete vector, used by the JSON emitter.
-    - 'cells_dest' : 15-deep destination roll-up summed over source
-                     (e.g. {'4d': 0.21, ...}) — used by the dense line.
-    - 'n'          : n_inplay (denominator / sample size for the line).
-    - 'err_rate'   : srv_err_rate, shown alongside the distribution.
-  Sparse by nature: zero cells simply don't appear.
-  """
-  grid_pct = getattr(dist_obj, 'grid_pct', {}) or {}
-
-  # Roll up per-source cells ('3_4d') to destination-only ('4d').
-  # 'other' cells ('3_other') roll up to a single 'other'.
-  dest = {}
-  for label, pct in grid_pct.items():
-    d = label.split('_', 1)[1]          # '3_4d' -> '4d' ; '3_other' -> 'other'
-    dest[d] = round(dest.get(d, 0.0) + pct, 3)
-
-  return {
-    'cells_full': dict(grid_pct),
-    'cells_dest': dest,
-    'n':          getattr(dist_obj, 'n_inplay', None),
-    'err_rate':   getattr(dist_obj, 'srv_err_rate', None),
-  }
   
 @monitor_performance(level=MONITORING_LEVEL_DETAILED)
 def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
@@ -522,7 +507,7 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
       obj_name = result_path.split('.')[0].strip()
       if obj_name in exec_context:
         dist_obj     = exec_context[obj_name]
-        distribution = _build_distribution_payload(dist_obj)
+        distribution = build_distribution_payload(dist_obj)
         # keep attempts populated with the in-play n so any scalar-only
         # consumer still sees a sane sample size
         attempts = getattr(dist_obj, 'n_inplay', None)

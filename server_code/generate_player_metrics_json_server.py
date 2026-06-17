@@ -368,6 +368,7 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
     category      = metric_row['metric_category']
     function_name = metric_row['function_name']
     result_path   = metric_row['result_path']
+    return_type   = metric_row.get('return_type', '')
     data_filter   = metric_row['data_filter']
 
     # attempts_path is the new column - handle gracefully if not yet in table
@@ -470,14 +471,28 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
         except Exception as ve:
           log_debug(f"video_path eval failed for {metric_id}: {ve}")
 
+      # Distribution metrics (return_type='distribution') return a result
+      # object, not a scalar. Capture the rolled-up payload separately and
+      # leave 'value' as None so the scalar formatter skips it.
+      distribution_payload = None
+      if str(return_type).strip() == 'distribution':
+        distribution_payload = build_distribution_payload(metric_value)
+        scalar_value = None
+        attempts_value = distribution_payload.get('n')
+      else:
+        scalar_value = (float(metric_value)
+                        if isinstance(metric_value, (int, float, np.number))
+                        else metric_value)
+
       metrics_output[category][metric_id] = {
-        'value': float(metric_value) if isinstance(metric_value, (int, float, np.number)) else metric_value,
+        'value': scalar_value,
         'metric_name': metric_row['metric_name'],
         'parent_metric': metric_row['parent_metric'] if pd.notna(metric_row.get('parent_metric')) else None,
         'video_links': video_links,
         'attempts': attempts_value,
         'sufficient_data': not value_suppressed,
-        'min_attempts': min_att
+        'min_attempts': min_att,
+        'distribution': distribution_payload
       }
 
       if not value_suppressed:
