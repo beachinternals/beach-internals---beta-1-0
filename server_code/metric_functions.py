@@ -29,7 +29,8 @@ find_ellipse_area,
 count_good_passes_obj,
 calc_att_height_metrics,
 calc_dig_quality_obj,
-srv_dest_obj
+srv_dest_obj,
+serves_received_obj
 )
 from metric_calc_functions import (
 consistency_sd_match,
@@ -73,6 +74,7 @@ def build_metric_namespace(ppr_df, player_name):
     'calc_att_height_metrics': calc_att_height_metrics,
     'calc_dig_quality_obj'   : calc_dig_quality_obj,
     'srv_dest_obj'           : srv_dest_obj, 
+    'serves_received_obj'    : serves_received_obj,
     'pd'                     : pd,
     'np'                     : np,
   }

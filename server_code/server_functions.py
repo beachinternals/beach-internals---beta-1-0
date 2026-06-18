@@ -3741,3 +3741,55 @@ def srv_dest_obj(ppr_df, disp_player):
     other=other_src_known + other_no_src,
     other_break={'src_known': other_src_known, 'no_src': other_no_src},
   )
+
+@dataclass
+class ServesReceivedResult:
+  """
+  Serves-received share. Of the serves this player's SIDE received,
+  what fraction did SHE take? High = opponents hunt her; low = they
+  serve away from her. Per-half shifts reveal mid-match targeting.
+  - received (int):   serves she received (pass_player == her)
+  - pair_total (int): serves her side received (her + partner, per row)
+  - pct (float):      received / pair_total, rounded 3 (None if 0)
+  """
+  received: int
+  pair_total: int
+  pct: float
+
+def serves_received_obj(ppr_df, disp_player):
+  """
+  Of the serves this player's SIDE received, what fraction did SHE take?
+  Per-row side identification: correct for multi-partner aggregates and the
+  player appearing in any slot (a1/a2/b1/b2). Restricted to actual receive
+  plays via pass_yn=='Y'. Vectorized.
+  """
+  if isinstance(ppr_df, pd.Series):
+    ppr_df = ppr_df.to_frame().T
+  if ppr_df.empty:
+    return ServesReceivedResult(0, 0, None)
+
+  # Restrict to actual receive plays (excludes serve errors/aces)
+  d = ppr_df[ppr_df['pass_yn'].astype(str).str.strip().str.upper() == 'Y']
+  if d.empty:
+    return ServesReceivedResult(0, 0, None)
+
+  disp_player = disp_player.strip()
+  a1 = d['player_a1'].astype(str).str.strip()
+  a2 = d['player_a2'].astype(str).str.strip()
+  b1 = d['player_b1'].astype(str).str.strip()
+  b2 = d['player_b2'].astype(str).str.strip()
+  pp = d['pass_player'].astype(str).str.strip()
+
+  on_a = (a1 == disp_player) | (a2 == disp_player)
+  on_b = (b1 == disp_player) | (b2 == disp_player)
+  involved = on_a | on_b
+
+  import numpy as np
+  side_p1 = pd.Series(np.where(on_a, a1, np.where(on_b, b1, '')), index=d.index)
+  side_p2 = pd.Series(np.where(on_a, a2, np.where(on_b, b2, '')), index=d.index)
+
+  received   = int((involved & (pp == disp_player)).sum())
+  pair_total = int((involved & ((pp == side_p1) | (pp == side_p2))).sum())
+
+  pct = round(received / pair_total, 3) if pair_total > 0 else None
+  return ServesReceivedResult(received, pair_total, pct)
