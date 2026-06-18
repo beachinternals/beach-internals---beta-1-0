@@ -574,6 +574,9 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
     return None
 
   log_info(f"Will calculate {len(core_metrics)} core metrics per set")
+  
+  half_metrics = get_set_level_metrics_from_dictionary(half=True)
+  log_info(f"Will also attempt {len(half_metrics)} half-set (phase) metrics per set")
 
   # ── Filter to rows where this player appears ──────────────────────────
   player_df = ppr_df[
@@ -638,9 +641,24 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
           'distribution': metric_result.get('distribution')
         }
 
+    # ── Half/phase metrics: each carries a data_filter (set==N & half).
+    # Applied to this set_df, only the phases matching this set survive;
+    # the rest self-skip (filter empties -> calculate_metric_for_set
+    # returns None). So set 1 yields its 1a/1b, set 2 its 2a/2b, etc.
+    half_set_metrics = {}
+    for metric_row in half_metrics:
+      metric_result = calculate_metric_for_set(metric_row, set_df, player_name)
+      if metric_result:
+        half_set_metrics[metric_result['metric_id']] = {
+          'name':         metric_result['metric_name'],
+          'value':        metric_result['value'],
+          'attempts':     metric_result['attempts'],
+          'distribution': metric_result.get('distribution')
+        }
     set_data = {
       **metadata,
       'metrics':            set_metrics,
+      'half_metrics':       half_set_metrics,
       'metrics_calculated': len(set_metrics)
     }
 
