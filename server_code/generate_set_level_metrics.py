@@ -976,6 +976,26 @@ def _format_set_level_dense(set_level_data, display_name=None, display_team=None
         if err is not None:
           head += f"|err:{err:.3f}"
         md.append(f"{head}|{cell_str}")
+head     = f"SRVDEST|n={n}"
+        if err is not None:
+          head += f"|err:{err:.3f}"
+        md.append(f"{head}|{cell_str}")
+
+    # ── Half/phase metrics (1a/1b for set 1, 2a/2b for set 2, etc.) ──────
+    # These were computed per-set; their data_filter already restricted each
+    # to its phase, so only the phases matching this set are present.
+    half_parts = []
+    for metric_id, metric_info in sorted(set_data.get('half_metrics', {}).items()):
+      value_str = _fmt_val(metric_info['value'])
+      attempts  = metric_info['attempts']
+      if attempts is not None:
+        half_parts.append(f"{metric_id}:{value_str}(n={attempts})")
+      else:
+        half_parts.append(f"{metric_id}:{value_str}")
+    if half_parts:
+      md.append("HALF|" + " ".join(half_parts))
+
+    md.append("")  # blank line between sets
 
     md.append("")  # blank line between sets
 
