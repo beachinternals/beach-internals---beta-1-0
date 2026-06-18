@@ -453,6 +453,7 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
   metric_id    = metric_row['metric_id']
   metric_name  = metric_row['metric_name']
   function_name = metric_row['function_name']
+  data_filter  = metric_row['data_filter'] 
 
   if not function_name or function_name.strip() == '':
     log_debug(f"No function_name for metric {metric_id}, skipping")
@@ -461,6 +462,24 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
   try:
     disp_player = player_name
     ppr_df      = ppr_df_filtered
+
+    # ── Apply data_filter (matches the aggregate path) ────────────────────
+    # The filter is PART OF THE METRIC DEFINITION. At set level, ppr_df is
+    # already one set's rows; a phase/zone filter slices further. If the
+    # filter yields no rows (e.g. a set==2 metric while processing set 1),
+    # the metric does not apply to this set — skip it. Emptiness is the
+    # signal; no filter-string parsing needed.
+    if data_filter is not None and str(data_filter).strip():
+      df_clean = str(data_filter).replace('\u2018', "'").replace('\u2019', "'")
+      df_clean = df_clean.replace('\u201c', '"').replace('\u201d', '"')
+      try:
+        filtered = eval(df_clean, {'ppr_df': ppr_df, 'disp_player': disp_player})
+      except Exception as fe:
+        log_error(f"data_filter failed for {metric_id}: {fe}")
+        return None
+      if filtered is None or len(filtered) == 0:
+        return None  # filter excludes this set — skip silently
+      ppr_df = filtered
 
     exec_context = {
       'ppr_df':      ppr_df,

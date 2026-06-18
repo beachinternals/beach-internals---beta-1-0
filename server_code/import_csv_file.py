@@ -221,7 +221,6 @@ def cleanup_metric_dictionary_quotes():
 
 
 @anvil.server.callable
-@anvil.server.callable
 def generate_slim_metric_dictionary_md():
   """
   Converts the metric_dictionary Anvil table into a slimmed-down Markdown
