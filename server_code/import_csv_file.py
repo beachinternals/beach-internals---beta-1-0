@@ -259,6 +259,7 @@ def generate_slim_metric_dictionary_md():
   # ── Distribution legend (only if any distribution metrics exist) ────────
   if distribution_rows:
     md_output += _build_distribution_legend(distribution_rows)
+    md_output += _build_phase_legend()
 
   return BlobMedia("text/markdown", md_output.encode('utf-8'),
                    name="metric_dictionary_logic.md")
@@ -309,6 +310,66 @@ def _build_distribution_legend(distribution_rows):
   L.append("")
 
   return "\n".join(L)
+
+def _build_phase_legend():
+  """
+  Legend for HALF| lines and *_1a.._3b phase metrics. Teaches the phase codes,
+  the population-vs-sample reading (SCOPED tightly to per-set/half values),
+  and gives the AI coach-friendly language so non-statisticians understand it.
+  """
+  L = []
+  L.append("\n\n## PER-SET PHASE METRICS (HALF lines and *_1a.._3b)\n")
+  L.append("In the set-by-set data, each set block may carry a HALF line:\n")
+  L.append("```")
+  L.append("HALF|metric_1a:value(n=) metric_1b:value(n=) ...")
+  L.append("```")
+  L.append("These split a metric into the two halves of THAT set, divided at "
+           "the technical timeout:\n")
+  L.append("**Phase codes** — `{set}{half}`:")
+  L.append("- `1a`/`1b` = Set 1 first/second half (split at combined score 20)")
+  L.append("- `2a`/`2b` = Set 2 first/second half (split at 20)")
+  L.append("- `3a`/`3b` = Set 3 first/second half (split at 14; set 3 plays to 15)")
+  L.append("A set block shows only its own set's phases (a Set 1 block shows 1a/1b).\n")
+
+  L.append("### How to read the sample size (n) — READ CAREFULLY, IT DIFFERS BY CONTEXT\n")
+  L.append("**Per-set and per-half values (SET blocks, HALF lines): n is the "
+           "COMPLETE record of that one set/half, not a sample.**")
+  L.append("A value like `fbhe_1a_match:-0.500(n=2)` means she attacked exactly "
+           "twice in that half and both were stuffed. It is the precise, whole "
+           "truth of that half — not a noisy estimate. So it is a firm FACT "
+           "about WHAT HAPPENED in that specific half.")
+  L.append("BUT: a single small half says nothing about her TENDENCIES. Two "
+           "swings cannot describe a habit. To speak about what she TENDS to do, "
+           "use the player-level aggregate (large n across all matches).\n")
+  L.append("**This 'it's a complete fact, not a sample' reading applies ONLY to "
+           "per-set and per-half numbers** — because a single set/half is a "
+           "complete, bounded event with every contact present.\n")
+  L.append("**Aggregate metrics (the Aggregate Performance section) are the "
+           "OPPOSITE case: there, n matters in the ordinary way.** A low-n "
+           "aggregate means FEW events were observed all season, so the value is "
+           "genuinely thin evidence and should be treated cautiously. Do NOT "
+           "carry the 'low n is still a firm fact' reading over to aggregate "
+           "metrics — it is false there.\n")
+
+  L.append("### Explaining this to coaches (they are not statisticians)\n")
+  L.append("Translate to plain coaching language, never statistics jargon:")
+  L.append("- Small-n per-half result -> frame as WHAT HAPPENED, with the swing "
+           "count: e.g. \"In that first half she got just two swings and both "
+           "were stuffed — that's the whole story of that half, but it's only "
+           "two balls, so don't read it as a trend; her season first-half "
+           "number is the one to judge her by.\"")
+  L.append("- Low-n AGGREGATE -> frame as TENTATIVE: e.g. \"We've only seen this "
+           "a handful of times all year, so treat it as a maybe, not a fact.\"")
+  L.append("- The core distinction in coach terms: **\"what happened\" (a single "
+           "event, however few balls) vs **\"what she tends to do\"** (needs "
+           "volume). Per-set/half = what happened. Aggregate = the tendency.\n")
+
+  L.append("Denominator-rich metrics (err_den, tcr, goodpass, knockout) stay "
+           "meaningful per half even at modest n; efficiency ratios (fbhe) at "
+           "very low n are exact facts about that half but should never be "
+           "generalized into a tendency.\n")
+  return "\n".join(L)
+
 
 """
 Import Competitive Level (comp_level) Data into master_player
