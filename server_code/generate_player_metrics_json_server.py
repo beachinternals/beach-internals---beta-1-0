@@ -479,10 +479,15 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
         distribution_payload = build_distribution_payload(metric_value)
         scalar_value = None
         attempts_value = distribution_payload.get('n')
-      else:
-        scalar_value = (float(metric_value)
-                        if isinstance(metric_value, (int, float, np.number))
-                        else metric_value)
+      elif str(return_type).strip() == 'distribution_setheight':
+        try:
+          min_att = int(metric_row.get('min_attempts_for_ci', 5))
+        except (TypeError, ValueError):
+          min_att = 5
+        distribution_payload = build_setheight_payload(metric_value, min_att)
+        scalar_value = None
+        attempts_value = (distribution_payload.get('total')
+                    if distribution_payload else None)
 
       metrics_output[category][metric_id] = {
         'value': scalar_value,

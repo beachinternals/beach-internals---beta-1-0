@@ -725,6 +725,8 @@ def generate_metric_index(metrics_by_category, metric_dict_df, ai_optimized=Fals
       dist = metric_info.get('distribution')
       if not dist:
         continue
+      if dist.get('kind') == 'setheight':
+        continue   # handled by the setheight pass below
       cells = [(k, v) for k, v in dist.get('cells_full', {}).items() if v >= 0.005]
       cells.sort(key=lambda it: (it[0].split('_')[0], -it[1]))
       if cells:
@@ -736,8 +738,15 @@ def generate_metric_index(metrics_by_category, metric_dict_df, ai_optimized=Fals
           head += f"|err:{err:.3f}"
         md.append(f"{head}|{cell_str}")
 
-    md.append("")
-    
+        # ── Set-height mismatch distribution -> SETHEIGHT line (aggregate) ──
+        for metric_id in sorted(all_metrics.keys()):
+          dist = all_metrics[metric_id].get('distribution')
+          if dist and dist.get('kind') == 'setheight':
+            line = setheight_line_from_payload(dist)
+            if line:
+              md.append(line)
+
+    md.append("")    
     return "\n".join(md)
 
   else:

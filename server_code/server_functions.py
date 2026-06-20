@@ -3652,6 +3652,92 @@ def build_distribution_payload(dist_obj):
     'n':          getattr(dist_obj, 'n_inplay', None),
     'err_rate':   getattr(dist_obj, 'srv_err_rate', None),
   }
+
+# ── EDITABLE: (upper_bound_seconds, coach_name). Last entry = open top bucket. ──
+# Buckets are on SET AIR TIME (clean Balltime flight-time proxy for apex height).
+SET_AIR_TIME_BUCKETS = [
+  (1.2,  "quick"),
+  (1.4,  "low"),
+  (1.6,  "medium"),
+  (1.8,  "high"),
+  (99.0, "floaty"),
+]
+
+
+def set_height_dist(ppr_df, disp_player, buckets=SET_AIR_TIME_BUCKETS):
+  """
+  Set-height MISMATCH distribution for sets this player ATTACKS off of
+  (att_player == her). Per tempo bucket: volume share (where she's set) and
+  fbhe (how well she hits it). Reading vol vs fbhe across buckets reveals
+  set-height mismatch. Uses set_air_time (clean; NOT set_height which is
+  corrupt). Valid sets only: set_yn=='Y' and air_time > 0. Computes ALL cells;
+  suppression is the emitter's job via min_attempts.
+  Returns: {'total': N, 'cells': {name: {'vol','fbhe','n'}}}
+  """
+  if isinstance(ppr_df, pd.Series):
+    ppr_df = ppr_df.to_frame().T
+  if ppr_df.empty:
+    return {'total': 0, 'cells': {}}
+  d = ppr_df
+  att = d['att_player'].astype(str).str.strip()
+  at  = pd.to_numeric(d['set_air_time'], errors='coerce')
+  yn  = d['set_yn'].astype(str).str.strip().str.upper()
+  oc  = d['point_outcome'].astype(str).str.strip()
+
+  base = (att == disp_player.strip()) & (yn == 'Y') & (at > 0)
+  sub_at = at[base]; sub_oc = oc[base]
+  total = int(len(sub_at))
+  if total == 0:
+    return {'total': 0, 'cells': {}}
+
+  cells = {}
+  lo = 0.0
+  for hi, name in buckets:
+    bm = (sub_at > lo) & (sub_at <= hi)
+    n = int(bm.sum())
+    if n > 0:
+      kills = int((sub_oc[bm] == 'FBK').sum())
+      errs  = int((sub_oc[bm] == 'FBE').sum())
+      cells[name] = {'vol': round(n/total, 3),
+                     'fbhe': round((kills - errs)/n, 3),
+                     'n': n}
+    lo = hi
+  return {'total': total, 'cells': cells}
+
+
+def build_setheight_payload(result, min_attempts=5):
+  """
+  Shape set_height_dist output for the emitter. Carries the min_attempts floor
+  WITH the data so the emitter suppresses thin fbhe consistently (volume always
+  kept). Tagged kind='setheight' to distinguish from serve-dest distributions.
+  """
+  if not result or result.get('total', 0) == 0:
+    return None
+  return {
+    'kind': 'setheight',
+    'total': result['total'],
+    'cells': result['cells'],
+    'order': [name for _, name in SET_AIR_TIME_BUCKETS],
+    'min_attempts': int(min_attempts) if min_attempts else 5,
+  }
+
+
+def setheight_line_from_payload(payload):
+  """Render a SETHEIGHT line. Volume always shown; fbhe shown at n>=min_attempts,
+     else '~' (directional). Buckets in tempo order. Shared by set-level &
+     aggregate formatters."""
+  if not payload or payload.get('total', 0) == 0:
+    return None
+  parts = []
+  for name in payload.get('order', []):
+    c = payload['cells'].get(name)
+    if not c:
+      continue
+    if c['n'] >= payload.get('min_attempts', 5):
+      parts.append(f"{name}:v{c['vol']:.2f}/fbhe{c['fbhe']:.3f}(n{c['n']})")
+    else:
+      parts.append(f"{name}:v{c['vol']:.2f}/fbhe~(n{c['n']})")
+  return f"SETHEIGHT|total={payload['total']}|" + " ".join(parts)
   
 def srv_dest_obj(ppr_df, disp_player):
   """

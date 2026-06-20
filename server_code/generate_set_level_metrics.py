@@ -530,7 +530,20 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
         # keep attempts populated with the in-play n so any scalar-only
         # consumer still sees a sane sample size
         attempts = getattr(dist_obj, 'n_inplay', None)
-
+      elif return_type == 'distribution_setheight':
+        # Set-height mismatch distribution. result_path names the dict from
+        # set_height_dist (e.g. "sh_result"). Carry min_attempts from the
+        # dictionary so the emitter suppresses thin fbhe; volume always kept.
+        obj_name = result_path.split('.')[0].split('[')[0].strip()
+        if obj_name in exec_context:
+          sh_result = exec_context[obj_name]
+          try:
+            min_att = int(metric_row['min_attempts_for_ci'])
+          except (KeyError, TypeError, ValueError):
+            min_att = 5
+          distribution = build_setheight_payload(sh_result, min_att)
+          attempts = sh_result.get('total') if isinstance(sh_result, dict) else None
+          
     return {
       'metric_id':    metric_id,
       'metric_name':  metric_name,
@@ -976,7 +989,15 @@ def _format_set_level_dense(set_level_data, display_name=None, display_team=None
         if err is not None:
           head += f"|err:{err:.3f}"
         md.append(f"{head}|{cell_str}")
-        
+
+    # ── Set-height mismatch distribution (vol + fbhe per tempo bucket) ──
+    for metric_id, metric_info in sorted(set_data['metrics'].items()):
+      dist = metric_info.get('distribution')
+      if not dist or dist.get('kind') != 'setheight':
+        continue
+      line = setheight_line_from_payload(dist)
+      if line:
+        md.append(line)
 
     # ── Half/phase metrics (1a/1b for set 1, 2a/2b for set 2, etc.) ──────
     # These were computed per-set; their data_filter already restricted each
