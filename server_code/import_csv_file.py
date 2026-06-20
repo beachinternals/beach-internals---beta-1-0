@@ -260,6 +260,8 @@ def generate_slim_metric_dictionary_md():
   if distribution_rows:
     md_output += _build_distribution_legend(distribution_rows)
     md_output += _build_phase_legend()
+    md_output += _build_setheight_legend()
+    md_output += _build_serves_received_note()
 
   return BlobMedia("text/markdown", md_output.encode('utf-8'),
                    name="metric_dictionary_logic.md")
@@ -370,7 +372,59 @@ def _build_phase_legend():
            "generalized into a tendency.\n")
   return "\n".join(L)
 
+def _build_setheight_legend():
+  """Legend for the SETHEIGHT line (set-height mismatch: volume + fbhe per
+     tempo bucket). Explains tempo names map to set AIR TIME (not guessed
+     height), the cell format, the mismatch read, and the ~ directional mark."""
+  L = []
+  L.append("\n\n## SET-HEIGHT MISMATCH (SETHEIGHT line)\n")
+  L.append("A player's set-height profile appears on its own line:\n")
+  L.append("```")
+  L.append("SETHEIGHT|total=N|quick:v0.03/fbhe0.429(n7) low:v0.17/fbhe0.439(n41) medium:v0.59/fbhe0.500(n142) ...")
+  L.append("```")
+  L.append("It describes the sets DELIVERED TO this player (the sets she "
+           "attacks off of), bucketed by tempo. For each bucket:")
+  L.append("- `v` = VOLUME share — fraction of her sets in this tempo bucket "
+           "(the buckets sum to ~1.0). This is where she is being set.")
+  L.append("- `fbhe` = her hitting efficiency on sets of that tempo. This is "
+           "how well she hits it.")
+  L.append("- `(n..)` = attacks in that bucket.\n")
+  L.append("**Tempo buckets are SET AIR TIME (flight-time), a robust apex-height "
+           "proxy — NOT a guessed height in meters.** Low time = quick/flat set; "
+           "high time = higher/floatier set. Names, fastest to highest:")
+  L.append("- `quick` (very fast/flat) < `low` < `medium` < `high` < `floaty` (highest)\n")
+  L.append("**The MISMATCH read (the point of this line):** compare VOLUME vs "
+           "FBHE across buckets. Where she is set most (high v) versus where she "
+           "hits best (high fbhe) may not match. Example: if she is set `high` "
+           "40% of the time but her fbhe is much better on `low`/`medium` sets, "
+           "that is a coachable mismatch — the setter should deliver lower. If "
+           "her best-fbhe bucket is also her highest-volume bucket, she is "
+           "well-matched.\n")
+  L.append("**`fbhe~` (tilde) = directional only:** the bucket has too few "
+           "attacks (below the metric's minimum) for a trustworthy efficiency, "
+           "so fbhe is suppressed. Volume is still shown (a clean count at any "
+           "n). Treat `fbhe~` as 'we see a few but not enough to judge.'\n")
+  return "\n".join(L)
 
+
+def _build_serves_received_note():
+  """One-block note on interpreting serves_received_pct (targeting signal)."""
+  L = []
+  L.append("\n\n## SERVES RECEIVED (serves_received_pct)\n")
+  L.append("`serves_received_pct` = of the serves this player's SIDE received, "
+           "the fraction SHE took (her receives / her+partner receives). It "
+           "measures OPPONENT TARGETING:")
+  L.append("- High (e.g. 0.65) = opponents are serving AT her (hunting her).")
+  L.append("- Low (e.g. 0.35) = opponents serve AWAY from her (toward her "
+           "partner) — often because she is the stronger passer.")
+  L.append("- ~0.50 = balanced.\n")
+  L.append("The `_1a.._3b` per-half versions reveal MID-MATCH targeting shifts: "
+           "if her share jumps from set 1 to set 3, the opponent adjusted to "
+           "target (or avoid) her — a scouting-response signal. Per the phase "
+           "rules above, a single set/half value is the exact record of that "
+           "segment; read trends across the aggregate.\n")
+  return "\n".join(L)
+  
 """
 Import Competitive Level (comp_level) Data into master_player
 

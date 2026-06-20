@@ -488,6 +488,10 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
         scalar_value = None
         attempts_value = (distribution_payload.get('total')
                     if distribution_payload else None)
+      else:
+        scalar_value = (float(metric_value)
+                        if isinstance(metric_value, (int, float, np.number))
+                        else metric_value)
 
       metrics_output[category][metric_id] = {
         'value': scalar_value,
