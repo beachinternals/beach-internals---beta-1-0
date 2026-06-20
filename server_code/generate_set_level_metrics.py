@@ -48,6 +48,17 @@ from metric_calc_functions import *
 # ============================================================================
 # CORE HELPER FUNCTIONS
 # ============================================================================
+def _safe_str(val, default=''):
+  """Coerce a possibly-NaN/float cell to a clean string. NaN/None -> default."""
+  if val is None:
+    return default
+  try:
+    if pd.isna(val):
+      return default
+  except (TypeError, ValueError):
+    pass
+  return str(val).strip()
+  
 def get_core_metrics_from_dictionary():
   """DEPRECATED shim — see get_set_level_metrics_from_dictionary."""
   return get_set_level_metrics_from_dictionary(half=False)
@@ -357,17 +368,17 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name, league_value):
     partner      = (first_row.get('player_a2', '')
                     if first_row.get('player_a1', '') == player_name
                     else first_row.get('player_a1', ''))
-    opponent_team = first_row.get('teamb', '')
-    opponent1    = first_row.get('player_b1', '')
-    opponent2    = first_row.get('player_b2', '')
+    opponent_team = _safe_str(first_row.get('teamb', ''))
+    opponent1    = _safe_str(first_row.get('player_b1', ''))
+    opponent2    = _safe_str(first_row.get('player_b2', ''))
   else:
     team         = first_row.get('teamb', '')
     partner      = (first_row.get('player_b2', '')
                     if first_row.get('player_b1', '') == player_name
                     else first_row.get('player_b1', ''))
-    opponent_team = first_row.get('teama', '')
-    opponent1    = first_row.get('player_a1', '')
-    opponent2    = first_row.get('player_a2', '')
+    opponent_team = _safe_str(first_row.get('teama', ''))
+    opponent1    = _safe_str(first_row.get('player_a1', ''))
+    opponent2    = _safe_str(first_row.get('player_a2', ''))
 
   # ── Weather ───────────────────────────────────────────────────────────
   weather_data = get_weather_from_weather_id(set_df)
@@ -549,7 +560,8 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
       'metric_name':  metric_name,
       'value':        value,
       'attempts':     attempts,
-      'distribution': distribution   # None for normal metrics
+      'distribution': distribution,   # None for normal metrics
+      'return_type':  return_type     # so formatter can skip distribution types
     }
 
   except Exception as e:
@@ -651,7 +663,8 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
           'name':         metric_result['metric_name'],
           'value':        metric_result['value'],
           'attempts':     metric_result['attempts'],
-          'distribution': metric_result.get('distribution')
+          'distribution': metric_result.get('distribution'),
+          'return_type':  metric_result.get('return_type', '')
         }
 
     # ── Half/phase metrics: each carries a data_filter (set==N & half).
@@ -920,7 +933,9 @@ def _format_set_level_dense(set_level_data, display_name=None, display_team=None
   for set_data in set_level_data['sets']:
     weather_str = _fmt_weather_dense(set_data.get('weather'))
 
-    comp_parts = [set_data.get('comp_l1',''), set_data.get('comp_l2',''), set_data.get('comp_l3','')]
+    comp_parts = [_safe_str(set_data.get('comp_l1','')),
+                  _safe_str(set_data.get('comp_l2','')),
+                  _safe_str(set_data.get('comp_l3',''))]
     comp_str   = "/".join(p for p in comp_parts if p)
 
     # SET line — opponent identified by the two opponent uuids (no team name)
@@ -961,9 +976,19 @@ def _format_set_level_dense(set_level_data, display_name=None, display_team=None
     if any_comp:
       md.append(f"CL|{cl_player}|{cl_partner}|{cl_opp1}|{cl_opp2}")
 
-    # Metrics line
     metric_parts = []
     for metric_id, metric_info in sorted(set_data['metrics'].items()):
+      # Distribution metrics (serve dest, set-height) emit their own lines
+      # below (SRVDEST / SETHEIGHT); skip them here so they don't leak onto
+      # the scalar token line as 'N/A'.
+
+      # Skip distribution-type metrics whether or not they produced a payload
+      # (a thin set may yield no distribution, but it still shouldn't print as
+      # a scalar N/A — it emits on its own SRVDEST/SETHEIGHT line or not at all).
+      rt = str(metric_info.get('return_type', ''))
+      if metric_info.get('distribution') or rt.startswith('distribution'):
+        continue
+        
       value_str = _fmt_val(metric_info['value'])
       attempts  = metric_info['attempts']
       if attempts is not None:
