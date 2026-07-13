@@ -43,6 +43,11 @@ generate_set_level_metrics_for_player,
 format_set_level_data_as_markdown
 )
 
+from generate_partner_level_metrics import (
+generate_partner_level_metrics_for_player,
+format_partner_level_data_as_markdown
+)
+
 # ============================================================================
 # NEW: MULTI-DATASET SUPPORT IMPORTS
 # ============================================================================
@@ -1358,6 +1363,44 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
                   sets_count = set_level_data.get('summary', {}).get('total_sets', 0)
               else:
                   log_error(f"  generate_set_level_metrics_for_player returned no result for {ds_name}")
+                  section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
+                  sets_count = 0
+
+        elif function_name == 'generate_partner_metrics_section' or ds_type == 'partner_level':
+          log_info(f"  Calling generate_partner_level_metrics_for_player for {ds_name}...")
+
+          # Fetch PPR data for this player with dataset-specific filters
+          league_parts = league_value.split('|')
+          league_str = league_parts[0].strip()
+          gender_str = league_parts[1].strip()
+          year_str   = league_parts[2].strip()
+
+          ppr_df = get_filtered_ppr_data_direct(
+            league=league_str,
+            gender=gender_str,
+            year=year_str,
+              team=team,
+              **ds_filters
+          )
+
+          if ppr_df is None or len(ppr_df) == 0:
+              log_error(f"  No PPR data for partner-level section {ds_name}")
+              section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
+              sets_count = 0
+          else:
+              log_info(f"  Loaded {len(ppr_df)} points for partner-level calculation")
+              partner_level_data = generate_partner_level_metrics_for_player(
+                  ppr_df=ppr_df,
+                  player_name=player,
+                  league_value=league_value,
+                  team=team
+              )
+
+              if partner_level_data:
+                  section_md = format_partner_level_data_as_markdown(partner_level_data, ai_optimized=ai_optimized)
+                  sets_count = partner_level_data.get('summary', {}).get('total_partners', 0)
+              else:
+                  log_error(f"  generate_partner_level_metrics_for_player returned no result for {ds_name}")
                   section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
                   sets_count = 0
         else:
