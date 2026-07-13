@@ -160,7 +160,16 @@ def generate_partner_level_metrics_for_player(ppr_df, player_name, league_value,
   log_info(f"Found {len(player_df)} total points for player")
 
   player_df['partner'] = _resolve_partner_series(player_df, player_name)
+  points_before_partner_filter = len(player_df)
   player_df = player_df[player_df['partner'].notna() & (player_df['partner'] != '')]
+
+  dropped_unresolved = points_before_partner_filter - len(player_df)
+  if dropped_unresolved > 0:
+    log_error(
+      f"Partner-level: dropped {dropped_unresolved} of {points_before_partner_filter} "
+      f"points for {player_name} — partner could not be resolved from "
+      f"player_a1/a2/b1/b2 (malformed or blank row)"
+    )
 
   unique_partners = sorted(player_df['partner'].unique())
   log_info(f"Found {len(unique_partners)} unique partner(s) for {player_name}")
@@ -202,9 +211,10 @@ def generate_partner_level_metrics_for_player(ppr_df, player_name, league_value,
   partners_data.sort(key=lambda p: p['points_together'], reverse=True)
 
   summary = {
-    'total_partners':      len(partners_data),
-    'total_points':        len(player_df),
-    'metrics_per_partner': len(partner_metric_dict)
+    'total_partners':               len(partners_data),
+    'total_points':                 len(player_df),
+    'metrics_per_partner':          len(partner_metric_dict),
+    'points_excluded_unresolved_partner': dropped_unresolved
   }
 
   log_info(f"Partner-level processing complete: {len(partners_data)} partners")
