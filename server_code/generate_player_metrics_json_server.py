@@ -327,6 +327,13 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
   """
   Calculate all metrics from the dictionary.
 
+  TODO: pass_ea (and possibly other *_ea metrics) has produced extreme
+  outliers in partner/set-level exports (e.g. pass_ea:19933.7, and
+  fbhe_1_3e_ea:10263 from the same run) — smells like a near-zero-denominator
+  division somewhere in that metric's formula. Its calculation_formula/
+  function_name live on the metric_dictionary row itself (data, not code),
+  so this needs to be sanity-checked there, not in this file.
+
   Uses attempts_path column (if present and populated) to:
     - Fetch the attempt count alongside the metric value
     - Suppress the metric value if attempts < min_attempts_for_ci

@@ -171,6 +171,23 @@ def generate_partner_level_metrics_for_player(ppr_df, player_name, league_value,
       f"player_a1/a2/b1/b2 (malformed or blank row)"
     )
 
+  # ── Data-quality check: a single (video_id, set) should have exactly one
+  # partner. If player_a1/a2/b1/b2 resolves to more than one partner within
+  # the same set, that's a source-data error (e.g. a mislabeled row), not a
+  # real mid-set roster change — flag it rather than silently letting it
+  # inflate sets_together for more than one partner.
+  partners_per_set = player_df.groupby(['video_id', 'set'])['partner'].nunique()
+  mixed_partner_sets = partners_per_set[partners_per_set > 1]
+  if len(mixed_partner_sets) > 0:
+    for (video_id, set_num), n_partners in mixed_partner_sets.items():
+      set_mask = (player_df['video_id'] == video_id) & (player_df['set'] == set_num)
+      partners_seen = sorted(player_df.loc[set_mask, 'partner'].unique())
+      log_error(
+        f"Partner-level DATA ERROR: {player_name} — video_id={video_id} set={set_num} "
+        f"resolves to {n_partners} different partners ({partners_seen}) instead of one. "
+        f"A single set should have exactly one partner — check source data for this set."
+      )
+
   unique_partners = sorted(player_df['partner'].unique())
   log_info(f"Found {len(unique_partners)} unique partner(s) for {player_name}")
 
@@ -214,7 +231,8 @@ def generate_partner_level_metrics_for_player(ppr_df, player_name, league_value,
     'total_partners':               len(partners_data),
     'total_points':                 len(player_df),
     'metrics_per_partner':          len(partner_metric_dict),
-    'points_excluded_unresolved_partner': dropped_unresolved
+    'points_excluded_unresolved_partner': dropped_unresolved,
+    'mixed_partner_sets_detected':  int(len(mixed_partner_sets))
   }
 
   log_info(f"Partner-level processing complete: {len(partners_data)} partners")

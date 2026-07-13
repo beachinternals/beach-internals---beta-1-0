@@ -697,8 +697,12 @@ def generate_set_level_metrics_for_player(ppr_df, player_name, league_value, tea
   summary = {
     'total_sets_analyzed': sets_included,
     'total_sets_excluded': sets_excluded,
-    'total_points': (int(player_df['point_no'].nunique())
-                     if 'point_no' in player_df.columns else len(player_df)),
+    # NOTE: was int(player_df['point_no'].nunique()) — point_no is only
+    # unique WITHIN a match (video_id), not across the whole player_df, so
+    # nunique() across multiple matches collapsed to roughly the highest
+    # point_no seen in any single match instead of the true total. len()
+    # matches how total_points is computed for aggregate/partner-level.
+    'total_points': len(player_df),
     'date_range': {
       'start': str(player_df['game_date'].min()) if 'game_date' in player_df.columns else None,
       'end':   str(player_df['game_date'].max()) if 'game_date' in player_df.columns else None
