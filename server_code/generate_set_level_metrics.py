@@ -564,6 +564,14 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
       'return_type':  return_type     # so formatter can skip distribution types
     }
 
+  except KeyError as e:
+    # Expected on older data: a column this metric reads (directly, or via
+    # a shared helper like calc_dig_quality_obj / set_height_dist) was added
+    # to the PPR schema after this data was imported. Not an actionable
+    # error — skip quietly instead of a full traceback + error_log row.
+    log_info(f"Metric {metric_id} skipped: column {e} not present in this dataset")
+    return None
+
   except Exception as e:
     log_error(f"Error calculating metric {metric_id}: {str(e)}")
     return None

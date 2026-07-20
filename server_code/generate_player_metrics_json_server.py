@@ -514,6 +514,14 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
       if not value_suppressed:
         successful += 1
 
+    except KeyError as e:
+      # Expected on older data: a column this metric reads (directly, or via
+      # a shared helper like calc_dig_quality_obj) was added to the PPR
+      # schema after this data was imported. Not an actionable error — skip
+      # quietly instead of a full traceback + error_log row per metric.
+      insufficient_data += 1
+      log_info(f"Metric {metric_id} skipped: column {e} not present in this dataset")
+      continue
     except Exception as e:
       insufficient_data += 1
       log_debug(f"Metric {metric_id} failed: {str(e)}")
