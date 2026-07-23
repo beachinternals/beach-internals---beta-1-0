@@ -5,6 +5,7 @@
 
 import anvil.server
 import anvil.tables as tables
+import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.email
 from datetime import datetime, timedelta, timezone
@@ -103,16 +104,15 @@ def analyze_error_logs(cutoff_time):
     Returns: dict with error statistics
     """
   try:
-    # Get all error logs
-    all_errors = list(app_tables.error_log.search(
-      tables.order_by('timestamp', ascending=False)
-    ))[:200]  # Limit to 200 most recent
+    # Filter server-side to the last 24 hours instead of pulling the whole
+    # table into memory — this stops the nightly job from getting slower
+    # as error_log grows.
+    recent_errors = list(app_tables.error_log.search(
+      tables.order_by('timestamp', ascending=False),
+      timestamp=q.greater_than_or_equal_to(cutoff_time)
+    ))[:200]  # Still cap at 200 in case a single day is unusually busy
 
-    # Filter for recent errors
-    recent_errors = [err for err in all_errors 
-                     if err['timestamp'] and err['timestamp'] >= cutoff_time]
-
-    log_info(f"Found {len(recent_errors)} errors from last 24 hours (out of {len(all_errors)} total)")
+    log_info(f"Found {len(recent_errors)} errors from last 24 hours")
 
     # Categorize errors
     error_stats = {
@@ -183,18 +183,15 @@ def generate_night_processing_summary(send_email=True, recipient_email=None):
   print(f"Looking for logs after: {cutoff_time}")
 
   try:
-    # Get all recent logs - Anvil's query syntax
-    all_logs = list(app_tables.performance_log.search(
-      tables.order_by('timestamp', ascending=False)
-    ))[:500]  # Limit to 500 most recent logs for performance
+    # Filter server-side to the last 24 hours instead of pulling the whole
+    # table into memory — this stops the nightly job from getting slower
+    # as performance_log grows.
+    recent_logs = list(app_tables.performance_log.search(
+      tables.order_by('timestamp', ascending=False),
+      timestamp=q.greater_than_or_equal_to(cutoff_time)
+    ))[:500]  # Still cap at 500 in case a single day is unusually busy
 
-    print(f"Retrieved {len(all_logs)} total logs from database")
-
-    # Filter in Python for last 24 hours
-    recent_logs = [log for log in all_logs 
-                   if log['timestamp'] and log['timestamp'] >= cutoff_time]
-
-    log_info(f"Found {len(recent_logs)} performance logs from last 24 hours (out of {len(all_logs)} total)")
+    log_info(f"Found {len(recent_logs)} performance logs from last 24 hours")
     print(f"Found {len(recent_logs)} logs in last 24 hours")
 
   except Exception as e:
@@ -278,11 +275,18 @@ def generate_night_processing_summary(send_email=True, recipient_email=None):
   log_info(f"Performance summary stats: {stats}")
   print(f"Summary stats: {stats}")
 
-  # Send email if requested
+  # Send email if requested. Failure here must NOT block the purge below —
+  # table cleanup is the more important nightly duty, and an email hiccup
+  # (bad recipient, service outage, quota) shouldn't cause the tables to
+  # silently grow forever. send_summary_email() logs and re-raises on
+  # failure; catch it here so we still reach the purge.
   if send_email and recipient_email:
-    send_summary_email(stats, recipient_email)
+    try:
+      send_summary_email(stats, recipient_email)
+    except Exception as e:
+      log_error(f"Failed to send performance summary email (purge will still run): {e}")
 
-  # Purge logs now that summary is safely emailed
+  # Purge logs regardless of whether the email above succeeded.
   # we need to purge most everything, getting way too may, so we'll use purge_time
   purge_time = datetime.now(timezone.utc) - timedelta(hours=0)
   purge_stats = purge_processed_logs(purge_time)
@@ -458,7 +462,8 @@ def purge_processed_logs(cutoff_time):
   """
   Delete performance and error log records older than cutoff_time.
   Called automatically at the end of generate_night_processing_summary,
-  AFTER the email summary has been sent so no data is lost.
+  regardless of whether the email summary succeeded — table cleanup must
+  not be blocked by an email delivery failure.
 
   Args:
       cutoff_time: datetime - delete records with timestamp BEFORE this time
@@ -473,9 +478,12 @@ def purge_processed_logs(cutoff_time):
   }
 
   # --- Purge performance_log ---
+  # Filter server-side (only fetch rows we're about to delete) instead of
+  # pulling the whole table into memory every night.
   try:
-    perf_rows = list(app_tables.performance_log.search())
-    old_perf = [r for r in perf_rows if r['timestamp'] and r['timestamp'] < cutoff_time]
+    old_perf = list(app_tables.performance_log.search(
+      timestamp=q.less_than(cutoff_time)
+    ))
     for row in old_perf:
       row.delete()
       result['performance_log_deleted'] += 1
@@ -486,8 +494,9 @@ def purge_processed_logs(cutoff_time):
 
   # --- Purge error_log ---
   try:
-    err_rows = list(app_tables.error_log.search())
-    old_errs = [r for r in err_rows if r['timestamp'] and r['timestamp'] < cutoff_time]
+    old_errs = list(app_tables.error_log.search(
+      timestamp=q.less_than(cutoff_time)
+    ))
     for row in old_errs:
       row.delete()
       result['error_log_deleted'] += 1
