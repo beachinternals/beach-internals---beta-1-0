@@ -337,7 +337,7 @@ def ai_export_mgr_generate_background(user=None):
   if user:
     log_info(f"Running as user: {user['email']}")
   else:
-    log_error("No user context provided to background task!")
+    log_info("No user context provided to background task (expected for nightly scheduled run)")
 
   now = datetime.now()
   email_text = f"AI Export Manager Started at: {str(now)}\n\n"
