@@ -118,10 +118,12 @@ def get_set_level_metrics_from_dictionary(half=False):
 def get_player_uuid(player_name, league_value):
   """
   Look up player_uuid from master_player for a name string
-  ("TEAM NUMBER SHORTNAME"). Mirrors get_comp_level_for_player's
-  parse + query. Returns the uuid string, or a safe placeholder
-  (and logs an error) if not found — NEVER returns the real name,
-  so de-identified files cannot leak even on a lookup miss.
+  ("TEAM NUMBER SHORTNAME", or "TEAM NUMBER" when the player has no
+  shortname on file — allowed as long as team+number is unique).
+  Mirrors get_comp_level_for_player's parse + query. Returns the uuid
+  string, or a safe placeholder (and logs an error) if not found —
+  NEVER returns the real name, so de-identified files cannot leak even
+  on a lookup miss.
   """
   placeholder = "PLYR-UNKNOWN"
 
@@ -129,19 +131,19 @@ def get_player_uuid(player_name, league_value):
     return placeholder
 
   parts = player_name.strip().split()
-  if len(parts) < 3:
+  if len(parts) < 2:
     log_error(f"get_player_uuid: cannot parse '{player_name}'")
     return placeholder
 
   # Anchor on jersey number — handles multi-word team names.
   num_idx = next((i for i, p in enumerate(parts) if p.isdigit()), None)
-  if num_idx is None or num_idx == 0 or num_idx == len(parts) - 1:
+  if num_idx is None or num_idx == 0:
     log_error(f"get_player_uuid: cannot parse '{player_name}' (no clear number token)")
     return placeholder
 
   team_part   = " ".join(parts[:num_idx])
   number_part = parts[num_idx]
-  short_part  = " ".join(parts[num_idx+1:])
+  short_part  = " ".join(parts[num_idx+1:])  # may be "" — no shortname on file
 
   try:
     lgy_parts = [p.strip() for p in league_value.split('|')]
@@ -154,10 +156,16 @@ def get_player_uuid(player_name, league_value):
     return placeholder
 
   try:
-    results = list(app_tables.master_player.search(
+    search_kwargs = dict(
       league=league_str, gender=gender_str, year=year_str,
-      team=team_part, number=number_part, shortname=short_part
-    ))
+      team=team_part, number=number_part
+    )
+    if short_part:
+      search_kwargs['shortname'] = short_part
+    results = list(app_tables.master_player.search(**search_kwargs))
+    if not short_part and len(results) > 1:
+      log_error(f"get_player_uuid: '{player_name}' has no shortname and team+number is not unique ({len(results)} matches)")
+      return placeholder
     if not results:
       log_error(f"get_player_uuid: no master_player match for '{player_name}'")
       return placeholder
@@ -173,13 +181,15 @@ def get_player_uuid(player_name, league_value):
 def get_comp_level_for_player(player_name, league_value):
   """
   Look up comp_level_rank and comp_level_score from master_player for a
-  given player name string (format "TEAM NUMBER SHORTNAME").
+  given player name string (format "TEAM NUMBER SHORTNAME", or
+  "TEAM NUMBER" when the player has no shortname on file — allowed as
+  long as team+number is unique).
 
   Unique key in master_player: league + gender + year + team + number + shortname
   All fields are strings in Anvil (including number and year).
 
   Args:
-      player_name (str): e.g. "FSU 35 Trusty"
+      player_name (str): e.g. "FSU 35 Trusty" or "CCU 03"
       league_value (str): lgy string e.g. "NCAA | W | 2026"
 
   Returns:
@@ -196,21 +206,21 @@ def get_comp_level_for_player(player_name, league_value):
 
   # ── Parse "TEAM NUMBER SHORTNAME" ─────────────────────────────────────
   parts = player_name.strip().split()
-  if len(parts) < 3:
+  if len(parts) < 2:
     log_debug(f"Cannot parse player_name '{player_name}' for comp_level lookup")
     return empty
 
   # Anchor on the jersey number (first all-digit token): team is everything
-  # before it, shortname everything after. Handles multi-word team names
-  # ("SANTA CLARA", "SOUTHERN MISS") and multi-word shortnames.
+  # before it, shortname everything after (may be empty). Handles multi-word
+  # team names ("SANTA CLARA", "SOUTHERN MISS") and multi-word shortnames.
   num_idx = next((i for i, p in enumerate(parts) if p.isdigit()), None)
-  if num_idx is None or num_idx == 0 or num_idx == len(parts) - 1:
+  if num_idx is None or num_idx == 0:
     log_debug(f"Cannot parse player_name '{player_name}' (no clear number token)")
     return empty
 
   team_part   = " ".join(parts[:num_idx])      # "SANTA CLARA"
   number_part = parts[num_idx]                 # "11"
-  short_part  = " ".join(parts[num_idx+1:])    # "Avery"
+  short_part  = " ".join(parts[num_idx+1:])    # "Avery", or "" if none on file
 
   # ── Split lgy into league, gender, year ───────────────────────────────
   # lgy format: "NCAA | W | 2026"
@@ -228,16 +238,24 @@ def get_comp_level_for_player(player_name, league_value):
     return empty
 
   # ── Query master_player ────────────────────────────────────────────────
-  # All six fields needed for a unique match; all are strings in Anvil
+  # All six fields needed for a unique match; all are strings in Anvil.
+  # When there's no shortname, fall back to team+number alone — only safe
+  # when that combination is unique for this league/gender/year.
   try:
-    results = list(app_tables.master_player.search(
+    search_kwargs = dict(
       league=league_str,
       gender=gender_str,
       year=year_str,
       team=team_part,
-      number=number_part,
-      shortname=short_part
-    ))
+      number=number_part
+    )
+    if short_part:
+      search_kwargs['shortname'] = short_part
+    results = list(app_tables.master_player.search(**search_kwargs))
+
+    if not short_part and len(results) > 1:
+      log_debug(f"'{player_name}' has no shortname and team+number is not unique for {league_str}/{gender_str}/{year_str}/{team_part}/{number_part} ({len(results)} matches)")
+      return empty
 
     if not results:
       log_debug(f"No master_player match for {league_str}/{gender_str}/{year_str}/{team_part}/{number_part}/{short_part}")

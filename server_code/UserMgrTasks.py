@@ -8,14 +8,21 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
 
+# Teams that are always valid regardless of subscriptions
+SPECIAL_TEAMS = {'INTERNALS', 'VISITOR', 'BALLTIME'}
+
+def _get_subscribed_teams():
+  """Return the set of team names with an active subscriptions record."""
+  try:
+    return {row['team'].strip().upper() for row in app_tables.subscriptions.search() if row['team']}
+  except Exception:
+    return set()
+
 # This is a server module. It runs on the Anvil server,
 @anvil.server.callable
 def check_user_team():
   # check if the user has a team assigned, maybe double check that all temas are valid
-  team_list = ['INTERNALS','VISITOR','BALLTIME',
-              'FSU',
-              'LMU', 'STETSON'
-              ]
+  team_list = SPECIAL_TEAMS | _get_subscribed_teams()
 
   user_row = anvil.users.get_user()
   if user_row:
