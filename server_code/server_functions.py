@@ -21,7 +21,7 @@ import matplotlib.patches as patches
 import matplotlib.colors as mcolors
 import math
 from pair_functions import *
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import re
 import scipy.stats as stats
 from matplotlib.colors import LinearSegmentedColormap
@@ -138,7 +138,7 @@ def monitor_performance(func=None, level=MONITORING_LEVEL_IMPORTANT):
 
         try:
           app_tables.performance_log.add_row(
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
             function_name=f.__name__,
             elapsed_seconds=round(elapsed, 3),
             success=success,

@@ -287,8 +287,9 @@ def generate_night_processing_summary(send_email=True, recipient_email=None):
       log_error(f"Failed to send performance summary email (purge will still run): {e}")
 
   # Purge logs regardless of whether the email above succeeded.
-  # we need to purge most everything, getting way too may, so we'll use purge_time
-  purge_time = datetime.now(timezone.utc) - timedelta(hours=0)
+  # Keep a rolling 24-hour retention window — matches the analysis window above,
+  # so today's data is still available if we need to dig into slow night processing.
+  purge_time = datetime.now(timezone.utc) - timedelta(hours=24)
   purge_stats = purge_processed_logs(purge_time)
   
   stats["purge_stats"] = purge_stats

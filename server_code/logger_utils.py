@@ -2,7 +2,7 @@
 import traceback
 from anvil_extras.logging import Logger, DEBUG
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import inspect
 
 # Import here to avoid circular imports
@@ -55,7 +55,7 @@ def _write_to_error_log(severity: str, message: str, source: str = None, traceba
 
     # Write to error_log table
     app_tables.error_log.add_row(
-      timestamp=datetime.now(),
+      timestamp=datetime.now(timezone.utc),
       severity=severity,
       source=source,
       message=message,
