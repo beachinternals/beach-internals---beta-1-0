@@ -70,6 +70,7 @@ def daily_performance_summary():
     try:
       anvil.email.send(
         to=YOUR_EMAIL,
+        from_address="no-reply",
         subject="⚠️ ERROR: Performance Summary Failed",
         text=f"""
 Performance Summary Task Failed
@@ -411,6 +412,7 @@ This is an automated summary from your Beach Volleyball Analytics system.
   try:
     anvil.email.send(
       to=recipient_email,
+      from_address="no-reply",
       subject=subject,
       text=email_body
     )

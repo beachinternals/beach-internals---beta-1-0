@@ -997,7 +997,7 @@ def test_rpt_mgr_new_rpts():
     rpt_r = {
         'rpt_type': 'player',
         'Report Description': 'Attacking Summary',
-        'email': 'scott@beachinternals.com',
+        'email': 'info@beachinternals.com',
         'rpts_inc': [{'id': 'test_id', 'report_name': 'Test Report', 'rpt_type': 'player', 'rpt_form': 'form1', 'function_name': 'fn1', 'order': 1}]
     }
     p_list = [{
