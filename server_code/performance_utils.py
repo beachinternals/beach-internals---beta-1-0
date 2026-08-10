@@ -189,7 +189,7 @@ def generate_night_processing_summary(send_email=True, recipient_email=None):
     recent_logs = list(app_tables.performance_log.search(
       tables.order_by('timestamp', ascending=False),
       timestamp=q.greater_than_or_equal_to(cutoff_time)
-    ))[:500]  # Still cap at 500 in case a single day is unusually busy
+    ))[:1000]  # Still cap at 1000 in case a single day is unusually busy
 
     log_info(f"Found {len(recent_logs)} performance logs from last 24 hours")
     print(f"Found {len(recent_logs)} logs in last 24 hours")

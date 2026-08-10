@@ -285,7 +285,7 @@ def get_comp_level_for_player(player_name, league_value):
 # WEATHER HELPER
 # ============================================================================
 
-@monitor_performance(level=MONITORING_LEVEL_DETAILED)
+@monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def get_weather_from_weather_id(set_df):
   """
   Get weather data using weather_id from PPR dataframe.
@@ -349,7 +349,7 @@ def get_weather_from_weather_id(set_df):
 # SET METADATA  (now includes comp_level for all 4 players)
 # ============================================================================
 
-@monitor_performance(level=MONITORING_LEVEL_DETAILED)
+@monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def get_set_metadata(ppr_df, video_id, set_number, player_name, league_value):
   """
   Extract metadata for a specific set from ppr_df.
@@ -465,7 +465,7 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name, league_value):
 # METRIC CALCULATION FOR A SINGLE SET
 # ============================================================================
   
-@monitor_performance(level=MONITORING_LEVEL_DETAILED)
+@monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
   """
   Calculate a single metric for a filtered set of data.
