@@ -381,6 +381,14 @@ db_schema:
       client_hidden: null
       name: weather_id
       type: string
+    - admin_ui: {order: 12.8125, width: 200}
+      client_hidden: false
+      name: corrections_json
+      type: string
+    - admin_ui: {order: 12.90625, width: 200}
+      client_hidden: false
+      name: corrections_count
+      type: number
     indexes: []
     server: full
     title: btd_files
