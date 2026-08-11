@@ -1,3 +1,5 @@
+import anvil.files
+from anvil.files import data_files
 """
 SERVER FUNCTION: generate_player_metrics_json()
 ===============================================
