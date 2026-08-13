@@ -63,6 +63,17 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     self.tri_league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
     self.tri_league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))  
 
+    # Now, let's populate the drop downs for the ppr_error_check! 
+    self.league_drop_down_1.items = [(row["league"], row) for row in app_tables.league_list.search()]
+    self.gender_drop_down_1.items = [(row["gender"], row) for row in app_tables.subscriptions.search(team=user_row['team'])]
+    self.year_drop_down_1.items = [(row["year"], row) for row in app_tables.subscriptions.search(team=user_row['team'])]   
+    
+    # populate the drop downs for league
+    self.league_drop_down_1.selected_value = user_row["def_league"]
+    self.gender_drop_down_1.selected_value = user_row["def_gender"]
+    self.year_drop_down_1.selected_value = user_row["def_year"]
+    #self.team_drop_down_1.selected_value = user_row['team']
+    
   def generate_ppr_button_click(self, **event_args):
     """This method is called when the button is clicked"""
 
@@ -230,4 +241,22 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     task = anvil.server.call('repair_video_id_column')
     alert(task)
     pass
+
+  @handle("run_ppr_file_error_check", "click")
+  def run_ppr_file_error_check_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # These dropdowns' items are (display_text, Row) pairs, so once a value has
+    # actually been picked, selected_value is a Row (from league_list /
+    # subscriptions), not a string -- but the initial default (set in
+    # __init__) is a plain string. Handle both so this works whether or not
+    # the dropdown selection has been touched.
+    league = self.league_drop_down_1.selected_value
+    gender = self.gender_drop_down_1.selected_value
+    year = self.year_drop_down_1.selected_value
+    task = anvil.server.call('run_pass_correction_test',
+                      league['league'] if not isinstance(league, str) else league,
+                      gender['gender'] if not isinstance(gender, str) else gender,
+                      year['year'] if not isinstance(year, str) else year)
+    alert(task)
+    pass  # Write Code Here
 

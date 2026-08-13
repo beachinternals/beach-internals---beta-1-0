@@ -301,6 +301,43 @@ components:
   properties: {role: outlined-card}
   type: ColumnPanel
 - components:
+  - layout_properties: {grid_position: 'HKVQZK,WGGFBP'}
+    name: label_18
+    properties: {text: 'Run PPR file error check:'}
+    type: Label
+  - layout_properties: {grid_position: 'HKVQZK,GXKHCL'}
+    name: label_19
+    properties: {text: 'League:'}
+    type: Label
+  - layout_properties: {grid_position: 'HKVQZK,QSXTPD'}
+    name: league_drop_down_1
+    properties: {}
+    type: DropDown
+  - layout_properties: {grid_position: 'HKVQZK,DYCCBD'}
+    name: label_20
+    properties: {text: 'Gender:'}
+    type: Label
+  - layout_properties: {grid_position: 'HKVQZK,KHJSCW'}
+    name: gender_drop_down_1
+    properties: {}
+    type: DropDown
+  - layout_properties: {grid_position: 'HKVQZK,XVGYYL'}
+    name: label_21
+    properties: {text: 'Year:'}
+    type: Label
+  - layout_properties: {grid_position: 'HKVQZK,MFWWVV'}
+    name: year_drop_down_1
+    properties: {}
+    type: DropDown
+  - layout_properties: {grid_position: 'HKVQZK,SALFDU'}
+    name: run_ppr_file_error_check
+    properties: {role: outlined-button, text: Run}
+    type: Button
+  layout_properties: {grid_position: 'ZMVOKM,STJVNB'}
+  name: outlined_card_9
+  properties: {col_widths: '{"WGGFBP":8,"GXKHCL":7,"QSXTPD":9,"DYCCBD":6,"KHJSCW":9,"XVGYYL":6,"MFWWVV":8,"SALFDU":7}', role: outlined-card}
+  type: ColumnPanel
+- components:
   - layout_properties: {grid_position: 'XOKJDX,UQQPWY'}
     name: label_17
     properties: {text: Repair video_id in btd_file}
