@@ -250,13 +250,15 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     # subscriptions), not a string -- but the initial default (set in
     # __init__) is a plain string. Handle both so this works whether or not
     # the dropdown selection has been touched.
+
     league = self.league_drop_down_1.selected_value
     gender = self.gender_drop_down_1.selected_value
     year = self.year_drop_down_1.selected_value
     task = anvil.server.call('run_pass_correction_test',
-                      league['league'] if not isinstance(league, str) else league,
-                      gender['gender'] if not isinstance(gender, str) else gender,
-                      year['year'] if not isinstance(year, str) else year)
+                         league['league'] if not isinstance(league, str) else league,
+                         gender['gender'] if not isinstance(gender, str) else gender,
+                         year['year'] if not isinstance(year, str) else year)
+
     alert(task)
     pass  # Write Code Here
 
