@@ -207,10 +207,23 @@ def _apply_alternation(ppr_df, idx, row, passer, teammate):
   from iterrows() and would silently discard any assignment).
 
   If the recorded attacker is on the *other* team, the double-contact rule
-  doesn't apply to it -- that's usually a set that went over the net and
-  got played by the opposing team (often scored as a first-ball error),
-  not a real attack by this team. Leave att_player alone in that case
-  rather than forcing it into this team's alternation.
+  doesn't automatically apply to it:
+    - If there's a dig recorded, the rally genuinely went into a longer
+      transition -- leave att_player (and the point outcome) alone.
+    - If there's no dig, a cross-team attacker with no further touches is
+      exactly the shape check_last_point() would have produced a "TE"
+      (transition error) outcome from: btd_to_ppr_df's in_trans flag flips
+      True the moment a player on the *serving* team touches the ball on a
+      non-serve action -- which, if this "attack" was really our passer's
+      team finishing a clean first-ball kill, is precisely what a mislabeled
+      cross-team attacker would trigger. So: cross-team attacker + no dig +
+      the old outcome already being "TE" credited to the other team is
+      strong enough evidence to reassign the attack to this team AND fix
+      point_outcome/point_outcome_team to match (FBK for this team) --
+      otherwise those fields would contradict what pass/set/att now show.
+      If the old outcome doesn't match that exact expected shape, it's an
+      unexplained case, not a first-ball kill in disguise -- leave it alone
+      rather than guess.
 
   Returns the list of (field, old_value, new_value) changes actually made.
   """
@@ -230,6 +243,21 @@ def _apply_alternation(ppr_df, idx, row, passer, teammate):
     if row['att_player'] in own_team and row['att_player'] != passer:
       changes.append(('att_player', row['att_player'], passer))
       ppr_df.at[idx, 'att_player'] = passer
+    elif row['att_player'] not in own_team:
+      no_dig = row['dig_yn'] != 'Y'
+      own_team_str = row['teama'] if passer in (row['player_a1'], row['player_a2']) else row['teamb']
+      other_team_str = row['teamb'] if own_team_str == row['teama'] else row['teama']
+      old_outcome_fits = row['point_outcome'] == 'TE' and row['point_outcome_team'] == other_team_str
+      if no_dig and old_outcome_fits:
+        changes.append(('att_player', row['att_player'], passer))
+        ppr_df.at[idx, 'att_player'] = passer
+        changes.append(('point_outcome', row['point_outcome'], 'FBK'))
+        ppr_df.at[idx, 'point_outcome'] = 'FBK'
+        changes.append(('point_outcome_team', row['point_outcome_team'], own_team_str))
+        ppr_df.at[idx, 'point_outcome_team'] = own_team_str
+      # else: dig present (real transition) or outcome doesn't match the
+      # expected TE-from-mislabeled-attacker shape -- leave att_player and
+      # the point outcome alone.
   elif has_set:
     if row['set_player'] != teammate:
       changes.append(('set_player', row['set_player'], teammate))
