@@ -56,18 +56,24 @@ def _is_plausible_coord(x, y):
 
 
 def _touch_players(row):
-  """Return the distinct-position player name for each touch that occurred
-  on this point (pass/set/att), and whether any two touches share a name --
-  the double-contact violation this whole module exists to fix."""
-  names = []
+  """Return the touch players in play order (pass, set, att -- whichever
+  occurred), and whether any two *adjacent* touches share a name -- the
+  double-contact violation this whole module exists to fix.
+
+  Pass and attack being the same player is NOT a violation when there's a
+  set in between -- that's the normal, common P-S-P alternation (passer
+  digs it, teammate sets, passer comes back and hits). Only touches on
+  either side of a given contact can't belong to the same player, so this
+  checks adjacency in the touch sequence, not "any name repeated"."""
+  touches = []
   if row['pass_yn'] == 'Y' and _has_name(row['pass_player']):
-    names.append(row['pass_player'])
+    touches.append(row['pass_player'])
   if row['set_yn'] == 'Y' and _has_name(row['set_player']):
-    names.append(row['set_player'])
+    touches.append(row['set_player'])
   if row['att_yn'] == 'Y' and _has_name(row['att_player']):
-    names.append(row['att_player'])
-  has_conflict = len(names) > 1 and len(names) != len(set(names))
-  return names, has_conflict
+    touches.append(row['att_player'])
+  has_conflict = any(touches[i] == touches[i + 1] for i in range(len(touches) - 1))
+  return touches, has_conflict
 
 
 def _teammate(row, player):
@@ -200,11 +206,18 @@ def _apply_alternation(ppr_df, idx, row, passer, teammate):
   Writes go through ppr_df.at[...], not the `row` Series (which is a copy
   from iterrows() and would silently discard any assignment).
 
+  If the recorded attacker is on the *other* team, the double-contact rule
+  doesn't apply to it -- that's usually a set that went over the net and
+  got played by the opposing team (often scored as a first-ball error),
+  not a real attack by this team. Leave att_player alone in that case
+  rather than forcing it into this team's alternation.
+
   Returns the list of (field, old_value, new_value) changes actually made.
   """
   changes = []
   has_set = row['set_yn'] == 'Y'
   has_att = row['att_yn'] == 'Y'
+  own_team = (passer, teammate)
 
   if row['pass_player'] != passer:
     changes.append(('pass_player', row['pass_player'], passer))
@@ -214,7 +227,7 @@ def _apply_alternation(ppr_df, idx, row, passer, teammate):
     if row['set_player'] != teammate:
       changes.append(('set_player', row['set_player'], teammate))
       ppr_df.at[idx, 'set_player'] = teammate
-    if row['att_player'] != passer:
+    if row['att_player'] in own_team and row['att_player'] != passer:
       changes.append(('att_player', row['att_player'], passer))
       ppr_df.at[idx, 'att_player'] = passer
   elif has_set:
@@ -222,7 +235,7 @@ def _apply_alternation(ppr_df, idx, row, passer, teammate):
       changes.append(('set_player', row['set_player'], teammate))
       ppr_df.at[idx, 'set_player'] = teammate
   elif has_att:
-    if row['att_player'] != teammate:
+    if row['att_player'] in own_team and row['att_player'] != teammate:
       changes.append(('att_player', row['att_player'], teammate))
       ppr_df.at[idx, 'att_player'] = teammate
 

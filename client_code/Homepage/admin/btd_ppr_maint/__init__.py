@@ -65,8 +65,8 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
 
     # Now, let's populate the drop downs for the ppr_error_check! 
     self.league_drop_down_1.items = [(row["league"], row) for row in app_tables.league_list.search()]
-    self.gender_drop_down_1.items = [(row["gender"], row) for row in app_tables.subscriptions.search(team=user_row['team'])]
-    self.year_drop_down_1.items = [(row["year"], row) for row in app_tables.subscriptions.search(team=user_row['team'])]   
+    #self.gender_drop_down_1.items = [(row["gender"], row) for row in app_tables.subscriptions.search(team=user_row['team'])]
+    #self.year_drop_down_1.items = [(row["year"], row) for row in app_tables.subscriptions.search(team=user_row['team'])]   
     
     # populate the drop downs for league
     self.league_drop_down_1.selected_value = user_row["def_league"]

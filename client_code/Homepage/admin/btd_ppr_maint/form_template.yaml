@@ -48,7 +48,8 @@ components:
     - layout_properties: {grid_position: 'BYFKWF,SEIWNO'}
       name: year_drop_down
       properties:
-        items: ['2024', '2025']
+        include_placeholder: true
+        items: ['2024', '2025', '2026', '2027']
       type: DropDown
     layout_properties: {grid_position: 'IQJQNN,ZLMMGT WYLFDH,PBDNWT'}
     name: column_panel_1
@@ -319,7 +320,8 @@ components:
     type: Label
   - layout_properties: {grid_position: 'HKVQZK,KHJSCW'}
     name: gender_drop_down_1
-    properties: {}
+    properties:
+      items: [M, W]
     type: DropDown
   - layout_properties: {grid_position: 'HKVQZK,XVGYYL'}
     name: label_21
@@ -327,7 +329,8 @@ components:
     type: Label
   - layout_properties: {grid_position: 'HKVQZK,MFWWVV'}
     name: year_drop_down_1
-    properties: {}
+    properties:
+      items: ['2024', '2025', '2026', '2027']
     type: DropDown
   - layout_properties: {grid_position: 'HKVQZK,SALFDU'}
     name: run_ppr_file_error_check
