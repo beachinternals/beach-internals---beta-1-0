@@ -12,6 +12,7 @@ import anvil.server
 from datetime import datetime, timedelta
 import pandas as pd
 import io
+import json
 import rebuild_data
 import numpy as np
 
@@ -685,6 +686,40 @@ def check_inconsistent_data():
 
     if mp_issues:
       issues.append("<h3>master_player Issues</h3><ul>" + "".join(f"<li>{issue}</li>" for issue in mp_issues) + "</ul>")
+
+    # Check pass/set/attack attribution corrections (see pass_attribution_correction.py),
+    # reading the audit trail generate_ppr_files_not_background already wrote to
+    # btd_files.corrections_json. Filtered for current_year via the same btd_rows above.
+    corrected_items = []
+    flagged_items = []
+    for row in btd_rows:
+      if not row['corrections_json']:
+        continue
+      try:
+        corrections = json.loads(row['corrections_json'])
+      except (ValueError, TypeError):
+        continue
+      filename = str(row['filename'] or 'None')
+      for entry in corrections:
+        point = entry.get('point_no')
+        link = f' <a href="{entry["video_link"]}">video</a>' if entry.get('video_link') else ''
+        if entry.get('status') == 'corrected':
+          changes = ', '.join(f"{field}: {old} -> {new}" for field, old, new in entry.get('changes', []))
+          corrected_items.append(f"{filename}, Point {point}: {changes}{link}")
+        elif entry.get('status') == 'flagged':
+          reason = entry.get('classification', {}).get('reason', 'unknown')
+          flagged_items.append(f"{filename}, Point {point}: still ambiguous ({reason}){link}")
+
+    if corrected_items:
+      issues.append(
+        "<h3>Pass/Set/Attack Corrections Applied</h3><ul>" +
+        "".join(f"<li>{item}</li>" for item in corrected_items) + "</ul>"
+      )
+    if flagged_items:
+      issues.append(
+        "<h3>Pass/Set/Attack Attribution Still Flagged (fix at the source in Balltime)</h3><ul>" +
+        "".join(f"<li>{item}</li>" for item in flagged_items) + "</ul>"
+      )
 
     email_body = (
       f"<h2>Nightly Data Consistency Report - {datetime.now().strftime('%Y-%m-%d')} ({current_year} Data Only)</h2>"

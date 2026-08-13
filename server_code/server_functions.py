@@ -367,6 +367,24 @@ def build_video_links(ppr_df: pd.DataFrame) -> str:
 
   return ' '.join(links)
 
+def build_point_video_link(video_id, action_ids):
+  """
+  Build a Balltime video link scoped to a single point's touches, rather
+  than the whole-match links build_video_links() produces.
+
+  Parameters:
+  - video_id (str): the match's Balltime video id.
+  - action_ids (list[str]): the point's non-zero action ids, in touch order
+    (serve, pass, set, attack, dig -- whichever occurred), as returned by
+    pass_attribution_correction._point_action_ids().
+
+  Returns:
+  - str: a Balltime URL, or None if there's no usable video_id/action_ids.
+  """
+  if not video_id or video_id == "No Video Id" or not action_ids:
+    return None
+  return f"https://app.balltime.com/video/{video_id}?actionIds={','.join(action_ids)}"
+
 @monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str, video_yn: bool) -> FBHEResult:
   """

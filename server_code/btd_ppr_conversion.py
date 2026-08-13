@@ -13,6 +13,7 @@ import anvil.server
 import pandas as pd
 import io
 import math
+import json
 from datetime import datetime, timedelta, date
 
 # ============================================================================
@@ -34,6 +35,7 @@ from logger_utils import log_info, log_error, log_critical, log_debug
 # Add with other imports at top
 from weather_ppr_integration import add_weather_to_ppr
 from weather_integration import get_or_create_weather
+from pass_attribution_correction import correct_pass_attribution
 
 # This is a server module. It runs on the Anvil server,
 
@@ -70,6 +72,28 @@ def make_ppr_files( u_league, u_gender, u_year, u_team, rebuild):
 def generate_ppr_files( user_league, user_gender, user_year, user_team, rebuild ):
   task = generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild )
   return task
+
+@anvil.server.callable
+def run_pass_correction_test(user_league, user_gender, user_year, rebuild=True):
+  """
+  Manual test entry point: regenerate + correct PPR files for every team that
+  has btd_files under this league/gender/year, calling
+  generate_ppr_files_not_background() synchronously (not as a background
+  task) so the results are available immediately to whoever calls this --
+  e.g. from the browser via anvil.server.call('run_pass_correction_test',
+  league, gender, year). Defaults rebuild=True since the point of this call
+  is to force reprocessing for testing, not to skip already-current files.
+
+  Returns a list of {'team', 'result', 'new_data'} for each team processed.
+  """
+  teams = sorted({
+    r['team'] for r in app_tables.btd_files.search(league=user_league, gender=user_gender, year=user_year)
+  })
+  results = []
+  for team in teams:
+    return_string, new_data = generate_ppr_files_not_background(user_league, user_gender, user_year, team, rebuild)
+    results.append({'team': team, 'result': return_string, 'new_data': new_data})
+  return results
 
 @anvil.server.callable
 def generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild  ): 
@@ -122,11 +146,18 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       # Add weather to PPR (fetches weather once for entire match)
       ppr_df = add_weather_to_ppr(ppr_df, flist_r)
 
-      # 4) Error check the ppr file for consistency, maybe raise errors into an email/text message??
+      # 4) Correct pass/set/attack player mis-attribution where confident (see
+      # pass_attribution_correction.py), before error-checking -- so the error
+      # report below reflects what's left after correction, not what BTD
+      # originally gave us.
+      ppr_df, corrections = correct_pass_attribution(ppr_df)
+      corrections_json = json.dumps(corrections)
+
+      # 5) Error check the ppr file for consistency, maybe raise errors into an email/text message??
       ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
       #print(f"Error String: {error_string}")
 
-      # 5) Lastly, save the ppr csv file back into the btd_files database
+      # 6) Lastly, save the ppr csv file back into the btd_files database
       # first, I need to cahnge the ppr_file dataframe to a csv file.
       ppr_csv_file = pd.DataFrame.to_csv(ppr_df)
       ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
@@ -139,6 +170,8 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
         ppr_data=ppr_media,
         error_str=error_string,
         no_errors=no_errors,
+        corrections_json=corrections_json,
+        corrections_count=len(corrections),
         ppr_file_date=datetime.now(),
         weather_id=weather_id,                    # NEW: Store weather_id
         weather_fetched=True if weather_id else False  # NEW: Track success
@@ -848,32 +881,24 @@ def transpose_ppr_coord(ppr_df):
 
 def error_check_ppr(ppr_df):
   #print("#############  Error Checking ppr DataFrame ######################")
-  all3 = False
   no_errors = 0
 
   # build a string to store this data
   error_string = str()
   # loop tyhru the datafarame looking for clear errors that can (or can not) be corrected
+  # This function only detects and reports; correct_pass_attribution() (called
+  # before this, in generate_ppr_files_not_background) is what actually fixes
+  # what it can, so by the time we get here most of what's flagged below is
+  # what correction couldn't confidently resolve.
   for index,ppr_r in ppr_df.iterrows():
+    all3 = False  # per-row: whether this point has a pass/set/att triple conflict
     # pass, set, attack all by same player
     if ppr_r['att_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and (ppr_r['set_player'] == ppr_r['att_player'] ):
       #print(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       all3 = True
       error_string = error_string + '\n' + print_to_string(f"|- Pass, Set, & Attack Same Player -| {ppr_r['pass_player']}, {ppr_r['set_player']}, {ppr_r['att_player']}, Point Number:{ppr_r['point_no']}")
       no_errors += 1
-      #print(f"Error String in all 3:{error_string}")
-      #
-      # so lets change the setter to the other player
-      if ppr_r['set_player'] == ppr_r['player_a1']:
-        ppr_r['set_player'] = ppr_r['player_a2']
-      elif ppr_r['set_player'] == ppr_r['player_a2']:
-        ppr_r['set_player'] = ppr_r['player_a1']
-      elif ppr_r['set_player'] ==  ppr_r['player_b1']:
-        ppr_r['set_player'] = ppr_r['player_b2']
-      elif ppr_r['set_player'] ==  ppr_r['player_b2']:
-        ppr_r['set_player'] = ppr_r['player_b2']
-      error_string = error_string + '\n' + "Swapped the set player to "+ppr_r['set_player'] 
-    
+
     if ppr_r['set_yn'] == "Y" and (ppr_r['pass_player'] == ppr_r['set_player'] ) and not all3:
       #print(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
       error_string = error_string + '\n' + print_to_string(f"|- Pass and  Set Same Player       -| {ppr_r['pass_player']},{ppr_r['set_player']} Point Number:{ppr_r['point_no']}")
