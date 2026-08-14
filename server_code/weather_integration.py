@@ -188,6 +188,15 @@ def fetch_weather_for_match(venue_name, match_date, match_time):
     lat = venue['latitude']
     lon = venue['longitude']
 
+    if lat is None or lon is None:
+      log_info(f"Venue '{venue_name}' has no coordinates on file - skipping weather fetch")
+      return {
+        'success': False,
+        'weather_id': None,
+        'message': f'Venue missing coordinates: {venue_name}',
+        'data': None
+      }
+
     log_debug(f"Found venue: {venue_name} at lat={lat}, lon={lon}")
 
     # 3. Check if weather already exists

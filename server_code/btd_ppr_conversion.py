@@ -143,6 +143,9 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       # 3) Calculate offensive tactic
       ppr_df = calc_tactic(ppr_df)
 
+      # 3b) Calculate per-point pressure score (static: postseason/round; dynamic: score situation)
+      ppr_df = calc_pressure_score(ppr_df)
+
       # Add weather to PPR (fetches weather once for entire match)
       ppr_df = add_weather_to_ppr(ppr_df, flist_r)
 
@@ -285,7 +288,8 @@ def btd_to_ppr_df(btd_df, flist_r):
     'dig_player':blank,'dig_yn':yn,'dig_src_x':zero,'dig_src_y':zero,'dig_src_t':zero,'dig_src_zone_depth':blank,'dig_src_zone_net':zero,
                   'dig_dest_x':zero,'dig_dest_y':zero,'dig_dest_t':zero,'dig_dest_zone_depth':blank,'dig_dest_zone_net':zero,
                   'dig_dist':0.0,'dig_dur':0.0,'dig_speed':0.0,'dig_angle':0.0,'dig_action_id':zero,'dig_height':0.0,'dig_quality':0.0,'dig_type':blank,
-    'point_outcome':blank,'point_outcome_team':blank,'tactic':blank,'last_action_id':zero
+    'point_outcome':blank,'point_outcome_team':blank,'tactic':blank,'last_action_id':zero,
+    'pressure_static':zero,'pressure_dynamic':zero,'pressure_total':zero
   }
 
   #print(f" ppr dictionary: {ppr_dict}")
@@ -1089,6 +1093,60 @@ def calc_tactic( ppr_df ):
           ppr_df.at[index,'tactic'] = 'behind' if ( ppr_r['set_src_x'] <= ppr_r['pass_src_x'] and ppr_r['att_src_x'] <= ppr_r['set_src_x']) else ' '
  
   return (ppr_df)
+
+# ============================================================================
+# PRESSURE SCORE CALCULATION
+# ============================================================================
+# Thresholds below are today's best guess, not finalized per-league values.
+# Keep them as named constants here so they can be tuned per league later
+# without touching the calculation logic in calculate_pressure_score().
+PRESSURE_POSTSEASON_COMP_L1 = 'Post-Season'
+PRESSURE_CLUTCH_ROUND_COMP_L3 = ('Semis', 'Finals')
+
+PRESSURE_LATE_MATCH_POINTS = 33
+PRESSURE_LATE_MATCH_SCORE_DIFF = 4
+
+PRESSURE_DECIDING_SET = 3
+PRESSURE_DECIDING_SET_LATE_POINTS = 20
+PRESSURE_DECIDING_SET_LATE_SCORE_DIFF = 4
+
+
+def calculate_pressure_score(row):
+  # Compute the pressure score for a single PPR point.
+  # Returns (pressure_static, pressure_dynamic, pressure_total).
+  static = 0
+  dynamic = 0
+
+  # Static component - same value for every point in the match
+  if row['comp_l1'] == PRESSURE_POSTSEASON_COMP_L1:
+    static += 1
+  if row['comp_l3'] in PRESSURE_CLUTCH_ROUND_COMP_L3:
+    static += 1  # stacks with postseason by design
+
+  # Dynamic component - changes point by point
+  total_points = row['a_score'] + row['b_score']
+  score_diff = abs(row['a_score'] - row['b_score'])
+
+  if total_points > PRESSURE_LATE_MATCH_POINTS and score_diff < PRESSURE_LATE_MATCH_SCORE_DIFF:
+    dynamic += 1
+  if row['set'] == PRESSURE_DECIDING_SET:
+    dynamic += 1
+  if (row['set'] == PRESSURE_DECIDING_SET and
+      total_points > PRESSURE_DECIDING_SET_LATE_POINTS and
+      score_diff < PRESSURE_DECIDING_SET_LATE_SCORE_DIFF):
+    dynamic += 1
+
+  return static, dynamic, static + dynamic
+
+
+def calc_pressure_score(ppr_df):
+  for index, ppr_r in ppr_df.iterrows():
+    static, dynamic, total = calculate_pressure_score(ppr_r)
+    ppr_df.at[index, 'pressure_static'] = static
+    ppr_df.at[index, 'pressure_dynamic'] = dynamic
+    ppr_df.at[index, 'pressure_total'] = total
+
+  return ppr_df
 
 def print_to_string(*args, **kwargs):
   output = io.StringIO()
