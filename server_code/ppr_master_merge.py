@@ -116,7 +116,7 @@ def deidentify_ppr(ppr_df, league, gender, year):
   for team_col, p1_col, p2_col in [('teama', 'player_a1', 'player_a2'),
                                    ('teamb', 'player_b1', 'player_b2')]:
     if all(c in ppr_df.columns for c in [team_col, p1_col, p2_col]):
-      ppr_df[team_col] = ppr_df[p1_col].fillna('') + ppr_df[p2_col].fillna('')
+      ppr_df[team_col] = ppr_df[p1_col].fillna('') + ' ' + ppr_df[p2_col].fillna('')
 
   # Step 4 — Remap point_outcome_team using original team strings captured in Step 1
   if 'point_outcome_team' in ppr_df.columns:
