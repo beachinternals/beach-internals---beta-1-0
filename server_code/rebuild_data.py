@@ -126,19 +126,31 @@ def night_processing_backgound(d_league, d_gender, d_year, rebuild_all, all_leag
     for c_gender in gender_list:
       for c_year in year_list:
         new_league_data = False
-        new_team_data = False
         if (all_leagues) or ((c_league == d_league) and (c_gender == d_gender) and (c_year == d_year)):
           for c_team in team_list:
             email_message += 'Generating PPR files for: ' + c_league + ' ' + c_gender + ' ' + c_year + ' ' + c_team + '\n'
             r_value, new_team_data = generate_ppr_files_not_background(c_league, c_gender, c_year, c_team, rebuild_all)
 
-            if new_team_data:
+            # Also re-merge if the btd_files data for this team is newer than
+            # the last merge, even if this run didn't itself convert anything
+            # (e.g. ppr_data was regenerated out-of-band by a reprocessing script).
+            if new_team_data or master_ppr_is_stale(c_league, c_gender, c_year, c_team, 'Private'):
               new_league_data = True
               email_message += ' Merging PPR Files for ' + c_league + " " + c_gender + " " + c_year + " " + c_team + "\n"
               r_val = make_master_ppr_not_background(c_league, c_gender, c_year, c_team, 'Private')
-              r_val = make_master_ppr_not_background(c_league, c_gender, c_year, c_team, 'Scouting')
-              email_message += ' Merging PPR Files for ' + c_league + ' ' + c_gender + ' ' + c_year + ' League' + "\n"
-              r_val = make_master_ppr_not_background(c_league, c_gender, c_year, c_team, 'League')
+
+          # Scouting and League merges aggregate across every team for this
+          # league/gender/year, so check staleness once here instead of
+          # redundantly re-running them inside the per-team loop above.
+          if master_ppr_is_stale(c_league, c_gender, c_year, '', 'Scouting'):
+            new_league_data = True
+            email_message += ' Merging Scouting PPR Files for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+            r_val = make_master_ppr_not_background(c_league, c_gender, c_year, '', 'Scouting')
+
+          if master_ppr_is_stale(c_league, c_gender, c_year, '', 'League'):
+            new_league_data = True
+            email_message += ' Merging League PPR Files for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+            r_val = make_master_ppr_not_background(c_league, c_gender, c_year, '', 'League')
 
         if new_league_data:
           # Calculate Player Data

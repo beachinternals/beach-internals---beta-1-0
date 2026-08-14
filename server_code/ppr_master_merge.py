@@ -377,6 +377,62 @@ def create_master_ppr_table( master_ppr_df, user_league, user_gender, user_year,
 
   pass
 
+def master_ppr_is_stale(league, gender, year, team, data_set):
+  """
+  True if any btd_files row feeding this data_set has a ppr_file_date newer
+  than the corresponding ppr_csv_tables row's merge date (or if no merged
+  row exists yet but converted btd files do).
+
+  Needed because the merge step is otherwise only triggered by
+  generate_ppr_files_not_background having just (re)converted a file in the
+  same run. That misses btd_files rows whose ppr_data was regenerated
+  out-of-band (e.g. a one-off reprocessing script after a conversion/error
+  check upgrade), which still stamp ppr_file_date but don't produce a
+  new_data flag for night processing to see.
+  """
+  if data_set == "Private":
+    btd_rows = app_tables.btd_files.search(
+      league=league, gender=gender, year=year, team=team, private=True
+    )
+    effective_team = team
+  elif data_set == "Scouting":
+    btd_rows = app_tables.btd_files.search(
+      league=league, gender=gender, year=year, private=False
+    )
+    effective_team = "Scout"
+  elif data_set == "League":
+    btd_rows = app_tables.btd_files.search(
+      league=league, gender=gender, year=year
+    )
+    effective_team = "League"
+  else:
+    return False
+
+  latest_ppr_file_date = None
+  for flist_r in btd_rows:
+    ppr_file_date = flist_r['ppr_file_date']
+    if not ppr_file_date:
+      continue
+    if latest_ppr_file_date is None or ppr_file_date > latest_ppr_file_date:
+      latest_ppr_file_date = ppr_file_date
+
+  if latest_ppr_file_date is None:
+    return False  # nothing converted yet for this group
+
+  ppr_csv_row = app_tables.ppr_csv_tables.get(
+    q.all_of(
+      league=league,
+      gender=gender,
+      year=year,
+      team=effective_team
+    )
+  )
+
+  if not ppr_csv_row or not ppr_csv_row['date']:
+    return True  # converted btd files exist but there's no merged file yet
+
+  return latest_ppr_file_date > ppr_csv_row['date']
+
 # ============================================================================
 # WEATHER BACKFILL
 # ============================================================================
