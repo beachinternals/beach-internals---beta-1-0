@@ -379,7 +379,7 @@ def btd_to_ppr_df(btd_df, flist_r):
       ppr_df = save_dig_info(ppr_df, btd_r, ppr_row, teama, teamb)
 
     #print(f"TOuches since serve:{touch_since_serve}, Player:{btd_r['player']}, action type:{btd_r['action_type']}")
-    if touch_since_serve == 5 or ( btd_r['player'] in serve_team and btd_r['action_type'] != "serve" ):
+    if touch_since_serve == 5 or ( btd_r['player'] in serve_team and btd_r['action_type'] not in ("serve", "receive") ):
       in_trans = True
 
     # --- Backfill dig_dest_t from the current action's time ---
