@@ -38,6 +38,7 @@ from calc_player_data import *
 from calc_pair_data import *
 from calc_traingle_scoring import *
 from s_w_report import *
+from weather_integration import cleanup_duplicate_weather_records
 
 
 # ============================================================================
@@ -194,6 +195,15 @@ def night_processing_backgound(d_league, d_gender, d_year, rebuild_all, all_leag
   email_message += ' Loading Pair data Table \n'
   r_val = load_pair_data_table()
   email_message += '        ' + str(r_val) + "\n"
+
+  # Clean up any duplicate weather_data rows so get_or_create_weather()
+  # stops logging "duplicate found" warnings on every lookup
+  email_message += ' Cleaning up duplicate weather records \n'
+  cleanup_stats = cleanup_duplicate_weather_records()
+  email_message += (
+    '        duplicate groups: ' + str(cleanup_stats['duplicates_found']) +
+    ', records deleted: ' + str(cleanup_stats['records_deleted']) + "\n"
+  )
 
   internals_email = 'beachinternals@gmail.com'
   now1 = datetime.now()
