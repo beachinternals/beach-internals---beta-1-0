@@ -2,7 +2,7 @@ import anvil.files
 from anvil.files import data_files
 # logger_utils.py
 import traceback
-from anvil_extras.logging import Logger, DEBUG
+from anvil_extras.logging import Logger, ERROR
 import json
 from datetime import datetime, timezone
 import inspect
@@ -17,7 +17,7 @@ import inspect
 # -----------------------------------------------------------------------------
 critical_logger = Logger(
   name="critical",
-  level=DEBUG,
+  level=ERROR,
   format="{name}-{level} {datetime:%Y-%m-%d %H:%M:%S}: {msg}"
 )
 
