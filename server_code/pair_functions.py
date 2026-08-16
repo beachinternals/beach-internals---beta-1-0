@@ -120,14 +120,17 @@ def pair_players(disp_pair: str) -> Tuple[str, str]:
   """
     Retrieve the two player names associated with a pair identifier from the master_pair table.
     If not found in the table, attempts to parse the pair string directly.
-    
+
     Args:
-        disp_pair (str): Pair identifier in format "TEAM1 NUM1 NAME1 TEAM2 NUM2 NAME2"
+        disp_pair (str): Pair identifier in format "TEAM1 NUM1 [NAME1] TEAM2 NUM2 [NAME2]"
                         Example: "UNF 10 Sophia UNF 32 Kamryn"
-        
+                        A player's name is optional — team+number is unique within a
+                        league/gender/year even when no shortname is on file, so
+                        "UNF 10 UNF 32" (blank names) is also valid.
+
     Returns:
         tuple[str, str]: A tuple containing the two player names (player1, player2)
-        
+
     Raises:
         ValueError: If disp_pair is empty or not a string, or if no players are found for the pair
     """
@@ -146,38 +149,24 @@ def pair_players(disp_pair: str) -> Tuple[str, str]:
   try:
     parts = disp_pair.split()
 
-    # We need at least 6 parts: TEAM1 NUM1 NAME1 TEAM2 NUM2 NAME2
-    if len(parts) < 6:
+    # Each player starts with a "TEAM NUM" anchor (2-4 uppercase letters
+    # followed by a number), optionally followed by a name. Find every
+    # anchor instead of assuming a fixed 3-tokens-per-player width, so a
+    # blank shortname (2 tokens: TEAM NUM) parses fine right alongside a
+    # player that does have a name (3 tokens: TEAM NUM NAME).
+    anchors = [
+      i for i in range(len(parts) - 1)
+      if parts[i].isupper() and 2 <= len(parts[i]) <= 4 and parts[i + 1].isdigit()
+    ]
+
+    if len(anchors) < 2:
       raise ValueError(f"Invalid pair format: {disp_pair}")
 
-    # Find the split point between the two players
-    # Look for where we have TEAM NUM pattern appearing a second time
-    split_idx = None
-
-    # Start from position 3 (after first TEAM NUM NAME)
-    for i in range(3, len(parts) - 2):
-      # Check if parts[i] looks like a team (2-4 uppercase letters)
-      # and parts[i+1] is a number
-      if (parts[i].isupper() and 
-          2 <= len(parts[i]) <= 4 and 
-          parts[i+1].isdigit()):
-        split_idx = i
-        break
-
-    if split_idx is None:
-      # Fallback: assume it's exactly in the middle
-      split_idx = len(parts) // 2
+    split_idx = anchors[1]
 
     # Build player1 and player2 strings
-    player1_parts = parts[:split_idx]
-    player2_parts = parts[split_idx:]
-
-    # Validate each player has at least TEAM NUM NAME (3 parts)
-    if len(player1_parts) < 3 or len(player2_parts) < 3:
-      raise ValueError(f"Invalid pair format: {disp_pair}")
-
-    player1 = ' '.join(player1_parts)
-    player2 = ' '.join(player2_parts)
+    player1 = ' '.join(parts[anchors[0]:split_idx])
+    player2 = ' '.join(parts[split_idx:])
 
     #print(f"Parsed pair {disp_pair} -> player1: {player1}, player2: {player2}")
     return player1, player2

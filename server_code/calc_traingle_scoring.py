@@ -360,20 +360,26 @@ def calculate_triangle_scoring_not_background( c_league, c_gender, c_year):
         if ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] ) != 0:
           tri_df.at[tri_row,'fbhe_a_withace'] = ( tri_df.at[tri_row,'fbk_a'] - tri_df.at[tri_row,'fbe_a'] ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
           tri_df.at[tri_row,'fbso_a_withace'] = ( tri_df.at[tri_row,'fbk_a']  ) / ( tri_df.at[tri_row,'srv_num_b'] - tri_df.at[tri_row,'tse_b'] )
-          eso_a_obj = calc_team_eso(ppr_df, teama)
-          if eso_a_obj.get('status'):
-            #print(f"saving eso_a {eso_a_obj.get('eso')}")
-            tri_df.at[tri_row,'eso_a'] = eso_a_obj.get('eso')
+          try:
+            eso_a_obj = calc_team_eso(ppr_df, teama)
+            if eso_a_obj.get('status'):
+              #print(f"saving eso_a {eso_a_obj.get('eso')}")
+              tri_df.at[tri_row,'eso_a'] = eso_a_obj.get('eso')
+          except Exception as e:
+            log_error(f"calc_team_eso failed for teama '{teama}': {e}")
         else:
           tri_df.at[tri_row,'fbhe_a_withace'] = None
           tri_df.at[tri_row,'fbso_a_withace'] = None
         if ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] ) != 0:
           tri_df.at[tri_row,'fbhe_b_withace'] = ( tri_df.at[tri_row,'fbk_b'] - tri_df.at[tri_row,'fbe_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
           tri_df.at[tri_row,'fbso_b_withace'] = ( tri_df.at[tri_row,'fbk_b'] ) / ( tri_df.at[tri_row,'srv_num_a'] - tri_df.at[tri_row,'tse_a'] )
-          eso_b_obj = calc_team_eso(ppr_df, teamb)
-          if eso_b_obj.get('status'):
-            #print(f"saving eso_b {eso_b_obj.get('eso')}")
-            tri_df.at[tri_row,'eso_b'] = eso_b_obj.get('eso')
+          try:
+            eso_b_obj = calc_team_eso(ppr_df, teamb)
+            if eso_b_obj.get('status'):
+              #print(f"saving eso_b {eso_b_obj.get('eso')}")
+              tri_df.at[tri_row,'eso_b'] = eso_b_obj.get('eso')
+          except Exception as e:
+            log_error(f"calc_team_eso failed for teamb '{teamb}': {e}")
         else:
           tri_df.at[tri_row,'fbhe_b_withace'] = None
           tri_df.at[tri_row,'fbso_b_withace'] = None
