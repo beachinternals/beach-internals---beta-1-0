@@ -116,16 +116,16 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
 
     if rebuild:
       # call the function to return the ppr file given the btd file
-      ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
+      ppr_df, serve_corrections = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )
       calc_ppr = True
       new_data = True
     else:
       if not flist_r['ppr_file_date']: # no date for the ppr file
-        ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )         
+        ppr_df, serve_corrections = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )
         calc_ppr = True
         new_data = True
       elif flist_r['btd_file_date'] > flist_r['ppr_file_date']: # btd file is newer then the ppr file
-        ppr_df = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r ) 
+        ppr_df, serve_corrections = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )
         calc_ppr = True
         new_data = True
 
@@ -156,7 +156,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       ppr_df, corrections = correct_pass_attribution(ppr_df)
       ppr_df, sp_corrections = correct_serve_pass_same_team(ppr_df, video_id=flist_r['video_id'])
       ppr_df, tc_corrections = correct_missing_touches(ppr_df, video_id=flist_r['video_id'])
-      corrections = corrections + sp_corrections + tc_corrections
+      corrections = serve_corrections + corrections + sp_corrections + tc_corrections
       corrections_json = json.dumps(corrections)
 
       # 5) Error check the ppr file for consistency, maybe raise errors into an email/text message??
@@ -188,6 +188,198 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       #print(f"Not processing file:{flist_r['filename']}")
 
   return return_string, new_data
+
+# ############ resolve the match's canonical player/team names once, shared
+# by canonical-name mapping, serve-player resolution, and point-building
+def resolve_match_players(flist_r):
+  # we need to sort the players alphabetically
+  player_a1 = flist_r['ppr_playera1']
+  player_a2 = flist_r['ppr_playera2']
+  btd_playera1 = flist_r['player1']
+  btd_playera2 = flist_r['player2']
+  if player_a1 > player_a2: # if I switch, I also need to switch the ppr player mapping
+    player_a2 = flist_r['ppr_playera1']
+    player_a1 = flist_r['ppr_playera2']
+    btd_playera2 = flist_r['player1']
+    btd_playera1 = flist_r['player2']
+  teama = player_a1 + " " + player_a2
+
+  player_b1 = flist_r['ppr_playerb1']
+  player_b2 = flist_r['ppr_playerb2']
+  btd_playerb1 = flist_r['player3']
+  btd_playerb2 = flist_r['player4']
+  if player_b1 > player_b2: # if I switch, I also need to switch the ppr player mapping
+    player_b2 = flist_r['ppr_playerb1']
+    player_b1 = flist_r['ppr_playerb2']
+    btd_playerb2 = flist_r['player3']
+    btd_playerb1 = flist_r['player4']
+  teamb =  player_b1 + " " + player_b2
+
+  return (player_a1, player_a2, btd_playera1, btd_playera2,
+          player_b1, player_b2, btd_playerb1, btd_playerb2,
+          teama, teamb)
+
+# ############ map every raw btd player name to its canonical roster name,
+# once, up front -- adds 'canonical_player', leaves 'player' (the raw source
+# value) untouched so raw vs. resolved stays visible for review
+def map_players_to_canonical(btd_df, player_a1, player_a2, btd_playera1, btd_playera2,
+                               player_b1, player_b2, btd_playerb1, btd_playerb2,
+                               flist_r):
+  def resolve(row):
+    raw_player = row['player']
+    if raw_player == btd_playera1:
+      return player_a1
+    if raw_player == btd_playera2:
+      return player_a2
+    if raw_player == btd_playerb1:
+      return player_b1
+    if raw_player == btd_playerb2:
+      return player_b2
+    log_error(
+      f"Player name mismatch in {flist_r['filename']}: raw name "
+      f"'{raw_player}' does not match any of the 4 expected roster "
+      f"names ({flist_r['player1']}, {flist_r['player2']}, "
+      f"{flist_r['player3']}, {flist_r['player4']}). "
+      f"action_id={row['action_id']}, action_type={row['action_type']}"
+    )
+    return "UNMATCHED_PLAYER"
+
+  btd_df['canonical_player'] = btd_df.apply(resolve, axis=1)
+  return btd_df
+
+def _team_of(player, player_a1, player_a2, player_b1, player_b2):
+  # exact roster membership, not substring -- an UNMATCHED_PLAYER sentinel
+  # or a partial name must never accidentally match here
+  if player in (player_a1, player_a2):
+    return 'A'
+  if player in (player_b1, player_b2):
+    return 'B'
+  return None
+
+def _partner_of(player, team_letter, player_a1, player_a2, player_b1, player_b2):
+  if team_letter == 'A':
+    return player_a2 if player == player_a1 else player_a1
+  else:
+    return player_b2 if player == player_b1 else player_b1
+
+# ############ pre-conversion serve-player resolver -- runs on the raw btd_df,
+# before btd_to_ppr_df's point-building loop, because a wrong serve_player
+# corrupts point_outcome/score for every point after it, and that damage
+# can't be undone by correcting the name after the fact.
+#
+# Per rally: who served, and who received (if anyone did) -- taking the
+# first serve/receive row found for each rally_id. rally_id order matches
+# row/action_id order in every btd file spot-checked so far, so we sort by
+# (rally_id, action_id) for a deterministic chronological ordering.
+def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2):
+  serves = (btd_df[btd_df['action_type'] == 'serve']
+            .sort_values(['rally_id', 'action_id'], kind='mergesort')
+            .drop_duplicates('rally_id', keep='first'))
+  receives = (btd_df[btd_df['action_type'] == 'receive']
+              .sort_values(['rally_id', 'action_id'], kind='mergesort')
+              .drop_duplicates('rally_id', keep='first'))
+  receive_by_rally = dict(zip(receives['rally_id'], receives['canonical_player']))
+
+  rallies = []
+  for _, row in serves.iterrows():
+    rallies.append({
+      'rally_id': row['rally_id'],
+      'serve': row['canonical_player'],
+      'pass': receive_by_rally.get(row['rally_id']),
+    })
+
+  def team_of(player):
+    return _team_of(player, player_a1, player_a2, player_b1, player_b2)
+
+  def partner_of(player, team_letter):
+    return _partner_of(player, team_letter, player_a1, player_a2, player_b1, player_b2)
+
+  def find_backward(idx, serve_team):
+    if idx - 1 >= 0:
+      r = rallies[idx - 1]
+      if r['serve'] not in (None, 'empty', 'UNMATCHED_PLAYER') and team_of(r['serve']) == serve_team:
+        return r['serve'], 'same server (continuous run)'
+    j = idx - 1
+    while j >= 0:
+      r = rallies[j]
+      if r['serve'] not in (None, 'empty', 'UNMATCHED_PLAYER') and team_of(r['serve']) == serve_team:
+        return partner_of(r['serve'], serve_team), 'partner of last known server (new run)'
+      j -= 1
+    return None, None
+
+  def find_forward(idx, serve_team):
+    if idx + 1 < len(rallies):
+      r = rallies[idx + 1]
+      if r['serve'] not in (None, 'empty', 'UNMATCHED_PLAYER') and team_of(r['serve']) == serve_team:
+        return r['serve'], 'same server (continuous run continues)'
+    j = idx + 1
+    while j < len(rallies):
+      r = rallies[j]
+      if r['serve'] not in (None, 'empty', 'UNMATCHED_PLAYER') and team_of(r['serve']) == serve_team:
+        return partner_of(r['serve'], serve_team), 'partner of next known server (different run)'
+      j += 1
+    return None, None
+
+  corrections = []
+  for idx, r in enumerate(rallies):
+    if r['serve'] != 'UNMATCHED_PLAYER':
+      continue
+
+    pass_player = r['pass']
+    entry = {
+      'rally_id': int(r['rally_id']),
+      'before': {'serve_player': 'UNMATCHED_PLAYER', 'pass_player': pass_player},
+      'classification': {'error_type': 'unmatched_serve_player'},
+    }
+
+    if pass_player in (None, 'empty', 'UNMATCHED_PLAYER'):
+      entry['classification']['reason'] = 'pass_player also unresolved - no anchor to determine serve team'
+      entry['status'] = 'flagged'
+      entry['changes'] = []
+      corrections.append(entry)
+      continue
+
+    serve_team = 'B' if team_of(pass_player) == 'A' else 'A'
+
+    back_val, back_reason = find_backward(idx, serve_team)
+    fwd_val, fwd_reason = find_forward(idx, serve_team)
+    entry['classification'].update({
+      'backward_candidate': back_val, 'backward_reason': back_reason,
+      'forward_candidate': fwd_val, 'forward_reason': fwd_reason,
+    })
+
+    if back_val and fwd_val:
+      if back_val == fwd_val:
+        new_val = back_val
+        entry['classification']['reason'] = 'backward and forward evidence agree'
+      else:
+        entry['classification']['reason'] = 'backward and forward evidence DISAGREE - contradiction'
+        entry['status'] = 'flagged'
+        entry['changes'] = []
+        corrections.append(entry)
+        continue
+    elif back_val or fwd_val:
+      new_val = back_val or fwd_val
+      entry['classification']['reason'] = 'only one direction had evidence'
+    else:
+      entry['classification']['reason'] = 'no evidence in either direction'
+      entry['status'] = 'flagged'
+      entry['changes'] = []
+      corrections.append(entry)
+      continue
+
+    btd_df.loc[
+      (btd_df['rally_id'] == r['rally_id']) & (btd_df['action_type'] == 'serve'),
+      'canonical_player'
+    ] = new_val
+    r['serve'] = new_val  # propagate into the live rallies list so later
+                           # iterations see this resolution as a real neighbor,
+                           # not stale UNMATCHED_PLAYER
+    entry['status'] = 'corrected'
+    entry['changes'] = [['serve_player', 'UNMATCHED_PLAYER', new_val]]
+    corrections.append(entry)
+
+  return btd_df, corrections
 
 # ############ server function to convert a btd file to a ppr file
 def btd_to_ppr_file(btd_file_bytes, flist_r):
@@ -228,38 +420,33 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
     # Reset index to prevent duplicate label errors from new BTD columns
     btd_df = btd_df.reset_index(drop=True)
 
+  # resolve the match's four canonical players/teams once, shared across
+  # canonical-name mapping, serve-player resolution, and point-building
+  (player_a1, player_a2, btd_playera1, btd_playera2,
+   player_b1, player_b2, btd_playerb1, btd_playerb2,
+   teama, teamb) = resolve_match_players(flist_r)
+
+  # resolve every raw player name to canonical up front (adds
+  # 'canonical_player', 'player' stays untouched for reference), then try to
+  # backfill any UNMATCHED_PLAYER serve_player from neighboring rallies --
+  # both have to happen before point-building, since a wrong serve_player
+  # corrupts every score downstream of it and can't be fixed after the fact.
+  btd_df = map_players_to_canonical(
+    btd_df, player_a1, player_a2, btd_playera1, btd_playera2,
+    player_b1, player_b2, btd_playerb1, btd_playerb2, flist_r
+  )
+  btd_df, serve_corrections = resolve_serve_players(
+    btd_df, player_a1, player_a2, player_b1, player_b2
+  )
+
   # call function to make the convesion
-  ppr_df = btd_to_ppr_df(btd_df, flist_r)
+  ppr_df = btd_to_ppr_df(btd_df, flist_r, player_a1, player_a2, player_b1, player_b2, teama, teamb)
 
   #print(f"ppr dataframe returned: {ppr_df}")
-  return ppr_df
+  return ppr_df, serve_corrections
 
 # ############ server function to convert a btd dataframe to a ppr dataframe
-def btd_to_ppr_df(btd_df, flist_r):
-
-  # define the two teams and the four players in this file:
-  # we need to sort the players alphabetically
-  player_a1 = flist_r['ppr_playera1']
-  player_a2 = flist_r['ppr_playera2']
-  btd_playera1 = flist_r['player1']
-  btd_playera2 = flist_r['player2']
-  if player_a1 > player_a2: # if I switch, I also need to switch the ppr player mapping
-    player_a2 = flist_r['ppr_playera1']
-    player_a1 = flist_r['ppr_playera2']
-    btd_playera2 = flist_r['player1']
-    btd_playera1 = flist_r['player2']
-  teama = player_a1 + " " + player_a2
-
-  player_b1 = flist_r['ppr_playerb1']
-  player_b2 = flist_r['ppr_playerb2']
-  btd_playerb1 = flist_r['player3']
-  btd_playerb2 = flist_r['player4']
-  if player_b1 > player_b2: # if I switch, I also need to switch the ppr player mapping
-    player_b2 = flist_r['ppr_playerb1']
-    player_b1 = flist_r['ppr_playerb2']
-    btd_playerb2 = flist_r['player3']
-    btd_playerb1 = flist_r['player4']
-  teamb =  player_b1 + " " + player_b2 
+def btd_to_ppr_df(btd_df, flist_r, player_a1, player_a2, player_b1, player_b2, teama, teamb):
 
   #print(f"BTD 2 PPR: 4 players, a1, a2 {player_a1,player_a2}, b1 b2 {player_b1},{player_b2}")
   zero = 0
@@ -324,24 +511,9 @@ def btd_to_ppr_df(btd_df, flist_r):
     if index == 0:
       print(f"FIRST ROW: action_type={btd_r['action_type']}, rally_id={btd_r['rally_id']}, ppr_row={ppr_row}")
       
-    # replace the btd players with the master player reference
-    if btd_r['player'] == btd_playera1:
-      btd_r['player'] = player_a1
-    elif btd_r['player'] == btd_playera2:
-      btd_r['player'] = player_a2
-    elif btd_r['player'] == btd_playerb1:
-      btd_r['player'] = player_b1
-    elif btd_r['player'] == btd_playerb2:
-      btd_r['player'] = player_b2
-    else:
-      log_error(
-        f"Player name mismatch in {flist_r['filename']}: raw name "
-        f"'{btd_r['player']}' does not match any of the 4 expected roster "
-        f"names ({flist_r['player1']}, {flist_r['player2']}, "
-        f"{flist_r['player3']}, {flist_r['player4']}). "
-        f"action_id={btd_r['action_id']}, action_type={btd_r['action_type']}"
-      )
-      btd_r['player'] = "UNMATCHED_PLAYER"
+    # player identity is already resolved upstream (map_players_to_canonical,
+    # plus for serve rows, resolve_serve_players) -- just read it here
+    btd_r['player'] = btd_r['canonical_player']
     
     # if this is a serve, then start a new point
     if btd_r['action_type'] == "serve":
