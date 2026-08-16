@@ -330,3 +330,102 @@ def correct_pass_attribution(ppr_df):
     corrections.append(entry)
 
   return ppr_df, corrections
+
+
+def team_of(player, row):
+  """Return 'A', 'B', or None depending on which roster the player belongs to."""
+  if player in (row['player_a1'], row['player_a2']):
+    return 'A'
+  if player in (row['player_b1'], row['player_b2']):
+    return 'B'
+  return None
+
+
+def teammates(team_letter, row):
+  if team_letter == 'A':
+    return row['player_a1'], row['player_a2']
+  else:
+    return row['player_b1'], row['player_b2']
+
+
+def correct_serve_pass_same_team(ppr_df, video_id=None):
+  """
+  Detects and (where confident) corrects points where pass_player is on
+  the same team as serve_player.
+
+  Rule:
+    - serve_team == pass_team  ->  bug confirmed
+    - receiving_team = the other team
+    - if set_player is one of the two receiving_team players ->
+          reassign pass_player to the OTHER receiving_team player
+          (the one who did NOT set)
+    - otherwise (no set_player, or set_player isn't on the receiving
+      team) -> do not guess; flag for manual review
+
+  Returns (ppr_df, corrections) in the same shape as
+  correct_pass_attribution(), so entries can be appended to the same
+  corrections_json list.
+  """
+  corrections = []
+
+  for index, row in ppr_df.iterrows():
+    serve_player = row['serve_player']
+    pass_player = row['pass_player']
+
+    if pass_player == 'empty' or serve_player == 'empty':
+      continue  # nothing to check - no pass or no serve recorded
+
+    serve_team = team_of(serve_player, row)
+    pass_team = team_of(pass_player, row)
+
+    if serve_team is None or pass_team is None:
+      # one of the names doesn't match either roster - see Fix 3,
+      # not something this function should guess at
+      continue
+
+    if serve_team != pass_team:
+      continue  # already correct - pass is on the receiving team
+
+    # --- BUG CONFIRMED: pass_player is on the same team as the server ---
+    receiving_team = 'B' if serve_team == 'A' else 'A'
+    p1, p2 = teammates(receiving_team, row)
+    set_player = row['set_player']
+
+    entry = {
+      'point_no': int(row['point_no']),
+      'video_id': video_id if video_id is not None else row.get('video_id', 'empty'),
+      'video_link': (f"https://app.balltime.com/video/{video_id}"
+                      if video_id else None),
+      'before': {
+        'serve_player': serve_player,
+        'pass_player': pass_player,
+        'set_player': set_player,
+      },
+      'classification': {
+        'error_type': 'serve_and_pass_same_team',
+        'receiving_team_candidates': [p1, p2],
+      },
+    }
+
+    if set_player == p1:
+      new_pass = p2
+    elif set_player == p2:
+      new_pass = p1
+    else:
+      new_pass = None  # empty, or set_player doesn't resolve cleanly
+
+    if new_pass is not None:
+      ppr_df.at[index, 'pass_player'] = new_pass
+      entry['classification']['reason'] = 'set_player identifies the setter; pass assigned to the other receiving-team player'
+      entry['status'] = 'corrected'
+      entry['changes'] = [['pass_player', pass_player, new_pass]]
+    else:
+      reason = ('no set_player to break the tie' if set_player == 'empty'
+                 else f'set_player ({set_player}) is not on the receiving team - deeper issue')
+      entry['classification']['reason'] = reason
+      entry['status'] = 'flagged'
+      entry['changes'] = []
+
+    corrections.append(entry)
+
+  return ppr_df, corrections

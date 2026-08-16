@@ -35,7 +35,7 @@ from logger_utils import log_info, log_error, log_critical, log_debug
 # Add with other imports at top
 from weather_ppr_integration import add_weather_to_ppr
 from weather_integration import get_or_create_weather
-from pass_attribution_correction import correct_pass_attribution
+from pass_attribution_correction import correct_pass_attribution, correct_serve_pass_same_team
 
 # This is a server module. It runs on the Anvil server,
 
@@ -154,6 +154,8 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       # report below reflects what's left after correction, not what BTD
       # originally gave us.
       ppr_df, corrections = correct_pass_attribution(ppr_df)
+      ppr_df, sp_corrections = correct_serve_pass_same_team(ppr_df, video_id=flist_r['video_id'])
+      corrections = corrections + sp_corrections
       corrections_json = json.dumps(corrections)
 
       # 5) Error check the ppr file for consistency, maybe raise errors into an email/text message??
@@ -331,9 +333,14 @@ def btd_to_ppr_df(btd_df, flist_r):
     elif btd_r['player'] == btd_playerb2:
       btd_r['player'] = player_b2
     else:
-      # ######## print this to a file to display as this is an error in the data #####################
-      #print(f"Could not find the player!! {btd_r['player']}, Row {index} in these four: {flist_r['player1']}, {flist_r['player2']}, {flist_r['player3']}, {flist_r['player4']}") 
-      btd_r['player'] = " "
+      log_error(
+        f"Player name mismatch in {flist_r['filename']}: raw name "
+        f"'{btd_r['player']}' does not match any of the 4 expected roster "
+        f"names ({flist_r['player1']}, {flist_r['player2']}, "
+        f"{flist_r['player3']}, {flist_r['player4']}). "
+        f"action_id={btd_r['action_id']}, action_type={btd_r['action_type']}"
+      )
+      btd_r['player'] = "UNMATCHED_PLAYER"
     
     # if this is a serve, then start a new point
     if btd_r['action_type'] == "serve":
