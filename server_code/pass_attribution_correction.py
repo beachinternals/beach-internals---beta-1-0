@@ -429,3 +429,134 @@ def correct_serve_pass_same_team(ppr_df, video_id=None):
     corrections.append(entry)
 
   return ppr_df, corrections
+
+
+def partner_of(player, team_letter, row):
+  p1, p2 = teammates(team_letter, row)
+  return p2 if player == p1 else p1
+
+
+def is_known_good(player, receiving_team, row):
+  if player in ('empty', 'UNMATCHED_PLAYER', None):
+    return False
+  return team_of(player, row) == receiving_team
+
+
+def correct_missing_touches(ppr_df, video_id=None):
+  """
+  Fills in pass_player, set_player, and att_player where the _yn flag says
+  the touch happened but the player identity is missing/unmatched/still
+  wrong, using whichever of the other two touches are already trustworthy
+  as an anchor. Flags (does not guess) when there's no usable anchor, or
+  when pass_player and att_player disagree in a way that makes set_player
+  ambiguous.
+
+  Resolves pass, then att, then set within a point, so a later derivation
+  can use an anchor derived earlier in the same point.
+
+  Returns (ppr_df, corrections) in the same shape as the existing
+  correction functions, for appending to the same corrections_json list.
+  """
+  corrections = []
+
+  for index, row in ppr_df.iterrows():
+    serve_player = row['serve_player']
+    serve_team = team_of(serve_player, row)
+    if serve_team is None:
+      continue  # can't establish receiving team without a valid serve_player
+    receiving_team = 'B' if serve_team == 'A' else 'A'
+
+    pass_yn = row['pass_yn']
+    set_yn = row['set_yn']
+    att_yn = row['att_yn']
+
+    pass_player = row['pass_player']
+    set_player = row['set_player']
+    att_player = row['att_player']
+
+    point_changes = []
+    point_reasons = []
+
+    # ---- 1. pass_player ----
+    if pass_yn == "Y" and not is_known_good(pass_player, receiving_team, row):
+      new_pass = None
+      reason = None
+      if set_yn == "Y" and is_known_good(set_player, receiving_team, row):
+        new_pass = partner_of(set_player, receiving_team, row)
+        reason = 'derived from set_player (partner)'
+      elif set_yn == "N" and att_yn == "Y" and is_known_good(att_player, receiving_team, row):
+        new_pass = partner_of(att_player, receiving_team, row)
+        reason = 'derived from att_player (partner, no set occurred)'
+      elif set_yn == "Y" and att_yn == "Y" and is_known_good(att_player, receiving_team, row):
+        new_pass = att_player
+        reason = 'derived from att_player (same person, set occurred)'
+
+      if new_pass is not None:
+        ppr_df.at[index, 'pass_player'] = new_pass
+        point_changes.append(['pass_player', pass_player, new_pass])
+        point_reasons.append(f'pass_player: {reason}')
+        pass_player = new_pass  # so later derivations in this row see the update
+      else:
+        point_reasons.append('pass_player: no usable anchor - flagged')
+
+    # ---- 2. att_player (before set_player, so set_player can use it) ----
+    if att_yn == "Y" and not is_known_good(att_player, receiving_team, row):
+      new_att = None
+      reason = None
+      if set_yn == "Y" and is_known_good(pass_player, receiving_team, row):
+        new_att = pass_player
+        reason = 'derived from pass_player (same person, set occurred)'
+      elif set_yn == "N" and is_known_good(pass_player, receiving_team, row):
+        new_att = partner_of(pass_player, receiving_team, row)
+        reason = 'derived from pass_player (partner, no set occurred)'
+      elif set_yn == "Y" and is_known_good(set_player, receiving_team, row):
+        new_att = partner_of(set_player, receiving_team, row)
+        reason = 'derived from set_player (partner)'
+
+      if new_att is not None:
+        ppr_df.at[index, 'att_player'] = new_att
+        point_changes.append(['att_player', att_player, new_att])
+        point_reasons.append(f'att_player: {reason}')
+        att_player = new_att
+      else:
+        point_reasons.append('att_player: no usable anchor - flagged')
+
+    # ---- 3. set_player (last, so it can use freshly-derived pass/att) ----
+    if set_yn == "Y" and not is_known_good(set_player, receiving_team, row):
+      pass_good = is_known_good(pass_player, receiving_team, row)
+      att_good = is_known_good(att_player, receiving_team, row)
+      new_set = None
+      reason = None
+
+      if pass_good and att_good and pass_player != att_player:
+        reason = (f'CONTRADICTION - pass_player ({pass_player}) and '
+                   f'att_player ({att_player}) disagree; cannot determine '
+                   f'set_player - flagged for manual review')
+      elif pass_good:
+        new_set = partner_of(pass_player, receiving_team, row)
+        reason = 'derived from pass_player (partner)'
+      elif att_good:
+        new_set = partner_of(att_player, receiving_team, row)
+        reason = 'derived from att_player (partner)'
+      else:
+        reason = 'set_player: no usable anchor - flagged'
+
+      if new_set is not None:
+        ppr_df.at[index, 'set_player'] = new_set
+        point_changes.append(['set_player', set_player, new_set])
+      point_reasons.append(reason if new_set is not None else f'set_player: {reason}')
+
+    if point_changes or point_reasons:
+      corrections.append({
+        'point_no': int(row['point_no']),
+        'video_id': video_id if video_id is not None else row.get('video_id', 'empty'),
+        'video_link': (f"https://app.balltime.com/video/{video_id}" if video_id else None),
+        'classification': {
+          'error_type': 'missing_or_unmatched_touch',
+          'notes': point_reasons,
+        },
+        'status': 'corrected' if point_changes else 'flagged',
+        'changes': point_changes,
+      })
+
+  return ppr_df, corrections

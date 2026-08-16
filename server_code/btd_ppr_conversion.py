@@ -35,7 +35,7 @@ from logger_utils import log_info, log_error, log_critical, log_debug
 # Add with other imports at top
 from weather_ppr_integration import add_weather_to_ppr
 from weather_integration import get_or_create_weather
-from pass_attribution_correction import correct_pass_attribution, correct_serve_pass_same_team
+from pass_attribution_correction import correct_pass_attribution, correct_serve_pass_same_team, correct_missing_touches
 
 # This is a server module. It runs on the Anvil server,
 
@@ -155,7 +155,8 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
       # originally gave us.
       ppr_df, corrections = correct_pass_attribution(ppr_df)
       ppr_df, sp_corrections = correct_serve_pass_same_team(ppr_df, video_id=flist_r['video_id'])
-      corrections = corrections + sp_corrections
+      ppr_df, tc_corrections = correct_missing_touches(ppr_df, video_id=flist_r['video_id'])
+      corrections = corrections + sp_corrections + tc_corrections
       corrections_json = json.dumps(corrections)
 
       # 5) Error check the ppr file for consistency, maybe raise errors into an email/text message??
@@ -935,7 +936,15 @@ def error_check_ppr(ppr_df):
       else:
         # Optional: log which field is missing for debugging
         print(f"Missing data - serve:{serve_player}, pass:{pass_player}, teama:{teama}, teamb:{teamb}")
-      
+
+    # unmatched player sentinel left in any touch field
+    for field in ['serve_player', 'pass_player', 'set_player', 'att_player']:
+      if ppr_r[field] == 'UNMATCHED_PLAYER':
+        error_string = error_string + '\n' + print_to_string(
+          f"|- Unmatched Player ({field})               -| Point Number:{ppr_r['point_no']}"
+        )
+        no_errors += 1
+
     # can I check the service order?
     if not ppr_r['serve_player']:
       #print(f"|- No Serve Player                   -|{ppr_r['serve_player']}, Point Number:{ppr_r['point_no']}")
