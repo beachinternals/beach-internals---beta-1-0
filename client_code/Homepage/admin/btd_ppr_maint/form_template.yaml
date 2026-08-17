@@ -350,8 +350,21 @@ components:
     name: btd_fix
     properties: {text: Fix btd_file}
     type: Button
-  layout_properties: {grid_position: 'GIUEKO,FTWVQD'}
+  layout_properties: {grid_position: 'PLANJX,NPZXRY'}
   name: outlined_card_8
+  properties: {role: outlined-card}
+  type: ColumnPanel
+- components:
+  - layout_properties: {grid_position: 'VJOLED,GZALRN'}
+    name: label_22
+    properties: {align: center, text: BTD > PPR File Data Quality}
+    type: Label
+  - layout_properties: {grid_position: 'VJOLED,GCARFI'}
+    name: outlined_button_3
+    properties: {role: outlined-button, text: Run Data Quality Report - System}
+    type: Button
+  layout_properties: {grid_position: 'AODVGH,VCCIDE'}
+  name: outlined_card_10
   properties: {role: outlined-card}
   type: ColumnPanel
 container: {type: ColumnPanel}

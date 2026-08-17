@@ -262,3 +262,15 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     alert(task)
     pass  # Write Code Here
 
+  @handle("outlined_button_3", "click")
+  def outlined_button_3_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    task = anvil.server.call('run_pass_correction_test',
+                             league['league'] if not isinstance(league, str) else league,
+                             gender['gender'] if not isinstance(gender, str) else gender,
+                             year['year'] if not isinstance(year, str) else year)
+
+    alert(task)
+    pass  # Write Code Here
+    pass  # Write Code Here
+
