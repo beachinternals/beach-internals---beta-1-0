@@ -22,8 +22,7 @@ from logger_utils import log_info, log_error
 #
 #  SENDING STATUS (see trigger_weekly_data_quality_report at the bottom):
 #    - The internal summary email to the system administrator
-#      (beachinternals@gmail.com, matching check_inconsistent_data's
-#      existing nightly-report address) is sent for real.
+#      (info@beachinternals.com) is sent for real.
 #    - Per-team emails are NOT sent yet -- SEND_TEAM_EMAILS stays False
 #      until that's explicitly turned on. build_weekly_report() still
 #      builds the per-team content so it can be reviewed/previewed.
@@ -31,7 +30,7 @@ from logger_utils import log_info, log_error
 # ============================================================================
 
 SEND_TEAM_EMAILS = False
-ADMIN_EMAIL = "beachinternals@gmail.com"
+ADMIN_EMAIL = "info@beachinternals.com"
 
 # Matches the exact lines error_check_ppr() (btd_ppr_conversion.py) writes
 # into error_str, e.g.:
@@ -189,12 +188,14 @@ def build_weekly_report(reference_time=None):
       'detail': build_team_detail(team, files),
     }
 
+  total_n_files = sum(row['n_files'] for row in summary_rows)
+  total_n_clean = sum(row['n_clean'] for row in summary_rows)
   totals = {
-    'n_files': sum(row['n_files'] for row in summary_rows),
-    'n_clean': sum(row['n_clean'] for row in summary_rows),
+    'n_files': total_n_files,
+    'n_clean': total_n_clean,
     'total_errors': sum(row['total_errors'] for row in summary_rows),
+    'pct_clean': round(total_n_clean / total_n_files * 100, 1) if total_n_files else 0,
   }
-  totals['pct_clean'] = round(totals['n_clean'] / totals['n_files'] * 100, 1) if totals['n_files'] else 0
 
   return {
     'start': start,

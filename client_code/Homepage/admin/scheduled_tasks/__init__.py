@@ -140,6 +140,12 @@ class scheduled_tasks(scheduled_tasksTemplate):
 
     pass
 
+  @handle("weekly_dq_report_button", "click")
+  def weekly_dq_report_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    return_value = anvil.server.call('trigger_weekly_data_quality_report')
+    alert(f"{return_value['status']}. Check info@beachinternals.com shortly for the internal summary.")
+
   def button_1_click(self, **event_args):
     """This method is called when the button is clicked"""
     print("Calling Daily Performance Summary Client")
