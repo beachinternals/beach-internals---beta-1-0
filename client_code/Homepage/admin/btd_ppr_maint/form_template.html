@@ -1,0 +1,116 @@
+<anvil-form container="ColumnPanel">
+  <anvil-component type="ColumnPanel" name="outlined_card_1" prop:role="outlined-card" container:grid_position="TWPHOE,FQMOWA">
+    <anvil-component type="Label" name="label_1" prop:align="center" prop:role="headline" prop:text="PPR File Maintenance" container:grid_position="CUBVAY,TRBHXY"></anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="outlined_card_2" prop:col_widths='"{\"THMIKC\":15,\"ZLMMGT\":45}"' prop:role="outlined-card" container:grid_position="TCKNES,IQQNJV">
+    <anvil-component type="ColumnPanel" name="column_panel_4" container:grid_position="IQJQNN,THMIKC IXJAPN,PPDBAO">
+      <anvil-component type="Label" name="label_2" prop:align="center" prop:bold="true" prop:role="null" prop:text="btd -> ppr : Generate PPR files for each Ball Time File" container:grid_position="VXCEKH,XGWZQW"></anvil-component>
+    </anvil-component>
+    <anvil-component type="Button" name="gen_all_ppr_button" prop:role="outlined-button" prop:text="Generate All PPR Files" container:grid_position="IQJQNN,THMIKC XKAZLT,UUUWPE"></anvil-component>
+    <anvil-component type="ColumnPanel" name="column_panel_1" container:grid_position="IQJQNN,ZLMMGT WYLFDH,PBDNWT">
+      <anvil-component type="Label" name="label_4" prop:align="right" prop:text="League" container:grid_position="BYFKWF,LADHNU"></anvil-component>
+      <anvil-component type="DropDown" name="league_drop_down" on:change="self.league_drop_down_change" container:grid_position="BYFKWF,IGYCJR"></anvil-component>
+      <anvil-component type="Label" name="label_5" prop:align="right" prop:text="Gender" container:grid_position="BYFKWF,AGTRCM"></anvil-component>
+      <anvil-component type="DropDown" name="gender_drop_down" prop:items='["W","M"]' container:grid_position="BYFKWF,EZTMTN"></anvil-component>
+      <anvil-component type="Label" name="label_6" prop:align="right" prop:text="Year" container:grid_position="BYFKWF,EPWWMS"></anvil-component>
+      <anvil-component type="DropDown" name="year_drop_down" prop:include_placeholder="true" prop:items='["2024","2025","2026","2027"]' container:grid_position="BYFKWF,SEIWNO"></anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="column_panel_2" container:grid_position="IQJQNN,ZLMMGT ORADKB,IQHXPA">
+      <anvil-component type="Label" name="label_7" prop:align="right" prop:text="Team" container:grid_position="SVNRCR,VKMVQV"></anvil-component>
+      <anvil-component type="DropDown" name="team_drop_down" container:grid_position="SVNRCR,FWVFBM"></anvil-component>
+      <anvil-component type="RadioButton" name="rebuild_button" prop:text="Rebuild All" container:grid_position="SVNRCR,DEXSNK"></anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="column_panel_3" container:grid_position="IQJQNN,ZLMMGT CYJRHV,ECUGNJ">
+      <anvil-component type="Button" name="generate_ppr_button" prop:role="outlined-button" prop:text="Generate League + Team PPR Files" on:click="self.generate_ppr_button_click" container:grid_position="TMKBRV,YTSAPB"></anvil-component>
+    </anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="outlined_card_3" prop:col_widths='"{\"GNZNHD\":15,\"XFSWNN\":45}"' prop:role="outlined-card" container:grid_position="XCBGKX,SZAXIP">
+    <anvil-component type="ColumnPanel" name="column_panel_5" container:grid_position="HFFPKC,GNZNHD MJAKWW,CPLIZA">
+      <anvil-component type="Label" name="label_3" prop:align="center" prop:bold="true" prop:role="null" prop:text="Merge PPR: Merge match PPR Files into Master PPR files" container:grid_position="OHVKDX,MAEYKV"></anvil-component>
+    </anvil-component>
+    <anvil-component type="Button" name="merge_all_button" prop:role="outlined-button" prop:text="Merge All " container:grid_position="HFFPKC,GNZNHD TVWOXD,YDJOIX"></anvil-component>
+    <anvil-component type="ColumnPanel" name="column_panel_1_copy" container:grid_position="HFFPKC,XFSWNN">
+      <anvil-component type="Label" name="label_4_copy" prop:text="League" container:grid_position="BYFKWF,LADHNU"></anvil-component>
+      <anvil-component type="DropDown" name="league_drop_down_copy" container:grid_position="BYFKWF,IGYCJR"></anvil-component>
+      <anvil-component type="Label" name="label_5_copy" prop:text="Gender" container:grid_position="BYFKWF,AGTRCM"></anvil-component>
+      <anvil-component type="DropDown" name="gender_drop_down_copy" prop:items='["W","M"]' container:grid_position="BYFKWF,EZTMTN"></anvil-component>
+      <anvil-component type="Label" name="label_6_copy" prop:text="Year" container:grid_position="BYFKWF,EPWWMS"></anvil-component>
+      <anvil-component type="DropDown" name="year_drop_down_copy" prop:items='["2024","2025"]' container:grid_position="BYFKWF,SEIWNO"></anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="column_panel_2_copy" container:grid_position="HFFPKC,XFSWNN">
+      <anvil-component type="Label" name="label_7_copy" prop:text="Team" container:grid_position="SVNRCR,VKMVQV"></anvil-component>
+      <anvil-component type="DropDown" name="team_drop_down_copy" container:grid_position="SVNRCR,FWVFBM"></anvil-component>
+      <anvil-component type="Label" name="label_8_copy" prop:text="Which Data Set?" container:grid_position="SVNRCR,YUQWGO"></anvil-component>
+      <anvil-component type="DropDown" name="drop_down_data_set_copy" prop:items='["Private","Scouting","League"]' container:grid_position="SVNRCR,BXUMEA"></anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="column_panel_3_copy" container:grid_position="HFFPKC,XFSWNN">
+      <anvil-component type="Button" name="merge_ppr_button" prop:role="outlined-button" prop:text="Merge League / Team into Master PPR File" on:click="self.merge_ppr_button_click" container:grid_position="TMKBRV,YTSAPB"></anvil-component>
+    </anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="outlined_card_4" prop:role="outlined-card" container:grid_position="PVKSMS,JEKWEE">
+    <anvil-component type="ColumnPanel" name="column_panel_7" container:grid_position="JHHHYC,CPTHKC GKYSTL,BFRQOZ">
+      <anvil-component type="Label" name="label_8" prop:align="center" prop:bold="true" prop:role="body" prop:text="Create League Summary Data" container:grid_position="UQKESH,RBNVRZ"></anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="column_panel_9" container:grid_position="JHHHYC,CPTHKC RZJHWY,KMBAYE">
+      <anvil-component type="Button" name="all_player_data_button" prop:role="outlined-button" prop:text="Create All Player Data : calc_all_player_data" on:click="self.all_player_data_button_click" container:grid_position="EPIKIX,QKQQGO"></anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="column_panel_8" container:grid_position="JHHHYC,ZAAVXD QQFNJM,JRHAXC">
+      <anvil-component type="Label" name="label_9" prop:align="right" prop:text="League:" container:grid_position="DKBETA,TKBNSA"></anvil-component>
+      <anvil-component type="DropDown" name="league3_drop_down" on:change="self.league3_drop_down_change" container:grid_position="DKBETA,NGTIJT"></anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="column_panel_10" container:grid_position="JHHHYC,ZAAVXD ACLRPN,NWKIGP">
+      <anvil-component type="Button" name="create_summary_button" prop:role="outlined-button" prop:text="Create Player Data: calc_player_data_background" on:click="self.create_summary_button_click" container:grid_position="SAAYSZ,HIWCGL"></anvil-component>
+    </anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="outlined_card_5" prop:role="outlined-card" container:grid_position="EXITKV,AEDSYF">
+    <anvil-component type="Label" name="label_10" prop:text="Create Triangle Scoring Table" container:grid_position="YVKKFQ,VYNCIF"></anvil-component>
+    <anvil-component type="Label" name="label_11" prop:align="right" prop:text="League:" container:grid_position="YVKKFQ,EVJXUK"></anvil-component>
+    <anvil-component type="DropDown" name="tri_league_drop_down" on:change="self.tri_league_drop_down_change" container:grid_position="YVKKFQ,OCUQMR"></anvil-component>
+    <anvil-component type="Button" name="tri_button" prop:role="outlined-button" prop:text="Create Table:calc_triangle_scoring_background" on:click="self.tri_button_click" container:grid_position="YVKKFQ,OPBVNI"></anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="outlined_card_6" prop:role="outlined-card" container:grid_position="APTLEV,LMLBTY">
+    <anvil-component type="Label" name="label_12" prop:text="Create Pair Table" container:grid_position="WEKJSE,BOKYTA"></anvil-component>
+    <anvil-component type="Label" name="label_13" prop:align="right" prop:text="League:" container:grid_position="WEKJSE,SJWOMI"></anvil-component>
+    <anvil-component type="DropDown" name="league4_drop_down" on:change="self.league4_drop_down_change" container:grid_position="WEKJSE,JGSFSZ IXFPUV,CYEXKE"></anvil-component>
+    <anvil-component type="Label" name="label_14" prop:align="right" prop:text="Build Master Pair Data:" container:grid_position="WEKJSE,JGSFSZ YXQIBL,UNXFET"></anvil-component>
+    <anvil-component type="Button" name="create_pair_button" prop:role="outlined-button" prop:text="Create Table:build_pair_table" on:click="self.create_pair_button_click" container:grid_position="WEKJSE,BFKIAM JMHTQU,WWLMAZ"></anvil-component>
+    <anvil-component type="Button" name="build_master_pair_button" prop:role="outlined-button" prop:text="build_pair_data_table" on:click="self.build_master_pair_button_click" container:grid_position="WEKJSE,BFKIAM GRSGWE,OEWZDJ"></anvil-component>
+    <anvil-component type="Button" name="outlined_button_2" prop:role="outlined-button" prop:text="Build master pair file" on:click="self.outlined_button_2_click" container:grid_position="WEKJSE,BFKIAM BAHQXX,GRDWKX"></anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="outlined_card_7" prop:role="outlined-card" container:grid_position="KSFWNK,FMQMGA">
+    <anvil-component type="Label" name="label_15" prop:text="Create Pair Data Table &amp; Pair Data Stats Table" container:grid_position="MTUJGU,EPTRYW"></anvil-component>
+    <anvil-component type="Label" name="label_16" prop:align="right" prop:text="League:" container:grid_position="MTUJGU,DGXNVE"></anvil-component>
+    <anvil-component type="DropDown" name="league5_drop_down" container:grid_position="MTUJGU,SGLAKB"></anvil-component>
+    <anvil-component type="Button" name="outlined_button_1" prop:role="outlined-button" prop:text="Create Table
+            calc_pair_data
+            " on:click="self.outlined_button_1_click" container:grid_position="MTUJGU,YEEYXT"></anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="outlined_card_9" prop:col_widths='"{\"WGGFBP\":8,\"GXKHCL\":7,\"QSXTPD\":9,\"DYCCBD\":6,\"KHJSCW\":9,\"XVGYYL\":6,\"MFWWVV\":8,\"SALFDU\":7}"' prop:role="outlined-card" container:grid_position="ZMVOKM,STJVNB">
+    <anvil-component type="Label" name="label_18" prop:text="Run PPR file error check:" container:grid_position="HKVQZK,WGGFBP"></anvil-component>
+    <anvil-component type="Label" name="label_19" prop:text="League:" container:grid_position="HKVQZK,GXKHCL"></anvil-component>
+    <anvil-component type="DropDown" name="league_drop_down_1" container:grid_position="HKVQZK,QSXTPD"></anvil-component>
+    <anvil-component type="Label" name="label_20" prop:text="Gender:" container:grid_position="HKVQZK,DYCCBD"></anvil-component>
+    <anvil-component type="DropDown" name="gender_drop_down_1" prop:items='["M","W"]' container:grid_position="HKVQZK,KHJSCW"></anvil-component>
+    <anvil-component type="Label" name="label_21" prop:text="Year:" container:grid_position="HKVQZK,XVGYYL"></anvil-component>
+    <anvil-component type="DropDown" name="year_drop_down_1" prop:items='["2024","2025","2026","2027"]' container:grid_position="HKVQZK,MFWWVV"></anvil-component>
+    <anvil-component type="Button" name="run_ppr_file_error_check" prop:role="outlined-button" prop:text="Run" container:grid_position="HKVQZK,SALFDU"></anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="outlined_card_8" prop:role="outlined-card" container:grid_position="PLANJX,NPZXRY">
+    <anvil-component type="Label" name="label_17" prop:text="Repair video_id in btd_file" container:grid_position="XOKJDX,UQQPWY"></anvil-component>
+    <anvil-component type="Button" name="btd_fix" prop:text="Fix btd_file" container:grid_position="XOKJDX,VKGSPX"></anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="outlined_card_10" prop:col_widths='"{\"LQTLBL\":7,\"LQTLDD\":9,\"GNTLBL\":5,\"GNTLDD\":5,\"TMTLBL\":5,\"TMTLDD\":15,\"DWRVRD\":6,\"ECTAIX\":8}"' prop:role="outlined-card" container:grid_position="AODVGH,VCCIDE">
+    <anvil-component type="Label" name="label_22" prop:align="center" prop:text="BTD > PPR File Data Quality" container:grid_position="VJOLED,GZALRN"></anvil-component>
+    <anvil-component type="Button" name="outlined_button_3" prop:role="outlined-button" prop:text="Run Data Quality Report - System" container:grid_position="VJOLED,GCARFI QVMRYW,VUJQXR"></anvil-component>
+    <anvil-component type="Button" name="outlined_button_4" prop:role="outlined-button" prop:text="Run Data Quality Report Email" container:grid_position="VJOLED,GCARFI ZIKYYY,KCPFSB"></anvil-component>
+    <anvil-component type="Label" name="label_25" prop:text="Year:" container:grid_position="TMROWX,DWRVRD"></anvil-component>
+    <anvil-component type="DropDown" name="year_drop_down_2" prop:items='["2024","2025","2026","2027"]' container:grid_position="TMROWX,ECTAIX"></anvil-component>
+    <anvil-component type="Label" name="label_23" prop:text="League:" container:grid_position="TMROWX,LQTLBL"></anvil-component>
+    <anvil-component type="DropDown" name="league_drop_down_2" container:grid_position="TMROWX,LQTLDD"></anvil-component>
+    <anvil-component type="Label" name="label_24" prop:text="Gender:" container:grid_position="TMROWX,GNTLBL"></anvil-component>
+    <anvil-component type="DropDown" name="gender_drop_down_2" prop:items='["M","W"]' container:grid_position="TMROWX,GNTLDD"></anvil-component>
+    <anvil-component type="Label" name="label_26" prop:text="Team:" container:grid_position="TMROWX,TMTLBL"></anvil-component>
+    <anvil-component type="DropDown" name="team_drop_down_2" container:grid_position="TMROWX,TMTLDD"></anvil-component>
+    <anvil-component type="Button" name="run_team_quality_report_button" prop:role="outlined-button" prop:text="Run Data Quality Report - Team" container:grid_position="GYLXRI,INEYIX"></anvil-component>
+  </anvil-component>
+</anvil-form>

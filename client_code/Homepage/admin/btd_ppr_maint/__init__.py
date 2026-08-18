@@ -73,7 +73,17 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     self.gender_drop_down_1.selected_value = user_row["def_gender"]
     self.year_drop_down_1.selected_value = user_row["def_year"]
     #self.team_drop_down_1.selected_value = user_row['team']
-    
+
+    # Now, let's populate the drop downs for the ad hoc team data quality report!
+    self.league_drop_down_2.items = [(row["league"], row) for row in app_tables.league_list.search()]
+    self.league_drop_down_2.selected_value = user_row["def_league"]
+    self.gender_drop_down_2.selected_value = user_row["def_gender"]
+    self.year_drop_down_2.selected_value = user_row["def_year"]
+
+    searchitem = list(set([(r['team']) for r in app_tables.btd_files.search()]))
+    self.team_drop_down_2.items = searchitem
+    self.team_drop_down_2.selected_value = user_row['team']
+
   def generate_ppr_button_click(self, **event_args):
     """This method is called when the button is clicked"""
 
@@ -269,5 +279,30 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
 
     alert(task)
     pass  # Write Code Here
+
+  @handle("outlined_button_4", "click")
+  def outlined_button_4_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    task = anvil.server.call('trigger_weekly_data_quality_report')
+
+    alert(task)
+    pass  # Write Code Here
+
+  @handle("run_team_quality_report_button", "click")
+  def run_team_quality_report_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # league_drop_down_2's items are (display_text, Row) pairs, so once a
+    # value has actually been picked, selected_value is a Row (from
+    # league_list), not a string -- but the initial default (set in
+    # __init__) is a plain string. Handle both, same as run_ppr_file_error_check_click.
+    league = self.league_drop_down_2.selected_value
+    task = anvil.server.call('trigger_team_quality_report',
+                         league['league'] if not isinstance(league, str) else league,
+                         self.gender_drop_down_2.selected_value,
+                         self.year_drop_down_2.selected_value,
+                         self.team_drop_down_2.selected_value)
+
+    alert(f"{task['status']}. Check info@beachinternals.com shortly.")
+    pass
 
 

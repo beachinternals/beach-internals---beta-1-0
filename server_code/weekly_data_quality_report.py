@@ -107,7 +107,7 @@ def find_video_link(point_no, corrections, video_id):
   for c in corrections:
     if c.get('point_no') == point_no and c.get('video_link'):
       return c['video_link']
-  if video_id and video_id != 'empty':
+  if video_id and video_id != 'No Video Id':
     return f"https://app.balltime.com/video/{video_id}"
   return None
 
@@ -228,10 +228,48 @@ def render_internal_summary_html(report):
   )
 
 
-def render_team_email_html(team, report):
-  start, end = report['start'], report['end']
-  detail = report['team_reports'][team]['detail']
+def build_error_buckets(detail):
+  """
+  Buckets each file by its remaining error count: clean (0), 1-5, 6-10,
+  11-20, 21+. Uses len(f['errors']) (the parsed error lines actually
+  listed below) rather than the raw no_errors column, so the summary
+  table always agrees with the per-file breakdown under it.
+  """
+  buckets = {'clean': 0, 'le_5': 0, 'g6_10': 0, 'g11_20': 0, 'over_20': 0}
+  for f in detail:
+    n = len(f['errors'])
+    if f['clean'] or n == 0:
+      buckets['clean'] += 1
+    elif n <= 5:
+      buckets['le_5'] += 1
+    elif n <= 10:
+      buckets['g6_10'] += 1
+    elif n <= 20:
+      buckets['g11_20'] += 1
+    else:
+      buckets['over_20'] += 1
+  return buckets
 
+
+def render_error_bucket_summary_html(detail):
+  buckets = build_error_buckets(detail)
+  return (
+    "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse'>"
+    "<tr><th>Total files</th><th>Clean</th><th>1&ndash;5 errors</th>"
+    "<th>6&ndash;10 errors</th><th>11&ndash;20 errors</th><th>21+ errors</th></tr>"
+    f"<tr><td>{len(detail)}</td><td>{buckets['clean']}</td><td>{buckets['le_5']}</td>"
+    f"<td>{buckets['g6_10']}</td><td>{buckets['g11_20']}</td><td>{buckets['over_20']}</td></tr>"
+    "</table>"
+  )
+
+
+def render_team_detail_html(team, detail, subtitle):
+  """
+  Shared per-file/per-error HTML body for a team, used by both the weekly
+  windowed report and the ad hoc league/gender/year+team report below.
+  Leads with an error-count summary table, then the full per-file/per-error
+  breakdown.
+  """
   files_html = []
   for f in detail:
     if f['clean']:
@@ -252,10 +290,99 @@ def render_team_email_html(team, report):
     )
 
   return (
-    f"<h2>Weekly Data Quality Report &mdash; {team or 'None'}</h2>"
-    f"<p>Files loaded {start.strftime('%Y-%m-%d %H:%M')} &ndash; {end.strftime('%Y-%m-%d %H:%M')}</p>"
+    f"<h2>Data Quality Report &mdash; {team or 'None'}</h2>"
+    f"<p>{subtitle}</p>"
+    f"{render_error_bucket_summary_html(detail)}"
     f"{''.join(files_html)}"
   )
+
+
+def render_team_email_html(team, report):
+  start, end = report['start'], report['end']
+  detail = report['team_reports'][team]['detail']
+  subtitle = f"Files loaded {start.strftime('%Y-%m-%d %H:%M')} &ndash; {end.strftime('%Y-%m-%d %H:%M')}"
+  return render_team_detail_html(team, detail, subtitle)
+
+
+def build_team_quality_report(league, gender, year, team):
+  """
+  Ad hoc, on-demand version of the per-team report: every btd_files row
+  matching this league/gender/year/team, with no date-window restriction
+  (unlike build_weekly_report, which only looks at the current Tue-Tue
+  window). Useful for reviewing a specific team's data quality at any time.
+  """
+  files = list(app_tables.btd_files.search(
+    league=league, gender=gender, year=str(year), team=team
+  ))
+  n = len(files)
+  n_clean = sum(1 for f in files if not f['no_errors'])
+  return {
+    'league': league,
+    'gender': gender,
+    'year': year,
+    'team': team,
+    'n_files': n,
+    'n_clean': n_clean,
+    'pct_clean': round(n_clean / n * 100, 1) if n else 0,
+    'total_errors': sum(f['no_errors'] or 0 for f in files),
+    'detail': build_team_detail(team, files),
+  }
+
+
+def _team_quality_report_subtitle(league, gender, year):
+  return f"League {league} | Gender {gender} | Year {year} &mdash; all files on file (no date filter)"
+
+
+@anvil.server.callable
+def preview_team_quality_report(league, gender, year, team):
+  """
+  INTERNALS only. Same per-file/per-error breakdown and video links as the
+  weekly per-team email, but for a caller-chosen league/gender/year/team
+  and ALL files on file for that combination (not just the current week).
+  Returns the summary counts plus rendered HTML; does not send any email.
+  """
+  _require_internals()
+  report = build_team_quality_report(league, gender, year, team)
+  return {
+    **report,
+    'html': render_team_detail_html(team, report['detail'], _team_quality_report_subtitle(league, gender, year)),
+  }
+
+
+@anvil.server.callable
+def trigger_team_quality_report(league, gender, year, team):
+  """INTERNALS only. Launches the background task that emails this report."""
+  _require_internals()
+  anvil.server.launch_background_task('send_team_quality_report', league, gender, year, team)
+  return {"status": f"Team data quality report triggered for {team} ({league} {gender} {year})"}
+
+
+@anvil.server.background_task
+def send_team_quality_report(league, gender, year, team):
+  """
+  Builds the ad hoc league/gender/year+team report (all files on file, no
+  date window) and emails it to the system administrator.
+  """
+  try:
+    report = build_team_quality_report(league, gender, year, team)
+    html = render_team_detail_html(team, report['detail'], _team_quality_report_subtitle(league, gender, year))
+
+    anvil.email.send(
+      to=ADMIN_EMAIL,
+      from_address="no-reply",
+      subject=f"Data Quality Report - {team} - {league} {gender} {year}",
+      html=html
+    )
+    log_info(f"Team data quality report sent to {ADMIN_EMAIL} for {team} ({league} {gender} {year})")
+
+  except Exception as e:
+    log_error(f"Error in send_team_quality_report: {str(e)}")
+    anvil.email.send(
+      to=ADMIN_EMAIL,
+      from_address="no-reply",
+      subject="Team Data Quality Report Error",
+      html=f"<h2>Error building/sending the Team Data Quality Report</h2><p>League {league} | Gender {gender} | Year {year} | Team {team}</p><p>{str(e)}</p>"
+    )
 
 
 @anvil.server.callable
