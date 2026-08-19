@@ -458,6 +458,15 @@ def build_corrections_detail(files):
         'status': c.get('status', 'unknown'),
         'error_type': classification.get('error_type', _DEFAULT_CORRECTION_ERROR_TYPE),
         'reason': classification.get('reason'),
+        # Whatever classify_pass_player()/correct_missing_touches() etc left
+        # in classification besides error_type/reason -- e.g. candidates,
+        # z_distance, confidence_ratio, sample_sizes (pass/set/att
+        # attribution) or notes (missing/unmatched touch, one line per
+        # field derivation). Kept generic and rendered as-is so newly added
+        # classification detail shows up here without more code changes.
+        'classification_extra': {
+          k: v for k, v in classification.items() if k not in ('error_type', 'reason')
+        },
         'before': c.get('before') or {},
         'changes': c.get('changes') or [],
         'video_link': get_correction_video_link(c, f['video_id']),
@@ -494,6 +503,16 @@ def _team_corrections_report_subtitle(league, gender, year):
   return f"League {league} | Gender {gender} | Year {year} &mdash; all files on file (no date filter)"
 
 
+def _format_classification_value(value):
+  if isinstance(value, float):
+    return str(round(value, 3))
+  if isinstance(value, dict):
+    return "{" + ", ".join(f"{k}={_format_classification_value(v)}" for k, v in value.items()) + "}"
+  if isinstance(value, list):
+    return "[" + ", ".join(_format_classification_value(v) for v in value) + "]"
+  return str(value)
+
+
 def render_correction_entry_html(entry):
   status = entry['status']
   status_label = _STATUS_LABELS.get(status, status.upper())
@@ -506,6 +525,18 @@ def render_correction_entry_html(entry):
   if entry['before']:
     before_str = ", ".join(f"{k}={v}" for k, v in entry['before'].items())
     extra.append(f"Before: {before_str}")
+
+  # notes (correct_missing_touches) is a list of one reasoning line per
+  # field it derived/flagged -- surface those as their own line rather than
+  # folding them into the generic classification-detail line below.
+  classification_extra = dict(entry['classification_extra'])
+  notes = classification_extra.pop('notes', None)
+  if classification_extra:
+    details_str = ", ".join(f"{k}={_format_classification_value(v)}" for k, v in classification_extra.items())
+    extra.append(f"Details: {details_str}")
+  if notes:
+    extra.append(f"Notes: {'; '.join(str(n) for n in notes)}")
+
   if entry['changes']:
     changes_str = "; ".join(f"{c[0]}: {c[1]} &rarr; {c[2]}" for c in entry['changes'])
     extra.append(f"Changes: {changes_str}")
