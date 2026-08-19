@@ -351,6 +351,20 @@ def get_weather_from_weather_id(set_df):
 # SET METADATA  (now includes comp_level for all 4 players)
 # ============================================================================
 
+def get_player_side(first_row, player_name):
+  """
+  Determine which side ('a' or 'b') player_name is on for a given ppr_df row.
+
+  Resolved per row rather than cached per-match: a player's team letter can
+  differ set to set, so callers must look it up against the same row(s)
+  they're about to filter/orient with, not assume it's fixed for the match.
+  """
+  player_on_team_a = player_name in [
+    first_row.get('player_a1', ''),
+    first_row.get('player_a2', '')
+  ]
+  return 'a' if player_on_team_a else 'b'
+
 @monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def get_set_metadata(ppr_df, video_id, set_number, player_name, league_value):
   """
@@ -378,10 +392,7 @@ def get_set_metadata(ppr_df, video_id, set_number, player_name, league_value):
   first_row = set_df.iloc[0]
 
   # ── Determine which side the player is on ────────────────────────────
-  player_on_team_a = player_name in [
-    first_row.get('player_a1', ''),
-    first_row.get('player_a2', '')
-  ]
+  player_on_team_a = get_player_side(first_row, player_name) == 'a'
 
   if player_on_team_a:
     team         = first_row.get('teama', '')

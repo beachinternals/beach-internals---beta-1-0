@@ -465,6 +465,245 @@ def calc_angle_attacks_obj(ppr_df, player_name):
 
 
 # ==============================================================================
+# FUNCTION 5: build_margin_sequence()
+# ==============================================================================
+def build_margin_sequence(ppr_df, disp_player, set_number=None, half=None):
+  """
+    Build the ordered, running point-margin sequence for one set or one
+    half-set, oriented to disp_player's side.
+
+    ppr_df is already one row per point (serve/pass/set/attack/dig columns
+    live wide on the same row), so this is a sort + filter + diff over
+    a_score/b_score -- no point reconstruction needed.
+
+    Half-set split uses the same total-score thresholds already used
+    elsewhere in the dictionary: <=21 for sets 1-2, <=15 for set 3.
+    For half='b', the margin is rebased to start at 0 at the beginning of
+    that half (subtract the margin reached at the end of half 'a'), so the
+    sequence reflects the half's own internal shape rather than carrying
+    the absolute score in from the rest of the set. Half 'a' and whole-set
+    sequences are already 0-based since a_score/b_score reset at set start.
+
+    Args:
+        ppr_df (DataFrame): Point-by-point dataframe. May already be
+            sliced to a single set (as the metric_dictionary set-level
+            harness delivers it) or span multiple sets (any other caller).
+        disp_player (str): Player whose side orients the margin
+        set_number (int | None): Set to build the sequence for. If None,
+            inferred as the set of the first row -- the metric_dictionary
+            harness's exec() namespace has no `set_number` variable to
+            reference, so dictionary-driven calls must rely on inference;
+            direct/test callers can still pass it explicitly.
+        half (str | None): None for the whole set, 'a' or 'b' for a half
+
+    Returns:
+        Object (SimpleNamespace) with attributes:
+            .margins (list[int]): running margin (own side - opponent) at
+                each point, in point_no order
+            .winners (list[str]): 'us'/'them' per point, same order/length
+                as margins -- derived from whichever of a_score/b_score
+                incremented versus the prior row
+            .points (int): len(margins)
+            .side (str | None): 'a' or 'b' -- disp_player's side in this
+                set, or None if the set has no rows at all
+    """
+  from types import SimpleNamespace
+  from generate_set_level_metrics import get_player_side
+
+  if ppr_df is None or len(ppr_df) == 0:
+    return SimpleNamespace(margins=[], winners=[], points=0, side=None)
+
+  if set_number is None:
+    set_number = int(ppr_df['set'].iloc[0])
+
+  disp_player = disp_player.strip()
+  empty = SimpleNamespace(margins=[], winners=[], points=0, side=None)
+
+  set_df = ppr_df[ppr_df['set'] == set_number].sort_values('point_no')
+  if set_df.empty:
+    return empty
+
+  first_row = set_df.iloc[0]
+  side = get_player_side(first_row, disp_player)
+
+  if side == 'a':
+    margin = set_df['a_score'] - set_df['b_score']
+  else:
+    margin = set_df['b_score'] - set_df['a_score']
+
+  # Winner per point: whichever score incremented versus the prior row.
+  # Scores reset to 0-0 at the start of each set, so seeding prev=(0, 0)
+  # is correct for the set's first row.
+  prev_a = 0
+  winner_side = []
+  for a_s in set_df['a_score']:
+    winner_side.append('a' if a_s > prev_a else 'b')
+    prev_a = a_s
+
+  threshold = 15 if set_number == 3 else 21
+  total_score = set_df['a_score'] + set_df['b_score']
+  in_half_a = total_score <= threshold
+
+  if half == 'a':
+    keep = in_half_a
+    baseline = 0
+  elif half == 'b':
+    keep = ~in_half_a
+    baseline = margin[in_half_a].iloc[-1] if in_half_a.any() else 0
+  else:
+    keep = pd.Series(True, index=set_df.index)
+    baseline = 0
+
+  if not keep.any():
+    return SimpleNamespace(margins=[], winners=[], points=0, side=side)
+
+  margins = (margin[keep] - baseline).tolist()
+  winners = ['us' if w == side else 'them'
+             for w, k in zip(winner_side, keep.tolist()) if k]
+
+  return SimpleNamespace(
+    margins=[int(m) for m in margins],
+    winners=winners,
+    points=len(margins),
+    side=side
+  )
+
+
+# ==============================================================================
+# FUNCTION 6: smooth_momentum()
+# ==============================================================================
+def smooth_momentum(margin_sequence, window=5):
+  """
+    Turn a raw margin sequence into a smoothed momentum series.
+
+    Computes the point-to-point change in margin (first derivative), then
+    applies a rolling average over `window` points to cut point-to-point
+    noise. window=5 is a starting default, not a validated value -- pass a
+    different value once real output has been reviewed.
+
+    Args:
+        margin_sequence (list[float]): running margin, in point order
+        window (int): rolling-average window size over the derivative series
+
+    Returns:
+        list[float]: smoothed momentum series. Empty if there are fewer
+            than `window` point-to-point deltas to average (too short a
+            sequence to smooth meaningfully -- e.g. an early-terminated
+            set/half).
+    """
+  if len(margin_sequence) < 2:
+    return []
+
+  deltas = [margin_sequence[i] - margin_sequence[i - 1]
+            for i in range(1, len(margin_sequence))]
+
+  if len(deltas) < window:
+    return []
+
+  smoothed = pd.Series(deltas).rolling(window=window).mean().dropna()
+  return smoothed.tolist()
+
+
+# ==============================================================================
+# FUNCTION 7: calc_momentum_obj()
+# ==============================================================================
+def calc_momentum_obj(ppr_df, disp_player, set_number=None, half=None, window=5):
+  """
+    Extract within-set/half momentum and decline metrics for disp_player.
+
+    Uses build_margin_sequence() + smooth_momentum() internally -- see
+    those for the margin/smoothing conventions, including how set_number
+    is inferred when not passed explicitly.
+
+    Args:
+        ppr_df (DataFrame): Point-by-point dataframe
+        disp_player (str): Player to analyze
+        set_number (int | None): Set to analyze; inferred from ppr_df if
+            omitted (see build_margin_sequence)
+        half (str | None): None for whole-set, 'a'/'b' for a half-set
+        window (int): rolling-average window passed to smooth_momentum
+
+    Returns:
+        Object (SimpleNamespace) with attributes:
+            .run_for_max (int | None): longest consecutive point-scoring
+                streak by disp_player's side
+            .run_against_max (int | None): same, opponent's side
+            .margin_max_lead (int | None): max(margins)
+            .margin_max_deficit (int | None): min(margins)
+            .decline_sharpness (float | None): magnitude of the steepest
+                single-step drop in the smoothed momentum series; 0.0 if
+                momentum never actually declined
+            .decline_location_pct (float | None): where that drop occurred,
+                0-100 through the smoothed series; None if there was no
+                decline to locate
+            .attempts (int): number of points in the sequence -- exposed
+                under this name (not .points) so it lines up with the
+                other calc_*_obj results and the set-level formatter's
+                "(n=X)" display
+
+        All fields are None (aside from .attempts) when the underlying
+        sequence is too short to compute them meaningfully, rather than
+        raising or returning a misleading 0.
+    """
+  from types import SimpleNamespace
+
+  seq = build_margin_sequence(ppr_df, disp_player, set_number, half=half)
+
+  if seq.points == 0:
+    return SimpleNamespace(
+      run_for_max=None, run_against_max=None,
+      margin_max_lead=None, margin_max_deficit=None,
+      decline_sharpness=None, decline_location_pct=None,
+      attempts=0
+    )
+
+  # Longest consecutive scoring runs, own side and opponent
+  run_for_max = 0
+  run_against_max = 0
+  cur_for = 0
+  cur_against = 0
+  for w in seq.winners:
+    if w == 'us':
+      cur_for += 1
+      cur_against = 0
+    else:
+      cur_against += 1
+      cur_for = 0
+    run_for_max = max(run_for_max, cur_for)
+    run_against_max = max(run_against_max, cur_against)
+
+  margin_max_lead = max(seq.margins)
+  margin_max_deficit = min(seq.margins)
+
+  smoothed = smooth_momentum(seq.margins, window=window)
+
+  if len(smoothed) < 2:
+    decline_sharpness = None
+    decline_location_pct = None
+  else:
+    drops = [smoothed[i] - smoothed[i - 1] for i in range(1, len(smoothed))]
+    steepest_idx = min(range(len(drops)), key=lambda i: drops[i])
+    steepest_drop = drops[steepest_idx]
+    if steepest_drop < 0:
+      decline_sharpness = abs(steepest_drop)
+      decline_location_pct = (steepest_idx / len(drops)) * 100
+    else:
+      # smoothed momentum never actually dropped -- nothing to locate
+      decline_sharpness = 0.0
+      decline_location_pct = None
+
+  return SimpleNamespace(
+    run_for_max=int(run_for_max),
+    run_against_max=int(run_against_max),
+    margin_max_lead=int(margin_max_lead),
+    margin_max_deficit=int(margin_max_deficit),
+    decline_sharpness=(float(decline_sharpness) if decline_sharpness is not None else None),
+    decline_location_pct=(float(decline_location_pct) if decline_location_pct is not None else None),
+    attempts=seq.points
+  )
+
+
+# ==============================================================================
 # USAGE EXAMPLES
 # ==============================================================================
 
