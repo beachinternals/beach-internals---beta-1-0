@@ -5,6 +5,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
 from datetime import datetime, timedelta
+from collections import Counter, defaultdict
 import json
 import re
 
@@ -382,6 +383,255 @@ def send_team_quality_report(league, gender, year, team):
       from_address="no-reply",
       subject="Team Data Quality Report Error",
       html=f"<h2>Error building/sending the Team Data Quality Report</h2><p>League {league} | Gender {gender} | Year {year} | Team {team}</p><p>{str(e)}</p>"
+    )
+
+
+# ============================================================================
+#
+#  Data Corrections Debug Report
+#
+#  Ad hoc, on-demand email (same league/gender/year/team shape as the team
+#  quality report above) that surfaces what correct_pass_attribution(),
+#  correct_serve_pass_same_team(), correct_missing_touches() and
+#  resolve_serve_players() (see pass_attribution_correction.py and
+#  btd_ppr_conversion.py) actually did with each btd_files.corrections_json
+#  entry -- corrected, flagged for manual review, or left alone -- with a
+#  video link per entry so a human can go watch the point and look for new
+#  correction rules. This is a debugging aid for those routines, not a data
+#  quality signal for teams.
+#
+# ============================================================================
+
+# Correction entries carry a 'classification' dict, but only some of the
+# correction functions stamp an explicit classification['error_type'] (see
+# correct_serve_pass_same_team, correct_missing_touches and
+# resolve_serve_players). correct_pass_attribution's entries don't -- they're
+# the pass/set/att mis-attribution case identified by _touch_players/
+# classify_pass_player, so that's the label used when error_type is absent.
+_DEFAULT_CORRECTION_ERROR_TYPE = 'pass_set_att_attribution'
+
+_STATUS_LABELS = {
+  'corrected': 'CORRECTED',
+  'flagged': 'FLAGGED',
+  'no_change_needed': 'NO CHANGE NEEDED',
+}
+_STATUS_COLORS = {
+  'corrected': '#2e7d32',
+  'flagged': '#b00020',
+  'no_change_needed': '#757575',
+}
+
+
+def get_correction_video_link(entry, file_video_id):
+  """
+  Priority order, same idea as find_video_link() above:
+  1. The entry's own video_link (some correction functions already build a
+     precise ?actionIds=... link).
+  2. A base match link built from the entry's own video_id, or else the
+     file's video_id (resolve_serve_players entries carry neither).
+  3. None -- caller renders "no video available".
+  """
+  if entry.get('video_link'):
+    return entry['video_link']
+  video_id = entry.get('video_id') or file_video_id
+  if video_id and video_id != 'No Video Id':
+    return f"https://app.balltime.com/video/{video_id}"
+  return None
+
+
+def build_corrections_detail(files):
+  """
+  Per-file, per-correction-entry breakdown (with video links) for one
+  team's files, from btd_files.corrections_json.
+  """
+  detail = []
+  for f in files:
+    corrections = parse_corrections_json(f['corrections_json'])
+    if not corrections:
+      detail.append({'filename': f['filename'], 'clean': True, 'corrections': []})
+      continue
+    entries = []
+    for c in corrections:
+      classification = c.get('classification') or {}
+      entries.append({
+        'point_id': c.get('point_no', c.get('rally_id')),
+        'status': c.get('status', 'unknown'),
+        'error_type': classification.get('error_type', _DEFAULT_CORRECTION_ERROR_TYPE),
+        'reason': classification.get('reason'),
+        'before': c.get('before') or {},
+        'changes': c.get('changes') or [],
+        'video_link': get_correction_video_link(c, f['video_id']),
+      })
+    detail.append({'filename': f['filename'], 'clean': False, 'corrections': entries})
+  return detail
+
+
+def build_team_corrections_report(league, gender, year, team):
+  """
+  Ad hoc, on-demand corrections debug report: every btd_files row matching
+  this league/gender/year/team, with no date-window restriction. Mirrors
+  build_team_quality_report() above but surfaces corrections_json instead
+  of error_str.
+  """
+  files = list(app_tables.btd_files.search(
+    league=league, gender=gender, year=str(year), team=team
+  ))
+  detail = build_corrections_detail(files)
+  total_entries = sum(len(f['corrections']) for f in detail)
+  return {
+    'league': league,
+    'gender': gender,
+    'year': year,
+    'team': team,
+    'n_files': len(files),
+    'n_files_with_corrections': sum(1 for f in detail if not f['clean']),
+    'total_entries': total_entries,
+    'detail': detail,
+  }
+
+
+def _team_corrections_report_subtitle(league, gender, year):
+  return f"League {league} | Gender {gender} | Year {year} &mdash; all files on file (no date filter)"
+
+
+def render_correction_entry_html(entry):
+  status = entry['status']
+  status_label = _STATUS_LABELS.get(status, status.upper())
+  status_color = _STATUS_COLORS.get(status, '#333')
+  point_label = f"Point {entry['point_id']}" if entry['point_id'] is not None else "Point ?"
+  link_html = f"<a href='{entry['video_link']}'>video</a>" if entry['video_link'] else "no video available for this match"
+  reason_html = f" &mdash; {entry['reason']}" if entry['reason'] else ""
+
+  extra = []
+  if entry['before']:
+    before_str = ", ".join(f"{k}={v}" for k, v in entry['before'].items())
+    extra.append(f"Before: {before_str}")
+  if entry['changes']:
+    changes_str = "; ".join(f"{c[0]}: {c[1]} &rarr; {c[2]}" for c in entry['changes'])
+    extra.append(f"Changes: {changes_str}")
+  extra_html = f"<br><small>{' &nbsp;|&nbsp; '.join(extra)}</small>" if extra else ""
+
+  return (
+    f"<li><span style='color:{status_color};font-weight:bold'>{status_label}</span> "
+    f"&mdash; {entry['error_type']}{reason_html} &mdash; {point_label} &mdash; {link_html}"
+    f"{extra_html}</li>"
+  )
+
+
+def build_corrections_breakdown(detail):
+  """
+  status totals, plus a per-error_type x status count grid -- the error
+  types with the most FLAGGED entries are the best candidates for new
+  correction rules.
+  """
+  status_totals = Counter()
+  by_error_type = defaultdict(Counter)
+  for f in detail:
+    for c in f['corrections']:
+      status_totals[c['status']] += 1
+      by_error_type[c['error_type']][c['status']] += 1
+  return status_totals, by_error_type
+
+
+def render_corrections_summary_html(detail):
+  status_totals, by_error_type = build_corrections_breakdown(detail)
+  total = sum(status_totals.values())
+
+  status_rows = "".join(
+    f"<tr><td>{_STATUS_LABELS.get(status, status.upper())}</td><td>{status_totals.get(status, 0)}</td></tr>"
+    for status in ('flagged', 'corrected', 'no_change_needed')
+  )
+
+  error_type_rows = "".join(
+    f"<tr><td>{error_type}</td><td>{counts.get('flagged', 0)}</td>"
+    f"<td>{counts.get('corrected', 0)}</td><td>{counts.get('no_change_needed', 0)}</td>"
+    f"<td>{sum(counts.values())}</td></tr>"
+    for error_type, counts in sorted(
+      by_error_type.items(), key=lambda kv: kv[1].get('flagged', 0), reverse=True
+    )
+  )
+
+  return (
+    "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse'>"
+    "<tr><th>Status</th><th>Count</th></tr>"
+    f"{status_rows}"
+    f"<tr><td><b>Total</b></td><td><b>{total}</b></td></tr>"
+    "</table>"
+    "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;margin-top:12px'>"
+    "<tr><th>Error type</th><th>Flagged</th><th>Corrected</th><th>No change needed</th><th>Total</th></tr>"
+    f"{error_type_rows}"
+    "</table>"
+  )
+
+
+def render_team_corrections_html(team, detail, subtitle):
+  files_html = []
+  for f in detail:
+    if f['clean']:
+      files_html.append(f"<h3>{f['filename']} &mdash; no corrections needed</h3>")
+      continue
+    entries_html = "".join(render_correction_entry_html(e) for e in f['corrections'])
+    files_html.append(
+      f"<h3>{f['filename']} &mdash; {len(f['corrections'])} correction entr"
+      f"{'y' if len(f['corrections']) == 1 else 'ies'}</h3><ul>{entries_html}</ul>"
+    )
+
+  return (
+    f"<h2>Data Corrections Debug Report &mdash; {team or 'None'}</h2>"
+    f"<p>{subtitle}</p>"
+    f"{render_corrections_summary_html(detail)}"
+    f"{''.join(files_html)}"
+  )
+
+
+@anvil.server.callable
+def preview_team_corrections_report(league, gender, year, team):
+  """
+  INTERNALS only. Same per-file/per-correction breakdown and video links as
+  the emailed version, but returns the rendered HTML without sending
+  anything, so it can be reviewed first.
+  """
+  _require_internals()
+  report = build_team_corrections_report(league, gender, year, team)
+  return {
+    **report,
+    'html': render_team_corrections_html(team, report['detail'], _team_corrections_report_subtitle(league, gender, year)),
+  }
+
+
+@anvil.server.callable
+def trigger_team_corrections_report(league, gender, year, team):
+  """INTERNALS only. Launches the background task that emails this report."""
+  _require_internals()
+  anvil.server.launch_background_task('send_team_corrections_report', league, gender, year, team)
+  return {"status": f"Data corrections debug report triggered for {team} ({league} {gender} {year})"}
+
+
+@anvil.server.background_task
+def send_team_corrections_report(league, gender, year, team):
+  """
+  Builds the ad hoc league/gender/year+team corrections debug report (all
+  files on file, no date window) and emails it to the system administrator.
+  """
+  try:
+    report = build_team_corrections_report(league, gender, year, team)
+    html = render_team_corrections_html(team, report['detail'], _team_corrections_report_subtitle(league, gender, year))
+
+    anvil.email.send(
+      to=ADMIN_EMAIL,
+      from_address="no-reply",
+      subject=f"Data Corrections Debug Report - {team} - {league} {gender} {year}",
+      html=html
+    )
+    log_info(f"Data corrections debug report sent to {ADMIN_EMAIL} for {team} ({league} {gender} {year})")
+
+  except Exception as e:
+    log_error(f"Error in send_team_corrections_report: {str(e)}")
+    anvil.email.send(
+      to=ADMIN_EMAIL,
+      from_address="no-reply",
+      subject="Data Corrections Debug Report Error",
+      html=f"<h2>Error building/sending the Data Corrections Debug Report</h2><p>League {league} | Gender {gender} | Year {year} | Team {team}</p><p>{str(e)}</p>"
     )
 
 

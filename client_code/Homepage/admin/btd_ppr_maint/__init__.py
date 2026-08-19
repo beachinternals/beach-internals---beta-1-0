@@ -305,4 +305,22 @@ class btd_ppr_maint(btd_ppr_maintTemplate):
     alert(f"{task['status']}. Check info@beachinternals.com shortly.")
     pass
 
+  @handle("run_team_corrections_report_button", "click")
+  def run_team_corrections_report_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    # Reuses the same league/gender/year/team_2 dropdowns as the data
+    # quality report above -- see run_team_quality_report_button_click for
+    # why the isinstance check is needed (selected_value is a Row once a
+    # value has actually been picked, but a plain string for the __init__
+    # default).
+    league = self.league_drop_down_2.selected_value
+    task = anvil.server.call('trigger_team_corrections_report',
+                         league['league'] if not isinstance(league, str) else league,
+                         self.gender_drop_down_2.selected_value,
+                         self.year_drop_down_2.selected_value,
+                         self.team_drop_down_2.selected_value)
+
+    alert(f"{task['status']}. Check info@beachinternals.com shortly.")
+    pass
+
 
