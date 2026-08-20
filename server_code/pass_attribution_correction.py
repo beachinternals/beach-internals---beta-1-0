@@ -163,19 +163,23 @@ def _mirror_profile(profile):
 
 def build_pass_profiles(ppr_df):
   """
-  Build per-player pass-position profiles from this match's clean points,
-  keyed by (player, near_court) so a Hawaiian-rotation player is compared
-  against the profile matching which side of the court she was actually
-  on that point, instead of one blended profile that averages together
-  two genuinely different positions.
-  For a non-Hawaiian team (or not enough data to tell), near and far
-  samples are pooled into one profile per player, same as before, stored
-  under both near_court keys.
-  For a confirmed-Hawaiian team, each player gets her own near-court and
-  far-court profile; if one side doesn't have enough real samples on its
-  own, it's filled in by mirroring her other side (marked 'derived': True)
-  rather than left unusable.
-  Returns: {(player_name, near_court_bool): {'mean_x','mean_y','std_x','std_y','n', ['derived']}}
+  Builds per-player pass-position data from this match's clean points.
+
+  Unlike before, this does NOT collapse each player straight down to a
+  fixed mean/std profile. It keeps the raw (x, y, point_no) samples,
+  because classify_pass_player needs to rebuild each candidate's profile
+  fresh for every point it judges -- excluding that specific point's own
+  touch from the sample pool first (see _build_profile_leave_one_out).
+
+  Why: a point's OWN touch data can be wrong. "Clean" here only means
+  "no back-to-back same-player conflict" -- it does NOT mean "verified
+  correct." If a genuinely mislabeled point slips past that conflict
+  check (very possible -- see Point 3), the old code would use that
+  point's own coordinates to help build the profile it was about to be
+  judged against. That lets one wrong touch quietly poison the very
+  measuring stick used to catch it, and can produce a confidently WRONG
+  answer instead of an honestly ambiguous one. Leave-one-out closes that
+  hole: a point is never allowed to vouch for itself.
   """
   samples = {}
   for _, row in ppr_df.iterrows():
@@ -188,44 +192,45 @@ def build_pass_profiles(ppr_df):
     if not _is_plausible_coord(x, y):
       continue
     nc = bool(row['near_court'])
-    samples.setdefault(row['pass_player'], {True: [], False: []})[nc].append((x, y))
+    samples.setdefault(row['pass_player'], {True: [], False: []})[nc].append((x, y, row['point_no']))
 
   if ppr_df.empty:
-    return {}
+    return {'samples': {}, 'hawaiian_status': {}, 'teams': []}
+
   ref = ppr_df.iloc[0]
   teams = [(ref['player_a1'], ref['player_a2']), (ref['player_b1'], ref['player_b2'])]
+  hawaiian_status = {(p1, p2): _team_is_hawaiian(samples, p1, p2) for (p1, p2) in teams}
 
-  profiles = {}
-  for p1, p2 in teams:
-    hawaiian = _team_is_hawaiian(samples, p1, p2)
-    for player in (p1, p2):
-      near_pts = samples.get(player, {}).get(True, [])
-      far_pts = samples.get(player, {}).get(False, [])
-      if not hawaiian:
-        pooled = near_pts + far_pts
-        if pooled:
-          prof = _profile_from_samples(pooled)
-          profiles[(player, True)] = prof
-          profiles[(player, False)] = prof
-      else:
-        near_prof = _profile_from_samples(near_pts) if near_pts else None
-        far_prof = _profile_from_samples(far_pts) if far_pts else None
-        if near_prof and not far_prof:
-          far_prof = _mirror_profile(near_prof)
-        if far_prof and not near_prof:
-          near_prof = _mirror_profile(far_prof)
-        if near_prof:
-          profiles[(player, True)] = near_prof
-        if far_prof:
-          profiles[(player, False)] = far_prof
-  return profiles
+  return {'samples': samples, 'hawaiian_status': hawaiian_status, 'teams': teams}
 
-def _z_distance(x, y, profile):
-  dx = (x - profile['mean_x']) / profile['std_x']
-  dy = (y - profile['mean_y']) / profile['std_y']
-  return math.sqrt(dx * dx + dy * dy)
 
-def classify_pass_player(row, profiles):
+def _build_profile_leave_one_out(samples, hawaiian, player, near_court, exclude_point_no):
+  """
+  Builds one player's position profile for one side of the court (near or
+  far), excluding the sample from exclude_point_no -- the point currently
+  being judged. This is what stops a point from being trained on itself.
+  """
+  near_pts = [(x, y) for (x, y, pn) in samples.get(player, {}).get(True, []) if pn != exclude_point_no]
+  far_pts = [(x, y) for (x, y, pn) in samples.get(player, {}).get(False, []) if pn != exclude_point_no]
+
+  if not hawaiian:
+    pooled = near_pts + far_pts
+    return _profile_from_samples(pooled) if pooled else None
+
+  near_prof = _profile_from_samples(near_pts) if near_pts else None
+  far_prof = _profile_from_samples(far_pts) if far_pts else None
+  if near_prof and not far_prof:
+    far_prof = _mirror_profile(near_prof)
+  if far_prof and not near_prof:
+    near_prof = _mirror_profile(far_prof)
+  return near_prof if near_court else far_prof
+
+
+def classify_pass_player(row, profile_data):
+  samples = profile_data['samples']
+  hawaiian_status = profile_data['hawaiian_status']
+  teams = profile_data['teams']
+
   cand_a, cand_b = _receiving_team_players(row)
   x, y = row['pass_src_x'], row['pass_src_y']
   info = {'candidates': [cand_a, cand_b], 'pass_src': [x, y]}
@@ -235,28 +240,48 @@ def classify_pass_player(row, profiles):
   if not _is_plausible_coord(x, y):
     info['reason'] = 'missing_or_implausible_pass_coords'
     return None, info
+
   nc = bool(row['near_court'])
   info['near_court'] = nc
-  prof_a, prof_b = profiles.get((cand_a, nc)), profiles.get((cand_b, nc))
+
+  team_key = next((t for t in teams if cand_a in t and cand_b in t), None)
+  hawaiian = hawaiian_status.get(team_key)
+  exclude_pn = row['point_no']
+
+  prof_a = _build_profile_leave_one_out(samples, hawaiian, cand_a, nc, exclude_pn)
+  prof_b = _build_profile_leave_one_out(samples, hawaiian, cand_b, nc, exclude_pn)
+
   if not prof_a or not prof_b or prof_a['n'] < MIN_CLEAN_SAMPLES or prof_b['n'] < MIN_CLEAN_SAMPLES:
     info['reason'] = 'insufficient_clean_samples'
     info['sample_sizes'] = {cand_a: prof_a['n'] if prof_a else 0, cand_b: prof_b['n'] if prof_b else 0}
     return None, info
+
   if prof_a.get('derived') or prof_b.get('derived'):
     info['used_derived_profile'] = True
+
   dist_a, dist_b = _z_distance(x, y, prof_a), _z_distance(x, y, prof_b)
   info['z_distance'] = {cand_a: dist_a, cand_b: dist_b}
+
   if dist_a <= dist_b:
     winner, winner_dist, loser_dist = cand_a, dist_a, dist_b
   else:
     winner, winner_dist, loser_dist = cand_b, dist_b, dist_a
+
   ratio = (loser_dist / winner_dist) if winner_dist > 0 else float('inf')
   info['confidence_ratio'] = ratio
   if ratio < MIN_CONFIDENCE_RATIO:
     info['reason'] = 'ambiguous'
     return None, info
+
   info['reason'] = 'confident'
   return winner, info
+  
+
+def _z_distance(x, y, profile):
+  dx = (x - profile['mean_x']) / profile['std_x']
+  dy = (y - profile['mean_y']) / profile['std_y']
+  return math.sqrt(dx * dx + dy * dy)
+
 
 
 
