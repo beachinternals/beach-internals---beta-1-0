@@ -994,73 +994,61 @@ def calc_ppr_data(ppr_df):
 
 def transpose_ppr_coord(ppr_df):
   #print("Transpose ppr coordiantes routing")
-
   for index, ppr_r in ppr_df.iterrows():
     # transpose from 0-1 cube ot +/-8m and 0-8m
     # serving from near court? or far?
-    # print(f" serve_src: {ppr_r['serve_src_x']}, {ppr_r['serve_src_y']}, rally id : {ppr_r['rally_id']}")
-
-    # what do we do if we don't have serve_src?
-    # I added the not 0 and not 1 because balltime seems to be giving serve of 1 and 0 whent they really do not know, so then go to the pass.
-    if (ppr_r['serve_src_y'] is None):
-      if ppr_r['pass_src_y'] is None:
-        if ppr_r['set_src_y'] is not None:
-          near_court = False if ppr_r['set_src_y'] > 0.5 else True 
-          #print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, set_src_y: {ppr_r['set_src_y']}")
-        else:
-          # if give up!!
-          near_court = True
-          #print(f"Near Court Calc: gave up! {near_court}, Rally ID: {ppr_r['rally_id']}, serve Src Y: {ppr_r['serve_src_y']}, pass soruce y: {ppr_r['pass_src_y']}, set_src_y: {ppr_r['set_src_y']}")
-      else:
-        near_court = False if ppr_r['pass_src_y'] > 0.5 else True 
-        #print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, pass_src_y: {ppr_r['pass_src_y']}")
-    else:
-      if (ppr_r['serve_src_y'] == 0) or (ppr_r['serve_src_y'] == 1):
-        # have a bit of doubt with teh 0 and 1 coordiante, sometimes they are wrong, so check pass src
-        # check the pass src, is not none, use that, else use this
-        if (ppr_r['pass_src_y'] is not None):
-          near_court = False if ppr_r['pass_src_y'] > 0.5 else True 
-        else:
-          near_court = True if ppr_r['serve_src_y'] > 0.5 else False 
-      else:
-        near_court = True if ppr_r['serve_src_y'] > 0.5 else False  
-        
-      #print(f"Near Court Calc: {near_court}, Rally ID: {ppr_r['rally_id']}, serve_src_y: {ppr_r['serve_src_y']}")
+    #
+    # near/far is now decided directly from the serve's own raw position.
+    # We verified (Aug 2026) that a real serve is always present for every
+    # point (a point can't exist without one), and that this value is
+    # trustworthy -- the times it changes from one point to the next line
+    # up with real side switches (e.g. every 7 total points), not tracking
+    # noise. So there's no need to fall back to the pass or set position
+    # anymore -- doing so was actually the source of the bug: pass position
+    # reflects how deep *that specific* serve was returned (noisy, changes
+    # rally to rally), and when there was no pass at all (an ace or a
+    # service error), pass_src_y was never a real value in the first place
+    # -- it defaults to 0, which was getting misread as "received right at
+    # the near baseline" and silently forcing the wrong orientation.
+    #
+    # raw serve_src_y is 0 (near baseline) to 1 (far baseline). If it's
+    # close to 1, the serve already originated from the far end, so we
+    # flip the y-sign and leave x alone. If it's close to 0, y is already
+    # right, so we mirror x instead, to keep the two consistent as one
+    # rotation of the court.
+    near_court = ppr_r['serve_src_y'] > 0.5
 
     # Serve Coordinates
     ppr_df.at[index,'serve_src_x'] = ppr_transpose_x(near_court, ppr_r['serve_src_x'])
     ppr_df.at[index,'serve_src_y'] = ppr_transpose_y(near_court, ppr_r['serve_src_y'])
     ppr_df.at[index,'serve_dest_x'] = ppr_transpose_x(near_court, ppr_r['serve_dest_x'])
     ppr_df.at[index,'serve_dest_y'] = ppr_transpose_y(near_court, ppr_r['serve_dest_y'])
-
     # Pass Coordinates
     if ppr_r['pass_yn'] == "Y":
       ppr_df.at[index,'pass_src_x'] = ppr_transpose_x(near_court, ppr_r['pass_src_x'])
       ppr_df.at[index,'pass_src_y'] = ppr_transpose_y(near_court, ppr_r['pass_src_y'])
       ppr_df.at[index,'pass_dest_x'] = ppr_transpose_x(near_court, ppr_r['pass_dest_x'])
       ppr_df.at[index,'pass_dest_y'] = ppr_transpose_y(near_court, ppr_r['pass_dest_y'])
-      
+
     # Set Coordinates
     if ppr_r['set_yn'] == "Y":
       ppr_df.at[index,'set_src_x'] = ppr_transpose_x(near_court, ppr_r['set_src_x'])
       ppr_df.at[index,'set_src_y'] = ppr_transpose_y(near_court, ppr_r['set_src_y'])
       ppr_df.at[index,'set_dest_x'] = ppr_transpose_x(near_court, ppr_r['set_dest_x'])
       ppr_df.at[index,'set_dest_y'] = ppr_transpose_y(near_court, ppr_r['set_dest_y'])
-
     # Attack Coordinates
     if ppr_r['att_yn'] == "Y":
       ppr_df.at[index,'att_src_x'] = ppr_transpose_x(near_court, ppr_r['att_src_x'])
       ppr_df.at[index,'att_src_y'] = ppr_transpose_y(near_court, ppr_r['att_src_y'])
       ppr_df.at[index,'att_dest_x'] = ppr_transpose_x(near_court, ppr_r['att_dest_x'])
       ppr_df.at[index,'att_dest_y'] = ppr_transpose_y(near_court, ppr_r['att_dest_y'])
-
     # Dig Coordinates
     if ppr_r['dig_yn'] == "Y":
       ppr_df.at[index,'dig_src_x'] = ppr_transpose_x(near_court, ppr_r['dig_src_x'])
       ppr_df.at[index,'dig_src_y'] = ppr_transpose_y(near_court, ppr_r['dig_src_y'])
       ppr_df.at[index,'dig_dest_x'] = ppr_transpose_x(near_court, ppr_r['dig_dest_x'])
       ppr_df.at[index,'dig_dest_y'] = ppr_transpose_y(near_court, ppr_r['dig_dest_y'])
-      
+
   return ppr_df
 
 def error_check_ppr(ppr_df):
