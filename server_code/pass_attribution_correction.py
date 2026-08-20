@@ -99,15 +99,83 @@ def _receiving_team_players(row):
   return None, None
 
 
+# ============================================================================
+# HAWAIIAN ROTATION HANDLING (Aug 2026)
+# ============================================================================
+# Some teams anchor each player to a fixed physical side of the court
+# ("Hawaiian" rotation) rather than a fixed role relative to the net. A
+# normal player's role-normalized x position (what's stored in the ppr
+# file) stays about the same whether her team is defending near court or
+# far court. A Hawaiian player's flips to roughly (8 - x), because she's
+# standing in the same physical spot while facing the opposite direction.
+#
+# We only decide this once per team, using the whole match -- a team could
+# in principle switch styles between sets or mid-match, but that's beyond
+# what error-correction can reasonably chase; we treat one file as one
+# style. And we test each player against her OWN near vs. far mean, not by
+# pooling both teammates' raw positions together -- pooling two players who
+# sit on genuinely opposite, fixed sides of a NORMAL court averages out to
+# somewhere near the center line regardless of near/far, which looks like a
+# false Hawaiian signal. Testing individually and then combining avoids that.
+MIN_HAWAIIAN_SIDE_SAMPLES = 2  # min clean samples a player needs on EACH side of the court to weigh in on her own flip-or-not signal
+
+def _player_side_signal(samples, player):
+  near_pts = samples.get(player, {}).get(True, [])
+  far_pts = samples.get(player, {}).get(False, [])
+  if len(near_pts) < MIN_HAWAIIAN_SIDE_SAMPLES or len(far_pts) < MIN_HAWAIIAN_SIDE_SAMPLES:
+    return None
+  near_mean = sum(p[0] for p in near_pts) / len(near_pts)
+  far_mean = sum(p[0] for p in far_pts) / len(far_pts)
+  return (near_mean - 4) * (far_mean - 4) < 0  # opposite sides of center -> Hawaiian signal
+
+def _team_is_hawaiian(samples, p1, p2):
+  signals = [s for s in (_player_side_signal(samples, p1), _player_side_signal(samples, p2)) if s is not None]
+  if not signals:
+    return None  # not enough data from either player to call it -- treat as normal/blended, don't guess
+  return any(signals)
+
+def _profile_from_samples(pts):
+  n = len(pts)
+  mean_x = sum(p[0] for p in pts) / n
+  mean_y = sum(p[1] for p in pts) / n
+  if n > 1:
+    var_x = sum((p[0] - mean_x) ** 2 for p in pts) / (n - 1)
+    var_y = sum((p[1] - mean_y) ** 2 for p in pts) / (n - 1)
+  else:
+    var_x = var_y = 0.0
+  std_x = max(var_x ** 0.5, 0.5)
+  std_y = max(var_y ** 0.5, 0.5)
+  return {'mean_x': mean_x, 'mean_y': mean_y, 'std_x': std_x, 'std_y': std_y, 'n': n}
+
+def _mirror_profile(profile):
+  # Reflect a profile around center court (x=4) -- stands in for a
+  # Hawaiian player's thin side when her other side has solid data.
+  # y is untouched; only left/right flips. 'derived' marks it as a
+  # stand-in rather than a profile built from real samples on that side.
+  return {
+    'mean_x': 8 - profile['mean_x'],
+    'mean_y': profile['mean_y'],
+    'std_x': profile['std_x'],
+    'std_y': profile['std_y'],
+    'n': profile['n'],
+    'derived': True,
+  }
+
 def build_pass_profiles(ppr_df):
   """
-  Build per-player pass-position profiles from this match's clean points.
-
-  Profiles are scoped to this match only -- a player's position tendencies
-  shift with partner and side, so aggregating across matches (different
-  partners, different sides) would corrupt the signal.
-
-  Returns: {player_name: {'mean_x', 'mean_y', 'std_x', 'std_y', 'n'}}
+  Build per-player pass-position profiles from this match's clean points,
+  keyed by (player, near_court) so a Hawaiian-rotation player is compared
+  against the profile matching which side of the court she was actually
+  on that point, instead of one blended profile that averages together
+  two genuinely different positions.
+  For a non-Hawaiian team (or not enough data to tell), near and far
+  samples are pooled into one profile per player, same as before, stored
+  under both near_court keys.
+  For a confirmed-Hawaiian team, each player gets her own near-court and
+  far-court profile; if one side doesn't have enough real samples on its
+  own, it's filled in by mirroring her other side (marked 'derived': True)
+  rather than left unusable.
+  Returns: {(player_name, near_court_bool): {'mean_x','mean_y','std_x','std_y','n', ['derived']}}
   """
   samples = {}
   for _, row in ppr_df.iterrows():
@@ -119,75 +187,77 @@ def build_pass_profiles(ppr_df):
     x, y = row['pass_src_x'], row['pass_src_y']
     if not _is_plausible_coord(x, y):
       continue
-    samples.setdefault(row['pass_player'], []).append((x, y))
+    nc = bool(row['near_court'])
+    samples.setdefault(row['pass_player'], {True: [], False: []})[nc].append((x, y))
+
+  if ppr_df.empty:
+    return {}
+  ref = ppr_df.iloc[0]
+  teams = [(ref['player_a1'], ref['player_a2']), (ref['player_b1'], ref['player_b2'])]
 
   profiles = {}
-  for player, pts in samples.items():
-    n = len(pts)
-    mean_x = sum(p[0] for p in pts) / n
-    mean_y = sum(p[1] for p in pts) / n
-    if n > 1:
-      var_x = sum((p[0] - mean_x) ** 2 for p in pts) / (n - 1)
-      var_y = sum((p[1] - mean_y) ** 2 for p in pts) / (n - 1)
-    else:
-      var_x = var_y = 0.0
-    # Floor the std so a tight or tiny-N cluster can't produce a
-    # near-zero denominator and a falsely "infinite confidence" distance.
-    std_x = max(var_x ** 0.5, 0.5)
-    std_y = max(var_y ** 0.5, 0.5)
-    profiles[player] = {'mean_x': mean_x, 'mean_y': mean_y, 'std_x': std_x, 'std_y': std_y, 'n': n}
+  for p1, p2 in teams:
+    hawaiian = _team_is_hawaiian(samples, p1, p2)
+    for player in (p1, p2):
+      near_pts = samples.get(player, {}).get(True, [])
+      far_pts = samples.get(player, {}).get(False, [])
+      if not hawaiian:
+        pooled = near_pts + far_pts
+        if pooled:
+          prof = _profile_from_samples(pooled)
+          profiles[(player, True)] = prof
+          profiles[(player, False)] = prof
+      else:
+        near_prof = _profile_from_samples(near_pts) if near_pts else None
+        far_prof = _profile_from_samples(far_pts) if far_pts else None
+        if near_prof and not far_prof:
+          far_prof = _mirror_profile(near_prof)
+        if far_prof and not near_prof:
+          near_prof = _mirror_profile(far_prof)
+        if near_prof:
+          profiles[(player, True)] = near_prof
+        if far_prof:
+          profiles[(player, False)] = far_prof
   return profiles
-
 
 def _z_distance(x, y, profile):
   dx = (x - profile['mean_x']) / profile['std_x']
   dy = (y - profile['mean_y']) / profile['std_y']
   return math.sqrt(dx * dx + dy * dy)
 
-
 def classify_pass_player(row, profiles):
-  """
-  Classify who actually passed this point. Candidates are constrained to the
-  receiving team's two players (the passer can't be on the serving team).
-
-  Returns (player_or_None, info) -- info always carries enough detail to log
-  even when no confident call is made, since an unresolved point still needs
-  to be reported.
-  """
   cand_a, cand_b = _receiving_team_players(row)
   x, y = row['pass_src_x'], row['pass_src_y']
   info = {'candidates': [cand_a, cand_b], 'pass_src': [x, y]}
-
   if not cand_a or not cand_b:
     info['reason'] = 'could_not_determine_receiving_team'
     return None, info
-
   if not _is_plausible_coord(x, y):
     info['reason'] = 'missing_or_implausible_pass_coords'
     return None, info
-
-  prof_a, prof_b = profiles.get(cand_a), profiles.get(cand_b)
+  nc = bool(row['near_court'])
+  info['near_court'] = nc
+  prof_a, prof_b = profiles.get((cand_a, nc)), profiles.get((cand_b, nc))
   if not prof_a or not prof_b or prof_a['n'] < MIN_CLEAN_SAMPLES or prof_b['n'] < MIN_CLEAN_SAMPLES:
     info['reason'] = 'insufficient_clean_samples'
     info['sample_sizes'] = {cand_a: prof_a['n'] if prof_a else 0, cand_b: prof_b['n'] if prof_b else 0}
     return None, info
-
+  if prof_a.get('derived') or prof_b.get('derived'):
+    info['used_derived_profile'] = True
   dist_a, dist_b = _z_distance(x, y, prof_a), _z_distance(x, y, prof_b)
   info['z_distance'] = {cand_a: dist_a, cand_b: dist_b}
-
   if dist_a <= dist_b:
     winner, winner_dist, loser_dist = cand_a, dist_a, dist_b
   else:
     winner, winner_dist, loser_dist = cand_b, dist_b, dist_a
   ratio = (loser_dist / winner_dist) if winner_dist > 0 else float('inf')
   info['confidence_ratio'] = ratio
-
   if ratio < MIN_CONFIDENCE_RATIO:
     info['reason'] = 'ambiguous'
     return None, info
-
   info['reason'] = 'confident'
   return winner, info
+
 
 
 def _apply_alternation(ppr_df, idx, row, passer, teammate):
