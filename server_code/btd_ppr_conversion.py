@@ -479,7 +479,7 @@ def btd_to_ppr_df(btd_df, flist_r, player_a1, player_a2, player_b1, player_b2, t
                   'dig_dest_x':zero,'dig_dest_y':zero,'dig_dest_t':zero,'dig_dest_zone_depth':blank,'dig_dest_zone_net':zero,
                   'dig_dist':0.0,'dig_dur':0.0,'dig_speed':0.0,'dig_angle':0.0,'dig_action_id':zero,'dig_height':0.0,'dig_quality':0.0,'dig_type':blank,
     'point_outcome':blank,'point_outcome_team':blank,'tactic':blank,'last_action_id':zero,
-    'pressure_static':zero,'pressure_dynamic':zero,'pressure_total':zero
+    'pressure_static':zero,'pressure_dynamic':zero,'pressure_total':zero,'near_court':True
   }
 
   #print(f" ppr dictionary: {ppr_dict}")
@@ -993,30 +993,29 @@ def calc_ppr_data(ppr_df):
   return ppr_df
 
 def transpose_ppr_coord(ppr_df):
-  #print("Transpose ppr coordiantes routing")
   for index, ppr_r in ppr_df.iterrows():
-    # transpose from 0-1 cube ot +/-8m and 0-8m
-    # serving from near court? or far?
-    #
-    # near/far is now decided directly from the serve's own raw position.
-    # We verified (Aug 2026) that a real serve is always present for every
-    # point (a point can't exist without one), and that this value is
-    # trustworthy -- the times it changes from one point to the next line
-    # up with real side switches (e.g. every 7 total points), not tracking
-    # noise. So there's no need to fall back to the pass or set position
-    # anymore -- doing so was actually the source of the bug: pass position
-    # reflects how deep *that specific* serve was returned (noisy, changes
-    # rally to rally), and when there was no pass at all (an ace or a
-    # service error), pass_src_y was never a real value in the first place
-    # -- it defaults to 0, which was getting misread as "received right at
-    # the near baseline" and silently forcing the wrong orientation.
-    #
-    # raw serve_src_y is 0 (near baseline) to 1 (far baseline). If it's
-    # close to 1, the serve already originated from the far end, so we
-    # flip the y-sign and leave x alone. If it's close to 0, y is already
-    # right, so we mirror x instead, to keep the two consistent as one
-    # rotation of the court.
-    near_court = ppr_r['serve_src_y'] > 0.5
+    # near/far is decided from the serve's own raw position -- see the
+    # Aug 2026 notes: it's reliable, changes only at real side switches,
+    # and no longer needs the pass/set fallback for the normal case.
+    # The one thing it DOES still need a fallback for is a serve position
+    # that's genuinely missing (None) rather than a real 0/1 boundary value
+    # -- rare, but it happens. In that case, fall back to the pass position,
+    # but only when a pass actually occurred (pass_yn == 'Y') -- checking
+    # "is not None" alone was the old bug, since a placeholder default of 0
+    # would get mistaken for a real position when there was no pass at all.
+    # If neither is available, there's truly nothing to go on for this
+    # point, so we default near_court to True rather than crash.
+    if ppr_r['serve_src_y'] is not None:
+      near_court = ppr_r['serve_src_y'] > 0.5
+    elif ppr_r['pass_yn'] == 'Y' and ppr_r['pass_src_y'] is not None:
+      near_court = ppr_r['pass_src_y'] > 0.5
+    else:
+      near_court = True
+
+    # Save it so downstream code (e.g. the pass/set/attack correction
+    # profiles) can tell which orientation applied to this point, instead
+    # of only we knowing it here and then losing it.
+    ppr_df.at[index,'near_court'] = near_court
 
     # Serve Coordinates
     ppr_df.at[index,'serve_src_x'] = ppr_transpose_x(near_court, ppr_r['serve_src_x'])
