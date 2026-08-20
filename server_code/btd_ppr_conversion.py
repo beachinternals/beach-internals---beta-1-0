@@ -538,8 +538,18 @@ def btd_to_ppr_df(btd_df, flist_r, player_a1, player_a2, player_b1, player_b2, t
       if ppr_row == -1:
         continue
       touch_since_serve +=  1
-      ppr_df = save_pass_info(ppr_df, btd_r, ppr_row)    
-      
+      ppr_df = save_pass_info(ppr_df, btd_r, ppr_row)
+
+    # A set/attack/dig by the serving team (or a 5th first-ball touch) is
+    # itself the action that ends first ball and starts transition -- decide
+    # that BEFORE dispatching below, so a serve-team touch (e.g. an overpass
+    # attacked directly off the pass) never gets recorded into this point's
+    # first-ball set_/att_ fields. Only these three types can trigger it --
+    # receive is always made by the receiving team, so it can't.
+    if ppr_row > -1 and btd_r['action_type'] in ("set", "attack", "dig") and not in_trans:
+      if touch_since_serve == 5 or btd_r['player'] in serve_team:
+        in_trans = True
+
     if btd_r['action_type'] == "set" and not in_trans:
       if ppr_row == -1:
         continue
@@ -552,11 +562,24 @@ def btd_to_ppr_df(btd_df, flist_r, player_a1, player_a2, player_b1, player_b2, t
       touch_since_serve += 1
       ppr_df = save_att_info(ppr_df, btd_r, ppr_row)
 
-    if btd_r['action_type'] == "dig" and not in_trans:
+    if btd_r['action_type'] == "dig":
       if ppr_row == -1:
         continue
-      touch_since_serve += 1
-      ppr_df = save_dig_info(ppr_df, btd_r, ppr_row, teama, teamb)
+      if not in_trans:
+        # A dig before transition is structurally the first-ball set -- BTD
+        # just tagged the touch technique as a dig -- but only reclassify
+        # it when no real set has already been recorded for this point.
+        if ppr_df.at[ppr_row, 'set_yn'] == "N":
+          touch_since_serve += 1
+          ppr_df = save_set_info(ppr_df, btd_r, ppr_row)
+      else:
+        # Only the first dig of transition is recorded; later transition
+        # touches (attacks, further digs/sets) are intentionally left out
+        # of ppr_df -- check_last_point still sees them via last_player/
+        # last_quality/last_action_id/last_action_type for point_outcome.
+        if ppr_df.at[ppr_row, 'dig_yn'] == "N":
+          touch_since_serve += 1
+          ppr_df = save_dig_info(ppr_df, btd_r, ppr_row, teama, teamb)
 
     #print(f"TOuches since serve:{touch_since_serve}, Player:{btd_r['player']}, action type:{btd_r['action_type']}")
     if touch_since_serve == 5 or ( btd_r['player'] in serve_team and btd_r['action_type'] not in ("serve", "receive") ):
