@@ -489,8 +489,8 @@ def correct_serve_pass_same_team(ppr_df, video_id=None):
     entry = {
       'point_no': int(row['point_no']),
       'video_id': video_id if video_id is not None else row.get('video_id', 'empty'),
-      'video_link': (f"https://app.balltime.com/video/{video_id}"
-                      if video_id else None),
+      'video_link': build_point_video_link(
+        video_id if video_id is not None else row.get('video_id'), _point_action_ids(row)),
       'before': {
         'serve_player': serve_player,
         'pass_player': pass_player,
@@ -645,7 +645,8 @@ def correct_missing_touches(ppr_df, video_id=None):
       corrections.append({
         'point_no': int(row['point_no']),
         'video_id': video_id if video_id is not None else row.get('video_id', 'empty'),
-        'video_link': (f"https://app.balltime.com/video/{video_id}" if video_id else None),
+        'video_link': build_point_video_link(
+          video_id if video_id is not None else row.get('video_id'), _point_action_ids(row)),
         'classification': {
           'error_type': 'missing_or_unmatched_touch',
           'notes': point_reasons,
