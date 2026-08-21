@@ -2062,8 +2062,8 @@ db_schema:
       client_hidden: null
       name: n_password_failures
       type: number
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 0.5, width: 200}
+      client_hidden: false
       name: team
       type: string
     - admin_ui: {width: 98}
