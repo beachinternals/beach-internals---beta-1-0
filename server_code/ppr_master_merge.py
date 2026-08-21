@@ -104,8 +104,9 @@ def deidentify_ppr(ppr_df, league, gender, year):
     for idx, val in ppr_df[col].items():
       if not isinstance(val, str) or val in ('', 'empty', 'nan'):
         continue
-      if val in to_uuid:
-        ppr_df.at[idx, col] = to_uuid[val]
+      val_stripped = val.strip()
+      if val_stripped in to_uuid:
+        ppr_df.at[idx, col] = to_uuid[val_stripped]
         n_replaced += 1
       elif not val.startswith('PLYR-'):
         n_not_found += 1

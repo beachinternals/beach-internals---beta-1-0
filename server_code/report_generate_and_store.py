@@ -144,8 +144,9 @@ def _validate_league_params(league=None, gender=None, team=None):
       raise ValueError("Team must be a non-empty string.")
     if re.search(r'[<>]', team):
       raise ValueError(f"Invalid team name: {repr(team)}.")
-    # INTERNALS can access any team — skip subscription check
-    if team.strip() != 'INTERNALS':
+    # INTERNALS can access any team; League is the de-identified league-wide
+    # pseudo-team used for league summary reports — both skip the subscription check
+    if team.strip() not in ('INTERNALS', 'League'):
       valid_teams = _get_valid_teams()
       if valid_teams is not None and team.strip() not in valid_teams:
         raise ValueError(f"Invalid team: {repr(team)}. Team is not registered in the system.")
