@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 from collections import Counter, defaultdict
 import json
 import re
+import io
+import pandas as pd
 
 from logger_utils import log_info, log_error
 from server_functions import build_point_video_link
@@ -98,6 +100,30 @@ def parse_corrections_json(corrections_json):
     return []
 
 
+def resolve_file_video_id(file_row):
+  """
+  btd_files.video_id is frequently unpopulated -- it's never set at upload
+  (see client_code/Homepage/DataMgr/btd_import) and is only backfilled by
+  the one-off fix_btd_file.repair_video_id_column() migration for older
+  files. The reliable source is the video_id column baked into the file's
+  own ppr_data CSV at conversion time (btd_ppr_conversion.btd_to_ppr_df),
+  so only fall back to reading that CSV when the btd_files column itself
+  is missing.
+  """
+  video_id = file_row['video_id']
+  if video_id and video_id != 'No Video Id':
+    return video_id
+  if not file_row['ppr_data']:
+    return None
+  try:
+    ppr_df = pd.read_csv(io.BytesIO(file_row['ppr_data'].get_bytes()), usecols=['video_id'])
+  except (ValueError, KeyError):
+    return None
+  found = ppr_df['video_id'].dropna()
+  found = found[~found.isin(['empty', 'No Video Id'])]
+  return found.iloc[0] if len(found) else None
+
+
 def find_video_link(point_no, corrections, video_id):
   """
   Priority order:
@@ -140,9 +166,10 @@ def build_team_detail(team, files):
       continue
     corrections = parse_corrections_json(f['corrections_json'])
     error_lines = parse_error_str(f['error_str'])
+    file_video_id = resolve_file_video_id(f)
     errors_with_links = []
     for line in error_lines:
-      link = find_video_link(line['point_no'], corrections, f['video_id'])
+      link = find_video_link(line['point_no'], corrections, file_video_id)
       errors_with_links.append({**line, 'video_link': link})
     detail.append({'filename': f['filename'], 'clean': False, 'errors': errors_with_links})
   return detail
@@ -451,9 +478,12 @@ def build_corrections_detail(files):
     if not corrections:
       detail.append({'filename': f['filename'], 'clean': True, 'corrections': []})
       continue
+    file_video_id = None  # lazily resolved -- most entries carry their own video_id
     entries = []
     for c in corrections:
       classification = c.get('classification') or {}
+      if not c.get('video_link') and not c.get('video_id') and file_video_id is None:
+        file_video_id = resolve_file_video_id(f)
       entries.append({
         'point_id': c.get('point_no', c.get('rally_id')),
         'status': c.get('status', 'unknown'),
@@ -470,7 +500,7 @@ def build_corrections_detail(files):
         },
         'before': c.get('before') or {},
         'changes': c.get('changes') or [],
-        'video_link': get_correction_video_link(c, f['video_id']),
+        'video_link': get_correction_video_link(c, file_video_id),
       })
     detail.append({'filename': f['filename'], 'clean': False, 'corrections': entries})
   return detail
@@ -498,7 +528,7 @@ def build_low_xy_files(files):
       'per_xy': per_xy,
       # actionIds=1 -- jumps straight into the match rather than a bare
       # match-level link, since there's no specific error point to anchor on.
-      'video_link': build_point_video_link(f['video_id'], ['1']),
+      'video_link': build_point_video_link(resolve_file_video_id(f), ['1']),
     })
   return sorted(low_xy, key=lambda f: f['per_xy'])
 

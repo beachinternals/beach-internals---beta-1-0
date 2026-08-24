@@ -288,6 +288,12 @@ def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2, vi
       'rally_id': row['rally_id'],
       'serve': row['canonical_player'],
       'pass': receive_by_rally.get(row['rally_id']),
+      # btd_df's own video_id column (straight from the raw CSV) is the
+      # reliable source -- btd_files.video_id (the video_id param) is often
+      # never populated at upload, see fix_btd_file.py's
+      # repair_video_id_column(). Only fall back to the param if this row
+      # somehow lacks it.
+      'video_id': row['video_id'] if row['video_id'] not in (None, 'empty') else video_id,
       'action_ids': [
         str(v) for v in (row['action_id'], receive_action_by_rally.get(row['rally_id']))
         if v not in (None, 0, '0', 0.0)
@@ -334,8 +340,8 @@ def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2, vi
     pass_player = r['pass']
     entry = {
       'rally_id': int(r['rally_id']),
-      'video_id': video_id,
-      'video_link': build_point_video_link(video_id, r['action_ids']),
+      'video_id': r['video_id'],
+      'video_link': build_point_video_link(r['video_id'], r['action_ids']),
       'before': {'serve_player': 'UNMATCHED_PLAYER', 'pass_player': pass_player},
       'classification': {'error_type': 'unmatched_serve_player'},
     }
