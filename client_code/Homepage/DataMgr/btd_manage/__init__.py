@@ -4,7 +4,7 @@ import anvil.server
 import anvil.users
 import anvil.tables as tables
 from anvil.tables import app_tables
-from btd_form_helpers import (
+from ..btd_form_helpers import (
   parse_lgy, format_lgy, get_league_items,
   get_comp_l1_items, get_comp_l2_items, get_comp_l3_items,
   get_venue_items, get_ppr_player_list, unpack_btd_statistics
@@ -59,7 +59,9 @@ class btd_manage(btd_manageTemplate):
     ]
     self.sort_dropdown.selected_value = 'date'
 
-    self.load_files()
+    # Don't load anything until the user actually searches -- an unfiltered
+    # load on every page open is slow.
+    self.file_count_label.text = "Set your search criteria and click Apply Filters"
 
   def build_filters(self):
     filters = {}
@@ -74,13 +76,6 @@ class btd_manage(btd_manageTemplate):
       filters['date_from'] = self.date_from_picker.date
     if self.date_to_picker.date:
       filters['date_to'] = self.date_to_picker.date
-
-    if self.status_private_radio.selected:
-      filters['status'] = 'Private'
-    elif self.status_scouting_radio.selected:
-      filters['status'] = 'Scouting'
-    else:
-      filters['status'] = 'All'
 
     if self.min_completeness_box.text:
       try:
@@ -114,8 +109,6 @@ class btd_manage(btd_manageTemplate):
     self.date_to_picker.date = None
     self.min_completeness_box.text = ""
     self.has_errors_checkbox.checked = False
-    self.status_all_radio.selected = True
-    self.load_files()
 
   def sort_dropdown_change(self, **event_args):
     self.load_files()
@@ -178,7 +171,7 @@ class btd_manage(btd_manageTemplate):
 
     if details['no_errors']:
       self.errors_label.visible = True
-      self.errors_label.text = f"⚠ {details['no_errors']} error(s) found on the last processing run: {details['error_str']}"
+      self.errors_label.text = f"⚠ {details['no_errors']} error(s) found on the last processing run"
     else:
       self.errors_label.visible = False
 
@@ -188,7 +181,7 @@ class btd_manage(btd_manageTemplate):
       self.last_processed_label.text = "Not yet processed"
 
     # --- Replace-file controls ---
-    self.replace_file_loader.file = None
+    self.replace_file_loader.clear()
     self.replace_status_label.visible = False
 
     # --- Player mapping ---

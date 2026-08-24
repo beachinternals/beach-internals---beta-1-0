@@ -8,7 +8,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import datetime
-from btd_form_helpers import (
+from ..btd_form_helpers import (
   parse_lgy, format_lgy, get_league_items,
   get_comp_l1_items, get_comp_l2_items, get_comp_l3_items,
   get_venue_items, get_ppr_player_list
@@ -26,6 +26,7 @@ class btd_import(btd_importTemplate):
     if not user_row:
       alert("Not Currently Logged in")
       open_form('Homepage.Landing_form')
+      return
 
     user_team = user_row["team"]
 
@@ -229,7 +230,7 @@ class btd_import(btd_importTemplate):
       )
 
     if len(p_rows) > 0:
-      alert(title='Player Already Exists')
+      alert('Player Already Exists')
       return False
 
     add_row = app_tables.master_player.add_row(
@@ -247,7 +248,7 @@ class btd_import(btd_importTemplate):
     if add_row:
      new_uuid = anvil.server.call('generate_player_uuid')
      add_row['player_uuid'] = new_uuid
-    alert(title='Player Added Successfully')
+    alert('Player Added Successfully')
 
     # now update the drop down menus for players
     ppr_player_list = get_ppr_player_list(disp_league, disp_gender, disp_year)

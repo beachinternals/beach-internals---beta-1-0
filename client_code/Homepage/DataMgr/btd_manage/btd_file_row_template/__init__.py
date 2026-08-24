@@ -26,57 +26,14 @@ class btd_file_row_template(btd_file_row_templateTemplate):
     else:
       self.date_label.text = "No Date"
 
-    # Competition (L1 - L2)
-    comp_text = self.item['comp_l1'] or ''
-    if self.item['comp_l2']:
-      comp_text += f" - {self.item['comp_l2']}"
-    self.comp_label.text = comp_text if comp_text else "No Competition"
-
-    # Players (showing ppr mappings if available, otherwise btd players)
-    if self.item['ppr_playera1'] and self.item['ppr_playerb1']:
-      # Extract just the last names for brevity
-      team_a = self.extract_last_name(self.item['ppr_playera1'])
-      team_b = self.extract_last_name(self.item['ppr_playerb1'])
-      self.players_label.text = f"{team_a} vs {team_b}"
-    else:
-      team_a = self.extract_last_name(self.item['player1'])
-      team_b = self.extract_last_name(self.item['player3'])
-      self.players_label.text = f"{team_a} vs {team_b}"
-
-    # Completeness score
-    score = self.item['completeness_score']
-    if score is not None:
-      self.comp_score_label.text = f"{score:.1f}%"
-
-      # Color code the score
-      if score >= 80:
-        self.comp_score_label.foreground = '#28a745'  # Green
-      elif score >= 60:
-        self.comp_score_label.foreground = '#ffc107'  # Yellow
-      else:
-        self.comp_score_label.foreground = '#dc3545'  # Red
-    else:
-      self.comp_score_label.text = "N/A"
-
-    # XY percentage
-    per_xy = self.item['per_xy']
-    if per_xy is not None:
-      self.xy_label.text = f"XY: {per_xy:.1f}%"
-    else:
-      self.xy_label.text = "XY: N/A"
-
-    # Points
-    points = self.item['points']
-    if points is not None:
-      self.points_label.text = f"Pts: {points}"
-    else:
-      self.points_label.text = "Pts: 0"
+    # Filename
+    self.filename_label.text = self.item['filename'] or "Untitled"
 
     # Error indicator
     no_errors = self.item['no_errors']
     if no_errors and no_errors > 0:
       self.error_icon.visible = True
-      self.error_icon.text = "⚠"
+      self.error_icon.text = f"⚠{no_errors}"
       self.error_icon.foreground = '#dc3545'
       self.error_icon.tooltip = f"{no_errors} error(s) found"
     else:
@@ -89,15 +46,6 @@ class btd_file_row_template(btd_file_row_templateTemplate):
     else:
       self.status_label.text = "👁"
       self.status_label.tooltip = "Scouting"
-
-  def extract_last_name(self, full_name):
-    """Extract last name from 'TEAM ## Name' format"""
-    if not full_name:
-      return "Unknown"
-
-    # Split by spaces and get the last part
-    parts = str(full_name).split()
-    return parts[-1] if parts else "Unknown"
 
   def select_link_click(self, **event_args):
     """This method is called when the row's 'View / Correct' link is clicked"""

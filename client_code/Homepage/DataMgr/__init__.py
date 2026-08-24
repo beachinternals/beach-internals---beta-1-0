@@ -7,11 +7,11 @@ import anvil.users
 import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
-from btd_import import *
-from btd_manage import *
-from roster_manage import *
-from btd_view import *
-from btd_manage import btd_manage
+from .btd_import import *
+from .btd_manage import *
+from .roster_manage import *
+from .btd_view import *
+from .btd_manage import btd_manage
 
 
 
