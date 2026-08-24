@@ -10,6 +10,7 @@ import json
 import re
 
 from logger_utils import log_info, log_error
+from server_functions import build_point_video_link
 
 # ============================================================================
 #
@@ -428,7 +429,7 @@ def get_correction_video_link(entry, file_video_id):
   1. The entry's own video_link (some correction functions already build a
      precise ?actionIds=... link).
   2. A base match link built from the entry's own video_id, or else the
-     file's video_id (resolve_serve_players entries carry neither).
+     file's video_id.
   3. None -- caller renders "no video available".
   """
   if entry.get('video_link'):
@@ -475,6 +476,33 @@ def build_corrections_detail(files):
   return detail
 
 
+_LOW_XY_THRESHOLD = 50
+
+
+def build_low_xy_files(files):
+  """
+  Files whose btd_files.per_xy (integer percent of actions with an x,y
+  coordinate) is under _LOW_XY_THRESHOLD -- these have enough missing
+  spatial data that zone/tactic-dependent stats are unreliable, a separate
+  concern from the row-level corrections_json issues covered above. A None
+  per_xy (never computed) is skipped rather than treated as low.
+  Sorted worst (lowest coverage) first.
+  """
+  low_xy = []
+  for f in files:
+    per_xy = f['per_xy']
+    if per_xy is None or per_xy >= _LOW_XY_THRESHOLD:
+      continue
+    low_xy.append({
+      'filename': f['filename'],
+      'per_xy': per_xy,
+      # actionIds=1 -- jumps straight into the match rather than a bare
+      # match-level link, since there's no specific error point to anchor on.
+      'video_link': build_point_video_link(f['video_id'], ['1']),
+    })
+  return sorted(low_xy, key=lambda f: f['per_xy'])
+
+
 def build_team_corrections_report(league, gender, year, team):
   """
   Ad hoc, on-demand corrections debug report: every btd_files row matching
@@ -486,6 +514,8 @@ def build_team_corrections_report(league, gender, year, team):
     league=league, gender=gender, year=str(year), team=team
   ))
   detail = build_corrections_detail(files)
+  # Worst files (most correction entries) first.
+  detail = sorted(detail, key=lambda f: len(f['corrections']), reverse=True)
   total_entries = sum(len(f['corrections']) for f in detail)
   return {
     'league': league,
@@ -496,6 +526,7 @@ def build_team_corrections_report(league, gender, year, team):
     'n_files_with_corrections': sum(1 for f in detail if not f['clean']),
     'total_entries': total_entries,
     'detail': detail,
+    'low_xy_files': build_low_xy_files(files),
   }
 
 
@@ -595,7 +626,25 @@ def render_corrections_summary_html(detail):
   )
 
 
-def render_team_corrections_html(team, detail, subtitle):
+def _render_low_xy_row_html(f):
+  link_html = f"<a href='{f['video_link']}'>video</a>" if f['video_link'] else "no video available for this match"
+  return f"<tr><td>{f['filename']}</td><td>{f['per_xy']}%</td><td>{link_html}</td></tr>"
+
+
+def render_low_xy_table_html(low_xy_files):
+  if not low_xy_files:
+    return ""
+  rows_html = "".join(_render_low_xy_row_html(f) for f in low_xy_files)
+  return (
+    f"<h3>Files with low x,y coordinate coverage (&lt;{_LOW_XY_THRESHOLD}%)</h3>"
+    "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse'>"
+    "<tr><th>Filename</th><th>% actions with x,y</th><th>Video</th></tr>"
+    f"{rows_html}"
+    "</table>"
+  )
+
+
+def render_team_corrections_html(team, detail, subtitle, low_xy_files=None):
   files_html = []
   for f in detail:
     if f['clean']:
@@ -611,6 +660,7 @@ def render_team_corrections_html(team, detail, subtitle):
     f"<h2>Data Corrections Debug Report &mdash; {team or 'None'}</h2>"
     f"<p>{subtitle}</p>"
     f"{render_corrections_summary_html(detail)}"
+    f"{render_low_xy_table_html(low_xy_files or [])}"
     f"{''.join(files_html)}"
   )
 
@@ -626,7 +676,9 @@ def preview_team_corrections_report(league, gender, year, team):
   report = build_team_corrections_report(league, gender, year, team)
   return {
     **report,
-    'html': render_team_corrections_html(team, report['detail'], _team_corrections_report_subtitle(league, gender, year)),
+    'html': render_team_corrections_html(
+      team, report['detail'], _team_corrections_report_subtitle(league, gender, year), report['low_xy_files']
+    ),
   }
 
 
@@ -646,7 +698,9 @@ def send_team_corrections_report(league, gender, year, team):
   """
   try:
     report = build_team_corrections_report(league, gender, year, team)
-    html = render_team_corrections_html(team, report['detail'], _team_corrections_report_subtitle(league, gender, year))
+    html = render_team_corrections_html(
+      team, report['detail'], _team_corrections_report_subtitle(league, gender, year), report['low_xy_files']
+    )
 
     anvil.email.send(
       to=ADMIN_EMAIL,

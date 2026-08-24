@@ -25,7 +25,8 @@ MONITORING_LEVEL_OFF,
 MONITORING_LEVEL_CRITICAL,
 MONITORING_LEVEL_IMPORTANT,
 MONITORING_LEVEL_DETAILED,
-MONITORING_LEVEL_VERBOSE
+MONITORING_LEVEL_VERBOSE,
+build_point_video_link
 )
 
 # import error logging funcitons
@@ -271,7 +272,7 @@ def _partner_of(player, team_letter, player_a1, player_a2, player_b1, player_b2)
 # first serve/receive row found for each rally_id. rally_id order matches
 # row/action_id order in every btd file spot-checked so far, so we sort by
 # (rally_id, action_id) for a deterministic chronological ordering.
-def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2):
+def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2, video_id=None):
   serves = (btd_df[btd_df['action_type'] == 'serve']
             .sort_values(['rally_id', 'action_id'], kind='mergesort')
             .drop_duplicates('rally_id', keep='first'))
@@ -279,6 +280,7 @@ def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2):
               .sort_values(['rally_id', 'action_id'], kind='mergesort')
               .drop_duplicates('rally_id', keep='first'))
   receive_by_rally = dict(zip(receives['rally_id'], receives['canonical_player']))
+  receive_action_by_rally = dict(zip(receives['rally_id'], receives['action_id']))
 
   rallies = []
   for _, row in serves.iterrows():
@@ -286,6 +288,10 @@ def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2):
       'rally_id': row['rally_id'],
       'serve': row['canonical_player'],
       'pass': receive_by_rally.get(row['rally_id']),
+      'action_ids': [
+        str(v) for v in (row['action_id'], receive_action_by_rally.get(row['rally_id']))
+        if v not in (None, 0, '0', 0.0)
+      ],
     })
 
   def team_of(player):
@@ -328,6 +334,8 @@ def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2):
     pass_player = r['pass']
     entry = {
       'rally_id': int(r['rally_id']),
+      'video_id': video_id,
+      'video_link': build_point_video_link(video_id, r['action_ids']),
       'before': {'serve_player': 'UNMATCHED_PLAYER', 'pass_player': pass_player},
       'classification': {'error_type': 'unmatched_serve_player'},
     }
@@ -436,7 +444,7 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
     player_b1, player_b2, btd_playerb1, btd_playerb2, flist_r
   )
   btd_df, serve_corrections = resolve_serve_players(
-    btd_df, player_a1, player_a2, player_b1, player_b2
+    btd_df, player_a1, player_a2, player_b1, player_b2, video_id=flist_r['video_id']
   )
 
   # call function to make the convesion
