@@ -1,0 +1,17 @@
+<anvil-form container="ColumnPanel">
+    <anvil-component type="ColumnPanel" name="card_1" prop:role="outlined-card" prop:spacing='{"padding":["-","0","0","0"]}' container:grid_position="HILMST,ZNIMWJ">
+        <anvil-component type="FlowPanel" name="flow_panel_1" container:grid_position="RHJPUQ,GNOWRJ">
+            <anvil-component type="Label" name="date_label" prop:bold="true" prop:text="3/15" container:width="60"></anvil-component>
+            <anvil-component type="Label" name="comp_label" prop:text="NCAA - Regional" container:width="200"></anvil-component>
+            <anvil-component type="Label" name="players_label" prop:text="Smith vs Jones" container:width="150"></anvil-component>
+            <anvil-component type="Label" name="error_icon" prop:text="⚠" container:width="30"></anvil-component>
+            <anvil-component type="Label" name="status_label" prop:text="🔒" container:width="30"></anvil-component>
+        </anvil-component>
+        <anvil-component type="FlowPanel" name="flow_panel_2" container:grid_position="AZLTBU,WRQZIE">
+            <anvil-component type="Label" name="comp_score_label" prop:font_size="12" prop:text="87.75%" container:width="60"></anvil-component>
+            <anvil-component type="Label" name="xy_label" prop:font_size="12" prop:text="45%" container:width="80"></anvil-component>
+            <anvil-component type="Label" name="points_label" prop:font_size="11" prop:text="43%" container:width="80"></anvil-component>
+            <anvil-component type="Link" name="select_link" prop:text="View / Correct →" prop:role="text-button" on:click="self.select_link_click"></anvil-component>
+        </anvil-component>
+    </anvil-component>
+</anvil-form>

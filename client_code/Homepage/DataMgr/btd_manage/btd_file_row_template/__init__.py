@@ -6,7 +6,7 @@ import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.users
 
-class DataMgr_btd_file_row_template(btd_file_row_templateTemplate):
+class btd_file_row_template(btd_file_row_templateTemplate):
   def __init__(self, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
@@ -97,22 +97,9 @@ class DataMgr_btd_file_row_template(btd_file_row_templateTemplate):
 
     # Split by spaces and get the last part
     parts = str(full_name).split()
-    if len(parts) >= 3:
-      # Format is typically: TEAM NUMBER NAME
-      return parts[-1]
-    elif len(parts) > 0:
-      return parts[-1]
-    else:
-      return "Unknown"
+    return parts[-1] if parts else "Unknown"
 
-  def form_click(self, **event_args):
-    """This method is called when the form is clicked"""
-    # Raise an event to the parent form that this row was clicked
-    self.raise_event('x-select-file', file_data=self.item)
-
-    # Highlight this row
-    self.card_1.role = 'elevated-card'
-
-  def card_1_show(self, **event_args):
-    """This method is called when the column panel is shown on the screen"""
-    pass
+  def select_link_click(self, **event_args):
+    """This method is called when the row's 'View / Correct' link is clicked"""
+    # Bubble the selection up to the RepeatingPanel so the parent form can react
+    self.parent.raise_event('x-select-file', item=self.item)

@@ -1,0 +1,125 @@
+<anvil-form container="ColumnPanel">
+  <anvil-component type="Label" name="title_label" prop:align="center" prop:role="headline" prop:text="Ball Time Data File Management"></anvil-component>
+
+  <anvil-component type="FlowPanel" name="main_flow">
+
+    <!-- ============================= LEFT: search / filter / list ============================= -->
+    <anvil-component type="ColumnPanel" name="left_panel" prop:role="outlined-card" container:width="420">
+      <anvil-component type="Label" name="filters_title" prop:align="center" prop:role="title" prop:text="Find a File"></anvil-component>
+
+      <anvil-component type="TextBox" name="filename_search_box" prop:placeholder="Search filename..." on:pressed_enter="self.apply_filters_button_click"></anvil-component>
+
+      <anvil-component type="Label" name="league_label" prop:text="League:"></anvil-component>
+      <anvil-component type="DropDown" name="league_dropdown" on:change="self.apply_filters_button_click"></anvil-component>
+
+      <anvil-component type="FlowPanel" name="date_range_flow">
+        <anvil-component type="Label" name="date_from_label" prop:text="From:"></anvil-component>
+        <anvil-component type="DatePicker" name="date_from_picker" container:width="150"></anvil-component>
+        <anvil-component type="Label" name="date_to_label" prop:text="To:"></anvil-component>
+        <anvil-component type="DatePicker" name="date_to_picker" container:width="150"></anvil-component>
+      </anvil-component>
+
+      <anvil-component type="FlowPanel" name="status_flow">
+        <anvil-component type="RadioButton" name="status_all_radio" prop:text="All" prop:group_name="status_filter" prop:selected="true"></anvil-component>
+        <anvil-component type="RadioButton" name="status_private_radio" prop:text="Private" prop:group_name="status_filter"></anvil-component>
+        <anvil-component type="RadioButton" name="status_scouting_radio" prop:text="Scouting" prop:group_name="status_filter"></anvil-component>
+      </anvil-component>
+
+      <anvil-component type="FlowPanel" name="completeness_flow">
+        <anvil-component type="Label" name="min_completeness_label" prop:text="Min completeness %:"></anvil-component>
+        <anvil-component type="TextBox" name="min_completeness_box" prop:type="number" container:width="80"></anvil-component>
+      </anvil-component>
+
+      <anvil-component type="CheckBox" name="has_errors_checkbox" prop:text="Show only files with errors"></anvil-component>
+
+      <anvil-component type="FlowPanel" name="filter_buttons_flow">
+        <anvil-component type="Button" name="apply_filters_button" prop:role="outlined-button" prop:text="Apply Filters" on:click="self.apply_filters_button_click"></anvil-component>
+        <anvil-component type="Button" name="clear_filters_button" prop:role="outlined-button" prop:text="Clear" on:click="self.clear_filters_button_click"></anvil-component>
+      </anvil-component>
+
+      <anvil-component type="Label" name="files_title" prop:text="Ball Time Data Files"></anvil-component>
+      <anvil-component type="DropDown" name="sort_dropdown" on:change="self.sort_dropdown_change"></anvil-component>
+      <anvil-component type="Label" name="file_count_label" prop:text="0 files"></anvil-component>
+
+      <anvil-component type="RepeatingPanel" name="file_list_panel" prop:item_template="Homepage.DataMgr.btd_manage.btd_file_row_template"></anvil-component>
+    </anvil-component>
+
+    <!-- ============================= RIGHT: view / correct a file ============================= -->
+    <anvil-component type="ColumnPanel" name="right_panel" prop:role="elevated-card" container:width="600">
+      <anvil-component type="Label" name="select_file_label" prop:align="center" prop:role="headline" prop:text="&#8592; Select a file from the list"></anvil-component>
+
+      <anvil-component type="ColumnPanel" name="edit_card" prop:role="outlined-card" prop:visible="false">
+        <anvil-component type="Label" name="file_name_label" prop:bold="true" prop:role="headline" prop:text="filename.csv"></anvil-component>
+        <anvil-component type="Label" name="context_label" prop:text="League / Team"></anvil-component>
+
+        <anvil-component type="Label" name="metadata_title" prop:role="title" prop:text="Metadata"></anvil-component>
+
+        <anvil-component type="FlowPanel" name="comp_flow">
+          <anvil-component type="Label" name="comp_label" prop:text="Competition:"></anvil-component>
+          <anvil-component type="DropDown" name="comp_l1_dropdown" on:change="self.comp_l1_dropdown_change"></anvil-component>
+          <anvil-component type="DropDown" name="comp_l2_dropdown"></anvil-component>
+          <anvil-component type="DropDown" name="comp_l3_dropdown"></anvil-component>
+        </anvil-component>
+
+        <anvil-component type="FlowPanel" name="date_venue_flow">
+          <anvil-component type="Label" name="date_label" prop:text="Match Date:"></anvil-component>
+          <anvil-component type="DatePicker" name="edit_date_picker"></anvil-component>
+          <anvil-component type="Label" name="venue_label" prop:text="Venue:"></anvil-component>
+          <anvil-component type="DropDown" name="edit_venue_dropdown"></anvil-component>
+          <anvil-component type="Label" name="match_time_label" prop:text="Match Time:"></anvil-component>
+          <anvil-component type="DropDown" name="edit_match_time_dropdown" prop:items='["8am-12pm","12pm-4pm","4pm-8pm"]'></anvil-component>
+        </anvil-component>
+
+        <anvil-component type="FlowPanel" name="privacy_flow">
+          <anvil-component type="RadioButton" name="edit_private_radio" prop:text="Private" prop:group_name="privacy"></anvil-component>
+          <anvil-component type="RadioButton" name="edit_scouting_radio" prop:text="Scouting" prop:group_name="privacy"></anvil-component>
+          <anvil-component type="Link" name="privacy_help_link" prop:icon="fa:question-circle-o" on:click="self.privacy_help_link_click"></anvil-component>
+        </anvil-component>
+
+        <anvil-component type="Label" name="stats_title" prop:role="title" prop:text="Current File Stats"></anvil-component>
+        <anvil-component type="Label" name="stats_label" prop:text="Stats"></anvil-component>
+        <anvil-component type="Label" name="errors_label" prop:visible="false" prop:foreground="#dc3545"></anvil-component>
+        <anvil-component type="Label" name="last_processed_label" prop:font_size="12"></anvil-component>
+
+        <anvil-component type="Label" name="replace_title" prop:role="title" prop:text="Replace Actions File"></anvil-component>
+        <anvil-component type="Label" name="replace_help_label" prop:font_size="12" prop:text="Only upload a file here if you corrected the export in Balltime. Leave blank to just edit the metadata below."></anvil-component>
+        <anvil-component type="FileLoader" name="replace_file_loader" on:change="self.replace_file_loader_change"></anvil-component>
+        <anvil-component type="Label" name="replace_status_label" prop:visible="false"></anvil-component>
+
+        <anvil-component type="Label" name="mapping_title" prop:role="title" prop:text="Player Mapping"></anvil-component>
+        <anvil-component type="FlowPanel" name="mapping_header_flow">
+          <anvil-component type="Label" name="mapping_header_pair" prop:text="Pair" container:width="60"></anvil-component>
+          <anvil-component type="Label" name="mapping_header_btd" prop:text="Ball Time Player" container:width="220"></anvil-component>
+          <anvil-component type="Label" name="mapping_header_ppr" prop:text="Roster Player" container:width="220"></anvil-component>
+        </anvil-component>
+        <anvil-component type="FlowPanel" name="mapping_a1_flow">
+          <anvil-component type="Label" name="mapping_a1_label" prop:text="A1" container:width="60"></anvil-component>
+          <anvil-component type="DropDown" name="btd_playera1_dropdown" container:width="220"></anvil-component>
+          <anvil-component type="DropDown" name="ppr_playera1_dropdown" container:width="220"></anvil-component>
+        </anvil-component>
+        <anvil-component type="FlowPanel" name="mapping_a2_flow">
+          <anvil-component type="Label" name="mapping_a2_label" prop:text="A2" container:width="60"></anvil-component>
+          <anvil-component type="DropDown" name="btd_playera2_dropdown" container:width="220"></anvil-component>
+          <anvil-component type="DropDown" name="ppr_playera2_dropdown" container:width="220"></anvil-component>
+        </anvil-component>
+        <anvil-component type="FlowPanel" name="mapping_b1_flow">
+          <anvil-component type="Label" name="mapping_b1_label" prop:text="B1" container:width="60"></anvil-component>
+          <anvil-component type="DropDown" name="btd_playerb1_dropdown" container:width="220"></anvil-component>
+          <anvil-component type="DropDown" name="ppr_playerb1_dropdown" container:width="220"></anvil-component>
+        </anvil-component>
+        <anvil-component type="FlowPanel" name="mapping_b2_flow">
+          <anvil-component type="Label" name="mapping_b2_label" prop:text="B2" container:width="60"></anvil-component>
+          <anvil-component type="DropDown" name="btd_playerb2_dropdown" container:width="220"></anvil-component>
+          <anvil-component type="DropDown" name="ppr_playerb2_dropdown" container:width="220"></anvil-component>
+        </anvil-component>
+
+        <anvil-component type="FlowPanel" name="action_buttons_flow">
+          <anvil-component type="Button" name="save_button" prop:role="outlined-button" prop:text="Save Changes" on:click="self.save_button_click"></anvil-component>
+          <anvil-component type="Button" name="delete_button" prop:role="outlined-button" prop:text="Delete File" on:click="self.delete_button_click"></anvil-component>
+        </anvil-component>
+      </anvil-component>
+    </anvil-component>
+  </anvil-component>
+
+  <anvil-component type="Button" name="close_button" prop:role="outlined-button" prop:text="Close" on:click="self.close_button_click"></anvil-component>
+</anvil-form>

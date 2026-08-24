@@ -8,6 +8,11 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import datetime
+from btd_form_helpers import (
+  parse_lgy, format_lgy, get_league_items,
+  get_comp_l1_items, get_comp_l2_items, get_comp_l3_items,
+  get_venue_items, get_ppr_player_list
+)
 
 
 class btd_import(btd_importTemplate):
@@ -25,18 +30,18 @@ class btd_import(btd_importTemplate):
     user_team = user_row["team"]
 
     # First, populate the selected values
-    self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
-    self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
+    self.league_drop_down.selected_value = format_lgy(user_row["def_league"], user_row['def_gender'], user_row['def_year'])
+    self.league_drop_down.items = get_league_items(user_row['team'])
     self.league2_drop_down.selected_value = self.league_drop_down.selected_value
     self.league2_drop_down.items = self.league_drop_down.items
 
     # populate the drop downs for league, and competition level 1 and 3
-    self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = user_row["def_league"] )]
+    self.comp_l1_drop_down.items = get_comp_l1_items(user_row["def_league"])
     self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( league= user_row['def_league'] )]
-    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = user_row['def_league'])]
+    self.comp_l3_drop_down.items = get_comp_l3_items(user_row["def_league"])
 
     # populate the venue drop down:
-    self.venue_drop_down.items =  [(row["venue_name"], row) for row in app_tables.venue.search( venue_league=user_row['def_league'])]
+    self.venue_drop_down.items = get_venue_items(user_row['def_league'])
     
   pass
 
@@ -44,53 +49,27 @@ class btd_import(btd_importTemplate):
     """This method is called when an item is selected"""
 
     # extract league, gender, year from league selected value
-    league_value = self.league_drop_down.selected_value
-    str_loc = league_value.index('|')
-    disp_league = league_value[:str_loc-1].strip()
-    league_value = league_value[str_loc+1:]
-    str_loc = league_value.index('|')
-    disp_gender = league_value[:str_loc-1].strip()
-    disp_year = league_value[str_loc+1:].strip()
+    disp_league, disp_gender, disp_year = parse_lgy(self.league_drop_down.selected_value)
 
     # set comp_l1 data:
-    self.comp_l1_drop_down.items = [(row["comp_l1"], row) for row in app_tables.league_comp_l1.search( league = disp_league )]
+    self.comp_l1_drop_down.items = get_comp_l1_items(disp_league)
 
     # set comp_l2 data:
-    self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( 
-      league= disp_league,
-      comp_l1=self.comp_l1_drop_down.selected_value['comp_l1']
-    )]
+    self.comp_l2_drop_down.items = get_comp_l2_items(disp_league, self.comp_l1_drop_down.selected_value['comp_l1'])
     self.league2_drop_down.selected_value = self.league_drop_down.selected_value
 
     # set comp_l3 data:
-    comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=disp_league)]
-    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
+    self.comp_l3_drop_down.items = get_comp_l3_items(disp_league)
 
     # Set the drop down for the ppr players
-    ppr_list = [
-      {
-        "team":   row["team"],
-        "number":   row["number"],
-        "shortname": row["shortname"],
-      }
-      for row in app_tables.master_player.search(
-        league = disp_league,
-        year = disp_year,
-        gender= disp_gender
-      )
-    ]
-    ppr_player_list = []
-    for i in ppr_list:
-      ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
-
-    ppr_player_list.sort()    
+    ppr_player_list = get_ppr_player_list(disp_league, disp_gender, disp_year)
     self.ppr_playera1_drop_down.items = ppr_player_list
     self.ppr_playera2_drop_down.items = ppr_player_list
     self.ppr_playerb1_drop_down.items = ppr_player_list
     self.ppr_playerb2_drop_down.items = ppr_player_list
 
     pass
-    
+
   def file_loader_1_change(self, file, **event_args):
     """This method is called when a new file is loaded into this FileLoader"""
     # Show processing notification
@@ -128,31 +107,10 @@ class btd_import(btd_importTemplate):
     self.btd_playerb2_drop_down.selected_value = playerb2
 
     # Extract league, gender, year from league selected value
-    league_value = self.league2_drop_down.selected_value
-    str_loc = league_value.index('|')
-    disp_league = league_value[:str_loc-1].strip()
-    league_value = league_value[str_loc+1:]
-    str_loc = league_value.index('|')
-    disp_gender = league_value[:str_loc-1].strip()
-    disp_year = league_value[str_loc+1:].strip()
+    disp_league, disp_gender, disp_year = parse_lgy(self.league2_drop_down.selected_value)
 
     # Set the drop down for the ppr players
-    ppr_list = [
-      {
-        "team": row["team"],
-        "number": row["number"],
-        "shortname": row["shortname"],
-      }
-      for row in app_tables.master_player.search(
-        league=disp_league,
-        year=disp_year,
-        gender=disp_gender
-      )
-    ]
-    ppr_player_list = []
-    for i in ppr_list:
-      ppr_player_list.append(i['team'] + " " + i['number'] + " " + i['shortname'])
-    ppr_player_list.sort()
+    ppr_player_list = get_ppr_player_list(disp_league, disp_gender, disp_year)
     self.ppr_playera1_drop_down.items = ppr_player_list
     self.ppr_playera2_drop_down.items = ppr_player_list
     self.ppr_playerb1_drop_down.items = ppr_player_list
@@ -192,13 +150,7 @@ class btd_import(btd_importTemplate):
         self.private_button.selected = not confirm('Did you want to make this data public?')
         
     # extract league, gender, year from league selected value
-    league_value = self.league2_drop_down.selected_value
-    str_loc = league_value.index('|')
-    disp_league = league_value[:str_loc-1].strip()
-    league_value = league_value[str_loc+1:]
-    str_loc = league_value.index('|')
-    disp_gender = league_value[:str_loc-1].strip()
-    disp_year = league_value[str_loc+1:].strip()
+    disp_league, disp_gender, disp_year = parse_lgy(self.league2_drop_down.selected_value)
 
     # the various statistics were converted to strings, %'s, so we need to convert them back to float.
     per_play = float(self.per_players_label.text[:-1])
@@ -265,15 +217,8 @@ class btd_import(btd_importTemplate):
     self.alias_text_box.text = self.alias_text_box.text.upper()
 
     # unpack the league into its parts
-    # extract league, gender, year from league selected value
-    league_value = self.league_drop_down.selected_value
-    str_loc = league_value.index('|')
-    disp_league = league_value[:str_loc-1].strip()
-    league_value = league_value[str_loc+1:]
-    str_loc = league_value.index('|')
-    disp_gender = league_value[:str_loc-1].strip()
-    disp_year = league_value[str_loc+1:].strip()
-    
+    disp_league, disp_gender, disp_year = parse_lgy(self.league_drop_down.selected_value)
+
     p_rows = app_tables.master_player.search(
       league = disp_league,
       gender = disp_gender,
@@ -305,25 +250,7 @@ class btd_import(btd_importTemplate):
     alert(title='Player Added Successfully')
 
     # now update the drop down menus for players
-    
-    # Set the drop down for the ppr players
-    ppr_list = [
-      {
-        "team":   row["team"],
-        "number":   row["number"],
-        "shortname": row["shortname"],
-      }
-      for row in app_tables.master_player.search(
-        league = disp_league,
-        year = disp_year,
-        gender = disp_gender
-      )
-    ]
-    ppr_player_list = []
-    for i in ppr_list:
-      ppr_player_list.append( i['team']+" "+i['number']+" "+i['shortname'] )
-    
-    ppr_player_list.sort()   
+    ppr_player_list = get_ppr_player_list(disp_league, disp_gender, disp_year)
     self.ppr_playera1_drop_down.items = ppr_player_list
     self.ppr_playera2_drop_down.items = ppr_player_list
     self.ppr_playerb1_drop_down.items = ppr_player_list
@@ -333,27 +260,16 @@ class btd_import(btd_importTemplate):
   def comp_l1_drop_down_change(self, **event_args):
     """This method is called when an item is selected"""
     # if we change the competition level 1, this will change the options for competition level 2
-    
-    # extract league, gender, year from league selected value
-    league_value = self.league_drop_down.selected_value
-    str_loc = league_value.index('|')
-    disp_league = league_value[:str_loc-1].strip()
-    league_value = league_value[str_loc+1:]
-    str_loc = league_value.index('|')
-    disp_gender = league_value[:str_loc-1].strip()
-    disp_year = league_value[str_loc+1:].strip()
-    
-    # set comp_l2 data:    
-    self.comp_l2_drop_down.items = [(row['comp_l2'], row) for row in app_tables.league_comp_l2.search( 
-      league= disp_league,
-      comp_l1=self.comp_l1_drop_down.selected_value['comp_l1']
-    )]
-    self.league2_drop_down.selected_value = self.league_drop_down.selected_value
-    
-    # set comp_l3 data:
-    comp3lbl = [(r['comp_l3_label'],r) for r in app_tables.league_list.search(league=disp_league)]
-    self.comp_l3_drop_down.items = [(row["comp_l3"], row) for row in app_tables.league_comp_l3.search( comp_l3_label = comp3lbl[0][0])]
 
+    # extract league, gender, year from league selected value
+    disp_league, disp_gender, disp_year = parse_lgy(self.league_drop_down.selected_value)
+
+    # set comp_l2 data:
+    self.comp_l2_drop_down.items = get_comp_l2_items(disp_league, self.comp_l1_drop_down.selected_value['comp_l1'])
+    self.league2_drop_down.selected_value = self.league_drop_down.selected_value
+
+    # set comp_l3 data:
+    self.comp_l3_drop_down.items = get_comp_l3_items(disp_league)
 
     pass
 

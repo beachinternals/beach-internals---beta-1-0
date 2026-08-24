@@ -17,10 +17,6 @@ unique_ids:
     Homepage.DataMgr: '1726058680138158647439576.31955'
     Homepage.DataMgr.btd_import: '1726076247774552468021531.6465'
     Homepage.DataMgr.btd_manage: '1765225423807687016520984.2172'
-    Homepage.DataMgr.btd_manage.ItemTemplate1: '176522611914934917407804.86474'
-    Homepage.DataMgr.btd_manage.RowTemplate6: '1765244146568189042730776.81055'
-    Homepage.DataMgr.btd_manage.RowTemplate7: '176537660355252402745357.24865'
-    Homepage.DataMgr.btd_manage.RowTemplate8: '1765376824463774189853145.3464'
     Homepage.DataMgr.btd_manage.btd_file_row_template: '1765224268040893196277238.3713'
     Homepage.DataMgr.btd_manage_old: '1726077553957870421279859.9729'
     Homepage.DataMgr.btd_manage_old.RowTemplate2: '172616556884018683104912.942783'
@@ -92,7 +88,8 @@ unique_ids:
     scouting_summary_rpt: '1737423435551649753407776.746'
     serves_45_new: '1755031303876534121346679.10614'
     serves_45_passing_new: '1753558369128687269397373.304'
-  modules: {}
+  modules:
+    Homepage.DataMgr.btd_form_helpers: '1787587971372.20539568544924136'
   scripts: {}
   server_modules:
     Exec_Summary: '1733348424785585788426961.9935'
