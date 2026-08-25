@@ -89,22 +89,35 @@ def _count_btd_file_references(league, gender, year, composed_name):
 
 
 # ============================================================================
-#  LIST
+#  SEARCH
 # ============================================================================
 
 @anvil.server.callable
-def get_master_players(league, gender, year):
-  """All master_player rows for one league/gender/year, sorted by team, number, short name."""
+def search_master_players(league, gender, year, search_text):
+  """
+  Search the league/gender/year roster by a substring of team, number, or
+  short name (matched against the same "TEAM NUMBER SHORTNAME" form stored
+  in btd_files.ppr_playerX). Returns [] for a blank search rather than the
+  whole roster.
+  """
   _require_login()
 
-  players = [{
-    'id': row.get_id(),
-    'team': row['team'],
-    'number': row['number'],
-    'shortname': row['shortname'],
-    'fullname': row['fullname'],
-    'player_uuid': row['player_uuid'],
-  } for row in app_tables.master_player.search(league=league, gender=gender, year=year)]
+  search_text = (search_text or '').strip().lower()
+  if not search_text:
+    return []
+
+  players = []
+  for row in app_tables.master_player.search(league=league, gender=gender, year=year):
+    haystack = _composed_name(row['team'], row['number'], row['shortname']).lower()
+    if search_text in haystack:
+      players.append({
+        'id': row.get_id(),
+        'team': row['team'],
+        'number': row['number'],
+        'shortname': row['shortname'],
+        'fullname': row['fullname'],
+        'player_uuid': row['player_uuid'],
+      })
 
   players.sort(key=lambda p: (p['team'] or '', p['number'] or '', p['shortname'] or ''))
   return players

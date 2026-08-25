@@ -6,7 +6,11 @@
       <anvil-component type="Label" name="league_label" prop:text="League:"></anvil-component>
       <anvil-component type="DropDown" name="league_dropdown" on:change="self.league_dropdown_change"></anvil-component>
       <anvil-component type="Label" name="roster_title" prop:role="title" prop:text="Players"></anvil-component>
-      <anvil-component type="Label" name="player_count_label" prop:text="Select a league"></anvil-component>
+      <anvil-component type="FlowPanel" name="search_flow">
+        <anvil-component type="TextBox" name="search_box" prop:placeholder="Search team, number, or short name..." on:pressed_enter="self.search_button_click" container:width="300"></anvil-component>
+        <anvil-component type="Button" name="search_button" prop:role="outlined-button" prop:text="Search" on:click="self.search_button_click"></anvil-component>
+      </anvil-component>
+      <anvil-component type="Label" name="player_count_label" prop:text="Select a league, then search for a player"></anvil-component>
       <anvil-component type="FlowPanel" name="merge_bar_flow">
         <anvil-component type="Label" name="merge_selected_label" prop:font_size="12"></anvil-component>
         <anvil-component type="Button" name="merge_selected_button" prop:role="outlined-button" prop:text="Merge Selected" prop:enabled="false" on:click="self.merge_selected_button_click"></anvil-component>

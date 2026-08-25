@@ -45,31 +45,56 @@ class master_player_mgr(master_player_mgrTemplate):
 
     self.reset_to_add_mode()
 
+    self.search_box.text = ""
     if self.league_dropdown.selected_value:
-      self.load_players()
+      self.clear_results("Search for a player by team, number, or short name")
     else:
-      self.player_count_label.text = "No leagues found for your team"
+      self.clear_results("No leagues found for your team")
 
   # ==========================================================================
-  #  LOAD / SELECT
+  #  SEARCH / SELECT
   # ==========================================================================
 
   def current_lgy(self):
     return parse_lgy(self.league_dropdown.selected_value)
 
-  def load_players(self):
-    league, gender, year = self.current_lgy()
+  def clear_results(self, message):
+    """Empty the roster list rather than loading the whole league's roster up front."""
+    self.player_list_panel.items = []
+    self.player_count_label.text = message
     self.merge_selected = {}
     self.merge_selected_label.text = ""
     self.merge_selected_button.enabled = False
 
-    players = anvil.server.call('get_master_players', league, gender, year)
+  def search_button_click(self, **event_args):
+    search_text = (self.search_box.text or '').strip()
+    if not search_text:
+      alert("Enter a team, number, or short name to search.")
+      return
+    self.run_search(search_text)
+
+  def run_search(self, search_text):
+    league, gender, year = self.current_lgy()
+    players = anvil.server.call('search_master_players', league, gender, year, search_text)
+
     self.player_list_panel.items = players
-    self.player_count_label.text = f"{len(players)} player(s)"
+    self.player_count_label.text = f"{len(players)} player(s) found" if players else "No players found"
+    self.merge_selected = {}
+    self.merge_selected_label.text = ""
+    self.merge_selected_button.enabled = False
+
+  def refresh_results(self):
+    """Re-run the active search after a change, instead of reloading the whole roster."""
+    search_text = (self.search_box.text or '').strip()
+    if search_text:
+      self.run_search(search_text)
+    else:
+      self.clear_results("Search for a player by team, number, or short name")
 
   def league_dropdown_change(self, **event_args):
     self.reset_to_add_mode()
-    self.load_players()
+    self.search_box.text = ""
+    self.clear_results("Search for a player by team, number, or short name")
 
   def player_list_panel_x_edit_player(self, item, **event_args):
     self.enter_edit_mode(item)
@@ -185,7 +210,7 @@ class master_player_mgr(master_player_mgrTemplate):
 
     Notification(result['message'], style='success', timeout=3).show()
     self.reset_to_add_mode()
-    self.load_players()
+    self.refresh_results()
 
   def do_edit(self):
     editing_item = self.editing_item
@@ -214,7 +239,7 @@ class master_player_mgr(master_player_mgrTemplate):
 
     Notification(result['message'], style='success', timeout=4).show()
     self.reset_to_add_mode()
-    self.load_players()
+    self.refresh_results()
 
   def do_merge(self):
     selected = list(self.merge_selected.values())
@@ -241,7 +266,7 @@ class master_player_mgr(master_player_mgrTemplate):
 
     Notification(result['message'], style='success', timeout=4).show()
     self.reset_to_add_mode()
-    self.load_players()
+    self.refresh_results()
 
   # ==========================================================================
   #  DELETE
@@ -263,7 +288,7 @@ class master_player_mgr(master_player_mgrTemplate):
 
     Notification(result['message'], style='success', timeout=3).show()
     self.reset_to_add_mode()
-    self.load_players()
+    self.refresh_results()
 
   def close_button_click(self, **event_args):
     open_form('Homepage.DataMgr')
