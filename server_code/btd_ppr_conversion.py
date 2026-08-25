@@ -226,6 +226,11 @@ def resolve_match_players(flist_r):
 def map_players_to_canonical(btd_df, player_a1, player_a2, btd_playera1, btd_playera2,
                                player_b1, player_b2, btd_playerb1, btd_playerb2,
                                flist_r):
+  # Every occurrence is a real, actionable mismatch -- but the same raw name
+  # can repeat for hundreds of rows in one file, so log each distinct raw
+  # name once per file instead of once per row.
+  logged_mismatches = set()
+
   def resolve(row):
     raw_player = row['player']
     if raw_player == btd_playera1:
@@ -236,13 +241,15 @@ def map_players_to_canonical(btd_df, player_a1, player_a2, btd_playera1, btd_pla
       return player_b1
     if raw_player == btd_playerb2:
       return player_b2
-    log_error(
-      f"Player name mismatch in {flist_r['filename']}: raw name "
-      f"'{raw_player}' does not match any of the 4 expected roster "
-      f"names ({flist_r['player1']}, {flist_r['player2']}, "
-      f"{flist_r['player3']}, {flist_r['player4']}). "
-      f"action_id={row['action_id']}, action_type={row['action_type']}"
-    )
+    if raw_player not in logged_mismatches:
+      logged_mismatches.add(raw_player)
+      log_error(
+        f"Player name mismatch in {flist_r['filename']}: raw name "
+        f"'{raw_player}' does not match any of the 4 expected roster "
+        f"names ({flist_r['player1']}, {flist_r['player2']}, "
+        f"{flist_r['player3']}, {flist_r['player4']}). "
+        f"action_id={row['action_id']}, action_type={row['action_type']}"
+      )
     return "UNMATCHED_PLAYER"
 
   btd_df['canonical_player'] = btd_df.apply(resolve, axis=1)

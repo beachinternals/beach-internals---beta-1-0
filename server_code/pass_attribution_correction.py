@@ -591,6 +591,13 @@ def correct_missing_touches(ppr_df, video_id=None):
         point_changes.append(['pass_player', pass_player, new_pass])
         point_reasons.append(f'pass_player: {reason}')
         pass_player = new_pass  # so later derivations in this row see the update
+      elif set_yn == "N" and att_yn == "N" and team_of(pass_player, row) != serve_team:
+        # Terminal point -- no set/attack ever happened, so there's no other
+        # touch to anchor a derivation on. But pass_player isn't sitting on
+        # the serving team either (it's just unresolved/empty), so there's
+        # no contradiction -- which of the 2 receiving players touched it is
+        # structurally unknowable, not a data error. Nothing to flag.
+        pass
       else:
         point_reasons.append('pass_player: no usable anchor - flagged')
 

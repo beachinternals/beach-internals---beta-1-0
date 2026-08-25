@@ -685,40 +685,43 @@ def league_tri_corr(lgy, team, **rpt_filters):
       else:
         corr_results.append({'Metric': col, 'Correlation': None, 'P-Value': None, 'Note': 'Insufficient data'})
 
-  corr_results_df = pd.DataFrame(corr_results).sort_values(by='Correlation', ascending=False)
-  corr_results_df['Correlation'] = corr_results_df['Correlation'].round(3)
-  corr_results_df['P-Value']     = corr_results_df['P-Value'].round(3)
+  if not corr_results:
+    log_error("league_tri_corr: no numeric feature columns available for FBK/FBE correlation (Section 3) — skipping")
+  else:
+    corr_results_df = pd.DataFrame(corr_results).sort_values(by='Correlation', ascending=False)
+    corr_results_df['Correlation'] = corr_results_df['Correlation'].round(3)
+    corr_results_df['P-Value']     = corr_results_df['P-Value'].round(3)
 
-  significant_metrics = corr_results_df[corr_results_df['P-Value'] < 0.05]['Metric']
-  if not significant_metrics.empty:
-    plt.figure(figsize=fig_size)
-    sns.barplot(x='Correlation', y='Metric', data=corr_results_df[corr_results_df['P-Value'] < 0.05])
-    plt.title('Significant Correlations with point_outcome (FBK/FBE)')
-    plt.show()
-  image_list[4] = anvil.mpl_util.plot_image()
+    significant_metrics = corr_results_df[corr_results_df['P-Value'] < 0.05]['Metric']
+    if not significant_metrics.empty:
+      plt.figure(figsize=fig_size)
+      sns.barplot(x='Correlation', y='Metric', data=corr_results_df[corr_results_df['P-Value'] < 0.05])
+      plt.title('Significant Correlations with point_outcome (FBK/FBE)')
+      plt.show()
+    image_list[4] = anvil.mpl_util.plot_image()
 
-  top_4    = significant_metrics.head(4)
-  bottom_4 = significant_metrics.tail(4)
-  scatter_vars = pd.concat([top_4, bottom_4])
+    top_4    = significant_metrics.head(4)
+    bottom_4 = significant_metrics.tail(4)
+    scatter_vars = pd.concat([top_4, bottom_4])
 
-  fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
-  axes = axes.flatten()
-  for i, var in enumerate(scatter_vars):
-    if var in corr_results_df.columns:
-      axes[i].scatter(corr_results_df['point_outcome'], corr_results_df[var], alpha=0.5)
-      axes[i].set_title(f'{var} vs Point Outcome FBE (-1) -> FBK (1)')
-      axes[i].set_xlabel('Percentage of Points')
-      axes[i].set_ylabel(var)
-    else:
-      axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
-      axes[i].set_axis_off()
-  plt.tight_layout()
-  image_list[5] = anvil.mpl_util.plot_image()
+    fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
+    axes = axes.flatten()
+    for i, var in enumerate(scatter_vars):
+      if var in corr_results_df.columns:
+        axes[i].scatter(corr_results_df['point_outcome'], corr_results_df[var], alpha=0.5)
+        axes[i].set_title(f'{var} vs Point Outcome FBE (-1) -> FBK (1)')
+        axes[i].set_xlabel('Percentage of Points')
+        axes[i].set_ylabel(var)
+      else:
+        axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
+        axes[i].set_axis_off()
+    plt.tight_layout()
+    image_list[5] = anvil.mpl_util.plot_image()
 
-  corr_results_df = corr_results_df[corr_results_df['P-Value'] < 0.05]
-  corr_results_df = pd.concat([corr_results_df.head(10), corr_results_df.tail(10)])
-  corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
-  df_list[2] = corr_results_df.to_dict('records')
+    corr_results_df = corr_results_df[corr_results_df['P-Value'] < 0.05]
+    corr_results_df = pd.concat([corr_results_df.head(10), corr_results_df.tail(10)])
+    corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
+    df_list[2] = corr_results_df.to_dict('records')
 
   #=====================================================================================
   #
@@ -759,40 +762,43 @@ def league_tri_corr(lgy, team, **rpt_filters):
       else:
         corr_results.append({'Metric': col, 'Correlation': None, 'P-Value': None, 'Note': 'Insufficient data'})
 
-  corr_results_df = pd.DataFrame(corr_results).sort_values(by='Correlation', ascending=False)
-  corr_results_df['Correlation'] = corr_results_df['Correlation'].round(3)
-  corr_results_df['P-Value']     = corr_results_df['P-Value'].round(3)
+  if not corr_results:
+    log_error("league_tri_corr: no numeric feature columns available for TSA/TSE correlation (Section 4) — skipping")
+  else:
+    corr_results_df = pd.DataFrame(corr_results).sort_values(by='Correlation', ascending=False)
+    corr_results_df['Correlation'] = corr_results_df['Correlation'].round(3)
+    corr_results_df['P-Value']     = corr_results_df['P-Value'].round(3)
 
-  significant_metrics = corr_results_df[corr_results_df['P-Value'] < 0.05]['Metric']
-  if not significant_metrics.empty:
-    plt.figure(figsize=fig_size)
-    sns.barplot(x='Correlation', y='Metric', data=corr_results_df[corr_results_df['P-Value'] < 0.05])
-    plt.title('Significant Correlations with point_outcome (TSA/TSE)')
-    plt.show()
-  image_list[6] = anvil.mpl_util.plot_image()
+    significant_metrics = corr_results_df[corr_results_df['P-Value'] < 0.05]['Metric']
+    if not significant_metrics.empty:
+      plt.figure(figsize=fig_size)
+      sns.barplot(x='Correlation', y='Metric', data=corr_results_df[corr_results_df['P-Value'] < 0.05])
+      plt.title('Significant Correlations with point_outcome (TSA/TSE)')
+      plt.show()
+    image_list[6] = anvil.mpl_util.plot_image()
 
-  top_4    = significant_metrics.head(4)
-  bottom_4 = significant_metrics.tail(4)
-  scatter_vars = pd.concat([top_4, bottom_4])
+    top_4    = significant_metrics.head(4)
+    bottom_4 = significant_metrics.tail(4)
+    scatter_vars = pd.concat([top_4, bottom_4])
 
-  fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
-  axes = axes.flatten()
-  for i, var in enumerate(scatter_vars):
-    if var in corr_results_df.columns:
-      axes[i].scatter(corr_results_df['point_outcome'], corr_results_df[var], alpha=0.5)
-      axes[i].set_title(f'{var} vs Point Outcome TSE (-1) -> TSA (1)')
-      axes[i].set_xlabel('Percentage of Points')
-      axes[i].set_ylabel(var)
-    else:
-      axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
-      axes[i].set_axis_off()
-  plt.tight_layout()
-  image_list[7] = anvil.mpl_util.plot_image()
+    fig_scatter, axes = plt.subplots(nrows=4, ncols=2, figsize=fig_size, sharex=True)
+    axes = axes.flatten()
+    for i, var in enumerate(scatter_vars):
+      if var in corr_results_df.columns:
+        axes[i].scatter(corr_results_df['point_outcome'], corr_results_df[var], alpha=0.5)
+        axes[i].set_title(f'{var} vs Point Outcome TSE (-1) -> TSA (1)')
+        axes[i].set_xlabel('Percentage of Points')
+        axes[i].set_ylabel(var)
+      else:
+        axes[i].text(0.5, 0.5, f'{var} not found', ha='center', va='center')
+        axes[i].set_axis_off()
+    plt.tight_layout()
+    image_list[7] = anvil.mpl_util.plot_image()
 
-  corr_results_df = corr_results_df[corr_results_df['P-Value'] < 0.05]
-  corr_results_df = pd.concat([corr_results_df.head(10), corr_results_df.tail(10)])
-  corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
-  df_list[3] = corr_results_df.to_dict('records')
+    corr_results_df = corr_results_df[corr_results_df['P-Value'] < 0.05]
+    corr_results_df = pd.concat([corr_results_df.head(10), corr_results_df.tail(10)])
+    corr_results_df = corr_results_df.sort_values(by='Correlation', ascending=False)
+    df_list[3] = corr_results_df.to_dict('records')
 
   return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 

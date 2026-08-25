@@ -146,7 +146,8 @@ def analyze_error_logs(cutoff_time):
         'timestamp': error['timestamp'],
         'source': error['source'] or 'Unknown',
         'message': (error['message'] or '')[:100],  # Truncate to 100 chars
-        'severity': (error['severity'] or 'error').upper()
+        'severity': (error['severity'] or 'error').upper(),
+        'traceback': error['traceback_text'],  # already captured by log_error(); just wasn't surfaced here
       })
 
     return error_stats
@@ -354,6 +355,12 @@ Total Errors: {total_errors}
       timestamp_str = err['timestamp'].strftime('%H:%M:%S UTC') if err['timestamp'] else 'Unknown'
       error_section += f"  [{timestamp_str}] {err['severity']}: {err['source']}\n"
       error_section += f"    {err['message']}\n"
+      traceback_text = (err.get('traceback') or '').strip()
+      if traceback_text:
+        if len(traceback_text) > 2000:
+          traceback_text = traceback_text[-2000:]  # tail has the actual raise site
+        for line in traceback_text.splitlines():
+          error_section += f"      {line}\n"
 
   # Determine status
   has_issues = stats['failed_operations'] > 0 or stats['errors_found'] > 0 or total_errors > 0
