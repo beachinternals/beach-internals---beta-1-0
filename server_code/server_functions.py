@@ -372,8 +372,12 @@ def build_point_video_link(video_id, action_ids):
   Build a Balltime video link scoped to a single point's touches, rather
   than the whole-match links build_video_links() produces.
 
-  Padded one action id before the first touch and two after the last, since
-  Balltime was cutting the clip off before the play's outcome was visible.
+  Balltime plays back exactly the given action ids, not their min/max span,
+  so a list of only the tracked touches (serve/pass/set/att/dig) leaves gaps
+  wherever an untracked action (e.g. a block, or another raw row between
+  touches) falls in between -- those gaps showed up as skips/early cutoffs
+  in playback. Filled to every id in the span instead, padded one id before
+  the first touch and two after the last for lead-in/outcome context.
 
   Parameters:
   - video_id (str): the match's Balltime video id.
@@ -387,11 +391,10 @@ def build_point_video_link(video_id, action_ids):
   if not video_id or video_id == "No Video Id" or not action_ids:
     return None
   ids_int = [int(a) for a in action_ids]
-  padded_ids = (
-    [str(max(0, min(ids_int) - 1))] + list(action_ids) +
-    [str(max(ids_int) + 1), str(max(ids_int) + 2)]
-  )
-  return f"https://app.balltime.com/video/{video_id}?actionIds={','.join(padded_ids)}"
+  start = max(0, min(ids_int) - 1)
+  end = max(ids_int) + 2
+  full_range_ids = [str(i) for i in range(start, end + 1)]
+  return f"https://app.balltime.com/video/{video_id}?actionIds={','.join(full_range_ids)}"
 
 @monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str, video_yn: bool) -> FBHEResult:
