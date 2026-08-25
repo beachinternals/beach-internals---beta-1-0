@@ -2,7 +2,7 @@
   <anvil-component type="Label" name="title_label" prop:align="center" prop:role="headline" prop:text="Master Player File"></anvil-component>
   <anvil-component type="FlowPanel" name="main_flow">
     <!-- ============================= LEFT: league picker / roster list ============================= -->
-    <anvil-component type="ColumnPanel" name="left_panel" prop:role="outlined-card" container:width="620">
+    <anvil-component type="ColumnPanel" name="left_panel" prop:role="outlined-card" container:width="713.4140625">
       <anvil-component type="Label" name="league_label" prop:text="League:"></anvil-component>
       <anvil-component type="DropDown" name="league_dropdown" on:change="self.league_dropdown_change"></anvil-component>
       <anvil-component type="Label" name="roster_title" prop:role="title" prop:text="Players"></anvil-component>
@@ -18,11 +18,11 @@
       <anvil-component type="RepeatingPanel" name="player_list_panel" prop:item_template="Homepage.DataMgr.master_player_mgr.master_player_row_template"></anvil-component>
     </anvil-component>
     <!-- ============================= RIGHT: add / edit / merge a player ============================= -->
-    <anvil-component type="ColumnPanel" name="right_panel" prop:role="elevated-card" container:width="480">
-      <anvil-component type="Label" name="mode_label" prop:align="center" prop:role="headline" prop:text="Add New Player"></anvil-component>
+    <anvil-component type="ColumnPanel" name="right_panel" prop:role="elevated-card" container:width="726.5625">
+      <anvil-component type="Label" name="mode_label" prop:align="center" prop:role="headline" prop:text="Add New / Update Player"></anvil-component>
       <anvil-component type="Label" name="merge_summary_label" prop:visible="false" prop:font_size="12"></anvil-component>
       <anvil-component type="Label" name="team_label" prop:text="Team:"></anvil-component>
-      <anvil-component type="TextBox" name="team_box" prop:placeholder="e.g. UCLA"></anvil-component>
+      <anvil-component type="TextBox" name="team_box" prop:placeholder="e.g. UCLA" container:grid_position="GRQTUE,MQGYNE"></anvil-component>
       <anvil-component type="Label" name="number_label" prop:text="Number:"></anvil-component>
       <anvil-component type="TextBox" name="number_box" prop:placeholder="e.g. 5 (becomes 05)"></anvil-component>
       <anvil-component type="Label" name="shortname_label" prop:text="Short Name:"></anvil-component>
