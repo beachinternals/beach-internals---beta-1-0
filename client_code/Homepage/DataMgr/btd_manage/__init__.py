@@ -298,8 +298,13 @@ class btd_manage(btd_manageTemplate):
     result = anvil.server.call('update_existing_btd_file', self.selected_file_id, fields)
     Notification(result['message'], style='success', timeout=4).show()
 
+    self.edit_card.visible = False
+    self.select_file_label.visible = True
+    self.selected_file_id = None
+    self.selected_file_details = None
+    self.file_replaced = False
+    self.pending_stats = None
     self.load_files()
-    self.select_file(self.selected_file_id)
 
   def delete_button_click(self, **event_args):
     if not self.selected_file_id:
