@@ -31,15 +31,15 @@ def _require_login():
   return user
 
 
-def _validate_export_fields(note, dow, datasets_included):
-  note = (note or '').strip()
+def _export_field_error(note, dow, datasets_included):
+  """None if note/dow/datasets_included are all valid, else an error result dict."""
   if not note:
-    return None, {'success': False, 'message': 'Please enter a title for this export.'}
+    return {'success': False, 'message': 'Please enter a title for this export.'}
   if dow not in DOW_CHOICES:
-    return None, {'success': False, 'message': 'Please select a day of week.'}
+    return {'success': False, 'message': 'Please select a day of week.'}
   if not datasets_included:
-    return None, {'success': False, 'message': 'Select at least one dataset to include.'}
-  return note, None
+    return {'success': False, 'message': 'Select at least one dataset to include.'}
+  return None
 
 
 # ============================================================================
@@ -55,14 +55,22 @@ def get_export_league_choices():
 
 
 @anvil.server.callable
-def get_export_players(league):
+def get_export_players(league, search_text):
   """
-  Players selectable for player_filter: the union of master_player rows
-  across every (gender, year) the logged-in user's team is subscribed to
-  under this league.
+  Search master_player by team/number/shortname substring, scoped to the union
+  of (gender, year) the logged-in user's team is subscribed to under this
+  league. Returns [] for a blank search rather than the whole roster -- a
+  league can have hundreds of players across every subscribed year, so this
+  mirrors search_master_players's on-demand pattern instead of loading
+  everything up front. Returns plain dicts, not linked rows -- add_ai_export /
+  update_ai_export take player ids and resolve them back to rows server-side.
   """
   user = _require_login()
   _validate_league_params(league=league, team=user['team'])
+
+  search_text = (search_text or '').strip().lower()
+  if not search_text:
+    return []
 
   lgy_set = {
     (row['gender'], row['year'])
@@ -74,11 +82,19 @@ def get_export_players(league):
   for gender, year in lgy_set:
     for row in app_tables.master_player.search(league=league, gender=gender, year=year):
       row_id = row.get_id()
-      if row_id not in seen_ids:
+      if row_id in seen_ids:
+        continue
+      haystack = f"{row['team']} {row['number']} {row['shortname']}".lower()
+      if search_text in haystack:
         seen_ids.add(row_id)
-        players.append(row)
+        players.append({
+          'id': row_id,
+          'team': row['team'],
+          'number': row['number'],
+          'shortname': row['shortname'],
+        })
 
-  players.sort(key=lambda r: (r['team'] or '', r['number'] or '', r['shortname'] or ''))
+  players.sort(key=lambda p: (p['team'] or '', p['number'] or '', p['shortname'] or ''))
   return players
 
 
@@ -105,13 +121,16 @@ def list_ai_exports():
 
 
 @anvil.server.callable
-def add_ai_export(league, note, dow, player_filter, datasets_included, disabled):
+def add_ai_export(league, note, dow, player_filter_ids, datasets_included, disabled):
   user = _require_login()
 
-  note, error = _validate_export_fields(note, dow, datasets_included)
+  note = (note or '').strip()
+  error = _export_field_error(note, dow, datasets_included)
   if error:
     return error
   _validate_league_params(league=league, team=user['team'])
+
+  player_rows = [r for r in (app_tables.master_player.get_by_id(pid) for pid in (player_filter_ids or [])) if r]
 
   app_tables.ai_export_mgr.add_row(
     league=league,
@@ -119,7 +138,7 @@ def add_ai_export(league, note, dow, player_filter, datasets_included, disabled)
     Note=note,
     export_type='markdown',
     dow=dow,
-    player_filter=player_filter,
+    player_filter=player_rows,  # type: ignore[reportArgumentType]  -- link_multiple accepts any list of rows, stub is overly narrow
     datasets_included=datasets_included,
     user_email=user['email'],
     de_identified=True,
@@ -133,7 +152,7 @@ def add_ai_export(league, note, dow, player_filter, datasets_included, disabled)
 
 
 @anvil.server.callable
-def update_ai_export(export_id, league, note, dow, player_filter, datasets_included, disabled):
+def update_ai_export(export_id, league, note, dow, player_filter_ids, datasets_included, disabled):
   _require_login()
 
   row = app_tables.ai_export_mgr.get_by_id(export_id)
@@ -141,16 +160,19 @@ def update_ai_export(export_id, league, note, dow, player_filter, datasets_inclu
     raise Exception("Export not found.")
   _require_own_team(row['team'])
 
-  note, error = _validate_export_fields(note, dow, datasets_included)
+  note = (note or '').strip()
+  error = _export_field_error(note, dow, datasets_included)
   if error:
     return error
   _validate_league_params(league=league, team=row['team'])
+
+  player_rows = [r for r in (app_tables.master_player.get_by_id(pid) for pid in (player_filter_ids or [])) if r]
 
   row.update(
     league=league,
     Note=note,
     dow=dow,
-    player_filter=player_filter,
+    player_filter=player_rows,  # type: ignore[reportArgumentType]  -- link_multiple accepts any list of rows, stub is overly narrow
     datasets_included=datasets_included,
     disabled=bool(disabled),
   )

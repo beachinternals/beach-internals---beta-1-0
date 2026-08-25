@@ -99,6 +99,11 @@ class Homepage(HomepageTemplate):
     open_form('Homepage.SubscriptionMgr')
     pass
 
+  def ai_export_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    open_form('Homepage.DataMgr', open_view='ai_export_mgr')
+    pass
+
   def about_us_link2_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('Homepage.AboutUs')

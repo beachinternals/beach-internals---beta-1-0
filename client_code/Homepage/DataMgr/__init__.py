@@ -12,11 +12,12 @@ from .btd_manage import *
 from .master_player_mgr import *
 from .btd_view import *
 from .btd_manage import btd_manage
+from .ai_export_mgr import *
 
 
 
 class DataMgr(DataMgrTemplate):
-  def __init__(self, **properties):
+  def __init__(self, open_view=None, **properties):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
@@ -29,7 +30,15 @@ class DataMgr(DataMgrTemplate):
     elif not user_row["team"]:
       alert('Please Contact Beach Internals to be Assigned to a Team')
       open_form('Homepage.Contact')
-      
+    elif open_view == 'ai_export_mgr':
+      self.ai_export_mgr_click_click()
+
+  def ai_export_mgr_click_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(ai_export_mgr())
+    pass
+
   def btd_import_click_click(self, **event_args):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
