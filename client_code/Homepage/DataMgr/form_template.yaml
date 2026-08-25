@@ -29,9 +29,9 @@ components_by_slot:
         name: label_3
         properties: {align: center, background: 'theme:Secondary Container', bold: true, text: Player Database}
         type: Label
-      - event_bindings: {click: roster_manage_click_click}
+      - event_bindings: {click: master_player_mgr_click_click}
         layout_properties: {grid_position: 'KDKIIQ,KCVXQA'}
-        name: roster_manage_click
+        name: master_player_mgr_click
         properties: {text: Manage Player Data}
         type: Link
       layout_properties: {grid_position: 'KCZYCU,SMAHSC'}

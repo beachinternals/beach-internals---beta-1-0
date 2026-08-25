@@ -1,0 +1,36 @@
+<anvil-form container="ColumnPanel">
+  <anvil-component type="Label" name="title_label" prop:align="center" prop:role="headline" prop:text="Master Player File"></anvil-component>
+  <anvil-component type="FlowPanel" name="main_flow">
+    <!-- ============================= LEFT: league picker / roster list ============================= -->
+    <anvil-component type="ColumnPanel" name="left_panel" prop:role="outlined-card" container:width="620">
+      <anvil-component type="Label" name="league_label" prop:text="League:"></anvil-component>
+      <anvil-component type="DropDown" name="league_dropdown" on:change="self.league_dropdown_change"></anvil-component>
+      <anvil-component type="Label" name="roster_title" prop:role="title" prop:text="Players"></anvil-component>
+      <anvil-component type="Label" name="player_count_label" prop:text="Select a league"></anvil-component>
+      <anvil-component type="FlowPanel" name="merge_bar_flow">
+        <anvil-component type="Label" name="merge_selected_label" prop:font_size="12"></anvil-component>
+        <anvil-component type="Button" name="merge_selected_button" prop:role="outlined-button" prop:text="Merge Selected" prop:enabled="false" on:click="self.merge_selected_button_click"></anvil-component>
+      </anvil-component>
+      <anvil-component type="RepeatingPanel" name="player_list_panel" prop:item_template="Homepage.DataMgr.master_player_mgr.master_player_row_template"></anvil-component>
+    </anvil-component>
+    <!-- ============================= RIGHT: add / edit / merge a player ============================= -->
+    <anvil-component type="ColumnPanel" name="right_panel" prop:role="elevated-card" container:width="480">
+      <anvil-component type="Label" name="mode_label" prop:align="center" prop:role="headline" prop:text="Add New Player"></anvil-component>
+      <anvil-component type="Label" name="merge_summary_label" prop:visible="false" prop:font_size="12"></anvil-component>
+      <anvil-component type="Label" name="team_label" prop:text="Team:"></anvil-component>
+      <anvil-component type="TextBox" name="team_box" prop:placeholder="e.g. UCLA"></anvil-component>
+      <anvil-component type="Label" name="number_label" prop:text="Number:"></anvil-component>
+      <anvil-component type="TextBox" name="number_box" prop:placeholder="e.g. 5 (becomes 05)"></anvil-component>
+      <anvil-component type="Label" name="shortname_label" prop:text="Short Name:"></anvil-component>
+      <anvil-component type="TextBox" name="shortname_box" prop:placeholder="e.g. Amy"></anvil-component>
+      <anvil-component type="Label" name="fullname_label" prop:text="Full Name:"></anvil-component>
+      <anvil-component type="TextBox" name="fullname_box" prop:placeholder="e.g. Amy Smith"></anvil-component>
+      <anvil-component type="FlowPanel" name="action_buttons_flow">
+        <anvil-component type="Button" name="primary_button" prop:role="outlined-button" prop:text="Add Player" on:click="self.primary_button_click"></anvil-component>
+        <anvil-component type="Button" name="delete_button" prop:role="outlined-button" prop:text="Delete Player" prop:visible="false" on:click="self.delete_button_click"></anvil-component>
+        <anvil-component type="Button" name="cancel_button" prop:role="outlined-button" prop:text="Cancel" on:click="self.cancel_button_click"></anvil-component>
+      </anvil-component>
+    </anvil-component>
+  </anvil-component>
+  <anvil-component type="Button" name="close_button" prop:role="outlined-button" prop:text="Close" on:click="self.close_button_click"></anvil-component>
+</anvil-form>

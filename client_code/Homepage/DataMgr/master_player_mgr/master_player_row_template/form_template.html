@@ -1,0 +1,11 @@
+<anvil-form container="ColumnPanel">
+    <anvil-component type="ColumnPanel" name="card_1" prop:role="outlined-card" prop:spacing='{"padding":["-","0","0","0"]}'>
+        <anvil-component type="FlowPanel" name="flow_panel_1">
+            <anvil-component type="CheckBox" name="merge_checkbox" on:change="self.merge_checkbox_change"></anvil-component>
+            <anvil-component type="Label" name="team_number_label" prop:bold="true" container:width="90"></anvil-component>
+            <anvil-component type="Label" name="shortname_label" container:width="140"></anvil-component>
+            <anvil-component type="Label" name="fullname_label" prop:font_size="12" prop:foreground="theme:On Surface Variant" container:width="160"></anvil-component>
+            <anvil-component type="Link" name="edit_link" prop:text="Edit →" prop:role="text-button" on:click="self.edit_link_click"></anvil-component>
+        </anvil-component>
+    </anvil-component>
+</anvil-form>
