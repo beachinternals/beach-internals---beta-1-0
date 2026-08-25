@@ -297,6 +297,10 @@ roles:
   display_in_toolbox: false
   name: tonal-card
   title: Tonal Card
+- components: [ColumnPanel, LinearPanel, XYPanel, RepeatingPanel]
+  display_in_toolbox: true
+  name: list-row
+  title: List Row
 - components: [Button, FileLoader]
   display_in_toolbox: true
   name: outlined-button

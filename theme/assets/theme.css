@@ -743,6 +743,11 @@ button.close > span, button.close {
   padding: 15px;
 }
 
+.anvil-role-list-row {
+  padding: 4px 6px;
+  border-bottom: solid 1px %color:Outline%;
+}
+
 
 /* full_width_row sections go full bleed */
 .column-panel.anvil-role-card > .anvil-panel-section > .anvil-panel-section-container.full-width-row {
