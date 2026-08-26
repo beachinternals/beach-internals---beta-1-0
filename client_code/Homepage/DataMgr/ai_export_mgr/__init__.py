@@ -10,8 +10,13 @@ import anvil.users
 #
 # export_type, user_email, de_identified, ai_optimized, and output_location
 # are not exposed here -- they're always set to fixed values server-side.
+#
+# player_select / dataset_select are anvil_extras.MultiSelectDropDown --
+# their own "selected" property is the source of truth, keyed by each
+# option's value (a master_player id string for players, the full dataset
+# row for datasets), so there's no separate selection-tracking dict here.
 
-DOW_CHOICES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+DOW_CHOICES = ['Everyday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 
 class ai_export_mgr(ai_export_mgrTemplate):
@@ -31,14 +36,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
     self.user = user
     self.mode = 'add'
     self.editing_id = None
-    self.selected_players = {}
-    self.player_found_count = 0
-    self.all_datasets = []
-    self.selected_datasets = {}
 
     self.export_list_panel.set_event_handler('x-edit-export', self.export_list_panel_x_edit_export)
-    self.player_list_panel.set_event_handler('x-toggle-player', self.player_list_panel_x_toggle_player)
-    self.dataset_list_panel.set_event_handler('x-toggle-dataset', self.dataset_list_panel_x_toggle_dataset)
 
     self.init_form()
 
@@ -53,8 +52,10 @@ class ai_export_mgr(ai_export_mgrTemplate):
     elif self.league_dropdown.items:
       self.league_dropdown.selected_value = self.league_dropdown.items[0]
 
-    self.all_datasets = anvil.server.call('get_export_datasets')
-    self.refresh_dataset_panel()
+    self.refresh_player_choices()
+
+    datasets = anvil.server.call('get_export_datasets')
+    self.dataset_select.items = [(r['dataset_name'] or r['dataset_type'] or 'Unnamed dataset', r) for r in datasets]
 
     self.refresh_export_list()
     self.reset_to_add_mode()
@@ -76,69 +77,14 @@ class ai_export_mgr(ai_export_mgrTemplate):
   # ==========================================================================
 
   def league_dropdown_change(self, **event_args):
-    self.selected_players = {}
-    self.search_box.text = ""
-    self.clear_player_results()
+    self.refresh_player_choices()
 
-  def clear_player_results(self):
-    """Empty the player list rather than loading a league's whole roster up front."""
-    self.player_list_panel.items = []
-    self.player_found_count = 0
-    self.update_player_count_label()
-
-  def search_button_click(self, **event_args):
+  def refresh_player_choices(self):
     league = self.league_dropdown.selected_value
-    if not league:
-      alert("Select a league first.")
-      return
-    search_text = (self.search_box.text or '').strip()
-    if not search_text:
-      alert("Enter a team, number, or short name to search.")
-      return
-
-    matches = anvil.server.call('get_export_players', league, search_text)
-    self.player_list_panel.items = [
-      {**m, 'checked': m['id'] in self.selected_players} for m in matches
+    players = anvil.server.call('get_export_players', league) if league else []
+    self.player_select.items = [
+      (f"{p['team']} {p['number']} {p['shortname']}", p['id']) for p in players
     ]
-    self.player_found_count = len(matches)
-    self.update_player_count_label()
-
-  def update_player_count_label(self):
-    selected = len(self.selected_players)
-    if self.player_found_count:
-      self.player_count_label.text = f"{self.player_found_count} found, {selected} selected"
-    elif selected:
-      self.player_count_label.text = f"{selected} player(s) selected"
-    else:
-      self.player_count_label.text = "Search for a player to add them to this export"
-
-  def player_list_panel_x_toggle_player(self, item, checked, **event_args):
-    if checked:
-      self.selected_players[item['id']] = item
-    else:
-      self.selected_players.pop(item['id'], None)
-    self.update_player_count_label()
-
-  # ==========================================================================
-  #  DATASET PICKER
-  # ==========================================================================
-
-  def refresh_dataset_panel(self):
-    self.dataset_list_panel.items = [
-      {'row': r, 'checked': r.get_id() in self.selected_datasets} for r in self.all_datasets
-    ]
-    self.update_dataset_count_label()
-
-  def update_dataset_count_label(self):
-    count = len(self.selected_datasets)
-    self.dataset_count_label.text = f"{count} dataset(s) selected" if count else "Select at least one dataset"
-
-  def dataset_list_panel_x_toggle_dataset(self, row, checked, **event_args):
-    if checked:
-      self.selected_datasets[row.get_id()] = row
-    else:
-      self.selected_datasets.pop(row.get_id(), None)
-    self.update_dataset_count_label()
 
   # ==========================================================================
   #  MODE SWITCHING
@@ -152,11 +98,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
     self.note_box.text = ""
     self.dow_dropdown.selected_value = None
     self.enabled_checkbox.checked = True
-    self.selected_players = {}
-    self.selected_datasets = {}
-    self.search_box.text = ""
-    self.clear_player_results()
-    self.refresh_dataset_panel()
+    self.player_select.selected = []
+    self.dataset_select.selected = []
     self.delete_button.visible = False
     self.primary_button.text = "Add Export"
 
@@ -172,15 +115,10 @@ class ai_export_mgr(ai_export_mgrTemplate):
     league = item['league']
     if league in self.league_dropdown.items:
       self.league_dropdown.selected_value = league
+    self.refresh_player_choices()
 
-    self.selected_players = {
-      r.get_id(): {'id': r.get_id(), 'team': r['team'], 'number': r['number'], 'shortname': r['shortname']}
-      for r in (item['player_filter'] or [])
-    }
-    self.selected_datasets = {r.get_id(): r for r in (item['datasets_included'] or [])}
-    self.search_box.text = ""
-    self.clear_player_results()
-    self.refresh_dataset_panel()
+    self.player_select.selected = [r.get_id() for r in (item['player_filter'] or [])]
+    self.dataset_select.selected = list(item['datasets_included'] or [])
 
     self.delete_button.visible = True
     self.primary_button.text = "Save Changes"
@@ -202,7 +140,7 @@ class ai_export_mgr(ai_export_mgrTemplate):
     if not self.dow_dropdown.selected_value:
       alert("Please select a day of week.")
       return
-    if not self.selected_datasets:
+    if not self.dataset_select.selected:
       alert("Select at least one dataset to include.")
       return
 
@@ -217,8 +155,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
       self.league_dropdown.selected_value,
       self.note_box.text,
       self.dow_dropdown.selected_value,
-      list(self.selected_players.keys()),
-      list(self.selected_datasets.values()),
+      self.player_select.selected,
+      self.dataset_select.selected,
       not self.enabled_checkbox.checked,
     )
     if not result['success']:
@@ -236,8 +174,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
       self.league_dropdown.selected_value,
       self.note_box.text,
       self.dow_dropdown.selected_value,
-      list(self.selected_players.keys()),
-      list(self.selected_datasets.values()),
+      self.player_select.selected,
+      self.dataset_select.selected,
       not self.enabled_checkbox.checked,
     )
     if not result['success']:

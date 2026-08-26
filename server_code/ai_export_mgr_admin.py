@@ -18,7 +18,7 @@ from ai_export_manager import _require_own_team, _validate_league_params
 # result_message) are owned by ai_export_manager's background job and are
 # never written here except created_at/files_generated on initial add.
 
-DOW_CHOICES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+DOW_CHOICES = ['Everyday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 
 def _require_login():
@@ -55,22 +55,18 @@ def get_export_league_choices():
 
 
 @anvil.server.callable
-def get_export_players(league, search_text):
+def get_export_players(league):
   """
-  Search master_player by team/number/shortname substring, scoped to the union
-  of (gender, year) the logged-in user's team is subscribed to under this
-  league. Returns [] for a blank search rather than the whole roster -- a
-  league can have hundreds of players across every subscribed year, so this
-  mirrors search_master_players's on-demand pattern instead of loading
-  everything up front. Returns plain dicts, not linked rows -- add_ai_export /
-  update_ai_export take player ids and resolve them back to rows server-side.
+  Players for the player_filter multi-select: the union of master_player rows
+  across every (gender, year) the logged-in user's team is subscribed to
+  under this league. Returns plain dicts, not linked rows, to keep the
+  payload light -- add_ai_export / update_ai_export take player ids and
+  resolve them back to rows server-side. The client's MultiSelectDropDown
+  provides its own filter box, so this loads the whole league roster once
+  per league selection rather than per keystroke.
   """
   user = _require_login()
   _validate_league_params(league=league, team=user['team'])
-
-  search_text = (search_text or '').strip().lower()
-  if not search_text:
-    return []
 
   lgy_set = {
     (row['gender'], row['year'])
@@ -84,15 +80,13 @@ def get_export_players(league, search_text):
       row_id = row.get_id()
       if row_id in seen_ids:
         continue
-      haystack = f"{row['team']} {row['number']} {row['shortname']}".lower()
-      if search_text in haystack:
-        seen_ids.add(row_id)
-        players.append({
-          'id': row_id,
-          'team': row['team'],
-          'number': row['number'],
-          'shortname': row['shortname'],
-        })
+      seen_ids.add(row_id)
+      players.append({
+        'id': row_id,
+        'team': row['team'],
+        'number': row['number'],
+        'shortname': row['shortname'],
+      })
 
   players.sort(key=lambda p: (p['team'] or '', p['number'] or '', p['shortname'] or ''))
   return players

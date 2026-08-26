@@ -25,16 +25,10 @@
         </anvil-component>
 
         <anvil-component type="Label" name="players_title" prop:role="title" prop:text="Players" prop:spacing_above="small"></anvil-component>
-        <anvil-component type="FlowPanel" name="player_search_flow" prop:spacing_above="none">
-          <anvil-component type="TextBox" name="search_box" prop:placeholder="Search team, number, or short name..." on:pressed_enter="self.search_button_click" container:width="260"></anvil-component>
-          <anvil-component type="Button" name="search_button" prop:role="outlined-button" prop:text="Search" on:click="self.search_button_click"></anvil-component>
-        </anvil-component>
-        <anvil-component type="Label" name="player_count_label" prop:font_size="12" prop:spacing_above="none" prop:spacing_below="none"></anvil-component>
-        <anvil-component type="RepeatingPanel" name="player_list_panel" prop:spacing_above="none" prop:item_template="Homepage.DataMgr.ai_export_mgr.player_pick_row"></anvil-component>
+        <anvil-component type="anvil_extras.MultiSelectDropDown" name="player_select" prop:placeholder="All players in this league" prop:enable_filtering="true" prop:enable_select_all="true" prop:multiple="true" prop:width="100%"></anvil-component>
 
         <anvil-component type="Label" name="datasets_title" prop:role="title" prop:text="Datasets" prop:spacing_above="small"></anvil-component>
-        <anvil-component type="Label" name="dataset_count_label" prop:font_size="12" prop:spacing_above="none" prop:spacing_below="none"></anvil-component>
-        <anvil-component type="RepeatingPanel" name="dataset_list_panel" prop:spacing_above="none" prop:item_template="Homepage.DataMgr.ai_export_mgr.dataset_pick_row"></anvil-component>
+        <anvil-component type="anvil_extras.MultiSelectDropDown" name="dataset_select" prop:placeholder="Select datasets" prop:enable_filtering="false" prop:enable_select_all="true" prop:multiple="true" prop:width="100%"></anvil-component>
 
         <anvil-component type="FlowPanel" name="action_buttons_flow" prop:spacing_above="small">
           <anvil-component type="Button" name="primary_button" prop:role="outlined-button" prop:text="Add Export" on:click="self.primary_button_click"></anvil-component>
