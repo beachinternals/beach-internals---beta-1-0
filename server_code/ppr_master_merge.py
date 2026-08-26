@@ -97,6 +97,7 @@ def deidentify_ppr(ppr_df, league, gender, year):
 
   n_replaced = 0
   n_not_found = 0
+  not_found_counts = {}
 
   for col in player_cols:
     if col not in ppr_df.columns:
@@ -110,8 +111,13 @@ def deidentify_ppr(ppr_df, league, gender, year):
         n_replaced += 1
       elif not val.startswith('PLYR-'):
         n_not_found += 1
+        not_found_counts[val_stripped] = not_found_counts.get(val_stripped, 0) + 1
 
   print(f"  deidentify_ppr: {n_replaced} player substitutions, {n_not_found} names not in map")
+  if not_found_counts:
+    print(f"  deidentify_ppr: {len(not_found_counts)} distinct names not in map:")
+    for name, count in sorted(not_found_counts.items(), key=lambda kv: -kv[1]):
+      print(f"    {count:6d}  {name!r}")
 
   # Step 3 — Rebuild teama and teamb from substituted player columns
   for team_col, p1_col, p2_col in [('teama', 'player_a1', 'player_a2'),
