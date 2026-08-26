@@ -94,10 +94,16 @@ def get_export_players(league):
 
 @anvil.server.callable
 def get_export_datasets():
-  """Active rows from ai_export_dataset_list, for the datasets_included multi-select."""
+  """
+  All rows from ai_export_dataset_list, for the datasets_included multi-select,
+  sorted the same way ai_export_dataset_combiner.get_enabled_datasets() orders
+  a saved export's datasets. Not filtered by 'active' -- that column isn't
+  used by the export pipeline itself, so filtering on it here would just hide
+  real dataset options.
+  """
   _require_login()
-  datasets = list(app_tables.ai_export_dataset_list.search(active=True))
-  datasets.sort(key=lambda r: r['dataset_name'] or '')
+  datasets = list(app_tables.ai_export_dataset_list.search())
+  datasets.sort(key=lambda r: r['order'] or 0)
   return datasets
 
 
