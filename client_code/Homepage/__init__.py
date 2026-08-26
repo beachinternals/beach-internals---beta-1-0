@@ -14,11 +14,15 @@ class Homepage(HomepageTemplate):
     # Set Form properties and Data Bindings.
     self.init_components(**properties)
 
-    # make admin visible, or not
+    self.refresh_user_state()
+
+  def refresh_user_state(self, **event_args):
+    """Refresh the header/footer UI to match the current sign-in state"""
     user_row = anvil.users.get_user()
 
     if user_row:
-      self.user_name_label.text = user_row['team'] 
+      self.user_name_label.text = user_row['team']
+      self.signin_link.text = "Logout"
       if user_row['team'] == "INTERNALS":
         self.admin_link.visible = True
         #self.pair_rpt_link.visible = True
@@ -31,17 +35,18 @@ class Homepage(HomepageTemplate):
         self.league_rpt_link.visible = False
         self.rpt_mgr_link.visible = True
         self.scouting_rpt_link.visible = False
-        self.reports_main.visible = True        
+        self.reports_main.visible = True
     else:
+      self.user_name_label.text = ""
+      self.signin_link.text = "Login"
       self.admin_link.visible = False
       self.pair_rpt_link.visible = False
       self.league_rpt_link.visible = False
       self.rpt_mgr_link.visible = True
       self.scouting_rpt_link.visible = False
       self.reports_main.visible = True
-
     pass
-    
+
   def datamgr_link_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('Homepage.DataMgr')
@@ -136,9 +141,19 @@ class Homepage(HomepageTemplate):
 
   def signin_link_click(self, **event_args):
     """This method is called when the link is clicked"""
-    open_form('Homepage.UserMgr')
-    if anvil.users.get_user():
-      self.user_name_label.text = anvil.users.get_user()['team']
+    user_row = anvil.users.get_user()
+
+    if user_row:
+      if confirm("Logout of Beach Internals?"):
+        anvil.users.logout()
+        open_form('Homepage.UserMgr')
+    else:
+      anvil.users.login_with_form()
+      if not anvil.users.get_user(allow_remembered=True):
+        alert("Login Failed")
+      else:
+        anvil.server.call('check_user_team')
+        self.refresh_user_state()
     pass
 
   def dashboard_link_click(self, **event_args):
