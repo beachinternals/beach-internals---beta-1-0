@@ -1,5 +1,6 @@
 from ._anvil_designer import HomepageTemplate
 from anvil import *
+import anvil.js
 import anvil.server
 import anvil.google.auth, anvil.google.drive
 from anvil.google.drive import app_files
@@ -132,6 +133,11 @@ class Homepage(HomepageTemplate):
   def home_link_click(self, **event_args):
     """This method is called when the link is clicked"""
     open_form('Homepage.Landing_form')
+    pass
+
+  def ai_assistant_link_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    anvil.js.window.open('https://ai.beachinternals.com', '_blank')
     pass
 
   def Contact_us_link_click(self, **event_args):

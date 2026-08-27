@@ -585,7 +585,19 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
             min_att = 5
           distribution = build_setheight_payload(sh_result, min_att)
           attempts = sh_result.get('total') if isinstance(sh_result, dict) else None
-          
+
+    # ── Gate on min_attempts_for_ci, same spirit as the aggregate engine
+    # (calculate_all_metrics): too few attempts makes the value noise, not
+    # signal. Distribution payloads already suppress their own thin cells
+    # downstream, so only gate scalar (object/dict) values here.
+    if return_type in ('object', 'dict') and attempts is not None:
+      try:
+        min_att = int(metric_row['min_attempts_for_ci'])
+      except (KeyError, TypeError, ValueError):
+        min_att = 5
+      if attempts < min_att:
+        return None
+
     return {
       'metric_id':    metric_id,
       'metric_name':  metric_name,
