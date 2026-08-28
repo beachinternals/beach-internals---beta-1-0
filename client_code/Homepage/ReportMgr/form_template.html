@@ -1,0 +1,48 @@
+<anvil-form layout="Beach_Internals_Application.Homepage">
+    <anvil-block slot="content_slot">
+        <anvil-component type="Label" name="title_label" prop:align="center" prop:role="headline" prop:text="Report Manager"></anvil-component>
+        <anvil-component type="FlowPanel" name="main_flow">
+            <anvil-component type="ColumnPanel" name="left_panel" prop:role="outlined-card" prop:col_spacing="small" container:width="480">
+                <anvil-component type="Label" name="list_title" prop:role="title" prop:text="Your Team's Reports"></anvil-component>
+                <anvil-component type="Label" name="report_count_label" prop:font_size="12" prop:spacing_above="small" prop:spacing_below="none"></anvil-component>
+                <anvil-component type="RepeatingPanel" name="rpt_list_panel" prop:spacing_above="none" prop:item_template="Homepage.ReportMgr.rpt_mgr_row_template"></anvil-component>
+            </anvil-component>
+            <anvil-component type="ColumnPanel" name="right_panel" prop:role="elevated-card" prop:col_spacing="small" container:width="640">
+                <anvil-component type="Label" name="mode_label" prop:align="center" prop:role="headline" prop:text="Add New Report"></anvil-component>
+
+                <anvil-component type="FlowPanel" name="lgy_flow" prop:spacing_above="small">
+                    <anvil-component type="Label" name="lgy_label" prop:text="League / Gender / Year:"></anvil-component>
+                    <anvil-component type="DropDown" name="lgy_dropdown" on:change="self.lgy_dropdown_change"></anvil-component>
+                </anvil-component>
+
+                <anvil-component type="TextBox" name="description_box" prop:placeholder="Report description" prop:spacing_above="small"></anvil-component>
+
+                <anvil-component type="FlowPanel" name="dow_rpt_flow" prop:spacing_above="small">
+                    <anvil-component type="Label" name="dow_field_label" prop:text="Day of Week:"></anvil-component>
+                    <anvil-component type="DropDown" name="dow_dropdown"></anvil-component>
+                    <anvil-component type="Label" name="rpt_type_field_label" prop:text="Report Type:" prop:spacing='{"padding":[null,null,null,"20"]}'></anvil-component>
+                    <anvil-component type="DropDown" name="rpt_type_dropdown" on:change="self.rpt_type_dropdown_change"></anvil-component>
+                </anvil-component>
+
+                <anvil-component type="FlowPanel" name="emailto_flow" prop:spacing_above="small">
+                    <anvil-component type="Label" name="emailto_label" prop:text="Send To:"></anvil-component>
+                    <anvil-component type="TextBox" name="emailto_box" prop:placeholder="Email address" container:width="260"></anvil-component>
+                    <anvil-component type="CheckBox" name="active_checkbox" prop:text="Active" prop:checked="true" prop:spacing='{"padding":[null,null,null,"20"]}'></anvil-component>
+                </anvil-component>
+
+                <anvil-component type="Label" name="players_title" prop:role="title" prop:text="Players" prop:spacing_above="small"></anvil-component>
+                <anvil-component type="anvil_extras.MultiSelectDropDown" name="player_select" prop:placeholder="Select players" prop:enable_filtering="true" prop:enable_select_all="true" prop:multiple="true" prop:width="100%"></anvil-component>
+
+                <anvil-component type="Label" name="reports_title" prop:role="title" prop:text="Included Reports" prop:spacing_above="small"></anvil-component>
+                <anvil-component type="anvil_extras.MultiSelectDropDown" name="rpts_inc_select" prop:placeholder="Select reports to include" prop:enable_filtering="false" prop:enable_select_all="true" prop:multiple="true" prop:width="100%"></anvil-component>
+
+                <anvil-component type="FlowPanel" name="action_buttons_flow" prop:spacing_above="small">
+                    <anvil-component type="Button" name="primary_button" prop:role="outlined-button" prop:text="Add Report" on:click="self.primary_button_click"></anvil-component>
+                    <anvil-component type="Button" name="delete_button" prop:role="outlined-button" prop:text="Delete Report" prop:visible="false" on:click="self.delete_button_click"></anvil-component>
+                    <anvil-component type="Button" name="cancel_button" prop:role="outlined-button" prop:text="Cancel" on:click="self.cancel_button_click"></anvil-component>
+                </anvil-component>
+            </anvil-component>
+        </anvil-component>
+        <anvil-component type="Button" name="close_button" prop:role="outlined-button" prop:text="Close" on:click="self.close_button_click"></anvil-component>
+    </anvil-block>
+</anvil-form>

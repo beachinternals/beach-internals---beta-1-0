@@ -149,8 +149,8 @@ def rpt_mgr_generate_background(user=None):
           print(f"First input item keys: {list(input_list_items[0].keys()) if hasattr(input_list_items[0], 'keys') else 'Not dict-like'}")
         else:
           print(f"Input list is None or empty")
-          email_text += f"No input list for {rpt_r['rpt_type']} report: {rpt_r['Report Description']}\n"
-          log_info(f"No input list for {rpt_r['rpt_type']} report: {rpt_r['Report Description']}")
+          email_text += f"No input list for {rpt_r['rpt_type']} report: {rpt_r['report_description']}\n"
+          log_info(f"No input list for {rpt_r['rpt_type']} report: {rpt_r['report_description']}")
           continue
 
         print(f"Calling rpt_mgr_new_rpts with rpt_type={rpt_r['rpt_type']}")
@@ -192,8 +192,8 @@ def rpt_mgr_generate_background(user=None):
             print(f"First pair item keys: {list(pair_list_items[0].keys()) if hasattr(pair_list_items[0], 'keys') else 'Not dict-like'}")
         else:
           print(f"Pair list is None or empty")
-          email_text += f"No pair list for scouting report: {rpt_r['Report Description']}\n"
-          log_info(f"No pair list for scouting report: {rpt_r['Report Description']}")
+          email_text += f"No pair list for scouting report: {rpt_r['report_description']}\n"
+          log_info(f"No pair list for scouting report: {rpt_r['report_description']}")
           continue
 
         print(f"Calling rpt_mgr_scouting_rpts with pair_list")
@@ -233,8 +233,8 @@ def rpt_mgr_generate_background(user=None):
 
     except Exception as e:
       print(f"ERROR: Exception processing report {report_index + 1}: {str(e)}")
-      log_critical(f"Exception processing report {rpt_r.get('Report Description', 'Unknown')}: {e}")
-      email_text += f"Error processing report {rpt_r.get('Report Description', 'Unknown')}: {str(e)}\n"
+      log_critical(f"Exception processing report {rpt_r.get('report_description', 'Unknown')}: {e}")
+      email_text += f"Error processing report {rpt_r.get('report_description', 'Unknown')}: {str(e)}\n"
 
   print(f"\n=== SUMMARY ===")
   print(f"Total reports found: {total_reports}")
@@ -359,9 +359,9 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         log_info(f"Unknown rpt_type: {rpt_r['rpt_type']}")
         continue
 
-      pdf_name = f"{player_pair} {rpt_r['Report Description']}.pdf"
+      pdf_name = f"{player_pair} {rpt_r['report_description']}.pdf"
       if rpt_r['rpt_type'] == 'dashboard':
-        pdf_name = f"{player_pair} {disp_team} {rpt_r['Report Description']}.pdf"
+        pdf_name = f"{player_pair} {disp_team} {rpt_r['report_description']}.pdf"
       #log_info(f"PDF name: {pdf_name}")
 
       # Process rpts_inc
@@ -374,7 +374,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           rptname_rows.append(rptname1)
 
       if not rptname_rows:
-        log_info(f"No valid reports in rpts_inc for {rpt_r['Report Description']}")
+        log_info(f"No valid reports in rpts_inc for {rpt_r['report_description']}")
         continue
 
       sorted_rptnames = sorted(rptname_rows, key=lambda r: r['order'] or 0)
@@ -421,10 +421,10 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
               log_error(f"Coach not found in Uers table, email: {rpt_r['email']}")
             
             # Get description from ai_prompt_templates
-            #log_info(f"Searching ai prompt table for report description {rpt_r['Report Description']}, Hierarchy 1, coach id {coach_user['ai_summary_level']}")
-            #log_info(f"Getting coach AI summary level for {rpt_r['email']}, report descirption = {rpt_r['Report Description']}, ai summary level ={coach_user['ai_summary_level']}")
+            #log_info(f"Searching ai prompt table for report description {rpt_r['report_description']}, Hierarchy 1, coach id {coach_user['ai_summary_level']}")
+            #log_info(f"Getting coach AI summary level for {rpt_r['email']}, report descirption = {rpt_r['report_description']}, ai summary level ={coach_user['ai_summary_level']}")
             #prompt_row = app_tables.ai_prompt_templates.get(
-            #  report_description=rpt_r['Report Description'],
+            #  report_description=rpt_r['report_description'],
             #  hierarchy_level='1',
             #  ai_summary_level=coach_user['ai_summary_level']
             #)
@@ -502,10 +502,10 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
 
       # NEW: Generate single rollup AI summary based on all report JSONs
       if report_data_collection:
-        log_info(f"Searching for rollup prompt: report description={rpt_r['Report Description']}, hierarchy=1, level={ai_summary_level}")
+        log_info(f"Searching for rollup prompt: report description={rpt_r['report_description']}, hierarchy=1, level={ai_summary_level}")
         rollup_prompt_rows = sorted(
           app_tables.ai_prompt_templates.search(
-            report_description=rpt_r['Report Description'],
+            report_description=rpt_r['report_description'],
             hierarchy_level='1',
             ai_summary_level=ai_summary_level  # Filter by coach's preference
           ),
@@ -519,7 +519,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
         if rollup_prompt:
           # Prepare comprehensive data for AI summary
           rollup_data = {
-            'report_description': rpt_r['Report Description'],
+            'report_description': rpt_r['report_description'],
             'player_pair': player_pair,
             'reports': report_data_collection  # All JSONs with descriptions
           }
@@ -571,7 +571,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
           else:
             log_info(f"Rollup PDF summary generation failed or no combined PDF available")
         else:
-          log_info(f"No rollup prompt found for {rpt_r['Report Description']} with level {ai_summary_level}")
+          log_info(f"No rollup prompt found for {rpt_r['report_description']} with level {ai_summary_level}")
       else:
         log_info(f"No report data collected for rollup summary")
 
@@ -580,7 +580,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       # # Generate roll-up summary
       # rollup_prompt_rows = sorted(
       #     app_tables.ai_prompt_templates.search(
-      #         report_description=rpt_r['Report Description'],
+      #         report_description=rpt_r['report_description'],
       #         hierarchy_level='1',
       #         coach_id=q.any_of(rpt_r['email'], '')
       #     ),
@@ -614,7 +614,7 @@ def rpt_mgr_new_rpts(rpt_r, p_list, disp_team):
       # Collect report info
       report_infos.append({
         'player_pair': player_pair,
-        'description': rpt_r['Report Description'],
+        'description': rpt_r['report_description'],
         'combined': combined_result,
         'individuals': pdf_files_created
       })
@@ -641,7 +641,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
   
   Args:
       rpt_r (dict): Report row from rpt_mgr table containing:
-          - Report Description: Name of the report
+          - report_description: Name of the report
           - email: Coach email for AI summary level lookup
           - rpts_inc: List of report specifications to generate
       pair_list (list): List of pair dictionaries containing:
@@ -664,7 +664,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
   report_infos = []
 
   if not pair_list:
-    log_critical(f"No pairs provided for scouting report: {rpt_r.get('Report Description', 'Unknown')}")
+    log_critical(f"No pairs provided for scouting report: {rpt_r.get('report_description', 'Unknown')}")
     return return_text, report_infos
 
   try:
@@ -727,7 +727,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
             coach_user = app_tables.users.get(email=rpt_r['email'])
             ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
             prompt_row = app_tables.ai_prompt_templates.get(
-            report_description=rpt_r['Report Description'],
+            report_description=rpt_r['report_description'],
             hierarchy_level='1',
             ai_summary_level=ai_summary_level
             )
@@ -745,7 +745,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
         pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
         if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
           pair_pdf = merge_pdfs(pair_pdf, pdf_result['pdf'],
-                                pdf_name=f"{disp_pair}_scouting_combined_{rpt_r['Report Description']}.pdf") if pair_pdf else pdf_result['pdf']
+                                pdf_name=f"{disp_pair}_scouting_combined_{rpt_r['report_description']}.pdf") if pair_pdf else pdf_result['pdf']
 
       # ===================================================================
       # SECTION 2: Process Player Reports (Individual Player Analysis)
@@ -778,7 +778,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
               coach_user = app_tables.users.get(email=rpt_r['email'])
               ai_summary_level = coach_user['ai_summary_level'] if coach_user else 'Summary'
               prompt_row = app_tables.ai_prompt_templates.get(
-                report_description=rpt_r['Report Description'],
+                report_description=rpt_r['report_description'],
                 hierarchy_level='1',
                 ai_summary_level=ai_summary_level
               )
@@ -796,7 +796,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           pdf_result = generate_pdf_report(rptname['rpt_form'], report_id)
           if isinstance(pdf_result, dict) and pdf_result.get('pdf'):
             player_pdf = merge_pdfs(player_pdf, pdf_result['pdf'],
-                                    pdf_name=f"{player}_{label}_combined_{rpt_r['Report Description']}.pdf") if player_pdf else pdf_result['pdf']
+                                    pdf_name=f"{player}_{label}_combined_{rpt_r['report_description']}.pdf") if player_pdf else pdf_result['pdf']
 
         # Store the completed player PDF
         if label == "player1":
@@ -807,7 +807,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
       # ===================================================================
       # SECTION 3: Combine All PDFs in Correct Order
       # ===================================================================
-      final_pdf_name = f"{disp_pair}_{rpt_r['Report Description']}_combined_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
+      final_pdf_name = f"{disp_pair}_{rpt_r['report_description']}_combined_{today.strftime('%Y%m%d_%H%M%S')}.pdf"
       final_pdf = None
       
       # Merge in order: pair report, player1 reports, player2 reports
@@ -827,7 +827,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
         # Find the appropriate AI prompt template
         rollup_prompt_rows = sorted(
           app_tables.ai_prompt_templates.search(
-            report_description=rpt_r['Report Description'],
+            report_description=rpt_r['report_description'],
             hierarchy_level='1',
             ai_summary_level=ai_summary_level
           ),
@@ -839,7 +839,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
         if rollup_prompt:
           # Prepare comprehensive data for AI summary
           rollup_data = {
-            'report_description': rpt_r['Report Description'],
+            'report_description': rpt_r['report_description'],
             'player_pair': disp_pair,
             'reports': report_data_collection  # All JSONs with descriptions
           }
@@ -859,7 +859,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
           )
 
           # Save rollup summary as JSON for data analysis
-          rollup_json_name = f"rollup_{disp_pair}_{rpt_r['Report Description']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
+          rollup_json_name = f"rollup_{disp_pair}_{rpt_r['report_description']}_{today.strftime('%Y%m%d_%H%M%S')}.json"
           rollup_json_media = anvil.BlobMedia('application/json', 
                                     json.dumps(rollup_data, indent=2).encode('utf-8'))
           rollup_json_result = write_to_nested_folder(json_folder, rollup_json_name, rollup_json_media)
@@ -889,7 +889,7 @@ def rpt_mgr_scouting_rpts(rpt_r, pair_list, disp_team):
       # Collect report information for email/logging
       report_infos.append({
         'player_pair': disp_pair,
-        'description': rpt_r['Report Description'],
+        'description': rpt_r['report_description'],
         'combined': combined_result,
         'individuals': pdf_files_created
       })
@@ -998,7 +998,7 @@ def test_rpt_mgr_new_rpts():
     _require_internals()
     rpt_r = {
         'rpt_type': 'player',
-        'Report Description': 'Attacking Summary',
+        'report_description': 'Attacking Summary',
         'email': 'info@beachinternals.com',
         'rpts_inc': [{'id': 'test_id', 'report_name': 'Test Report', 'rpt_type': 'player', 'rpt_form': 'form1', 'function_name': 'fn1', 'order': 1}]
     }

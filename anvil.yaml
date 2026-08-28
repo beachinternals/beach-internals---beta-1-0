@@ -1454,7 +1454,7 @@ db_schema:
     server: full
     title: report_list
   rpt_mgr:
-    client: full
+    client: none
     columns:
     - admin_ui: {width: 71}
       client_hidden: null
@@ -1474,7 +1474,7 @@ db_schema:
       type: string
     - admin_ui: {width: 200}
       client_hidden: null
-      name: Report Description
+      name: report_description
       type: string
     - admin_ui: {width: 98}
       client_hidden: null
@@ -1596,6 +1596,10 @@ db_schema:
       client_hidden: null
       name: copy_beachinternals
       type: bool
+    - admin_ui: {width: 200}
+      client_hidden: null
+      name: Report Description
+      type: string
     indexes: []
     server: full
     title: rpt_mgr

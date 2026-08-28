@@ -1,0 +1,11 @@
+<anvil-form container="ColumnPanel">
+  <anvil-component type="ColumnPanel" name="card_1" prop:role="list-row" prop:spacing_above="none" prop:spacing_below="none">
+    <anvil-component type="FlowPanel" name="flow_panel_1" prop:spacing_above="none" prop:spacing_below="none">
+      <anvil-component type="Label" name="description_label" prop:bold="true" container:width="220"></anvil-component>
+      <anvil-component type="Label" name="rpt_type_label" prop:font_size="12" prop:foreground="theme:On Surface Variant" container:width="90"></anvil-component>
+      <anvil-component type="Label" name="dow_label" prop:font_size="12" prop:foreground="theme:On Surface Variant" container:width="100"></anvil-component>
+      <anvil-component type="Label" name="status_label" prop:font_size="12" container:width="90"></anvil-component>
+      <anvil-component type="Link" name="edit_link" prop:text="Edit →" prop:role="text-button" on:click="self.edit_link_click"></anvil-component>
+    </anvil-component>
+  </anvil-component>
+</anvil-form>
