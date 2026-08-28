@@ -41,10 +41,10 @@ class Homepage(HomepageTemplate):
       self.user_name_label.text = ""
       self.signin_link.text = "Login"
       self.admin_link.visible = False
-      self.pair_rpt_link.visible = False
-      self.league_rpt_link.visible = False
-      self.rpt_mgr_link.visible = True
-      self.scouting_rpt_link.visible = False
+      #self.pair_rpt_link.visible = False
+      #self.league_rpt_link.visible = False
+      #self.rpt_mgr_link.visible = True
+      #self.scouting_rpt_link.visible = False
       self.reports_main.visible = True
     pass
 
