@@ -555,6 +555,7 @@ def build_team_corrections_report(league, gender, year, team):
     'n_files': len(files),
     'n_files_with_corrections': sum(1 for f in detail if not f['clean']),
     'total_entries': total_entries,
+    'total_points': sum(f['points'] or 0 for f in files),
     'detail': detail,
     'low_xy_files': build_low_xy_files(files),
   }
@@ -625,9 +626,19 @@ def build_corrections_breakdown(detail):
   return status_totals, by_error_type
 
 
-def render_corrections_summary_html(detail):
+def render_corrections_summary_html(detail, n_files=None, total_points=None):
   status_totals, by_error_type = build_corrections_breakdown(detail)
   total = sum(status_totals.values())
+
+  totals_html = ""
+  if n_files is not None or total_points is not None:
+    totals_html = (
+      "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;margin-bottom:12px'>"
+      "<tr><th>Total files</th><th>Total points</th></tr>"
+      f"<tr><td>{n_files if n_files is not None else '-'}</td>"
+      f"<td>{total_points if total_points is not None else '-'}</td></tr>"
+      "</table>"
+    )
 
   status_rows = "".join(
     f"<tr><td>{_STATUS_LABELS.get(status, status.upper())}</td><td>{status_totals.get(status, 0)}</td></tr>"
@@ -644,6 +655,7 @@ def render_corrections_summary_html(detail):
   )
 
   return (
+    f"{totals_html}"
     "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse'>"
     "<tr><th>Status</th><th>Count</th></tr>"
     f"{status_rows}"
@@ -674,7 +686,7 @@ def render_low_xy_table_html(low_xy_files):
   )
 
 
-def render_team_corrections_html(team, detail, subtitle, low_xy_files=None):
+def render_team_corrections_html(team, detail, subtitle, low_xy_files=None, n_files=None, total_points=None):
   files_html = []
   for f in detail:
     if f['clean']:
@@ -689,7 +701,7 @@ def render_team_corrections_html(team, detail, subtitle, low_xy_files=None):
   return (
     f"<h2>Data Corrections Debug Report &mdash; {team or 'None'}</h2>"
     f"<p>{subtitle}</p>"
-    f"{render_corrections_summary_html(detail)}"
+    f"{render_corrections_summary_html(detail, n_files, total_points)}"
     f"{render_low_xy_table_html(low_xy_files or [])}"
     f"{''.join(files_html)}"
   )
@@ -707,7 +719,8 @@ def preview_team_corrections_report(league, gender, year, team):
   return {
     **report,
     'html': render_team_corrections_html(
-      team, report['detail'], _team_corrections_report_subtitle(league, gender, year), report['low_xy_files']
+      team, report['detail'], _team_corrections_report_subtitle(league, gender, year), report['low_xy_files'],
+      report['n_files'], report['total_points']
     ),
   }
 
@@ -729,7 +742,8 @@ def send_team_corrections_report(league, gender, year, team):
   try:
     report = build_team_corrections_report(league, gender, year, team)
     html = render_team_corrections_html(
-      team, report['detail'], _team_corrections_report_subtitle(league, gender, year), report['low_xy_files']
+      team, report['detail'], _team_corrections_report_subtitle(league, gender, year), report['low_xy_files'],
+      report['n_files'], report['total_points']
     )
 
     anvil.email.send(
