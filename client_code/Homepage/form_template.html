@@ -9,42 +9,31 @@ properties:
   type: string
 ---
 <anvil-form container="HtmlTemplate" prop:background="" prop:html="@theme:standard-page.html">
-    <anvil-component type="ColumnPanel" name="content_panel" prop:col_widths='"{}"' container:slot="default">
-        <anvil-slot name="content_slot" container:grid_position="IOFUKZ,ZJTTFQ"></anvil-slot>
-        <anvil-component type="ColumnPanel" name="outlined_card_1" prop:background="theme:Secondary Container" prop:role="outlined-card" prop:spacing='{"padding":["5",null,"5",null]}' container:grid_position="DHWYHY,UIPWBZ">
-            <anvil-component type="Link" name="home_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font_size="12" prop:icon="" prop:spacing_above="none" prop:spacing_below="none" prop:text="Home" on:click="self.home_link_click" container:grid_position="EUPYKN,ASNSFQ"></anvil-component>
-            <anvil-component type="Link" name="help1_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font='"12"' prop:icon="" prop:spacing_above="none" prop:spacing_below="none" prop:text="Help" on:click="self.help1_link_click" container:grid_position="EUPYKN,CUNESU"></anvil-component>
-            <anvil-component type="Link" name="aboutus_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font_size="12" prop:icon="" prop:spacing_above="none" prop:spacing_below="none" prop:text="About" on:click="self.aboutus_link_click" container:grid_position="EUPYKN,UTTPAI"></anvil-component>
-            <anvil-component type="Link" name="Contact_us_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font_size="12" prop:spacing_above="none" prop:spacing_below="none" prop:text="Contact Us" on:click="self.Contact_us_link_click" container:grid_position="EUPYKN,DIRWPO"></anvil-component>
-            <anvil-component type="Link" name="signin_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font='"12"' prop:spacing_above="none" prop:spacing_below="none" prop:text="Login" on:click="self.signin_link_click" container:grid_position="EUPYKN,RXLJEE"></anvil-component>
-        </anvil-component>
+  <anvil-component type="ColumnPanel" name="content_panel" prop:col_widths='"{}"' container:slot="default">
+    <anvil-slot name="content_slot" container:grid_position="IOFUKZ,ZJTTFQ"></anvil-slot>
+    <anvil-component type="ColumnPanel" name="outlined_card_1" prop:background="theme:Secondary Container" prop:role="outlined-card" prop:spacing='{"padding":["5",null,"5",null]}' container:grid_position="DHWYHY,UIPWBZ">
+      <anvil-component type="Link" name="home_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font_size="12" prop:icon="" prop:spacing_above="none" prop:spacing_below="none" prop:text="Home" on:click="self.home_link_click" container:grid_position="EUPYKN,ASNSFQ"></anvil-component>
+      <anvil-component type="Link" name="help1_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font='"12"' prop:icon="" prop:spacing_above="none" prop:spacing_below="none" prop:text="Help" on:click="self.help1_link_click" container:grid_position="EUPYKN,CUNESU"></anvil-component>
+      <anvil-component type="Link" name="aboutus_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font_size="12" prop:icon="" prop:spacing_above="none" prop:spacing_below="none" prop:text="About" on:click="self.aboutus_link_click" container:grid_position="EUPYKN,UTTPAI"></anvil-component>
+      <anvil-component type="Link" name="Contact_us_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font_size="12" prop:spacing_above="none" prop:spacing_below="none" prop:text="Contact Us" on:click="self.Contact_us_link_click" container:grid_position="EUPYKN,DIRWPO"></anvil-component>
+      <anvil-component type="Link" name="signin_link" prop:align="center" prop:background="theme:Secondary Container" prop:col_spacing="tiny" prop:font='"12"' prop:spacing_above="none" prop:spacing_below="none" prop:text="Login" on:click="self.signin_link_click" container:grid_position="EUPYKN,RXLJEE"></anvil-component>
     </anvil-component>
-    <anvil-component type="FlowPanel" name="navbar_links" container:slot="nav-right">
-        <anvil-component type="Label" name="user_name_label" prop:align="right" prop:font='"6"' prop:spacing='{"padding":["4",null,"4",null]}' bind:text></anvil-component>
-        <anvil-component type="Link" name="user_page" prop:background="theme:Secondary Container" prop:icon="fa:user-circle-o" prop:spacing='{"padding":["3","2","3","2"]}' prop:text="" on:click="self.user_page_click"></anvil-component>
-    </anvil-component>
-    <anvil-component type="ColumnPanel" name="column_panel_1" prop:background="" prop:col_spacing="tiny" prop:spacing='{"padding":["10",null,"10",null]}' container:slot="left-nav">
-        <anvil-component type="Label" name="label_1" prop:align="center" prop:background="theme:Secondary Container" prop:bold="true" prop:spacing='{"padding":["4",null,"4",null]}' prop:spacing_above="none" prop:spacing_below="none" prop:text="Reports" container:grid_position="FZVTGU,CMPTKD"></anvil-component>
-        <anvil-component type="Link" name="dashboard_link" prop:align="left" prop:spacing='{"padding":["4",null,null,null]}' prop:text="Dashboard" prop:visible="false" on:click="self.dashboard_link_click" container:grid_position="GXUGWM,QZZBDA"></anvil-component>
-        <anvil-component type="Link" name="playerRpt_link" prop:align="left" prop:text="Player Reports" prop:visible="false" on:click="self.playerRpt_link_click" container:grid_position="LITXTA,FHEEDA"></anvil-component>
-        <anvil-component type="Link" name="pair_rpt_link" prop:align="left" prop:text="Pair Reports" prop:visible="false" on:click="self.pair_rpt_link_click" container:grid_position="YZUPKD,QRTDHS"></anvil-component>
-        <anvil-component type="Link" name="scouting_rpt_link" prop:align="left" prop:text="Scouting Reports" prop:visible="false" on:click="self.scouting_rpt_link_click" container:grid_position="BAGGML,CBZHAU"></anvil-component>
-        <anvil-component type="Link" name="matchup" prop:text="Match Ups" prop:visible="false" on:click="self.matchup_click" container:grid_position="OOUIGW,NCRRAH"></anvil-component>
-        <anvil-component type="Link" name="league_rpt_link" prop:align="left" prop:text="League Reports" prop:visible="false" on:click="self.league_rpt_link_click" container:grid_position="WYEEDF,SZTYHO"></anvil-component>
-        <anvil-component type="Link" name="reports_main" prop:text="Reports" on:click="self.reports_main_click" container:grid_position="SZGHWC,HMYTZR"></anvil-component>
-        <anvil-component type="Link" name="rpt_mgr_link" prop:text="Report Manager" on:click="self.rpt_mgr_link_click" container:grid_position="QCIEYA,BBCCRW"></anvil-component>
-        <anvil-component type="Label" name="label_2" prop:align="center" prop:background="theme:Secondary Container" prop:bold="true" prop:spacing_above="none" prop:spacing_below="none" prop:text="Data Management" container:grid_position="WCVOTN,YUJLNY"></anvil-component>
-        <anvil-component type="Link" name="datamgr_link" prop:text="Data" on:click="self.datamgr_link_click" container:grid_position="FRMYAQ,YAIFDB"></anvil-component>
-        <anvil-component type="Link" name="ai_export_link" prop:text="AI Export" on:click="self.ai_export_link_click" container:grid_position="XPRTAI,LNKEXP"></anvil-component>
-        <anvil-component type="Label" name="label_3" prop:align="center" prop:background="theme:Secondary Container" prop:bold="true" prop:spacing_above="none" prop:spacing_below="none" prop:text="Website" prop:visible="false" container:grid_position="WASNKQ,LJQPFH"></anvil-component>
-        <anvil-component type="Link" name="link_1" prop:align="center" prop:background="theme:Secondary Container" prop:text="Website" prop:url="http://www.beachinternals.com/" container:grid_position="UXLRAM,AKFREC"></anvil-component>
-        <anvil-component type="Link" name="ai_assistant_link" prop:align="center" prop:background="theme:Secondary Container" prop:text="AI Assistant" on:click="self.ai_assistant_link_click" container:grid_position="VJKXQD,PLMZRT"></anvil-component>
-        <anvil-component type="Link" name="about_us_link2" prop:text="About Us" prop:visible="false" on:click="self.about_us_link2_click" container:grid_position="KFWFWT,APDDXN"></anvil-component>
-        <anvil-component type="Link" name="contact_us_link" prop:text="Contact Us" prop:visible="false" on:click="self.contact_us_link_click" container:grid_position="IFSYAN,THUAZQ"></anvil-component>
-        <anvil-component type="Link" name="help_link2" prop:text="Help" prop:visible="false" on:click="self.help_link2_click" container:grid_position="ASTZBJ,QNBNRV"></anvil-component>
-        <anvil-component type="Link" name="beta_link" prop:text="Beta Development" prop:visible="false" on:click="self.beta_link_click" container:grid_position="XYVQRW,NHFDHT"></anvil-component>
-        <anvil-component type="Label" name="label_4" container:grid_position="FNKXML,FFBQFA"></anvil-component>
-        <anvil-component type="Link" name="admin_link" prop:background="theme:Secondary" prop:foreground="theme:On Primary" prop:text="ADMIN" on:click="self.admin_link_click" bind:visible="self.item['']" container:grid_position="NDVFEB,UHROFR"></anvil-component>
-    </anvil-component>
-    <anvil-component type="Label" name="title_label" prop:align="center" prop:role="title" prop:spacing='{"margin":["15",null,null,"10"],"padding":["4",null,"4",null]}' prop:text="Beach Internals" container:slot="title"></anvil-component>
+  </anvil-component>
+  <anvil-component type="FlowPanel" name="navbar_links" container:slot="nav-right">
+    <anvil-component type="Label" name="user_name_label" prop:align="right" prop:font='"6"' prop:spacing='{"padding":["4",null,"4",null]}' bind:text></anvil-component>
+    <anvil-component type="Link" name="user_page" prop:background="theme:Secondary Container" prop:icon="fa:user-circle-o" prop:spacing='{"padding":["3","2","3","2"]}' prop:text="" on:click="self.user_page_click"></anvil-component>
+  </anvil-component>
+  <anvil-component type="ColumnPanel" name="column_panel_1" prop:background="" prop:col_spacing="tiny" prop:spacing='{"padding":["10",null,"10",null]}' container:slot="left-nav">
+    <anvil-component type="Label" name="label_1" prop:align="center" prop:background="theme:Secondary Container" prop:bold="true" prop:spacing='{"padding":["4",null,"4",null]}' prop:spacing_above="none" prop:spacing_below="none" prop:text="Reports" container:grid_position="FZVTGU,CMPTKD"></anvil-component>
+    <anvil-component type="Link" name="reports_main" prop:text="Reports" on:click="self.reports_main_click" container:grid_position="SZGHWC,HMYTZR"></anvil-component>
+    <anvil-component type="Link" name="rpt_mgr_link" prop:text="Report Manager" on:click="self.rpt_mgr_link_click" container:grid_position="QCIEYA,BBCCRW"></anvil-component>
+    <anvil-component type="Label" name="label_2" prop:align="center" prop:background="theme:Secondary Container" prop:bold="true" prop:spacing_above="none" prop:spacing_below="none" prop:text="Data Management" container:grid_position="WCVOTN,YUJLNY"></anvil-component>
+    <anvil-component type="Link" name="datamgr_link" prop:text="Data" on:click="self.datamgr_link_click" container:grid_position="FRMYAQ,YAIFDB"></anvil-component>
+    <anvil-component type="Link" name="ai_export_link" prop:text="AI Export" on:click="self.ai_export_link_click" container:grid_position="XPRTAI,LNKEXP"></anvil-component>
+    <anvil-component type="Label" name="label_3" prop:align="center" prop:background="theme:Secondary Container" prop:bold="true" prop:spacing_above="none" prop:spacing_below="none" prop:text="Websites" prop:visible="true" container:grid_position="WASNKQ,LJQPFH"></anvil-component>
+    <anvil-component type="Link" name="link_2" prop:text="General Website" prop:url="http://www.beachinternals.com/" container:grid_position="AKICGJ,GLTEDN"></anvil-component>
+    <anvil-component type="Link" name="link_1" prop:text="AI Assistant" prop:url="http://ai.beachinternals.com/" container:grid_position="YVFWXI,FMPYPB"></anvil-component>
+    <anvil-component type="Link" name="admin_link" prop:background="theme:Secondary" prop:foreground="theme:On Primary" prop:text="ADMIN" on:click="self.admin_link_click" bind:visible="self.item['']" container:grid_position="NDVFEB,UHROFR"></anvil-component>
+  </anvil-component>
+  <anvil-component type="Label" name="title_label" prop:align="center" prop:role="title" prop:spacing='{"margin":["15",null,null,"10"],"padding":["4",null,"4",null]}' prop:text="Beach Internals" container:slot="title"></anvil-component>
 </anvil-form>
