@@ -113,9 +113,12 @@ def get_export_datasets():
 
 @anvil.server.callable
 def list_ai_exports():
-  """This team's ai_export_mgr rows."""
+  """This team's ai_export_mgr rows -- every team's rows if the caller is INTERNALS."""
   user = _require_login()
-  rows = list(app_tables.ai_export_mgr.search(team=user['team']))
+  if user['team'] == 'INTERNALS':
+    rows = list(app_tables.ai_export_mgr.search())
+  else:
+    rows = list(app_tables.ai_export_mgr.search(team=user['team']))
   rows.sort(key=lambda r: (r['Note'] or '').lower())
   return rows
 

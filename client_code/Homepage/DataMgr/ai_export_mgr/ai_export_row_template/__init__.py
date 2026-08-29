@@ -1,5 +1,6 @@
 from ._anvil_designer import ai_export_row_templateTemplate
 from anvil import *
+import anvil.users
 
 
 class ai_export_row_template(ai_export_row_templateTemplate):
@@ -10,6 +11,15 @@ class ai_export_row_template(ai_export_row_templateTemplate):
       self.update_display()
 
   def update_display(self):
+    # INTERNALS sees every team's exports (list_ai_exports), so show which
+    # team each row belongs to. Other teams only ever see their own rows.
+    user = anvil.users.get_user(allow_remembered=True)
+    if user and user['team'] == 'INTERNALS':
+      self.team_label.text = self.item['team'] or ''
+      self.team_label.visible = True
+    else:
+      self.team_label.visible = False
+
     self.league_label.text = self.item['league'] or ''
     self.note_label.text = self.item['Note'] or ''
     self.dow_label.text = self.item['dow'] or ''

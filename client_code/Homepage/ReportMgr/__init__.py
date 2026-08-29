@@ -47,6 +47,8 @@ class ReportMgr(ReportMgrTemplate):
     self.init_form()
 
   def init_form(self):
+    if self.user['team'] == 'INTERNALS':
+      self.list_title.text = "All Teams' Reports"
     self.dow_dropdown.items = DOW_CHOICES
     self.rpt_type_dropdown.items = RPT_TYPE_CHOICES
 

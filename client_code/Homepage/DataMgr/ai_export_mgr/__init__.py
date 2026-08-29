@@ -43,6 +43,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
 
   def init_form(self):
     self.team_label.text = self.user['team']
+    if self.user['team'] == 'INTERNALS':
+      self.list_title.text = "All Teams' Exports"
     self.dow_dropdown.items = DOW_CHOICES
 
     self.league_dropdown.items = anvil.server.call('get_export_league_choices')

@@ -748,6 +748,18 @@ button.close > span, button.close {
   border-bottom: solid 1px %color:Outline%;
 }
 
+/* Tighter row spacing, divider line kept (AI Export Manager list) */
+.anvil-role-list-row-tight {
+  padding: 1px 6px;
+  border-bottom: solid 1px %color:Outline%;
+}
+
+/* Tighter row spacing, no divider line (Report Manager list) */
+.anvil-role-list-row-compact {
+  padding: 1px 6px;
+  border-bottom: none;
+}
+
 
 /* full_width_row sections go full bleed */
 .column-panel.anvil-role-card > .anvil-panel-section > .anvil-panel-section-container.full-width-row {

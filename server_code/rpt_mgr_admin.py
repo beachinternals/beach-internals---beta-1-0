@@ -97,9 +97,12 @@ def get_rpt_player_choices(league, gender, year):
 
 @anvil.server.callable
 def list_rpt_mgr_reports():
-  """This team's rpt_mgr rows."""
+  """This team's rpt_mgr rows -- every team's rows if the caller is INTERNALS."""
   user = _require_login()
-  rows = list(app_tables.rpt_mgr.search(team=user['team']))
+  if user['team'] == 'INTERNALS':
+    rows = list(app_tables.rpt_mgr.search())
+  else:
+    rows = list(app_tables.rpt_mgr.search(team=user['team']))
   rows.sort(key=lambda r: (r['report_description'] or '').lower())
   return rows
 
