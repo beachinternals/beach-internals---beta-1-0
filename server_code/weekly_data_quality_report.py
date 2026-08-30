@@ -4,7 +4,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import anvil.server
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from collections import Counter, defaultdict
 import json
 import re
@@ -52,6 +52,16 @@ def _require_internals():
     raise Exception("Please log in to continue.")
   if user['team'] != 'INTERNALS':
     raise Exception("Access denied: this function is for admins only.")
+  return user
+
+
+def _require_own_team(team):
+  """Verify the caller is logged in AND is either INTERNALS or requesting their own team's data."""
+  user = anvil.users.get_user()
+  if not user:
+    raise Exception("Please log in to continue.")
+  if user['team'] != 'INTERNALS' and team != user['team']:
+    raise Exception("Access denied: you can only access your own team's data.")
   return user
 
 
@@ -533,16 +543,25 @@ def build_low_xy_files(files):
   return sorted(low_xy, key=lambda f: f['per_xy'])
 
 
-def build_team_corrections_report(league, gender, year, team):
+def build_team_corrections_report(league, gender, year, team, date_start=None, date_end=None):
   """
   Ad hoc, on-demand corrections debug report: every btd_files row matching
-  this league/gender/year/team, with no date-window restriction. Mirrors
-  build_team_quality_report() above but surfaces corrections_json instead
-  of error_str.
+  this league/gender/year/team. With no date_start/date_end, covers every
+  file on file (no date window), same as before. When given, restricts to
+  files loaded (btd_file_date) within [date_start, date_end] inclusive.
+  Mirrors build_team_quality_report() above but surfaces corrections_json
+  instead of error_str.
   """
-  files = list(app_tables.btd_files.search(
-    league=league, gender=gender, year=str(year), team=team
-  ))
+  search_kwargs = dict(league=league, gender=gender, year=str(year), team=team)
+  if date_start or date_end:
+    conditions = []
+    if date_start:
+      conditions.append(q.greater_than_or_equal_to(datetime.combine(date_start, time.min)))
+    if date_end:
+      conditions.append(q.less_than(datetime.combine(date_end, time.min) + timedelta(days=1)))
+    search_kwargs['btd_file_date'] = q.all_of(*conditions)
+
+  files = list(app_tables.btd_files.search(**search_kwargs))
   detail = build_corrections_detail(files)
   # Worst files (most correction entries) first.
   detail = sorted(detail, key=lambda f: len(f['corrections']), reverse=True)
@@ -561,8 +580,13 @@ def build_team_corrections_report(league, gender, year, team):
   }
 
 
-def _team_corrections_report_subtitle(league, gender, year):
-  return f"League {league} | Gender {gender} | Year {year} &mdash; all files on file (no date filter)"
+def _team_corrections_report_subtitle(league, gender, year, date_start=None, date_end=None):
+  base = f"League {league} | Gender {gender} | Year {year}"
+  if date_start or date_end:
+    start_str = date_start.strftime('%Y-%m-%d') if date_start else 'earliest'
+    end_str = date_end.strftime('%Y-%m-%d') if date_end else 'latest'
+    return f"{base} &mdash; files loaded {start_str} to {end_str}"
+  return f"{base} &mdash; all files on file (no date filter)"
 
 
 def _format_classification_value(value):
@@ -708,51 +732,64 @@ def render_team_corrections_html(team, detail, subtitle, low_xy_files=None, n_fi
 
 
 @anvil.server.callable
-def preview_team_corrections_report(league, gender, year, team):
+def preview_team_corrections_report(league, gender, year, team, date_start=None, date_end=None):
   """
-  INTERNALS only. Same per-file/per-correction breakdown and video links as
-  the emailed version, but returns the rendered HTML without sending
-  anything, so it can be reviewed first.
+  Same per-file/per-correction breakdown and video links as the emailed
+  version, but returns the rendered HTML without sending anything, so it
+  can be reviewed first. Callable by INTERNALS for any team, or by any
+  team member for their own team. date_start/date_end are optional -- with
+  neither given, every file on file is included (no date window).
   """
-  _require_internals()
-  report = build_team_corrections_report(league, gender, year, team)
+  _require_own_team(team)
+  report = build_team_corrections_report(league, gender, year, team, date_start, date_end)
   return {
     **report,
     'html': render_team_corrections_html(
-      team, report['detail'], _team_corrections_report_subtitle(league, gender, year), report['low_xy_files'],
-      report['n_files'], report['total_points']
+      team, report['detail'], _team_corrections_report_subtitle(league, gender, year, date_start, date_end),
+      report['low_xy_files'], report['n_files'], report['total_points']
     ),
   }
 
 
 @anvil.server.callable
-def trigger_team_corrections_report(league, gender, year, team):
-  """INTERNALS only. Launches the background task that emails this report."""
-  _require_internals()
-  anvil.server.launch_background_task('send_team_corrections_report', league, gender, year, team)
+def trigger_team_corrections_report(league, gender, year, team, date_start=None, date_end=None, to_email=None):
+  """
+  Launches the background task that emails this report. Callable by
+  INTERNALS for any team, or by any team member for their own team's data.
+  to_email defaults to the system administrator when not supplied (e.g. the
+  INTERNALS PPR maintenance page, which doesn't collect an email address).
+  """
+  _require_own_team(team)
+  anvil.server.launch_background_task(
+    'send_team_corrections_report', league, gender, year, team, date_start, date_end, to_email
+  )
   return {"status": f"Data corrections debug report triggered for {team} ({league} {gender} {year})"}
 
 
 @anvil.server.background_task
-def send_team_corrections_report(league, gender, year, team):
+def send_team_corrections_report(league, gender, year, team, date_start=None, date_end=None, to_email=None):
   """
-  Builds the ad hoc league/gender/year+team corrections debug report (all
-  files on file, no date window) and emails it to the system administrator.
+  Builds the ad hoc league/gender/year+team corrections debug report
+  (restricted to date_start/date_end when given, otherwise every file on
+  file) and emails it to to_email. Failures are always reported to the
+  system administrator, regardless of to_email, so they don't just vanish
+  into a requester's inbox as a raw stack trace.
   """
+  recipient = to_email or ADMIN_EMAIL
   try:
-    report = build_team_corrections_report(league, gender, year, team)
+    report = build_team_corrections_report(league, gender, year, team, date_start, date_end)
     html = render_team_corrections_html(
-      team, report['detail'], _team_corrections_report_subtitle(league, gender, year), report['low_xy_files'],
-      report['n_files'], report['total_points']
+      team, report['detail'], _team_corrections_report_subtitle(league, gender, year, date_start, date_end),
+      report['low_xy_files'], report['n_files'], report['total_points']
     )
 
     anvil.email.send(
-      to=ADMIN_EMAIL,
+      to=recipient,
       from_address="no-reply",
       subject=f"Data Corrections Debug Report - {team} - {league} {gender} {year}",
       html=html
     )
-    log_info(f"Data corrections debug report sent to {ADMIN_EMAIL} for {team} ({league} {gender} {year})")
+    log_info(f"Data corrections debug report sent to {recipient} for {team} ({league} {gender} {year})")
 
   except Exception as e:
     log_error(f"Error in send_team_corrections_report: {str(e)}")
@@ -760,7 +797,7 @@ def send_team_corrections_report(league, gender, year, team):
       to=ADMIN_EMAIL,
       from_address="no-reply",
       subject="Data Corrections Debug Report Error",
-      html=f"<h2>Error building/sending the Data Corrections Debug Report</h2><p>League {league} | Gender {gender} | Year {year} | Team {team}</p><p>{str(e)}</p>"
+      html=f"<h2>Error building/sending the Data Corrections Debug Report</h2><p>League {league} | Gender {gender} | Year {year} | Team {team} | Requested by {recipient}</p><p>{str(e)}</p>"
     )
 
 

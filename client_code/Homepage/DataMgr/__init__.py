@@ -13,6 +13,7 @@ from .master_player_mgr import *
 from .btd_view import *
 from .btd_manage import btd_manage
 from .ai_export_mgr import *
+from .team_quality_email import *
 
 
 
@@ -49,6 +50,12 @@ class DataMgr(DataMgrTemplate):
     """This method is called when the link is clicked"""
     self.outlined_card_3.clear()
     self.outlined_card_3.add_component(btd_manage())
+    pass
+
+  def team_quality_email_click_click(self, **event_args):
+    """This method is called when the link is clicked"""
+    self.outlined_card_3.clear()
+    self.outlined_card_3.add_component(team_quality_email())
     pass
 
   def master_player_mgr_click_click(self, **event_args):

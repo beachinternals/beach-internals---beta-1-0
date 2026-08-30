@@ -1,0 +1,18 @@
+<anvil-form layout="Beach_Internals_Application.Homepage">
+    <anvil-block slot="content_slot">
+        <anvil-component type="ColumnPanel" name="outlined_card_1" prop:background="theme:Secondary Container" prop:role="outlined-card">
+            <anvil-component type="Label" name="label_2" prop:align="center" prop:bold="true" prop:role="headline" prop:text="Data Management" container:grid_position="ZGCTFP,UFPWQS"></anvil-component>
+        </anvil-component>
+        <anvil-component type="ColumnPanel" name="outlined_card_2" prop:background="" prop:col_widths='"{\"SMAHSC\":10,\"LQEYDV\":50}"' prop:role="outlined-card">
+            <anvil-component type="ColumnPanel" name="column_panel_1" container:grid_position="KCZYCU,SMAHSC">
+                <anvil-component type="Label" name="label_1" prop:align="center" prop:background="theme:Secondary Container" prop:bold="true" prop:text="Ball Time Data" container:grid_position="BMXCRM,GGUBEW"></anvil-component>
+                <anvil-component type="Link" name="btd_import_click" prop:align="center" prop:text="Import New Match" on:click="self.btd_import_click_click" container:grid_position="YJBAZA,XDXPYM"></anvil-component>
+                <anvil-component type="Link" name="btd_manage_click" prop:align="center" prop:text="Manage Uploaded Matches" on:click="self.btd_manage_click_click" container:grid_position="QUDNGE,YTODGM"></anvil-component>
+                <anvil-component type="Link" name="team_quality_email_click" prop:align="center" prop:text="Email My Data Quality Report" on:click="self.team_quality_email_click_click"></anvil-component>
+                <anvil-component type="Label" name="label_3" prop:align="center" prop:background="theme:Secondary Container" prop:bold="true" prop:text="Player Database" container:grid_position="IHHGFV,OTPPRT"></anvil-component>
+                <anvil-component type="Link" name="master_player_mgr_click" prop:text="Manage Player Data" on:click="self.master_player_mgr_click_click" container:grid_position="KDKIIQ,KCVXQA"></anvil-component>
+            </anvil-component>
+            <anvil-component type="ColumnPanel" name="outlined_card_3" prop:background="theme:Secondary" prop:role="outlined-card" container:grid_position="KCZYCU,LQEYDV GRNBPF,IBYDCD"></anvil-component>
+        </anvil-component>
+    </anvil-block>
+</anvil-form>

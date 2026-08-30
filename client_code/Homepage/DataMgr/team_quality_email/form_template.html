@@ -1,0 +1,23 @@
+<anvil-form container="ColumnPanel">
+  <anvil-component type="Label" name="title_label" prop:align="center" prop:role="headline" prop:text="Email My Data Quality Report"></anvil-component>
+  <anvil-component type="ColumnPanel" name="form_panel" prop:role="outlined-card" prop:col_spacing="small">
+    <anvil-component type="FlowPanel" name="lgy_flow" prop:spacing_above="small">
+      <anvil-component type="Label" name="lgy_label" prop:text="League / Gender / Year:"></anvil-component>
+      <anvil-component type="DropDown" name="lgy_dropdown"></anvil-component>
+    </anvil-component>
+    <anvil-component type="FlowPanel" name="date_flow" prop:spacing_above="small">
+      <anvil-component type="Label" name="start_date_label" prop:text="Start Date:"></anvil-component>
+      <anvil-component type="DatePicker" name="start_date_picker"></anvil-component>
+      <anvil-component type="Label" name="end_date_label" prop:text="End Date:" prop:spacing='{"padding":[null,null,null,"20"]}'></anvil-component>
+      <anvil-component type="DatePicker" name="end_date_picker"></anvil-component>
+    </anvil-component>
+    <anvil-component type="FlowPanel" name="email_flow" prop:spacing_above="small">
+      <anvil-component type="Label" name="email_label" prop:text="Send To:"></anvil-component>
+      <anvil-component type="TextBox" name="email_box" prop:placeholder="Email address" container:width="260"></anvil-component>
+    </anvil-component>
+    <anvil-component type="FlowPanel" name="action_buttons_flow" prop:spacing_above="small">
+      <anvil-component type="Button" name="send_button" prop:role="outlined-button" prop:text="Email Data Quality Report" on:click="self.send_button_click"></anvil-component>
+    </anvil-component>
+  </anvil-component>
+  <anvil-component type="Button" name="close_button" prop:role="outlined-button" prop:text="Close" on:click="self.close_button_click"></anvil-component>
+</anvil-form>
