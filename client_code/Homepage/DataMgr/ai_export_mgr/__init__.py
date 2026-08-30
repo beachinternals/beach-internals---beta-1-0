@@ -3,6 +3,8 @@ from anvil import *
 import anvil.server
 import anvil.users
 
+from ..btd_form_helpers import format_lgy, parse_lgy, get_league_items
+
 # Front end for the ai_export_mgr table (Homepage.DataMgr.ai_export_mgr).
 # Reached directly from the Homepage left nav ("AI Export"). Every list/add/
 # update/delete call is routed through server_code/ai_export_mgr_admin.py,
@@ -47,12 +49,12 @@ class ai_export_mgr(ai_export_mgrTemplate):
       self.list_title.text = "All Teams' Exports"
     self.dow_dropdown.items = DOW_CHOICES
 
-    self.league_dropdown.items = anvil.server.call('get_export_league_choices')
-    default_league = self.user['def_league']
-    if default_league in self.league_dropdown.items:
-      self.league_dropdown.selected_value = default_league
-    elif self.league_dropdown.items:
-      self.league_dropdown.selected_value = self.league_dropdown.items[0]
+    self.lgy_dropdown.items = get_league_items(self.user['team'])
+    default_lgy = format_lgy(self.user['def_league'], self.user['def_gender'], self.user['def_year'])
+    if default_lgy in self.lgy_dropdown.items:
+      self.lgy_dropdown.selected_value = default_lgy
+    elif self.lgy_dropdown.items:
+      self.lgy_dropdown.selected_value = self.lgy_dropdown.items[0]
 
     self.refresh_player_choices()
 
@@ -78,12 +80,12 @@ class ai_export_mgr(ai_export_mgrTemplate):
   #  PLAYER PICKER
   # ==========================================================================
 
-  def league_dropdown_change(self, **event_args):
+  def lgy_dropdown_change(self, **event_args):
     self.refresh_player_choices()
 
   def refresh_player_choices(self):
-    league = self.league_dropdown.selected_value
-    players = anvil.server.call('get_export_players', league) if league else []
+    league, gender, year = parse_lgy(self.lgy_dropdown.selected_value)
+    players = anvil.server.call('get_export_players', league, gender, year) if league else []
     self.player_select.items = [
       (f"{p['team']} {p['number']} {p['shortname']}", p['id']) for p in players
     ]
@@ -114,9 +116,7 @@ class ai_export_mgr(ai_export_mgrTemplate):
     self.dow_dropdown.selected_value = item['dow']
     self.enabled_checkbox.checked = not item['disabled']
 
-    league = item['league']
-    if league in self.league_dropdown.items:
-      self.league_dropdown.selected_value = league
+    self.lgy_dropdown.selected_value = self._lgy_for_item(item)
     self.refresh_player_choices()
 
     self.player_select.selected = [r.get_id() for r in (item['player_filter'] or [])]
@@ -124,6 +124,28 @@ class ai_export_mgr(ai_export_mgrTemplate):
 
     self.delete_button.visible = True
     self.primary_button.text = "Save Changes"
+
+  def _lgy_for_item(self, item):
+    """
+    Best-guess lgy dropdown value for an existing export row. The row itself
+    only stores 'league' -- gender/year aren't columns on ai_export_mgr, so we
+    derive them from whichever player is linked (master_player rows carry
+    their own league/gender/year), same as the background generator does.
+    Falls back to matching on league alone, then to the first available lgy.
+    """
+    players = item['player_filter']
+    if players:
+      p = players[0]
+      lgy = format_lgy(p['league'], p['gender'], p['year'])
+      if lgy in self.lgy_dropdown.items:
+        return lgy
+
+    league = item['league']
+    for option in self.lgy_dropdown.items:
+      if parse_lgy(option)[0] == league:
+        return option
+
+    return self.lgy_dropdown.items[0] if self.lgy_dropdown.items else None
 
   def cancel_button_click(self, **event_args):
     self.reset_to_add_mode()
@@ -133,8 +155,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
   # ==========================================================================
 
   def primary_button_click(self, **event_args):
-    if not self.league_dropdown.selected_value:
-      alert("Select a league.")
+    if not self.lgy_dropdown.selected_value:
+      alert("Select a league / gender / year.")
       return
     if not (self.note_box.text or '').strip():
       alert("Please enter a title for this export.")
@@ -152,9 +174,10 @@ class ai_export_mgr(ai_export_mgrTemplate):
       self.do_edit()
 
   def do_add(self):
+    league, _gender, _year = parse_lgy(self.lgy_dropdown.selected_value)
     result = anvil.server.call(
       'add_ai_export',
-      self.league_dropdown.selected_value,
+      league,
       self.note_box.text,
       self.dow_dropdown.selected_value,
       self.player_select.selected,
@@ -170,10 +193,11 @@ class ai_export_mgr(ai_export_mgrTemplate):
     self.refresh_export_list()
 
   def do_edit(self):
+    league, _gender, _year = parse_lgy(self.lgy_dropdown.selected_value)
     result = anvil.server.call(
       'update_ai_export',
       self.editing_id,
-      self.league_dropdown.selected_value,
+      league,
       self.note_box.text,
       self.dow_dropdown.selected_value,
       self.player_select.selected,

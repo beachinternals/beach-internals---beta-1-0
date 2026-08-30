@@ -126,7 +126,9 @@ class ReportMgr(ReportMgrTemplate):
     self.editing_id = item.get_id()
 
     self.mode_label.text = "Edit Report"
-    self.description_box.text = item['report_description'] or ''
+    # Fall back to the legacy 'Report Description' column for rows created
+    # before this admin UI existed (see rpt_mgr_row_template).
+    self.description_box.text = item['report_description'] or item['Report Description'] or ''
     self.dow_dropdown.selected_value = item['dow']
     self.emailto_box.text = item['emailto'] or self.user['email']
     self.active_checkbox.checked = item['active'] == 'Yes'

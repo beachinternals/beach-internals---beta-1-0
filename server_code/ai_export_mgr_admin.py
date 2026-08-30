@@ -47,47 +47,30 @@ def _export_field_error(note, dow, datasets_included):
 # ============================================================================
 
 @anvil.server.callable
-def get_export_league_choices():
-  """Distinct leagues the logged-in user's team is subscribed to."""
-  user = _require_login()
-  leagues = {row['league'] for row in app_tables.subscriptions.search(team=user['team'])}
-  return sorted(leagues)
-
-
-@anvil.server.callable
-def get_export_players(league):
+def get_export_players(league, gender, year):
   """
-  Players for the player_filter multi-select: the union of master_player rows
-  across every (gender, year) the logged-in user's team is subscribed to
-  under this league. Returns plain dicts, not linked rows, to keep the
+  Players for the player_filter multi-select: master_player rows for this
+  exact league/gender/year. Returns plain dicts, not linked rows, to keep the
   payload light -- add_ai_export / update_ai_export take player ids and
   resolve them back to rows server-side. The client's MultiSelectDropDown
-  provides its own filter box, so this loads the whole league roster once
-  per league selection rather than per keystroke.
+  provides its own filter box, so this loads the roster once per lgy
+  selection rather than per keystroke.
   """
   user = _require_login()
-  _validate_league_params(league=league, team=user['team'])
+  _validate_league_params(league=league, gender=gender, team=user['team'])
 
-  lgy_set = {
-    (row['gender'], row['year'])
-    for row in app_tables.subscriptions.search(team=user['team'], league=league)
-  }
+  if not app_tables.subscriptions.get(team=user['team'], league=league, gender=gender, year=year):
+    return []
 
-  seen_ids = set()
-  players = []
-  for gender, year in lgy_set:
-    for row in app_tables.master_player.search(league=league, gender=gender, year=year):
-      row_id = row.get_id()
-      if row_id in seen_ids:
-        continue
-      seen_ids.add(row_id)
-      players.append({
-        'id': row_id,
-        'team': row['team'],
-        'number': row['number'],
-        'shortname': row['shortname'],
-      })
-
+  players = [
+    {
+      'id': row.get_id(),
+      'team': row['team'],
+      'number': row['number'],
+      'shortname': row['shortname'],
+    }
+    for row in app_tables.master_player.search(league=league, gender=gender, year=year)
+  ]
   players.sort(key=lambda p: (p['team'] or '', p['number'] or '', p['shortname'] or ''))
   return players
 
