@@ -794,8 +794,8 @@ db_schema:
       client_hidden: null
       name: return_type
       type: string
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 9.75, width: 329}
+      client_hidden: false
       name: result_path
       type: string
     - admin_ui: {width: 200}
