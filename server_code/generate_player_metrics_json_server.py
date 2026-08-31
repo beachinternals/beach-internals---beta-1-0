@@ -384,6 +384,17 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
     attempts_path = metric_row.get('attempts_path', None)
     min_attempts  = metric_row.get('min_attempts_for_ci', 5)
 
+    # aggregate_level gates whether this metric is safe to compute against a
+    # multi-set frame. This function is used for both the full player
+    # aggregate report and the partner-level report, both of which hand it a
+    # ppr_df spanning many sets/matches. Metrics whose formula depends on
+    # being scoped to a single set (e.g. momentum) opt out via
+    # aggregate_level = 'No'. Default is 'Yes' so metrics keep running here
+    # unless explicitly marked single-set-only.
+    aggregate_level = metric_row.get('aggregate_level', 'Yes')
+    if pd.notna(aggregate_level) and str(aggregate_level).strip().lower() == 'no':
+      continue
+
     if pd.isna(function_name):
       continue
 

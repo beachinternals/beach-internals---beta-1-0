@@ -704,6 +704,92 @@ def calc_momentum_obj(ppr_df, disp_player, set_number=None, half=None, window=5)
 
 
 # ==============================================================================
+# FUNCTION 8: calc_momentum_agg_obj()
+# ==============================================================================
+def calc_momentum_agg_obj(ppr_df, disp_player, window=5, min_points_per_set=10):
+  """
+    Aggregate momentum across every set disp_player has played in ppr_df.
+
+    calc_momentum_obj() is inherently single-set (score margins reset each
+    set, so "momentum" only means something within one set's boundaries).
+    This groups ppr_df into (video_id, set) pairs, runs calc_momentum_obj()
+    once per qualifying set, and summarizes each of its six fields as a
+    mean/stdev across sets. This is what the metric_dictionary's
+    aggregate-level momentum rows (run_for_max_avg/_sd, margin_max_lead_avg/
+    _sd, etc.) call -- those rows must not run calc_momentum_obj() directly
+    against a multi-set frame (see build_margin_sequence's set_number
+    inference, which silently narrows to a single arbitrary set otherwise).
+
+    Args:
+        ppr_df (DataFrame): Point-by-point dataframe, any number of
+            matches/sets -- the full player (or partner) aggregate frame
+        disp_player (str): Player whose side orients each set's margins
+        window (int): rolling-average window passed through to
+            calc_momentum_obj / smooth_momentum
+        min_points_per_set (int): sets with fewer points than this are
+            dropped as too short to be a real set (mirrors the >=10-point
+            convention used elsewhere to count valid sets)
+
+    Returns:
+        Object (SimpleNamespace) with, for each of run_for_max,
+        run_against_max, margin_max_lead, margin_max_deficit,
+        decline_sharpness, decline_location_pct:
+            .<field>_avg (float | None): mean across qualifying sets that
+                produced a value for this field; None if fewer than 2
+            .<field>_sd (float | None): sample stdev (ddof=1) across the
+                same sets; None under the same condition as _avg
+        Plus:
+            .sets (int): number of qualifying sets calc_momentum_obj() was
+                run against -- shared attempts/CI-gating count for all
+                twelve _avg/_sd metrics
+  """
+  from types import SimpleNamespace
+
+  disp_player = disp_player.strip()
+
+  player_df = ppr_df[
+    (ppr_df['player_a1'].str.strip() == disp_player) |
+    (ppr_df['player_a2'].str.strip() == disp_player) |
+    (ppr_df['player_b1'].str.strip() == disp_player) |
+    (ppr_df['player_b2'].str.strip() == disp_player)
+  ]
+
+  fields = [
+    'run_for_max', 'run_against_max',
+    'margin_max_lead', 'margin_max_deficit',
+    'decline_sharpness', 'decline_location_pct',
+  ]
+  set_values = {field: [] for field in fields}
+  num_sets = 0
+
+  for (video_id, set_num), set_df in player_df.groupby(['video_id', 'set']):
+    if len(set_df) < min_points_per_set:
+      continue
+
+    result = calc_momentum_obj(set_df, disp_player, set_number=int(set_num), window=window)
+    if result.attempts == 0:
+      continue
+
+    num_sets += 1
+    for field in fields:
+      value = getattr(result, field)
+      if value is not None:
+        set_values[field].append(value)
+
+  out = {'sets': num_sets}
+  for field in fields:
+    vals = set_values[field]
+    if len(vals) >= 2:
+      out[f'{field}_avg'] = float(np.mean(vals))
+      out[f'{field}_sd']  = float(np.std(vals, ddof=1))
+    else:
+      out[f'{field}_avg'] = float(vals[0]) if vals else None
+      out[f'{field}_sd']  = None
+
+  return SimpleNamespace(**out)
+
+
+# ==============================================================================
 # USAGE EXAMPLES
 # ==============================================================================
 

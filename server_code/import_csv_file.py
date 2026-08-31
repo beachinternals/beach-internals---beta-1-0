@@ -82,13 +82,14 @@ def import_metric_dictionary_from_csv(csv_file):
           except:
             return None
             
-        def to_flag(value):
-          # Yes/No flag columns (set_level_whole, set_level_half, partner_level, correlation).
-          # Blank/None/No -> 'No'.  'Yes' (any case) -> 'Yes'.
+        def to_flag(value, default='No'):
+          # Yes/No flag columns (set_level_whole, set_level_half, partner_level,
+          # correlation, aggregate_level). Blank/None -> default. 'No' (any
+          # case) -> 'No'. 'Yes' (any case) -> 'Yes'.
           # Stored as a normalized string so the table is consistent
           # whether the cell came from Numbers as Yes/No or blank.
-          if value is None:
-            return 'No'
+          if value is None or str(value).strip() == '':
+            return default
           s = str(value).strip().lower()
           return 'Yes' if s in ('yes', 'y', 'true', '1') else 'No'
   
@@ -133,7 +134,8 @@ def import_metric_dictionary_from_csv(csv_file):
           set_level_whole=to_flag(row.get('set_level_whole')),
           set_level_half=to_flag(row.get('set_level_half')),
           partner_level=to_flag(row.get('partner_level')),
-          correlation=to_flag(row.get('correlation'))
+          correlation=to_flag(row.get('correlation')),
+          aggregate_level=to_flag(row.get('aggregate_level'), default='Yes')
         )
 
         imported_count += 1
