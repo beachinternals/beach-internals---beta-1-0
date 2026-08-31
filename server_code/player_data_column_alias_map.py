@@ -5,17 +5,12 @@ Single source of truth mapping legacy calc_player_data.py column names to
 metric_dictionary metric_ids, shared by calc_player_data_dictionary.py and
 metric_dictionary_diff.py so the two can never drift apart.
 
-Every non-grid "simple" column starts as (None, 'unconfirmed') -- these need
-to be filled in against a real metric_dictionary export (see
-generate_slim_metric_dictionary_md() in import_csv_file.py) before the new
-calculation can produce real values for them. Until then,
-calc_player_data_dictionary.py simply skips them (see its skipped_columns
-return value) rather than raising.
-
-The 45-cell own-side FBHE grid is pre-filled as (same_name, 'guess') on the
-strength of a TODO comment in generate_player_metrics_json_server.py that
-references 'fbhe_1_3e_ea' and 'pass_ea' by name -- still needs confirming
-against a real export before being trusted.
+Reconciled against a real generate_slim_metric_dictionary_md() export
+(metric_id/coach_alias/metric_name/coach_view/coach_speak_* only -- no
+function_name/result_path/data_filter, so entries here are 'guess' rather
+than 'confirmed' until metric_dictionary_diff.py's numeric comparison backs
+them up). Any column still (None, 'unconfirmed') genuinely has no dictionary
+equivalent found in that export.
 """
 
 # ============================================================================
@@ -46,56 +41,72 @@ for _fr in (1, 3, 5):
 # ============================================================================
 
 COLUMN_ALIAS_MAP: dict = {
-  'fbhe':        (None, 'unconfirmed'),
-  'fbhe1':       (None, 'unconfirmed'),
-  'fbhe2':       (None, 'unconfirmed'),
-  'fbhe3':       (None, 'unconfirmed'),
-  'fbhe4':       (None, 'unconfirmed'),
-  'fbhe5':       (None, 'unconfirmed'),
-  'fbhe_behind': (None, 'unconfirmed'),
-  'fbhe_option': (None, 'unconfirmed'),
-  'fbhe_tempo':  (None, 'unconfirmed'),
-  'fbhe_bang':   (None, 'unconfirmed'),
-  'fbhe_oos':    (None, 'unconfirmed'),
-  'fbhe_insys':  (None, 'unconfirmed'),
-  'fbhe_srv1':   (None, 'unconfirmed'),
-  'fbhe_srv3':   (None, 'unconfirmed'),
-  'fbhe_srv5':   (None, 'unconfirmed'),
-  'tcr':         (None, 'unconfirmed'),
-  'tcr_r':       (None, 'unconfirmed'),
-  'tcr_s':       (None, 'unconfirmed'),
-  'err_den':     (None, 'unconfirmed'),
-  'expected':    (None, 'unconfirmed'),
-  'srv_fbhe':    (None, 'unconfirmed'),
-  'srv1_fbhe':   (None, 'unconfirmed'),
-  'srv3_fbhe':   (None, 'unconfirmed'),
-  'srv5_fbhe':   (None, 'unconfirmed'),
-  'knockout':    (None, 'unconfirmed'),
-  'goodpass':    (None, 'unconfirmed'),
-  'eso':         (None, 'unconfirmed'),
-  't_eff':       (None, 'unconfirmed'),
-  't_eff_r':     (None, 'unconfirmed'),
-  't_eff_s':     (None, 'unconfirmed'),
-  't_create':    (None, 'unconfirmed'),
-  't_create_r':  (None, 'unconfirmed'),
-  't_create_s':  (None, 'unconfirmed'),
-  'cons_fbhe_sd_match': (None, 'unconfirmed'),
-  'cons_tcr_sd_match':  (None, 'unconfirmed'),
-  'cons_ed_sd_match':   (None, 'unconfirmed'),  # reports_dashboard.py hard dependency
-  'cons_ko_sd_match':   (None, 'unconfirmed'),
-  'cons_pass_sd_match': (None, 'unconfirmed'),
-  'cons_pts_sd_match':  (None, 'unconfirmed'),
-  'cons_fbhe_sd_s2s':   (None, 'unconfirmed'),
-  'cons_tcr_sd_s2s':    (None, 'unconfirmed'),
-  'cons_ed_sd_s2s':     (None, 'unconfirmed'),
-  'cons_ko_sd_s2s':     (None, 'unconfirmed'),
-  'cons_pass_sd_s2s':   (None, 'unconfirmed'),
-  'cons_pts_sd_s2s':    (None, 'unconfirmed'),
+  'fbhe':        ('fbhe', 'guess'),
+  'fbhe1':       ('fbhe1', 'guess'),
+  'fbhe2':       ('fbhe2', 'guess'),
+  'fbhe3':       ('fbhe3', 'guess'),
+  'fbhe4':       ('fbhe4', 'guess'),
+  'fbhe5':       ('fbhe5', 'guess'),
+  'fbhe_behind': ('fbhe_behind', 'guess'),
+  'fbhe_option': ('fbhe_option', 'guess'),
+  'fbhe_tempo':  ('fbhe_tempo', 'guess'),
+  # legacy poke/shoot/bang 3-way split became harddriven/offspeed in the real
+  # dictionary. poke/shoot have no home (see DROPPED_LEGACY_COLUMNS); bang
+  # maps to harddriven. Denominator semantics ('both' = self-set attacks)
+  # unverified against fbhe_harddriven's actual data_filter -- watch this one
+  # in the diff tool.
+  'fbhe_bang':   ('fbhe_harddriven', 'guess'),
+  'fbhe_oos':    ('fbhe_oos', 'guess'),
+  'fbhe_insys':  ('fbhe_insys', 'guess'),
+  'fbhe_srv1':   ('fbhe_srv1', 'guess'),
+  'fbhe_srv3':   ('fbhe_srv3', 'guess'),
+  'fbhe_srv5':   ('fbhe_srv5', 'guess'),
+  'tcr':         ('tcr', 'guess'),
+  'tcr_r':       ('tcr_r', 'guess'),
+  'tcr_s':       ('tcr_s', 'guess'),
+  'err_den':     ('err_den', 'guess'),
+  'expected':    ('expected', 'guess'),
+  'srv_fbhe':    ('srv_fbhe', 'guess'),
+  'srv1_fbhe':   ('srv1_fbhe', 'guess'),
+  'srv3_fbhe':   ('srv3_fbhe', 'guess'),
+  'srv5_fbhe':   ('srv5_fbhe', 'guess'),
+  'knockout':    ('knockout', 'guess'),
+  'goodpass':    ('goodpass', 'guess'),
+  'eso':         ('eso', 'guess'),
+  't_eff':       ('t_eff', 'guess'),
+  't_eff_r':     ('t_eff_r', 'guess'),
+  't_eff_s':     ('t_eff_s', 'guess'),
+  't_create':    ('t_create', 'guess'),
+  't_create_r':  ('t_create_r', 'guess'),
+  't_create_s':  ('t_create_s', 'guess'),
+  'cons_fbhe_sd_match': ('cons_fbhe_sd_match', 'guess'),
+  'cons_tcr_sd_match':  ('cons_tcr_sd_match', 'guess'),
+  'cons_ed_sd_match':   ('cons_ed_sd_match', 'guess'),  # reports_dashboard.py hard dependency
+  'cons_ko_sd_match':   ('cons_ko_sd_match', 'guess'),
+  'cons_pass_sd_match': ('cons_pass_sd_match', 'guess'),
+  'cons_pts_sd_match':  ('cons_pts_sd_match', 'guess'),
+  'cons_fbhe_sd_s2s':   ('cons_fbhe_sd_s2s', 'guess'),
+  'cons_tcr_sd_s2s':    ('cons_tcr_sd_s2s', 'guess'),
+  'cons_ed_sd_s2s':     ('cons_ed_sd_s2s', 'guess'),
+  'cons_ko_sd_s2s':     ('cons_ko_sd_s2s', 'guess'),
+  'cons_pass_sd_s2s':   ('cons_pass_sd_s2s', 'guess'),
+  'cons_pts_sd_s2s':    ('cons_pts_sd_s2s', 'guess'),
+  # srv*_ace_per / srv*_err_per exist as real metric_ids -- no bespoke ratio
+  # math needed (see PER_RATIO_SPECS below for what's actually still bespoke).
+  'srv_ace_per':  ('srv_ace_per', 'guess'),
+  'srv_err_per':  ('srv_err_per', 'guess'),
+  'srv1_ace_per': ('srv1_ace_per', 'guess'),
+  'srv1_err_per': ('srv1_err_per', 'guess'),
+  'srv3_ace_per': ('srv3_ace_per', 'guess'),
+  'srv3_err_per': ('srv3_err_per', 'guess'),
+  'srv5_ace_per': ('srv5_ace_per', 'guess'),
+  'srv5_err_per': ('srv5_err_per', 'guess'),
   # fbhe_range, point_per are NOT metric_dictionary lookups -- see
   # calc_player_data_dictionary.py's _compute_fbhe_range/_compute_point_per.
 }
 
-# Own-side 45-cell FBHE grid, generated rather than hand-listed.
+# Own-side 45-cell FBHE grid -- confirmed present under identical names in
+# the real export, generated rather than hand-listed.
 for _fr in (1, 3, 5):
   for _net in (1, 2, 3, 4, 5):
     for _depth in ('c', 'd', 'e'):
@@ -105,17 +116,16 @@ for _fr in (1, 3, 5):
 
 
 # ============================================================================
-# "_per" ratio columns -- NOT simple aliases. See
-# calc_player_data_dictionary._compute_per_ratios() for how these are used.
+# "_per" ratio columns with NO dictionary equivalent -- NOT simple aliases.
+# See calc_player_data_dictionary._compute_per_ratios() for how these are
+# used. (srv*_ace_per / srv*_err_per turned out to already exist as real
+# metric_ids -- see COLUMN_ALIAS_MAP above -- so they're not here.)
 #
 # fbhe_*_per: subset pass attempts (captured as <base>_n once the base metric
-#   is mapped) / TOTAL pass attempts for the player.
-# srv*_ace_per / srv*_err_per: count of point_outcome TSA/TSE / TOTAL serve
-#   attempts for the player, optionally zone-filtered.
-#
-# Both denominators are computed directly from ppr_df (not via a dictionary
-# metric_id), filtered the same way fbhe_obj() does it
-# (server_functions.py ~line 400): `<col>.str.strip() == player_name.strip()`.
+#   is mapped) / TOTAL pass (or 'both', for fbhe_bang_per) attempts for the
+#   player, computed directly from ppr_df, filtered the same way fbhe_obj()
+#   does it (server_functions.py ~line 400):
+#   `<col>.str.strip() == player_name.strip()`.
 #
 # Known, acceptable divergence from legacy: calc_player_data.py guards its
 # pass-attempts denominator with `if attempts != min_att else 1` (line ~364)
@@ -132,14 +142,6 @@ PER_RATIO_SPECS = {
   'fbhe_oos_per':    {'legacy_numerator_col': 'fbhe_oos_n',    'denominator': 'total_pass'},
   'fbhe_insys_per':  {'legacy_numerator_col': 'fbhe_insys_n',  'denominator': 'total_pass'},
   'fbhe_bang_per':   {'legacy_numerator_col': 'fbhe_bang_n',   'denominator': 'total_both'},
-  'srv_ace_per':  {'outcome': 'TSA', 'zone': None, 'denominator': 'total_serve'},
-  'srv_err_per':  {'outcome': 'TSE', 'zone': None, 'denominator': 'total_serve'},
-  'srv1_ace_per': {'outcome': 'TSA', 'zone': 1,    'denominator': 'total_serve'},
-  'srv1_err_per': {'outcome': 'TSE', 'zone': 1,    'denominator': 'total_serve'},
-  'srv3_ace_per': {'outcome': 'TSA', 'zone': 3,    'denominator': 'total_serve'},
-  'srv3_err_per': {'outcome': 'TSE', 'zone': 3,    'denominator': 'total_serve'},
-  'srv5_ace_per': {'outcome': 'TSA', 'zone': 5,    'denominator': 'total_serve'},
-  'srv5_err_per': {'outcome': 'TSE', 'zone': 5,    'denominator': 'total_serve'},
 }
 
 

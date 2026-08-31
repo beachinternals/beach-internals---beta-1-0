@@ -124,37 +124,19 @@ def _compute_per_ratios(ppr_df, player_name, row, skipped_columns):
   since these ratios are not shaped like a single metric_dictionary metric."""
   name = player_name.strip()
   total_pass = ppr_df[ppr_df['pass_player'].str.strip() == name].shape[0]
-  total_serve = ppr_df[ppr_df['serve_player'].str.strip() == name].shape[0]
   total_both = ppr_df[
     (ppr_df['pass_player'].str.strip() == name) &
     (ppr_df['att_player'].str.strip() == name)
   ].shape[0]
 
   for legacy_col, spec in PER_RATIO_SPECS.items():
-    denom_kind = spec['denominator']
-
-    if denom_kind in ('total_pass', 'total_both'):
-      numerator = row.get(spec['legacy_numerator_col'])
-      denom = total_pass if denom_kind == 'total_pass' else total_both
-      if numerator is None or not denom:
-        row[legacy_col] = None
-        skipped_columns.add(legacy_col) if numerator is None else None
-      else:
-        row[legacy_col] = numerator / denom
-      continue
-
-    # denom_kind == 'total_serve'
-    mask = (ppr_df['serve_player'].str.strip() == name) & (ppr_df['point_outcome'] == spec['outcome'])
-    if spec['zone'] is not None:
-      mask &= (ppr_df['serve_src_zone_net'] == spec['zone'])
-      zone_total = ppr_df[
-        (ppr_df['serve_player'].str.strip() == name) &
-        (ppr_df['serve_src_zone_net'] == spec['zone'])
-      ].shape[0]
+    numerator = row.get(spec['legacy_numerator_col'])
+    denom = total_pass if spec['denominator'] == 'total_pass' else total_both
+    if numerator is None:
+      row[legacy_col] = None
+      skipped_columns.add(legacy_col)
     else:
-      zone_total = total_serve
-
-    row[legacy_col] = (ppr_df[mask].shape[0] / zone_total) if zone_total else None
+      row[legacy_col] = (numerator / denom) if denom else None
 
   return row
 
