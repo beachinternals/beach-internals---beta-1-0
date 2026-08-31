@@ -858,6 +858,10 @@ db_schema:
       client_hidden: false
       name: partner_level
       type: string
+    - admin_ui: {order: 10.43359375, width: 200}
+      client_hidden: false
+      name: aggregate_level
+      type: string
     indexes: []
     server: full
     title: metric_dictionary
