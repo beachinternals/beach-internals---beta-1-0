@@ -485,3 +485,4 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
         anvil.alert(f"Import failed: {result['errors'][0] if result['errors'] else 'Unknown error'}")
 
 
+

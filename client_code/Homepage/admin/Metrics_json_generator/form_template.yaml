@@ -81,6 +81,10 @@ components_by_slot:
         name: outlined_button_4
         properties: {role: outlined-button, text: Download Metric DIff}
         type: Button
+      - layout_properties: {grid_position: 'KDNNLQ,PMZWBJ'}
+        name: single_player_diff_button
+        properties: {role: outlined-button, text: Single Player Data Diff}
+        type: Button
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
       properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40}', role: outlined-card}

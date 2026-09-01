@@ -118,7 +118,20 @@ def diff_player_data_dictionary_vs_legacy_for_player(c_league, c_gender, c_year,
     return {'error': meta.get('error', 'unknown failure')}
 
   old_player_df, _old_stats_df = get_player_data(c_league, c_gender, c_year)
+  if old_player_df.empty:
+    return {'error': (
+      f"No stored player_data at all for {c_league} {c_gender} {c_year} -- "
+      "has calc_player_data_background ever been run for this league?"
+    )}
+
   old_row_df = old_player_df[old_player_df['player'] == player_name]
+  if old_row_df.empty:
+    sample = sorted(old_player_df['player'].unique())[:10]
+    return {'error': (
+      f"No stored player_data row found for player {player_name!r}. "
+      f"{len(old_player_df)} players are on file for this league; "
+      f"sample of exact names stored: {sample}"
+    )}
 
   return {
     'league': c_league, 'gender': c_gender, 'year': c_year, 'player': player_name,
