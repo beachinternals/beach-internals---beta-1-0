@@ -16,7 +16,10 @@ import pandas as pd
 
 from server_functions import get_player_data
 from calc_player_data import _require_internals
-from calc_player_data_dictionary import calculate_player_data_via_dictionary
+from calc_player_data_dictionary import (
+  calculate_player_data_via_dictionary,
+  calculate_single_player_data_via_dictionary,
+)
 from player_data_column_alias_map import DROPPED_LEGACY_COLUMNS
 
 DIFF_REPORT_EMAIL = "info@beachinternals.com"
@@ -103,6 +106,69 @@ def diff_player_data_dictionary_vs_legacy(c_league, c_gender, c_year):
   }
 
 
+def diff_player_data_dictionary_vs_legacy_for_player(c_league, c_gender, c_year, player_name):
+  """
+  Single-player diff: validates the metric_id mapping without the
+  league-wide memory cost. Only compares player_data (one row) -- there's no
+  per-player equivalent of player_data_stats, which is a league-wide
+  mean/stdev across every player.
+  """
+  new_row_df, meta = calculate_single_player_data_via_dictionary(c_league, c_gender, c_year, player_name)
+  if new_row_df is None:
+    return {'error': meta.get('error', 'unknown failure')}
+
+  old_player_df, _old_stats_df = get_player_data(c_league, c_gender, c_year)
+  old_row_df = old_player_df[old_player_df['player'] == player_name]
+
+  return {
+    'league': c_league, 'gender': c_gender, 'year': c_year, 'player': player_name,
+    'skipped_columns': meta['skipped_columns'],
+    'player_data_diff': _diff_player_dataframes(old_row_df, new_row_df),
+  }
+
+
+@anvil.server.callable
+def download_single_player_diff_report(c_league, c_gender, c_year, player_name):
+  """
+  Button-facing entry point for the single-player diff. Cheap enough (same
+  scale as the existing per-player JSON/markdown reports) to run
+  synchronously and return a downloadable BlobMedia directly -- no
+  background task, no email, no timeout risk.
+  """
+  _require_internals()
+  report = diff_player_data_dictionary_vs_legacy_for_player(c_league, c_gender, c_year, player_name)
+  markdown = format_single_player_diff_report_as_markdown(report)
+  filename = f"player_data_diff_{player_name.replace(' ', '_')}.md"
+  return BlobMedia("text/markdown", markdown.encode("utf-8"), name=filename)
+
+
+def format_single_player_diff_report_as_markdown(report):
+  """Human-readable rendering via tabulate, matching the league-wide report's
+  shape but for one player's row."""
+  from tabulate import tabulate
+
+  if 'error' in report:
+    return f"# Diff Report Failed\n\n{report['error']}"
+
+  lines = [
+    f"# Single-Player Diff Report: {report['player']} ({report['league']} {report['gender']} {report['year']})",
+    f"Skipped (unresolved) columns: {len(report['skipped_columns'])}",
+  ]
+  if report['skipped_columns']:
+    lines.append(f"  {report['skipped_columns']}")
+
+  pdd = report['player_data_diff']
+  if 'error' in pdd:
+    lines.append(f"\n## player_data diff failed: {pdd['error']}")
+  else:
+    lines.append(f"\n## player_data -- missing_in_new ({len(pdd['missing_in_new'])}): {pdd['missing_in_new']}")
+    lines.append(f"## player_data -- new_only ({len(pdd['new_only'])}): {pdd['new_only']}")
+    lines.append("\n## Per-column comparison")
+    lines.append(tabulate(pdd['column_report'], headers='keys', floatfmt='.4f'))
+
+  return "\n".join(lines)
+
+
 @anvil.server.callable
 def launch_player_data_diff_report(c_league, c_gender, c_year):
   """
@@ -136,7 +202,7 @@ def diff_player_data_dictionary_vs_legacy_task(c_league, c_gender, c_year):
       from_address="no-reply",
       subject=f"Player Data Diff Report - {c_league} {c_gender} {c_year}",
       text="Attached is the player_data vs metric_dictionary diff report.",
-      attachments=md_media,
+      attachments=[md_media],
     )
     return md_media
 

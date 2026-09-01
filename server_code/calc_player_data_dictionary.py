@@ -141,6 +141,36 @@ def _compute_per_ratios(ppr_df, player_name, row, skipped_columns):
   return row
 
 
+def _calculate_one_player_row(ppr_df, player_name, metric_dict, skipped_columns):
+  """
+  Computes one player's full player_data row. Shared by the league-wide loop
+  and the single-player entry point below, so there's exactly one place that
+  defines "what a player's row contains."
+
+  Filters ppr_df to this player's own points BEFORE running the ~300
+  dictionary formulas, rather than handing every formula the full league
+  ppr_df to re-filter from scratch. A player appears in player_a1/a2/b1/b2
+  for every point of every match they played (positions don't change
+  mid-match), so this loses nothing a per-player metric would ever need --
+  it just avoids redoing a full-league scan hundreds of times per player,
+  which is what was exhausting memory on large leagues.
+  """
+  player_ppr_df = ppr_df[
+    (ppr_df['player_a1'] == player_name) | (ppr_df['player_a2'] == player_name) |
+    (ppr_df['player_b1'] == player_name) | (ppr_df['player_b2'] == player_name)
+  ]
+
+  metrics_result = calculate_all_metrics(metric_dict, player_ppr_df, player_name)
+  flat_metrics = _flat_metric_lookup(metrics_result['metrics'])
+
+  row = {'pair': '', 'player': player_name, 'team': _parse_team(player_name)}
+  row.update(_flatten_row(flat_metrics, skipped_columns))
+  row['fbhe_range'] = _compute_fbhe_range(row)
+  row = _compute_per_ratios(player_ppr_df, player_name, row, skipped_columns)
+  row['point_per'] = _compute_point_per(player_ppr_df, player_name)
+  return row
+
+
 def calculate_player_data_via_dictionary(c_league, c_gender, c_year):
   """
   Parallel, metric_dictionary-driven implementation of
@@ -172,15 +202,7 @@ def calculate_player_data_via_dictionary(c_league, c_gender, c_year):
 
   for player_name in p_list:
     log_info(f"[dict-engine] Calculating {player_name}")
-    metrics_result = calculate_all_metrics(metric_dict, ppr_df, player_name)
-    flat_metrics = _flat_metric_lookup(metrics_result['metrics'])
-
-    row = {'pair': '', 'player': player_name, 'team': _parse_team(player_name)}
-    row.update(_flatten_row(flat_metrics, skipped_columns))
-    row['fbhe_range'] = _compute_fbhe_range(row)
-    row = _compute_per_ratios(ppr_df, player_name, row, skipped_columns)
-    row['point_per'] = _compute_point_per(ppr_df, player_name)
-    rows.append(row)
+    rows.append(_calculate_one_player_row(ppr_df, player_name, metric_dict, skipped_columns))
 
   player_df = pd.DataFrame(rows)
   player_stats_df = _build_player_stats_df(player_df)
@@ -188,6 +210,38 @@ def calculate_player_data_via_dictionary(c_league, c_gender, c_year):
   meta = {'skipped_columns': sorted(skipped_columns), 'num_players': len(p_list)}
   log_info(f"[dict-engine] Done. {len(skipped_columns)} legacy columns unresolved this run.")
   return player_df, player_stats_df, meta
+
+
+def calculate_single_player_data_via_dictionary(c_league, c_gender, c_year, player_name):
+  """
+  Same engine as calculate_player_data_via_dictionary, but for exactly one
+  player -- cheap enough to run synchronously (same scale as the existing
+  per-player JSON/markdown reports), for validating the metric_id mapping
+  without the league-wide memory cost.
+
+  Returns:
+      (player_row_df, meta) where player_row_df is a 1-row DataFrame (or
+      None on structural failure, with meta['error'] set). There is no
+      per-player equivalent of player_data_stats -- that's a league-wide
+      mean/stdev across every player, which this intentionally does not
+      compute.
+  """
+  log_info(f"[dict-engine] Single player: {player_name} ({c_league}, {c_gender}, {c_year})")
+  ppr_csv_row, ppr_df = _load_league_ppr(c_league, c_gender, c_year)
+  if ppr_csv_row is None:
+    log_error(f"[dict-engine] No ppr_csv_row for {c_league} {c_gender} {c_year}")
+    return None, {'error': 'No Rows'}
+  if ppr_df is None or ppr_df.shape[0] == 0:
+    log_error(f"[dict-engine] ppr_df has 0 rows for {c_league} {c_gender} {c_year}")
+    return None, {'error': 'No Rows'}
+
+  metric_dict = _load_metric_dictionary_df()
+  skipped_columns = set()
+  row = _calculate_one_player_row(ppr_df, player_name, metric_dict, skipped_columns)
+
+  meta = {'skipped_columns': sorted(skipped_columns)}
+  log_info(f"[dict-engine] Done. {len(skipped_columns)} legacy columns unresolved this run.")
+  return pd.DataFrame([row]), meta
 
 
 def _build_player_stats_df(player_df):

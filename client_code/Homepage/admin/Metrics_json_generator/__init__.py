@@ -435,6 +435,35 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
       "Player data diff report started in the background. "
       "You'll receive it by email at info@beachinternals.com when it's done."
     )
+
+  @anvil.handle("single_player_diff_button", "click")
+  def single_player_diff_button_click(self, **event_args):
+    """Cheap single-player variant of the player_data diff -- validates the
+    metric_id mapping for one player without the league-wide memory cost.
+    Uses the same player_drop_down as the JSON generation button."""
+    if not self.player_drop_down.selected_value:
+      anvil.alert("Please select a player")
+      return
+
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index("|")
+    disp_league = league_value[: str_loc - 1].strip()
+    league_value = league_value[str_loc + 1 :]
+    str_loc = league_value.index("|")
+    disp_gender = league_value[: str_loc - 1].strip()
+    disp_year = league_value[str_loc + 1 :].strip()
+
+    player_name = (
+      self.player_drop_down.selected_value['team'] + " " +
+      self.player_drop_down.selected_value['number'] + ' ' +
+      self.player_drop_down.selected_value['shortname']
+    )
+
+    with anvil.Notification("Running single-player diff..."):
+      md_media = anvil.server.call(
+        'download_single_player_diff_report', disp_league, disp_gender, disp_year, player_name
+      )
+    anvil.media.download(md_media)
     pass  # Write Code Here
 
   @anvil.handle("file_loader_1", "change")
