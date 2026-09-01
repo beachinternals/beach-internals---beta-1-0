@@ -8,9 +8,8 @@ get_player_data()) -- no schema change, no writes, safe to run against a live
 league at any time.
 """
 
-import time
-
 import anvil.server
+import anvil.email
 from anvil import BlobMedia
 import numpy as np
 import pandas as pd
@@ -19,6 +18,8 @@ from server_functions import get_player_data
 from calc_player_data import _require_internals
 from calc_player_data_dictionary import calculate_player_data_via_dictionary
 from player_data_column_alias_map import DROPPED_LEGACY_COLUMNS
+
+DIFF_REPORT_EMAIL = "info@beachinternals.com"
 
 
 def _diff_player_dataframes(old_df, new_df, key_col='player'):
@@ -103,31 +104,50 @@ def diff_player_data_dictionary_vs_legacy(c_league, c_gender, c_year):
 
 
 @anvil.server.callable
-def diff_player_data_dictionary_vs_legacy_background(c_league, c_gender, c_year):
-  """Launches the diff as a background task, so the actual pandas-heavy
-  computation runs in its own process with generous resource limits instead
-  of inside a synchronous server call (which is what was getting killed).
-  Polls server-side (real time.sleep, unlike client-side Skulpt) and returns
-  the finished BlobMedia directly -- so the client still only needs one
-  simple blocking anvil.server.call(), no Task/Timer handling required."""
+def launch_player_data_diff_report(c_league, c_gender, c_year):
+  """
+  Button-facing entry point. Fires the diff off as a background task and
+  returns immediately. A synchronous call -- even one that only polls and
+  waits, not doing the heavy work itself -- still hit
+  anvil.server.TimeoutError, because that's a hard wall-clock limit on
+  synchronous calls regardless of what they're waiting on. So there is no
+  live request left to hand a result back to; the background task emails
+  the finished report instead.
+  """
   _require_internals()
-  task = anvil.server.launch_background_task(
+  anvil.server.launch_background_task(
     'diff_player_data_dictionary_vs_legacy_task', c_league, c_gender, c_year)
-  while task.is_running():
-    time.sleep(2)
-  error = task.get_error()
-  if error is not None:
-    raise error
-  return task.get_return_value()
 
 
 @anvil.server.background_task
 def diff_player_data_dictionary_vs_legacy_task(c_league, c_gender, c_year):
-  """Runs the full diff and packages it as a downloadable BlobMedia."""
-  report = diff_player_data_dictionary_vs_legacy(c_league, c_gender, c_year)
-  markdown = format_diff_report_as_markdown(report)
-  filename = f"player_data_diff_{c_league}_{c_gender}_{c_year}.md"
-  return BlobMedia("text/markdown", markdown.encode("utf-8"), name=filename)
+  """Runs the full diff and emails the result -- same
+  compute-then-anvil.email.send() shape as
+  weekly_data_quality_report.send_team_quality_report(), including emailing
+  a failure notice instead of just dying silently."""
+  try:
+    report = diff_player_data_dictionary_vs_legacy(c_league, c_gender, c_year)
+    markdown = format_diff_report_as_markdown(report)
+    filename = f"player_data_diff_{c_league}_{c_gender}_{c_year}.md"
+    md_media = BlobMedia("text/markdown", markdown.encode("utf-8"), name=filename)
+
+    anvil.email.send(
+      to=DIFF_REPORT_EMAIL,
+      from_address="no-reply",
+      subject=f"Player Data Diff Report - {c_league} {c_gender} {c_year}",
+      text="Attached is the player_data vs metric_dictionary diff report.",
+      attachments=md_media,
+    )
+    return md_media
+
+  except Exception as e:
+    anvil.email.send(
+      to=DIFF_REPORT_EMAIL,
+      from_address="no-reply",
+      subject=f"Player Data Diff Report FAILED - {c_league} {c_gender} {c_year}",
+      text=f"The player_data diff report failed to generate: {e}",
+    )
+    raise
 
 
 def format_diff_report_as_markdown(report):
