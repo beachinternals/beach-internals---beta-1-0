@@ -25,6 +25,7 @@ from player_data_column_alias_map import (
   COLUMN_ALIAS_MAP,
   PER_RATIO_SPECS,
   LEGACY_STATS_BASE_COLUMNS,
+  SCALE_TRANSFORMS,
 )
 
 
@@ -93,7 +94,12 @@ def _flatten_row(flat_metrics, skipped_columns):
   """Apply COLUMN_ALIAS_MAP to one player's calculate_all_metrics() output,
   emitting <legacy_name> (value) and <legacy_name>_n (attempts) for every
   resolved mapping. Unmapped/unresolvable columns are recorded in
-  skipped_columns (mutated in place) and simply absent from the row."""
+  skipped_columns (mutated in place) and simply absent from the row.
+
+  SCALE_TRANSFORMS corrects legacy columns (expected, err_den) that were
+  historically stored on a 0-100 scale (parsed from a '{:.2%}'-formatted
+  string) while the dictionary's equivalent metric is a plain 0-1 float,
+  matching every other ratio metric in the dictionary."""
   row = {}
   for legacy_col, (metric_id, _confidence) in COLUMN_ALIAS_MAP.items():
     if metric_id is None:
@@ -103,7 +109,10 @@ def _flatten_row(flat_metrics, skipped_columns):
     if info is None:
       skipped_columns.add(legacy_col)
       continue
-    row[legacy_col] = info['value'] if info.get('sufficient_data', True) else None
+    value = info['value'] if info.get('sufficient_data', True) else None
+    if value is not None and legacy_col in SCALE_TRANSFORMS:
+      value = value * SCALE_TRANSFORMS[legacy_col]
+    row[legacy_col] = value
     row[f"{legacy_col}_n"] = info.get('attempts')
   return row
 

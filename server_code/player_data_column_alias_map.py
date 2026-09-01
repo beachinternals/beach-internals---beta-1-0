@@ -116,6 +116,24 @@ for _fr in (1, 3, 5):
 
 
 # ============================================================================
+# Confirmed scale mismatches (single-player diff, 2026-09-01): legacy
+# consistently formatted these as a percent STRING then parsed back to a
+# 0-100 float (e.g. calc_ev's `float(ev_vector[0][:-1])` on '{:.2%}'-formatted
+# text; calc_error_den does the same). The metric_dictionary versions
+# (calc_ev_obj/calc_error_density_obj in server_functions.py) expose the same
+# ratio as a plain 0-1 float instead, consistent with every other 0-1-scale
+# metric in the dictionary (fbhe, tcr, goodpass, ...). Legacy's 0-100 choice
+# is the outlier here, not the dictionary -- so the compatibility scaling
+# belongs in this shim, not in metric_dictionary itself.
+# ============================================================================
+
+SCALE_TRANSFORMS = {
+  'expected': 100,
+  'err_den': 100,
+}
+
+
+# ============================================================================
 # "_per" ratio columns with NO dictionary equivalent -- NOT simple aliases.
 # See calc_player_data_dictionary._compute_per_ratios() for how these are
 # used. (srv*_ace_per / srv*_err_per turned out to already exist as real

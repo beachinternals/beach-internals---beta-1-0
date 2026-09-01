@@ -453,15 +453,18 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
     disp_gender = league_value[: str_loc - 1].strip()
     disp_year = league_value[str_loc + 1 :].strip()
 
-    player_name = (
-      self.player_drop_down.selected_value['team'] + " " +
-      self.player_drop_down.selected_value['number'] + ' ' +
-      self.player_drop_down.selected_value['shortname']
-    )
+    # player_data is computed from the de-identified league-wide ppr file,
+    # where every player is a PLYR-<uuid> token, not their real name -- so
+    # this must match on player_uuid, not the team/number/shortname string
+    # used elsewhere on this form (e.g. json_button_click).
+    player_uuid = self.player_drop_down.selected_value['player_uuid']
+    if not player_uuid:
+      anvil.alert("No player_uuid on file for this player -- can't match them in the de-identified player_data.")
+      return
 
     with anvil.Notification("Running single-player diff..."):
       md_media = anvil.server.call(
-        'download_single_player_diff_report', disp_league, disp_gender, disp_year, player_name
+        'download_single_player_diff_report', disp_league, disp_gender, disp_year, player_uuid
       )
     anvil.media.download(md_media)
     pass  # Write Code Here
