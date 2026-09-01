@@ -77,6 +77,10 @@ components_by_slot:
         name: file_loader_1
         properties: {text: Import Comp Level to Master Player Table}
         type: FileLoader
+      - layout_properties: {grid_position: 'GLLRDO,FYAJRY'}
+        name: outlined_button_4
+        properties: {role: outlined-button, text: Download Metric DIff}
+        type: Button
       layout_properties: {grid_position: 'HRVTBW,IJUWLN'}
       name: outlined_card_7
       properties: {col_widths: '{"GAEVDY":20,"GLQPYX":40}', role: outlined-card}

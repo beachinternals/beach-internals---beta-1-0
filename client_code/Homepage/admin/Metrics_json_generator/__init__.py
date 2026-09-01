@@ -419,7 +419,19 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
 
   @anvil.handle("outlined_button_4", "click")
   def outlined_button_4_click(self, **event_args):
-    """This method is called when the button is clicked"""
+    # Extract league, gender, year from league selected value
+    league_value = self.league_drop_down.selected_value
+    str_loc = league_value.index("|")
+    disp_league = league_value[: str_loc - 1].strip()
+    league_value = league_value[str_loc + 1 :]
+    str_loc = league_value.index("|")
+    disp_gender = league_value[: str_loc - 1].strip()
+    disp_year = league_value[str_loc + 1 :].strip()
+    
+    md_media = anvil.server.call(
+      'download_player_data_diff_report', disp_league, disp_gender, disp_year
+    )
+    anvil.media.download(md_media)
     pass  # Write Code Here
 
   @anvil.handle("file_loader_1", "change")
