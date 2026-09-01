@@ -8,7 +8,10 @@ get_player_data()) -- no schema change, no writes, safe to run against a live
 league at any time.
 """
 
+import time
+
 import anvil.server
+from anvil import BlobMedia
 import numpy as np
 import pandas as pd
 
@@ -101,17 +104,30 @@ def diff_player_data_dictionary_vs_legacy(c_league, c_gender, c_year):
 
 @anvil.server.callable
 def diff_player_data_dictionary_vs_legacy_background(c_league, c_gender, c_year):
-  """Background-task wrapper (mirrors calc_player_data_background's launch
-  pattern) so a large league's dual calculation doesn't risk a request
-  timeout. Retrieve via task.get_result()."""
+  """Launches the diff as a background task, so the actual pandas-heavy
+  computation runs in its own process with generous resource limits instead
+  of inside a synchronous server call (which is what was getting killed).
+  Polls server-side (real time.sleep, unlike client-side Skulpt) and returns
+  the finished BlobMedia directly -- so the client still only needs one
+  simple blocking anvil.server.call(), no Task/Timer handling required."""
   _require_internals()
-  return anvil.server.launch_background_task(
+  task = anvil.server.launch_background_task(
     'diff_player_data_dictionary_vs_legacy_task', c_league, c_gender, c_year)
+  while task.is_running():
+    time.sleep(2)
+  error = task.get_error()
+  if error is not None:
+    raise error
+  return task.get_return_value()
 
 
 @anvil.server.background_task
 def diff_player_data_dictionary_vs_legacy_task(c_league, c_gender, c_year):
-  return diff_player_data_dictionary_vs_legacy(c_league, c_gender, c_year)
+  """Runs the full diff and packages it as a downloadable BlobMedia."""
+  report = diff_player_data_dictionary_vs_legacy(c_league, c_gender, c_year)
+  markdown = format_diff_report_as_markdown(report)
+  filename = f"player_data_diff_{c_league}_{c_gender}_{c_year}.md"
+  return BlobMedia("text/markdown", markdown.encode("utf-8"), name=filename)
 
 
 def format_diff_report_as_markdown(report):

@@ -428,9 +428,10 @@ class Metrics_json_generator(Metrics_json_generatorTemplate):
     disp_gender = league_value[: str_loc - 1].strip()
     disp_year = league_value[str_loc + 1 :].strip()
     
-    md_media = anvil.server.call(
-      'download_player_data_diff_report', disp_league, disp_gender, disp_year
-    )
+    with anvil.Notification("Running player_data diff... this may take a while"):
+      md_media = anvil.server.call(
+        'diff_player_data_dictionary_vs_legacy_background', disp_league, disp_gender, disp_year
+      )
     anvil.media.download(md_media)
     pass  # Write Code Here
 
