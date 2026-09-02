@@ -125,11 +125,25 @@ for _fr in (1, 3, 5):
 # metric in the dictionary (fbhe, tcr, goodpass, ...). Legacy's 0-100 choice
 # is the outlier here, not the dictionary -- so the compatibility scaling
 # belongs in this shim, not in metric_dictionary itself.
+#
+# Same root cause reaches into the consistency (std-dev) metrics: legacy's
+# calc_consistency_match_table/calc_consistency_s2s_table (server_functions.py)
+# build their per-set 'Tran Conv' and 'Error Den' values via calc_trans/
+# calc_error_den's percent-string parsing (0-100), while every other per-set
+# value in those same tables (FBHE, Knockout %, Good Passes, Points Earned)
+# is a plain 0-1 fraction. The dictionary's consistency_sd_match/
+# consistency_sd_set2set (metric_calc_functions.py) compute all six
+# sub-metrics as plain 0-1 fractions uniformly -- so only the tcr- and
+# error-density-based consistency columns inherit the scale mismatch.
 # ============================================================================
 
 SCALE_TRANSFORMS = {
   'expected': 100,
   'err_den': 100,
+  'cons_tcr_sd_match': 100,
+  'cons_tcr_sd_s2s': 100,
+  'cons_ed_sd_match': 100,
+  'cons_ed_sd_s2s': 100,
 }
 
 

@@ -906,8 +906,8 @@ db_schema:
       client_hidden: null
       name: gender
       type: string
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 2, width: 200}
+      client_hidden: true
       name: year
       type: string
     - admin_ui: {width: 200}
