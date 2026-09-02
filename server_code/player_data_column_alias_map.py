@@ -134,29 +134,35 @@ for _fr in (1, 3, 5):
 # fractions. BOTH group by (video_id, set) -- same population -- so the ×100
 # transform applies here.
 #
-# cons_tcr_sd_match/cons_ed_sd_match are DELIBERATELY NOT in this map, even
-# though they showed the same large diffs -- confirmed (2026-09-02) that it's
-# not a scale bug for these two. Legacy's calc_consistency_match_table
-# computes exactly 7 pooled values (All, 1a, 1b, 2a, 2b, 3a, 3b), each
-# aggregating EVERY match this player ever played into one ratio per phase
-# label, then takes stdev across those 7 numbers. The dictionary's
-# consistency_sd_match groups by (video_id, period) instead -- a separate
-# value per individual match's phase, stdev taken across all of them pooled.
-# Different population, not just different units; a multiplier can't fix it.
-# Left unscaled (raw dictionary value) pending a decision on whether to align
-# consistency_sd_match's grouping to legacy's, or accept these as distinct.
+# cons_tcr_sd_match/cons_ed_sd_match ALSO get x100 here, but for a different
+# reason than the others above -- confirmed (2026-09-02) this is NOT a scale
+# bug for these two. Legacy's calc_consistency_match_table computes exactly 7
+# pooled values (All, 1a, 1b, 2a, 2b, 3a, 3b), each aggregating EVERY match
+# this player ever played into one ratio per phase label, then takes stdev
+# across those 7 numbers. The dictionary's consistency_sd_match groups by
+# (video_id, period) instead -- a separate value per individual match's
+# phase, stdev taken across all of them pooled. Different population, not
+# just different units -- a multiplier does NOT make this match legacy's
+# number, and isn't meant to. We're deliberately trusting the new
+# (per-match-period) calculation over legacy's here. The x100 is applied
+# purely so this stays on the same 0-100 basis as every other percentage-
+# based metric in this table (err_den, cons_ed_sd_*, cons_tcr_sd_s2s) --
+# consistent basis matters for any downstream code building a percentile/
+# z-score from value+mean+stdev together, and for display next to siblings.
 #
-# cons_tcr_sd_s2s/cons_ed_sd_s2s (and their fbhe/ko/pass/pts siblings) still
-# won't fully converge even after this fix: legacy's calc_consistency_s2s_table
-# requires >=20 points in a set to count it; consistency_sd_set2set has no
-# such floor, so thin/noisy sets inflate its stdev. Small effect on the
-# already-0-1 sub-metrics, more visible here since it compounds with the x100.
+# cons_tcr_sd_s2s/cons_ed_sd_s2s (and their fbhe/ko/pass/pts siblings) won't
+# fully converge to legacy's number either, for a smaller reason: legacy's
+# calc_consistency_s2s_table requires >=20 points in a set to count it;
+# consistency_sd_set2set has no such floor, so thin/noisy sets inflate its
+# stdev somewhat. Accepted as-is -- trusting the new calculation here too.
 # ============================================================================
 
 SCALE_TRANSFORMS = {
   'expected': 100,
   'err_den': 100,
+  'cons_tcr_sd_match': 100,
   'cons_tcr_sd_s2s': 100,
+  'cons_ed_sd_match': 100,
   'cons_ed_sd_s2s': 100,
 }
 
