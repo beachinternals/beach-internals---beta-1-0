@@ -1,16 +1,30 @@
 """
 player_data_column_alias_map.py
 ================================
-Single source of truth mapping legacy calc_player_data.py column names to
-metric_dictionary metric_ids, shared by calc_player_data_dictionary.py and
-metric_dictionary_diff.py so the two can never drift apart.
+Since 2026-09-03, calc_player_data_dictionary.py's player_data is
+COMPREHENSIVE by default: every metric_dictionary row with
+aggregate_level='Yes' is emitted automatically under its own metric_id,
+including distribution-shaped metrics (flattened cell-by-cell -- see
+calc_player_data_dictionary._flatten_distribution). This file now only
+covers the exceptions on top of that:
 
-Reconciled against a real generate_slim_metric_dictionary_md() export
-(metric_id/coach_alias/metric_name/coach_view/coach_speak_* only -- no
-function_name/result_path/data_filter, so entries here are 'guess' rather
-than 'confirmed' until metric_dictionary_diff.py's numeric comparison backs
-them up). Any column still (None, 'unconfirmed') genuinely has no dictionary
-equivalent found in that export.
+- COLUMN_ALIAS_MAP: legacy calc_player_data.py column names that differ from
+  their metric_dictionary metric_id (e.g. fbhe_bang -> fbhe_harddriven), or
+  that need SCALE_TRANSFORMS applied under the legacy name specifically.
+  Kept for the handful of downstream consumers that still hardcode old
+  player_data column names (reports_league.py, dashboard.py, s_w_report.py,
+  reports_dashboard.py, calc_traingle_scoring.py). Most entries here now
+  duplicate what the comprehensive pass already emits under the same name
+  (metric_id == legacy_col) -- harmless, not worth pruning.
+- DROPPED_LEGACY_COLUMNS: legacy columns with zero downstream consumers
+  (confirmed by full-repo grep), explicitly excluded so the diff tool never
+  flags them as a regression.
+- SCALE_TRANSFORMS / PER_RATIO_SPECS: see their own docstrings below.
+
+Confidence tags ('guess' vs 'confirmed') are historical, from when this file
+was reconciled against a generate_slim_metric_dictionary_md() export that
+only had metric_id/coach_alias/metric_name/coach_view/coach_speak_* (no
+function_name/result_path/data_filter) -- kept for now, not actively used.
 """
 
 # ============================================================================
@@ -22,7 +36,6 @@ equivalent found in that export.
 DROPPED_LEGACY_COLUMNS = {
   'fbhe_poke', 'fbhe_poke_n', 'fbhe_poke_per',
   'fbhe_shoot', 'fbhe_shoot_n', 'fbhe_shoot_per',
-  'fbhe_range',
   'opp_fbhe', 'opp_fbhe1', 'opp_fbhe2', 'opp_fbhe3', 'opp_fbhe4', 'opp_fbhe5',
 }
 
@@ -33,6 +46,13 @@ for _fr in (1, 3, 5):
       DROPPED_LEGACY_COLUMNS.add(_opp_cell)
       DROPPED_LEGACY_COLUMNS.add(f"{_opp_cell}_n")
       DROPPED_LEGACY_COLUMNS.add(f"{_opp_cell}_ea")
+      # Own-side ellipse-area cells dropped too (decided 2026-09-03): these
+      # were kept only because legacy had them, not because they're trusted --
+      # a much earlier TODO in generate_player_metrics_json_server.py already
+      # flagged *_ea metrics for producing extreme outliers (e.g. pass_ea
+      # ~19933, fbhe_1_3e_ea ~10263). Dropped from player_data entirely now
+      # that we're no longer constrained to match legacy's column set 1:1.
+      DROPPED_LEGACY_COLUMNS.add(f"fbhe_{_fr}_{_net}{_depth}_ea")
 
 
 # ============================================================================
@@ -106,13 +126,38 @@ COLUMN_ALIAS_MAP: dict = {
 }
 
 # Own-side 45-cell FBHE grid -- confirmed present under identical names in
-# the real export, generated rather than hand-listed.
+# the real export, generated rather than hand-listed. _ea (ellipse area)
+# siblings deliberately excluded -- see DROPPED_LEGACY_COLUMNS.
 for _fr in (1, 3, 5):
   for _net in (1, 2, 3, 4, 5):
     for _depth in ('c', 'd', 'e'):
       _cell = f"fbhe_{_fr}_{_net}{_depth}"
       COLUMN_ALIAS_MAP[_cell] = (_cell, 'guess')
-      COLUMN_ALIAS_MAP[f"{_cell}_ea"] = (f"{_cell}_ea", 'guess')
+
+# ============================================================================
+# Pressure-situation family -- NEW to player_data (2026-09-03), no legacy
+# equivalent at all. These were previously invisible to player_data purely
+# because the original alias map only carried columns legacy already had;
+# now that the migration itself is trusted, adding metric_dictionary metrics
+# with real value even without a legacy precedent. metric_id spelling is
+# copied verbatim from the live dictionary, including its "presssure" (3 s's)
+# typo on the tcr_s pair -- the player_data COLUMN name is spelled correctly
+# regardless, since there's no legacy name to preserve here.
+# ============================================================================
+COLUMN_ALIAS_MAP['fbhe_pressure_0']     = ('fbhe_pressure_0', 'guess')
+COLUMN_ALIAS_MAP['fbhe_pressure_1']     = ('fbhe_pressure_1', 'guess')
+COLUMN_ALIAS_MAP['tcr_pressure_0']      = ('tcr_pressure_0', 'guess')
+COLUMN_ALIAS_MAP['tcr_pressure_1']      = ('tcr_pressure_1', 'guess')
+COLUMN_ALIAS_MAP['err_den_pressure_0']  = ('err_den_pressure_0', 'guess')
+COLUMN_ALIAS_MAP['err_den_pressure_1']  = ('err_den_pressure_1', 'guess')
+COLUMN_ALIAS_MAP['goodpass_pressure_0'] = ('goodpass_pressure_0', 'guess')
+COLUMN_ALIAS_MAP['goodpass_pressure_1'] = ('goodpass_pressure_1', 'guess')
+COLUMN_ALIAS_MAP['knockout_pressure_0'] = ('knockout_pressure_0', 'guess')
+COLUMN_ALIAS_MAP['knockout_pressure_1'] = ('knockout_pressure_1', 'guess')
+COLUMN_ALIAS_MAP['tcr_r_pressure_0']    = ('tcr_r_pressure_0', 'guess')
+COLUMN_ALIAS_MAP['tcr_r_pressure_1']    = ('tcr_r_pressure_1', 'guess')
+COLUMN_ALIAS_MAP['tcr_s_pressure_0']    = ('tcr_s_presssure_0', 'guess')  # dictionary typo, see note above
+COLUMN_ALIAS_MAP['tcr_s_pressure_1']    = ('tcr_s_presssure_1', 'guess')  # dictionary typo, see note above
 
 
 # ============================================================================
@@ -164,6 +209,11 @@ SCALE_TRANSFORMS = {
   'cons_tcr_sd_s2s': 100,
   'cons_ed_sd_match': 100,
   'cons_ed_sd_s2s': 100,
+  # err_den_pressure_0/1 are the same calc_error_density_obj-style ratio as
+  # err_den, just situationally filtered -- same 0-1-native dictionary value,
+  # same reason to put it on err_den's 0-100 basis for consistency.
+  'err_den_pressure_0': 100,
+  'err_den_pressure_1': 100,
 }
 
 
@@ -208,35 +258,6 @@ PER_RATIO_SPECS = {
   'fbhe_insys_per':  {'legacy_numerator_col': 'fbhe_insys_n',  'denominator': 'sibling_sum', 'sibling_col': 'fbhe_oos_n'},
   'fbhe_bang_per':   {'legacy_numerator_col': 'fbhe_bang_n',   'denominator': 'total_both'},
 }
-
-
-# ============================================================================
-# Explicit allowlist for player_stats_df -- only these base columns get
-# <col>_mean / <col>_stdev companions, so new/bonus metric columns never
-# silently grow the stats file that s_w_report.py, reports_league.py,
-# calc_traingle_scoring.py, and reports_dashboard.py read from.
-# ============================================================================
-
-LEGACY_STATS_BASE_COLUMNS = [
-  'fbhe', 'fbhe1', 'fbhe2', 'fbhe3', 'fbhe4', 'fbhe5',
-  'fbhe_behind', 'fbhe_behind_per', 'fbhe_option', 'fbhe_option_per',
-  'fbhe_tempo', 'fbhe_tempo_per', 'fbhe_bang', 'fbhe_bang_per',
-  'fbhe_oos', 'fbhe_oos_per', 'fbhe_insys', 'fbhe_insys_per',
-  'fbhe_srv1', 'fbhe_srv3', 'fbhe_srv5',
-  'tcr', 'tcr_r', 'tcr_s', 'expected', 'err_den',
-  'srv_fbhe', 'srv1_fbhe', 'srv3_fbhe', 'srv5_fbhe',
-  'cons_fbhe_sd_match', 'cons_tcr_sd_match', 'cons_ed_sd_match',
-  'cons_ko_sd_match', 'cons_pass_sd_match', 'cons_pts_sd_match',
-  'cons_fbhe_sd_s2s', 'cons_tcr_sd_s2s', 'cons_ed_sd_s2s',
-  'cons_ko_sd_s2s', 'cons_pass_sd_s2s', 'cons_pts_sd_s2s',
-  'knockout', 'goodpass', 'eso', 't_eff', 't_eff_r', 't_eff_s',
-  'point_per', 't_create', 't_create_r', 't_create_s',
-]
-for _fr in (1, 3, 5):
-  for _net in (1, 2, 3, 4, 5):
-    for _depth in ('c', 'd', 'e'):
-      LEGACY_STATS_BASE_COLUMNS.append(f"fbhe_{_fr}_{_net}{_depth}")
-      LEGACY_STATS_BASE_COLUMNS.append(f"fbhe_{_fr}_{_net}{_depth}_ea")
 
 
 def unresolved_columns():

@@ -1,16 +1,24 @@
 """
 calc_player_data_dictionary.py
 ===============================
-Parallel, metric_dictionary-driven implementation of
-calc_player_data.calculate_player_data_not_background(), built alongside the
-legacy function rather than replacing it. Does NOT write to ppr_csv_row /
-BlobMedia -- returns the in-memory dataframes so metric_dictionary_diff.py
-(and manual inspection) can validate against the currently stored player_data
-before any cutover.
+Metric_dictionary-driven implementation of
+calc_player_data.calculate_player_data_not_background(). Now that the
+migration itself is validated and cut over (2026-09-02), this is
+COMPREHENSIVE by default: every metric_dictionary row with
+aggregate_level='Yes' is emitted as a player_data column under its own
+metric_id, automatically -- no manual step needed when a new metric is added
+to the dictionary. COLUMN_ALIAS_MAP now only handles the exceptions: legacy
+column-name renames (e.g. fbhe_bang -> fbhe_harddriven) and scale fixes, kept
+for the handful of downstream consumers that still hardcode old names
+(reports_league.py, dashboard.py, s_w_report.py, reports_dashboard.py,
+calc_traingle_scoring.py).
 
-calc_player_data.py, generate_player_metrics_json_server.py, metric_functions.py
-and server_functions.py are all read-only dependencies here -- none of them
-are modified by this file.
+distribution / distribution_setheight metrics (e.g. srv_dest_per,
+set_height_dist) aren't single values -- calculate_all_metrics returns them
+as a rolled-up payload (one exec() call computing every cell at once, rather
+than one call per cell, for speed). _flatten_distribution() unpacks that
+payload into one player_data column per cell, so every cell is still a real
+number player_data_stats can compute a population mean/stdev for.
 """
 
 import io
@@ -24,7 +32,6 @@ from generate_player_metrics_json_server import calculate_all_metrics
 from player_data_column_alias_map import (
   COLUMN_ALIAS_MAP,
   PER_RATIO_SPECS,
-  LEGACY_STATS_BASE_COLUMNS,
   SCALE_TRANSFORMS,
 )
 
@@ -90,17 +97,75 @@ def _flat_metric_lookup(metrics_output):
   return flat
 
 
-def _flatten_row(flat_metrics, skipped_columns):
-  """Apply COLUMN_ALIAS_MAP to one player's calculate_all_metrics() output,
-  emitting <legacy_name> (value) and <legacy_name>_n (attempts) for every
-  resolved mapping. Unmapped/unresolvable columns are recorded in
-  skipped_columns (mutated in place) and simply absent from the row.
+def _flatten_distribution(metric_id, dist, row):
+  """Unpacks one distribution-shaped metric result into player_data columns.
 
-  SCALE_TRANSFORMS corrects legacy columns (expected, err_den) that were
+  build_setheight_payload() (server_functions.py) shape:
+    {'kind': 'setheight', 'total': N, 'order': [bucket names],
+     'cells': {bucket: {'vol':, 'fbhe':, 'n':}}}
+  -> {metric_id}_n = total; {metric_id}__{bucket}_vol/_fbhe/_n per bucket.
+
+  build_distribution_payload() shape:
+    {'cells_full': {cell_key: pct}, 'cells_dest': {...}, 'n':, 'err_rate':}
+  -> {metric_id}_n = n; {metric_id}_err = err_rate (if present);
+     {metric_id}__{cell_key} = pct per cell in cells_full. cells_dest is a
+     strict rollup of cells_full (summed by destination) and is deliberately
+     NOT also flattened -- it's fully derivable from cells_full later, so
+     keeping only the granular version avoids doubling the column count for
+     no new information.
+  """
+  if dist.get('kind') == 'setheight':
+    row[f"{metric_id}_n"] = dist.get('total')
+    for bucket in dist.get('order', []):
+      cell = dist.get('cells', {}).get(bucket)
+      if not cell:
+        continue
+      row[f"{metric_id}__{bucket}_vol"] = cell.get('vol')
+      row[f"{metric_id}__{bucket}_fbhe"] = cell.get('fbhe')
+      row[f"{metric_id}__{bucket}_n"] = cell.get('n')
+  else:
+    row[f"{metric_id}_n"] = dist.get('n')
+    if dist.get('err_rate') is not None:
+      row[f"{metric_id}_err"] = dist.get('err_rate')
+    for cell_key, pct in dist.get('cells_full', {}).items():
+      row[f"{metric_id}__{cell_key}"] = pct
+
+
+def _flatten_row(flat_metrics, skipped_columns):
+  """Two passes over one player's calculate_all_metrics() output:
+
+  1. Comprehensive: every metric_id the dictionary computed (aggregate_level
+     already filtered by calculate_all_metrics itself) becomes a column
+     under its own name -- <metric_id> (value) + <metric_id>_n (attempts)
+     for scalars, or the flattened cell columns from _flatten_distribution
+     for distribution-shaped results. New metrics added to the dictionary
+     show up here automatically, no code change required.
+
+  2. Legacy aliasing: COLUMN_ALIAS_MAP adds a second, differently-named copy
+     for the handful of columns downstream consumers still hardcode under
+     the old player_data name (e.g. fbhe_bang duplicates fbhe_harddriven).
+     For entries where metric_id == legacy_col this just re-writes the same
+     value under the same key -- redundant but harmless, so the map doesn't
+     need pruning as more of it becomes covered by the comprehensive pass.
+
+  SCALE_TRANSFORMS corrects columns (expected, err_den, ...) that were
   historically stored on a 0-100 scale (parsed from a '{:.2%}'-formatted
-  string) while the dictionary's equivalent metric is a plain 0-1 float,
-  matching every other ratio metric in the dictionary."""
+  string in legacy) while the dictionary's equivalent metric is a plain 0-1
+  float, matching every other ratio metric in the dictionary -- applied by
+  whichever name (native or legacy-aliased) is actually being written."""
   row = {}
+
+  for metric_id, info in flat_metrics.items():
+    dist = info.get('distribution')
+    if dist:
+      _flatten_distribution(metric_id, dist, row)
+      continue
+    value = info['value'] if info.get('sufficient_data', True) else None
+    if value is not None and metric_id in SCALE_TRANSFORMS:
+      value = value * SCALE_TRANSFORMS[metric_id]
+    row[metric_id] = value
+    row[f"{metric_id}_n"] = info.get('attempts')
+
   for legacy_col, (metric_id, _confidence) in COLUMN_ALIAS_MAP.items():
     if metric_id is None:
       skipped_columns.add(legacy_col)
@@ -114,6 +179,7 @@ def _flatten_row(flat_metrics, skipped_columns):
       value = value * SCALE_TRANSFORMS[legacy_col]
     row[legacy_col] = value
     row[f"{legacy_col}_n"] = info.get('attempts')
+
   return row
 
 
@@ -272,16 +338,14 @@ def calculate_single_player_data_via_dictionary(c_league, c_gender, c_year, play
 
 def _build_player_stats_df(player_df):
   """Generic replacement for calc_player_data.py's ~150 hand-written
-  .mean()/.std() lines. Iterates the explicit LEGACY_STATS_BASE_COLUMNS
-  allowlist rather than player_df.columns, so brand-new/unexpected columns
-  never leak into the stats file that s_w_report.py, reports_league.py,
-  calc_traingle_scoring.py, and reports_dashboard.py read <col>_mean/<col>_stdev
-  from."""
+  .mean()/.std() lines. Comprehensive over every numeric column in
+  player_df (which is itself comprehensive now, see _flatten_row) --
+  'pair'/'player'/'team' are the only non-numeric columns and are excluded
+  by select_dtypes automatically."""
+  numeric_df = player_df.select_dtypes(include='number')
   stats_row = {}
-  for base_col in LEGACY_STATS_BASE_COLUMNS:
-    if base_col not in player_df.columns:
-      continue  # not resolved this run; diff tool will report it as missing
-    series = pd.to_numeric(player_df[base_col], errors='coerce')
-    stats_row[f"{base_col}_mean"] = series.mean(skipna=True)
-    stats_row[f"{base_col}_stdev"] = series.std(skipna=True)
+  for col in numeric_df.columns:
+    series = numeric_df[col]
+    stats_row[f"{col}_mean"] = series.mean(skipna=True)
+    stats_row[f"{col}_stdev"] = series.std(skipna=True)
   return pd.DataFrame([stats_row])
