@@ -126,23 +126,37 @@ for _fr in (1, 3, 5):
 # is the outlier here, not the dictionary -- so the compatibility scaling
 # belongs in this shim, not in metric_dictionary itself.
 #
-# Same root cause reaches into the consistency (std-dev) metrics: legacy's
-# calc_consistency_match_table/calc_consistency_s2s_table (server_functions.py)
-# build their per-set 'Tran Conv' and 'Error Den' values via calc_trans/
-# calc_error_den's percent-string parsing (0-100), while every other per-set
-# value in those same tables (FBHE, Knockout %, Good Passes, Points Earned)
-# is a plain 0-1 fraction. The dictionary's consistency_sd_match/
-# consistency_sd_set2set (metric_calc_functions.py) compute all six
-# sub-metrics as plain 0-1 fractions uniformly -- so only the tcr- and
-# error-density-based consistency columns inherit the scale mismatch.
+# The same 0-100-vs-0-1 root cause touches cons_tcr_sd_s2s/cons_ed_sd_s2s too
+# -- legacy's calc_consistency_s2s_table (server_functions.py) builds its
+# per-set 'Tran Conv'/'Error Den' via calc_trans/calc_error_den's
+# percent-string parsing (0-100), while the dictionary's consistency_sd_set2set
+# (metric_calc_functions.py) computes the same sub-metrics as plain 0-1
+# fractions. BOTH group by (video_id, set) -- same population -- so the ×100
+# transform applies here.
+#
+# cons_tcr_sd_match/cons_ed_sd_match are DELIBERATELY NOT in this map, even
+# though they showed the same large diffs -- confirmed (2026-09-02) that it's
+# not a scale bug for these two. Legacy's calc_consistency_match_table
+# computes exactly 7 pooled values (All, 1a, 1b, 2a, 2b, 3a, 3b), each
+# aggregating EVERY match this player ever played into one ratio per phase
+# label, then takes stdev across those 7 numbers. The dictionary's
+# consistency_sd_match groups by (video_id, period) instead -- a separate
+# value per individual match's phase, stdev taken across all of them pooled.
+# Different population, not just different units; a multiplier can't fix it.
+# Left unscaled (raw dictionary value) pending a decision on whether to align
+# consistency_sd_match's grouping to legacy's, or accept these as distinct.
+#
+# cons_tcr_sd_s2s/cons_ed_sd_s2s (and their fbhe/ko/pass/pts siblings) still
+# won't fully converge even after this fix: legacy's calc_consistency_s2s_table
+# requires >=20 points in a set to count it; consistency_sd_set2set has no
+# such floor, so thin/noisy sets inflate its stdev. Small effect on the
+# already-0-1 sub-metrics, more visible here since it compounds with the x100.
 # ============================================================================
 
 SCALE_TRANSFORMS = {
   'expected': 100,
   'err_den': 100,
-  'cons_tcr_sd_match': 100,
   'cons_tcr_sd_s2s': 100,
-  'cons_ed_sd_match': 100,
   'cons_ed_sd_s2s': 100,
 }
 
