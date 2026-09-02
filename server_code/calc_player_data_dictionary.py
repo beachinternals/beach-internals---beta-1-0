@@ -128,9 +128,17 @@ def _compute_fbhe_range(row):
 
 
 def _compute_per_ratios(ppr_df, player_name, row, skipped_columns):
-  """Implements PER_RATIO_SPECS. Denominators are computed directly from
-  ppr_df, filtered the same way fbhe_obj() does it (server_functions.py),
-  since these ratios are not shaped like a single metric_dictionary metric."""
+  """Implements PER_RATIO_SPECS.
+
+  'total_pass'/'total_both' denominators are computed directly from ppr_df,
+  filtered the same way fbhe_obj() does it (server_functions.py), since these
+  ratios are not shaped like a single metric_dictionary metric.
+
+  'sibling_sum' denominators are deliberately NOT computed from ppr_df --
+  they're the sum of two already-dictionary-computed numerator columns
+  (e.g. fbhe_oos_n + fbhe_insys_n), so numerator and denominator are
+  guaranteed to share the same scope the dictionary itself uses, rather than
+  risking a population mismatch against an independently-recomputed total."""
   name = player_name.strip()
   total_pass = ppr_df[ppr_df['pass_player'].str.strip() == name].shape[0]
   total_both = ppr_df[
@@ -140,12 +148,21 @@ def _compute_per_ratios(ppr_df, player_name, row, skipped_columns):
 
   for legacy_col, spec in PER_RATIO_SPECS.items():
     numerator = row.get(spec['legacy_numerator_col'])
-    denom = total_pass if spec['denominator'] == 'total_pass' else total_both
     if numerator is None:
       row[legacy_col] = None
       skipped_columns.add(legacy_col)
+      continue
+
+    denom_kind = spec['denominator']
+    if denom_kind == 'sibling_sum':
+      sibling = row.get(spec['sibling_col'])
+      denom = (numerator + sibling) if sibling is not None else None
+    elif denom_kind == 'total_pass':
+      denom = total_pass
     else:
-      row[legacy_col] = (numerator / denom) if denom else None
+      denom = total_both
+
+    row[legacy_col] = (numerator / denom) if denom else None
 
   return row
 

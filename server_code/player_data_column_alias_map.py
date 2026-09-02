@@ -185,14 +185,27 @@ SCALE_TRANSFORMS = {
 # (the correct check), so expect the diff tool to flag a mismatch for any
 # player whose total pass attempts happens to exactly equal min_att -- that's
 # the new code being right, not a regression to chase.
+#
+# fbhe_oos_per/fbhe_insys_per use 'sibling_sum' rather than 'total_pass'
+# (decided 2026-09-02): the dictionary's fbhe_oos/fbhe_insys are BOTH scoped
+# to "player passed AND attacked" (self-created offense only -- deliberately
+# excludes attacks off a partner's pass), unlike legacy's oos/insys which
+# scoped to "any pass by this player" regardless of who attacked it. Dividing
+# by an independently-computed total_pass would compare a both-filtered
+# numerator against a broader denominator -- the same population mismatch
+# that caused the fbhe1-5 zone-count bug. Since fbhe_oos_n and fbhe_insys_n
+# now partition the exact same "both" population between them, dividing each
+# by their sum keeps numerator and denominator on the same scope AND
+# preserves oos_per + insys_per = 100%, same complementary-pair property
+# legacy's version had (over a different, broader population).
 # ============================================================================
 
 PER_RATIO_SPECS = {
   'fbhe_option_per': {'legacy_numerator_col': 'fbhe_option_n', 'denominator': 'total_pass'},
   'fbhe_behind_per': {'legacy_numerator_col': 'fbhe_behind_n', 'denominator': 'total_pass'},
   'fbhe_tempo_per':  {'legacy_numerator_col': 'fbhe_tempo_n',  'denominator': 'total_pass'},
-  'fbhe_oos_per':    {'legacy_numerator_col': 'fbhe_oos_n',    'denominator': 'total_pass'},
-  'fbhe_insys_per':  {'legacy_numerator_col': 'fbhe_insys_n',  'denominator': 'total_pass'},
+  'fbhe_oos_per':    {'legacy_numerator_col': 'fbhe_oos_n',    'denominator': 'sibling_sum', 'sibling_col': 'fbhe_insys_n'},
+  'fbhe_insys_per':  {'legacy_numerator_col': 'fbhe_insys_n',  'denominator': 'sibling_sum', 'sibling_col': 'fbhe_oos_n'},
   'fbhe_bang_per':   {'legacy_numerator_col': 'fbhe_bang_n',   'denominator': 'total_both'},
 }
 
