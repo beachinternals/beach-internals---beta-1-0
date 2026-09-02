@@ -630,12 +630,15 @@ def calc_momentum_obj(ppr_df, disp_player, set_number=None, half=None, window=5)
             .run_against_max (int | None): same, opponent's side
             .margin_max_lead (int | None): max(margins)
             .margin_max_deficit (int | None): min(margins)
-            .decline_sharpness (float | None): magnitude of the steepest
-                single-step drop in the smoothed momentum series; 0.0 if
+            .decline_sharpness (float | None): magnitude of the largest
+                peak-to-trough decline (max drawdown) in the smoothed
+                momentum series -- i.e. the biggest drop from any local
+                high down to a later low, not just one step; 0.0 if
                 momentum never actually declined
-            .decline_location_pct (float | None): where that drop occurred,
-                0-100 through the smoothed series; None if there was no
-                decline to locate
+            .decline_location_pct (float | None): where that trough (the
+                bottom of the steepest decline) occurred, 0-100 through
+                the smoothed series; None if there was no decline to
+                locate
             .attempts (int): number of points in the sequence -- exposed
                 under this name (not .points) so it lines up with the
                 other calc_*_obj results and the set-level formatter's
@@ -681,14 +684,27 @@ def calc_momentum_obj(ppr_df, disp_player, set_number=None, half=None, window=5)
     decline_sharpness = None
     decline_location_pct = None
   else:
-    drops = [smoothed[i] - smoothed[i - 1] for i in range(1, len(smoothed))]
-    steepest_idx = min(range(len(drops)), key=lambda i: drops[i])
-    steepest_drop = drops[steepest_idx]
-    if steepest_drop < 0:
-      decline_sharpness = abs(steepest_drop)
-      decline_location_pct = (steepest_idx / len(drops)) * 100
+    # Max drawdown: track the running peak of the smoothed series and,
+    # at each later point, how far below that peak we've fallen. The
+    # largest such fall is the steepest decline, however many points it
+    # takes to unfold -- a single-step diff saturates near-instantly
+    # here because the series is a window=5 rolling mean of +/-1 deltas,
+    # so consecutive values can only differ by up to 2/5.
+    running_peak = smoothed[0]
+    max_drawdown = 0.0
+    trough_idx = None
+    for i, value in enumerate(smoothed):
+      running_peak = max(running_peak, value)
+      drawdown = running_peak - value
+      if drawdown > max_drawdown:
+        max_drawdown = drawdown
+        trough_idx = i
+
+    if trough_idx is not None:
+      decline_sharpness = max_drawdown
+      decline_location_pct = (trough_idx / (len(smoothed) - 1)) * 100
     else:
-      # smoothed momentum never actually dropped -- nothing to locate
+      # smoothed momentum never actually dropped below a prior peak
       decline_sharpness = 0.0
       decline_location_pct = None
 
