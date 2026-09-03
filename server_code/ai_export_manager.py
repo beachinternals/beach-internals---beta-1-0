@@ -189,68 +189,104 @@ def _validate_lgy_string(lgy):
 #--------------------------------------------------------------
 # Helper function to get PPR data without user check
 #--------------------------------------------------------------
+
+# Caches the re-identified League PPR (all teams, ~100k+ rows) for the
+# INTERNALS override below. An export run calls get_filtered_ppr_data_direct
+# multiple times per player, and loading + reidentifying that whole table
+# from scratch on every call (instead of once per league/gender/year) is
+# what caused ai_export runs to time out.
+_internals_league_ppr_cache = {'key': None, 'df': None}  # type: dict
+
 def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
   """
   Get PPR data directly using team parameter, bypassing user check.
   This is for scheduled/background tasks where no user is logged in.
-  
+
   Loads the team's own PPR row PLUS Scout row and merges them,
   exactly like get_ppr_data() in server_functions.py with scout=True.
-  
-  'team' is passed as-is — INTERNALS has its own row just like any other team.
-  No special mapping is needed.
+
+  Special case: INTERNALS uses the League row instead of its own row,
+  since League already contains all data. Scout is not merged in this
+  case, since the League row already includes it.
   """
   try:
     from server_functions import filter_ppr_df
 
-    log_info(f"Loading PPR data for {league}/{gender}/{year}/team={team} (scout=True)...")
+    fetch_team = team
+    skip_scout = False
+    if team == 'INTERNALS':
+      fetch_team = 'League'
+      skip_scout = True
 
-    combined_df = None
+    cache_key = (league, gender, str(year)) if team == 'INTERNALS' else None
 
-    # Step 1: Load the team's own PPR row (e.g. INTERNALS, FSU, TOP20B, etc.)
-    team_rows = list(app_tables.ppr_csv_tables.search(
-      league=league,
-      gender=gender,
-      year=str(year),
-      team=team
-    ))
-
-    if len(team_rows) > 0:
-      ppr_csv_data = team_rows[0]['ppr_csv']
-      if hasattr(ppr_csv_data, 'get_bytes'):
-        ppr_csv_string = ppr_csv_data.get_bytes().decode('utf-8')
-      else:
-        ppr_csv_string = ppr_csv_data
-      combined_df = pd.read_csv(io.StringIO(ppr_csv_string))
-      log_info(f"Loaded {len(combined_df)} points from team row '{team}'")
+    if cache_key is not None and _internals_league_ppr_cache['key'] == cache_key:
+      combined_df = _internals_league_ppr_cache['df'].copy()
+      log_info(f"Using cached re-identified League PPR for {league}/{gender}/{year} ({len(combined_df)} points)")
     else:
-      log_info(f"No row found for team='{team}' — will use Scout only")
+      log_info(f"Loading PPR data for {league}/{gender}/{year}/team={team} (fetch_team={fetch_team}, scout={not skip_scout})...")
 
-    # Step 2: Load Scout row and merge
-    scout_rows = list(app_tables.ppr_csv_tables.search(
-      league=league,
-      gender=gender,
-      year=str(year),
-      team='Scout'
-    ))
+      combined_df = None
 
-    if len(scout_rows) > 0:
-      scout_csv_data = scout_rows[0]['ppr_csv']
-      if hasattr(scout_csv_data, 'get_bytes'):
-        scout_csv_string = scout_csv_data.get_bytes().decode('utf-8')
+      # Step 1: Load the team's own PPR row (e.g. League, FSU, TOP20B, etc.)
+      team_rows = list(app_tables.ppr_csv_tables.search(
+        league=league,
+        gender=gender,
+        year=str(year),
+        team=fetch_team
+      ))
+
+      if len(team_rows) > 0:
+        ppr_csv_data = team_rows[0]['ppr_csv']
+        if hasattr(ppr_csv_data, 'get_bytes'):
+          ppr_csv_string = ppr_csv_data.get_bytes().decode('utf-8')
+        else:
+          ppr_csv_string = ppr_csv_data
+        combined_df = pd.read_csv(io.StringIO(ppr_csv_string))
+        log_info(f"Loaded {len(combined_df)} points from team row '{fetch_team}'")
       else:
-        scout_csv_string = scout_csv_data
-      scout_df = pd.read_csv(io.StringIO(scout_csv_string))
-      log_info(f"Loaded {len(scout_df)} points from Scout row")
-      combined_df = pd.concat([combined_df, scout_df], ignore_index=True) if combined_df is not None else scout_df
-    else:
-      log_info("No Scout row found")
+        log_info(f"No row found for team='{fetch_team}' — will use Scout only")
 
-    if combined_df is None or len(combined_df) == 0:
-      log_error(f"No PPR data found for {league}/{gender}/{year}/team={team} (+ Scout)")
-      return pd.DataFrame()
+      # Step 2: Load Scout row and merge (skipped when using the League row, which already has all data)
+      if skip_scout:
+        log_info("Skipping Scout merge (League row already contains all data)")
+      else:
+        scout_rows = list(app_tables.ppr_csv_tables.search(
+          league=league,
+          gender=gender,
+          year=str(year),
+          team='Scout'
+        ))
 
-    log_info(f"Loaded {len(combined_df)} raw points from PPR (team + scout)")
+        if len(scout_rows) > 0:
+          scout_csv_data = scout_rows[0]['ppr_csv']
+          if hasattr(scout_csv_data, 'get_bytes'):
+            scout_csv_string = scout_csv_data.get_bytes().decode('utf-8')
+          else:
+            scout_csv_string = scout_csv_data
+          scout_df = pd.read_csv(io.StringIO(scout_csv_string))
+          log_info(f"Loaded {len(scout_df)} points from Scout row")
+          combined_df = pd.concat([combined_df, scout_df], ignore_index=True) if combined_df is not None else scout_df
+        else:
+          log_info("No Scout row found")
+
+      if combined_df is None or len(combined_df) == 0:
+        log_error(f"No PPR data found for {league}/{gender}/{year}/team={team} (+ Scout)")
+        return pd.DataFrame()
+
+      log_info(f"Loaded {len(combined_df)} raw points from PPR (team + scout)")
+
+      # The League row is stored pre-de-identified (player names replaced with
+      # PLYR-<uuid> tokens). INTERNALS is the data owner, so reverse that here
+      # rather than leaving downstream name-based lookups (e.g.
+      # generate_set_level_metrics_for_player) unable to match real player names.
+      if team == 'INTERNALS' and fetch_team == 'League':
+        from ppr_master_merge import reidentify_ppr
+        combined_df = reidentify_ppr(combined_df, league, gender, str(year))
+
+      if cache_key is not None:
+        _internals_league_ppr_cache['key'] = cache_key
+        _internals_league_ppr_cache['df'] = combined_df.copy()
 
     # Step 3: Apply filters
     log_info("Applying filters...")

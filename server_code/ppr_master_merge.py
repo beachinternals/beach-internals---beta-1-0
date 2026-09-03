@@ -140,7 +140,88 @@ def deidentify_ppr(ppr_df, league, gender, year):
     ppr_df['point_outcome_team'] = ppr_df.apply(remap_outcome_team, axis=1)
 
   return ppr_df
-  
+
+def reidentify_ppr(ppr_df, league, gender, year):
+  """
+  Reverse of deidentify_ppr(): replace PLYR-<uuid> player tokens in the
+  PPR dataframe with real "TEAM NUMBER SHORTNAME" identities, using the
+  master_player table.
+
+  Used when a team is entitled to see real identities in data that was
+  otherwise stored de-identified (e.g. INTERNALS substituting the League
+  PPR for its own row — INTERNALS is the data owner, so there's no
+  privacy reason to keep the League's redacted tokens in its own export).
+  year is always a string.
+  """
+  # Build lookup: "PLYR-xxxxxxxx" -> "TEAM 1 Shortname"
+  to_name = {}
+  player_rows = app_tables.master_player.search(
+    league=league,
+    gender=gender,
+    year=year
+  )
+
+  for row in player_rows:
+    uuid = row['player_uuid']
+    if not uuid:
+      continue
+    number = str(row['number'] or '')
+    real_id = f"{row['team']} {number} {row['shortname']}".strip()
+    to_name[uuid] = real_id
+
+  n_mapped = len(to_name)
+  print(f"  reidentify_ppr: {n_mapped} players in substitution map")
+
+  if n_mapped == 0:
+    print(f"  reidentify_ppr: WARNING — no players found for {league} {gender} {year}, skipping")
+    return ppr_df
+
+  # Reset index to ensure unique integer index (concat can create duplicates)
+  ppr_df = ppr_df.reset_index(drop=True)
+
+  # Step 1 — Capture original (de-identified) team strings BEFORE any substitution
+  orig_teama = (ppr_df['player_a1'].fillna('') + ' ' + ppr_df['player_a2'].fillna('')
+                if 'player_a1' in ppr_df.columns else pd.Series('', index=ppr_df.index))
+  orig_teamb = (ppr_df['player_b1'].fillna('') + ' ' + ppr_df['player_b2'].fillna('')
+                if 'player_b1' in ppr_df.columns else pd.Series('', index=ppr_df.index))
+
+  # Step 2 — Substitute individual player name columns
+  player_cols = [
+    'player_a1', 'player_a2', 'player_b1', 'player_b2',
+    'serve_player', 'pass_player', 'set_player',
+    'att_player', 'dig_player'
+  ]
+
+  n_replaced = 0
+  n_not_found = 0
+
+  for col in player_cols:
+    if col not in ppr_df.columns:
+      continue
+    col_series = ppr_df[col]
+    is_plyr = col_series.astype(str).str.startswith('PLYR-', na=False)
+    matched = col_series.isin(to_name.keys())
+    n_replaced += int((is_plyr & matched).sum())
+    n_not_found += int((is_plyr & ~matched).sum())
+    ppr_df[col] = col_series.replace(to_name)
+
+  print(f"  reidentify_ppr: {n_replaced} player substitutions, {n_not_found} uuids not in map")
+
+  # Step 3 — Rebuild teama and teamb from substituted player columns
+  for team_col, p1_col, p2_col in [('teama', 'player_a1', 'player_a2'),
+                                   ('teamb', 'player_b1', 'player_b2')]:
+    if all(c in ppr_df.columns for c in [team_col, p1_col, p2_col]):
+      ppr_df[team_col] = ppr_df[p1_col].fillna('') + ' ' + ppr_df[p2_col].fillna('')
+
+  # Step 4 — Remap point_outcome_team using original team strings captured in Step 1
+  if 'point_outcome_team' in ppr_df.columns:
+    outcome = ppr_df['point_outcome_team']
+    remapped = outcome.where(outcome != orig_teama, ppr_df['teama'])
+    remapped = remapped.where(outcome != orig_teamb, ppr_df['teamb'])
+    ppr_df['point_outcome_team'] = remapped
+
+  return ppr_df
+
 @anvil.server.background_task
 def make_master_ppr( user_league, user_gender, user_year, user_team, data_set ):
   task = make_master_ppr_not_background(user_league, user_gender, user_year, user_team, data_set)
