@@ -806,6 +806,77 @@ def calc_momentum_agg_obj(ppr_df, disp_player, window=5, min_points_per_set=10):
 
 
 # ==============================================================================
+# FUNCTION 9: calc_pts_won_obj()
+# ==============================================================================
+def calc_pts_won_obj(ppr_df, disp_player):
+  """
+    Calculate disp_player's team's share of points won over ppr_df.
+
+    Uses the actual recorded outcome of each point -- point_outcome_team
+    combined with point_outcome -- rather than reconstructing anything from
+    a_score/b_score. a_score/b_score only accumulate correctly within a
+    single set (they reset to 0-0 at the start of each set), so they can't
+    be read directly for an arbitrary window; point_outcome_team is set
+    per-row regardless of window, so this works unmodified whether ppr_df
+    is a whole match, a single set, a half of a set, or any other
+    data_filter slice (zone, phase, etc.) -- same convention already used
+    for point_pct in reports_player.py's player_tri_corr.
+
+    point_outcome codes: TSA/FBK/TK win the point for point_outcome_team;
+    TSE/FBE/TE lose the point for point_outcome_team (i.e. win it for the
+    other side). Every ppr_df row is one point, so team_points +
+    opponent_points should equal len(ppr_df).
+
+    Args:
+        ppr_df (DataFrame): Point-by-point dataframe, any window/filter
+        disp_player (str): Player whose team's share to calculate
+
+    Returns:
+        Object (SimpleNamespace) with attributes:
+            .per_pts_won (float | None): team_points / (team_points +
+                opponent_points); bounded 0-1, 0.5 = even. None if there
+                are no classifiable points in the window.
+            .team_points (int): points won by disp_player's team
+            .opponent_points (int): points won by the opponent
+            .attempts (int): team_points + opponent_points
+  """
+  from types import SimpleNamespace
+
+  disp_player = disp_player.strip()
+
+  won_outcomes  = ['TSA', 'FBK', 'TK']
+  lost_outcomes = ['TSE', 'FBE', 'TE']
+
+  if (ppr_df is None or len(ppr_df) == 0
+      or 'point_outcome_team' not in ppr_df.columns
+      or 'point_outcome' not in ppr_df.columns):
+    return SimpleNamespace(per_pts_won=None, team_points=0, opponent_points=0, attempts=0)
+
+  player_is_outcome_team = ppr_df['point_outcome_team'].str.contains(
+    disp_player, na=False, regex=False
+  )
+
+  team_points = len(ppr_df[
+    (player_is_outcome_team & ppr_df['point_outcome'].isin(won_outcomes)) |
+    (~player_is_outcome_team & ppr_df['point_outcome'].isin(lost_outcomes))
+  ])
+  opponent_points = len(ppr_df[
+    (~player_is_outcome_team & ppr_df['point_outcome'].isin(won_outcomes)) |
+    (player_is_outcome_team & ppr_df['point_outcome'].isin(lost_outcomes))
+  ])
+
+  attempts = team_points + opponent_points
+  per_pts_won = (team_points / attempts) if attempts > 0 else None
+
+  return SimpleNamespace(
+    per_pts_won=per_pts_won,
+    team_points=int(team_points),
+    opponent_points=int(opponent_points),
+    attempts=int(attempts)
+  )
+
+
+# ==============================================================================
 # USAGE EXAMPLES
 # ==============================================================================
 

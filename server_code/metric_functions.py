@@ -41,6 +41,7 @@ consistency_sd_set2set,
 calc_serve_pct_obj,
 calc_angle_attacks_obj,
 calc_momentum_agg_obj,
+calc_pts_won_obj,
 )
 
 
@@ -75,6 +76,7 @@ def build_metric_namespace(ppr_df, player_name):
     'calc_serve_pct_obj'     : calc_serve_pct_obj,
     'calc_angle_attacks_obj' : calc_angle_attacks_obj,
     'calc_momentum_agg_obj'  : calc_momentum_agg_obj,
+    'calc_pts_won_obj'       : calc_pts_won_obj,
     'count_good_passes_obj'  : count_good_passes_obj,
     'calc_att_height_metrics': calc_att_height_metrics,
     'calc_dig_quality_obj'   : calc_dig_quality_obj,
