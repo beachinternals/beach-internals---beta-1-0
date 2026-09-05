@@ -136,36 +136,46 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
 
       # We now have a complete ppr datafile.  THree more steps:
       # 1) Transpose some points (so we always serve from close, first ball attack from the far court) Transpose first, makes zone's much easier
+      print(f"CHECKPOINT: {flist_r['filename']} before transpose_ppr_coord")
       ppr_df = transpose_ppr_coord(ppr_df)
 
       # 2) Cacluate the data (speed, distance, etc...)
+      print(f"CHECKPOINT: {flist_r['filename']} before calc_ppr_data")
       ppr_df = calc_ppr_data(ppr_df)
 
       # 3) Calculate offensive tactic
+      print(f"CHECKPOINT: {flist_r['filename']} before calc_tactic")
       ppr_df = calc_tactic(ppr_df)
 
       # 3b) Calculate per-point pressure score (static: postseason/round; dynamic: score situation)
+      print(f"CHECKPOINT: {flist_r['filename']} before calc_pressure_score")
       ppr_df = calc_pressure_score(ppr_df)
 
       # Add weather to PPR (fetches weather once for entire match)
+      print(f"CHECKPOINT: {flist_r['filename']} before add_weather_to_ppr")
       ppr_df = add_weather_to_ppr(ppr_df, flist_r)
 
       # 4) Correct pass/set/attack player mis-attribution where confident (see
       # pass_attribution_correction.py), before error-checking -- so the error
       # report below reflects what's left after correction, not what BTD
       # originally gave us.
+      print(f"CHECKPOINT: {flist_r['filename']} before correct_pass_attribution")
       ppr_df, corrections = correct_pass_attribution(ppr_df)
+      print(f"CHECKPOINT: {flist_r['filename']} before correct_serve_pass_same_team")
       ppr_df, sp_corrections = correct_serve_pass_same_team(ppr_df, video_id=flist_r['video_id'])
+      print(f"CHECKPOINT: {flist_r['filename']} before correct_missing_touches")
       ppr_df, tc_corrections = correct_missing_touches(ppr_df, video_id=flist_r['video_id'])
       corrections = serve_corrections + corrections + sp_corrections + tc_corrections
       corrections_json = json.dumps(corrections)
 
       # 5) Error check the ppr file for consistency, maybe raise errors into an email/text message??
+      print(f"CHECKPOINT: {flist_r['filename']} before error_check_ppr")
       ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
       #print(f"Error String: {error_string}")
 
       # 6) Lastly, save the ppr csv file back into the btd_files database
       # first, I need to cahnge the ppr_file dataframe to a csv file.
+      print(f"CHECKPOINT: {flist_r['filename']} before to_csv/save")
       ppr_csv_file = pd.DataFrame.to_csv(ppr_df)
       ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
 
@@ -183,6 +193,7 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
         weather_id=weather_id,                    # NEW: Store weather_id
         weather_fetched=True if weather_id else False  # NEW: Track success
       )
+      print(f"CHECKPOINT: {flist_r['filename']} saved successfully")
 
     else:
       True
