@@ -156,7 +156,7 @@ def generate_partner_level_metrics_for_player(ppr_df, player_name, league_value,
   ].copy()
 
   if len(player_df) == 0:
-    log_error(f"No data found for player {player_name}")
+    log_info(f"No data found for player {player_name}")
     return None
 
   log_info(f"Found {len(player_df)} total points for player")

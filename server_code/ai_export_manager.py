@@ -1400,7 +1400,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
                   section_md = format_set_level_data_as_markdown(set_level_data,ai_optimized=ai_optimized)
                   sets_count = set_level_data.get('summary', {}).get('total_sets', 0)
               else:
-                  log_error(f"  generate_set_level_metrics_for_player returned no result for {ds_name}")
+                  log_info(f"  generate_set_level_metrics_for_player returned no result for {ds_name}")
                   section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
                   sets_count = 0
 
@@ -1438,7 +1438,7 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
                   section_md = format_partner_level_data_as_markdown(partner_level_data, ai_optimized=ai_optimized)
                   sets_count = partner_level_data.get('summary', {}).get('total_partners', 0)
               else:
-                  log_error(f"  generate_partner_level_metrics_for_player returned no result for {ds_name}")
+                  log_info(f"  generate_partner_level_metrics_for_player returned no result for {ds_name}")
                   section_md = f"\n## {section_title}\n\n*No data available for this dataset.*\n"
                   sets_count = 0
         else:
