@@ -112,91 +112,113 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
   new_data = False # flag to indicate that new data was found to help night processing do the rest of the tasts
 
   for flist_r in btd_row:
-    print(f"CHECKPOINT: {flist_r['filename']} starting, points={flist_r['points']}", flush=True)
     calc_ppr = False
 
-    if rebuild:
-      # call the function to return the ppr file given the btd file
-      ppr_df, serve_corrections = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )
-      calc_ppr = True
-      new_data = True
-    else:
-      if not flist_r['ppr_file_date']: # no date for the ppr file
+    # Decide up front whether this file needs (re)processing, so we only emit
+    # a CHECKPOINT for files that are actually going to run the pipeline --
+    # printing "starting" for every already-current file was flooding the
+    # background task's console log and pushing the real error (if any) past
+    # the log's retention limit before it could ever be seen.
+    needs_processing = bool(
+      rebuild
+      or not flist_r['ppr_file_date']
+      or flist_r['btd_file_date'] > flist_r['ppr_file_date']
+    )
+    if needs_processing:
+      print(f"CHECKPOINT: {flist_r['filename']} starting, points={flist_r['points']}", flush=True)
+
+    try:
+      if rebuild:
+        # call the function to return the ppr file given the btd file
         ppr_df, serve_corrections = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )
         calc_ppr = True
         new_data = True
-      elif flist_r['btd_file_date'] > flist_r['ppr_file_date']: # btd file is newer then the ppr file
-        ppr_df, serve_corrections = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )
-        calc_ppr = True
-        new_data = True
+      else:
+        if not flist_r['ppr_file_date']: # no date for the ppr file
+          ppr_df, serve_corrections = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )
+          calc_ppr = True
+          new_data = True
+        elif flist_r['btd_file_date'] > flist_r['ppr_file_date']: # btd file is newer then the ppr file
+          ppr_df, serve_corrections = btd_to_ppr_file( io.BytesIO( flist_r['csv_data'].get_bytes()), flist_r )
+          calc_ppr = True
+          new_data = True
 
-    if calc_ppr:
-      # clean up the ppr_df databale, just in case.
-      ppr_df = ppr_df.replace({float('nan'): None})
+      if calc_ppr:
+        # clean up the ppr_df databale, just in case.
+        ppr_df = ppr_df.replace({float('nan'): None})
 
-      # We now have a complete ppr datafile.  THree more steps:
-      # 1) Transpose some points (so we always serve from close, first ball attack from the far court) Transpose first, makes zone's much easier
-      print(f"CHECKPOINT: {flist_r['filename']} before transpose_ppr_coord", flush=True)
-      ppr_df = transpose_ppr_coord(ppr_df)
+        # We now have a complete ppr datafile.  THree more steps:
+        # 1) Transpose some points (so we always serve from close, first ball attack from the far court) Transpose first, makes zone's much easier
+        print(f"CHECKPOINT: {flist_r['filename']} before transpose_ppr_coord", flush=True)
+        ppr_df = transpose_ppr_coord(ppr_df)
 
-      # 2) Cacluate the data (speed, distance, etc...)
-      print(f"CHECKPOINT: {flist_r['filename']} before calc_ppr_data", flush=True)
-      ppr_df = calc_ppr_data(ppr_df)
+        # 2) Cacluate the data (speed, distance, etc...)
+        print(f"CHECKPOINT: {flist_r['filename']} before calc_ppr_data", flush=True)
+        ppr_df = calc_ppr_data(ppr_df)
 
-      # 3) Calculate offensive tactic
-      print(f"CHECKPOINT: {flist_r['filename']} before calc_tactic", flush=True)
-      ppr_df = calc_tactic(ppr_df)
+        # 3) Calculate offensive tactic
+        print(f"CHECKPOINT: {flist_r['filename']} before calc_tactic", flush=True)
+        ppr_df = calc_tactic(ppr_df)
 
-      # 3b) Calculate per-point pressure score (static: postseason/round; dynamic: score situation)
-      print(f"CHECKPOINT: {flist_r['filename']} before calc_pressure_score", flush=True)
-      ppr_df = calc_pressure_score(ppr_df)
+        # 3b) Calculate per-point pressure score (static: postseason/round; dynamic: score situation)
+        print(f"CHECKPOINT: {flist_r['filename']} before calc_pressure_score", flush=True)
+        ppr_df = calc_pressure_score(ppr_df)
 
-      # Add weather to PPR (fetches weather once for entire match)
-      print(f"CHECKPOINT: {flist_r['filename']} before add_weather_to_ppr", flush=True)
-      ppr_df = add_weather_to_ppr(ppr_df, flist_r)
+        # Add weather to PPR (fetches weather once for entire match)
+        print(f"CHECKPOINT: {flist_r['filename']} before add_weather_to_ppr", flush=True)
+        ppr_df = add_weather_to_ppr(ppr_df, flist_r)
 
-      # 4) Correct pass/set/attack player mis-attribution where confident (see
-      # pass_attribution_correction.py), before error-checking -- so the error
-      # report below reflects what's left after correction, not what BTD
-      # originally gave us.
-      print(f"CHECKPOINT: {flist_r['filename']} before correct_pass_attribution", flush=True)
-      ppr_df, corrections = correct_pass_attribution(ppr_df)
-      print(f"CHECKPOINT: {flist_r['filename']} before correct_serve_pass_same_team", flush=True)
-      ppr_df, sp_corrections = correct_serve_pass_same_team(ppr_df, video_id=flist_r['video_id'])
-      print(f"CHECKPOINT: {flist_r['filename']} before correct_missing_touches", flush=True)
-      ppr_df, tc_corrections = correct_missing_touches(ppr_df, video_id=flist_r['video_id'])
-      corrections = serve_corrections + corrections + sp_corrections + tc_corrections
-      corrections_json = json.dumps(corrections)
+        # 4) Correct pass/set/attack player mis-attribution where confident (see
+        # pass_attribution_correction.py), before error-checking -- so the error
+        # report below reflects what's left after correction, not what BTD
+        # originally gave us.
+        print(f"CHECKPOINT: {flist_r['filename']} before correct_pass_attribution", flush=True)
+        ppr_df, corrections = correct_pass_attribution(ppr_df)
+        print(f"CHECKPOINT: {flist_r['filename']} before correct_serve_pass_same_team", flush=True)
+        ppr_df, sp_corrections = correct_serve_pass_same_team(ppr_df, video_id=flist_r['video_id'])
+        print(f"CHECKPOINT: {flist_r['filename']} before correct_missing_touches", flush=True)
+        ppr_df, tc_corrections = correct_missing_touches(ppr_df, video_id=flist_r['video_id'])
+        corrections = serve_corrections + corrections + sp_corrections + tc_corrections
+        corrections_json = json.dumps(corrections)
 
-      # 5) Error check the ppr file for consistency, maybe raise errors into an email/text message??
-      print(f"CHECKPOINT: {flist_r['filename']} before error_check_ppr", flush=True)
-      ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
-      #print(f"Error String: {error_string}")
+        # 5) Error check the ppr file for consistency, maybe raise errors into an email/text message??
+        print(f"CHECKPOINT: {flist_r['filename']} before error_check_ppr", flush=True)
+        ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
+        #print(f"Error String: {error_string}")
 
-      # 6) Lastly, save the ppr csv file back into the btd_files database
-      # first, I need to cahnge the ppr_file dataframe to a csv file.
-      print(f"CHECKPOINT: {flist_r['filename']} before to_csv/save", flush=True)
-      ppr_csv_file = pd.DataFrame.to_csv(ppr_df)
-      ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
+        # 6) Lastly, save the ppr csv file back into the btd_files database
+        # first, I need to cahnge the ppr_file dataframe to a csv file.
+        print(f"CHECKPOINT: {flist_r['filename']} before to_csv/save", flush=True)
+        ppr_csv_file = pd.DataFrame.to_csv(ppr_df)
+        ppr_media = anvil.BlobMedia(content_type="text/plain", content=ppr_csv_file.encode(), name="ppr.csv")
 
-      # Extract weather_id from ppr_df (all rows have same weather)
-      weather_id = ppr_df['weather_id'].iloc[0] if 'weather_id' in ppr_df.columns else None
+        # Extract weather_id from ppr_df (all rows have same weather)
+        weather_id = ppr_df['weather_id'].iloc[0] if 'weather_id' in ppr_df.columns else None
 
-      # Update btd_files row
-      flist_r.update(
-        ppr_data=ppr_media,
-        error_str=error_string,
-        no_errors=no_errors,
-        corrections_json=corrections_json,
-        corrections_count=len(corrections),
-        ppr_file_date=datetime.now(),
-        weather_id=weather_id,                    # NEW: Store weather_id
-        weather_fetched=True if weather_id else False  # NEW: Track success
+        # Update btd_files row
+        flist_r.update(
+          ppr_data=ppr_media,
+          error_str=error_string,
+          no_errors=no_errors,
+          corrections_json=corrections_json,
+          corrections_count=len(corrections),
+          ppr_file_date=datetime.now(),
+          weather_id=weather_id,                    # NEW: Store weather_id
+          weather_fetched=True if weather_id else False  # NEW: Track success
+        )
+        print(f"CHECKPOINT: {flist_r['filename']} saved successfully", flush=True)
+
+      else:
+        True
+    except Exception as e:
+      # Persisted to the error_log table (unlike console output, which the
+      # background task's log retention limit can truncate before this point
+      # is ever reached) -- captures exactly which file broke and why.
+      log_critical(
+        f"generate_ppr_files_not_background crashed on '{flist_r['filename']}' "
+        f"({user_league} {user_gender} {user_year} {user_team}): {e}"
       )
-      print(f"CHECKPOINT: {flist_r['filename']} saved successfully", flush=True)
-
-    else:
-      True
+      raise
       #print(f"Not processing file:{flist_r['filename']}")
 
   return return_string, new_data
