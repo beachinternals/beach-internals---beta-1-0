@@ -160,14 +160,19 @@ def night_processing_backgound(d_league, d_gender, d_year, rebuild_all, all_leag
           email_message += '        ' + str(r_val) + "\n"
 
           # Calculate Pair Table (MOVED BEFORE TRIANGLE DATA)
-          email_message += ' Building Pair Table for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
-          r_val = build_pair_df(c_league, c_gender, c_year)
-          email_message += '        ' + str(r_val) + "\n"
+          # TEMPORARILY DISABLED: pair tables aren't in use right now, and this
+          # step is broken since league PPR data switched to PLYR-uuid names
+          # instead of team-pair names -- re-enable once that's fixed.
+          # email_message += ' Building Pair Table for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          # r_val = build_pair_df(c_league, c_gender, c_year)
+          # email_message += '        ' + str(r_val) + "\n"
 
           # Load Pair Data into master_pair table (MOVED BEFORE TRIANGLE DATA)
-          email_message += ' Loading Pair data into master_pair table for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
-          r_val = load_pair_data_table_for_league(c_league, c_gender, c_year)
-          email_message += '        ' + str(r_val) + "\n"
+          # TEMPORARILY DISABLED: pair tables aren't in use right now -- see
+          # "Calculate Pair Table" note above.
+          # email_message += ' Loading Pair data into master_pair table for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          # r_val = load_pair_data_table_for_league(c_league, c_gender, c_year)
+          # email_message += '        ' + str(r_val) + "\n"
 
           # Calculate Triangle Data (MOVED AFTER PAIR TABLE IS LOADED)
           email_message += ' Calculating Triangle Data for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
@@ -175,26 +180,32 @@ def night_processing_backgound(d_league, d_gender, d_year, rebuild_all, all_leag
           email_message += '        ' + str(r_val) + "\n"
 
           # Calculate Pair Data
-          email_message += ' Building Pair Data for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
-          r_val = calculate_pair_data_not_background(c_league, c_gender, c_year)
-          email_message += '        ' + str(r_val) + "\n"
+          # TEMPORARILY DISABLED: pair tables aren't in use right now, and this
+          # step is broken since league PPR data switched to PLYR-uuid names
+          # instead of team-pair names -- re-enable once that's fixed.
+          # email_message += ' Building Pair Data for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          # r_val = calculate_pair_data_not_background(c_league, c_gender, c_year)
+          # email_message += '        ' + str(r_val) + "\n"
 
-          # Pair Data & Stats
-          email_message += ' Building Pair Data & Stats for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
-          r_val = calc_s_w_player(c_league, c_gender, c_year)
-          email_message += '        ' + str(r_val) + "\n"
-
-          # Strengths & Weaknesses
-          email_message += ' Building Strengths & Weaknesses for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
-          r_val = calc_s_w_player(c_league, c_gender, c_year)
-          email_message += '        ' + str(r_val) + "\n"
+          # Pair Data & Stats / Strengths & Weaknesses
+          # TEMPORARILY DISABLED: not using the s_w (Strengths & Weaknesses)
+          # tables right now either, and this depends on the same master_pair
+          # data as the disabled pair-table steps above.
+          # email_message += ' Building Pair Data & Stats for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          # r_val = calc_s_w_player(c_league, c_gender, c_year)
+          # email_message += '        ' + str(r_val) + "\n"
+          # email_message += ' Building Strengths & Weaknesses for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
+          # r_val = calc_s_w_player(c_league, c_gender, c_year)
+          # email_message += '        ' + str(r_val) + "\n"
         else:
           email_message += 'No New data Found for ' + c_league + ' ' + c_gender + ' ' + c_year + "\n"
 
   # The very last thing — load the pair's data table
-  email_message += ' Loading Pair data Table \n'
-  r_val = load_pair_data_table()
-  email_message += '        ' + str(r_val) + "\n"
+  # TEMPORARILY DISABLED: pair tables aren't in use right now -- see
+  # "Calculate Pair Table" note above.
+  # email_message += ' Loading Pair data Table \n'
+  # r_val = load_pair_data_table()
+  # email_message += '        ' + str(r_val) + "\n"
 
   # Clean up any duplicate weather_data rows so get_or_create_weather()
   # stops logging "duplicate found" warnings on every lookup
