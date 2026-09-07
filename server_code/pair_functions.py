@@ -149,6 +149,14 @@ def pair_players(disp_pair: str) -> Tuple[str, str]:
   try:
     parts = disp_pair.split()
 
+    # Newer player-identity format: each player is a single opaque token
+    # (e.g. "PLYR-c4278ca1"), so the pair is just "player1 player2" -- exactly
+    # 2 tokens. The legacy "TEAM NUM [NAME]" format always needs at least 4
+    # tokens (TEAM NUM per player, minimum), so a 2-token string can only be
+    # this newer format -- no ambiguity with the anchor parsing below.
+    if len(parts) == 2:
+      return parts[0], parts[1]
+
     # Each player starts with a "TEAM NUM" anchor (2-4 uppercase letters
     # followed by a number), optionally followed by a name. Find every
     # anchor instead of assuming a fixed 3-tokens-per-player width, so a
