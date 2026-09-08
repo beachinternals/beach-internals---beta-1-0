@@ -60,6 +60,12 @@ def calc_metric_correlations():
   Metric calculations use the metric_dictionary table as the single
   source of truth — the same functions and logic as player reports.
 
+  Each distinct (league, gender, year) PPR file is loaded exactly once
+  and used immediately by every correlation definition/skill level/player
+  that needs it, then dropped — this keeps memory bounded to roughly one
+  PPR dataframe at a time, regardless of how many correlation definitions
+  or skill levels reference the same file.
+
   All existing results are deleted first (full recalculate).
   Returns a summary string.
   """
@@ -91,68 +97,103 @@ def calc_metric_correlations():
     count_deleted += 1
   print(f"Deleted {count_deleted} existing result rows")
 
+  # --- Validate each correlation pair against the dictionary once ---
+  defs_meta = []
+  for cd in corr_defs:
+    upstream_metric   = cd['metric_upstream']
+    downstream_metric = cd['metric_downstream']
+    up_ok   = not metric_dict_df[metric_dict_df['metric_id'] == upstream_metric].empty
+    down_ok = not metric_dict_df[metric_dict_df['metric_id'] == downstream_metric].empty
+    invalid_reason = None
+    if not up_ok:
+      invalid_reason = f"'{upstream_metric}' not found in metric_dictionary"
+    elif not down_ok:
+      invalid_reason = f"'{downstream_metric}' not found in metric_dictionary"
+    defs_meta.append({
+      'corr_def':       cd,
+      'upstream':       upstream_metric,
+      'downstream':     downstream_metric,
+      'valid':          up_ok and down_ok,
+      'invalid_reason': invalid_reason,
+    })
+
+  # ── Pass 1: resolve player rows once, independent of correlation def ──
+  # eligible[sl_idx]    — level has ≥3 players
+  # combo_players[lgy]  — (sl_idx, player_uuid) pairs needing that file
+  # lgy_key[lgy]        — (league, gender, year) to load it with
+  eligible      = {}
+  combo_players = {}
+  lgy_key       = {}
+
+  for sl_idx, sl in enumerate(skill_levels):
+    player_list = sl['player_list']
+    eligible[sl_idx] = bool(player_list and len(player_list) >= 3)
+    if not eligible[sl_idx]:
+      continue
+
+    for player_row in player_list:
+      try:
+        league      = player_row['league']
+        gender      = player_row['gender']
+        year        = player_row['year']
+        player_uuid = player_row['player_uuid']
+      except Exception as e:
+        print(f"  Error reading master_player row: {e}")
+        continue
+
+      lgy = f"{league}|{gender}|{year}"
+      lgy_key[lgy] = (league, gender, year)
+      combo_players.setdefault(lgy, []).append((sl_idx, player_uuid))
+
+  # ── Pass 2: load each distinct PPR file once, calculate both metrics for
+  #    every (correlation def, skill level, player) that needs it, then
+  #    drop it before the next file loads ───────────────────────────────
+  jobs = {
+    (cd_idx, sl_idx): {'up': [], 'down': []}
+    for cd_idx, meta in enumerate(defs_meta) if meta['valid']
+    for sl_idx in range(len(skill_levels)) if eligible[sl_idx]
+  }
+
+  for lgy, entries in combo_players.items():
+    league, gender, year = lgy_key[lgy]
+    ppr_df = _load_ppr_df(league, gender, year)
+    if ppr_df is None:
+      continue
+
+    for cd_idx, meta in enumerate(defs_meta):
+      if not meta['valid']:
+        continue
+      for sl_idx, player_uuid in entries:
+        up_val   = calc_metric_from_dict(meta['upstream'],   ppr_df, player_uuid, metric_dict_df)
+        down_val = calc_metric_from_dict(meta['downstream'], ppr_df, player_uuid, metric_dict_df)
+        if up_val is not None and down_val is not None:
+          job = jobs[(cd_idx, sl_idx)]
+          job['up'].append(up_val)
+          job['down'].append(down_val)
+    # ppr_df falls out of scope here — freed before the next file loads
+
+  # ── Pass 3: correlate and save per (correlation def, skill level) ─────
   results_saved   = 0
   results_skipped = 0
 
-  for corr_def in corr_defs:
-    upstream_metric   = corr_def['metric_upstream']
-    downstream_metric = corr_def['metric_downstream']
-    print(f"\n--- {upstream_metric} → {downstream_metric} ---")
+  for cd_idx, meta in enumerate(defs_meta):
+    print(f"\n--- {meta['upstream']} → {meta['downstream']} ---")
 
-    # Validate both metrics exist in the dictionary before looping players
-    if metric_dict_df[metric_dict_df['metric_id'] == upstream_metric].empty:
-      print(f"  Skipping: '{upstream_metric}' not found in metric_dictionary")
-      results_skipped += len(skill_levels)
-      continue
-    if metric_dict_df[metric_dict_df['metric_id'] == downstream_metric].empty:
-      print(f"  Skipping: '{downstream_metric}' not found in metric_dictionary")
+    if not meta['valid']:
+      print(f"  Skipping: {meta['invalid_reason']}")
       results_skipped += len(skill_levels)
       continue
 
-    for skill_row in skill_levels:
-      skill_level_name = skill_row['level_name']
-      player_list      = skill_row['player_list']
+    for sl_idx, sl in enumerate(skill_levels):
+      skill_level_name = sl['level_name']
 
-      if not player_list or len(player_list) < 3:
+      if not eligible[sl_idx]:
         print(f"  Skipping {skill_level_name}: fewer than 3 players")
         results_skipped += 1
         continue
 
-      upstream_values   = []
-      downstream_values = []
-
-      # Cache PPR dataframe — only reload when league/gender/year changes
-      current_lgy    = None
-      current_ppr_df = None
-
-      for player_row in player_list:
-        try:
-          league      = player_row['league']
-          gender      = player_row['gender']
-          year        = player_row['year']
-          player_uuid = player_row['player_uuid']
-        except Exception as e:
-          print(f"  Error reading master_player row: {e}")
-          continue
-
-        lgy = f"{league}|{gender}|{year}"
-        if lgy != current_lgy:
-          current_ppr_df = _load_ppr_df(league, gender, year)
-          current_lgy    = lgy
-
-        if current_ppr_df is None:
-          continue
-
-        # Use metric_dictionary as single source of truth for both metrics
-        up_val   = calc_metric_from_dict(upstream_metric,   current_ppr_df, player_uuid, metric_dict_df)
-        down_val = calc_metric_from_dict(downstream_metric, current_ppr_df, player_uuid, metric_dict_df)
-
-        if up_val is not None and down_val is not None:
-          upstream_values.append(up_val)
-          downstream_values.append(down_val)
-
-      # --- Correlate ---
-      n = len(upstream_values)
+      job = jobs[(cd_idx, sl_idx)]
+      n   = len(job['up'])
       print(f"  {skill_level_name}: {n} players with valid data")
 
       if n < 3:
@@ -161,7 +202,7 @@ def calc_metric_correlations():
         continue
 
       try:
-        r, p = stats.pearsonr(upstream_values, downstream_values)
+        r, p = stats.pearsonr(job['up'], job['down'])
         is_significant = bool(p < 0.05)
         print(f"  r={r:.3f}  p={p:.4f}  n={n}  sig={is_significant}")
       except Exception as e:
@@ -170,14 +211,14 @@ def calc_metric_correlations():
         continue
 
       app_tables.metric_correlation_results.add_row(
-        corr_def       = corr_def,
+        corr_def       = meta['corr_def'],
         skill_level    = skill_level_name,
         correlation    = round(float(r), 4),
         p_value        = round(float(p), 4),
         n_players      = n,
         is_significant = is_significant,
         calculated_at  = datetime.now(),
-        notes          = f"{upstream_metric}→{downstream_metric} | {skill_level_name}"
+        notes          = f"{meta['upstream']}→{meta['downstream']} | {skill_level_name}"
       )
       results_saved += 1
 
