@@ -746,8 +746,8 @@ db_schema:
   metric_dictionary:
     client: none
     columns:
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 0, width: 237}
+      client_hidden: false
       name: metric_id
       type: string
     - admin_ui: {width: 200}
