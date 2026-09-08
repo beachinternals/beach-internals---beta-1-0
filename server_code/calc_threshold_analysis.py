@@ -185,6 +185,43 @@ def _resolve_physical_col(physical_col, df):
 
 
 # ─────────────────────────────────────────────────────────────────
+#  HELPER: raw columns actually needed from a PPR file
+#
+#  PPR files carry ~130 columns; _add_outcome_cols and _get_player_events
+#  only ever touch a handful of them. Pruning to just those columns before
+#  _add_outcome_cols runs cuts both the memory footprint of each loaded
+#  file and the cost of its row-wise .apply() calls (which scale with the
+#  number of columns, not just rows).
+# ─────────────────────────────────────────────────────────────────
+_BASE_RAW_COLUMNS = {
+  # read by _add_outcome_cols for every row
+  'point_outcome', 'point_outcome_team', 'att_player', 'pass_oos',
+  # read by _get_player_events's event-type filters
+  'serve_player', 'att_yn', 'dig_dur', 'serve_dur',
+}
+
+
+def _needed_raw_columns(defs_meta):
+  """
+  Union of the fixed base columns above with each active definition's
+  physical_metric column, resolved through the same speed-column
+  fallback logic _resolve_physical_col uses at read time (so a metric
+  like att_speed_mph also keeps its att_speed fallback).
+  """
+  cols = set(_BASE_RAW_COLUMNS)
+  for meta in defs_meta:
+    pcol = meta['physical_col']
+    if pcol in _SPEED_COL_MAP:
+      preferred, fallback, _ = _SPEED_COL_MAP[pcol]
+      cols.add(preferred)
+      if fallback:
+        cols.add(fallback)
+    else:
+      cols.add(pcol)
+  return cols
+
+
+# ─────────────────────────────────────────────────────────────────
 #  HELPER: load PPR dataframe
 # ─────────────────────────────────────────────────────────────────
 def _load_ppr_df(league, gender, year):
@@ -608,6 +645,12 @@ def calc_threshold_analysis():
     Player matching: master_player['player_name'] must match the PPR
     name strings exactly (e.g. "STETSON 22 Zoe").
 
+    Each distinct (league, gender, year) PPR file is loaded exactly once
+    and its events are extracted for every definition/skill level that
+    needs it before it is dropped — this keeps memory bounded to roughly
+    one PPR dataframe at a time, regardless of how many definitions or
+    skill levels reference the same file.
+
     Deletes all existing results before recalculating.
     Returns a summary string.
     """
@@ -630,86 +673,120 @@ def calc_threshold_analysis():
         deleted += 1
     print(f"Deleted {deleted} existing results")
 
-    # PPR dataframes are identical across every analysis definition — load
-    # and add outcome cols for each (league, gender, year) once per run,
-    # not once per definition.
-    ppr_cache = {}
+    defs_meta = [{
+        'physical_col': ad['physical_metric'],
+        'outcome_col':  ad['outcome_metric'],
+        'event_type':   ad['event_type'],
+        'outcome_type': ad['outcome_type'],   # "binary" or "continuous"
+        'min_events':   ad['min_events'] or 30,
+        'name':         ad['analysis_name'],
+    } for ad in defs]
 
+    # ── Pass 1: resolve player rows once, independent of definition ───────
+    # eligible[sl_idx]     — level has ≥3 players
+    # base_n_exc[sl_idx]   — players excluded for unresolved names (same
+    #                        for every definition — doesn't depend on
+    #                        physical/outcome columns)
+    # combo_players[lgy]   — (sl_idx, player_name) pairs needing that file
+    # lgy_key[lgy]         — (league, gender, year) to load it with
+    eligible      = {}
+    base_n_exc    = {}
+    combo_players = {}
+    lgy_key       = {}
+
+    for sl_idx, sl in enumerate(skill_levels):
+        player_list = sl['player_list']
+        eligible[sl_idx] = bool(player_list and len(player_list) >= 3)
+        if not eligible[sl_idx]:
+            continue
+
+        n_exc = 0
+        for pr in player_list:
+            try:
+                league      = pr['league']
+                gender      = pr['gender']
+                year        = pr['year']
+                player_name = _get_player_name(pr)
+            except Exception as e:
+                print(f"  Player row error: {e}")
+                continue
+
+            if not player_name:
+                n_exc += 1
+                continue
+
+            lgy = f"{league}|{gender}|{year}"
+            lgy_key[lgy] = (league, gender, year)
+            combo_players.setdefault(lgy, []).append((sl_idx, player_name))
+
+        base_n_exc[sl_idx] = n_exc
+
+    # ── Pass 2: load each distinct PPR file once, extract events for every
+    #    (definition, skill level, player) that needs it, then drop it ────
+    jobs = {
+        (ad_idx, sl_idx): {'x': [], 'y': [], 'n_inc': 0, 'n_exc': base_n_exc[sl_idx]}
+        for ad_idx in range(len(defs))
+        for sl_idx in range(len(skill_levels))
+        if eligible[sl_idx]
+    }
+
+    needed_cols = _needed_raw_columns(defs_meta)
+
+    for lgy, entries in combo_players.items():
+        league, gender, year = lgy_key[lgy]
+        raw = _load_ppr_df(league, gender, year)
+        if raw is None:
+            continue
+
+        raw    = raw[[c for c in needed_cols if c in raw.columns]]
+        ppr_df = _add_outcome_cols(raw)
+
+        for ad_idx, meta in enumerate(defs_meta):
+            for sl_idx, player_name in entries:
+                job = jobs[(ad_idx, sl_idx)]
+                xv, yv = _get_player_events(
+                    ppr_df, player_name,
+                    meta['physical_col'], meta['outcome_col'], meta['event_type']
+                )
+                if xv is None or len(xv) < meta['min_events']:
+                    job['n_exc'] += 1
+                    continue
+                job['x'].extend(xv.tolist())
+                job['y'].extend(yv.tolist())
+                job['n_inc'] += 1
+        # ppr_df falls out of scope here — freed before the next file loads
+
+    # ── Pass 3: run the 4 analyses per (definition, skill level) and save ─
     saved = skipped = 0
 
-    for ad in defs:
-        physical_col = ad['physical_metric']
-        outcome_col  = ad['outcome_metric']
-        event_type   = ad['event_type']
-        outcome_type = ad['outcome_type']   # "binary" or "continuous"
-        min_events   = ad['min_events'] or 30
-        name         = ad['analysis_name']
+    for ad_idx, meta in enumerate(defs_meta):
+        print(f"\n=== {meta['name']}  ({meta['physical_col']} → "
+              f"{meta['outcome_col']}, {meta['event_type']}) ===")
 
-        print(f"\n=== {name}  ({physical_col} → {outcome_col}, {event_type}) ===")
+        for sl_idx, sl in enumerate(skill_levels):
+            level_name = sl['level_name']
 
-        for sl in skill_levels:
-            level_name  = sl['level_name']
-            player_list = sl['player_list']
-
-            if not player_list or len(player_list) < 3:
+            if not eligible[sl_idx]:
                 print(f"  Skipping {level_name}: fewer than 3 players")
                 skipped += 1
                 continue
 
-            all_x  = []
-            all_y  = []
-            n_inc  = 0
-            n_exc  = 0
-
-            for pr in player_list:
-                try:
-                    league      = pr['league']
-                    gender      = pr['gender']
-                    year        = pr['year']
-                    player_name = _get_player_name(pr)
-                except Exception as e:
-                    print(f"  Player row error: {e}")
-                    continue
-
-                if not player_name:
-                    n_exc += 1
-                    continue
-
-                lgy = f"{league}|{gender}|{year}"
-                if lgy not in ppr_cache:
-                    raw = _load_ppr_df(league, gender, year)
-                    ppr_cache[lgy] = _add_outcome_cols(raw) if raw is not None else None
-
-                cur_ppr = ppr_cache[lgy]
-                if cur_ppr is None:
-                    continue
-
-                xv, yv = _get_player_events(
-                    cur_ppr, player_name,
-                    physical_col, outcome_col, event_type
-                )
-
-                if xv is None or len(xv) < min_events:
-                    n_exc += 1
-                    continue
-
-                all_x.extend(xv.tolist())
-                all_y.extend(yv.tolist())
-                n_inc += 1
-
-            n_events = len(all_x)
+            job      = jobs[(ad_idx, sl_idx)]
+            n_events = len(job['x'])
+            n_inc    = job['n_inc']
+            n_exc    = job['n_exc']
             print(f"  {level_name}: {n_inc} players, "
                   f"{n_exc} excluded, {n_events} events")
 
             # Need at least 3× min_events pooled, and at least 100 total
-            min_pooled = max(min_events * 3, 100)
+            min_pooled = max(meta['min_events'] * 3, 100)
             if n_events < min_pooled:
                 print(f"  Skipping: {n_events} events (need {min_pooled})")
                 skipped += 1
                 continue
 
-            xa = np.array(all_x, dtype=float)
-            ya = np.array(all_y, dtype=float)
+            xa = np.array(job['x'], dtype=float)
+            ya = np.array(job['y'], dtype=float)
 
             # Descriptive stats on the physical variable
             desc = {
@@ -727,14 +804,14 @@ def calc_threshold_analysis():
                 'auc': None, 'roc_threshold': None,
                 'roc_sensitivity': None, 'roc_specificity': None,
             }
-            if outcome_type == 'binary':
+            if meta['outcome_type'] == 'binary':
                 roc = _roc_analysis(xa, ya)
 
             quad = _quadratic_analysis(xa, ya)
 
             try:
                 app_tables.threshold_analysis_results.add_row(
-                    analysis_def     = ad,
+                    analysis_def     = defs[ad_idx],
                     skill_level      = level_name,
                     n_events         = n_events,
                     n_players        = n_inc,
@@ -767,7 +844,7 @@ def calc_threshold_analysis():
                     quad_r2          = quad['quad_r2'],
                     quad_shape       = quad['quad_shape'],
                     calculated_at    = datetime.now(),
-                    notes            = (f"{name} | {level_name} | "
+                    notes            = (f"{meta['name']} | {level_name} | "
                                         f"n={n_events} events / {n_inc} players")
                 )
                 saved += 1
