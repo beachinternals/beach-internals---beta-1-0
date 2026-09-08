@@ -630,6 +630,11 @@ def calc_threshold_analysis():
         deleted += 1
     print(f"Deleted {deleted} existing results")
 
+    # PPR dataframes are identical across every analysis definition — load
+    # and add outcome cols for each (league, gender, year) once per run,
+    # not once per definition.
+    ppr_cache = {}
+
     saved = skipped = 0
 
     for ad in defs:
@@ -656,9 +661,6 @@ def calc_threshold_analysis():
             n_inc  = 0
             n_exc  = 0
 
-            cur_lgy = None
-            cur_ppr = None
-
             for pr in player_list:
                 try:
                     league      = pr['league']
@@ -674,11 +676,11 @@ def calc_threshold_analysis():
                     continue
 
                 lgy = f"{league}|{gender}|{year}"
-                if lgy != cur_lgy:
+                if lgy not in ppr_cache:
                     raw = _load_ppr_df(league, gender, year)
-                    cur_ppr = _add_outcome_cols(raw) if raw is not None else None
-                    cur_lgy = lgy
+                    ppr_cache[lgy] = _add_outcome_cols(raw) if raw is not None else None
 
+                cur_ppr = ppr_cache[lgy]
                 if cur_ppr is None:
                     continue
 
