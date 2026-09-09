@@ -462,6 +462,18 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
     # Reset index to prevent duplicate label errors from new BTD columns
     btd_df = btd_df.reset_index(drop=True)
 
+  # BTD exports don't guarantee rows arrive in true rally order -- a
+  # rally's serve row can end up displaced relative to its other actions
+  # (see e.g. a 'set'/'attack' pair whose rally_id has no serve row
+  # anywhere nearby in file order). The point-building loop below starts
+  # a new point only on action_type == "serve" and otherwise appends to
+  # whatever point is currently open, so a displaced row silently
+  # corrupts whichever point happens to be open at that position in the
+  # file. Sort explicitly so every rally's rows always arrive together
+  # and in that rally's real order, regardless of file order -- mirrors
+  # the sort resolve_serve_players() already applies to its own subset.
+  btd_df = btd_df.sort_values(['rally_id', 'action_id'], kind='mergesort').reset_index(drop=True)
+
   # resolve the match's four canonical players/teams once, shared across
   # canonical-name mapping, serve-player resolution, and point-building
   (player_a1, player_a2, btd_playera1, btd_playera2,
