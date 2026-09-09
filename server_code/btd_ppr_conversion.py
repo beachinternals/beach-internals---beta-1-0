@@ -14,6 +14,7 @@ import pandas as pd
 import io
 import math
 import json
+from collections import Counter
 from datetime import datetime, timedelta, date
 
 # ============================================================================
@@ -96,8 +97,16 @@ def run_pass_correction_test(user_league, user_gender, user_year, rebuild=True):
     results.append({'team': team, 'result': return_string, 'new_data': new_data})
   return results
 
+def _print_correction_summary(label, items):
+  corrected = sum(1 for i in items if i.get('status') == 'corrected')
+  flagged   = sum(1 for i in items if i.get('status') == 'flagged')
+  other     = len(items) - corrected - flagged
+  log_debug(f"    {label}: {len(items)} total -- {corrected} corrected, {flagged} flagged"
+            + (f", {other} other" if other else ""))
+
+
 @anvil.server.callable
-def generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild  ): 
+def generate_ppr_files_not_background(user_league, user_gender, user_year, user_team, rebuild  ):
   # select rows from the btd_files database and limit it to league, gender, and year and team
   # this routine calculates ppr files for all btd files for this l,g,y,t
   btd_row = app_tables.btd_files.search(
@@ -170,12 +179,19 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
         ppr_df, corrections = correct_pass_attribution(ppr_df)
         ppr_df, sp_corrections = correct_serve_pass_same_team(ppr_df, video_id=flist_r['video_id'])
         ppr_df, tc_corrections = correct_missing_touches(ppr_df, video_id=flist_r['video_id'])
+
+        log_debug(f"  Corrections for {flist_r['filename']}:")
+        _print_correction_summary('serve-player resolution', serve_corrections)
+        _print_correction_summary('pass attribution', corrections)
+        _print_correction_summary('serve/pass same-team', sp_corrections)
+        _print_correction_summary('missing/unmatched touch', tc_corrections)
+
         corrections = serve_corrections + corrections + sp_corrections + tc_corrections
         corrections_json = json.dumps(corrections)
 
         # 5) Error check the ppr file for consistency, maybe raise errors into an email/text message??
         ppr_df, no_errors, error_string = error_check_ppr(ppr_df)
-        #print(f"Error String: {error_string}")
+        log_debug(f"  Error check: {'no errors' if no_errors else str(len(error_string.splitlines())) + ' issue line(s) remaining'}")
 
         # 6) Lastly, save the ppr csv file back into the btd_files database
         # first, I need to cahnge the ppr_file dataframe to a csv file.
@@ -472,7 +488,60 @@ def btd_to_ppr_file(btd_file_bytes, flist_r):
   # file. Sort explicitly so every rally's rows always arrive together
   # and in that rally's real order, regardless of file order -- mirrors
   # the sort resolve_serve_players() already applies to its own subset.
-  btd_df = btd_df.sort_values(['rally_id', 'action_id'], kind='mergesort').reset_index(drop=True)
+  pre_sort_df = btd_df
+  original_order = list(zip(pre_sort_df['rally_id'], pre_sort_df['action_id']))
+  sorted_df = pre_sort_df.sort_values(['rally_id', 'action_id'], kind='mergesort')
+  # sorted_df.index still holds each row's ORIGINAL position (pre_sort_df is
+  # 0-based here); wherever that doesn't match its new position, the row moved.
+  moved_orig_positions = [
+    orig_pos for new_pos, orig_pos in enumerate(sorted_df.index)
+    if orig_pos != new_pos
+  ]
+  btd_df = sorted_df.reset_index(drop=True)
+  n_moved = len(moved_orig_positions)
+
+  if n_moved:
+    # A rally only risks corrupting point-building if its rows were split
+    # apart in the original file order (some other rally's row sits between
+    # them) -- a same-rally reorder (e.g. set/pass swapped within one
+    # rally's own few rows) never crosses the "new point starts on serve"
+    # boundary, so it can't have changed anything downstream.
+    original_rally_order = [rid for rid, _ in original_order]
+    first_seen, last_seen = {}, {}
+    for pos, rid in enumerate(original_rally_order):
+      first_seen.setdefault(rid, pos)
+      last_seen[rid] = pos
+    counts = Counter(original_rally_order)
+    split_rallies = sorted(
+      rid for rid in counts
+      if last_seen[rid] - first_seen[rid] + 1 != counts[rid]
+    )
+
+    # Detail on exactly which rows moved, for manual inspection against the
+    # raw CSV. +2 converts a 0-based DataFrame position into a 1-based file
+    # line number that accounts for the header row.
+    detail_cols = [c for c in ('rally_id', 'action_id', 'action_type', 'player')
+                   if c in pre_sort_df.columns]
+    moved_rows = pre_sort_df.loc[moved_orig_positions, detail_cols].to_dict('records')
+    moved_detail = [
+      f"CSV line {pos + 2} ({', '.join(f'{c}={row[c]!r}' for c in detail_cols)})"
+      for pos, row in zip(moved_orig_positions, moved_rows)
+    ]
+    log_debug("  Row-order fix: moved rows -- " + "; ".join(moved_detail[:20])
+              + ("; ..." if len(moved_detail) > 20 else ""))
+
+    if split_rallies:
+      log_debug(f"  Row-order fix: {n_moved} of {len(btd_df)} rows resorted -- "
+                f"{len(split_rallies)} rally id(s) were genuinely split across "
+                f"other rallies in the original file: {split_rallies[:10]}"
+                + ("..." if len(split_rallies) > 10 else ""))
+    else:
+      log_debug(f"  Row-order fix: {n_moved} of {len(btd_df)} rows were out of "
+                f"order but all stayed within their own rally's block -- "
+                f"point boundaries unaffected")
+  else:
+    log_debug("  Row-order fix: file already in (rally_id, action_id) order -- "
+              "no rows moved")
 
   # resolve the match's four canonical players/teams once, shared across
   # canonical-name mapping, serve-player resolution, and point-building

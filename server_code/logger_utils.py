@@ -2,7 +2,7 @@ import anvil.files
 from anvil.files import data_files
 # logger_utils.py
 import traceback
-from anvil_extras.logging import Logger, ERROR
+from anvil_extras.logging import Logger, ERROR, DEBUG
 import json
 from datetime import datetime, timezone
 import inspect
@@ -17,7 +17,12 @@ import inspect
 # -----------------------------------------------------------------------------
 critical_logger = Logger(
   name="critical",
-  level=ERROR,
+  # DEBUG lets log_debug/log_info through everywhere they're called in the
+  # app (they were previously silently dropped below the old ERROR
+  # threshold). Raise this back to ERROR (or reintroduce a separate
+  # threshold check) once verbose diagnostics are no longer needed --
+  # this level is shared by every module that calls into logger_utils.
+  level=DEBUG,
   format="{name}-{level} {datetime:%Y-%m-%d %H:%M:%S}: {msg}"
 )
 
