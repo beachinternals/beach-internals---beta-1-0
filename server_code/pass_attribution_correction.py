@@ -611,6 +611,12 @@ def correct_missing_touches(ppr_df, video_id=None):
         pass
       else:
         point_reasons.append('pass_player: no usable anchor - flagged')
+        log_debug(
+          f"correct_missing_touches: point {int(row['point_no'])} pass_player anchor failed -- "
+          f"receiving_team={receiving_team} pass_player={pass_player} (known_good={is_known_good(pass_player, receiving_team, row)}) "
+          f"set_yn={set_yn} set_player={set_player} (known_good={is_known_good(set_player, receiving_team, row)}) "
+          f"att_yn={att_yn} att_player={att_player} (known_good={is_known_good(att_player, receiving_team, row)})"
+        )
 
     # ---- 2. att_player (before set_player, so set_player can use it) ----
     if att_yn == "Y" and not is_known_good(att_player, receiving_team, row):
@@ -633,6 +639,12 @@ def correct_missing_touches(ppr_df, video_id=None):
         att_player = new_att
       else:
         point_reasons.append('att_player: no usable anchor - flagged')
+        log_debug(
+          f"correct_missing_touches: point {int(row['point_no'])} att_player anchor failed -- "
+          f"receiving_team={receiving_team} att_player={att_player} "
+          f"pass_yn={pass_yn} pass_player={pass_player} (known_good={is_known_good(pass_player, receiving_team, row)}) "
+          f"set_yn={set_yn} set_player={set_player} (known_good={is_known_good(set_player, receiving_team, row)})"
+        )
 
     # ---- 3. set_player (last, so it can use freshly-derived pass/att) ----
     if set_yn == "Y" and not is_known_good(set_player, receiving_team, row):
