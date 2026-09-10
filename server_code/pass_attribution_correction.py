@@ -1,6 +1,7 @@
 import math
 
 from server_functions import build_point_video_link
+from logger_utils import log_debug
 
 # This is a server module. It runs on the Anvil server.
 #
@@ -234,11 +235,14 @@ def classify_pass_player(row, profile_data):
   cand_a, cand_b = _receiving_team_players(row)
   x, y = row['pass_src_x'], row['pass_src_y']
   info = {'candidates': [cand_a, cand_b], 'pass_src': [x, y]}
+  point_no = row.get('point_no')
   if not cand_a or not cand_b:
     info['reason'] = 'could_not_determine_receiving_team'
+    log_debug(f"classify_pass_player: point {point_no} -- {info}")
     return None, info
   if not _is_plausible_coord(x, y):
     info['reason'] = 'missing_or_implausible_pass_coords'
+    log_debug(f"classify_pass_player: point {point_no} -- {info}")
     return None, info
 
   nc = bool(row['near_court'])
@@ -254,6 +258,7 @@ def classify_pass_player(row, profile_data):
   if not prof_a or not prof_b or prof_a['n'] < MIN_CLEAN_SAMPLES or prof_b['n'] < MIN_CLEAN_SAMPLES:
     info['reason'] = 'insufficient_clean_samples'
     info['sample_sizes'] = {cand_a: prof_a['n'] if prof_a else 0, cand_b: prof_b['n'] if prof_b else 0}
+    log_debug(f"classify_pass_player: point {point_no} -- {info}")
     return None, info
 
   if prof_a.get('derived') or prof_b.get('derived'):
@@ -271,9 +276,11 @@ def classify_pass_player(row, profile_data):
   info['confidence_ratio'] = ratio
   if ratio < MIN_CONFIDENCE_RATIO:
     info['reason'] = 'ambiguous'
+    log_debug(f"classify_pass_player: point {point_no} -- {info}")
     return None, info
 
   info['reason'] = 'confident'
+  log_debug(f"classify_pass_player: point {point_no} -- winner={winner} {info}")
   return winner, info
   
 
@@ -409,6 +416,7 @@ def correct_pass_attribution(ppr_df):
 
     if passer is None:
       entry['status'] = 'flagged'
+      log_debug(f"correct_pass_attribution: point {row['point_no']} FLAGGED - {info.get('reason')} - {info}")
       corrections.append(entry)
       continue
 
@@ -416,12 +424,14 @@ def correct_pass_attribution(ppr_df):
     if teammate is None:
       entry['status'] = 'flagged'
       entry['classification']['reason'] = 'no_teammate_found'
+      log_debug(f"correct_pass_attribution: point {row['point_no']} FLAGGED - no_teammate_found for passer={passer} - {info}")
       corrections.append(entry)
       continue
 
     changes = _apply_alternation(ppr_df, idx, row, passer, teammate)
     entry['status'] = 'corrected' if changes else 'no_change_needed'
     entry['changes'] = changes
+    log_debug(f"correct_pass_attribution: point {row['point_no']} {entry['status']} - passer={passer} teammate={teammate} changes={changes}")
     corrections.append(entry)
 
   return ppr_df, corrections
@@ -521,6 +531,7 @@ def correct_serve_pass_same_team(ppr_df, video_id=None):
       entry['status'] = 'flagged'
       entry['changes'] = []
 
+    log_debug(f"correct_serve_pass_same_team: point {entry['point_no']} {entry['status']} - {entry['classification']['reason']}")
     corrections.append(entry)
 
   return ppr_df, corrections
@@ -649,6 +660,8 @@ def correct_missing_touches(ppr_df, video_id=None):
       point_reasons.append(reason if new_set is not None else f'set_player: {reason}')
 
     if point_changes or point_reasons:
+      status = 'corrected' if point_changes else 'flagged'
+      log_debug(f"correct_missing_touches: point {int(row['point_no'])} {status} - {point_reasons} changes={point_changes}")
       corrections.append({
         'point_no': int(row['point_no']),
         'video_id': video_id if video_id is not None else row.get('video_id', 'empty'),
@@ -658,7 +671,7 @@ def correct_missing_touches(ppr_df, video_id=None):
           'error_type': 'missing_or_unmatched_touch',
           'notes': point_reasons,
         },
-        'status': 'corrected' if point_changes else 'flagged',
+        'status': status,
         'changes': point_changes,
       })
 

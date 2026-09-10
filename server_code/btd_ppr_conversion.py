@@ -395,6 +395,7 @@ def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2, vi
       entry['classification']['reason'] = 'pass_player also unresolved - no anchor to determine serve team'
       entry['status'] = 'flagged'
       entry['changes'] = []
+      log_debug(f"resolve_serve_players: rally {r['rally_id']} FLAGGED - {entry['classification']['reason']}")
       corrections.append(entry)
       continue
 
@@ -415,6 +416,7 @@ def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2, vi
         entry['classification']['reason'] = 'backward and forward evidence DISAGREE - contradiction'
         entry['status'] = 'flagged'
         entry['changes'] = []
+        log_debug(f"resolve_serve_players: rally {r['rally_id']} FLAGGED - {entry['classification']['reason']} (backward={back_val}, forward={fwd_val})")
         corrections.append(entry)
         continue
     elif back_val or fwd_val:
@@ -424,6 +426,7 @@ def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2, vi
       entry['classification']['reason'] = 'no evidence in either direction'
       entry['status'] = 'flagged'
       entry['changes'] = []
+      log_debug(f"resolve_serve_players: rally {r['rally_id']} FLAGGED - {entry['classification']['reason']}")
       corrections.append(entry)
       continue
 
@@ -436,6 +439,7 @@ def resolve_serve_players(btd_df, player_a1, player_a2, player_b1, player_b2, vi
                            # not stale UNMATCHED_PLAYER
     entry['status'] = 'corrected'
     entry['changes'] = [['serve_player', 'UNMATCHED_PLAYER', new_val]]
+    log_debug(f"resolve_serve_players: rally {r['rally_id']} CORRECTED - {entry['classification']['reason']} -> serve_player={new_val}")
     corrections.append(entry)
 
   return btd_df, corrections
@@ -633,7 +637,13 @@ def btd_to_ppr_df(btd_df, flist_r, player_a1, player_a2, player_b1, player_b2, t
     # player identity is already resolved upstream (map_players_to_canonical,
     # plus for serve rows, resolve_serve_players) -- just read it here
     btd_r['player'] = btd_r['canonical_player']
-    
+
+    log_debug(
+      f"btd_to_ppr_df: row idx={index} rally_id={btd_r['rally_id']} action_id={btd_r['action_id']} "
+      f"action_type={btd_r['action_type']} player={btd_r['player']} quality={btd_r['quality']} "
+      f"ppr_row={ppr_row} in_trans={in_trans} touch_since_serve={touch_since_serve}"
+    )
+
     # if this is a serve, then start a new point
     if btd_r['action_type'] == "serve":
       # first thing, check if we have an outcome posted for the last point
@@ -668,6 +678,7 @@ def btd_to_ppr_df(btd_df, flist_r, player_a1, player_a2, player_b1, player_b2, t
     if ppr_row > -1 and btd_r['action_type'] in ("set", "attack", "dig") and not in_trans:
       if touch_since_serve == 5 or btd_r['player'] in serve_team:
         in_trans = True
+        log_debug(f"btd_to_ppr_df: in_trans -> True at rally_id={btd_r['rally_id']} action_id={btd_r['action_id']} (touch_since_serve={touch_since_serve}, serving-team touch on {btd_r['action_type']})")
 
     if btd_r['action_type'] == "set" and not in_trans:
       if ppr_row == -1:
@@ -702,6 +713,8 @@ def btd_to_ppr_df(btd_df, flist_r, player_a1, player_a2, player_b1, player_b2, t
 
     #print(f"TOuches since serve:{touch_since_serve}, Player:{btd_r['player']}, action type:{btd_r['action_type']}")
     if touch_since_serve == 5 or ( btd_r['player'] in serve_team and btd_r['action_type'] not in ("serve", "receive") ):
+      if not in_trans:
+        log_debug(f"btd_to_ppr_df: in_trans -> True at rally_id={btd_r['rally_id']} action_id={btd_r['action_id']} (touch_since_serve={touch_since_serve}, action_type={btd_r['action_type']})")
       in_trans = True
 
     # --- Backfill dig_dest_t from the current action's time ---
@@ -740,7 +753,7 @@ def save_serve_info( ppr_df, btd_r, ppr_row ):
   ppr_df.at[ppr_row,'serve_src_y'] = btd_r['src_y']
   if 'speed_mph' in btd_r and isinstance(btd_r.get('speed_mph'), (float, int)):
     ppr_df.at[ppr_row,'serve_speed_mph'] = float(btd_r['speed_mph'])
-  #print(f"Saving Serve INfo ppr_row {ppr_row}, rally number {btd_r['rally_id']}, Server:{ppr_df.at[ppr_row,'serve_player']}")  
+  log_debug(f"save_serve_info: ppr_row={ppr_row} rally_id={btd_r['rally_id']} action_id={btd_r['action_id']} server={btd_r['player']} quality={btd_r.get('quality')}")
   return ppr_df
 
 def save_pass_info( ppr_df, btd_r, ppr_row):
@@ -754,12 +767,12 @@ def save_pass_info( ppr_df, btd_r, ppr_row):
   ppr_df.at[ppr_row,'pass_yn'] = "Y"  
   ppr_df.at[ppr_row,'serve_dest_t'] = ppr_df.at[ppr_row,'pass_src_t']
   ppr_df.at[ppr_row,'pass_rtg_btd'] = btd_r['quality']
-  #print(f"Saving pass info Action Id: {ppr_df.at[ppr_row,'pass_action_id']}, ppr_row: {ppr_row}, Pass Player: {ppr_df.at[ppr_row,'pass_player']}")
   if 'touch_position' in btd_r:
     ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('pass_touch_position'))] = btd_r['touch_position']
   if 'touch_type' in btd_r:
     ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('pass_touch_type'))] = btd_r['touch_type']
 
+  log_debug(f"save_pass_info: ppr_row={ppr_row} action_id={btd_r['action_id']} pass_player={btd_r['player']} pass_rtg_btd(quality)={btd_r['quality']}")
   return ppr_df
 
 def save_set_info( ppr_df, btd_r, ppr_row):
@@ -779,11 +792,11 @@ def save_set_info( ppr_df, btd_r, ppr_row):
   if 'set_air_time' in btd_r and isinstance(btd_r.get('set_air_time'), (float, int)):
     ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('set_air_time'))] = float(btd_r['set_air_time'])
 
+  log_debug(f"save_set_info: ppr_row={ppr_row} action_id={btd_r['action_id']} set_player={btd_r['player']} quality={btd_r.get('quality')}")
   return ppr_df
 
 def save_att_info( ppr_df, btd_r, ppr_row):
-  #print(f"saving ATT info Action Id: {btd_r['action_id']}, ppr_row: {ppr_row}")
-  
+
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_action_id'))] = int(btd_r['action_id'])
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_src_t'))] = btd_r['action_time']
   ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_dest_x'))] = btd_r['dest_x']
@@ -801,6 +814,7 @@ def save_att_info( ppr_df, btd_r, ppr_row):
       ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_speed'))] = float(btd_r['speed_mph'])*0.44704  # convert MPH to M/S
       ppr_df.iloc[(ppr_row,ppr_df.columns.get_loc('att_speed_mph'))] = float(btd_r['speed_mph'])  # keep original MPH value
 
+  log_debug(f"save_att_info: ppr_row={ppr_row} action_id={btd_r['action_id']} att_player={btd_r['player']} quality={btd_r.get('quality')}")
   return ppr_df
 
 def save_dig_info( ppr_df, btd_r, ppr_row, teama, teamb):
@@ -825,7 +839,8 @@ def save_dig_info( ppr_df, btd_r, ppr_row, teama, teamb):
       ppr_df.iloc[(ppr_row, ppr_df.columns.get_loc('dig_type'))] = 'block_recovery'
     else:
       ppr_df.iloc[(ppr_row, ppr_df.columns.get_loc('dig_type'))] = 'defensive'
-      
+
+  log_debug(f"save_dig_info: ppr_row={ppr_row} action_id={btd_r['action_id']} dig_player={btd_r['player']} quality={btd_r.get('quality')} dig_type={ppr_df.iloc[(ppr_row, ppr_df.columns.get_loc('dig_type'))]}")
   return ppr_df
 
 def calc_dig_midpoint(att_src_x, att_src_y, dig_src_x, dig_src_y):
@@ -942,41 +957,61 @@ def check_last_point( ppr_df, ppr_row, btd_r, last_player, last_quality, last_ac
   serve_team = teama if btd_r['player'] in teama else teamb   # team that serves the next ball
   if final_pt:
     serve_team = teama if ppr_df.at[ppr_row,'a_score_diff'] > 0 else teamb  # if final point ,like the next server is the one in the lead
-    
-  #print(f"### CHECKING LAST POINT ###, rally id:{btd_r['rally_id']}, Serve Team next point):{serve_team}, last team: {last_team}, Last Player: {last_player}  Transition? {in_trans}, Last Action Id:{last_action_id},Last Action Type:{last_action_type}, Last Quality:{last_quality}")
-  
+
+  log_debug(
+    f"check_last_point: rally_id={btd_r['rally_id']} ppr_row={ppr_row} final_pt={final_pt} "
+    f"last_player={last_player} last_team={last_team} last_action_type={last_action_type} "
+    f"last_quality={last_quality} last_action_id={last_action_id} serve_team={serve_team} in_trans={in_trans}"
+  )
+
   if in_trans:
     # do I have a terminal quality?
     if last_team == serve_team:
+      log_debug("check_last_point: -> TK (in transition, last touch team == next server's team)")
       ppr_df = save_point( ppr_df, ppr_row, "TK", last_team, last_action_id )
     else:
+      log_debug("check_last_point: -> TE (in transition, last touch team != next server's team)")
       ppr_df = save_point( ppr_df, ppr_row, "TE", last_team, last_action_id )
-      
+
   else:
     if last_quality in ["ace","error","kill"]:
       # ace or error?
       if last_action_type == "serve":
         if last_quality == "ace" or last_team == serve_team:
+          log_debug(f"check_last_point: -> TSA (last_action_type=serve, last_quality={last_quality})")
           ppr_df = save_point( ppr_df, ppr_row, "TSA", last_team, last_action_id )
         elif last_quality == "error" or last_team == serve_team:
+          log_debug(f"check_last_point: -> TSE (last_action_type=serve, last_quality={last_quality})")
           ppr_df = save_point( ppr_df, ppr_row, "TSE", last_team, last_action_id )
       else:
         # first ball kill
+        if last_quality == "ace":
+          log_debug(
+            f"check_last_point: last_quality=ace but last_action_type={last_action_type} "
+            f"(not 'serve') -- falling into the FBK/FBE branch instead of TSA/TSE. "
+            f"last_player={last_player} last_action_id={last_action_id}"
+          )
         if last_quality == "kill" or last_team == serve_team:
+          log_debug(f"check_last_point: -> FBK (last_action_type={last_action_type}, last_quality={last_quality}, last_team==serve_team={last_team == serve_team})")
           ppr_df = save_point( ppr_df, ppr_row, "FBK", last_team, last_action_id )
         elif last_quality == "error" or last_team == serve_team:
+          log_debug(f"check_last_point: -> FBE (last_action_type={last_action_type}, last_quality={last_quality})")
           ppr_df = save_point( ppr_df, ppr_row, "FBE", last_team, last_action_id )
     elif last_team == serve_team:  # kill or ace
       if last_action_type == "serve":
+        log_debug(f"check_last_point: -> TSA (fallback: last_team==serve_team, last_action_type=serve, last_quality={last_quality})")
         ppr_df = save_point( ppr_df, ppr_row, "TSA", last_team, last_action_id )
       else:
+        log_debug(f"check_last_point: -> FBK (fallback: last_team==serve_team, last_action_type={last_action_type}, last_quality={last_quality})")
         ppr_df = save_point( ppr_df, ppr_row, "FBK", last_team, last_action_id )
     else:  # error, serve or first ball
       if last_action_type == "serve":
+        log_debug(f"check_last_point: -> TSE (fallback: last_team!=serve_team, last_action_type=serve, last_quality={last_quality})")
         ppr_df = save_point( ppr_df, ppr_row, "TSE", last_team, last_action_id )
       else:
+        log_debug(f"check_last_point: -> FBE (fallback: last_team!=serve_team, last_action_type={last_action_type}, last_quality={last_quality})")
         ppr_df = save_point( ppr_df, ppr_row, "FBE", last_team, last_action_id )
-      
+
   return ppr_df
 
 def update_score(ppr_df, ppr_row, teama):
