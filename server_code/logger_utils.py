@@ -17,12 +17,12 @@ import inspect
 # -----------------------------------------------------------------------------
 critical_logger = Logger(
   name="critical",
-  # DEBUG lets log_debug/log_info through everywhere they're called in the
-  # app (they were previously silently dropped below the old ERROR
-  # threshold). Raise this back to ERROR (or reintroduce a separate
-  # threshold check) once verbose diagnostics are no longer needed --
-  # this level is shared by every module that calls into logger_utils.
-  level=DEBUG,
+  # ERROR is the normal-run level -- log_debug/log_info calls throughout the
+  # app (btd_ppr_conversion.py, pass_attribution_correction.py, etc.) are
+  # left in place for the next deep dive; flip this back to DEBUG
+  # temporarily to see them again. This level is shared by every module
+  # that calls into logger_utils.
+  level=ERROR,
   format="{name}-{level} {datetime:%Y-%m-%d %H:%M:%S}: {msg}"
 )
 
