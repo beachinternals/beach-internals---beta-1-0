@@ -1451,14 +1451,16 @@ def calculate_pressure_score(row):
   total_points = row['a_score'] + row['b_score']
   score_diff = abs(row['a_score'] - row['b_score'])
 
-  if total_points > PRESSURE_LATE_MATCH_POINTS and score_diff < PRESSURE_LATE_MATCH_SCORE_DIFF:
-    dynamic += 1
+  # Late-and-close uses a lower point threshold in the deciding set, since
+  # sets often end sooner there; the two checks are mutually exclusive so a
+  # point can only earn this dynamic pressure once.
   if row['set'] == PRESSURE_DECIDING_SET:
-    dynamic += 1
-  if (row['set'] == PRESSURE_DECIDING_SET and
-      total_points > PRESSURE_DECIDING_SET_LATE_POINTS and
-      score_diff < PRESSURE_DECIDING_SET_LATE_SCORE_DIFF):
-    dynamic += 1
+    if (total_points > PRESSURE_DECIDING_SET_LATE_POINTS and
+        score_diff < PRESSURE_DECIDING_SET_LATE_SCORE_DIFF):
+      dynamic += 1
+  else:
+    if total_points > PRESSURE_LATE_MATCH_POINTS and score_diff < PRESSURE_LATE_MATCH_SCORE_DIFF:
+      dynamic += 1
 
   return static, dynamic, static + dynamic
 
