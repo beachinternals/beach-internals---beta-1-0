@@ -14,7 +14,16 @@ def add_weather_to_ppr(ppr_df, btd_row):
   """
   Fetch weather and add weather_id and weather data to all rows in ppr_df.
   Called during BTD->PPR conversion after all PPR data is calculated.
-  Skips fetch if weather already exists in the dataframe.
+
+  Always re-derives weather from the current venue/date/match_time via
+  get_or_create_weather(), which itself checks the weather_data table and
+  only calls the external API on a real cache miss -- so this stays cheap.
+  We deliberately do NOT trust a weather_id already sitting on ppr_df/btd_row
+  as a signal to skip: that value was seeded from btd_row's weather_id
+  *before* this conversion ran, so trusting it here would let a stale or
+  wrong weather_id (e.g. fetched before the venue was corrected) survive a
+  rebuild indefinitely instead of being re-checked against the current venue/
+  date/time.
   year is always a string.
   """
   log_debug(f"add_weather_to_ppr called for file: {btd_row['filename']}")
@@ -23,16 +32,6 @@ def add_weather_to_ppr(ppr_df, btd_row):
   venue_name = btd_row['venue_name']
   match_date = btd_row['date']
   match_time = btd_row['match_time']
-
-  # If weather already in the PPR rows, skip — no need to fetch again
-  already_has_weather = (
-    'weather_id' in ppr_df.columns and
-    ppr_df['weather_id'].notna().any() and
-    (ppr_df['weather_id'] != '').any()
-  )
-  if already_has_weather:
-    log_debug(f"Weather already present for {btd_row['filename']}, skipping fetch")
-    return ppr_df
 
   # Helper to stamp empty weather columns and return
   def set_empty_weather():
