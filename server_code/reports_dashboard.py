@@ -121,9 +121,8 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   # Unpack lgy into league, gender, year
   disp_league, disp_gender, disp_year = unpack_lgy(lgy)
 
-  # Fetch the ppr dataframe and player stats
+  # Fetch the ppr dataframe
   ppr_df = get_ppr_data(disp_league, disp_gender, disp_year, team, True)
-  player_data_df, player_data_stats_df = get_player_data(disp_league, disp_gender, disp_year)
 
   # Filter the ppr dataframe with any additional filters
   ppr_df = filter_ppr_df(ppr_df, **rpt_filters)
@@ -144,6 +143,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   # Initialize comprehensive metrics dataframe
   metrics_data = {
     'Player': [],
+    'Sets': [],           # Number of sets in the data being analyzed
     'FBHE': [],           # First Ball Hitting Efficiency
     'FBSO': [],           # First Ball Side Out
     'TCR': [],            # Transition Conversion Rate
@@ -152,7 +152,6 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
     'Good_Pass_Pct': [],  # Good Pass Percentage
     'Knockout': [], # Knockout Ratio
     'Ace/Error': [], # Ace to Error Ratio
-    'Consistency_Errors': [], # Consistency in Errors
     'Error_Density': []   # Error Density
   }
 
@@ -183,6 +182,10 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
     try:
       # Add player name
       metrics_data['Player'].append(player)
+
+      # Get number of sets in the data being analyzed for this player
+      sets_count = count_player_sets_from_ppr(ppr_df, player)
+      metrics_data['Sets'].append(sets_count)
 
       # Get FBHE and FBSO from fbhe_obj function
       fbhe_result = fbhe_obj(ppr_df, player, 'att', False)
@@ -215,10 +218,6 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       ace_error_result = calc_ace_error_ratio_from_ppr(ppr_df, player)
       metrics_data['Ace/Error'].append(ace_error_result.get('ratio', 0)) 
 
-      # Get Consistency in Errors from player_data_stats_df
-      consistency_result = get_consistency_errors_from_stats(player_data_df, player, 'cons_ed_sd_match')
-      metrics_data['Consistency_Errors'].append(to_python_type(consistency_result))
-
       # Get Error Density from calc_error_density_obj function
       error_density_result = calc_error_density_obj(ppr_df, player)
       error_density_value = error_density_result.get('error_density') 
@@ -229,9 +228,12 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
     except Exception as e:
       print(f"Error processing player {player}: {str(e)}")
-      # Remove the player name we just added if error occurs
-      if len(metrics_data['Player']) > len(metrics_data['FBHE']):
-        metrics_data['Player'].pop()
+      # Trim any columns that got ahead of the rest before the error occurred,
+      # so all columns stay the same length
+      min_len = min(len(v) for v in metrics_data.values())
+      for key in metrics_data:
+        while len(metrics_data[key]) > min_len:
+          metrics_data[key].pop()
 
     # Create the main metrics DataFrame
   metrics_df = pd.DataFrame(metrics_data)
@@ -245,7 +247,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
     summary_row = {'Player': 'TEAM AVERAGE'}
 
     # Calculate averages for numeric columns
-    numeric_cols = ['FBHE', 'FBSO', 'TCR', 'ESO', 'Expected', 'Knockout', 'Ace/Error', 'Consistency_Errors']
+    numeric_cols = ['Sets', 'FBHE', 'FBSO', 'TCR', 'ESO', 'Expected', 'Knockout', 'Ace/Error']
     for col in numeric_cols:
       summary_row[col] = round(metrics_df[col].mean(), 3) if not metrics_df[col].empty else 0
 
@@ -309,6 +311,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   # Verify types
   #print(metrics_df.dtypes)
 
+  metrics_df['Sets'] = metrics_df['Sets'].round(1).astype(str)
   metrics_df['FBHE'] = metrics_df['FBHE'].round(3).astype(str)
   metrics_df['FBSO'] = metrics_df['FBSO'].round(3).astype(str)
   metrics_df['TCR'] = metrics_df['TCR'].round(3).astype(str)
@@ -318,14 +321,12 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].apply(lambda x: f"{x * 100:02.0f}%" if pd.notnull(x) else x)
   metrics_df['Knockout'] = metrics_df['Knockout'].round(3).astype(str)
   metrics_df['Ace/Error'] = metrics_df['Ace/Error'].round(3).astype(str)
-  metrics_df['Consistency_Errors'] = metrics_df['Consistency_Errors'].round(2).astype(str)
   #metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3)
   metrics_df['Error_Density'] = metrics_df['Error_Density'].apply(lambda x: f"{x * 100:02.0f}%" if pd.notnull(x) else x)
 
   # change column names to fit into the display
   metrics_df = metrics_df.rename(columns={
     'Good_Pass_Pct': 'Good Pass',
-    'Consistency_Errors': 'Consistency',
     'Error_Density': 'Error Density'
   })
   
