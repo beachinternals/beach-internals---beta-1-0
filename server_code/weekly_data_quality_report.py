@@ -125,12 +125,14 @@ def resolve_file_video_id(file_row):
     return video_id
   if not file_row['ppr_data']:
     return None
+  log_info(f"DEBUG resolve_file_video_id: falling back to CSV read for {file_row['filename']}")
   try:
     ppr_df = pd.read_csv(io.BytesIO(file_row['ppr_data'].get_bytes()), usecols=['video_id'])
   except (ValueError, KeyError):
     return None
   found = ppr_df['video_id'].dropna()
   found = found[~found.isin(['empty', 'No Video Id'])]
+  log_info(f"DEBUG resolve_file_video_id: CSV read done for {file_row['filename']}")
   return found.iloc[0] if len(found) else None
 
 
@@ -483,7 +485,8 @@ def build_corrections_detail(files):
   team's files, from btd_files.corrections_json.
   """
   detail = []
-  for f in files:
+  for i, f in enumerate(files):
+    log_info(f"DEBUG build_corrections_detail: file {i + 1}/{len(files)}: {f['filename']}")
     corrections = parse_corrections_json(f['corrections_json'])
     if not corrections:
       detail.append({'filename': f['filename'], 'clean': True, 'corrections': []})
@@ -518,6 +521,18 @@ def build_corrections_detail(files):
 
 _LOW_XY_THRESHOLD = 50
 
+# Bolds the % x,y cell in the top file-list table -- deliberately a
+# different (stricter) cutoff than _LOW_XY_THRESHOLD above, which drives the
+# separate "low x,y coverage" table further down.
+_FILE_LIST_LOW_XY_THRESHOLD = 40
+
+
+def _count_statuses(corrections):
+  """flagged/corrected counts within one file's corrections list."""
+  flagged = sum(1 for c in corrections if c['status'] == 'flagged')
+  corrected = sum(1 for c in corrections if c['status'] == 'corrected')
+  return flagged, corrected
+
 
 def build_low_xy_files(files):
   """
@@ -529,10 +544,11 @@ def build_low_xy_files(files):
   Sorted worst (lowest coverage) first.
   """
   low_xy = []
-  for f in files:
+  for i, f in enumerate(files):
     per_xy = f['per_xy']
     if per_xy is None or per_xy >= _LOW_XY_THRESHOLD:
       continue
+    log_info(f"DEBUG build_low_xy_files: file {i + 1}/{len(files)}: {f['filename']} (per_xy={per_xy})")
     low_xy.append({
       'filename': f['filename'],
       'per_xy': per_xy,
@@ -562,18 +578,30 @@ def build_team_corrections_report(league, gender, year, team, date_start=None, d
     search_kwargs['btd_file_date'] = q.all_of(*conditions)
 
   files = list(app_tables.btd_files.search(**search_kwargs))
-  detail = build_corrections_detail(files)
-  # Alphabetical by filename -- a stable, predictable order for readers
-  # scanning for a specific file, rather than ranking by error count.
-  detail = sorted(detail, key=lambda f: (f['filename'] or '').lower())
+  log_info(f"DEBUG build_team_corrections_report: {len(files)} files matched for {team} ({league} {gender} {year})")
+  raw_detail = build_corrections_detail(files)
+  log_info(f"DEBUG build_team_corrections_report: build_corrections_detail done ({len(raw_detail)} entries)")
+  # Pair each file row with its own detail entry -- both built from `files`
+  # in the same order, so zip() lines them up -- then sort the pairs
+  # together, alphabetically by filename, so detail and file_list stay in
+  # sync without a separate filename lookup.
+  paired = sorted(zip(files, raw_detail), key=lambda pair: (pair[1]['filename'] or '').lower())
+  detail = [d for _, d in paired]
   total_entries = sum(len(f['corrections']) for f in detail)
-  file_list = sorted(
-    (
-      {'filename': f['filename'], 'btd_file_date': f['btd_file_date'], 'points': f['points']}
-      for f in files
-    ),
-    key=lambda f: (f['filename'] or '').lower()
-  )
+  file_list = []
+  for f, d in paired:
+    flagged, corrected = _count_statuses(d['corrections'])
+    file_list.append({
+      'filename': f['filename'],
+      'btd_file_date': f['btd_file_date'],
+      'points': f['points'],
+      'flagged': flagged,
+      'corrected': corrected,
+      'total_corrections': len(d['corrections']),
+      'per_xy': f['per_xy'],
+    })
+  low_xy_files = build_low_xy_files(files)
+  log_info(f"DEBUG build_team_corrections_report: build_low_xy_files done ({len(low_xy_files)} entries)")
   return {
     'league': league,
     'gender': gender,
@@ -585,7 +613,7 @@ def build_team_corrections_report(league, gender, year, team, date_start=None, d
     'total_points': sum(f['points'] or 0 for f in files),
     'detail': detail,
     'file_list': file_list,
-    'low_xy_files': build_low_xy_files(files),
+    'low_xy_files': low_xy_files,
   }
 
 
@@ -659,28 +687,44 @@ def build_corrections_breakdown(detail):
   return status_totals, by_error_type
 
 
-def render_corrections_summary_html(detail, n_files=None, total_points=None, file_list=None):
-  status_totals, by_error_type = build_corrections_breakdown(detail)
-  total = sum(status_totals.values())
+def _render_file_list_row_html(f):
+  per_xy = f.get('per_xy')
+  if per_xy is None:
+    per_xy_cell = '-'
+  elif per_xy < _FILE_LIST_LOW_XY_THRESHOLD:
+    per_xy_cell = f"<b>{per_xy}%</b>"
+  else:
+    per_xy_cell = f"{per_xy}%"
+  return (
+    f"<tr><td>{f['filename']}</td>"
+    f"<td>{f['btd_file_date'].strftime('%Y-%m-%d') if f['btd_file_date'] else '-'}</td>"
+    f"<td>{f['points'] if f['points'] is not None else '-'}</td>"
+    f"<td>{f['flagged']}</td>"
+    f"<td>{f['corrected']}</td>"
+    f"<td>{f['total_corrections']}</td>"
+    f"<td>{per_xy_cell}</td></tr>"
+  )
 
+
+def render_corrections_summary_html(detail, n_files=None, total_points=None, file_list=None):
   totals_html = ""
   if file_list:
-    file_rows = "".join(
-      f"<tr><td>{f['filename']}</td>"
-      f"<td>{f['btd_file_date'].strftime('%Y-%m-%d') if f['btd_file_date'] else '-'}</td>"
-      f"<td>{f['points'] if f['points'] is not None else '-'}</td></tr>"
-      for f in file_list
-    )
+    file_rows = "".join(_render_file_list_row_html(f) for f in file_list)
     totals_html = (
       "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;margin-bottom:12px'>"
-      "<tr><th>Total files ({0})</th><th>Date uploaded</th><th>Points</th></tr>"
+      "<tr><th>Total files ({0})</th><th>Date uploaded</th><th>Points</th>"
+      "<th>Flagged</th><th>Corrected</th><th>Total</th><th>% with x,y</th></tr>"
       "{1}"
-      "<tr><td><b>Total</b></td><td></td><td><b>{2}</b></td></tr>"
+      "<tr><td><b>Total</b></td><td></td><td><b>{2}</b></td>"
+      "<td><b>{3}</b></td><td><b>{4}</b></td><td><b>{5}</b></td><td></td></tr>"
       "</table>"
     ).format(
       n_files if n_files is not None else len(file_list),
       file_rows,
       total_points if total_points is not None else '-',
+      sum(f['flagged'] for f in file_list),
+      sum(f['corrected'] for f in file_list),
+      sum(f['total_corrections'] for f in file_list),
     )
   elif n_files is not None or total_points is not None:
     totals_html = (
@@ -691,32 +735,37 @@ def render_corrections_summary_html(detail, n_files=None, total_points=None, fil
       "</table>"
     )
 
-  status_rows = "".join(
-    f"<tr><td>{_STATUS_LABELS.get(status, status.upper())}</td><td>{status_totals.get(status, 0)}</td></tr>"
-    for status in ('flagged', 'corrected', 'no_change_needed')
-  )
+  # Status table and Error-type table -- disabled 2026-09 per request (the
+  # per-file Flagged/Corrected columns above cover the same ground more
+  # compactly). Left in place, commented out, in case they're wanted again.
+  #
+  # status_totals, by_error_type = build_corrections_breakdown(detail)
+  # total = sum(status_totals.values())
+  # status_rows = "".join(
+  #   f"<tr><td>{_STATUS_LABELS.get(status, status.upper())}</td><td>{status_totals.get(status, 0)}</td></tr>"
+  #   for status in ('flagged', 'corrected', 'no_change_needed')
+  # )
+  # error_type_rows = "".join(
+  #   f"<tr><td>{error_type}</td><td>{counts.get('flagged', 0)}</td>"
+  #   f"<td>{counts.get('corrected', 0)}</td><td>{counts.get('no_change_needed', 0)}</td>"
+  #   f"<td>{sum(counts.values())}</td></tr>"
+  #   for error_type, counts in sorted(
+  #     by_error_type.items(), key=lambda kv: kv[1].get('flagged', 0), reverse=True
+  #   )
+  # )
+  # totals_html += (
+  #   "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse'>"
+  #   "<tr><th>Status</th><th>Count</th></tr>"
+  #   f"{status_rows}"
+  #   f"<tr><td><b>Total</b></td><td><b>{total}</b></td></tr>"
+  #   "</table>"
+  #   "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;margin-top:12px'>"
+  #   "<tr><th>Error type</th><th>Flagged</th><th>Corrected</th><th>No change needed</th><th>Total</th></tr>"
+  #   f"{error_type_rows}"
+  #   "</table>"
+  # )
 
-  error_type_rows = "".join(
-    f"<tr><td>{error_type}</td><td>{counts.get('flagged', 0)}</td>"
-    f"<td>{counts.get('corrected', 0)}</td><td>{counts.get('no_change_needed', 0)}</td>"
-    f"<td>{sum(counts.values())}</td></tr>"
-    for error_type, counts in sorted(
-      by_error_type.items(), key=lambda kv: kv[1].get('flagged', 0), reverse=True
-    )
-  )
-
-  return (
-    f"{totals_html}"
-    "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse'>"
-    "<tr><th>Status</th><th>Count</th></tr>"
-    f"{status_rows}"
-    f"<tr><td><b>Total</b></td><td><b>{total}</b></td></tr>"
-    "</table>"
-    "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;margin-top:12px'>"
-    "<tr><th>Error type</th><th>Flagged</th><th>Corrected</th><th>No change needed</th><th>Total</th></tr>"
-    f"{error_type_rows}"
-    "</table>"
-  )
+  return totals_html
 
 
 def _render_low_xy_row_html(f):
@@ -787,6 +836,7 @@ def trigger_team_corrections_report(league, gender, year, team, date_start=None,
   INTERNALS PPR maintenance page, which doesn't collect an email address).
   """
   _require_own_team(team)
+  log_info(f"DEBUG trigger_team_corrections_report: launching background task for {team} ({league} {gender} {year})")
   anvil.server.launch_background_task(
     'send_team_corrections_report', league, gender, year, team, date_start, date_end, to_email
   )
@@ -803,12 +853,17 @@ def send_team_corrections_report(league, gender, year, team, date_start=None, da
   into a requester's inbox as a raw stack trace.
   """
   recipient = to_email or ADMIN_EMAIL
+  log_info(f"DEBUG send_team_corrections_report: starting for {team} ({league} {gender} {year}), "
+           f"date_start={date_start}, date_end={date_end}, to_email={to_email}")
   try:
     report = build_team_corrections_report(league, gender, year, team, date_start, date_end)
+    log_info(f"DEBUG send_team_corrections_report: build_team_corrections_report done, "
+             f"n_files={report['n_files']}")
     html = render_team_corrections_html(
       team, report['detail'], _team_corrections_report_subtitle(league, gender, year, date_start, date_end),
       report['low_xy_files'], report['n_files'], report['total_points'], report['file_list']
     )
+    log_info("DEBUG send_team_corrections_report: html rendered, sending email")
 
     anvil.email.send(
       to=recipient,
