@@ -563,9 +563,17 @@ def build_team_corrections_report(league, gender, year, team, date_start=None, d
 
   files = list(app_tables.btd_files.search(**search_kwargs))
   detail = build_corrections_detail(files)
-  # Worst files (most correction entries) first.
-  detail = sorted(detail, key=lambda f: len(f['corrections']), reverse=True)
+  # Alphabetical by filename -- a stable, predictable order for readers
+  # scanning for a specific file, rather than ranking by error count.
+  detail = sorted(detail, key=lambda f: (f['filename'] or '').lower())
   total_entries = sum(len(f['corrections']) for f in detail)
+  file_list = sorted(
+    (
+      {'filename': f['filename'], 'btd_file_date': f['btd_file_date'], 'points': f['points']}
+      for f in files
+    ),
+    key=lambda f: (f['filename'] or '').lower()
+  )
   return {
     'league': league,
     'gender': gender,
@@ -576,6 +584,7 @@ def build_team_corrections_report(league, gender, year, team, date_start=None, d
     'total_entries': total_entries,
     'total_points': sum(f['points'] or 0 for f in files),
     'detail': detail,
+    'file_list': file_list,
     'low_xy_files': build_low_xy_files(files),
   }
 
@@ -650,12 +659,30 @@ def build_corrections_breakdown(detail):
   return status_totals, by_error_type
 
 
-def render_corrections_summary_html(detail, n_files=None, total_points=None):
+def render_corrections_summary_html(detail, n_files=None, total_points=None, file_list=None):
   status_totals, by_error_type = build_corrections_breakdown(detail)
   total = sum(status_totals.values())
 
   totals_html = ""
-  if n_files is not None or total_points is not None:
+  if file_list:
+    file_rows = "".join(
+      f"<tr><td>{f['filename']}</td>"
+      f"<td>{f['btd_file_date'].strftime('%Y-%m-%d') if f['btd_file_date'] else '-'}</td>"
+      f"<td>{f['points'] if f['points'] is not None else '-'}</td></tr>"
+      for f in file_list
+    )
+    totals_html = (
+      "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;margin-bottom:12px'>"
+      "<tr><th>Total files ({0})</th><th>Date uploaded</th><th>Points</th></tr>"
+      "{1}"
+      "<tr><td><b>Total</b></td><td></td><td><b>{2}</b></td></tr>"
+      "</table>"
+    ).format(
+      n_files if n_files is not None else len(file_list),
+      file_rows,
+      total_points if total_points is not None else '-',
+    )
+  elif n_files is not None or total_points is not None:
     totals_html = (
       "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;margin-bottom:12px'>"
       "<tr><th>Total files</th><th>Total points</th></tr>"
@@ -710,7 +737,7 @@ def render_low_xy_table_html(low_xy_files):
   )
 
 
-def render_team_corrections_html(team, detail, subtitle, low_xy_files=None, n_files=None, total_points=None):
+def render_team_corrections_html(team, detail, subtitle, low_xy_files=None, n_files=None, total_points=None, file_list=None):
   files_html = []
   for f in detail:
     if f['clean']:
@@ -725,7 +752,7 @@ def render_team_corrections_html(team, detail, subtitle, low_xy_files=None, n_fi
   return (
     f"<h2>Data Corrections Debug Report &mdash; {team or 'None'}</h2>"
     f"<p>{subtitle}</p>"
-    f"{render_corrections_summary_html(detail, n_files, total_points)}"
+    f"{render_corrections_summary_html(detail, n_files, total_points, file_list)}"
     f"{render_low_xy_table_html(low_xy_files or [])}"
     f"{''.join(files_html)}"
   )
@@ -746,7 +773,7 @@ def preview_team_corrections_report(league, gender, year, team, date_start=None,
     **report,
     'html': render_team_corrections_html(
       team, report['detail'], _team_corrections_report_subtitle(league, gender, year, date_start, date_end),
-      report['low_xy_files'], report['n_files'], report['total_points']
+      report['low_xy_files'], report['n_files'], report['total_points'], report['file_list']
     ),
   }
 
@@ -780,7 +807,7 @@ def send_team_corrections_report(league, gender, year, team, date_start=None, da
     report = build_team_corrections_report(league, gender, year, team, date_start, date_end)
     html = render_team_corrections_html(
       team, report['detail'], _team_corrections_report_subtitle(league, gender, year, date_start, date_end),
-      report['low_xy_files'], report['n_files'], report['total_points']
+      report['low_xy_files'], report['n_files'], report['total_points'], report['file_list']
     )
 
     anvil.email.send(
