@@ -169,6 +169,9 @@ def generate_ppr_files_not_background(user_league, user_gender, user_year, user_
         # 3b) Calculate per-point pressure score (static: postseason/round; dynamic: score situation)
         ppr_df = calc_pressure_score(ppr_df)
 
+        # 3c) Calculate momentum streak, score margin, and set-progress columns
+        ppr_df = calc_momentum_streak(ppr_df)
+
         # Add weather to PPR (fetches weather once for entire match)
         ppr_df = add_weather_to_ppr(ppr_df, flist_r)
 
@@ -1473,6 +1476,94 @@ def calc_pressure_score(ppr_df):
     ppr_df.at[index, 'pressure_total'] = total
 
   return ppr_df
+
+def streak_update(s, we_won):
+  # Signed run of consecutive points won (positive) or lost (negative), from
+  # team A's perspective. A win/loss that extends the existing sign keeps
+  # incrementing the magnitude; a win/loss that flips the sign resets the
+  # magnitude to 1 -- it does not decrement toward zero (e.g. -3 -> +1 on a win).
+  if we_won:
+    return s + 1 if s > 0 else 1
+  else:
+    return s - 1 if s < 0 else -1
+
+
+# Beach doubles: sets 1-2 play to 21, the deciding set (set 3) plays to 15 --
+# see PRESSURE_DECIDING_SET above and import_csv_file.py's own note on this.
+MOMENTUM_SET_LENGTHS = {3: 15}
+MOMENTUM_DEFAULT_SET_LENGTH = 21
+
+
+def calc_momentum_streak(ppr_df):
+  # Adds momentum-streak, score-margin, and set-progress columns to ppr_df.
+  #
+  # streak_after_a / streak_before_a: signed run of consecutive points won by
+  # team A (see streak_update above), always from team A's perspective --
+  # this mirrors the existing a_score_diff convention of storing one signed
+  # value rather than a per-viewer one. streak_before_a is the value ENTERING
+  # a point (0 at the first point of every set); streak_after_a is the value
+  # once the point resolves. streak_before_b / streak_after_b / margin_before_b
+  # are the exact negation of the _a columns -- streak_update(-s, not w) ==
+  # -streak_update(s, w) for every s and w, so team B's numbers never need a
+  # second pass, just a sign flip (verified in the momentum streak test).
+  #
+  # margin_before_a: team A's score minus team B's score, ENTERING this point.
+  #
+  # set_pct: fraction of the way through the set, entering this point --
+  # points played so far (a_score_before + b_score_before) divided by the
+  # set's typical length (21, or 15 for the deciding set 3), capped at 1.0.
+  #
+  # Resets to 0 at the start of every SET, not every match -- enforced by
+  # grouping on 'set' and starting streak_a/scores-before fresh per group.
+  # Rows within a set are assumed already in chronological point order
+  # (guaranteed by btd_to_ppr_df's point-building loop); sorted by index
+  # here defensively in case that ever stops being true.
+  #
+  # Points whose winner couldn't be determined (point_outcome_team left
+  # blank -- see check_last_point) don't move the streak: streak_after_a ==
+  # streak_before_a for that row, and it's logged rather than silently
+  # guessed.
+  undetermined_rows = []
+
+  for set_no, set_rows in ppr_df.groupby('set', sort=False):
+    set_rows = set_rows.sort_index()
+    typical_length = MOMENTUM_SET_LENGTHS.get(set_no, MOMENTUM_DEFAULT_SET_LENGTH)
+
+    streak_a = 0        # streak ENTERING the next point in this set
+    a_score_before = 0
+    b_score_before = 0
+
+    for index, ppr_r in set_rows.iterrows():
+      ppr_df.at[index, 'streak_before_a'] = streak_a
+      ppr_df.at[index, 'streak_before_b'] = -streak_a
+      ppr_df.at[index, 'margin_before_a'] = a_score_before - b_score_before
+      ppr_df.at[index, 'margin_before_b'] = b_score_before - a_score_before
+      ppr_df.at[index, 'set_pct'] = min((a_score_before + b_score_before) / typical_length, 1.0)
+
+      outcome_team = ppr_r['point_outcome_team']
+      if outcome_team == ppr_r['teama']:
+        streak_a = streak_update(streak_a, True)
+      elif outcome_team == ppr_r['teamb']:
+        streak_a = streak_update(streak_a, False)
+      else:
+        undetermined_rows.append(index)
+        # winner unknown for this point -- leave the streak unmoved
+
+      ppr_df.at[index, 'streak_after_a'] = streak_a
+      ppr_df.at[index, 'streak_after_b'] = -streak_a
+
+      a_score_before = ppr_r['a_score']
+      b_score_before = ppr_r['b_score']
+
+  if undetermined_rows:
+    log_debug(
+      f"calc_momentum_streak: point_outcome_team undetermined for "
+      f"{len(undetermined_rows)} row(s) -- streak held flat at those points: "
+      f"{undetermined_rows[:20]}" + ("..." if len(undetermined_rows) > 20 else "")
+    )
+
+  return ppr_df
+
 
 def print_to_string(*args, **kwargs):
   output = io.StringIO()
