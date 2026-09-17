@@ -11,6 +11,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
+from logger_utils import log_error
+
 
 # ==============================================================================
 # FUNCTION 1: consistency_sd_match()
@@ -874,6 +876,390 @@ def calc_pts_won_obj(ppr_df, disp_player):
     opponent_points=int(opponent_points),
     attempts=int(attempts)
   )
+
+
+# ==============================================================================
+# RUN METRICS
+# ==============================================================================
+#
+# Derived from the PPR momentum-streak columns (streak_before_a/b,
+# streak_after_a/b -- see calc_momentum_streak() in btd_ppr_conversion.py).
+#
+# These are PAIR-level facts -- a run happens to the team on court, not to
+# either individual -- computed and stored per player through this same
+# player-keyed engine, the same way run_for_max/run_against_max (momentum,
+# above) already are. Both partners on a pair get identical values for
+# every metric in this section; there's no separate schema tag for this,
+# matching the existing momentum precedent.
+#
+# Every function below resolves player perspective exactly once, in
+# _resolve_run_perspective(), the same way _resolve_my_streak_before()
+# (server_functions.py) already does for streak_before alone, then reads
+# ONLY the resulting _player columns -- never streak_before_a/b or
+# streak_after_a/b directly. That's deliberate: an a/b branch repeated in
+# each function below would eventually get inverted in one of them without
+# looking wrong, and this way it can't.
+
+RUN_MIN = 3                    # run_burden/run_burden_for: min run length that counts as "a run"
+SIDEOUT_MIN_ATTEMPTS = 200     # sideout_rate/sideout_rate_opp: min receiving/serving points
+RUN_BURDEN_MIN_ATTEMPTS = 500  # run_burden/run_burden_for/run_burden_resid: min total points
+RUN_HAZARD_MIN_ATTEMPTS = 30   # run_hazard_k: min points entered at that streak value
+
+RUN_WON_OUTCOMES = ['TSA', 'FBK', 'TK']
+RUN_LOST_OUTCOMES = ['TSE', 'FBE', 'TE']
+
+
+def _resolve_run_perspective(ppr_df, disp_player):
+  """
+  Filter ppr_df to disp_player's own points and add on_a/on_b plus the two
+  perspective-resolved streak columns every run metric reads --
+  streak_before_player/streak_after_player -- so nothing downstream ever
+  branches on a/b again.
+
+  Mirrors _resolve_my_streak_before() (server_functions.py), extended to
+  streak_after and materialized as on_a/on_b + both _player columns on one
+  dataframe rather than a single Series, since the run metrics need several
+  of these together.
+  """
+  disp_player = disp_player.strip()
+
+  df = ppr_df[
+    (ppr_df['player_a1'].str.strip() == disp_player) |
+    (ppr_df['player_a2'].str.strip() == disp_player) |
+    (ppr_df['player_b1'].str.strip() == disp_player) |
+    (ppr_df['player_b2'].str.strip() == disp_player)
+  ].copy()
+
+  if len(df) == 0:
+    for col in ('on_a', 'on_b', 'streak_before_player', 'streak_after_player'):
+      df[col] = pd.Series(dtype=float)
+    return df
+
+  df['on_a'] = (df['player_a1'].str.strip() == disp_player) | (df['player_a2'].str.strip() == disp_player)
+  df['on_b'] = (df['player_b1'].str.strip() == disp_player) | (df['player_b2'].str.strip() == disp_player)
+  df['streak_before_player'] = np.where(
+    df['on_a'], df['streak_before_a'],
+    np.where(df['on_b'], df['streak_before_b'], np.nan)
+  )
+  df['streak_after_player'] = np.where(
+    df['on_a'], df['streak_after_a'],
+    np.where(df['on_b'], df['streak_after_b'], np.nan)
+  )
+  return df
+
+
+def _resolve_serve_side(df):
+  """
+  Which side served, resolved by matching serve_player against the four
+  player columns -- not against on_a/on_b, which is the RECEIVING player's
+  own side, resolved separately above. Returns (own_pair_served,
+  opp_pair_served, unresolved_count); points where serve_player doesn't
+  match any of the four columns are excluded from both booleans and counted
+  in unresolved_count so the caller can log it.
+  """
+  serve_is_a = (df['serve_player'] == df['player_a1']) | (df['serve_player'] == df['player_a2'])
+  serve_is_b = (df['serve_player'] == df['player_b1']) | (df['serve_player'] == df['player_b2'])
+  serve_resolved = serve_is_a | serve_is_b
+
+  own_pair_served = (df['on_a'] & serve_is_a) | (df['on_b'] & serve_is_b)
+  opp_pair_served = serve_resolved & ~own_pair_served
+  unresolved_count = int((~serve_resolved).sum())
+
+  return own_pair_served, opp_pair_served, unresolved_count
+
+
+def _pair_won_point(df, disp_player):
+  """
+  Same win/loss convention as calc_pts_won_obj() above: point_outcome_team
+  combined with point_outcome, not streak/score reconstruction, so this
+  works on any row subset. Returns (pair_won, classifiable) boolean Series.
+  """
+  player_is_outcome_team = df['point_outcome_team'].str.contains(disp_player, na=False, regex=False)
+  pair_won = (
+    (player_is_outcome_team & df['point_outcome'].isin(RUN_WON_OUTCOMES)) |
+    (~player_is_outcome_team & df['point_outcome'].isin(RUN_LOST_OUTCOMES))
+  )
+  classifiable = df['point_outcome'].isin(RUN_WON_OUTCOMES + RUN_LOST_OUTCOMES)
+  return pair_won, classifiable
+
+
+def sideout_rate_obj(ppr_df, disp_player):
+  """
+    Of the points the OPPONENT served, the fraction disp_player's pair won.
+
+    Returns:
+        Object (SimpleNamespace):
+            .sideout_rate (float | None): 0-1; None if there are no
+                classifiable receiving points
+            .attempts (int): classifiable receiving points (opponent
+                served, point_outcome resolves a winner) -- gate at
+                SIDEOUT_MIN_ATTEMPTS
+            .unresolved_server (int): points skipped (and logged) because
+                serve_player didn't match any of player_a1/a2/b1/b2
+  """
+  from types import SimpleNamespace
+
+  disp_player = disp_player.strip()
+  df = _resolve_run_perspective(ppr_df, disp_player)
+  if len(df) == 0:
+    return SimpleNamespace(sideout_rate=None, attempts=0, unresolved_server=0)
+
+  _, opp_pair_served, unresolved_count = _resolve_serve_side(df)
+  if unresolved_count:
+    log_error(
+      f"sideout_rate: {unresolved_count} of {len(df)} points for {disp_player} "
+      f"skipped -- serve_player did not match player_a1/a2/b1/b2"
+    )
+
+  receiving = df[opp_pair_served]
+  pair_won, classifiable = _pair_won_point(receiving, disp_player)
+  attempts = int(classifiable.sum())
+  sideout_rate = float(pair_won[classifiable].mean()) if attempts > 0 else None
+
+  return SimpleNamespace(
+    sideout_rate=sideout_rate,
+    attempts=attempts,
+    unresolved_server=unresolved_count
+  )
+
+
+def sideout_rate_opp_obj(ppr_df, disp_player):
+  """
+    Of the points THIS pair served, the fraction the opponent won.
+
+    Returns:
+        Object (SimpleNamespace):
+            .sideout_rate_opp (float | None): 0-1; None if there are no
+                classifiable serving points
+            .attempts (int): classifiable serving points -- gate at
+                SIDEOUT_MIN_ATTEMPTS
+            .unresolved_server (int): points skipped (and logged) because
+                serve_player didn't match any of player_a1/a2/b1/b2
+  """
+  from types import SimpleNamespace
+
+  disp_player = disp_player.strip()
+  df = _resolve_run_perspective(ppr_df, disp_player)
+  if len(df) == 0:
+    return SimpleNamespace(sideout_rate_opp=None, attempts=0, unresolved_server=0)
+
+  own_pair_served, _, unresolved_count = _resolve_serve_side(df)
+  if unresolved_count:
+    log_error(
+      f"sideout_rate_opp: {unresolved_count} of {len(df)} points for {disp_player} "
+      f"skipped -- serve_player did not match player_a1/a2/b1/b2"
+    )
+
+  serving = df[own_pair_served]
+  pair_won, classifiable = _pair_won_point(serving, disp_player)
+  attempts = int(classifiable.sum())
+  sideout_rate_opp = float((~pair_won[classifiable]).mean()) if attempts > 0 else None
+
+  return SimpleNamespace(
+    sideout_rate_opp=sideout_rate_opp,
+    attempts=attempts,
+    unresolved_server=unresolved_count
+  )
+
+
+def _add_run_final_length(df):
+  """
+  Add 'run_final_length': for every row, the largest abs(streak_after_player)
+  reached inside the run (maximal same-sign block of streak_after_player)
+  that row belongs to, computed separately within each (video_id, set) --
+  a run never crosses a set boundary since the streak resets to 0 there.
+
+  streak_update() (btd_ppr_conversion.py) only ever increments magnitude
+  while a run's sign holds and resets to 1 the instant it flips, so a run's
+  values are non-decreasing in magnitude across its own span -- its final
+  length is always its last value, and .max() over the block reads the same
+  thing while being simpler to reason about here.
+  """
+  df = df.copy()
+  df['run_final_length'] = np.nan
+
+  for _, idx in df.groupby(['video_id', 'set'], sort=False).groups.items():
+    group = df.loc[idx].sort_index()
+    signs = np.sign(group['streak_after_player'])
+    new_run = signs.ne(signs.shift(1))
+    run_id = new_run.cumsum()
+    final_length = group['streak_after_player'].abs().groupby(run_id).transform('max')
+    df.loc[group.index, 'run_final_length'] = final_length
+
+  return df
+
+
+def run_burden_obj(ppr_df, disp_player):
+  """
+    Points lost/won inside runs of RUN_MIN+ consecutive points, per 100
+    points.
+
+    A run is a maximal block of consecutive points, within one set, where
+    sign(streak_after_player) doesn't flip; its final length is the largest
+    abs(streak_after_player) reached inside it (_add_run_final_length).
+
+    Returns:
+        Object (SimpleNamespace):
+            .run_burden (float | None): 100 * (points with
+                streak_after_player < 0 inside a run whose final length >=
+                RUN_MIN) / total points; None if there are no points at all
+            .run_burden_for (float | None): same, streak_after_player > 0
+            .attempts (int): total points -- gate at RUN_BURDEN_MIN_ATTEMPTS
+                for both run_burden and run_burden_for
+  """
+  from types import SimpleNamespace
+
+  disp_player = disp_player.strip()
+  df = _resolve_run_perspective(ppr_df, disp_player)
+  total_points = len(df)
+  if total_points == 0:
+    return SimpleNamespace(run_burden=None, run_burden_for=None, attempts=0)
+
+  df = _add_run_final_length(df)
+  in_long_run = df['run_final_length'] >= RUN_MIN
+
+  burden_points = int(((df['streak_after_player'] < 0) & in_long_run).sum())
+  for_points = int(((df['streak_after_player'] > 0) & in_long_run).sum())
+
+  return SimpleNamespace(
+    run_burden=float(burden_points / total_points * 100.0),
+    run_burden_for=float(for_points / total_points * 100.0),
+    attempts=int(total_points)
+  )
+
+
+# rows = own side-out rate, cols = opponent side-out rate
+RUN_BURDEN_EXP_BREAKPOINTS = [0.50, 0.54, 0.58, 0.62, 0.66, 0.70, 0.74]
+RUN_BURDEN_EXP_GRID = np.array([
+  [23.6, 24.8, 25.5, 26.6, 27.0, 27.9, 28.4],
+  [20.0, 21.0, 21.7, 22.4, 23.4, 23.8, 24.3],
+  [16.7, 17.6, 18.3, 18.6, 19.2, 19.8, 20.5],
+  [13.7, 14.5, 14.8, 15.4, 16.0, 16.4, 16.6],
+  [11.0, 11.7, 11.9, 12.5, 12.7, 13.2, 13.5],
+  [ 8.6,  9.0,  9.1,  9.5,  9.8, 10.4, 10.4],
+  [ 6.3,  6.6,  7.1,  7.2,  7.4,  7.6,  8.0],
+])
+
+
+def _grid_bracket(value, breakpoints):
+  """
+  Clamp value into [breakpoints[0], breakpoints[-1]] (rather than
+  extrapolate) and return (lo_index, hi_index, fraction from lo to hi) for
+  linear interpolation. fraction lands on exactly 0.0 or 1.0 at any
+  breakpoint, including the last one, so a lookup at a grid point returns
+  that cell with no interpolation drift.
+  """
+  clamped = min(max(value, breakpoints[0]), breakpoints[-1])
+  hi = 1
+  while hi < len(breakpoints) - 1 and breakpoints[hi] < clamped:
+    hi += 1
+  lo = hi - 1
+  span = breakpoints[hi] - breakpoints[lo]
+  fraction = (clamped - breakpoints[lo]) / span if span else 0.0
+  return lo, hi, fraction
+
+
+def _run_burden_exp_lookup(own_sideout, opp_sideout):
+  """Bilinear interpolation of RUN_BURDEN_EXP_GRID at (own_sideout,
+  opp_sideout), clamped to the grid range rather than extrapolated."""
+  row_lo, row_hi, row_frac = _grid_bracket(own_sideout, RUN_BURDEN_EXP_BREAKPOINTS)
+  col_lo, col_hi, col_frac = _grid_bracket(opp_sideout, RUN_BURDEN_EXP_BREAKPOINTS)
+
+  top = (RUN_BURDEN_EXP_GRID[row_lo, col_lo]
+         + (RUN_BURDEN_EXP_GRID[row_lo, col_hi] - RUN_BURDEN_EXP_GRID[row_lo, col_lo]) * col_frac)
+  bottom = (RUN_BURDEN_EXP_GRID[row_hi, col_lo]
+            + (RUN_BURDEN_EXP_GRID[row_hi, col_hi] - RUN_BURDEN_EXP_GRID[row_hi, col_lo]) * col_frac)
+  return float(top + (bottom - top) * row_frac)
+
+
+def run_burden_exp_obj(ppr_df, disp_player):
+  """
+    Expected run_burden looked up from RUN_BURDEN_EXP_GRID given this
+    pair's own and opponent side-out rates, bilinearly interpolated.
+
+    Calls sideout_rate_obj/sideout_rate_opp_obj directly as plain functions
+    rather than reading their metric_dictionary rows' results, so this
+    bypasses the dictionary engine's generic attempts_path gating --
+    SIDEOUT_MIN_ATTEMPTS is re-checked explicitly here for that reason
+    (both side-out rates must be present, per spec).
+
+    Returns:
+        Object (SimpleNamespace):
+            .run_burden_exp (float | None): None unless both side-out
+                rates clear SIDEOUT_MIN_ATTEMPTS
+            .attempts (int): the smaller of the two side-out attempt
+                counts, exposed for explainability even when None (e.g.
+                AI narration can say why it's missing)
+  """
+  from types import SimpleNamespace
+
+  so = sideout_rate_obj(ppr_df, disp_player)
+  so_opp = sideout_rate_opp_obj(ppr_df, disp_player)
+  attempts = min(so.attempts, so_opp.attempts)
+
+  if (so.sideout_rate is None or so_opp.sideout_rate_opp is None
+      or so.attempts < SIDEOUT_MIN_ATTEMPTS or so_opp.attempts < SIDEOUT_MIN_ATTEMPTS):
+    return SimpleNamespace(run_burden_exp=None, attempts=attempts)
+
+  value = _run_burden_exp_lookup(so.sideout_rate, so_opp.sideout_rate_opp)
+  return SimpleNamespace(run_burden_exp=value, attempts=attempts)
+
+
+def run_burden_resid_obj(ppr_df, disp_player):
+  """
+    run_burden - run_burden_exp -- the part of a pair's run_burden not
+    explained by how often each side sides out. This is the one meant for
+    coaching output; raw run_burden is confounded by opponent strength (see
+    run_burden_obj).
+
+    Returns:
+        Object (SimpleNamespace):
+            .run_burden_resid (float | None): None unless both run_burden
+                and run_burden_exp are available
+            .attempts (int): total points (same denominator as
+                run_burden) -- gate at RUN_BURDEN_MIN_ATTEMPTS
+  """
+  from types import SimpleNamespace
+
+  rb = run_burden_obj(ppr_df, disp_player)
+  exp = run_burden_exp_obj(ppr_df, disp_player)
+
+  if rb.run_burden is None or exp.run_burden_exp is None:
+    return SimpleNamespace(run_burden_resid=None, attempts=rb.attempts)
+
+  return SimpleNamespace(
+    run_burden_resid=float(rb.run_burden - exp.run_burden_exp),
+    attempts=rb.attempts
+  )
+
+
+def run_hazard_obj(ppr_df, disp_player, k):
+  """
+    Of the points entered at streak_before_player == -k, the percent where
+    streak_after_player < 0 (the run extended rather than broke).
+
+    Args:
+        k (int): magnitude of the losing streak entering the point (pass
+            1, 2, or 3 for run_hazard_1/2/3)
+
+    Returns:
+        Object (SimpleNamespace):
+            .run_hazard (float | None): 0-100; None if no points were
+                entered at streak_before_player == -k
+            .attempts (int): points entered at that streak value -- gate
+                at RUN_HAZARD_MIN_ATTEMPTS
+  """
+  from types import SimpleNamespace
+
+  disp_player = disp_player.strip()
+  df = _resolve_run_perspective(ppr_df, disp_player)
+  entered = df[df['streak_before_player'] == -k]
+  attempts = len(entered)
+  if attempts == 0:
+    return SimpleNamespace(run_hazard=None, attempts=0)
+
+  extended = int((entered['streak_after_player'] < 0).sum())
+  return SimpleNamespace(run_hazard=float(extended / attempts * 100.0), attempts=int(attempts))
 
 
 # ==============================================================================
