@@ -63,6 +63,14 @@ db_schema:
       client_hidden: false
       name: days_before
       type: number
+    - admin_ui: {order: 15, width: 200}
+      client_hidden: false
+      name: streak_for
+      type: number
+    - admin_ui: {order: 16, width: 200}
+      client_hidden: false
+      name: streak_against
+      type: number
     indexes: []
     server: full
     title: ai_export_dataset_list
