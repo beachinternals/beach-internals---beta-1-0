@@ -1305,6 +1305,8 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
       days_before    = ds_row['days_before']       # e.g. 7, or None
       ds_date_start  = ds_row['date_start']        # dataset-level override, or ''
       ds_date_end    = ds_row['date_end']          # dataset-level override, or ''
+      streak_for     = ds_row['streak_for']        # min winning-streak length, or None
+      streak_against = ds_row['streak_against']    # min losing-streak length, or None
 
       log_info(f"  Processing dataset: {ds_name} (type={ds_type}, fn={function_name})")
 
@@ -1315,6 +1317,14 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
         # Apply comp_l1 filter if specified (e.g. 'Regular Season')
         if comp_l1:
           ds_filters['comp_l1'] = comp_l1
+
+        # Apply momentum-streak filter if specified -- 'player' is already
+        # in base_filters, which is what lets filter_ppr_df resolve which of
+        # streak_before_a/streak_before_b belongs to this player
+        if streak_for:
+          ds_filters['streak_for'] = streak_for
+        if streak_against:
+          ds_filters['streak_against'] = streak_against
 
         # Apply days_before filter if specified (e.g. last 7 days)
         if days_before:

@@ -2348,6 +2348,22 @@ def initialize_report_lists( calling_function_name, **rpt_filters) :
   return title_list, label_list, image_list, df_list
 
 
+def _resolve_my_streak_before(df, player_name):
+  # streak_before is stored once in the ppr data, signed from team A's
+  # perspective (streak_before_a) plus its exact negation (streak_before_b)
+  # -- see calc_momentum_streak() in btd_ppr_conversion.py. Pick whichever
+  # column belongs to this player, per row. A row where the player isn't
+  # part of that match at all is left NaN, so a >=/<= comparison naturally
+  # drops it rather than guessing a side.
+  player_name = player_name.strip()
+  is_team_a = (df['player_a1'].str.strip() == player_name) | (df['player_a2'].str.strip() == player_name)
+  is_team_b = (df['player_b1'].str.strip() == player_name) | (df['player_b2'].str.strip() == player_name)
+  my_streak_before = pd.Series(float('nan'), index=df.index)
+  my_streak_before[is_team_a] = df.loc[is_team_a, 'streak_before_a']
+  my_streak_before[is_team_b] = df.loc[is_team_b, 'streak_before_b']
+  return my_streak_before
+
+
 def filter_ppr_df( dataframe, **kwargs):
   # given the dataframe, filter it by rpt_filters
   """
@@ -2358,7 +2374,13 @@ def filter_ppr_df( dataframe, **kwargs):
     Returns:
         Filtered DataFrame
 
-    This function DOES NOT filter on a given pair or player.  This needs to be done by the report function
+    This function DOES NOT filter on a given pair or player, with one
+    exception: streak_for/streak_against need to know which player they're
+    computed for, so they read 'player' out of kwargs if present (set
+    alongside them by the caller) purely to resolve which of
+    streak_before_a/streak_before_b belongs to that player. They still don't
+    restrict rows to that player's matches -- that's still the report
+    function's job.
 
     This function filters on:
       comp_l1
@@ -2376,6 +2398,8 @@ def filter_ppr_df( dataframe, **kwargs):
       set touch type (bump, hand, unknown)
       att_height low & high
       att_speed low & high
+      streak_for      -- min length of an active winning streak (streak_before >= value)
+      streak_against  -- min length of an active losing streak (streak_before <= -value)
     """
   result = dataframe.copy()  # Avoid modifying the original DataFrame
   for column, value in kwargs.items():
@@ -2458,6 +2482,24 @@ def filter_ppr_df( dataframe, **kwargs):
       result = result[ result['att_speed'] >= value ]
     if column == 'att_speed_high':
       result = result[ result['att_speed'] <= value ]
+
+    # momentum streak -- needs 'player' (also present in kwargs) to know
+    # which of streak_before_a/streak_before_b belongs to this player
+    if column == 'streak_for':
+      player_name = kwargs.get('player')
+      if not player_name:
+        log_error("filter_ppr_df: streak_for filter requested but no 'player' in kwargs -- skipping")
+      else:
+        my_streak_before = _resolve_my_streak_before(result, player_name)
+        result = result[ my_streak_before >= float(value) ]
+
+    if column == 'streak_against':
+      player_name = kwargs.get('player')
+      if not player_name:
+        log_error("filter_ppr_df: streak_against filter requested but no 'player' in kwargs -- skipping")
+      else:
+        my_streak_before = _resolve_my_streak_before(result, player_name)
+        result = result[ my_streak_before <= -float(value) ]
 
 
     #result = result[result[column] == value]
