@@ -2398,8 +2398,10 @@ def filter_ppr_df( dataframe, **kwargs):
       set touch type (bump, hand, unknown)
       att_height low & high
       att_speed low & high
-      streak_for      -- min length of an active winning streak (streak_before >= value)
-      streak_against  -- min length of an active losing streak (streak_before <= -value)
+      streak_for      -- exact signed threshold (streak_before >= value); pass
+                         a positive value, e.g. streak_for=3
+      streak_against  -- exact signed threshold (streak_before <= value); pass
+                         a negative value yourself, e.g. streak_against=-3
     """
   result = dataframe.copy()  # Avoid modifying the original DataFrame
   for column, value in kwargs.items():
@@ -2499,7 +2501,7 @@ def filter_ppr_df( dataframe, **kwargs):
         log_error("filter_ppr_df: streak_against filter requested but no 'player' in kwargs -- skipping")
       else:
         my_streak_before = _resolve_my_streak_before(result, player_name)
-        result = result[ my_streak_before <= -float(value) ]
+        result = result[ my_streak_before <= float(value) ]
 
 
     #result = result[result[column] == value]

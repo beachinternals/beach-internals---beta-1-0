@@ -1305,8 +1305,8 @@ def generate_player_markdown(league, team, player, date_start=None, date_end=Non
       days_before    = ds_row['days_before']       # e.g. 7, or None
       ds_date_start  = ds_row['date_start']        # dataset-level override, or ''
       ds_date_end    = ds_row['date_end']          # dataset-level override, or ''
-      streak_for     = ds_row['streak_for']        # min winning-streak length, or None
-      streak_against = ds_row['streak_against']    # min losing-streak length, or None
+      streak_for     = ds_row['streak_for']        # exact signed threshold, e.g. 3, or None
+      streak_against = ds_row['streak_against']    # exact signed threshold, e.g. -3, or None
 
       log_info(f"  Processing dataset: {ds_name} (type={ds_type}, fn={function_name})")
 
