@@ -1484,8 +1484,8 @@ db_schema:
       client_hidden: null
       name: emailto
       type: string
-    - admin_ui: {width: 200}
-      client_hidden: null
+    - admin_ui: {order: 1.25, width: 200}
+      client_hidden: false
       name: report_description
       type: string
     - admin_ui: {width: 98}
