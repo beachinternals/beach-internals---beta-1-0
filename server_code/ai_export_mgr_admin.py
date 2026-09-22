@@ -102,7 +102,11 @@ def list_ai_exports():
     rows = list(app_tables.ai_export_mgr.search())
   else:
     rows = list(app_tables.ai_export_mgr.search(team=user['team']))
-  rows.sort(key=lambda r: (r['Note'] or '').lower())
+  rows.sort(key=lambda r: (
+    r['team'] or '',
+    0 if not r['disabled'] else 1,
+    (r['Note'] or '').lower(),
+  ))
   return rows
 
 

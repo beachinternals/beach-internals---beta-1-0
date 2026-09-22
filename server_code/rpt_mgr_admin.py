@@ -103,7 +103,11 @@ def list_rpt_mgr_reports():
     rows = list(app_tables.rpt_mgr.search())
   else:
     rows = list(app_tables.rpt_mgr.search(team=user['team']))
-  rows.sort(key=lambda r: (r['report_description'] or '').lower())
+  rows.sort(key=lambda r: (
+    r['team'] or '',
+    0 if r['active'] == 'Yes' else 1,
+    (r['report_description'] or '').lower(),
+  ))
   return rows
 
 
