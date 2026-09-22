@@ -11,7 +11,7 @@ import datetime
 from ..btd_form_helpers import (
   parse_lgy, format_lgy, get_league_items,
   get_comp_l1_items, get_comp_l2_items, get_comp_l3_items,
-  get_venue_items, get_ppr_player_list
+  get_venue_items, get_ppr_player_list, find_duplicate_selection
 )
 
 
@@ -61,6 +61,9 @@ class btd_import(btd_importTemplate):
 
     # set comp_l3 data:
     self.comp_l3_drop_down.items = get_comp_l3_items(disp_league)
+
+    # set venue data:
+    self.venue_drop_down.items = get_venue_items(disp_league)
 
     # Set the drop down for the ppr players
     ppr_player_list = get_ppr_player_list(disp_league, disp_gender, disp_year)
@@ -138,6 +141,26 @@ class btd_import(btd_importTemplate):
     # first off, a little data check:
     if not self.date_picker.date:
       alert("Please enter a valid date for this Match")
+      return
+
+    dup = find_duplicate_selection([
+      self.btd_playera1_drop_down.selected_value,
+      self.btd_playera2_drop_down.selected_value,
+      self.btd_playerb1_drop_down.selected_value,
+      self.btd_playerb2_drop_down.selected_value,
+    ])
+    if dup:
+      alert(f'"{dup}" is selected for more than one BTD player. Each BTD player can only be mapped once.')
+      return
+
+    dup = find_duplicate_selection([
+      self.ppr_playera1_drop_down.selected_value,
+      self.ppr_playera2_drop_down.selected_value,
+      self.ppr_playerb1_drop_down.selected_value,
+      self.ppr_playerb2_drop_down.selected_value,
+    ])
+    if dup:
+      alert(f'"{dup}" is selected for more than one master player mapping. Each player can only be mapped once.')
       return
 
     # let's check if the private tag looks correct

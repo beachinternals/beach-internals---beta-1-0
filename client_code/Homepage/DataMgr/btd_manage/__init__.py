@@ -7,7 +7,8 @@ from anvil.tables import app_tables
 from ..btd_form_helpers import (
   parse_lgy, format_lgy, get_league_items,
   get_comp_l1_items, get_comp_l2_items, get_comp_l3_items,
-  get_venue_items, get_ppr_player_list, unpack_btd_statistics
+  get_venue_items, get_ppr_player_list, unpack_btd_statistics,
+  find_duplicate_selection
 )
 
 
@@ -265,6 +266,26 @@ class btd_manage(btd_manageTemplate):
       return
     if not self.edit_venue_dropdown.selected_value:
       alert("Please select a venue for this match.")
+      return
+
+    dup = find_duplicate_selection([
+      self.btd_playera1_dropdown.selected_value,
+      self.btd_playera2_dropdown.selected_value,
+      self.btd_playerb1_dropdown.selected_value,
+      self.btd_playerb2_dropdown.selected_value,
+    ])
+    if dup:
+      alert(f'"{dup}" is selected for more than one BTD player. Each BTD player can only be mapped once.')
+      return
+
+    dup = find_duplicate_selection([
+      self.ppr_playera1_dropdown.selected_value,
+      self.ppr_playera2_dropdown.selected_value,
+      self.ppr_playerb1_dropdown.selected_value,
+      self.ppr_playerb2_dropdown.selected_value,
+    ])
+    if dup:
+      alert(f'"{dup}" is selected for more than one master player mapping. Each player can only be mapped once.')
       return
 
     fields = {

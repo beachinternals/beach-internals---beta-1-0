@@ -154,14 +154,27 @@ def update_btd_characteristics( file ):
 
   # check if the dataframe has a field called team
   if 'team' in btd_df.columns:
-    # fill nan with '' in team and player
-    btd_df = btd_df.fillna({'team':str('NOTEAM'),'player':str('NOPLAYER')})
-    # this must be a new actions file,, so we will rename 'player' to 'only_player', then merge team and player and store it in a new 'player' column
-    btd_df = btd_df.rename(columns={'player':'only_player'})
-    btd_df['player'] = btd_df['team'].astype(str)+' ' + btd_df['only_player'].astype(str)
-    #btd_df['player'] = np.where( ('NOTEAM' in btd_df['player']) or ('NOPLAYER' in btd_df['player'] ), '', btd_df['player'] )
-    # we should be good, let's check
-    #print(f"BTD Fields of interest: {btd_df['team']}, {btd_df['only_player']}, {btd_df['player']}")
+    btd_df = btd_df.fillna({'team':str('NOTEAM')})
+    # Strip stray whitespace so the same real player doesn't get counted as
+    # two distinct players below just because Balltime padded one row's name
+    # differently (e.g. a trailing space) than another row for the same person.
+    btd_df['team'] = btd_df['team'].astype(str).str.strip()
+    if 'only_player' in btd_df.columns:
+      # CSV was already processed (e.g. re-uploaded as a replacement file) --
+      # only_player and player columns are already correct. Just ensure no
+      # NaN in player. Renaming 'player' to 'only_player' again here would
+      # collide with the existing only_player column and produce duplicate
+      # column labels, which blows up the team+only_player concat below.
+      btd_df = btd_df.fillna({'player':str('NOTEAM NOPLAYER')})
+      btd_df['player'] = btd_df['player'].astype(str).str.strip()
+    else:
+      # this must be a new actions file,, so we will rename 'player' to 'only_player', then merge team and player and store it in a new 'player' column
+      btd_df = btd_df.fillna({'player':str('NOPLAYER')})
+      btd_df = btd_df.rename(columns={'player':'only_player'})
+      btd_df['only_player'] = btd_df['only_player'].astype(str).str.strip()
+      btd_df['player'] = btd_df['team'] + ' ' + btd_df['only_player']
+    # Reset index to prevent duplicate label errors from new BTD columns
+    btd_df = btd_df.reset_index(drop=True)
 
   # Calculate number of actions
   num_actions = int(btd_df.shape[0])
@@ -218,6 +231,17 @@ def update_btd_characteristics( file ):
 
     players_unique = tmp_players
     print(f"Number of players reduced to:{players_unique.shape[0]} players are: {players_unique}")
+
+    if len(players_unique) > 4:
+      # A beach match only ever has 4 players -- more than that means a real
+      # data problem (e.g. the same player recorded under two slightly
+      # different names). Surface it instead of silently keeping only the
+      # first 4 (alphabetically) and dropping a real player unnoticed.
+      return None, None, (
+        f"Found {len(players_unique)} distinct players in this file, but a match should have "
+        f"exactly 4: {', '.join(players_unique)}. Check for duplicate or misspelled player names "
+        f"in Balltime and re-export."
+      )
 
     while len(players_unique) <4:
       # if we are less then 4, then add a row

@@ -47,7 +47,10 @@ def get_comp_l3_items(league):
 
 
 def get_venue_items(league):
-  return [(row['venue_name'], row) for row in app_tables.venue.search(venue_league=league)]
+  """Venue options for this league, sorted alphabetically by venue_name."""
+  venues = [(row['venue_name'], row) for row in app_tables.venue.search(venue_league=league)]
+  venues.sort(key=lambda item: (item[0] or '').lower())
+  return venues
 
 
 def get_ppr_player_list(league, gender, year):
@@ -58,6 +61,23 @@ def get_ppr_player_list(league, gender, year):
   ]
   players.sort()
   return players
+
+
+def find_duplicate_selection(values):
+  """
+  First value in `values` that also appears earlier in `values`, ignoring
+  None/unselected entries -- used to catch the same BTD or master_player
+  player picked for more than one of the four player-mapping dropdowns.
+  Returns None if there's no duplicate.
+  """
+  seen = set()
+  for value in values:
+    if value is None:
+      continue
+    if value in seen:
+      return value
+    seen.add(value)
+  return None
 
 
 def unpack_btd_statistics(statistics, cleaned_csv, filename):
