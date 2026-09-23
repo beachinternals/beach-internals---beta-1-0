@@ -221,7 +221,11 @@ def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
     cache_key = (league, gender, str(year)) if team == 'INTERNALS' else None
 
     if cache_key is not None and _internals_league_ppr_cache['key'] == cache_key:
-      combined_df = _internals_league_ppr_cache['df'].copy()
+      # No .copy() here: filter_ppr_df() below makes its own defensive copy
+      # before it filters, and nothing else mutates this frame in place, so
+      # sharing the cached object directly avoids doubling a very large
+      # dataframe in memory (this path was OOM-killing the export worker).
+      combined_df = _internals_league_ppr_cache['df']
       log_info(f"Using cached re-identified League PPR for {league}/{gender}/{year} ({len(combined_df)} points)")
     else:
       log_info(f"Loading PPR data for {league}/{gender}/{year}/team={team} (fetch_team={fetch_team}, scout={not skip_scout})...")
@@ -285,8 +289,11 @@ def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
         combined_df = reidentify_ppr(combined_df, league, gender, str(year))
 
       if cache_key is not None:
+        # No .copy() here either — see note above; combined_df isn't mutated
+        # again before filter_ppr_df() copies it, so storing the same object
+        # avoids a third full-dataframe copy at the peak-memory moment.
         _internals_league_ppr_cache['key'] = cache_key
-        _internals_league_ppr_cache['df'] = combined_df.copy()
+        _internals_league_ppr_cache['df'] = combined_df
 
     # Step 3: Apply filters
     log_info("Applying filters...")
