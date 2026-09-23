@@ -20,6 +20,11 @@
         <anvil-component type="DropDown" name="dow_dropdown"></anvil-component>
         <anvil-component type="CheckBox" name="enabled_checkbox" prop:text="Enabled" prop:checked="true" prop:spacing='{"padding":[null,null,null,"20"]}'></anvil-component>
       </anvil-component>
+      <anvil-component type="FlowPanel" name="internals_only_flow" prop:spacing_above="small" prop:visible="false">
+        <anvil-component type="CheckBox" name="de_identified_checkbox" prop:text="De-identified" prop:checked="true"></anvil-component>
+        <anvil-component type="Label" name="output_location_label" prop:text="Output Location:" prop:spacing='{"padding":[null,null,null,"20"]}'></anvil-component>
+        <anvil-component type="DropDown" name="output_location_dropdown"></anvil-component>
+      </anvil-component>
       <anvil-component type="Label" name="players_title" prop:role="title" prop:text="Players" prop:spacing_above="small"></anvil-component>
       <anvil-component type="anvil_extras.MultiSelectDropDown" name="player_select" prop:placeholder="All players in this league" prop:enable_filtering="true" prop:enable_select_all="true" prop:multiple="true" prop:width="100%"></anvil-component>
       <anvil-component type="Label" name="datasets_title" prop:role="title" prop:text="Datasets" prop:spacing_above="small"></anvil-component>

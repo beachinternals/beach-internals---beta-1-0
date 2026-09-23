@@ -10,8 +10,12 @@ from ..btd_form_helpers import format_lgy, parse_lgy, get_league_items
 # update/delete call is routed through server_code/ai_export_mgr_admin.py,
 # which scopes everything to the logged-in user's own team.
 #
-# export_type, user_email, de_identified, ai_optimized, and output_location
-# are not exposed here -- they're always set to fixed values server-side.
+# export_type and user_email are not exposed here -- they're always set to
+# fixed values server-side. ai_optimized is always True. de_identified and
+# output_location are only editable by INTERNALS users (internals_only_flow);
+# everyone else gets the fixed defaults (de_identified=True,
+# output_location='data_table') enforced server-side regardless of what's
+# sent, since the field being hidden client-side isn't itself a guarantee.
 #
 # player_select / dataset_select are anvil_extras.MultiSelectDropDown --
 # their own "selected" property is the source of truth, keyed by each
@@ -19,6 +23,7 @@ from ..btd_form_helpers import format_lgy, parse_lgy, get_league_items
 # row for datasets), so there's no separate selection-tracking dict here.
 
 DOW_CHOICES = ['Everyday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+OUTPUT_LOCATION_CHOICES = [('Data Table', 'data_table'), ('Google Drive', 'drive')]
 
 
 class ai_export_mgr(ai_export_mgrTemplate):
@@ -45,9 +50,11 @@ class ai_export_mgr(ai_export_mgrTemplate):
 
   def init_form(self):
     self.team_label.text = self.user['team']
+    self.internals_only_flow.visible = self.user['team'] == 'INTERNALS'
     if self.user['team'] == 'INTERNALS':
       self.list_title.text = "All Teams' Exports"
     self.dow_dropdown.items = DOW_CHOICES
+    self.output_location_dropdown.items = OUTPUT_LOCATION_CHOICES
 
     self.lgy_dropdown.items = get_league_items(self.user['team'])
     default_lgy = format_lgy(self.user['def_league'], self.user['def_gender'], self.user['def_year'])
@@ -102,6 +109,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
     self.note_box.text = ""
     self.dow_dropdown.selected_value = None
     self.enabled_checkbox.checked = True
+    self.de_identified_checkbox.checked = True
+    self.output_location_dropdown.selected_value = 'data_table'
     self.player_select.selected = []
     self.dataset_select.selected = []
     self.delete_button.visible = False
@@ -115,6 +124,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
     self.note_box.text = item['Note'] or ''
     self.dow_dropdown.selected_value = item['dow']
     self.enabled_checkbox.checked = not item['disabled']
+    self.de_identified_checkbox.checked = item['de_identified']
+    self.output_location_dropdown.selected_value = item['output_location'] or 'data_table'
 
     self.lgy_dropdown.selected_value = self._lgy_for_item(item)
     self.refresh_player_choices()
@@ -183,6 +194,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
       self.player_select.selected,
       self.dataset_select.selected,
       not self.enabled_checkbox.checked,
+      self.de_identified_checkbox.checked,
+      self.output_location_dropdown.selected_value,
     )
     if not result['success']:
       alert(result['message'])
@@ -203,6 +216,8 @@ class ai_export_mgr(ai_export_mgrTemplate):
       self.player_select.selected,
       self.dataset_select.selected,
       not self.enabled_checkbox.checked,
+      self.de_identified_checkbox.checked,
+      self.output_location_dropdown.selected_value,
     )
     if not result['success']:
       alert(result['message'])

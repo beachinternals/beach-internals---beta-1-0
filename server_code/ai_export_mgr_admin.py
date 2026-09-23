@@ -12,13 +12,17 @@ from ai_export_manager import _require_own_team, _validate_league_params
 # delete their own team's ai_export_mgr rows.
 #
 # Several ai_export_mgr columns are not exposed in the UI and are always set
-# here to a fixed value: export_type='markdown', de_identified=True,
-# ai_optimized=True, output_location='data_table'. Progress columns
-# (status, created_at, started_at, completed_at, files_generated, file_list,
-# result_message) are owned by ai_export_manager's background job and are
-# never written here except created_at/files_generated on initial add.
+# here to a fixed value: export_type='markdown', ai_optimized=True.
+# de_identified and output_location are only editable by INTERNALS users (the
+# client hides those controls for everyone else) -- enforced here too, since
+# a hidden client control isn't itself a guarantee against a direct server call.
+# Progress columns (status, created_at, started_at, completed_at,
+# files_generated, file_list, result_message) are owned by
+# ai_export_manager's background job and are never written here except
+# created_at/files_generated on initial add.
 
 DOW_CHOICES = ['Everyday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+OUTPUT_LOCATION_CHOICES = ['data_table', 'drive']
 
 
 def _require_login():
@@ -29,6 +33,18 @@ def _require_login():
   if not user['team']:
     raise Exception("Your account is not assigned to a team. Please contact Beach Internals.")
   return user
+
+
+def _resolve_internals_only_fields(user, de_identified, output_location):
+  """
+  de_identified and output_location are only editable by INTERNALS users --
+  everyone else always gets the fixed defaults, regardless of what's passed in.
+  """
+  if user['team'] != 'INTERNALS':
+    return True, 'data_table'
+  if output_location not in OUTPUT_LOCATION_CHOICES:
+    output_location = 'data_table'
+  return bool(de_identified), output_location
 
 
 def _export_field_error(note, dow, datasets_included):
@@ -111,7 +127,7 @@ def list_ai_exports():
 
 
 @anvil.server.callable
-def add_ai_export(league, note, dow, player_filter_ids, datasets_included, disabled):
+def add_ai_export(league, note, dow, player_filter_ids, datasets_included, disabled, de_identified=True, output_location='data_table'):
   user = _require_login()
 
   note = (note or '').strip()
@@ -119,6 +135,8 @@ def add_ai_export(league, note, dow, player_filter_ids, datasets_included, disab
   if error:
     return error
   _validate_league_params(league=league, team=user['team'])
+
+  de_identified, output_location = _resolve_internals_only_fields(user, de_identified, output_location)
 
   player_rows = [r for r in (app_tables.master_player.get_by_id(pid) for pid in (player_filter_ids or [])) if r]
 
@@ -131,10 +149,10 @@ def add_ai_export(league, note, dow, player_filter_ids, datasets_included, disab
     player_filter=player_rows,  # type: ignore[reportArgumentType]  -- link_multiple accepts any list of rows, stub is overly narrow
     datasets_included=datasets_included,
     user_email=user['email'],
-    de_identified=True,
+    de_identified=de_identified,
     disabled=bool(disabled),
     ai_optimized=True,
-    output_location='data_table',
+    output_location=output_location,
     created_at=datetime.now(),
     files_generated=0,
   )
@@ -142,8 +160,8 @@ def add_ai_export(league, note, dow, player_filter_ids, datasets_included, disab
 
 
 @anvil.server.callable
-def update_ai_export(export_id, league, note, dow, player_filter_ids, datasets_included, disabled):
-  _require_login()
+def update_ai_export(export_id, league, note, dow, player_filter_ids, datasets_included, disabled, de_identified=True, output_location='data_table'):
+  user = _require_login()
 
   row = app_tables.ai_export_mgr.get_by_id(export_id)
   if not row:
@@ -156,6 +174,8 @@ def update_ai_export(export_id, league, note, dow, player_filter_ids, datasets_i
     return error
   _validate_league_params(league=league, team=row['team'])
 
+  de_identified, output_location = _resolve_internals_only_fields(user, de_identified, output_location)
+
   player_rows = [r for r in (app_tables.master_player.get_by_id(pid) for pid in (player_filter_ids or [])) if r]
 
   row.update(
@@ -165,6 +185,8 @@ def update_ai_export(export_id, league, note, dow, player_filter_ids, datasets_i
     player_filter=player_rows,  # type: ignore[reportArgumentType]  -- link_multiple accepts any list of rows, stub is overly narrow
     datasets_included=datasets_included,
     disabled=bool(disabled),
+    de_identified=de_identified,
+    output_location=output_location,
   )
   return {'success': True, 'message': f'Export "{note}" updated.'}
 
