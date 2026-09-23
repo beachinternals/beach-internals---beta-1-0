@@ -12,13 +12,7 @@ import anvil.server
 import pandas as pd
 import io
 import math
-import resource
 from datetime import datetime, timedelta, date
-
-def _log_mem(label):
-  """Temporary diagnostic: print rows and process RSS to pinpoint OOM crashes."""
-  rss_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-  print(f"  [mem] {label}: RSS={rss_mb:.0f} MB")
 
 # This is a server module. It runs on the Anvil server,
 # rather than in the user's browser.
@@ -177,24 +171,19 @@ def reidentify_ppr(ppr_df, league, gender, year):
 
   n_mapped = len(to_name)
   print(f"  reidentify_ppr: {n_mapped} players in substitution map")
-  _log_mem("after building substitution map")
 
   if n_mapped == 0:
     print(f"  reidentify_ppr: WARNING — no players found for {league} {gender} {year}, skipping")
     return ppr_df
 
-  print(f"  reidentify_ppr: input frame has {len(ppr_df)} rows, {len(ppr_df.columns)} columns")
-
   # Reset index to ensure unique integer index (concat can create duplicates)
   ppr_df = ppr_df.reset_index(drop=True)
-  _log_mem("after reset_index")
 
   # Step 1 — Capture original (de-identified) team strings BEFORE any substitution
   orig_teama = (ppr_df['player_a1'].fillna('') + ' ' + ppr_df['player_a2'].fillna('')
                 if 'player_a1' in ppr_df.columns else pd.Series('', index=ppr_df.index))
   orig_teamb = (ppr_df['player_b1'].fillna('') + ' ' + ppr_df['player_b2'].fillna('')
                 if 'player_b1' in ppr_df.columns else pd.Series('', index=ppr_df.index))
-  _log_mem("after capturing orig_teama/orig_teamb")
 
   # Step 2 — Substitute individual player name columns
   player_cols = [
@@ -215,17 +204,14 @@ def reidentify_ppr(ppr_df, league, gender, year):
     n_replaced += int((is_plyr & matched).sum())
     n_not_found += int((is_plyr & ~matched).sum())
     ppr_df[col] = col_series.replace(to_name)
-    _log_mem(f"after substituting column '{col}'")
 
   print(f"  reidentify_ppr: {n_replaced} player substitutions, {n_not_found} uuids not in map")
-  _log_mem("after Step 2 (all player columns substituted)")
 
   # Step 3 — Rebuild teama and teamb from substituted player columns
   for team_col, p1_col, p2_col in [('teama', 'player_a1', 'player_a2'),
                                    ('teamb', 'player_b1', 'player_b2')]:
     if all(c in ppr_df.columns for c in [team_col, p1_col, p2_col]):
       ppr_df[team_col] = ppr_df[p1_col].fillna('') + ' ' + ppr_df[p2_col].fillna('')
-  _log_mem("after Step 3 (rebuilt teama/teamb)")
 
   # Step 4 — Remap point_outcome_team using original team strings captured in Step 1
   if 'point_outcome_team' in ppr_df.columns:
@@ -233,7 +219,6 @@ def reidentify_ppr(ppr_df, league, gender, year):
     remapped = outcome.where(outcome != orig_teama, ppr_df['teama'])
     remapped = remapped.where(outcome != orig_teamb, ppr_df['teamb'])
     ppr_df['point_outcome_team'] = remapped
-  _log_mem("after Step 4 (remapped point_outcome_team)")
 
   return ppr_df
 

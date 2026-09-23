@@ -18,20 +18,9 @@ import json
 from datetime import datetime
 import hashlib
 import io
-import resource
 
 # Import your logging utilities
 from logger_utils import log_info, log_error, log_debug, log_critical
-
-_last_logged_rss = [0.0]
-
-def _log_mem(label):
-  """Temporary diagnostic: print process peak RSS, but only when it actually
-  moves, to stay well under the background-task log size limit."""
-  rss_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-  if rss_mb != _last_logged_rss[0]:
-    print(f"  [mem] {label}: RSS={rss_mb:.0f} MB (was {_last_logged_rss[0]:.0f})")
-    _last_logged_rss[0] = rss_mb
 
 # ============================================================================
 #  AUTH HELPERS
@@ -430,9 +419,6 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
     total_calculated += 1
     cache_key = f"{function_name}||{data_filter}"
 
-    if total_calculated % 10 == 0:
-      print(f"  [progress] metric {total_calculated}/{len(metric_dict)}: {metric_id}")
-
     try:
       # ------------------------------------------------------------------
       # Apply data filter if specified
@@ -456,7 +442,6 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
         local_namespace = build_metric_namespace(filtered_ppr, player_name)
         exec(function_name, local_namespace)
         function_cache[cache_key] = local_namespace
-        _log_mem(f"after exec #{len(function_cache)} ({metric_id}: {function_name[:60]})")
       else:
         local_namespace = function_cache[cache_key]
 
