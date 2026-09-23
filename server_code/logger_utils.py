@@ -17,12 +17,10 @@ import inspect
 # -----------------------------------------------------------------------------
 critical_logger = Logger(
   name="critical",
-  # ERROR is the normal-run level -- log_debug/log_info calls throughout the
-  # app (btd_ppr_conversion.py, pass_attribution_correction.py, etc.) are
-  # left in place for the next deep dive; flip this back to DEBUG
-  # temporarily to see them again. This level is shared by every module
-  # that calls into logger_utils.
-  level=ERROR,
+  # Flipped to DEBUG for the ai_export_mgr OOM investigation -- this surfaces
+  # every log_info/log_debug call app-wide (not just this code path), so
+  # flip back to ERROR once the crash is diagnosed to cut the noise back down.
+  level=DEBUG,
   format="{name}-{level} {datetime:%Y-%m-%d %H:%M:%S}: {msg}"
 )
 

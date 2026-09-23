@@ -18,9 +18,15 @@ import json
 from datetime import datetime
 import hashlib
 import io
+import resource
 
 # Import your logging utilities
 from logger_utils import log_info, log_error, log_debug, log_critical
+
+def _log_mem(label):
+  """Temporary diagnostic: print process peak RSS to pinpoint OOM crashes."""
+  rss_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+  print(f"  [mem] {label}: RSS={rss_mb:.0f} MB")
 
 # ============================================================================
 #  AUTH HELPERS
@@ -400,8 +406,9 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
 
     total_calculated += 1
 
-    #if total_calculated % 50 == 0:
-    #  log_info(f"Progress: {total_calculated}/{len(metric_dict)} metrics calculated...")
+    print(f"  [metric {total_calculated}/{len(metric_dict)}] {metric_id} (fn_cache_size={len(function_cache)})")
+    if total_calculated % 25 == 0:
+      _log_mem(f"before metric #{total_calculated} ({metric_id})")
 
     try:
       # ------------------------------------------------------------------
@@ -424,9 +431,11 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
       # ------------------------------------------------------------------
       cache_key = f"{function_name}||{data_filter}"
       if cache_key not in function_cache:
+        print(f"    new function_cache entry: {function_name[:120]!r}")
         local_namespace = build_metric_namespace(filtered_ppr, player_name)
         exec(function_name, local_namespace)
         function_cache[cache_key] = local_namespace
+        _log_mem(f"after exec for {metric_id}")
       else:
         local_namespace = function_cache[cache_key]
 

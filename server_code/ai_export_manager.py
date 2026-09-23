@@ -287,6 +287,7 @@ def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
       if team == 'INTERNALS' and fetch_team == 'League':
         from ppr_master_merge import reidentify_ppr
         combined_df = reidentify_ppr(combined_df, league, gender, str(year))
+        print(f"  get_filtered_ppr_data_direct: reidentify_ppr returned, control back in caller ({len(combined_df)} rows)")
 
       if cache_key is not None:
         # No .copy() here either — see note above; combined_df isn't mutated
@@ -294,11 +295,13 @@ def get_filtered_ppr_data_direct(league, gender, year, team, **filters):
         # avoids a third full-dataframe copy at the peak-memory moment.
         _internals_league_ppr_cache['key'] = cache_key
         _internals_league_ppr_cache['df'] = combined_df
+        print("  get_filtered_ppr_data_direct: cache populated")
 
     # Step 3: Apply filters
     log_info("Applying filters...")
     try:
       ppr_df = filter_ppr_df(combined_df, **filters)
+      print("  get_filtered_ppr_data_direct: filter_ppr_df returned")
       log_info(f"After filtering: {len(ppr_df)} points retained")
     except ValueError as e:
       log_info(f"No data after filtering (normal if no recent data): {e}")
