@@ -23,10 +23,15 @@ import resource
 # Import your logging utilities
 from logger_utils import log_info, log_error, log_debug, log_critical
 
+_last_logged_rss = [0.0]
+
 def _log_mem(label):
-  """Temporary diagnostic: print process peak RSS to pinpoint OOM crashes."""
+  """Temporary diagnostic: print process peak RSS, but only when it actually
+  moves, to stay well under the background-task log size limit."""
   rss_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-  print(f"  [mem] {label}: RSS={rss_mb:.0f} MB")
+  if rss_mb != _last_logged_rss[0]:
+    print(f"  [mem] {label}: RSS={rss_mb:.0f} MB (was {_last_logged_rss[0]:.0f})")
+    _last_logged_rss[0] = rss_mb
 
 # ============================================================================
 #  AUTH HELPERS
@@ -374,7 +379,25 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
   # and produces fbhe_result, fbso_result etc. that multiple metric rows read).
   # Without the cache, each metric gets a fresh namespace and cross-references
   # like attempts_path = 'fbhe_result.points' fail with NameError.
+  #
+  # Each namespace holds its own filtered_ppr slice plus the computed result
+  # object, so leaving every entry cached for the whole 608-metric run grows
+  # RSS by several MB per unique (function, filter) pair -- with a couple
+  # hundred unique pairs per player this was enough to OOM-kill the export
+  # worker partway through. remaining_uses tracks how many more metric rows
+  # will read each cache_key so we can evict it the moment the last reader
+  # is done, instead of holding it for the rest of the run.
   function_cache = {}
+  remaining_uses = {}
+  for _, _row in metric_dict.iterrows():
+    _agg = _row.get('aggregate_level', 'Yes')
+    if pd.notna(_agg) and str(_agg).strip().lower() == 'no':
+      continue
+    _fn = _row['function_name']
+    if pd.isna(_fn):
+      continue
+    _key = f"{_fn}||{_row['data_filter']}"
+    remaining_uses[_key] = remaining_uses.get(_key, 0) + 1
 
   log_info(f"Calculating {len(metric_dict)} metrics for {player_name}...")
 
@@ -405,10 +428,10 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
       continue
 
     total_calculated += 1
+    cache_key = f"{function_name}||{data_filter}"
 
-    print(f"  [metric {total_calculated}/{len(metric_dict)}] {metric_id} (fn_cache_size={len(function_cache)})")
-    if total_calculated % 25 == 0:
-      _log_mem(f"before metric #{total_calculated} ({metric_id})")
+    if total_calculated % 10 == 0:
+      print(f"  [progress] metric {total_calculated}/{len(metric_dict)}: {metric_id}")
 
     try:
       # ------------------------------------------------------------------
@@ -429,13 +452,11 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
       # results created by one exec() (e.g. fbhe_result) are visible to
       # subsequent metrics that reference them in result_path or attempts_path.
       # ------------------------------------------------------------------
-      cache_key = f"{function_name}||{data_filter}"
       if cache_key not in function_cache:
-        print(f"    new function_cache entry: {function_name[:120]!r}")
         local_namespace = build_metric_namespace(filtered_ppr, player_name)
         exec(function_name, local_namespace)
         function_cache[cache_key] = local_namespace
-        _log_mem(f"after exec for {metric_id}")
+        _log_mem(f"after exec #{len(function_cache)} ({metric_id}: {function_name[:60]})")
       else:
         local_namespace = function_cache[cache_key]
 
@@ -548,6 +569,13 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
       insufficient_data += 1
       log_debug(f"Metric {metric_id} failed: {str(e)}")
       continue
+    finally:
+      # Evict this cache entry the moment its last reader has run, whether
+      # this row succeeded or failed above -- see remaining_uses note.
+      if cache_key in remaining_uses:
+        remaining_uses[cache_key] -= 1
+        if remaining_uses[cache_key] <= 0:
+          function_cache.pop(cache_key, None)
 
   log_info(
     f"Calculation complete: {successful} successful, "

@@ -17,10 +17,13 @@ import inspect
 # -----------------------------------------------------------------------------
 critical_logger = Logger(
   name="critical",
-  # Flipped to DEBUG for the ai_export_mgr OOM investigation -- this surfaces
-  # every log_info/log_debug call app-wide (not just this code path), so
-  # flip back to ERROR once the crash is diagnosed to cut the noise back down.
-  level=DEBUG,
+  # Reverted to ERROR: DEBUG surfaced every log_info/log_debug call app-wide
+  # (not just the ai_export_mgr path being investigated), which combined with
+  # our targeted print() instrumentation in generate_player_metrics_json_server.py
+  # was blowing through the background-task log size limit before reaching
+  # the actual crash. The print() instrumentation is unconditional and doesn't
+  # need this raised, so ERROR is fine while that investigation continues.
+  level=ERROR,
   format="{name}-{level} {datetime:%Y-%m-%d %H:%M:%S}: {msg}"
 )
 
