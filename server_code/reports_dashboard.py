@@ -951,7 +951,29 @@ def _report_integrated_player_profile_internal(lgy, team, **rpt_filters):
       return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
     player_ppr = calculate_runs(player_ppr)
+
+    # DEBUG - temporary, remove after diagnosing 2027 FAU team profile report.
+    # groupby() drops any row where a key column is NaN by default -- if
+    # set_stats comes back empty despite player_ppr having rows, one of
+    # these 5 key columns is null for every FAU row.
+    groupby_keys = ['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2']
+    print(f"DEBUG team_profile player_ppr rows: {len(player_ppr)}")
+    print(f"DEBUG team_profile null counts in groupby keys:\n{player_ppr[groupby_keys].isna().sum()}")
+    print(f"DEBUG team_profile sample rows:\n{player_ppr[groupby_keys].head(10)}")
+
     set_stats = calculate_set_stats(player_ppr)
+
+    # DEBUG - temporary, remove after diagnosing 2027 FAU team profile report.
+    # Settles two things at once per player_id: whether attack attempts are
+    # being attributed at all (total_attempts), and whether they're spread
+    # across enough distinct sets to clear the >=3-set threshold used by
+    # calculate_player_profiles()/analyze_struggle_triggers() below.
+    debug_summary = set_stats.groupby('player_id').agg(
+      total_attempts=('attempts', 'sum'),
+      sets_with_attempts=('attempts', lambda s: (s > 0).sum()),
+      total_set_rows=('attempts', 'count'),
+    )
+    print(f"DEBUG team_profile per-player attempt summary ({team_prefix}):\n{debug_summary}")
 
     # Analyze
     profiles_df = calculate_player_profiles(player_ppr, set_stats)
