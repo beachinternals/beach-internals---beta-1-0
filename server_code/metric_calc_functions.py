@@ -11,7 +11,88 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
+from anvil.tables import app_tables
 from logger_utils import log_error
+
+
+# ==============================================================================
+# CONSISTENCY METRIC GATING
+# ==============================================================================
+# consistency_sd_match/consistency_sd_set2set (below) build each cons_*_sd
+# value from a list of per-period/per-set base-metric values. Two gates keep
+# a thin/noisy set from inflating the resulting stdev:
+#
+#   1. Per-period/set gate: a period's or set's own value only counts if that
+#      period/set cleared the underlying base metric's min_attempts_for_ci
+#      (e.g. the 'fbhe' row's min_attempts_for_ci gates each period's own
+#      attack-attempt count when metric_name='fbhe'). Periods/sets below the
+#      floor are excluded outright -- not zeroed, not carried as NaN.
+#   2. Min-sets gate: even after (1), the cons_*_sd metric itself (e.g.
+#      'cons_fbhe_sd_match') needs enough surviving periods/sets to be worth
+#      reporting at all, per its own min_sets_for_consistency.
+#
+# Both thresholds are read from metric_dictionary at runtime -- never
+# hardcoded here -- so the dictionary stays the single source of truth.
+# _DICTIONARY_CACHE loads the whole table once per process (same pattern
+# every other metric_dictionary consumer in this codebase uses) rather than
+# querying per lookup.
+
+DEFAULT_MIN_ATTEMPTS_FOR_CI = 5
+DEFAULT_MIN_SETS_FOR_CONSISTENCY = 8
+
+# metric_name (as passed to consistency_sd_match/consistency_sd_set2set) ->
+# metric_id of the underlying base metric, whose min_attempts_for_ci gates
+# each individual period's/set's own attempt count.
+CONSISTENCY_BASE_METRIC_ID = {
+  'fbhe':          'fbhe',
+  'error_density': 'err_den',
+  'knockout':      'knockout',
+  'pass_oos':      'goodpass',
+  'points':        'per_pts_won',
+  'transition':    'tcr',
+}
+
+# metric_name -> cons_*_sd metric_id prefix (suffixed '_match' or '_s2s' by
+# the caller) whose own min_sets_for_consistency gates how many qualifying
+# periods/sets are required before a value is emitted at all.
+CONSISTENCY_METRIC_ID_PREFIX = {
+  'fbhe':          'cons_fbhe_sd',
+  'error_density': 'cons_ed_sd',
+  'knockout':      'cons_ko_sd',
+  'pass_oos':      'cons_pass_sd',
+  'points':        'cons_pts_sd',
+  'transition':    'cons_tcr_sd',
+}
+
+_DICTIONARY_CACHE = None
+
+
+def _dictionary_rows():
+  """metric_id -> metric_dictionary row, loaded once per process.
+
+  Tests populate this cache directly (see tests/test_consistency_metrics.py)
+  so they never need a live app_tables connection.
+  """
+  global _DICTIONARY_CACHE
+  if _DICTIONARY_CACHE is None:
+    _DICTIONARY_CACHE = {row['metric_id']: row for row in app_tables.metric_dictionary.search()}
+  return _DICTIONARY_CACHE
+
+
+def _dictionary_value(metric_id, column, default):
+  row = _dictionary_rows().get(metric_id)
+  if row is None:
+    return default
+  value = row[column]
+  return default if value is None else value
+
+
+def _min_attempts_for_ci(metric_id):
+  return _dictionary_value(metric_id, 'min_attempts_for_ci', DEFAULT_MIN_ATTEMPTS_FOR_CI)
+
+
+def _min_sets_for_consistency(metric_id):
+  return _dictionary_value(metric_id, 'min_sets_for_consistency', DEFAULT_MIN_SETS_FOR_CONSISTENCY)
 
 
 # ==============================================================================
@@ -28,21 +109,33 @@ def consistency_sd_match(ppr_df, player_name, metric_name):
     
     This measures how consistent a player's performance is across different game periods.
     Lower std dev = more consistent performance.
-    
+
+    Each period only contributes a value if it clears the underlying base
+    metric's min_attempts_for_ci (its own attempt count for that period --
+    see CONSISTENCY_BASE_METRIC_ID); periods below that floor are excluded,
+    not zeroed or carried as NaN. std_dev/mean_value are only emitted if the
+    number of surviving periods clears this metric's own
+    min_sets_for_consistency -- otherwise both are None. Both thresholds are
+    read from metric_dictionary at runtime.
+
     Args:
         ppr_df (DataFrame): Point-by-point dataframe
         player_name (str): Player to analyze
         metric_name (str): Which metric to calculate consistency for.
-                          Options: 'fbhe', 'error_density', 'knockout', 
+                          Options: 'fbhe', 'error_density', 'knockout',
                                    'pass_oos', 'points', 'transition'
-    
+
     Returns:
         dict: {
-            'std_dev': float (standard deviation across periods),
+            'std_dev': float | None (sample stdev across qualifying periods;
+                None if fewer than min_sets_for_consistency qualify),
             'metric_name': str,
-            'num_periods': int (number of periods analyzed),
-            'mean_value': float (average metric value across periods),
-            'period_values': list (metric value for each period)
+            'num_periods': int (number of periods that survived the
+                per-period attempts gate -- NOT the player's total period
+                count),
+            'mean_value': float | None (mean across the same qualifying
+                periods; None under the same condition as std_dev),
+            'period_values': list (metric value for each qualifying period)
         }
     """
 
@@ -91,17 +184,20 @@ def consistency_sd_match(ppr_df, player_name, metric_name):
 
   for (video_id, period), period_df in player_df.groupby(['video_id', 'period']):
 
-    # Calculate the specified metric for this period
+    # Calculate the specified metric for this period, tracking this
+    # period's own attempt count (period_attempts) so it can be gated below
+    # against the base metric's min_attempts_for_ci.
     metric_value = None
+    period_attempts = 0
 
     if metric_name == 'fbhe':
       # First ball hitting efficiency
       attacks = period_df[period_df['att_player'] == player_name]
-      if len(attacks) > 0:
+      period_attempts = len(attacks)
+      if period_attempts > 0:
         kills = len(attacks[attacks['point_outcome'] == 'FBK'])
         errors = len(attacks[attacks['point_outcome'] == 'FBE'])
-        attempts = len(attacks)
-        metric_value = (kills - errors) / attempts if attempts > 0 else None
+        metric_value = (kills - errors) / period_attempts
 
     elif metric_name == 'error_density':
       # Total errors / total points
@@ -109,58 +205,75 @@ def consistency_sd_match(ppr_df, player_name, metric_name):
       tran_errors = len(period_df[(period_df['point_outcome'] == 'TE') & (period_df['point_outcome_team'].str.contains(player_name, na=False))]) / 2
       serve_errors = len(period_df[(period_df['point_outcome'] == 'TSE') & (period_df['serve_player'] == player_name)])
       errors = att_errors + tran_errors + serve_errors
-      points = len(period_df)
-      metric_value = errors / points if points > 0 else None
+      period_attempts = len(period_df)
+      metric_value = errors / period_attempts if period_attempts > 0 else None
 
     elif metric_name == 'knockout':
       # (Aces + opponent OOS passes) / serves
       serves = period_df[period_df['serve_player'] == player_name]
-      if len(serves) > 0:
+      period_attempts = len(serves)
+      if period_attempts > 0:
         aces = len(serves[serves['point_outcome'] == 'TSA'])
         oos = len(serves[serves['pass_oos'] != 0])
-        metric_value = (aces + oos) / len(serves)
+        metric_value = (aces + oos) / period_attempts
 
     elif metric_name == 'pass_oos':
       # Out of system passes / total passes
       passes = period_df[period_df['pass_player'] == player_name]
-      if len(passes) > 0:
+      period_attempts = len(passes)
+      if period_attempts > 0:
         oos = len(passes[passes['pass_oos'] != 0])
-        metric_value = oos / len(passes)
+        metric_value = oos / period_attempts
 
     elif metric_name == 'points':
       # Points won / total points in period
+      period_attempts = len(period_df)
       points_earned = len(period_df[
-        ((period_df['point_outcome'] == 'FBK') | 
-         (period_df['point_outcome'] == 'TK') | 
+        ((period_df['point_outcome'] == 'FBK') |
+         (period_df['point_outcome'] == 'TK') |
          (period_df['point_outcome'] == 'TSA')) &
         (period_df['point_outcome_team'].str.contains(player_name, na=False))
         ])
-      metric_value = points_earned / len(period_df) if len(period_df) > 0 else None
+      metric_value = points_earned / period_attempts if period_attempts > 0 else None
 
     elif metric_name == 'transition':
       # Transition points won / total transition points
       tran_pts_won = len(period_df[
-        (period_df['point_outcome'] == 'TK') & 
+        (period_df['point_outcome'] == 'TK') &
         (period_df['point_outcome_team'].str.contains(player_name, na=False))
         ])
       tran_pts_opp_err = len(period_df[
-        (period_df['point_outcome'] == 'TE') & 
+        (period_df['point_outcome'] == 'TE') &
         (~period_df['point_outcome_team'].str.contains(player_name, na=False))
         ])
       tran_pts = tran_pts_won + tran_pts_opp_err
 
       total_tran = len(period_df[
-        (period_df['point_outcome'] == 'TK') | 
+        (period_df['point_outcome'] == 'TK') |
         (period_df['point_outcome'] == 'TE')
         ])
+      period_attempts = total_tran
 
       metric_value = tran_pts / total_tran if total_tran > 0 else None
 
-    if metric_value is not None:
+    # Per-period gate: this period only counts if it cleared the base
+    # metric's own min_attempts_for_ci. Excluded periods contribute nothing
+    # -- not a zero, not a NaN placeholder.
+    min_attempts = _min_attempts_for_ci(CONSISTENCY_BASE_METRIC_ID[metric_name])
+    if metric_value is not None and period_attempts >= min_attempts:
       period_values.append(metric_value)
 
-  # Calculate standard deviation across periods
-  if len(period_values) >= 2:
+  # Min-sets gate: only emit a value if enough periods survived the
+  # per-period gate above. num_periods below reports the surviving count
+  # either way, so callers can always see how many periods actually went in.
+  cons_metric_id = CONSISTENCY_METRIC_ID_PREFIX[metric_name] + '_match'
+  min_periods = _min_sets_for_consistency(cons_metric_id)
+  num_periods = len(period_values)
+
+  # The >= 2 floor is a mathematical requirement for a sample stdev
+  # (ddof=1), not a tunable business threshold -- min_periods itself is
+  # always the real gate.
+  if num_periods >= min_periods and num_periods >= 2:
     std_dev = float(np.std(period_values, ddof=1))
     mean_value = float(np.mean(period_values))
   else:
@@ -170,7 +283,7 @@ def consistency_sd_match(ppr_df, player_name, metric_name):
   return {
     'std_dev': std_dev,
     'metric_name': metric_name,
-    'num_periods': len(period_values),
+    'num_periods': num_periods,
     'mean_value': mean_value,
     'period_values': period_values
   }
@@ -187,21 +300,32 @@ def consistency_sd_set2set(ppr_df, player_name, metric_name):
     
     This measures how consistent a player's performance is from set to set.
     Lower std dev = more consistent performance.
-    
+
+    Each set only contributes a value if it clears the underlying base
+    metric's min_attempts_for_ci (its own attempt count for that set -- see
+    CONSISTENCY_BASE_METRIC_ID); sets below that floor are excluded, not
+    zeroed or carried as NaN. std_dev/mean_value are only emitted if the
+    number of surviving sets clears this metric's own
+    min_sets_for_consistency -- otherwise both are None. Both thresholds are
+    read from metric_dictionary at runtime.
+
     Args:
         ppr_df (DataFrame): Point-by-point dataframe
         player_name (str): Player to analyze
         metric_name (str): Which metric to calculate consistency for.
-                          Options: 'fbhe', 'error_density', 'knockout', 
+                          Options: 'fbhe', 'error_density', 'knockout',
                                    'pass_oos', 'points', 'transition'
-    
+
     Returns:
         dict: {
-            'std_dev': float (standard deviation across sets),
+            'std_dev': float | None (sample stdev across qualifying sets;
+                None if fewer than min_sets_for_consistency qualify),
             'metric_name': str,
-            'num_sets': int (number of sets analyzed),
-            'mean_value': float (average metric value across sets),
-            'set_values': list (metric value for each set)
+            'num_sets': int (number of sets that survived the per-set
+                attempts gate -- NOT the player's total set count),
+            'mean_value': float | None (mean across the same qualifying
+                sets; None under the same condition as std_dev),
+            'set_values': list (metric value for each qualifying set)
         }
     """
 
@@ -228,17 +352,20 @@ def consistency_sd_set2set(ppr_df, player_name, metric_name):
 
   for (video_id, set_num), set_df in player_df.groupby(['video_id', 'set']):
 
-    # Calculate the specified metric for this set
+    # Calculate the specified metric for this set, tracking this set's own
+    # attempt count (set_attempts) so it can be gated below against the base
+    # metric's min_attempts_for_ci.
     metric_value = None
+    set_attempts = 0
 
     if metric_name == 'fbhe':
       # First ball hitting efficiency
       attacks = set_df[set_df['att_player'] == player_name]
-      if len(attacks) > 0:
+      set_attempts = len(attacks)
+      if set_attempts > 0:
         kills = len(attacks[attacks['point_outcome'] == 'FBK'])
         errors = len(attacks[attacks['point_outcome'] == 'FBE'])
-        attempts = len(attacks)
-        metric_value = (kills - errors) / attempts if attempts > 0 else None
+        metric_value = (kills - errors) / set_attempts
 
     elif metric_name == 'error_density':
       # Total errors / total points
@@ -246,58 +373,75 @@ def consistency_sd_set2set(ppr_df, player_name, metric_name):
       tran_errors = len(set_df[(set_df['point_outcome'] == 'TE') & (set_df['point_outcome_team'].str.contains(player_name, na=False))]) / 2
       serve_errors = len(set_df[(set_df['point_outcome'] == 'TSE') & (set_df['serve_player'] == player_name)])
       errors = att_errors + tran_errors + serve_errors
-      points = len(set_df)
-      metric_value = errors / points if points > 0 else None
+      set_attempts = len(set_df)
+      metric_value = errors / set_attempts if set_attempts > 0 else None
 
     elif metric_name == 'knockout':
       # (Aces + opponent OOS passes) / serves
       serves = set_df[set_df['serve_player'] == player_name]
-      if len(serves) > 0:
+      set_attempts = len(serves)
+      if set_attempts > 0:
         aces = len(serves[serves['point_outcome'] == 'TSA'])
         oos = len(serves[serves['pass_oos'] != 0])
-        metric_value = (aces + oos) / len(serves)
+        metric_value = (aces + oos) / set_attempts
 
     elif metric_name == 'pass_oos':
       # Out of system passes / total passes
       passes = set_df[set_df['pass_player'] == player_name]
-      if len(passes) > 0:
+      set_attempts = len(passes)
+      if set_attempts > 0:
         oos = len(passes[passes['pass_oos'] != 0])
-        metric_value = oos / len(passes)
+        metric_value = oos / set_attempts
 
     elif metric_name == 'points':
       # Points won / total points in set
+      set_attempts = len(set_df)
       points_earned = len(set_df[
-        ((set_df['point_outcome'] == 'FBK') | 
-         (set_df['point_outcome'] == 'TK') | 
+        ((set_df['point_outcome'] == 'FBK') |
+         (set_df['point_outcome'] == 'TK') |
          (set_df['point_outcome'] == 'TSA')) &
         (set_df['point_outcome_team'].str.contains(player_name, na=False))
         ])
-      metric_value = points_earned / len(set_df) if len(set_df) > 0 else None
+      metric_value = points_earned / set_attempts if set_attempts > 0 else None
 
     elif metric_name == 'transition':
       # Transition points won / total transition points
       tran_pts_won = len(set_df[
-        (set_df['point_outcome'] == 'TK') & 
+        (set_df['point_outcome'] == 'TK') &
         (set_df['point_outcome_team'].str.contains(player_name, na=False))
         ])
       tran_pts_opp_err = len(set_df[
-        (set_df['point_outcome'] == 'TE') & 
+        (set_df['point_outcome'] == 'TE') &
         (~set_df['point_outcome_team'].str.contains(player_name, na=False))
         ])
       tran_pts = tran_pts_won + tran_pts_opp_err
 
       total_tran = len(set_df[
-        (set_df['point_outcome'] == 'TK') | 
+        (set_df['point_outcome'] == 'TK') |
         (set_df['point_outcome'] == 'TE')
         ])
+      set_attempts = total_tran
 
       metric_value = tran_pts / total_tran if total_tran > 0 else None
 
-    if metric_value is not None:
+    # Per-set gate: this set only counts if it cleared the base metric's own
+    # min_attempts_for_ci. Excluded sets contribute nothing -- not a zero,
+    # not a NaN placeholder.
+    min_attempts = _min_attempts_for_ci(CONSISTENCY_BASE_METRIC_ID[metric_name])
+    if metric_value is not None and set_attempts >= min_attempts:
       set_values.append(metric_value)
 
-  # Calculate standard deviation across sets
-  if len(set_values) >= 2:
+  # Min-sets gate: only emit a value if enough sets survived the per-set
+  # gate above. num_sets below reports the surviving count either way, so
+  # callers can always see how many sets actually went in.
+  cons_metric_id = CONSISTENCY_METRIC_ID_PREFIX[metric_name] + '_s2s'
+  min_sets = _min_sets_for_consistency(cons_metric_id)
+  num_sets = len(set_values)
+
+  # The >= 2 floor is a mathematical requirement for a sample stdev
+  # (ddof=1), not a tunable business threshold -- min_sets itself is always
+  # the real gate.
+  if num_sets >= min_sets and num_sets >= 2:
     std_dev = float(np.std(set_values, ddof=1))
     mean_value = float(np.mean(set_values))
   else:
@@ -307,7 +451,7 @@ def consistency_sd_set2set(ppr_df, player_name, metric_name):
   return {
     'std_dev': std_dev,
     'metric_name': metric_name,
-    'num_sets': len(set_values),
+    'num_sets': num_sets,
     'mean_value': mean_value,
     'set_values': set_values
   }
