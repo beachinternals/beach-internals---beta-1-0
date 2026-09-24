@@ -585,7 +585,13 @@ def calculate_runs(player_ppr):
 
 def calculate_set_stats(player_ppr):
   """Calculate per-set statistics for each player"""
-  set_stats = player_ppr.groupby(['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2']).agg({
+  # dropna=False: comp_l2 (competition-level classification) is legitimately
+  # blank for practice/intra-squad reps, not just real games -- groupby's
+  # default of dropping NaN-keyed rows was silently discarding every point
+  # for teams whose recorded matches don't carry a comp_l2 tag.
+  set_stats = player_ppr.groupby(
+    ['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2'], dropna=False
+  ).agg({
     'kill': 'sum',
     'error': 'sum',
     'attempt': 'sum',
@@ -661,7 +667,7 @@ def calculate_player_profiles(player_ppr, set_stats, min_attempts=30):
     clutch_score = max(1, min(10, 5.5 + clutch_delta * 25))
 
     # VS RANKED
-    vs_top20 = player_sets[player_sets['comp_l2'].str.contains('Top 20', na=False)]
+    vs_top20 = player_sets[player_sets['comp_l2'].astype(str).str.contains('Top 20', na=False)]
     if len(vs_top20) >= 3 and vs_top20['attempts'].sum() >= 20:
       top20_eff = (vs_top20['kills'].sum() - vs_top20['errors'].sum()) / vs_top20['attempts'].sum()
     else:
@@ -779,7 +785,7 @@ def analyze_struggle_triggers(player_ppr, set_stats):
 
       # Calculate triggers only if there are struggle sets
     if n_struggles > 0:
-      top20_struggle_rate = struggle_sets['comp_l2'].str.contains('Top 20', na=False).sum() / n_struggles
+      top20_struggle_rate = struggle_sets['comp_l2'].astype(str).str.contains('Top 20', na=False).sum() / n_struggles
 
       set3_struggles = len(struggle_sets[struggle_sets['set_number'] == 3])
       set3_total = len(player_attacks[player_attacks['set_number'] == 3])
@@ -951,29 +957,7 @@ def _report_integrated_player_profile_internal(lgy, team, **rpt_filters):
       return title_list, label_list, image_list, df_list, df_desc_list, image_desc_list
 
     player_ppr = calculate_runs(player_ppr)
-
-    # DEBUG - temporary, remove after diagnosing 2027 FAU team profile report.
-    # groupby() drops any row where a key column is NaN by default -- if
-    # set_stats comes back empty despite player_ppr having rows, one of
-    # these 5 key columns is null for every FAU row.
-    groupby_keys = ['player_id', 'partner_id', 'set_id', 'opponent_team', 'comp_l2']
-    print(f"DEBUG team_profile player_ppr rows: {len(player_ppr)}")
-    print(f"DEBUG team_profile null counts in groupby keys:\n{player_ppr[groupby_keys].isna().sum()}")
-    print(f"DEBUG team_profile sample rows:\n{player_ppr[groupby_keys].head(10)}")
-
     set_stats = calculate_set_stats(player_ppr)
-
-    # DEBUG - temporary, remove after diagnosing 2027 FAU team profile report.
-    # Settles two things at once per player_id: whether attack attempts are
-    # being attributed at all (total_attempts), and whether they're spread
-    # across enough distinct sets to clear the >=3-set threshold used by
-    # calculate_player_profiles()/analyze_struggle_triggers() below.
-    debug_summary = set_stats.groupby('player_id').agg(
-      total_attempts=('attempts', 'sum'),
-      sets_with_attempts=('attempts', lambda s: (s > 0).sum()),
-      total_set_rows=('attempts', 'count'),
-    )
-    print(f"DEBUG team_profile per-player attempt summary ({team_prefix}):\n{debug_summary}")
 
     # Analyze
     profiles_df = calculate_player_profiles(player_ppr, set_stats)
