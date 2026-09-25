@@ -870,6 +870,10 @@ db_schema:
       client_hidden: false
       name: aggregate_level
       type: string
+    - admin_ui: {order: 4.75, width: 200}
+      client_hidden: false
+      name: min_sets_for_consistency
+      type: number
     indexes: []
     server: full
     title: metric_dictionary

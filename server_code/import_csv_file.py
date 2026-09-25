@@ -115,6 +115,7 @@ def import_metric_dictionary_from_csv(csv_file):
           parent_metric=row.get('parent_metric', ''),
           metric_category=row.get('metric_category', ''),
           min_attempts_for_ci=to_number(row.get('min_attempts_for_ci')),
+          min_sets_for_consistency=to_number(row.get('min_sets_for_consistency')),
           ci_calculation_method=row.get('ci_calculation_method', ''),
           data_filter=data_filter_clean,
           return_type=row.get('return_type', ''),
