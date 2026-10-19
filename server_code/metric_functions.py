@@ -48,6 +48,7 @@ run_burden_obj,
 run_burden_exp_obj,
 run_burden_resid_obj,
 run_hazard_obj,
+make_them_pay_obj,
 )
 
 
@@ -89,6 +90,7 @@ def build_metric_namespace(ppr_df, player_name):
     'run_burden_exp_obj'     : run_burden_exp_obj,
     'run_burden_resid_obj'   : run_burden_resid_obj,
     'run_hazard_obj'         : run_hazard_obj,
+    'make_them_pay_obj'      : make_them_pay_obj,
     'count_good_passes_obj'  : count_good_passes_obj,
     'calc_att_height_metrics': calc_att_height_metrics,
     'calc_dig_quality_obj'   : calc_dig_quality_obj,

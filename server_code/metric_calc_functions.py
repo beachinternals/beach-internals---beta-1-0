@@ -1407,6 +1407,60 @@ def run_hazard_obj(ppr_df, disp_player, k):
 
 
 # ==============================================================================
+# FUNCTION: make_them_pay_obj()
+# ==============================================================================
+def make_them_pay_obj(ppr_df, disp_player):
+  """
+    Make Them Pay (MTP) % -- of every serve disp_player received, what
+    fraction were put back into play rather than ending in a first-ball
+    error, an ace, or a service error.
+
+    Pre-filters to pass_player == disp_player (same receive-side convention
+    as calc_ev_obj/calc_pts_won_obj): every point where the opponent served
+    to this player, regardless of outcome. A point counts as "put back into
+    play" if it was a first-ball kill (FBK) or carried on to transition (TK
+    or TE -- reaching transition at all means the first ball wasn't an
+    error, independent of who won the transition rally). FBE (first-ball
+    error), TSA (ace), and TSE (service error) are not put-in-play.
+
+    This is distinct from the legacy 'Make Them Pay' row in pair_reports.py,
+    which approximates it as (100 - error_density) over the player's whole
+    involvement rather than this receive-only kill+transition definition.
+
+    Args:
+        ppr_df (DataFrame): Point-by-point dataframe
+        disp_player (str): Player to analyze
+
+    Returns:
+        Object (SimpleNamespace) with attributes:
+            .mtp_pct (float | None): (kills + transition_plays) / attempts;
+                None if disp_player received no serves in ppr_df
+            .attempts (int): total serves received (pass_player ==
+                disp_player), any outcome
+            .kills (int): FBK count
+            .transition_plays (int): TK + TE count
+  """
+  from types import SimpleNamespace
+
+  disp_player = disp_player.strip()
+  received = ppr_df[ppr_df['pass_player'].str.strip() == disp_player]
+
+  attempts = len(received)
+  if attempts == 0:
+    return SimpleNamespace(mtp_pct=None, attempts=0, kills=0, transition_plays=0)
+
+  kills = len(received[received['point_outcome'] == 'FBK'])
+  transition_plays = len(received[received['point_outcome'].isin(['TK', 'TE'])])
+
+  return SimpleNamespace(
+    mtp_pct=float((kills + transition_plays) / attempts),
+    attempts=int(attempts),
+    kills=int(kills),
+    transition_plays=int(transition_plays)
+  )
+
+
+# ==============================================================================
 # USAGE EXAMPLES
 # ==============================================================================
 
