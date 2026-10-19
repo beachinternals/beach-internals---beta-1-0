@@ -1411,17 +1411,27 @@ def run_hazard_obj(ppr_df, disp_player, k):
 # ==============================================================================
 def make_them_pay_obj(ppr_df, disp_player):
   """
-    Make Them Pay (MTP) % -- of every serve disp_player received, what
-    fraction were put back into play rather than ending in a first-ball
-    error, an ace, or a service error.
+    Make Them Pay (MTP) % -- of every serve disp_player's pair received,
+    what fraction were put back into play rather than ending in a
+    first-ball error or an ace.
 
-    Pre-filters to pass_player == disp_player (same receive-side convention
-    as calc_ev_obj/calc_pts_won_obj): every point where the opponent served
-    to this player, regardless of outcome. A point counts as "put back into
-    play" if it was a first-ball kill (FBK) or carried on to transition (TK
-    or TE -- reaching transition at all means the first ball wasn't an
-    error, independent of who won the transition rally). FBE (first-ball
-    error), TSA (ace), and TSE (service error) are not put-in-play.
+    FBK/FBE/TK/TE always carry a real pass_player (the ball was actually
+    played), so those are attributed individually by filtering
+    pass_player == disp_player. TSA (ace) is different: the receiver never
+    touched the ball, so pass_player is usually blank on those rows. Aces
+    are instead found at the pair level -- via _resolve_serve_side, the
+    same serve-side resolution the run metrics use -- and split 0.5/0.5
+    between both players on the receiving pair, since there's no reliable
+    way to charge one teammate over the other.
+
+    TSE (service error) is excluded entirely: the opponent's serve never
+    crossed the net, so it was never disp_player's pair's attempt to put
+    anything into play.
+
+    A point counts as "put back into play" if it was a first-ball kill
+    (FBK) or carried on to transition (TK or TE -- reaching transition at
+    all means the first ball wasn't an error, independent of who won the
+    transition rally). FBE and TSA are not put-in-play.
 
     This is distinct from the legacy 'Make Them Pay' row in pair_reports.py,
     which approximates it as (100 - error_density) over the player's whole
@@ -1433,30 +1443,56 @@ def make_them_pay_obj(ppr_df, disp_player):
 
     Returns:
         Object (SimpleNamespace) with attributes:
-            .mtp_pct (float | None): (kills + transition_plays) / attempts;
-                None if disp_player received no serves in ppr_df
-            .attempts (int): total serves received (pass_player ==
-                disp_player), any outcome
+            .mtp_pct (float | None): (kills + transition_plays) /
+                attempts; None if attempts == 0
+            .attempts (float): FBK/FBE/TK/TE points individually
+                attributed to disp_player via pass_player, plus 0.5 per
+                ace served against disp_player's pair (TSE excluded
+                entirely)
             .kills (int): FBK count
             .transition_plays (int): TK + TE count
+            .aces_against_pair (int): TSA count against disp_player's
+                pair -- each contributes 0.5 to attempts, not this count
   """
   from types import SimpleNamespace
 
   disp_player = disp_player.strip()
-  received = ppr_df[ppr_df['pass_player'].str.strip() == disp_player]
 
-  attempts = len(received)
-  if attempts == 0:
-    return SimpleNamespace(mtp_pct=None, attempts=0, kills=0, transition_plays=0)
+  received = ppr_df[ppr_df['pass_player'].str.strip() == disp_player]
+  received = received[received['point_outcome'].isin(['FBK', 'FBE', 'TK', 'TE'])]
 
   kills = len(received[received['point_outcome'] == 'FBK'])
   transition_plays = len(received[received['point_outcome'].isin(['TK', 'TE'])])
+  individual_attempts = len(received)
+
+  # Pair-level resolution for aces -- deliberately not _resolve_run_perspective,
+  # which also pulls in streak_before/after columns this metric has no use for.
+  pair_df = ppr_df[
+    (ppr_df['player_a1'].str.strip() == disp_player) |
+    (ppr_df['player_a2'].str.strip() == disp_player) |
+    (ppr_df['player_b1'].str.strip() == disp_player) |
+    (ppr_df['player_b2'].str.strip() == disp_player)
+  ].copy()
+
+  if len(pair_df) == 0:
+    aces_against_pair = 0
+  else:
+    pair_df['on_a'] = (pair_df['player_a1'].str.strip() == disp_player) | (pair_df['player_a2'].str.strip() == disp_player)
+    pair_df['on_b'] = (pair_df['player_b1'].str.strip() == disp_player) | (pair_df['player_b2'].str.strip() == disp_player)
+    _, opp_pair_served, _ = _resolve_serve_side(pair_df)
+    aces_against_pair = int((opp_pair_served & (pair_df['point_outcome'] == 'TSA')).sum())
+
+  attempts = individual_attempts + (aces_against_pair * 0.5)
+
+  if attempts == 0:
+    return SimpleNamespace(mtp_pct=None, attempts=0.0, kills=0, transition_plays=0, aces_against_pair=0)
 
   return SimpleNamespace(
     mtp_pct=float((kills + transition_plays) / attempts),
-    attempts=int(attempts),
+    attempts=float(attempts),
     kills=int(kills),
-    transition_plays=int(transition_plays)
+    transition_plays=int(transition_plays),
+    aces_against_pair=int(aces_against_pair)
   )
 
 
