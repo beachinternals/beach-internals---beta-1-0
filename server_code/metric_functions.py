@@ -145,7 +145,7 @@ def calc_metric_from_dict(metric_name, ppr_df, player_name, metric_dict_df):
 
     # Build namespace and execute the metric function string
     namespace = build_metric_namespace(filtered_ppr, player_name)
-    exec(function_name, namespace)
+    exec(str(function_name).strip(), namespace)
 
     # Extract the value via result_path
     if pd.notna(result_path) and str(result_path).strip():

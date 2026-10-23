@@ -529,7 +529,7 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
       'player_name': player_name
     }
     exec_context.update(globals())
-    exec(function_name, exec_context)
+    exec(function_name.strip(), exec_context)
 
     return_type = metric_row['return_type']
     result_path = metric_row['result_path']

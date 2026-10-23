@@ -440,7 +440,7 @@ def calculate_all_metrics(metric_dict, ppr_df, player_name):
       # ------------------------------------------------------------------
       if cache_key not in function_cache:
         local_namespace = build_metric_namespace(filtered_ppr, player_name)
-        exec(function_name, local_namespace)
+        exec(function_name.strip(), local_namespace)
         function_cache[cache_key] = local_namespace
       else:
         local_namespace = function_cache[cache_key]
