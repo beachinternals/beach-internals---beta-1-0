@@ -243,7 +243,7 @@ class btd_import(btd_importTemplate):
 
   def _reset_for_next_file(self):
     """Clears the per-file fields after a save, leaving league/comp/date/venue/time selections in place for the next import."""
-    self.file_loader_1.file = None
+    self.file_loader_1.clear()
     self.filename_box.text = ""
     self.cleaned_csv_file = None
 
