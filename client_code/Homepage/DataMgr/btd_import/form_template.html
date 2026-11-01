@@ -1,0 +1,95 @@
+<anvil-form container="ColumnPanel">
+    <anvil-component type="Label" name="label_1" prop:align="center" prop:role="title" prop:text="Upload Match from Ball Time" container:grid_position="GTUGIY,ULUKBZ"></anvil-component>
+    <anvil-component type="ColumnPanel" name="outlined_card_1" prop:col_widths='"{\"EWIITU\":35,\"QSGWJX\":25,\"VBCDKB\":35,\"THUYNP\":25,\"BJJGKG\":20,\"SPMECB\":40,\"LZGNLG\":10,\"CDCVON\":50,\"VSNEDV\":20,\"XOEQGC\":40}"' prop:role="outlined-card" container:grid_position="GRQZAQ,AEVLXG">
+        <anvil-component type="Label" name="label_2" prop:align="right" prop:text="League:" container:grid_position="PVOVSQ,VBCDKB JYEQOD,EWIITU PQKLLF,BJJGKG BUFGUH,CBFCGU"></anvil-component>
+        <anvil-component type="Label" name="label_6" prop:align="right" prop:text="Match Date:" container:grid_position="PVOVSQ,VBCDKB JYEQOD,EWIITU PQKLLF,BJJGKG HRUTXL,TPNBCG"></anvil-component>
+        <anvil-component type="DropDown" name="league_drop_down" on:change="self.league_drop_down_change" container:grid_position="PVOVSQ,VBCDKB JYEQOD,EWIITU PQKLLF,SPMECB IPYLXR,YSXDLT"></anvil-component>
+        <anvil-component type="DatePicker" name="date_picker" container:grid_position="PVOVSQ,VBCDKB JYEQOD,EWIITU PQKLLF,SPMECB EECIUH,WFERAH"></anvil-component>
+        <anvil-component type="Label" name="label_3" prop:align="right" prop:text="Match Time:" container:grid_position="PVOVSQ,VBCDKB JYEQOD,EWIITU ETVSHI,VSNEDV"></anvil-component>
+        <anvil-component type="DropDown" name="match_time_drop_down" prop:items='["8am-12pm","12pm-4pm","4pm-8pm"]' container:grid_position="PVOVSQ,VBCDKB JYEQOD,EWIITU ETVSHI,XOEQGC"></anvil-component>
+        <anvil-component type="DropDown" name="comp_l1_drop_down" on:change="self.comp_l1_drop_down_change" container:grid_position="PVOVSQ,VBCDKB JYEQOD,QSGWJX CJIOWT,NIPOSY"></anvil-component>
+        <anvil-component type="ColumnPanel" name="column_panel_2" container:grid_position="PVOVSQ,VBCDKB JYEQOD,QSGWJX RJTGJS,JMFQVR">
+            <anvil-component type="DropDown" name="comp_l2_drop_down" container:grid_position="WCUZFP,TFGBBU"></anvil-component>
+        </anvil-component>
+        <anvil-component type="DropDown" name="comp_l3_drop_down" container:grid_position="PVOVSQ,VBCDKB JYEQOD,QSGWJX GVYHIJ,OJUDNO"></anvil-component>
+        <anvil-component type="Label" name="label_4" prop:align="right" prop:text="Venue:" container:grid_position="PVOVSQ,VBCDKB PGLHHV,LZGNLG"></anvil-component>
+        <anvil-component type="DropDown" name="venue_drop_down" container:grid_position="PVOVSQ,VBCDKB PGLHHV,CDCVON"></anvil-component>
+        <anvil-component type="RadioButton" name="private_button" prop:align="center" prop:enabled="true" prop:selected="true" prop:text="Private" prop:visible="true" container:grid_position="PVOVSQ,THUYNP WFBAAS,MAKLPO"></anvil-component>
+        <anvil-component type="RadioButton" name="scouting_button" prop:text="Scouting" container:grid_position="PVOVSQ,THUYNP WFBAAS,EVOJQM"></anvil-component>
+        <anvil-component type="Link" name="private_help_link" prop:align="left" prop:icon="fa:question-circle-o" prop:text="" on:click="self.private_help_link_click" container:grid_position="PVOVSQ,THUYNP WFBAAS,LMDSTL"></anvil-component>
+        <anvil-component type="ColumnPanel" name="column_panel_18" container:grid_position="PVOVSQ,THUYNP YXSLUY,FIBEEK">
+            <anvil-component type="Label" name="label_7" prop:align="right" prop:text="Filename:" container:grid_position="SBXYWQ,KPNAXE"></anvil-component>
+            <anvil-component type="Label" name="filename_box" container:grid_position="SBXYWQ,CMOGKV"></anvil-component>
+        </anvil-component>
+        <anvil-component type="FileLoader" name="file_loader_1" prop:align="center" on:change="self.file_loader_1_change" container:grid_position="PVOVSQ,THUYNP QCBRUY,ZKUCWK"></anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="outlined_card_2" prop:role="outlined-card" container:grid_position="LVJGUC,OCYULO">
+        <anvil-component type="Label" name="label_8" prop:align="center" prop:role="title" prop:text="Ball Time Match File Characteristics" container:grid_position="RDYBVE,ZPOOEW"></anvil-component>
+        <anvil-component type="FlowPanel" name="flow_panel_1" container:grid_position="SXRIJO,PPGYRV">
+            <anvil-component type="Label" name="label_10" prop:text="Number of Points:"></anvil-component>
+            <anvil-component type="Label" name="points_label"></anvil-component>
+            <anvil-component type="Label" name="label_12" prop:text="Percent w/Serve Player:"></anvil-component>
+            <anvil-component type="Label" name="per_srv_player_label"></anvil-component>
+            <anvil-component type="Label" name="label_14" prop:text="Percent w/ Players"></anvil-component>
+            <anvil-component type="Label" name="per_players_label"></anvil-component>
+            <anvil-component type="Label" name="label_11" prop:text="Percent w/Coordinates:"></anvil-component>
+            <anvil-component type="Label" name="per_coord_label"></anvil-component>
+            <anvil-component type="Label" name="label_13" prop:text="Completeness Score:"></anvil-component>
+            <anvil-component type="Label" name="comp_score_label"></anvil-component>
+        </anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="outlined_card_3" prop:role="outlined-card" container:grid_position="AXTBGF,TVBCNU">
+        <anvil-component type="Label" name="label_9" prop:align="center" prop:role="title" prop:text="Player Mapping" container:grid_position="ENBNOH,YDDXJQ"></anvil-component>
+        <anvil-component type="ColumnPanel" name="column_panel_8" container:grid_position="DDMHGJ,JTCRGW">
+            <anvil-component type="Label" name="label_15" prop:text="Pair" container:grid_position="ZRKMJR,QZIKSP"></anvil-component>
+            <anvil-component type="Label" name="label_16" prop:text="Ball Time Player" container:grid_position="ZRKMJR,GRBTSR"></anvil-component>
+            <anvil-component type="Label" name="label_17" prop:text="Player" container:grid_position="ZRKMJR,JLJFXU"></anvil-component>
+        </anvil-component>
+        <anvil-component type="ColumnPanel" name="column_panel_9" prop:col_widths='"{\"OJEXXW\":10,\"RTFSFK\":30,\"HJTEJJ\":20}"' container:grid_position="PSXPQF,STIGCC">
+            <anvil-component type="Label" name="label_18" prop:text="Pair A" container:grid_position="FCZQKY,OJEXXW"></anvil-component>
+            <anvil-component type="DropDown" name="btd_playera1_drop_down" container:grid_position="FCZQKY,RTFSFK QIJSBM,TUSWIT"></anvil-component>
+            <anvil-component type="DropDown" name="btd_playera2_drop_down" container:grid_position="FCZQKY,RTFSFK GNYLXN,ZOCOBI"></anvil-component>
+            <anvil-component type="DropDown" name="ppr_playera1_drop_down" container:grid_position="FCZQKY,HJTEJJ WYEOHO,DHDWKX"></anvil-component>
+            <anvil-component type="DropDown" name="ppr_playera2_drop_down" container:grid_position="FCZQKY,HJTEJJ UBHDFS,LIMBDI"></anvil-component>
+        </anvil-component>
+        <anvil-component type="ColumnPanel" name="column_panel_10" prop:col_widths='"{\"EZGMNZ\":10,\"FXCGZV\":50,\"JLZGGJ\":35,\"LYORUE\":25,\"WYWMVI\":35,\"YIZVNU\":25}"' container:grid_position="WYHUHP,YTZRFF">
+            <anvil-component type="Label" name="label_19" prop:text="Pair B" container:grid_position="JFKEBS,EZGMNZ"></anvil-component>
+            <anvil-component type="DropDown" name="btd_playerb1_drop_down" container:grid_position="JFKEBS,FXCGZV DAWJNJ,JLZGGJ"></anvil-component>
+            <anvil-component type="DropDown" name="ppr_playerb1_drop_down" container:grid_position="JFKEBS,FXCGZV DAWJNJ,LYORUE"></anvil-component>
+            <anvil-component type="DropDown" name="btd_playerb2_drop_down" container:grid_position="JFKEBS,FXCGZV RXYPZO,WYWMVI"></anvil-component>
+            <anvil-component type="DropDown" name="ppr_playerb2_drop_down" container:grid_position="JFKEBS,FXCGZV RXYPZO,YIZVNU"></anvil-component>
+        </anvil-component>
+        <anvil-component type="Button" name="cancel_file_button" prop:role="outlined-button" prop:text="CANCEL" on:click="self.cancel_file_button_click" container:grid_position="NEIZEH,BGGKRP"></anvil-component>
+        <anvil-component type="Button" name="save_file_button" prop:role="outlined-button" prop:text="SAVE FILE" on:click="self.save_file_button_click" container:grid_position="NEIZEH,UYIMDY"></anvil-component>
+        <anvil-component type="Button" name="save_and_add_another_button" prop:role="outlined-button" prop:text="SAVE &amp; IMPORT ANOTHER" on:click="self.save_and_add_another_button_click" container:grid_position="NEIZEH,SVAADN"></anvil-component>
+    </anvil-component>
+    <anvil-component type="ColumnPanel" name="outlined_card_5" prop:role="outlined-card" container:grid_position="JGDDBL,WEFMUF">
+        <anvil-component type="Label" name="label_5" prop:align="center" prop:bold="false" prop:role="title" prop:text="Add a New Player" container:grid_position="SHGULN,VOGWOC"></anvil-component>
+        <anvil-component type="ColumnPanel" name="column_panel_4" container:grid_position="LLSUOR,GTMRKQ">
+            <anvil-component type="ColumnPanel" name="column_panel_7" container:grid_position="FSJZYQ,UTQMES">
+                <anvil-component type="Label" name="label_23" prop:align="right" prop:bold="false" prop:text="Team:" container:grid_position="WBBBTO,EENNGN"></anvil-component>
+                <anvil-component type="TextBox" name="team2_text_box" container:grid_position="WBBBTO,TTHAFW"></anvil-component>
+            </anvil-component>
+            <anvil-component type="ColumnPanel" name="column_panel_11" container:grid_position="CUFHEJ,PAHVCH">
+                <anvil-component type="Label" name="label_22" prop:align="right" prop:text="Number:" container:grid_position="MNOZAB,MKJSYI"></anvil-component>
+                <anvil-component type="TextBox" name="number_text_box" container:grid_position="MNOZAB,KIKACM"></anvil-component>
+            </anvil-component>
+            <anvil-component type="ColumnPanel" name="column_panel_12" container:grid_position="EOLDUC,LULZQZ">
+                <anvil-component type="Label" name="label_20" prop:align="right" prop:text="Short Name:" container:grid_position="ARUDXU,LMMLHW"></anvil-component>
+                <anvil-component type="TextBox" name="short_name_text_box" container:grid_position="ARUDXU,OYNYIQ"></anvil-component>
+                <anvil-component type="ColumnPanel" name="column_panel_13" container:grid_position="NMUUSK,CLRNVI">
+                    <anvil-component type="Label" name="label_21" prop:align="right" prop:text="Full Name:" container:grid_position="NXQOEK,PELVAM"></anvil-component>
+                    <anvil-component type="TextBox" name="full_name_text_box" container:grid_position="NXQOEK,WDQEWA"></anvil-component>
+                </anvil-component>
+                <anvil-component type="Label" name="label_27" prop:align="right" prop:text="BTD Alias:" container:grid_position="XRHBKD,FOOKTN"></anvil-component>
+                <anvil-component type="TextBox" name="alias_text_box" container:grid_position="XRHBKD,BEFQRC"></anvil-component>
+            </anvil-component>
+        </anvil-component>
+        <anvil-component type="ColumnPanel" name="column_panel_6" prop:col_widths='"{\"RVIJQF\":20,\"EKQSXK\":40}"' container:grid_position="LLSUOR,CGCSGL">
+            <anvil-component type="Label" name="label_24" prop:align="right" prop:text="League:" container:grid_position="ZMLBSY,RVIJQF"></anvil-component>
+            <anvil-component type="DropDown" name="league2_drop_down" container:grid_position="ZMLBSY,EKQSXK"></anvil-component>
+            <anvil-component type="Button" name="save_player_button" prop:role="outlined-button" prop:text="Save New Player" on:click="self.save_player_button_click" container:grid_position="AZNLGQ,RUPQGD"></anvil-component>
+            <anvil-component type="Button" name="cancel_player_button" prop:role="outlined-button" prop:text="Cancel" container:grid_position="UTFEBB,PGZBOC"></anvil-component>
+        </anvil-component>
+    </anvil-component>
+</anvil-form>

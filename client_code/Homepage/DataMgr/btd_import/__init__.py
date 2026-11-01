@@ -136,7 +136,22 @@ class btd_import(btd_importTemplate):
 
   def save_file_button_click(self, **event_args):
     """This method is called when the button is clicked"""
-    # alert("Saving your data now")
+    row = self._save_new_row()
+    if row is None:
+      return
+    alert("New Row Saved! (With validated player/team assignments)")
+    open_form("Homepage.DataMgr")
+
+  def save_and_add_another_button_click(self, **event_args):
+    """This method is called when the button is clicked"""
+    row = self._save_new_row()
+    if row is None:
+      return
+    Notification("File saved! Ready for the next file.", style="success", timeout=3)
+    self._reset_for_next_file()
+
+  def _save_new_row(self):
+    """Validates the form and saves a new btd_files row. Returns the new row, or None if validation failed (an alert has already been shown)."""
 
     # first off, a little data check:
     if not self.date_picker.date:
@@ -193,7 +208,7 @@ class btd_import(btd_importTemplate):
     # - Player/team validation corrections
     # - Normalized player names
     # - A 'changes' column documenting all modifications
-    app_tables.btd_files.add_row( 
+    row = app_tables.btd_files.add_row(
       league=disp_league,
       gender=disp_gender,
       year=disp_year,
@@ -224,8 +239,42 @@ class btd_import(btd_importTemplate):
       venue_id = app_tables.venue.get(venue_name=self.venue_drop_down.selected_value['venue_name'])['venue_id'],
       match_time=self.match_time_drop_down.selected_value
     )
-    alert("New Row Saved! (With validated player/team assignments)")
-    open_form("Homepage.DataMgr")
+    return row
+
+  def _reset_for_next_file(self):
+    """Clears the per-file fields after a save, leaving league/comp/date/venue/time selections in place for the next import."""
+    self.file_loader_1.file = None
+    self.filename_box.text = ""
+    self.cleaned_csv_file = None
+
+    self.points_label.text = ""
+    self.comp_score_label.text = ""
+    self.per_players_label.text = ""
+    self.per_coord_label.text = ""
+    self.per_srv_player_label.text = ""
+
+    self.btd_playera1_drop_down.items = []
+    self.btd_playera2_drop_down.items = []
+    self.btd_playerb1_drop_down.items = []
+    self.btd_playerb2_drop_down.items = []
+    self.btd_playera1_drop_down.selected_value = None
+    self.btd_playera2_drop_down.selected_value = None
+    self.btd_playerb1_drop_down.selected_value = None
+    self.btd_playerb2_drop_down.selected_value = None
+
+    # extract league, gender, year from league selected value (unchanged from the last save)
+    disp_league, disp_gender, disp_year = parse_lgy(self.league2_drop_down.selected_value)
+    ppr_player_list = get_ppr_player_list(disp_league, disp_gender, disp_year)
+    self.ppr_playera1_drop_down.items = ppr_player_list
+    self.ppr_playera2_drop_down.items = ppr_player_list
+    self.ppr_playerb1_drop_down.items = ppr_player_list
+    self.ppr_playerb2_drop_down.items = ppr_player_list
+    self.ppr_playera1_drop_down.selected_value = None
+    self.ppr_playera2_drop_down.selected_value = None
+    self.ppr_playerb1_drop_down.selected_value = None
+    self.ppr_playerb2_drop_down.selected_value = None
+
+    self.private_button.selected = True
 
   def private_help_link_click(self, **event_args):
     """This method is called when the link is clicked"""
