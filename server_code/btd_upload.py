@@ -120,6 +120,20 @@ def _validate_lgy_string(lgy):
 # Here is an example - you can replace it with your own:
 #
 
+_JUNK_NAME_TOKENS = {'none', 'nan', 'null'}
+
+def _clean_name_series(series):
+  """Normalizes team/player names so the same real player isn't counted twice.
+  Strips whitespace, collapses repeated spaces, and drops stray placeholder
+  tokens ('None', 'nan', 'null') that Balltime or pandas can leave in a name,
+  e.g. 'Opponent None 7' -> 'Opponent 7'. If a name is nothing but placeholder
+  tokens, it is left as-is (just whitespace-normalized)."""
+  def _clean(name):
+    parts = str(name).split()
+    kept = [t for t in parts if t.lower() not in _JUNK_NAME_TOKENS]
+    return ' '.join(kept if kept else parts)
+  return series.map(_clean)
+
 # ############ server function to calculate completeness for all btd file entries
 @anvil.server.callable
 def update_btd_characteristics( file ):
@@ -158,7 +172,7 @@ def update_btd_characteristics( file ):
     # Strip stray whitespace so the same real player doesn't get counted as
     # two distinct players below just because Balltime padded one row's name
     # differently (e.g. a trailing space) than another row for the same person.
-    btd_df['team'] = btd_df['team'].astype(str).str.strip()
+    btd_df['team'] = _clean_name_series(btd_df['team'])
     if 'only_player' in btd_df.columns:
       # CSV was already processed (e.g. re-uploaded as a replacement file) --
       # only_player and player columns are already correct. Just ensure no
@@ -166,12 +180,12 @@ def update_btd_characteristics( file ):
       # collide with the existing only_player column and produce duplicate
       # column labels, which blows up the team+only_player concat below.
       btd_df = btd_df.fillna({'player':str('NOTEAM NOPLAYER')})
-      btd_df['player'] = btd_df['player'].astype(str).str.strip()
+      btd_df['player'] = _clean_name_series(btd_df['player'])
     else:
       # this must be a new actions file,, so we will rename 'player' to 'only_player', then merge team and player and store it in a new 'player' column
       btd_df = btd_df.fillna({'player':str('NOPLAYER')})
       btd_df = btd_df.rename(columns={'player':'only_player'})
-      btd_df['only_player'] = btd_df['only_player'].astype(str).str.strip()
+      btd_df['only_player'] = _clean_name_series(btd_df['only_player'])
       btd_df['player'] = btd_df['team'] + ' ' + btd_df['only_player']
     # Reset index to prevent duplicate label errors from new BTD columns
     btd_df = btd_df.reset_index(drop=True)

@@ -8,6 +8,7 @@ import anvil.tables as tables
 import anvil.tables.query as q
 from anvil.tables import app_tables
 import datetime
+from anvil.js import window
 from ..btd_form_helpers import (
   parse_lgy, format_lgy, get_league_items,
   get_comp_l1_items, get_comp_l2_items, get_comp_l3_items,
@@ -149,6 +150,7 @@ class btd_import(btd_importTemplate):
       return
     Notification("File saved! Ready for the next file.", style="success", timeout=3)
     self._reset_for_next_file()
+    window.scrollTo(0, 0)
 
   def _save_new_row(self):
     """Validates the form and saves a new btd_files row. Returns the new row, or None if validation failed (an alert has already been shown)."""
