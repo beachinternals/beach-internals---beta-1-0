@@ -11,6 +11,7 @@ from anvil.tables import app_tables
 import anvil.users
 import anvil.server
 import pandas as pd
+import numpy as np
 import io
 import math
 import json
@@ -1142,6 +1143,10 @@ def calc_ppr_data(ppr_df):
         ppr_df.at[index,'dig_height']   # use the freshly calculated value
       )
     
+  # pass_oos has now been set for every row (inside the loop above), so we can
+  # grade the in-system passes.  This adds one new True/False column: great_pass.
+  ppr_df = add_great_pass(ppr_df)
+
   return ppr_df
 
 def transpose_ppr_coord(ppr_df):
@@ -1615,6 +1620,54 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
    # print(f'6 oos flag: {oos_flag}, Dest net, depth, height, src net, angle: {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
     
   return oos_flag
+
+
+# ---- Great pass settings (tune here) ----
+# Coordinates are metres, AFTER transpose_ppr_coord: x runs 0-8 across the court
+# (centre = 4); y is metres off the net on the receiving side (0 = net, ~8 = baseline).
+GP_CENTRE_X = 4.0     # metres across (court centre)
+GP_CENTRE_Y = 3.5     # metres off the net
+GP_RADIUS_X = 1.5     # ellipse half-width, side to side
+GP_RADIUS_Y = 1.5     # ellipse half-height, toward/away from net
+GP_MIN_OFF_NET = 1.5  # pass must land at least this far off the net
+GP_MIN_FORWARD = 1.5  # ball must travel at least this far toward the net
+GP_ANGLE_MIN = 15     # degrees; 0 = straight at net, + = toward centre
+GP_ANGLE_MAX = 45
+
+
+def add_great_pass(ppr_df):
+  """Add a 'great_pass' True/False column.
+  A great pass is an in-system pass (pass_yn == 'Y' and pass_oos == 0) that lands in a
+  target ellipse, travels toward the net, and comes in at an angle toward the court centre.
+  Only in-system passes can be great.  Missing coordinates give False (never an error).
+  Does not modify pass_oos or any other existing column."""
+
+  # The coordinate columns can hold None (we replaced NaN with None earlier), which makes
+  # the maths fail.  to_numeric(errors='coerce') turns anything non-numeric into NaN, and
+  # any comparison with NaN is False -- so rows with missing data end up as False.
+  sx = pd.to_numeric(ppr_df['pass_src_x'], errors='coerce')
+  sy = pd.to_numeric(ppr_df['pass_src_y'], errors='coerce')
+  x  = pd.to_numeric(ppr_df['pass_dest_x'], errors='coerce')
+  y  = pd.to_numeric(ppr_df['pass_dest_y'], errors='coerce')
+  oos = pd.to_numeric(ppr_df['pass_oos'], errors='coerce')
+
+  # Inside the ellipse (<= 1 means inside or on the edge)
+  in_ellipse = ((x - GP_CENTRE_X) / GP_RADIUS_X) ** 2 + \
+               ((y - GP_CENTRE_Y) / GP_RADIUS_Y) ** 2 <= 1
+
+  # forward = how far the ball travelled toward the net (positive = toward the net)
+  forward = sy - y
+  deep_enough = (y >= GP_MIN_OFF_NET) & (forward >= GP_MIN_FORWARD)
+
+  # sideways movement, counted positive when it is toward the court centre
+  sideways_to_centre = (x - sx) * np.sign(GP_CENTRE_X - sx)
+  angle = np.degrees(np.arctan2(sideways_to_centre, forward))
+  good_angle = (angle >= GP_ANGLE_MIN) & (angle <= GP_ANGLE_MAX)
+
+  in_system = (ppr_df['pass_yn'] == 'Y') & (oos == 0)
+
+  ppr_df['great_pass'] = (in_system & in_ellipse & deep_enough & good_angle).fillna(False).astype(bool)
+  return ppr_df
 
 
 def calc_attack_angles( att_x, att_y, att_angle ):
