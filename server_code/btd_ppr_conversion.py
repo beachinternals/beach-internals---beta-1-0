@@ -1622,51 +1622,72 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
   return oos_flag
 
 
-# ---- Great pass settings (tune here) ----
+# ---- Great pass settings, version 2 (tune here) ----
 # Coordinates are metres, AFTER transpose_ppr_coord: x runs 0-8 across the court
 # (centre = 4); y is metres off the net on the receiving side (0 = net, ~8 = baseline).
-GP_CENTRE_X = 4.0     # metres across (court centre)
-GP_CENTRE_Y = 3.5     # metres off the net
-GP_RADIUS_X = 1.5     # ellipse half-width, side to side
-GP_RADIUS_Y = 1.5     # ellipse half-height, toward/away from net
-GP_MIN_OFF_NET = 1.5  # pass must land at least this far off the net
-GP_MIN_FORWARD = 1.5  # ball must travel at least this far toward the net
-GP_ANGLE_MIN = 15     # degrees; 0 = straight at net, + = toward centre
+GREAT_PASS_VERSION = 2
+GP_CENTRE_X = 4.0       # metres across (court centre); the target circle is centred here
+GP_SHORT_START = 4.5    # passer started closer to the net than this (pass_src_y) = "short serve"
+GP_ANGLE_MIN = 15       # degrees toward the court centre
 GP_ANGLE_MAX = 45
+
+# Short serves: smaller target circle, closer to the net
+GP_SHORT_CENTRE_Y = 1.75     # metres off the net
+GP_SHORT_RADIUS = 1.25       # circle radius in metres
+GP_SHORT_MIN_OFF_NET = 1.0   # pass must land at least this far off the net
+GP_SHORT_MIN_FORWARD = 1.0   # ball must travel at least this far toward the net
+
+# All other serves
+GP_CENTRE_Y = 3.5
+GP_RADIUS = 1.5
+GP_MIN_OFF_NET = 1.5
+GP_MIN_FORWARD = 1.5
 
 
 def add_great_pass(ppr_df):
-  """Add a 'great_pass' True/False column.
-  A great pass is an in-system pass (pass_yn == 'Y' and pass_oos == 0) that lands in a
-  target ellipse, travels toward the net, and comes in at an angle toward the court centre.
-  Only in-system passes can be great.  Missing coordinates give False (never an error).
-  Does not modify pass_oos or any other existing column."""
+  """Add a 'great_pass' True/False column (version 2).
+  A great pass is an in-system pass (pass_yn == 'Y' and pass_oos == 0) that:
+    - lands inside the target circle for where the passer started (short serve vs other),
+    - is far enough off the net and has travelled far enough toward the net,
+    - has an angle of 15-45 degrees toward the court centre (uses pass_angle).
+  pass_height is NOT used (it comes from timestamps and is not accurate enough).
+  Missing coordinates or a missing pass_angle give False (never an error).
+  Does not modify pass_oos, pass_yn or any other existing column."""
 
-  # The coordinate columns can hold None (we replaced NaN with None earlier), which makes
+  # Some of these columns can hold None (we replaced NaN with None earlier), which makes
   # the maths fail.  to_numeric(errors='coerce') turns anything non-numeric into NaN, and
   # any comparison with NaN is False -- so rows with missing data end up as False.
-  sx = pd.to_numeric(ppr_df['pass_src_x'], errors='coerce')
-  sy = pd.to_numeric(ppr_df['pass_src_y'], errors='coerce')
-  x  = pd.to_numeric(ppr_df['pass_dest_x'], errors='coerce')
-  y  = pd.to_numeric(ppr_df['pass_dest_y'], errors='coerce')
+  sx  = pd.to_numeric(ppr_df['pass_src_x'], errors='coerce')
+  sy  = pd.to_numeric(ppr_df['pass_src_y'], errors='coerce')
+  x   = pd.to_numeric(ppr_df['pass_dest_x'], errors='coerce')
+  y   = pd.to_numeric(ppr_df['pass_dest_y'], errors='coerce')
+  ang = pd.to_numeric(ppr_df['pass_angle'], errors='coerce')
   oos = pd.to_numeric(ppr_df['pass_oos'], errors='coerce')
 
-  # Inside the ellipse (<= 1 means inside or on the edge)
-  in_ellipse = ((x - GP_CENTRE_X) / GP_RADIUS_X) ** 2 + \
-               ((y - GP_CENTRE_Y) / GP_RADIUS_Y) ** 2 <= 1
+  # Pick the right settings for each row: short serve or not.
+  # np.where(test, a, b) gives a where test is True, otherwise b, row by row.
+  short    = sy < GP_SHORT_START
+  centre_y = np.where(short, GP_SHORT_CENTRE_Y,    GP_CENTRE_Y)
+  radius   = np.where(short, GP_SHORT_RADIUS,      GP_RADIUS)
+  min_off  = np.where(short, GP_SHORT_MIN_OFF_NET, GP_MIN_OFF_NET)
+  min_fwd  = np.where(short, GP_SHORT_MIN_FORWARD, GP_MIN_FORWARD)
 
-  # forward = how far the ball travelled toward the net (positive = toward the net)
-  forward = sy - y
-  deep_enough = (y >= GP_MIN_OFF_NET) & (forward >= GP_MIN_FORWARD)
+  # Inside the circle (<= 1 means inside or on the edge)
+  in_circle = ((x - GP_CENTRE_X) / radius) ** 2 + ((y - centre_y) / radius) ** 2 <= 1
 
-  # sideways movement, counted positive when it is toward the court centre
-  sideways_to_centre = (x - sx) * np.sign(GP_CENTRE_X - sx)
-  angle = np.degrees(np.arctan2(sideways_to_centre, forward))
-  good_angle = (angle >= GP_ANGLE_MIN) & (angle <= GP_ANGLE_MAX)
+  # Far enough off the net, and travelled far enough toward the net (sy - y is positive
+  # when the ball moved toward the net)
+  deep_enough = (y >= min_off) & ((sy - y) >= min_fwd)
+
+  # pass_angle is + when the ball moves toward larger x.  Multiplying by the sign of
+  # (4.0 - pass_src_x) flips it so + always means "toward the court centre".
+  # (If pass_src_x is exactly 4.0 the sign is 0, the angle is 0, and the pass is not great.)
+  angle_to_centre = ang * np.sign(GP_CENTRE_X - sx)
+  good_angle = (angle_to_centre >= GP_ANGLE_MIN) & (angle_to_centre <= GP_ANGLE_MAX)
 
   in_system = (ppr_df['pass_yn'] == 'Y') & (oos == 0)
 
-  ppr_df['great_pass'] = (in_system & in_ellipse & deep_enough & good_angle).fillna(False).astype(bool)
+  ppr_df['great_pass'] = (in_system & in_circle & deep_enough & good_angle).fillna(False).astype(bool)
   return ppr_df
 
 
