@@ -367,6 +367,8 @@ def build_video_links(ppr_df: pd.DataFrame) -> str:
 
   return ' '.join(links)
 
+MAX_VIDEO_LINK_ID_SPAN = 200   # biggest max-min action id gap we will fill in one video link
+
 def build_point_video_link(video_id, action_ids):
   """
   Build a Balltime video link scoped to a single point's touches, rather
@@ -393,8 +395,22 @@ def build_point_video_link(video_id, action_ids):
   ids_int = [int(a) for a in action_ids]
   start = max(0, min(ids_int) - 1)
   end = max(ids_int) + 2
-  full_range_ids = [str(i) for i in range(start, end + 1)]
-  return f"https://app.balltime.com/video/{video_id}?actionIds={','.join(full_range_ids)}"
+
+  # Safety cap.  Normal points have ids a few apart, so filling the span is a handful of
+  # numbers.  But if one point's ids sit on very different scales (e.g. 10 and
+  # 1730601826063, seen in some 2025 files), range(start, end + 1) would try to build a
+  # list of trillions of strings, run the server out of memory, and kill the whole
+  # background task with no error message.  When the span is too big we link only the ids
+  # we were actually given (no gap filling), and log it so the bad file can be found.
+  if end - start > MAX_VIDEO_LINK_ID_SPAN:
+    log_error(
+      f"build_point_video_link: action id span too large ({end - start}) for video "
+      f"{video_id}; linking only the given ids {sorted(set(ids_int))} instead of filling "
+      f"the range", with_traceback=False)
+    ids_to_link = [str(i) for i in sorted(set(ids_int))]
+  else:
+    ids_to_link = [str(i) for i in range(start, end + 1)]
+  return f"https://app.balltime.com/video/{video_id}?actionIds={','.join(ids_to_link)}"
 
 @monitor_performance(level=MONITORING_LEVEL_VERBOSE)
 def fbhe_obj(ppr_df: pd.DataFrame | pd.Series, disp_player: str, play_type: str, video_yn: bool) -> FBHEResult:
