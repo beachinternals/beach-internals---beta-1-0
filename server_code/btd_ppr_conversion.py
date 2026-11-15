@@ -1622,36 +1622,31 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
   return oos_flag
 
 
-# ---- Great pass settings, version 2 (tune here) ----
+# ---- Great pass settings, version 4: "aim spot" rule (tune here) ----
 # Coordinates are metres, AFTER transpose_ppr_coord: x runs 0-8 across the court
 # (centre = 4); y is metres off the net on the receiving side (0 = net, ~8 = baseline).
-GREAT_PASS_VERSION = 2
-GP_CENTRE_X = 4.0       # metres across (court centre); the target circle is centred here
-GP_SHORT_START = 4.5    # passer started closer to the net than this (pass_src_y) = "short serve"
-GP_ANGLE_MIN = 15       # degrees toward the court centre
-GP_ANGLE_MAX = 45
-
-# Short serves: smaller target circle, closer to the net
-GP_SHORT_CENTRE_Y = 1.75     # metres off the net
-GP_SHORT_RADIUS = 1.25       # circle radius in metres
-GP_SHORT_MIN_OFF_NET = 1.0   # pass must land at least this far off the net
-GP_SHORT_MIN_FORWARD = 1.0   # ball must travel at least this far toward the net
-
-# All other serves
-GP_CENTRE_Y = 3.5
-GP_RADIUS = 1.5
-GP_MIN_OFF_NET = 1.5
-GP_MIN_FORWARD = 1.5
+GREAT_PASS_VERSION = 4
+GP_CENTRE_X = 4.0         # court centre (metres across)
+GP_SHORT_START = 4.8      # passer starts closer to the net than this (pass_src_y) = short serve
+GP_LINE_DIST = 2.4        # passer this far from centre = line passer (net zone 1 or 5)
+GP_ANGLE = 20             # aim angle in degrees, from straight at the net toward the middle
+GP_LINE_ANGLE = 30        # aim angle for a line passer
+GP_SHORT_EXTRA_ANGLE = 10 # added to the aim angle on a short serve
+GP_FLOOR = 1.5            # closest the pass may land to the net
+GP_SHORT_FLOOR = 1.0      # same, on a short serve
+GP_RADIUS = 1.0           # great = within this many metres of the aim spot; the spot also
+                          # sits GP_RADIUS beyond the floor
+GP_MIN_FORWARD = 0.5      # ball must travel at least this far toward the net
 
 
 def add_great_pass(ppr_df):
-  """Add a 'great_pass' True/False column (version 2).
-  A great pass is an in-system pass (pass_yn == 'Y' and pass_oos == 0) that:
-    - lands inside the target circle for where the passer started (short serve vs other),
-    - is far enough off the net and has travelled far enough toward the net,
-    - has an angle of 15-45 degrees toward the court centre (uses pass_angle).
-  pass_height is NOT used (it comes from timestamps and is not accurate enough).
-  Missing coordinates or a missing pass_angle give False (never an error).
+  """Add a 'great_pass' True/False column (version 4, "aim spot" rule).
+  A great pass is an in-system pass (pass_yn == 'Y' and pass_oos == 0) that lands within
+  GP_RADIUS metres of an "aim spot", AND at least the floor distance off the net, AND
+  has travelled at least GP_MIN_FORWARD metres toward the net.
+  The aim spot depends on where the passer started (short serve? line passer?).
+  pass_height and pass_angle are NOT used.
+  Missing coordinates give False (never an error).
   Does not modify pass_oos, pass_yn or any other existing column."""
 
   # Some of these columns can hold None (we replaced NaN with None earlier), which makes
@@ -1661,33 +1656,31 @@ def add_great_pass(ppr_df):
   sy  = pd.to_numeric(ppr_df['pass_src_y'], errors='coerce')
   x   = pd.to_numeric(ppr_df['pass_dest_x'], errors='coerce')
   y   = pd.to_numeric(ppr_df['pass_dest_y'], errors='coerce')
-  ang = pd.to_numeric(ppr_df['pass_angle'], errors='coerce')
   oos = pd.to_numeric(ppr_df['pass_oos'], errors='coerce')
 
-  # Pick the right settings for each row: short serve or not.
-  # np.where(test, a, b) gives a where test is True, otherwise b, row by row.
-  short    = sy < GP_SHORT_START
-  centre_y = np.where(short, GP_SHORT_CENTRE_Y,    GP_CENTRE_Y)
-  radius   = np.where(short, GP_SHORT_RADIUS,      GP_RADIUS)
-  min_off  = np.where(short, GP_SHORT_MIN_OFF_NET, GP_MIN_OFF_NET)
-  min_fwd  = np.where(short, GP_SHORT_MIN_FORWARD, GP_MIN_FORWARD)
+  # Two yes/no questions about where the passer started (one answer per row)
+  short = sy < GP_SHORT_START
+  line  = (sx - GP_CENTRE_X).abs() > GP_LINE_DIST
 
-  # Inside the circle (<= 1 means inside or on the edge)
-  in_circle = ((x - GP_CENTRE_X) / radius) ** 2 + ((y - centre_y) / radius) ** 2 <= 1
+  # Pick the settings for each row.  np.where(test, a, b) gives a where test is True,
+  # otherwise b.  Line passers aim at 30 degrees, others 20; short serves add 10 more.
+  angle = np.where(line, GP_LINE_ANGLE, GP_ANGLE) + np.where(short, GP_SHORT_EXTRA_ANGLE, 0)
+  floor = np.where(short, GP_SHORT_FLOOR, GP_FLOOR)
 
-  # Far enough off the net, and travelled far enough toward the net (sy - y is positive
-  # when the ball moved toward the net)
-  deep_enough = (y >= min_off) & ((sy - y) >= min_fwd)
+  # Aim spot: walk from the passer along the aim line (angled toward the court centre)
+  # until we are GP_RADIUS beyond the floor.  That gives the spot's y; its x is the
+  # sideways distance covered, tan(angle) * (distance travelled toward the net).
+  # (If the passer is exactly at x = 4.0 the sign is 0, so the aim line is straight ahead.)
+  aim_y = floor + GP_RADIUS
+  toward_centre = np.sign(GP_CENTRE_X - sx)
+  aim_x = sx + toward_centre * np.tan(np.radians(angle)) * (sy - aim_y)
 
-  # pass_angle is + when the ball moves toward larger x.  Multiplying by the sign of
-  # (4.0 - pass_src_x) flips it so + always means "toward the court centre".
-  # (If pass_src_x is exactly 4.0 the sign is 0, the angle is 0, and the pass is not great.)
-  angle_to_centre = ang * np.sign(GP_CENTRE_X - sx)
-  good_angle = (angle_to_centre >= GP_ANGLE_MIN) & (angle_to_centre <= GP_ANGLE_MAX)
-
+  near_spot = (x - aim_x) ** 2 + (y - aim_y) ** 2 <= GP_RADIUS ** 2   # inside or on the circle
+  off_net   = y >= floor
+  forward   = (sy - y) >= GP_MIN_FORWARD     # sy - y is positive when the ball moved toward the net
   in_system = (ppr_df['pass_yn'] == 'Y') & (oos == 0)
 
-  ppr_df['great_pass'] = (in_system & in_circle & deep_enough & good_angle).fillna(False).astype(bool)
+  ppr_df['great_pass'] = (in_system & near_spot & off_net & forward).fillna(False).astype(bool)
   return ppr_df
 
 
