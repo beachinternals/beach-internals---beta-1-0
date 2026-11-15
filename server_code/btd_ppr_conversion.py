@@ -1143,8 +1143,10 @@ def calc_ppr_data(ppr_df):
         ppr_df.at[index,'dig_height']   # use the freshly calculated value
       )
     
-  # pass_oos has now been set for every row (inside the loop above), so we can
-  # grade the in-system passes.  This adds one new True/False column: great_pass.
+  # pass_oos has now been set for every row (inside the loop above).  Two more steps:
+  # 1) record which passes have full court positions (and blank pass_oos when we have no
+  #    positions at all), 2) grade the in-system, fully tracked passes (great_pass).
+  ppr_df = add_pass_tracking(ppr_df)
   ppr_df = add_great_pass(ppr_df)
 
   return ppr_df
@@ -1622,6 +1624,39 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
   return oos_flag
 
 
+def add_pass_tracking(ppr_df):
+  """Add a 'pass_tracking' column saying how much court-position data a pass has.
+  Only rows with pass_yn == 'Y' get a value; other rows are left blank (NaN).
+    'full'    - pass_src_x/y AND pass_dest_x/y are all present
+    'no_dest' - source present, destination missing (often a real shank off the court)
+    'no_src'  - destination present, source missing
+    'none'    - both missing
+  For 'none' passes we cannot know whether the pass was in system, so pass_oos is set to
+  blank (NaN).  'no_dest' and 'no_src' keep the pass_oos that calc_out_of_system gave them
+  (the +1000 'no destination' flag is correct for real shanks).
+  Only None / NaN count as missing -- a real position of 0 is valid."""
+
+  # to_numeric(errors='coerce') turns None or text into NaN; .notna() is then True only
+  # where we really have a number.
+  src_ok  = pd.to_numeric(ppr_df['pass_src_x'],  errors='coerce').notna() & \
+            pd.to_numeric(ppr_df['pass_src_y'],  errors='coerce').notna()
+  dest_ok = pd.to_numeric(ppr_df['pass_dest_x'], errors='coerce').notna() & \
+            pd.to_numeric(ppr_df['pass_dest_y'], errors='coerce').notna()
+  is_pass = ppr_df['pass_yn'] == 'Y'
+
+  # np.select walks the conditions in order and uses the label of the first one that is True
+  label = np.select(
+    [src_ok & dest_ok, src_ok & ~dest_ok, ~src_ok & dest_ok],
+    ['full',           'no_dest',         'no_src'],
+    default='none')
+  # .where(is_pass) keeps the label for passes and puts NaN (blank) on every other row
+  ppr_df['pass_tracking'] = pd.Series(label, index=ppr_df.index).where(is_pass)
+
+  # 'none' passes: in system or not is unknown, so blank pass_oos (NaN, not 0)
+  ppr_df.loc[ppr_df['pass_tracking'] == 'none', 'pass_oos'] = np.nan
+  return ppr_df
+
+
 # ---- Great pass settings, version 6: "aim spot" rule (tune here) ----
 # Coordinates are metres, AFTER transpose_ppr_coord: x runs 0-8 across the court
 # (centre = 4); y is metres off the net on the receiving side (0 = net, ~8 = baseline).
@@ -1648,13 +1683,14 @@ GP_SHORT_RADIUS = 1.0
 def add_great_pass(ppr_df):
   """Add two columns (version 6, "aim spot" rule):
     pass_aim_dist - metres from where the pass landed to its aim spot.
-                    NaN (blank) when the pass is not in system or coordinates are missing.
-    great_pass    - True/False.  Only in-system passes can be great.
+                    NaN (blank) unless the pass is in system AND fully tracked.
+    great_pass    - True / False / blank.  Blank means "unknown": the pass is not in
+                    system, or a court position is missing (see add_pass_tracking).
   A great pass is in system (pass_yn == 'Y' and pass_oos == 0), lands within the radius of
   the aim spot, lands at least the floor distance off the net, and has travelled at least
   GP_MIN_FORWARD metres toward the net.
   The aim spot depends on where the passer started (short serve? line passer?).
-  pass_height is NOT used.  Missing coordinates give great_pass False (never an error).
+  pass_height is NOT used.  Missing coordinates give a blank, never an error.
   Does not modify pass_oos, pass_yn or any other existing column."""
 
   # Some of these columns can hold None (we replaced NaN with None earlier), which makes
@@ -1690,9 +1726,30 @@ def add_great_pass(ppr_df):
   in_system = (ppr_df['pass_yn'] == 'Y') & (oos == 0)
   ok = (y >= floor) & ((sy - y) >= GP_MIN_FORWARD)   # sy - y is positive when the ball moved toward the net
 
+  # We can only grade a pass when all four positions are present.  Otherwise the answer
+  # is unknown, and we leave it blank (NaN) rather than saying False.
+  full  = sx.notna() & sy.notna() & x.notna() & y.notna()
+  known = in_system & full      # in system AND fully tracked
+
   # Series.where(test) keeps the value where test is True and puts NaN (blank) elsewhere
-  ppr_df['pass_aim_dist'] = dist.where(in_system)
-  ppr_df['great_pass'] = (in_system & ok & (dist <= radius)).fillna(False).astype(bool)
+  ppr_df['pass_aim_dist'] = dist.where(known)
+  # True / False / blank.  The 'boolean' dtype (capital b) can hold True, False AND blank;
+  # a plain bool column cannot hold a blank.
+  ppr_df['great_pass'] = (ok & (dist <= radius)).where(known).astype('boolean')
+  return ppr_df
+
+
+def clean_ppr_flags(ppr_df):
+  """Call this right after pd.read_csv() on a saved ppr file.
+  A CSV has no True/False/blank type: great_pass comes back as plain True/False when
+  nothing is blank, but as an 'object' column of True/False/NaN when some rows are blank.
+  This puts it back to the 'boolean' dtype (True / False / <NA>) so it always behaves the same.
+  Counting tips:  known = ppr_df['great_pass'].notna();  great = (ppr_df['great_pass'] == True).
+  Do NOT filter with ppr_df[ppr_df['great_pass']] -- that fails when blanks are present.
+  Files built before great_pass existed have no such column; they are left alone."""
+  if 'great_pass' in ppr_df.columns:
+    ppr_df['great_pass'] = ppr_df['great_pass'].map(
+      {True: True, False: False, 'True': True, 'False': False}).astype('boolean')
   return ppr_df
 
 
