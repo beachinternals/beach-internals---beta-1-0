@@ -1454,7 +1454,8 @@ def count_oos_obj(ppr_df, disp_player, action, video_yn=False):
     'count': 0,           # number out of system
     'percent': 0.0,       # percent out of system (decimal)
     'percent_str': '0%',  # percent out of system (formatted string)
-    'attempts': 0 ,       # total attempts
+    'attempts': 0 ,       # attempts whose in-system status is known (pass_oos not blank)
+    'untracked': 0,       # attempts left out because pass_oos is blank (unknown)
     'URL':''              # Video Links
   }
 
@@ -1464,6 +1465,14 @@ def count_oos_obj(ppr_df, disp_player, action, video_yn=False):
 
     # Filter data for the specific player
   player_data = ppr_df[ppr_df[action_filter] == disp_player]
+
+  # A blank (NaN) pass_oos means "unknown" -- the pass had no court positions at all
+  # (see add_pass_tracking), so we cannot say whether it was in system.  Those passes
+  # are left out of the attempts so they don't count as in system, and are reported
+  # separately in 'untracked'.
+  known_mask = player_data['pass_oos'].notna()
+  result['untracked'] = int((~known_mask).sum())
+  player_data = player_data[known_mask]
 
   # Calculate statistics
   result['attempts'] = len(player_data)
@@ -1529,6 +1538,97 @@ def count_good_passes_obj(ppr_df, disp_player, action='pass', video_yn=False):
     'attempts': total_attempts,    # total attempts
     'URL': video_links            # video links or empty string
   }
+
+
+#=============----------------===============---------------==============----------
+def count_great_passes_obj(ppr_df, disp_player, action='pass', video_yn=False):
+  """
+    Great-pass statistics for a player (see add_great_pass in btd_ppr_conversion).
+
+    A pass is only GRADED when it is in system AND has all four court positions; those
+    rows have great_pass True/False.  Every other row has a blank great_pass = unknown,
+    and is left out of the rates.
+
+    Args:
+        ppr_df: DataFrame containing player performance data
+        disp_player: Player name to analyze
+        action: 'pass', 'att' or 'srv' -- which player column to match, defaults to 'pass'
+        video_yn: Boolean to include video links to the great passes, defaults to False
+
+    Returns:
+        dict with keys (use .get() for safe access):
+        'count'            - number of great passes
+        'attempts'         - graded passes (in system AND fully tracked)
+        'percent'          - count / attempts (decimal, e.g. 0.45)
+        'percent_str'      - formatted, no decimals (e.g. '45%')
+        'known'            - passes whose in-system status is known (pass_oos not blank)
+        'percent_of_known' - count / known  (great passes as a share of ALL known passes)
+        'percent_of_known_str'
+        'passes'           - all tracked-or-not passes (pass_tracking not blank)
+        'tracked'          - passes with full court positions (pass_tracking == 'full')
+        'tracked_pct'      - tracked / passes (data-quality measure)
+        'mean_aim_dist'    - average metres from the aim spot over graded passes (lower = better), or None
+        'sd_aim_dist'      - standard deviation of that distance, or None (needs 2+ passes)
+        'URL'              - video links to the great passes if video_yn is True, else ''
+    Files built before great_pass existed have no great_pass column: zeros/None are returned.
+  """
+  action_mapping = {
+    'att': 'att_player',
+    'pass': 'pass_player',
+    'srv': 'serve_player'
+  }
+  action_filter = action_mapping.get(action.lower())
+  if action_filter is None:
+    print(f'Invalid action: {action}. Valid options: {list(action_mapping.keys())}. Using "pass".')
+    action_filter = 'pass_player'
+
+  result = {
+    'count': 0, 'attempts': 0, 'percent': 0.0, 'percent_str': '0%',
+    'known': 0, 'percent_of_known': 0.0, 'percent_of_known_str': '0%',
+    'passes': 0, 'tracked': 0, 'tracked_pct': 0.0,
+    'mean_aim_dist': None, 'sd_aim_dist': None,
+    'URL': ''
+  }
+
+  if ppr_df.empty or 'great_pass' not in ppr_df.columns:
+    return result
+
+  player_data = ppr_df[ppr_df[action_filter] == disp_player]
+
+  # graded = in system AND fully tracked (great_pass is not blank).
+  # NOTE: only .notna(), == True and == False are used on great_pass, because they behave
+  # the same whether the CSV loaded the column as bool, object (True/False/NaN) or 'boolean'.
+  graded = player_data[player_data['great_pass'].notna()]
+  great  = graded[graded['great_pass'] == True]
+  result['attempts'] = len(graded)
+  result['count']    = len(great)
+  if result['attempts'] > 0:
+    result['percent'] = result['count'] / result['attempts']
+  result['percent_str'] = f"{result['percent']:.0%}"
+
+  # share of ALL passes whose in-system status is known (in system or out of system)
+  result['known'] = int(pd.to_numeric(player_data['pass_oos'], errors='coerce').notna().sum())
+  if result['known'] > 0:
+    result['percent_of_known'] = result['count'] / result['known']
+  result['percent_of_known_str'] = f"{result['percent_of_known']:.0%}"
+
+  # data quality: how many passes had full court positions
+  if 'pass_tracking' in player_data.columns:
+    result['passes']  = int(player_data['pass_tracking'].notna().sum())
+    result['tracked'] = int((player_data['pass_tracking'] == 'full').sum())
+    if result['passes'] > 0:
+      result['tracked_pct'] = result['tracked'] / result['passes']
+
+  # distance from the aim spot (None, not NaN, when there is nothing to average)
+  if 'pass_aim_dist' in graded.columns:
+    dists = pd.to_numeric(graded['pass_aim_dist'], errors='coerce').dropna()
+    if len(dists) > 0:
+      result['mean_aim_dist'] = float(dists.mean())
+    if len(dists) > 1:
+      result['sd_aim_dist'] = float(dists.std())
+
+  result['URL'] = build_video_links(great) if (video_yn and len(great) > 0) else ''
+  return result
 
   
 
