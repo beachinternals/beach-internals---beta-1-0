@@ -156,6 +156,20 @@ def calc_metric_from_dict(metric_name, ppr_df, player_name, metric_dict_df):
       result_var_name = function_name.split('=')[0].strip()
       value = namespace[result_var_name]
 
+    # Minimum-attempts gate, the same rule calculate_all_metrics uses: too few attempts
+    # means "no data", which must come back blank (None) rather than a 0 that would be
+    # counted as a real value.  Metrics with no attempts_path are not gated.
+    attempts_path = row.get('attempts_path', None)
+    if pd.notna(attempts_path) and str(attempts_path).strip():
+      try:
+        attempts_value = eval(str(attempts_path).strip(), namespace)
+      except Exception:
+        attempts_value = None
+      min_att = row.get('min_attempts_for_ci', 5)
+      min_att = int(min_att) if pd.notna(min_att) else 5
+      if attempts_value is not None and attempts_value < min_att:
+        return None
+
     return float(value) if value is not None else None
 
   except Exception as e:

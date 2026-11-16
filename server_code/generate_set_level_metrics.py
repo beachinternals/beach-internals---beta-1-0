@@ -557,8 +557,12 @@ def calculate_metric_for_set(metric_row, ppr_df_filtered, player_name):
         if key_start >= 0 and key_end > key_start:
           key      = result_path[key_start+2:key_end]
           value    = result_dict.get(key, None)
-          attempts = (result_dict.get('attempts', None)
-                      or result_dict.get('total_points', None))
+          # NOTE: not "attempts or total_points" -- with 0 attempts that `or` fell through
+          # to total_points (None), the minimum-attempts gate below was skipped, and the
+          # metric was kept with a value of 0 instead of being left blank.
+          attempts = result_dict.get('attempts', None)
+          if attempts is None:
+            attempts = result_dict.get('total_points', None)
 
     elif return_type == 'distribution':
       # result_path names the SrvDestResult-style object in exec_context,
