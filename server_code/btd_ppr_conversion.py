@@ -1079,6 +1079,9 @@ def calc_ppr_data(ppr_df):
       ppr_df.at[index,'pass_dest_zone_depth'] = zone_depth(ppr_r['pass_dest_y'])
       ppr_df.at[index,'pass_dest_zone_net'] = zone_net(ppr_r['pass_dest_x'])
       ppr_df.at[index,'pass_angle'] = calc_angle(ppr_r['pass_src_x'],ppr_r['pass_dest_x'],ppr_r['pass_src_y'],ppr_r['pass_dest_y'])
+      # NOTE: pass_oos is only worked out when pass_dest_t is a number.  Without it there is no
+      # flight time (so no height), and pass_oos simply keeps its starting value of 0.0 (in system).
+      # add_pass_tracking later blanks pass_oos only for passes with NO court positions at all.
       if isinstance(ppr_r['pass_dest_t'],(float,int)):
         ppr_df.at[index,'pass_dur'] = calc_dur(ppr_r['pass_src_t'],ppr_r['pass_dest_t'])
         ppr_df.at[index,'pass_speed'] = calc_speed(ppr_df.at[index,'pass_dist'],ppr_df.at[index,'pass_dur'])
@@ -1580,12 +1583,39 @@ def print_to_string(*args, **kwargs):
   return contents
 
 
+# ---------------------------------------------------------------------------------------
+# calc_out_of_system -- how a pass is judged "in system" or "out of system".
+#
+# Returns a number made of flags that are ADDED together.  0 = in system, anything above
+# 0 = out of system.  Each flag has its own place value, so you can read which tests fired:
+#     1    ball sent toward the sideline (away from the court centre) too sharply
+#    10    landed too deep: the back zone (E), or a deep corner (zone D in net zone 1 or 5)
+#   100    a very short flight time (very low pass)
+#  1000    no landing spot AND a long flight time -- a ball in the air that went off screen
+# e.g. 1010 = no landing spot, long flight, AND it also fired the zone flag.
+#
+# A caution that applies to everything below: the pass_height used here comes from the
+# timestamps, and the timestamps are noisy (it is hard to mark the exact second of each
+# touch).  So height is a rough measure, only used for the two coarse tests (100 and 1000),
+# and we accept that there is only so much accuracy this data can give.  great_pass does
+# NOT use pass_height for exactly this reason.
+#
+# Also note: calc_ppr_data only calls this function when pass_dest_t is a number (see the
+# note there), and add_pass_tracking may blank the result afterwards for passes with no
+# court positions at all.
+# ---------------------------------------------------------------------------------------
 def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net, pass_angle, dest_y):
   # calcualte the out of system flag
   oos_flag = 0
   #print(f'Out of System Called : {dest_zone_net,dest_zone_depth,pass_height,src_zone_net,pass_angle}')
   
-  # Angle checks - only if we have a valid angle
+  # Angle checks (flag value 1): a passer standing in one of the outer net zones should not
+  # send the ball away from the court centre by more than a few degrees.  Zones 1 and 2 are
+  # on the high-x side and zones 4 and 5 on the low-x side, which is why the signs of the
+  # angles are opposite; the limit is tighter (10) for the zone nearest the sideline (1, 5)
+  # than for the next one in (15).  Zone 3 (middle) has no angle test.
+  # pass_angle is None when the destination is missing (calc_angle needs both ends), so a
+  # pass with no landing spot skips this whole block.
   if pass_angle is not None:
     if (src_zone_net == '1') and (pass_angle > 10):
       oos_flag = oos_flag + 1
@@ -1600,21 +1630,42 @@ def calc_out_of_system(dest_zone_net, dest_zone_depth, pass_height, src_zone_net
       oos_flag = oos_flag + 1
       #print(f'2d oos flag: {oos_flag}')
     
-  # zone
+  # Landing-zone checks (flag value 10).  Depth zones are 1.6 m wide, A at the net to E at the
+  # back, so E is the last stretch of court (roughly 6.4 m back and beyond).
+  # The "dest_y < 30" part looks like a guard against absurd coordinates: real y values
+  # are 0-8 m, so it does not change anything for normal data.
+  # With no landing spot the depth zone is blank (' '), so neither test below can fire.
   if ( dest_zone_depth == 'E'):
     if (dest_y < 30):
       oos_flag = oos_flag + 10
       #print(f'3 oos flag: {oos_flag}')
+  # a deep corner: depth zone D (4.8-6.4 m back) in one of the two sideline net zones
   if (dest_zone_depth == 'D') & ( (dest_zone_net == '1' ) | (dest_zone_net == '5') ):
     oos_flag = oos_flag + 10
     #print(f'4 oos flag: {oos_flag}')
 
-  # height
+  # Height check (flag value 100): a very short flight time.  pass_height is
+  # 1.225 * seconds^2, so under 1.0 means under roughly 0.9 seconds in the air.
+  # "pass_height > 0" matters: calc_height returns 0 when a timestamp is missing, so a
+  # pass with no usable timestamps is NOT flagged here (we do not guess).
+  # Timestamps are noisy, so treat this as a coarse flag, not a precise measurement.
   if (pass_height > 0) & (pass_height < 1.00):
     oos_flag = oos_flag + 100
     #print(f'5 oos flag: {oos_flag}')
 
   # no pass desitnation, likely a shank off the court, added pass height since some good passes have no zone, but a reasonable height
+  #
+  # The thinking behind this rule (flag value 1000):
+  #  - Some passes have no landing spot because the ball went up in the air and off screen,
+  #    or somewhere the tracking could not see.  Ignoring them hid a lot of bad passes, so
+  #    we count them as out of system.
+  #  - But a missing landing spot can ALSO just be missing data, and we do not want to call
+  #    every gap a bad pass.  So we also require a long flight time: pass_height > 15 is
+  #    about 3.5 seconds or more in the air, which is a ball that really went somewhere.
+  #  - dest_zone_net == 0 is how a missing landing x shows up (zone_net gives 0 for None/NaN).
+  #  - Result: no landing spot + long flight = out of system.  No landing spot + short flight
+  #    (or no timestamps at all) is NOT flagged, so it stays in system (pass_oos = 0).
+  #    That is a deliberate, conservative call given how noisy the timestamps are.
   if ( dest_zone_net == 0) & (pass_height > 15):
     oos_flag = oos_flag + 1000
     
@@ -1652,7 +1703,10 @@ def add_pass_tracking(ppr_df):
   # .where(is_pass) keeps the label for passes and puts NaN (blank) on every other row
   ppr_df['pass_tracking'] = pd.Series(label, index=ppr_df.index).where(is_pass)
 
-  # 'none' passes: in system or not is unknown, so blank pass_oos (NaN, not 0)
+  # 'none' passes: in system or not is unknown, so blank pass_oos (NaN, not 0).
+  # Deliberately NOT done for 'no_dest' / 'no_src': a no-landing-spot pass is already judged by
+  # calc_out_of_system (long flight = ball off screen = out of system), and we accept that a
+  # short-flight one stays in system because the timestamps are too noisy to say more.
   ppr_df.loc[ppr_df['pass_tracking'] == 'none', 'pass_oos'] = np.nan
   return ppr_df
 
