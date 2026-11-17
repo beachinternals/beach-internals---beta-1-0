@@ -50,7 +50,7 @@ class Reports_main(Reports_mainTemplate):
     self.league_drop_down.selected_value = (
       user_row["def_league"] + "|" + user_row["def_gender"] + "|" + user_row["def_year"]
     )
-    self.league_drop_down.items = list(
+    self.league_drop_down.items = sorted(
       set(
         [
           (r["league"]) + " | " + r["gender"] + " | " + r["year"]

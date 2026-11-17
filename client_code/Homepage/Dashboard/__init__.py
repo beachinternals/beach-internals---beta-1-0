@@ -26,7 +26,7 @@ class Dashboard(DashboardTemplate):
     else:
       # set up the league drop down
       self.league_drop_down.selected_value = user_row["def_league"]+'|'+user_row['def_gender']+'|'+user_row['def_year']
-      self.league_drop_down.items = list(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
+      self.league_drop_down.items = sorted(set([(r['league'])+' | '+r['gender']+' | '+r['year'] for r in app_tables.subscriptions.search(team=user_row['team'])]))
 
     # populate the reports drop down
     if anvil.users.get_user()['team'] == "INTERNALS":

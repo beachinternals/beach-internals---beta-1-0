@@ -110,9 +110,9 @@ def report_league_new(lgy, team, **rpt_filters):
 
   # Create the output dictionary
   df_dict = {
-    'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Hgher FBHE', 'Win w/ Higher Transition', 'Win w/ Lower Errors',' ', 'High FBHE Loser w/High Errors','High FBHE Loser w/Low Transition'],
-    'Number': ['', 0, 0, 0, 0, 0, 0, 0, '', 0, 0],
-    'Percent': ['', '', '', '', '', 0, 0, 0, '', 0, 0]
+    'Metric': ['League', 'Points', 'Sets', 'Players', 'Pairs', 'Win w/ Hgher FBHE', 'Win w/ Higher Transition', 'Win w/ Lower Errors',' ', 'High FBHE Loser w/High Errors','High FBHE Loser w/Low Transition', 'Win w/ Higher FBHE & Avg Errors', 'Win w/ Higher TCR & Avg Errors'],
+    'Number': ['', 0, 0, 0, 0, 0, 0, 0, '', 0, 0, 0, 0],
+    'Percent': ['', '', '', '', '', 0, 0, 0, '', 0, 0, 0, 0]
   }
 
   # Create DataFrame and set index
@@ -153,6 +153,25 @@ def report_league_new(lgy, team, **rpt_filters):
     #df_table.at['Low FBHE Win w/Low Transition','Percent'] = str('{:.1%}'.format(df_table.at['Low FBHE Win w/Low Transition','Number']/tmp_df.shape[0]))
     df_table.at['High FBHE Loser w/High Errors','Percent'] = str('{:.1%}'.format(df_table.at['High FBHE Loser w/High Errors','Number']/tmp_df.shape[0]))
     df_table.at['High FBHE Loser w/Low Transition','Percent'] = str('{:.1%}'.format(df_table.at['High FBHE Loser w/Low Transition','Number']/tmp_df.shape[0]))
+
+  # Sets won with higher FBHE / (total sets - sets lost with higher FBHE and high errors)
+  wins_hi_fbhe = df_table.at['Win w/ Hgher FBHE','Number']
+  denom = df_table.at['Sets','Number'] - df_table.at['High FBHE Loser w/High Errors','Number']
+  df_table.at['Win w/ Higher FBHE & Avg Errors','Number'] = wins_hi_fbhe
+  if denom == 0:
+    df_table.at['Win w/ Higher FBHE & Avg Errors','Percent'] = 0
+  else:
+    df_table.at['Win w/ Higher FBHE & Avg Errors','Percent'] = str('{:.1%}'.format(wins_hi_fbhe/denom))
+
+  # Sets won with higher TCR / (total sets - sets lost with higher TCR and high errors)
+  wins_hi_tcr = df_table.at['Win w/ Higher Transition','Number']
+  lost_hi_tcr_hi_err = tri_df[ (tri_df['win_tcr'] < tri_df['loser_tcr']) & (tri_df['loser_err_den'] >= error_high) ].shape[0]
+  denom_tcr = df_table.at['Sets','Number'] - lost_hi_tcr_hi_err
+  df_table.at['Win w/ Higher TCR & Avg Errors','Number'] = wins_hi_tcr
+  if denom_tcr == 0:
+    df_table.at['Win w/ Higher TCR & Avg Errors','Percent'] = 0
+  else:
+    df_table.at['Win w/ Higher TCR & Avg Errors','Percent'] = str('{:.1%}'.format(wins_hi_tcr/denom_tcr))
 
   #print(f'reports league: df_table \n {df_table}')
   # put the DF's in the df_list

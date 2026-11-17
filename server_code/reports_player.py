@@ -438,15 +438,15 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
   # Create the new table with specified columns, including 'Metric'
   # UPDATED: Added 6 new rows for pass touch type (bump, hand, unknown - FBHE and Attempts each)
   table_data = {
-    'Metric': ['FBHE', 'Percentile', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts', '% In System',
+    'Metric': ['FBHE', 'Percentile', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts', '% In System', '% Great Pass',
                'Bump Set FBHE', 'Bump Set Attempts',
                'Hand Set FBHE', 'Hand Set Attempts',
                'Unknown Touch Type FBHE', 'Unknown Touch Type Attempts',
                'URL'],
-    'Front-Pin': [0, 0, 0, 0, 0, 0, '0%', '0%', 0, 0, 0, 0, 0, 0, ''],
-    'Front-Slot': [0, 0, 0, 0, 0, 0, '0%', '0%', 0, 0, 0, 0, 0, 0, ''],
-    'Behind': [0, 0, 0, 0, 0, 0, '0%', '0%', 0, 0, 0, 0, 0, 0, ''],
-    'Middle': [0, 0, 0, 0, 0, 0, '0%', '0%', 0, 0, 0, 0, 0, 0, '']
+    'Front-Pin': [0, 0, 0, 0, 0, 0, '0%', '0%', '0%', 0, 0, 0, 0, 0, 0, ''],
+    'Front-Slot': [0, 0, 0, 0, 0, 0, '0%', '0%', '0%', 0, 0, 0, 0, 0, 0, ''],
+    'Behind': [0, 0, 0, 0, 0, 0, '0%', '0%', '0%', 0, 0, 0, 0, 0, 0, ''],
+    'Middle': [0, 0, 0, 0, 0, 0, '0%', '0%', '0%', 0, 0, 0, 0, 0, 0, '']
   }
   new_table_df = pd.DataFrame(table_data)
 
@@ -489,6 +489,9 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
     # % In System: Get from count_good_passes_obj (use percent_str for xx% format)
     good_passes = count_good_passes_obj(pos_df, disp_player, action='att', video_yn=True)
     new_table_df.loc[new_table_df['Metric'] == '% In System', pos] = good_passes.get('percent_str', '0%')
+    # % Great Pass: great passes as a share of passes with known in-system status
+    great_passes = count_great_passes_obj(pos_df, disp_player, action='att')
+    new_table_df.loc[new_table_df['Metric'] == '% Great Pass', pos] = great_passes.get('percent_of_known_str', '0%')
 
     # ADDED: Calculate pass touch type stats for each position
     for touch_type, row_fbhe, row_att in [('bump', 'Bump Set FBHE', 'Bump Set Attempts'), 
@@ -529,6 +532,8 @@ def report_player_att_tendencies(lgy, team, **rpt_filters):
   new_table_df.loc[new_table_df['Metric'] == 'Percentile', 'Behind'] = round(percentile, 1)
   good_passes = count_good_passes_obj(behind_df, disp_player, action='att', video_yn=True)
   new_table_df.loc[new_table_df['Metric'] == '% In System', 'Behind'] = good_passes.get('percent_str', '0%')
+  great_passes = count_great_passes_obj(behind_df, disp_player, action='att')
+  new_table_df.loc[new_table_df['Metric'] == '% Great Pass', 'Behind'] = great_passes.get('percent_of_known_str', '0%')
 
   # ADDED: Calculate pass touch type stats for Behind position
   for touch_type, row_fbhe, row_att in [('bump', 'Bump Set FBHE', 'Bump Set Attempts'), 

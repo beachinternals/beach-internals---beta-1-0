@@ -43,6 +43,7 @@ from pair_functions import *
 from plot_functions import *
 from datetime import datetime, timedelta
 from server_functions import *
+from metric_calc_functions import sideout_rate_obj
 from plot_functions import *
 
 
@@ -148,8 +149,9 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
     'FBSO': [],           # First Ball Side Out
     'TCR': [],            # Transition Conversion Rate
     'ESO': [],            # Expected Side Out
-    'Expected': [], # Expected Value
+    'Side_Out_Rate': [],  # Side Out Rate (receiving points won)
     'Good_Pass_Pct': [],  # Good Pass Percentage
+    'Great_Pass_Pct': [], # Great Pass Percentage (of known passes)
     'Knockout': [], # Knockout Ratio
     'Ace/Error': [], # Ace to Error Ratio
     'Error_Density': []   # Error Density
@@ -200,15 +202,20 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
       eso_result = calc_player_eso_obj(ppr_df, player)
       metrics_data['ESO'].append(eso_result.get('eso'))
 
-        # Get Expected Value from calc_ev_obj function
-      ev_result = calc_ev_obj(ppr_df, player)
-      metrics_data['Expected'].append(to_python_type(ev_result.get('expected_value')) )
+      # Get Side Out Rate from sideout_rate_obj (None when no receiving points)
+      so_result = sideout_rate_obj(ppr_df, player)
+      so_value = so_result.sideout_rate
+      metrics_data['Side_Out_Rate'].append(float(so_value) if so_value is not None else np.nan)
 
       # Get Good Pass percentage from count_good_passes_obj function
       good_pass_result = count_good_passes_obj(ppr_df, player, 'pass')
       good_pass_value = good_pass_result.get('percent') 
       #print(f"Raw Good_Pass_Pct for {player}: {good_pass_value} Type {type(good_pass_value)}")
       metrics_data['Good_Pass_Pct'].append(to_python_type(good_pass_value))
+
+      # Great Pass percentage (great passes as a share of all passes with known in-system status)
+      great_pass_result = count_great_passes_obj(ppr_df, player, 'pass')
+      metrics_data['Great_Pass_Pct'].append(to_python_type(great_pass_result.get('percent_of_known', 0.0)))
 
       # Get Knockout Ratio from calc_knockout_obj function
       knockout_result = calc_knock_out_obj(ppr_df, player)
@@ -247,17 +254,18 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
     summary_row = {'Player': 'TEAM AVERAGE'}
 
     # Calculate averages for numeric columns
-    numeric_cols = ['Sets', 'FBHE', 'FBSO', 'TCR', 'ESO', 'Expected', 'Knockout', 'Ace/Error']
+    numeric_cols = ['Sets', 'FBHE', 'FBSO', 'TCR', 'ESO', 'Knockout', 'Ace/Error']
     for col in numeric_cols:
       summary_row[col] = round(metrics_df[col].mean(), 3) if not metrics_df[col].empty else 0
 
       # Calculate averages for percentage columns
-    for col in ['Good_Pass_Pct', 'Error_Density']:
+    for col in ['Side_Out_Rate', 'Good_Pass_Pct', 'Great_Pass_Pct', 'Error_Density']:
       valid_values = [v for v in metrics_df[col] if pd.notnull(v)]
       summary_row[col] = round(sum(valid_values) / len(valid_values), 3) if valid_values else 0.0
 
       # Convert percentage columns back to string format for display
     summary_row['Good_Pass_Pct'] = f"{summary_row['Good_Pass_Pct'] * 100:.0f}%"
+    summary_row['Great_Pass_Pct'] = f"{summary_row['Great_Pass_Pct'] * 100:.0f}%"
     summary_row['Error_Density'] = f"{summary_row['Error_Density'] * 100:.1f}%"
     
     # Add summary row
@@ -274,7 +282,7 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
             ('ESO', 'Earned Side Out'),
             ('Knockout','Knockout Ratio'),
             #('Error_Density', 'Error Density')
-            ('Expected', 'Expected Value')
+            ('Side_Out_Rate', 'Side Out Rate')
         ]
 
     for metric, desc in categories:
@@ -284,6 +292,8 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
         # Format value for display
         # Convert value to Python type and format for display
         value = to_python_type(top_player[metric].iloc[0])
+        if metric == 'Side_Out_Rate':
+          value = f"{value * 100:.0f}%"
         #if metric in ['Good_Pass_Pct', 'Error_Density']:
         #  value = f"{value * 100:.0f}%" if metric == 'Good_Pass_Pct' else f"{value * 100:.1f}%"
         top_performers.append({
@@ -302,10 +312,12 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
   # After concatenating the summary row
   metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].apply(lambda x: float(x.strip('%')) / 100 if isinstance(x, str) else x)
+  metrics_df['Great_Pass_Pct'] = metrics_df['Great_Pass_Pct'].apply(lambda x: float(x.strip('%')) / 100 if isinstance(x, str) else x)
   metrics_df['Error_Density'] = metrics_df['Error_Density'].apply(lambda x: float(x.strip('%')) / 100 if isinstance(x, str) else x)
 
   # Ensure float64 type
   metrics_df['Good_Pass_Pct'] = pd.to_numeric(metrics_df['Good_Pass_Pct'], errors='coerce').astype('float64')
+  metrics_df['Great_Pass_Pct'] = pd.to_numeric(metrics_df['Great_Pass_Pct'], errors='coerce').astype('float64')
   metrics_df['Error_Density'] = pd.to_numeric(metrics_df['Error_Density'], errors='coerce').astype('float64')
 
   # Verify types
@@ -316,9 +328,14 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
   metrics_df['FBSO'] = metrics_df['FBSO'].round(3).astype(str)
   metrics_df['TCR'] = metrics_df['TCR'].round(3).astype(str)
   metrics_df['ESO'] = metrics_df['ESO'].round(3).astype(str)
-  metrics_df['Expected'] = metrics_df['Expected'].round(3).astype(str)
+  metrics_df['Side_Out_Rate'] = metrics_df['Side_Out_Rate'].apply(lambda x: f"{x * 100:02.0f}%" if pd.notnull(x) else '')
   #metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].round(3)
-  metrics_df['Good_Pass_Pct'] = metrics_df['Good_Pass_Pct'].apply(lambda x: f"{x * 100:02.0f}%" if pd.notnull(x) else x)
+  # Good / Great pass shown together in one column, e.g. "80%/56%"
+  metrics_df['Good_Pass_Pct'] = [
+    f"{g * 100:.0f}%/{gr * 100:.0f}%" if pd.notnull(g) and pd.notnull(gr) else ''
+    for g, gr in zip(metrics_df['Good_Pass_Pct'], metrics_df['Great_Pass_Pct'])
+  ]
+  metrics_df = metrics_df.drop(columns=['Great_Pass_Pct'])
   metrics_df['Knockout'] = metrics_df['Knockout'].round(3).astype(str)
   metrics_df['Ace/Error'] = metrics_df['Ace/Error'].round(3).astype(str)
   #metrics_df['Error_Density'] = metrics_df['Error_Density'].round(3)
@@ -326,7 +343,8 @@ def report_dashboard_key_metrics(lgy, team, **rpt_filters):
 
   # change column names to fit into the display
   metrics_df = metrics_df.rename(columns={
-    'Good_Pass_Pct': 'Good Pass',
+    'Side_Out_Rate': 'Side Out Rate',
+    'Good_Pass_Pct': 'Good/Great Pass',
     'Error_Density': 'Error Density'
   })
   

@@ -2959,12 +2959,12 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
   '''
   # Define the structure of the DataFrame
   df_dict = {
-    ' ': ['FBHE', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts', '% In System', 'URL'],
-    'Cut-Left': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A1
-    'Angle-Left': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A2
-    'Over-Middle': [0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A3
-    'Angle-Right': [0, 0, 0, 0, 0, 0, 0, ' '],   # Zone A4
-    'Cut-Right': [0, 0, 0, 0, 0, 0, 0, ' ']      # Zone A5
+    ' ': ['FBHE', 'FBSO', 'Kills', 'Errors', 'Attempts', '% of Attempts', '% In System', '% Great Pass', 'URL'],
+    'Cut-Left': [0, 0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A1
+    'Angle-Left': [0, 0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A2
+    'Over-Middle': [0, 0, 0, 0, 0, 0, 0, 0, ' '],  # Zone A3
+    'Angle-Right': [0, 0, 0, 0, 0, 0, 0, 0, ' '],   # Zone A4
+    'Cut-Right': [0, 0, 0, 0, 0, 0, 0, 0, ' ']      # Zone A5
   }
 
   # Create DataFrame without setting an index
@@ -2993,6 +2993,8 @@ def get_player_angular_attack_table(new_df, player_data_stats_df, disp_player):
     angle_table.loc[angle_table[' '] == 'Errors', ang_labels[i]] = fbhe_result.errors
     angle_table.loc[angle_table[' '] == 'Attempts', ang_labels[i]] = fbhe_result.attempts
     angle_table.loc[angle_table[' '] == '% In System', ang_labels[i]] = f"{(1 - oos_vector[1]):.1%}"
+    great_result = count_great_passes_obj(tmp_df, disp_player, 'att')
+    angle_table.loc[angle_table[' '] == '% Great Pass', ang_labels[i]] = f"{great_result.get('percent_of_known', 0.0):.1%}"
     angle_table.loc[angle_table[' '] == 'URL', ang_labels[i]] = fbhe_result.video_link
     attempts = fbhe_result.attempts + attempts
     #print(f"Attempts: {attempts}")
