@@ -1047,7 +1047,7 @@ def report_player_att_expected(lgy, team, **rpt_filters):
 
 
 
-def plot_volleyball_attacks(ppr_df, plt_title=''):
+def plot_volleyball_attacks(ppr_df, plt_title='', show_pass_dots=True):
   # Create figure and axis
   fig, ax = plt.subplots(figsize=(10, 18))
 
@@ -1086,6 +1086,17 @@ def plot_volleyball_attacks(ppr_df, plt_title=''):
       ax.arrow(dest_x - dx, dest_y - dy, dx, dy, 
                head_width=0.2, head_length=0.3, 
                fc=color, ec=color, alpha=0.9)
+
+  # Dots where the pass landed, same colours as the attack outcome (green FBK, red FBE, blue other).
+  # Skips attacks with no tracked pass (pass_yn != 'Y', or coordinates left at the 0,0 default).
+  if show_pass_dots and 'pass_dest_x' in ppr_df.columns:
+    pass_df = ppr_df[(ppr_df['pass_yn'] == 'Y') &
+                     ~((ppr_df['pass_dest_x'] == 0) & (ppr_df['pass_dest_y'] == 0))]
+    pass_df = pass_df.dropna(subset=['pass_dest_x', 'pass_dest_y'])
+    if not pass_df.empty:
+      dot_colors = [outcome_colors.get(o, 'blue') for o in pass_df['point_outcome']]
+      ax.scatter(pass_df['pass_dest_x'], pass_df['pass_dest_y'], s=90, c=dot_colors,
+                 alpha=0.6, edgecolors='black', linewidths=1, zorder=5)
 
     # Process ellipses for each angular zone
   angular_zones = ['A1', 'A2', 'A3', 'A4', 'A5']
